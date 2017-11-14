@@ -1,0 +1,109 @@
+{
+  "logging": {
+    "categories": "Warning, Error"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "example_tests": {
+    "datadir": "/glade/p/mmm/syha/OOPS/oops/MPAS/test/testinput",
+    "exp": "mpas_nicas_in_oops",
+    "date": "2012-05-25T00:00:00Z"
+  },
+  "Geometry": {
+    "nCells": "40962",
+    "nVertLevels": "55"
+  },
+  "Variables": {
+    "variables": "onevar"
+  },
+  "State": {
+    "read_from_file": "1",
+    "gridfname": "/glade/p/mmm/syha/MPASV51/x1.40962.init.nc",
+    "perturb": "0"
+  }
+  "Covariance": {
+    "covariance": "ensemble",
+    "members": "5",
+    "date": "2012-05-25T00:00:00Z",
+    "localization": {
+      "localization": "NICAS",
+      "datadir": "/glade/p/mmm/syha/OOPS/oops/MPAS/test/testinput",
+      "prefix": "mpas",
+      "colorlog": 0,
+      "model": "oops",
+      "nl": 2,
+      "levs(1)": 1,
+      "levs(2)": 2,
+      "new_param": 1,
+      "new_mpi": 1,
+      "check_adjoints": 1,
+      "check_pos_def": 0,
+      "check_mpi": 1,
+      "check_dirac": 1,
+      "check_perf": 0,
+      "ndir": 3,
+      "levdir": 1,
+      "londir(1)": -1.2,
+      "londir(2)": 147.0,
+      "londir(3)": -79.8,
+      "latdir(1)": -31.7,
+      "latdir(2)": 10.7,
+      "latdir(3)": 21.7,
+      "sam_default_seed": 1,
+      "mask_check": 0,
+      "ntry": 30,
+      "nrep": 2,
+      "logpres": 0,
+      "lsqrt": 0,
+      "Lbh_file": "none",
+      "Lbh(1)": 3000.0e3,
+      "Lbh(2)": 3000.0e3,
+      "Lbv_file": "none",
+      "Lbv(1)": 0.4,
+      "Lbv(2)": 0.4,
+      "resol": 12.0,
+      "network": 0,
+      "nproc": 1,
+      "mpicom": 2
+    },
+        "state": [
+          {
+            "filename": "./Data/x1.40962.init.2012052500.e1.nc"
+            "date": "2012-05-25T00:00:00Z"
+          },
+          {
+            "filename": "./Data/x1.40962.init.2012052500.e2.nc"
+            "date": "2012-05-25T00:00:00Z"
+          },
+          {
+            "filename": "./Data/x1.40962.init.2012052500.e3.nc"
+            "date": "2012-05-25T00:00:00Z"
+          },
+          {
+            "filename": "./Data/x1.40962.init.2012052500.e4.nc"
+            "date": "2012-05-25T00:00:00Z"
+          },
+          {
+            "filename": "./Data/x1.40962.init.2012052500.e5.nc"
+            "date": "2012-05-25T00:00:00Z"
+          }
+        ]
+  },
+  "dirac": {
+    "ndir": 1,
+    "iCell(1)": 20,
+    "ildir": 1,
+    "ifdir": 1
+  },
+  "output_nicas": {
+    "datadir": "./",
+    "exp": "dirac",
+    "type": "an",
+    "date": "2012-05-25T00:00:00Z"
+  },
+  "output_Bens": {
+    "datadir": "./",
+    "exp": "Bens",
+    "type": "an",
+    "date": "2012-05-25T00:00:00Z"
+  }
+}
