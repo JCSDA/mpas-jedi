@@ -20,6 +20,11 @@
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"
 
+// GD add include Locations geovals
+#include "/home/vagrant/jedi/code/ufo/src/ufo/GeoVaLs.h"
+#include "/home/vagrant/jedi/code/ufo/src/ufo/Locations.h"
+
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -29,7 +34,13 @@ namespace oops {
   class UnstructuredGrid;
 }
 
+namespace ufo {
+  class Locations;
+  class GeoVaLs;
+}
+
 namespace mpas {
+  class Geometry;
 
 // -----------------------------------------------------------------------------
 /// Class to represent a FieldSet for the MPAS model
@@ -59,9 +70,9 @@ class Fields : public util::Printable,
   void random();
 
 // Interpolate to given location
-//  void interpolate(const LocQG &, GomQG &) const;
-//  void interpolateTL(const LocQG &, GomQG &) const;
-//  void interpolateAD(const LocQG &, const GomQG &);
+  void interpolate(const ufo::Locations &, ufo::GeoVaLs &) const;
+  //void interpolateTL(const ufo::Locations &, ufo::GeoVaLs &) const;
+  //void interpolateAD(const ufo::Locations &, const ufo::GeoVaLs &);
 
 // Interpolate full fields
   void changeResolution(const Fields &);

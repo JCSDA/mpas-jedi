@@ -371,6 +371,86 @@ prms = zz
 
 end subroutine mpas_field_rms_c
 
+!-------------------------------------------------------------------------------
+
+subroutine mpas_field_interp_c(c_key_fld,c_key_loc,c_key_geov) bind(c,name='mpas_field_interp_f90')
+  use iso_c_binding
+  use mpas_fields
+  !use mpas_vars
+  use ufo_locs_mod
+  use ufo_geovals_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_loc
+  !integer(c_int), intent(in) :: c_key_var
+  integer(c_int), intent(in) :: c_key_geov
+  type(mpas_field), pointer :: fld
+  type(ufo_geoval),  pointer :: geov
+  type(ufo_locs),  pointer :: locs
+  !type(mpas_vars),  pointer :: vars
+
+  call mpas_field_registry%get(c_key_fld,fld)
+  call ufo_locs_registry%get(c_key_loc,locs)
+  !call ufo_geovals_registry%get(c_key_geov,geov)
+
+  call interp_tl(fld, locs, geov)
+
+end subroutine mpas_field_interp_c
+
+
+!-------------------------------------------------------------------------------
+
+subroutine mpas_field_interp_tl_c(c_key_fld,c_key_loc,c_key_geov) bind(c,name='mpas_field_interp_tl_f90')
+  use iso_c_binding
+  use mpas_fields
+  !use mpas_vars
+  use ufo_locs_mod
+  use ufo_geovals_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_loc
+  !integer(c_int), intent(in) :: c_key_var
+  integer(c_int), intent(in) :: c_key_geov
+  type(mpas_field), pointer :: fld
+  type(ufo_geoval),  pointer :: geov
+  type(ufo_locs),  pointer :: locs
+  !type(mpas_vars),  pointer :: vars
+!
+!  !call mpas_field_registry%get(c_key_fld,fld)
+!  !call mpas_locs_registry%get(c_key_loc,locs)
+!  !call mpas_goms_registry%get(c_key_gom,gom)
+!
+!  !call interp_tl(fld, locs, gom)
+!
+end subroutine mpas_field_interp_tl_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_interp_ad_c(c_key_fld,c_key_loc,c_key_var,c_key_geov) bind(c,name='mpas_field_interp_ad_f90')
+  use iso_c_binding
+  use mpas_fields
+  use mpas_vars_mod
+  use ufo_locs_mod
+  use ufo_geovals_mod
+  implicit none
+  integer(c_int), intent(in) :: c_key_fld
+  integer(c_int), intent(in) :: c_key_loc
+  integer(c_int), intent(in) :: c_key_var
+  integer(c_int), intent(in) :: c_key_geov
+  type(mpas_field), pointer :: fld
+  type(mpas_vars), pointer :: vars
+  type(ufo_locs),  pointer :: locs
+  type(ufo_geoval),  pointer :: geov
+!
+!  !call mpas_field_registry%get(c_key_fld,fld)
+!  !call mpas_locs_registry%get(c_key_loc,locs)
+!  !call mpas_goms_registry%get(c_key_gom,gom)
+!
+!  !call interp_ad(fld, locs, gom)
+!
+end subroutine mpas_field_interp_ad_c
+
+
 ! ------------------------------------------------------------------------------
 
 subroutine mpas_fieldnum_c(c_key_fld, nx, ny, nf) bind(c,name='mpas_field_sizes_f90')

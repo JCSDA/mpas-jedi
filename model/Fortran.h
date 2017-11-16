@@ -70,6 +70,13 @@ extern "C" {
   void mpas_field_sizes_f90(const int & keyFlds, int &, int &, int &);
   void mpas_field_rms_f90(const int & keyFlds, double &);
 
+  void mpas_field_interp_f90(const int & keyFlds, const int &,
+                          const int & keyGVL);
+  void mpas_field_interp_tl_f90(const int & keyFlds, const int &,
+                              const int & keyGVL);
+  void mpas_field_interp_ad_f90(const int & keyFlds, const int &,
+                              const int & keyGVL);  
+
 // -----------------------------------------------------------------------------
 //  Variables
 // -----------------------------------------------------------------------------

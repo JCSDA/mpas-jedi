@@ -38,8 +38,12 @@ find_package( Boost ${Boost_MINIMUM_VERSION} REQUIRED
 include_directories( ${Boost_INCLUDE_DIR} )
 
 # oops
-ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
-include_directories( ${OOPS_INCLUDE_DIRS} )
+#ecbuild_use_package( PROJECT ufo VERSION 0.1.0 REQUIRED )
+ecbuild_use_package( PROJECT ufo )
+include_directories( ${UFO_INCLUDE_DIRS} )
+
+# ufo
+#include_directories( ${UFO_INCLUDE} )
 
 # MPAS
 include_directories( ${MPAS_INCLUDE} )
@@ -48,7 +52,7 @@ include_directories( ${MPAS_INCLUDE} )
 # Export package info
 ################################################################################
 
-list( APPEND MPAS_TPLS oops )
+list( APPEND MPAS_TPLS ufo)
 
 foreach( _tpl ${MPAS_TPLS} )
   string( TOUPPER ${_tpl} TPL )

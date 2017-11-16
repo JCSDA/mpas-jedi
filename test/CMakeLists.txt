@@ -51,3 +51,10 @@ ecbuild_add_test( TARGET test_mpas_dirac_nicas
                        testoutput/dirac.nicas.test
                   DEPENDS mpas_dirac.x )
 
+#ecbuild_add_test( TARGET  test_Interpolation
+#//                  BOOST
+##                  SOURCES executables/TestInterpolation.cc
+#                  ARGS    "testinput/interfaces.json"
+#                  LIBS    mpas )
+
+

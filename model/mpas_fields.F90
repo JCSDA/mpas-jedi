@@ -6,15 +6,20 @@ module mpas_fields
 use config_mod
 use mpas_geom_mod
 use mpas_vars_mod
+!use mpas_locs_mod --> UFO not ready yet
 use kinds
 use tools_nc
 use netcdf
+
+! call to ufo module
+use ufo_locs_mod
+use ufo_geovals_mod
 
 !MPAS
 !use io_input
 !use io_output
 !use grid_types
-use mpas_framework
+!use mpas_framework
 !use mpas_subdriver
 !use mpas_configs
 !!use configure
@@ -29,7 +34,8 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, change_resol, &
         & read_file, write_file, gpnorm, fldrms, &
-        & convert_to_ug, convert_from_ug, dirac
+        !& interp_tl, interp_ad, convert_to_ug, convert_from_ug, dirac
+        & interp_tl, convert_to_ug, convert_from_ug, dirac
 public :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
@@ -623,6 +629,104 @@ end associate
 end subroutine fldrms
 
 ! ------------------------------------------------------------------------------
+  subroutine interp_tl(fld, locs, geov)
+    implicit none
+    type(mpas_field), intent(in)    :: fld
+!    type(mpas_vars), intent(in)     :: vars
+    type(ufo_locs), intent(in)      :: locs ! TO COMPILE ONLY WRONG GD
+    type(ufo_geoval), intent(inout) :: geov
+    character(2)                        :: op_type='TL'
+
+    call check(fld)
+    call nicas_interph(fld, locs, geov, op_type)
+
+  end subroutine interp_tl
+
+! ------------------------------------------------------------------------------
+
+!  subroutine interp_ad(fld, locs, geov)
+!    implicit none
+!    type(mpas_field), intent(inout) :: fld
+!    type(mpas_vars), intent(in)     :: vars
+!    type(ufo_locs), intent(in)      :: locs
+!    type(ufo_geoval), intent(inout) :: geov
+!    character(2)                        :: op_type='AD'
+!
+!    call check(fld)
+!    call nicas_interph(fld, locs, geov, op_type)
+!
+!  end subroutine interp_ad
+! ------------------------------------------------------------------------------
+
+ subroutine nicas_interph(fld, locs, geov, op_type)
+
+    use type_linop
+    use tools_interp, only: interp_horiz
+    use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
+    use module_namelist, only: namtype    
+    use tools_const, only : deg2rad
+
+    type(mpas_field), intent(in)    :: fld
+    type(ufo_locs), intent(in)      :: locs
+    type(ufo_geoval), intent(inout) :: geov
+    character(2), intent(in)        :: op_type !('TL' or 'AD')
+
+    integer :: Nc, No, var_index, NCAT
+
+    logical,allocatable :: mask(:), masko(:)                !< mask (ncells, nlevels)
+    real(kind=kind_real), allocatable :: lon(:), lat(:), lono(:), lato(:), fld_src(:), fld_dst(:)
+    type(namtype) :: nam !< Namelist variables
+    !BJJ
+    integer :: iii
+    logical :: geov_hinterp_initialized
+    type(linoptype) :: geov_hinterp_op
+
+    Nc = fld%geom%nCells
+    No = locs%nloc
+    !No = gom%nobs
+    !No=2
+    if (No>0) then
+       print *,'nobs=',locs%nloc,geov%nobs
+       allocate(fld_src(Nc))
+       allocate(masko(No), fld_dst(No), lono(No), lato(No)) ! <--- Hack job, need to replace with pointers? ...
+
+       masko = .true. ! Figured out what's the use for masko????
+       mask = .true.
+       if (.not.(geov_hinterp_initialized)) then
+          print *,'INITIALIZE INTERP'
+          rng = create_randgen(nam)
+          lono = deg2rad*locs%xyz(1,:)
+          lato = deg2rad*locs%xyz(2,:)
+          lon = deg2rad*fld%geom%lonCell  
+          lat = deg2rad*fld%geom%latCell  
+          call interp_horiz(rng, Nc, lon,  lat,  mask, No, lono, lato, masko, geov_hinterp_op)
+          geov_hinterp_initialized = .true.
+       end if
+
+       select case (op_type)
+       case ('TL')
+          print *,'&&&&&&&&&&&&&&&&&&& APPLY NICAS_INTERPH TL OPERATOR ',No
+          !need to loop through all variables fld_dst ==> gom%values
+!          Nc = fld%geom%nCell
+          NCAT = 5 !<=== NO GOOD !!!!! GET FROM GEOM
+          if (.not.allocated(fld_src)) allocate(fld_src(Nc)) ! <--- Hack job, need to replace with pointers? ...
+          do var_index=1,NCAT
+            do iii=1,fld%geom%nVertLevels
+             fld_src = fld%fld(:,iii,var_index)
+             call apply_linop(geov_hinterp_op, fld_src, fld_dst)
+             write(*,*) " interpolated valued for level ",iii," is ", fld_dst
+            enddo
+             !gom%values(var_index,gom%tindex:gom%tindex+No-1)=fld_dst(1:No)
+          end do
+          deallocate(fld_src)
+       case ('AD')
+          !call apply_linop_ad(hinterp_op,fld_dst,fld_src)
+          !put fld_src
+       end select
+!       gom%tindex=gom%tindex+locs%nloc*gom%nvar
+    end if
+end subroutine nicas_interph
+
 
 subroutine lin_weights(kk,delta1,delta2,k1,k2,w1,w2)
 implicit none

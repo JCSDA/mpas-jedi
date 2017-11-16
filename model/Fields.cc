@@ -21,6 +21,10 @@
 #include "util/Logger.h"
 #include "util/abor1_cpp.h"
 
+#include "/home/vagrant/jedi/code/ufo/src/ufo/GeoVaLs.h"
+#include "/home/vagrant/jedi/code/ufo/src/ufo/Locations.h"
+
+
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
@@ -119,6 +123,18 @@ void Fields::schur_product_with(const Fields & dx) {
 void Fields::random() {
   mpas_field_random_f90(keyFlds_);
 }
+// -----------------------------------------------------------------------------
+void Fields::interpolate(const ufo::Locations & locs, ufo::GeoVaLs & geov) const {
+    mpas_field_interp_f90(keyFlds_, locs.toFortran(), geov.toFortran());
+}
+// -----------------------------------------------------------------------------
+//void Fields::interpolateTL(const ufo::Locations & locs, ufo::GeoVaLs & geov) const {
+//    mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), geov.toFortran());
+//}
+// -----------------------------------------------------------------------------
+//void Fields::interpolateAD(const ufo::Locations & locs, ufo::GeoVaLs & geov) const {
+//  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), geov.toFortran());
+//}
 // -----------------------------------------------------------------------------
 void Fields::changeResolution(const Fields & other) {
   mpas_field_change_resol_f90(keyFlds_, other.keyFlds_);

@@ -30,7 +30,7 @@ endif()
 ecbuild_add_library( TARGET   mpas
                      DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_mpas_src_files}
-                     LIBS     oops ${LAPACK_LIBRARIES} ${MPAS_LIBRARIES}
+                     LIBS     ufo ${LAPACK_LIBRARIES} ${MPAS_LIBRARIES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )
