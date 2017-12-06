@@ -16,6 +16,8 @@ ModelBiasIncrementMPAS.h
 ModelBiasMPAS.h
 ModelMPAS.cc
 ModelMPAS.h
+RunMPAS.cc
+RunMPAS.h
 StateMPAS.cc
 StateMPAS.h
 TlmIdMPAS.cc

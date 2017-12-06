@@ -5,12 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/LfricTraits.h"
+#include "LfricTraits.h"
 #include "oops/runs/Forecast.h"
-#include "oops/runs/Run.h"
+#include "RunLfric.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
+  lfric::RunLfric run(argc, argv);
   oops::Forecast<lfric::LfricTraits> fc;
   run.execute(fc);
   return 0;

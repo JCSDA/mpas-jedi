@@ -5,13 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/LfricTraits.h"
+#include "LfricTraits.h"
 #include "oops/runs/Variational.h"
-#include "oops/runs/Run.h"
+#include "RunLfric.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
+  lfirc::RunLfric run(argc, argv);
   oops::Variational<lfric::LfricTraits> var;
   run.execute(var);
   return 0;
 };
+
