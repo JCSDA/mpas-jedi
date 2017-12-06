@@ -57,7 +57,7 @@ include_directories( ${UFO_INCLUDE_DIRS} )
 
 list( APPEND MPAS_TPLS ufo oops )
 
-set( MPAS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/main ${CMAKE_CURRENT_BINARY_DIR}/main
+set( MPAS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/model ${CMAKE_CURRENT_BINARY_DIR}/model
                         ${CMAKE_Fortran_MODULE_DIRECTORY} )
 set( MPAS_LIBRARIES mpas )
 
@@ -76,9 +76,10 @@ endforeach()
 
 include( mpas_compiler_flags )
 include_directories( ${MPAS_INCLUDE_DIRS} ${MPAS_EXTRA_INCLUDE_DIRS}
-                     ${CMAKE_CURRENT_SOURCE_DIR}/main )
+                     ${CMAKE_CURRENT_SOURCE_DIR}/model )
 
-add_subdirectory( main )
+add_subdirectory( model )
+add_subdirectory( mains )
 add_subdirectory( test )
 
 ################################################################################
