@@ -3,31 +3,28 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
-module mpas_vars_mod
-
-use iso_c_binding
-use config_mod
+module mpas_trajectories
 
 implicit none
 private
-public :: mpas_vars
-public :: mpas_vars_registry
 
+public :: mpas_trajectory, set_traj, delete_traj
+public :: mpas_traj_registry
 
 ! ------------------------------------------------------------------------------
 
-!> Fortran derived type to hold variables definition
-type :: mpas_vars
+!> Fortran derived type to hold the model trajectory
+type :: mpas_trajectory
   integer :: nothing
-end type mpas_vars
+end type mpas_trajectory
 
-#define LISTED_TYPE mpas_vars
+#define LISTED_TYPE mpas_trajectory
 
 !> Linked list interface - defines registry_t type
 #include "linkedList_i.f"
 
 !> Global registry
-type(registry_t) :: mpas_vars_registry
+type(registry_t) :: mpas_traj_registry
 
 ! ------------------------------------------------------------------------------
 contains
@@ -37,4 +34,20 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-end module mpas_vars_mod
+subroutine set_traj(self)
+implicit none
+type(mpas_trajectory), intent(inout) :: self
+
+end subroutine set_traj
+
+! ------------------------------------------------------------------------------
+
+subroutine delete_traj(self)
+implicit none
+type(mpas_trajectory), intent(inout) :: self
+
+end subroutine delete_traj
+
+! ------------------------------------------------------------------------------
+
+end module mpas_trajectories

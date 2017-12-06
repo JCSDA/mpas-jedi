@@ -1,40 +1,40 @@
 /*
  * (C) Copyright 2017 UCAR
- *
+ * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/Fields.h"
+#include "FieldsMPAS.h"
 
 #include <cmath>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "eckit/config/Configuration.h"
-#include "oops/generic/UnstructuredGrid.h"
-#include "model/Fortran.h"
-#include "model/Geometry.h"
-#include "model/Variables.h"
-#include "util/DateTime.h"
+#include "oops/base/Variables.h"
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 #include "util/Logger.h"
-#include "util/abor1_cpp.h"
+#include "Fortran.h"
+#include "GeometryMPAS.h"
+#include "eckit/config/Configuration.h"
+#include "util/DateTime.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-Fields::Fields(const Geometry & geom, const Variables & vars,
-                   const util::DateTime & time):
-  geom_(new Geometry(geom)), vars_(new Variables(vars)), time_(time)
+FieldsMPAS::FieldsMPAS(const GeometryMPAS & geom, const oops::Variables & vars,
+                         const util::DateTime & time):
+  geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
 }
 // -----------------------------------------------------------------------------
-Fields::Fields(const Fields & other, const bool copy)
+FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const bool copy)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   if (copy) {
     mpas_field_copy_f90(keyFlds_, other.keyFlds_);
   } else {
@@ -42,129 +42,133 @@ Fields::Fields(const Fields & other, const bool copy)
   }
 }
 // -----------------------------------------------------------------------------
-Fields::Fields(const Fields & other)
+FieldsMPAS::FieldsMPAS(const FieldsMPAS & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   mpas_field_copy_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-Fields::Fields(const Fields & other, const Geometry & geom)
-  : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
+FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const GeometryMPAS & geom)
+  : geom_(new GeometryMPAS(geom)), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   mpas_field_change_resol_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-Fields::Fields(const Fields & other, const Variables & vars)
-  : geom_(other.geom_), vars_(new Variables(vars)), time_(other.time_)
+FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const oops::Variables & vars)
+  : geom_(other.geom_), vars_(vars), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_->toFortran());
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
   mpas_field_copy_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-Fields::~Fields() {
+FieldsMPAS::~FieldsMPAS() {
   mpas_field_delete_f90(keyFlds_);
 }
 // -----------------------------------------------------------------------------
-Fields & Fields::operator=(const Fields & rhs) {
+FieldsMPAS & FieldsMPAS::operator=(const FieldsMPAS & rhs) {
   mpas_field_copy_f90(keyFlds_, rhs.keyFlds_);
   time_ = rhs.time_;
   return *this;
 }
 // -----------------------------------------------------------------------------
-Fields & Fields::operator+=(const Fields & rhs) {
+FieldsMPAS & FieldsMPAS::operator+=(const FieldsMPAS & rhs) {
   mpas_field_self_add_f90(keyFlds_, rhs.keyFlds_);
   return *this;
 }
 // -----------------------------------------------------------------------------
-Fields & Fields::operator-=(const Fields & rhs) {
+FieldsMPAS & FieldsMPAS::operator-=(const FieldsMPAS & rhs) {
   mpas_field_self_sub_f90(keyFlds_, rhs.keyFlds_);
   return *this;
 }
 // -----------------------------------------------------------------------------
-Fields & Fields::operator*=(const double & zz) {
+FieldsMPAS & FieldsMPAS::operator*=(const double & zz) {
   mpas_field_self_mul_f90(keyFlds_, zz);
   return *this;
 }
 // -----------------------------------------------------------------------------
-void Fields::zero() {
+void FieldsMPAS::zero() {
   mpas_field_zero_f90(keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::zero(const util::DateTime & time) {
+void FieldsMPAS::zero(const util::DateTime & time) {
   mpas_field_zero_f90(keyFlds_);
   time_ = time;
 }
 // -----------------------------------------------------------------------------
-void Fields::dirac(const eckit::Configuration & config) {
-  const eckit::Configuration * conf = &config;
-  mpas_field_dirac_f90(keyFlds_, &conf);
-}
-// -----------------------------------------------------------------------------
-void Fields::axpy(const double & zz, const Fields & rhs) {
+void FieldsMPAS::axpy(const double & zz, const FieldsMPAS & rhs) {
   mpas_field_axpy_f90(keyFlds_, zz, rhs.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-double Fields::dot_product_with(const Fields & fld2) const {
+double FieldsMPAS::dot_product_with(const FieldsMPAS & fld2) const {
   double zz;
   mpas_field_dot_prod_f90(keyFlds_, fld2.keyFlds_, zz);
   return zz;
 }
 // -----------------------------------------------------------------------------
-void Fields::schur_product_with(const Fields & dx) {
+void FieldsMPAS::schur_product_with(const FieldsMPAS & dx) {
     mpas_field_self_schur_f90(keyFlds_, dx.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::random() {
+void FieldsMPAS::random() {
   mpas_field_random_f90(keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::changeResolution(const Fields & other) {
+void FieldsMPAS::interpolate(const ufo::Locations & locs, const oops::Variables & vars,
+                              ufo::GeoVaLs & gom) const {
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars,
+                                ufo::GeoVaLs & gom) const {
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars,
+                                const ufo::GeoVaLs & gom) {
+  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::changeResolution(const FieldsMPAS & other) {
   mpas_field_change_resol_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::add(const Fields & rhs) {
+void FieldsMPAS::add(const FieldsMPAS & rhs) {
   mpas_field_add_incr_f90(keyFlds_, rhs.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::diff(const Fields & x1, const Fields & x2) {
+void FieldsMPAS::diff(const FieldsMPAS & x1, const FieldsMPAS & x2) {
   mpas_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void Fields::convert_to(oops::UnstructuredGrid & ug) const {
-  mpas_field_convert_to_f90(keyFlds_, ug.toFortran());
-}
-// -----------------------------------------------------------------------------
-void Fields::convert_from(const oops::UnstructuredGrid & ug) {
-  mpas_field_convert_from_f90(keyFlds_, ug.toFortran());
-}
-// -----------------------------------------------------------------------------
-void Fields::read(const eckit::Configuration & config) {
+void FieldsMPAS::read(const eckit::Configuration & config) {
   const eckit::Configuration * conf = &config;
   util::DateTime * dtp = &time_;
   mpas_field_read_file_f90(keyFlds_, &conf, &dtp);
 }
 // -----------------------------------------------------------------------------
-void Fields::write(const eckit::Configuration & config) const {
+void FieldsMPAS::write(const eckit::Configuration & config) const {
   const eckit::Configuration * conf = &config;
   const util::DateTime * dtp = &time_;
   mpas_field_write_file_f90(keyFlds_, &conf, &dtp);
 }
 // -----------------------------------------------------------------------------
-double Fields::norm() const {
+double FieldsMPAS::norm() const {
   double zz = 0.0;
   mpas_field_rms_f90(keyFlds_, zz);
   return zz;
 }
 // -----------------------------------------------------------------------------
-void Fields::print(std::ostream & os) const {
+void FieldsMPAS::print(std::ostream & os) const {
   int nx = -1;
   int ny = -1;
   int nf = -1;
-  mpas_field_sizes_f90(keyFlds_, nx, ny, nf);
+  int nb = -1;
+//  mpas_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
   os << std::endl << "  Resolution = " << nx << ", " << ny
-     << ", Fields = " << nf;
+     << ", Fields = " << nf << ", " << nb;
+  nf += nb;
   std::vector<double> zstat(3*nf);
   mpas_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {

@@ -1,172 +1,172 @@
 /*
  * (C) Copyright 2017 UCAR
- *
+ * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/Increment.h"
+#include "IncrementMPAS.h"
 
 #include <algorithm>
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "oops/generic/UnstructuredGrid.h"
-#include "model/Fields.h"
-#include "model/Geometry.h"
-#include "model/State.h"
-#include "model/Variables.h"
+#include "util/Logger.h"
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
+#include "ErrorCovarianceMPAS.h"
+#include "FieldsMPAS.h"
+#include "GeometryMPAS.h"
+#include "StateMPAS.h"
+#include "oops/base/Variables.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
-#include "util/Logger.h"
-
-using oops::Log;
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-Increment::Increment(const Geometry & resol, const Variables & vars,
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
                          const util::DateTime & vt)
-  : fields_(new Fields(resol, vars, vt)), stash_()
+  : fields_(new FieldsMPAS(resol, vars, vt)), stash_()
 {
   fields_->zero();
-  Log::trace() << "Increment constructed." << std::endl;
+  oops::Log::trace() << "IncrementMPAS constructed." << std::endl;
 }
 // -----------------------------------------------------------------------------
-Increment::Increment(const Geometry & resol, const Increment & other)
-  : fields_(new Fields(*other.fields_, resol)), stash_()
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol, const IncrementMPAS & other)
+  : fields_(new FieldsMPAS(*other.fields_, resol)), stash_()
 {
-  Log::trace() << "Increment constructed from other." << std::endl;
+  oops::Log::trace() << "IncrementMPAS constructed from other." << std::endl;
 }
 // -----------------------------------------------------------------------------
-Increment::Increment(const Increment & other, const bool copy)
-  : fields_(new Fields(*other.fields_, copy)), stash_()
+IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
+  : fields_(new FieldsMPAS(*other.fields_, copy)), stash_()
 {
-  Log::trace() << "Increment copy-created." << std::endl;
+  oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-Increment::Increment(const Increment & other)
-  : fields_(new Fields(*other.fields_)), stash_()
+IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
+  : fields_(new FieldsMPAS(*other.fields_)), stash_()
 {
-  Log::trace() << "Increment copy-created." << std::endl;
+  oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-Increment::~Increment() {
-  Log::trace() << "Increment destructed" << std::endl;
+IncrementMPAS::~IncrementMPAS() {
+  oops::Log::trace() << "IncrementMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void Increment::activateModel() {
+void IncrementMPAS::activateModel() {
 // Should get variables from model. YT
   eckit::LocalConfiguration modelvars;
-  modelvars.set("variables", "onevar");
-  Variables vars(modelvars);
+  modelvars.set("variables", "tl");
+  oops::Variables vars(modelvars);
 // Should get variables from model. YT
-  stash_.reset(new Fields(*fields_, vars));
+  stash_.reset(new FieldsMPAS(*fields_, vars));
   swap(fields_, stash_);
   ASSERT(fields_);
   ASSERT(stash_);
-  Log::trace() << "Increment activated for TLM" << std::endl;
+  oops::Log::trace() << "IncrementMPAS activated for TLM" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void Increment::deactivateModel() {
+void IncrementMPAS::deactivateModel() {
   swap(fields_, stash_);
   *fields_ = *stash_;
   stash_.reset();
   ASSERT(fields_);
   ASSERT(!stash_);
-  Log::trace() << "Increment deactivated for TLM" << std::endl;
+  oops::Log::trace() << "IncrementMPAS deactivated for TLM" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
-void Increment::diff(const State & x1, const State & x2) {
+void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {
   ASSERT(this->validTime() == x1.validTime());
   ASSERT(this->validTime() == x2.validTime());
-  Log::debug() << "Increment:diff incr " << *fields_ << std::endl;
-  Log::debug() << "Increment:diff x1 " << x1.fields() << std::endl;
-  Log::debug() << "Increment:diff x2 " << x2.fields() << std::endl;
+  oops::Log::debug() << "IncrementMPAS:diff incr " << *fields_ << std::endl;
+  oops::Log::debug() << "IncrementMPAS:diff x1 " << x1.fields() << std::endl;
+  oops::Log::debug() << "IncrementMPAS:diff x2 " << x2.fields() << std::endl;
   fields_->diff(x1.fields(), x2.fields());
 }
 // -----------------------------------------------------------------------------
-Increment & Increment::operator=(const Increment & rhs) {
+IncrementMPAS & IncrementMPAS::operator=(const IncrementMPAS & rhs) {
   *fields_ = *rhs.fields_;
   return *this;
 }
 // -----------------------------------------------------------------------------
-Increment & Increment::operator+=(const Increment & dx) {
+IncrementMPAS & IncrementMPAS::operator+=(const IncrementMPAS & dx) {
   ASSERT(this->validTime() == dx.validTime());
   *fields_ += *dx.fields_;
   return *this;
 }
 // -----------------------------------------------------------------------------
-Increment & Increment::operator-=(const Increment & dx) {
+IncrementMPAS & IncrementMPAS::operator-=(const IncrementMPAS & dx) {
   ASSERT(this->validTime() == dx.validTime());
   *fields_ -= *dx.fields_;
   return *this;
 }
 // -----------------------------------------------------------------------------
-Increment & Increment::operator*=(const double & zz) {
+IncrementMPAS & IncrementMPAS::operator*=(const double & zz) {
   *fields_ *= zz;
   return *this;
 }
 // -----------------------------------------------------------------------------
-void Increment::zero() {
+void IncrementMPAS::zero() {
   fields_->zero();
 }
 // -----------------------------------------------------------------------------
-void Increment::zero(const util::DateTime & vt) {
+void IncrementMPAS::zero(const util::DateTime & vt) {
   fields_->zero(vt);
 }
 // -----------------------------------------------------------------------------
-void Increment::dirac(const eckit::Configuration & files) {
-  fields_->dirac(files);
-}
-// -----------------------------------------------------------------------------
-void Increment::axpy(const double & zz, const Increment & dx,
+void IncrementMPAS::axpy(const double & zz, const IncrementMPAS & dx,
                        const bool check) {
   ASSERT(!check || this->validTime() == dx.validTime());
   fields_->axpy(zz, *dx.fields_);
 }
 // -----------------------------------------------------------------------------
-void Increment::accumul(const double & zz, const State & xx) {
+void IncrementMPAS::accumul(const double & zz, const StateMPAS & xx) {
   fields_->axpy(zz, xx.fields());
 }
 // -----------------------------------------------------------------------------
-void Increment::schur_product_with(const Increment & dx) {
+void IncrementMPAS::schur_product_with(const IncrementMPAS & dx) {
   fields_->schur_product_with(*dx.fields_);
 }
 // -----------------------------------------------------------------------------
-double Increment::dot_product_with(const Increment & other) const {
+double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
   return dot_product(*fields_, *other.fields_);
 }
 // -----------------------------------------------------------------------------
-void Increment::random() {
+void IncrementMPAS::random() {
   fields_->random();
 }
 // -----------------------------------------------------------------------------
-/// Convert to/from unstructured grid
+/// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void Increment::convert_to(oops::UnstructuredGrid & ug) const {
-  fields_->convert_to(ug);
+void IncrementMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
+  fields_->interpolateTL(locs, vars, cols);
+  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
 }
 // -----------------------------------------------------------------------------
-void Increment::convert_from(const oops::UnstructuredGrid & ug) {
-  fields_->convert_from(ug);
+void IncrementMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
+  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
+  fields_->interpolateAD(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void Increment::read(const eckit::Configuration & files) {
+void IncrementMPAS::read(const eckit::Configuration & files) {
   fields_->read(files);
 }
 // -----------------------------------------------------------------------------
-void Increment::write(const eckit::Configuration & files) const {
+void IncrementMPAS::write(const eckit::Configuration & files) const {
   fields_->write(files);
 }
 // -----------------------------------------------------------------------------
-void Increment::print(std::ostream & os) const {
+void IncrementMPAS::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime();
   os << *fields_;
 }

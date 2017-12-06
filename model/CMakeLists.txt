@@ -1,36 +1,43 @@
 list( APPEND oops_mpas_src_files
-ErrorCovariance.h
-Fields.cc
-Fields.h
+ErrorCovarianceMPAS.cc
+ErrorCovarianceMPAS.h
+FieldsMPAS.cc
+FieldsMPAS.h
 Fortran.h
-Geometry.cc
-Geometry.h
-Increment.cc
-Increment.h
-State.cc
-State.h
-Traits.h
-Variables.cc
-Variables.h
-random_f.cc
-random_f.h
-random_vectors_mod.F90
-mpas_constants.f90
-mpas_fields.F90
+GeometryMPAS.cc
+GeometryMPAS.h
+IncrementMPAS.cc
+IncrementMPAS.h
+MPASTraits.h
+LocalizationMatrixMPAS.cc
+LocalizationMatrixMPAS.h
+ModelBiasCovarianceMPAS.h
+ModelBiasIncrementMPAS.h
+ModelBiasMPAS.h
+ModelMPAS.cc
+ModelMPAS.h
+StateMPAS.cc
+StateMPAS.h
+TlmIdMPAS.cc
+TlmIdMPAS.h
+TlmMPAS.cc
+TlmMPAS.h
+mpas_covariance_interface.F90
+mpas_covariance_mod.F90
 mpas_fields_interface.F90
+mpas_fields_mod.F90
+mpas_geom_interface.F90
 mpas_geom_mod.F90
-mpas_invent_state.f90
+mpas_kinds_mod.F90
+mpas_model_interface.F90
+mpas_model_mod.F90
+mpas_trajectories.F90
 mpas_vars_mod.F90
 )
 
-if ( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  set( cfdealloc C_F_NO_DEALLOC )
-endif()
-
 ecbuild_add_library( TARGET   mpas
-                     DEFINITIONS ${cfdealloc}
                      SOURCES  ${oops_mpas_src_files}
-                     LIBS     oops ${LAPACK_LIBRARIES} ${MPAS_LIBRARIES}
+                     LIBS     oops ufo
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )
