@@ -1,25 +1,25 @@
-ecbuild_add_executable( TARGET  lfric_dfi.x
-                        SOURCES lfricDFI.cc
-                        LIBS    lfric
+ecbuild_add_executable( TARGET  mpas_dfi.x
+                        SOURCES mpasDFI.cc
+                        LIBS    mpas
                        )
 
-ecbuild_add_executable( TARGET  lfric_forecast.x
-                        SOURCES lfricForecast.cc
-                        LIBS    lfric
+ecbuild_add_executable( TARGET  mpas_forecast.x
+                        SOURCES mpasForecast.cc
+                        LIBS    mpas
                        )
 
-ecbuild_add_executable( TARGET  lfric_genpert.x
-                        SOURCES lfricGenEnsPertB.cc
-                        LIBS    lfric
+ecbuild_add_executable( TARGET  mpas_genpert.x
+                        SOURCES mpasGenEnsPertB.cc
+                        LIBS    mpas
                       )
 
-ecbuild_add_executable( TARGET  lfric_4dvar.x
-                        SOURCES lfric4DVar.cc
-                        LIBS    lfric
+ecbuild_add_executable( TARGET  mpas_4dvar.x
+                        SOURCES mpas4DVar.cc
+                        LIBS    mpas
                       )
 
-ecbuild_add_executable( TARGET  lfric_makeobs.x
-                        SOURCES lfricMakeObs.cc
-                        LIBS    lfric
+ecbuild_add_executable( TARGET  mpas_makeobs.x
+                        SOURCES mpasMakeObs.cc
+                        LIBS    mpas
                       )
 
