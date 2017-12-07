@@ -34,7 +34,6 @@ ModelMPAS::~ModelMPAS() {
 }
 // -----------------------------------------------------------------------------
 void ModelMPAS::initialize(StateMPAS & xx) const {
-  xx.activateModel();
   mpas_model_prepare_integration_f90(keyConfig_, xx.fields().toFortran());
   oops::Log::debug() << "ModelMPAS::initialize" << xx.fields() << std::endl;
 }
@@ -47,7 +46,6 @@ void ModelMPAS::step(StateMPAS & xx, const ModelBiasMPAS &) const {
 }
 // -----------------------------------------------------------------------------
 void ModelMPAS::finalize(StateMPAS & xx) const {
-  xx.deactivateModel();
   oops::Log::debug() << "ModelMPAS::finalize" << xx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

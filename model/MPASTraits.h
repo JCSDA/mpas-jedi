@@ -24,6 +24,8 @@
 #include "ufo/ObsSpace.h"
 #include "ufo/ObsVector.h"
 #include "ufo/ObsBias.h"
+#include "ufo/ObsBiasIncrement.h"
+#include "ufo/ObsBiasCovariance.h"
 
 namespace mpas {
 
@@ -47,8 +49,8 @@ struct MPASTraits {
   typedef ufo::ObsVector                   ObsVector;
 
   typedef ufo::ObsBias                     ObsAuxControl;
-//  typedef ufo::ObsBiasIncrement            ObsAuxIncrement;
-//  typedef ufo::ObsBiasCovariance           ObsAuxCovariance;
+  typedef ufo::ObsBiasIncrement            ObsAuxIncrement;
+  typedef ufo::ObsBiasCovariance           ObsAuxCovariance;
 
   typedef ufo::GeoVaLs                     GeoVaLs;
   typedef ufo::Locations                   Locations;

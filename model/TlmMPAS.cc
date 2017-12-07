@@ -63,7 +63,6 @@ void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr, const ModelBi
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::initializeTL(IncrementMPAS & dx) const {
-  dx.activateModel();
   mpas_model_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
   oops::Log::debug() << "TlmMPAS::initializeTL" << dx.fields() << std::endl;
 }
@@ -81,12 +80,10 @@ void TlmMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::finalizeTL(IncrementMPAS & dx) const {
-  dx.deactivateModel();
   oops::Log::debug() << "TlmMPAS::finalizeTL" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::initializeAD(IncrementMPAS & dx) const {
-  dx.activateModel();
   oops::Log::debug() << "TlmMPAS::initializeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -104,7 +101,6 @@ void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
 // -----------------------------------------------------------------------------
 void TlmMPAS::finalizeAD(IncrementMPAS & dx) const {
   mpas_model_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  dx.deactivateModel();
   oops::Log::debug() << "TlmMPAS::finalizeAD" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------

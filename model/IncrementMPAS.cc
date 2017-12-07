@@ -57,28 +57,6 @@ IncrementMPAS::~IncrementMPAS() {
   oops::Log::trace() << "IncrementMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::activateModel() {
-// Should get variables from model. YT
-  eckit::LocalConfiguration modelvars;
-  modelvars.set("variables", "tl");
-  oops::Variables vars(modelvars);
-// Should get variables from model. YT
-  stash_.reset(new FieldsMPAS(*fields_, vars));
-  swap(fields_, stash_);
-  ASSERT(fields_);
-  ASSERT(stash_);
-  oops::Log::trace() << "IncrementMPAS activated for TLM" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void IncrementMPAS::deactivateModel() {
-  swap(fields_, stash_);
-  *fields_ = *stash_;
-  stash_.reset();
-  ASSERT(fields_);
-  ASSERT(!stash_);
-  oops::Log::trace() << "IncrementMPAS deactivated for TLM" << std::endl;
-}
-// -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
 void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {

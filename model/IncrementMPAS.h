@@ -97,9 +97,6 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   }
 
 /// Other
-  void activateModel();
-  void deactivateModel();
-
   void accumul(const double &, const StateMPAS &);
 
 /// Data

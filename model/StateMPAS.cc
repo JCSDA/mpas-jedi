@@ -80,9 +80,6 @@ class StateMPAS : public util::Printable,
   }
 
 /// Other
-  void activateModel();
-  void deactivateModel();
-
   void zero();
   void accumul(const double &, const StateMPAS &);
 
