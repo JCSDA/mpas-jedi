@@ -1,25 +1,149 @@
 {
-  "logging": {
-    "categories": "Warning, Error"
-  },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc"
+    "nx": "40",
+    "ny": "20",
+    "bc": "1"
   },
   "Variables": {
-    "variables": "onevar"
+    "variables": "ci"
   },
-  "TestDate": "2012-06-15T00:00:00Z",
+  "TestDate": "2009-12-31T00:00:00Z",
   "State": {
-    "read_from_file": "1",
-    "filename": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc",
-    "date": "2012-06-15T00:00:00Z"
+    "filename": "Data/truth.fc.2009-12-15T00:00:00Z.P16D",
+    "date": "2009-12-31T00:00:00Z"
   },
   "StateTest": {
-    "read_from_file": "1",
-    "filename": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc",
-    "date": "2012-06-15T00:00:00Z",
-    "norm": "410.46802873296025",
+    "date": "2009-12-31T00:00:00Z",
+    "norm": "15.010",
     "tolerance": "0.005"
-  }
+  },
+  "ModelBias": null,
+  "Model": {
+    "tstep": "PT1H",
+    "top_layer_depth": "5500.0",
+    "bottom_layer_depth": "4500.0"
+  },
+  "ModelTest": {
+    "fclength": "PT24H",
+    "finalnorm": "13.965",
+    "tolerance": "0.005"
+  },
+  "Covariance": {
+    "covariance": "static",
+    "standard_deviation": "0.8",
+    "vertical_correlation": "0.2",
+    "horizontal_length_scale": "1e6",
+    "maximum_condition_number": "1.0e6",
+    "date": "2009-12-31T00:00:00Z"
+  },
+  "CovarianceTest": {
+    "tolerance": "0.01"
+  },
+  "Localization": {
+    "standard_deviation": "1.0",
+    "vertical_correlation": "0.4",
+    "horizontal_length_scale": "2e6",
+    "maximum_condition_number": "1.0e6"
+  },
+  "ModelBiasCovariance": null,
+  "LinearModel": {
+    "version": "QgTLM",
+    "tstep": "PT1H",
+    "top_layer_depth": "5500.0",
+    "bottom_layer_depth": "4500.0",
+    "trajectory": {
+      "tstep": "PT1H",
+      "top_layer_depth": "5500.0",
+      "bottom_layer_depth": "4500.0"
+    }
+  },
+  "LinearModelTest": {
+    "fclength": "PT24H",
+    "testiterTL": "12",
+    "toleranceTL": "1.0e-6",
+    "toleranceAD": "1.0e-12"
+  },
+  "ObsBias": {
+    "stream": "-1.0",
+    "uwind": "1.0"
+  },
+  "ObsBiasCovariance": {
+    "stream": "2.0",
+    "uwind": "1.5"
+  },
+  "window_begin": "2010-01-01T00:00:00Z",
+  "window_end": "2010-01-02T00:00:00Z",
+  "Observations": {
+    "ObsTypes": [
+    {
+      "ObsType": "Stream",
+      "ObsData": {
+        "ObsHandler": "ObsHelpQG",
+        "ObsDataIn": {
+          "obsfile": "Data/qg.truth4d.obt"
+        },
+        "ObsDataOut": {
+          "obsfile": "Data/qg.test.obt"
+        },
+        "obsvalue": "ObsVal"
+      },
+      "GeoVaLs": {
+        "filename": "Data/qg.stream.gom",
+        "norm": "356.985842472369"
+      },
+      "Covariance": {
+        "covariance": "diagonal",
+        "obserror": "ObsErr"
+      },
+      "rmsequiv": "12.62135549999",
+      "tolerance": "1.0e-8"
+    },
+    {
+      "ObsType": "Wind",
+      "ObsData": {
+        "ObsHandler": "ObsHelpQG",
+        "ObsDataIn": {
+          "obsfile": "Data/qg.truth4d.obt"
+        },
+        "ObsDataOut": {
+          "obsfile": "Data/qg.test.obt"
+        },
+        "obsvalue": "ObsVal"
+      },
+      "GeoVaLs": {
+        "filename": "Data/qg.wind.gom",
+        "norm": "120.590296066919"
+      },
+      "Covariance": {
+        "covariance": "diagonal",
+        "obserror": "ObsErr"
+      },
+      "rmsequiv": "4.2635108047106",
+      "tolerance": "1.0e-8"
+    },
+    {
+      "ObsType": "WSpeed",
+      "ObsData": {
+        "ObsHandler": "ObsHelpQG",
+        "ObsDataIn": {
+          "obsfile": "Data/qg.truth4d.obt"
+        },
+        "ObsDataOut": {
+          "obsfile": "Data/qg.test.obt"
+        },
+        "obsvalue": "ObsVal"
+      },
+      "GeoVaLs": {
+        "filename": "Data/qg.wspeed.gom",
+        "norm": "122.535512929154"
+      },
+      "Covariance": {
+        "covariance": "diagonal",
+        "obserror": "ObsErr"
+      },
+      "rmsequiv": "6.12677564645768",
+      "tolerance": "1.0e-8"
+    }
+  ]}
 }
