@@ -22,7 +22,7 @@
 setenv MODEL "mpas"
 setenv SRC_MPAS "/home/vagrant/jedi/code/mpas-bundle/MPAS-Release/src"
 setenv MPAS_LIBRARIES "${SRC_MPAS}/libframework.a;${SRC_MPAS}/libdycore.a;${SRC_MPAS}/libops.a"
-setenv MPAS_INCLUDES "${SRC_MPAS}/framework;${SRC_MPAS}/operators;${SRC_MPAS}/core_atmosphere"
+setenv MPAS_INCLUDES "${SRC_MPAS}/driver;${SRC_MPAS}/framework;${SRC_MPAS}/operators;${SRC_MPAS}/core_atmosphere"
 echo "MPAS LIBS:     ${MPAS_LIBRARIES}"
 echo "MPAS INCLUDE:  ${MPAS_INCLUDES}"
 

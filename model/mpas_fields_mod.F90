@@ -14,6 +14,13 @@ use mpas_kinds
 use ufo_locs_mod
 use ufo_geovals_mod
 
+use mpas_framework
+use mpas_kind_types
+!use mpas_subdriver
+!use mpas_core
+!use mpas_subdriver
+
+
 implicit none
 private
 
@@ -30,6 +37,11 @@ public :: mpas_field_registry
 !> Fortran derived type to hold LFRic fields
 type :: mpas_field
   integer :: nothing_yet
+  type (domain_type), pointer :: domain 
+   type(mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
+  integer :: nf                           !< Number of variables in fld
+  integer :: ns                           !< Number of surface fields (x1d [nCells])
+  character(len=20), allocatable :: fldnames(:)      !< Variable identifiers
 end type mpas_field
 
 #define LISTED_TYPE mpas_field

@@ -10,7 +10,7 @@
 #include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  lfirc::RunMPAS run(argc, argv);
+  mpas::RunMPAS run(argc, argv);
   oops::Variational<mpas::MPASTraits> var;
   run.execute(var);
   return 0;
