@@ -5,13 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "LfricTraits.h"
+#include "MPASTraits.h"
 #include "oops/runs/Forecast.h"
-#include "RunLfric.h"
+#include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  lfric::RunLfric run(argc, argv);
-  oops::Forecast<lfric::LfricTraits> fc;
+  mpas::RunMPAS run(argc, argv);
+  oops::Forecast<mpas::MPASTraits> fc;
   run.execute(fc);
   return 0;
 };

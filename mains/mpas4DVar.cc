@@ -5,13 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "LfricTraits.h"
+#include "MPASTraits.h"
 #include "oops/runs/Variational.h"
-#include "RunLfric.h"
+#include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  lfirc::RunLfric run(argc, argv);
-  oops::Variational<lfric::LfricTraits> var;
+  lfirc::RunMPAS run(argc, argv);
+  oops::Variational<mpas::MPASTraits> var;
   run.execute(var);
   return 0;
 };
