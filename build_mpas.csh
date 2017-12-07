@@ -29,8 +29,8 @@ echo "MPAS INCLUDE:  ${MPAS_INCLUDES}"
 setenv SRC_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
 setenv BUILD "/home/vagrant/jedi/build_test/mpas-bundle/${MODEL}"
 echo "BUILD $BUILD"
-rm -rf $BUILD
-mkdir -p $BUILD
+#rm -rf $BUILD
+#mkdir -p $BUILD
 cd $BUILD
 
 #ecbuild --build=debug -DBOOST_ROOT=$BOOST_ROOT -DBoost_NO_SYSTEM_PATHS=ON -DLAPACK_PATH=$LAPACK_PATH -DLAPACK_LIBRARIES=$LAPACK_LIBRARIES -DNETCDF_LIBRARIES=${NETCDF_LIBRARIES} -DNETCDF_PATH=${NETCDF} -DMPAS_LIBRARIES=${MPAS_LIBRARIES} -DMPAS_INCLUDE=$MPAS_INCLUDE -DOOPS_PATH=${BUILD}/${OOPS} ${SRC_MODEL}
