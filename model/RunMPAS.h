@@ -6,15 +6,15 @@
 namespace mpas {
 
 /*!
- *  RunLfric encapsulates one LFRic/OOPS run.
+ *  RunMPAS encapsulates one MPAS/OOPS run.
  */
 
 // -----------------------------------------------------------------------------
 
-class RunLfric : public oops::Run {
+class RunMPAS : public oops::Run {
  public:
-  RunLfric(int, char **);
-  ~RunLfric();
+  RunMPAS(int, char **);
+  ~RunMPAS();
 };
 
 // -----------------------------------------------------------------------------

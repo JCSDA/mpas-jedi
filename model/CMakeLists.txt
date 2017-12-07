@@ -37,9 +37,13 @@ mpas_trajectories.F90
 mpas_vars_mod.F90
 )
 
+set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )
+set ( MPAS_INCLUDES $ENV{MPAS_INCLUDES} )
+
 ecbuild_add_library( TARGET   mpas
                      SOURCES  ${oops_mpas_src_files}
-                     LIBS     oops ufo
+                     LIBS     oops ufo ${MPAS_LIBRARIES}
+                     INCLUDES ${MPAS_INCLUDES}
                      INSTALL_HEADERS LISTED
                      LINKER_LANGUAGE ${OOPS_LINKER_LANGUAGE}
                     )

@@ -5,13 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "RunLfric.h"
+#include "RunMPAS.h"
 #include "oops/runs/HofX.h"
-#include "LfricTraits.h"
+#include "MPASTraits.h"
 
 int main(int argc,  char ** argv) {
-  lfric::RunLfric run(argc, argv);
-  oops::HofX<lfric::LfricTraits> hofx;
+  mpas::RunMPAS run(argc, argv);
+  oops::HofX<mpas::MPASTraits> hofx;
   run.execute(hofx);
   return 0;
 };

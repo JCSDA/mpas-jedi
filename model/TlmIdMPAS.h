@@ -5,118 +5,67 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include <vector>
+#ifndef MPAS_MODEL_TLMIDMPAS_H_
+#define MPAS_MODEL_TLMIDMPAS_H_
 
-#include "TlmMPAS.h"
+#include <string>
 
-#include "eckit/config/LocalConfiguration.h"
-#include "Fortran.h"
-#include "GeometryMPAS.h"
-#include "IncrementMPAS.h"
-#include "ModelMPAS.h"
-#include "StateMPAS.h"
+#include <boost/noncopyable.hpp>
+
+#include "oops/interface/LinearModelBase.h"
+
+#include "util/Duration.h"
+#include "util/ObjectCounter.h"
+#include "util/Printable.h"
+
 #include "MPASTraits.h"
-#include "util/DateTime.h"
-#include "util/Logger.h"
-#include "util/abor1_cpp.h"
+
+// Forward declarations
+namespace eckit {
+  class Configuration;
+}
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
-static oops::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
-// -----------------------------------------------------------------------------
-TlmMPAS::TlmMPAS(const GeometryMPAS & resol, const eckit::Configuration & tlConf)
-  : keyConfig_(0), tstep_(), resol_(resol), traj_(),
-    lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory"))
-{
-  tstep_ = util::Duration(tlConf.getString("tstep"));
+/// MPAS linear identity model definition.
+/*!
+ *  MPAS linear identity model definition and configuration parameters.
+ */
 
-  const eckit::Configuration * configc = &tlConf;
-  mpas_model_setup_f90(&configc, resol_.toFortran(), keyConfig_);
+class TlmIdMPAS: public oops::LinearModelBase<MPASTraits>,
+                  private util::ObjectCounter<TlmIdMPAS> {
+ public:
+  static const std::string classname() {return "mpas::TlmIdMPAS";}
 
-  oops::Log::trace() << "TlmMPAS created" << std::endl;
-}
-// -----------------------------------------------------------------------------
-TlmMPAS::~TlmMPAS() {
-  mpas_model_delete_f90(keyConfig_);
-  for (trajIter jtra = traj_.begin(); jtra != traj_.end(); ++jtra) {
-    mpas_model_wipe_traj_f90(jtra->second);
-  }
-  oops::Log::trace() << "TlmMPAS destructed" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr, const ModelBiasMPAS & bias) {
-// StateMPAS xlr(resol_, xx);
-  xlr.changeResolution(xx);
-  int ftraj = lrmodel_.saveTrajectory(xlr, bias);
-  traj_[xx.validTime()] = ftraj;
+  TlmIdMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  ~TlmIdMPAS();
 
-// should be in print method
-  std::vector<double> zstat(15);
-//  mpas_traj_minmaxrms_f90(ftraj, zstat[0]);
-  oops::Log::debug() << "TlmMPAS trajectory at time " << xx.validTime() << std::endl;
-  for (unsigned int jj = 0; jj < 5; ++jj) {
-    oops::Log::debug() << "  Min=" << zstat[3*jj] << ", Max=" << zstat[3*jj+1]
-                       << ", RMS=" << zstat[3*jj+2] << std::endl;
-  }
-// should be in print method
-}
+/// Model trajectory computation
+  void setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &) override;
+
+/// Run TLM and its adjoint
+  void initializeTL(IncrementMPAS &) const override;
+  void stepTL(IncrementMPAS &, const ModelBiasIncrementMPAS &) const override;
+  void finalizeTL(IncrementMPAS &) const override;
+
+  void initializeAD(IncrementMPAS &) const override;
+  void stepAD(IncrementMPAS &, ModelBiasIncrementMPAS &) const override;
+  void finalizeAD(IncrementMPAS &) const override;
+
+/// Other utilities
+  const util::Duration & timeResolution() const override {return tstep_;}
+  const GeometryMPAS & resolution() const {return resol_;}
+
+ private:
+  void print(std::ostream &) const override;
+
+// Data
+  int keyConfig_;
+  util::Duration tstep_;
+  const GeometryMPAS resol_;
+};
 // -----------------------------------------------------------------------------
-void TlmMPAS::initializeTL(IncrementMPAS & dx) const {
-  dx.activateModel();
-  mpas_model_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
-  oops::Log::debug() << "TlmMPAS::initializeTL" << dx.fields() << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
-  trajICst itra = traj_.find(dx.validTime());
-  if (itra == traj_.end()) {
-    oops::Log::error() << "TlmMPAS: trajectory not available at time " << dx.validTime() << std::endl;
-    ABORT("TlmMPAS: trajectory not available");
-  }
-  oops::Log::debug() << "TlmMPAS::stepTL fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_tl_f90(keyConfig_, dx.fields().toFortran(), itra->second);
-  oops::Log::debug() << "TlmMPAS::stepTL fields out" << dx.fields() << std::endl;
-  dx.validTime() += tstep_;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::finalizeTL(IncrementMPAS & dx) const {
-  dx.deactivateModel();
-  oops::Log::debug() << "TlmMPAS::finalizeTL" << dx.fields() << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::initializeAD(IncrementMPAS & dx) const {
-  dx.activateModel();
-  oops::Log::debug() << "TlmMPAS::initializeAD" << dx.fields() << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
-  dx.validTime() -= tstep_;
-  trajICst itra = traj_.find(dx.validTime());
-  if (itra == traj_.end()) {
-    oops::Log::error() << "TlmMPAS: trajectory not available at time " << dx.validTime() << std::endl;
-    ABORT("TlmMPAS: trajectory not available");
-  }
-  oops::Log::debug() << "TlmMPAS::stepAD fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_ad_f90(keyConfig_, dx.fields().toFortran(), itra->second);
-  oops::Log::debug() << "TlmMPAS::stepAD fields out" << dx.fields() << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::finalizeAD(IncrementMPAS & dx) const {
-  mpas_model_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  dx.deactivateModel();
-  oops::Log::debug() << "TlmMPAS::finalizeAD" << dx.fields() << std::endl;
-}
-// -----------------------------------------------------------------------------
-void TlmMPAS::print(std::ostream & os) const {
-  os << "MPAS TLM Trajectory, nstep=" << traj_.size() << std::endl;
-  typedef std::map< util::DateTime, int >::const_iterator trajICst;
-  if (traj_.size() > 0) {
-    os << "MPAS TLM Trajectory: times are:";
-    for (trajICst jtra = traj_.begin(); jtra != traj_.end(); ++jtra) {
-      os << "  " << jtra->first;
-    }
-  }
-}
-// -----------------------------------------------------------------------------
+
 }  // namespace mpas
+#endif  // MPAS_MODEL_TLMIDMPAS_H_
