@@ -58,6 +58,13 @@ endif()
   link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 #endif()
 
+# PIO
+#ecbuild_add_option( FEATURE PIO DEFAULT ON
+#                    DESCRIPTION "Support for PIO distributed parallelism"
+#                    REQUIRED_PACKAGES "PIO COMPONENTS CXX Fortran" )
+#ecbuild_include_pio()
+#link_libraries(${PIO_CXX_LIBRARIES} ${PIO_Fortran_LIBRARIES})
+
 # OpenMP
 ecbuild_add_option( FEATURE OMP
                     DESCRIPTION "Support for OpenMP threaded parallelism"

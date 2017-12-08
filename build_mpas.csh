@@ -21,8 +21,10 @@
 #------------------------------------------------------------------------------#
 setenv MODEL "mpas"
 setenv SRC_MPAS "/home/vagrant/jedi/code/jedi-bundle/MPAS-Release/src"
+#setenv MPAS_LIBRARIES "${SRC_MPAS}/libframework.a;${SRC_MPAS}/libdycore.a;${SRC_MPAS}/libops.a;${SRC_MPAS}/external/esmf_time_f90/libesmf_time.a;/home/vagrant/jedi/libs/build/src/flib/libpiof.a"
 setenv MPAS_LIBRARIES "${SRC_MPAS}/libframework.a;${SRC_MPAS}/libdycore.a;${SRC_MPAS}/libops.a;${SRC_MPAS}/external/esmf_time_f90/libesmf_time.a"
 setenv MPAS_INCLUDES "${SRC_MPAS}/driver;${SRC_MPAS}/framework;${SRC_MPAS}/operators;${SRC_MPAS}/core_atmosphere;${SRC_MPAS}/external/esmf_time_f90"
+#setenv MPAS_INCLUDES "${SRC_MPAS}/driver;${SRC_MPAS}/framework;${SRC_MPAS}/operators;${SRC_MPAS}/core_atmosphere;${SRC_MPAS}/external/esmf_time_f90;/home/vagrant/jedi/libs/build/src/flib"
 echo "MPAS LIBS:     ${MPAS_LIBRARIES}"
 echo "MPAS INCLUDE:  ${MPAS_INCLUDES}"
 
@@ -33,10 +35,14 @@ echo "BUILD $BUILD"
 #mkdir -p $BUILD
 cd $BUILD
 
+setenv PIO_LIBRARIES /home/vagrant/jedi/libs/build/src/flib
+setenv PIO_INCLUDES /home/vagrant/jedi/libs/build/src/flib
+
 #ecbuild --build=debug -DBOOST_ROOT=$BOOST_ROOT -DBoost_NO_SYSTEM_PATHS=ON -DLAPACK_PATH=$LAPACK_PATH -DLAPACK_LIBRARIES=$LAPACK_LIBRARIES -DNETCDF_LIBRARIES=${NETCDF_LIBRARIES} -DNETCDF_PATH=${NETCDF} -DMPAS_LIBRARIES=${MPAS_LIBRARIES} -DMPAS_INCLUDE=$MPAS_INCLUDE -DOOPS_PATH=${BUILD}/${OOPS} ${SRC_MODEL}
 #  ecbuild --build=debug -DLAPACK_LIBRARIES=$LAPACK_LIBRARIES -DOOPS_PATH=${BUILD}/jedi/${OOPS} ${SRC_MODEL}
 
-#ecbuild /home/vagrant/jedi/code/mpas-bundle
+#ecbuild -DPIO_LIBRARIES=$PIO_LIBRARIES -DPIO_PATH=${PIO_INCLUDES} /home/vagrant/jedi/code/mpas-bundle
+ecbuild  /home/vagrant/jedi/code/mpas-bundle
 
 #ecbuild -DMPAS_LIBRARIES=${MPAS_LIBRARIES} -DMPAS_INCLUDES=$MPAS_INCLUDES /home/vagrant/jedi/code/mpas-bundle
 # Compile
