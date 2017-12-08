@@ -5,7 +5,8 @@
 
 module mpas_fields_mod
 
-use iso_c_binding
+!use iso_c_binding , only: c_char, c_int
+use iso_c_binding 
 use config_mod
 use datetime_mod
 use mpas_geom_mod
@@ -14,8 +15,10 @@ use mpas_kinds
 use ufo_locs_mod
 use ufo_geovals_mod
 
+use mpas_derived_types
 use mpas_framework
 use mpas_kind_types
+!use init_atm_core_interface
 !use mpas_subdriver
 !use mpas_core
 !use mpas_subdriver
@@ -36,10 +39,13 @@ public :: mpas_field_registry
 
 !> Fortran derived type to hold LFRic fields
 type :: mpas_field
-  integer :: nothing_yet
   type (domain_type), pointer :: domain 
-   type(mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
+  type (core_type), pointer :: corelist
+  type (dm_info), pointer :: dminfo
+  type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
   integer :: nf                           !< Number of variables in fld
+  integer :: sum_scalar                   !< Number of variables in fld
+  integer :: sum_aero                     !< Number of variables in fld
   integer :: ns                           !< Number of surface fields (x1d [nCells])
   character(len=20), allocatable :: fldnames(:)      !< Variable identifiers
 end type mpas_field
@@ -61,10 +67,29 @@ contains
 ! ------------------------------------------------------------------------------
 
 subroutine create(self, geom, vars)
-implicit none
-type(mpas_field), intent(inout) :: self
-type(mpas_geom),  intent(in)    :: geom
-type(mpas_vars),  intent(in)    :: vars
+
+
+    implicit none
+
+    type(mpas_field), intent(inout) :: self
+    type(mpas_geom),  intent(in)    :: geom
+    type(mpas_vars),  intent(in)    :: vars
+
+    type (core_type), pointer :: corelist => null()
+    type (dm_info), pointer :: dminfo
+    type (domain_type), pointer :: domain_ptr
+
+
+    allocate(corelist)
+    nullify(corelist % next)
+
+    allocate(corelist % domainlist)
+    nullify(corelist % domainlist % next)
+
+    domain_ptr => corelist % domainlist
+    domain_ptr % core => corelist
+
+    call mpas_allocate_domain(domain_ptr)
 
 end subroutine create
 
@@ -73,6 +98,8 @@ end subroutine create
 subroutine delete(self)
 implicit none
 type(mpas_field), intent(inout) :: self
+
+!call  mpas_finalize()
 
 end subroutine delete
 
@@ -184,13 +211,52 @@ type(mpas_field), intent(in)    :: rhs
 
 end subroutine change_resol
 
-! ------------------------------------------------------------------------------
+! -----------------------------------------------------------------------------------------------------------
 
 subroutine read_file(fld, c_conf, vdate)
+
+use mpas_derived_types
+use mpas_pool_routines
+use mpas_dmpar
+use mpas_abort, only : mpas_dmpar_global_abort
+use mpas_stream_manager
+
+!type (MPAS_Clock_type), pointer :: clock
 implicit none
 type(mpas_field), intent(inout) :: fld      !< Fields
 type(c_ptr), intent(in)          :: c_conf   !< Configuration
 type(datetime), intent(inout)    :: vdate    !< DateTime
+logical, pointer :: config_do_restart
+integer :: ierr
+real (kind=RKIND), pointer :: dt
+
+      !
+      ! Set "local" clock to point to the clock contained in the domain type
+      !
+      !clock => fld % domain % clock
+      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_do_restart', config_do_restart)
+      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_dt', dt)
+      !
+      ! If this is a restart run, read the restart stream, else read the input
+      ! stream.
+      ! Regardless of which stream we read for initial conditions, reset the
+      ! input alarms for both input and restart before reading any remaining
+      ! input streams.
+      !
+      if (config_do_restart) then
+         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='restart', ierr=ierr)
+      else
+         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='input', ierr=ierr)
+      end if
+      if (ierr /= MPAS_STREAM_MGR_NOERR) then
+         call mpas_dmpar_global_abort('********************************************************************************', &
+                                      deferredAbort=.true.)
+         call mpas_dmpar_global_abort('Error reading initial conditions', &
+                                      deferredAbort=.true.)
+         call mpas_dmpar_global_abort('********************************************************************************')
+      end if
+      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='input', direction=MPAS_STREAM_INPUT, ierr=ierr)
+      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='restart', direction=MPAS_STREAM_INPUT, ierr=ierr)
 
 end subroutine read_file
 
@@ -201,6 +267,10 @@ implicit none
 type(mpas_field), intent(in) :: fld    !< Fields
 type(c_ptr), intent(in)       :: c_conf !< Configuration
 type(datetime), intent(in)    :: vdate  !< DateTime
+
+
+!call mpas_dmpar_get_time(output_start_time)
+!call mpas_stream_mgr_write(domain % streamManager, ierr=ierr)
 
 end subroutine write_file
 

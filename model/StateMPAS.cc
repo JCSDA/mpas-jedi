@@ -68,28 +68,6 @@ StateMPAS::~StateMPAS() {
   oops::Log::trace() << "StateMPAS::StateMPAS destructed." << std::endl;
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::activateModel() {
-// Should get variables from model. YT
-  eckit::LocalConfiguration modelvars;
-  modelvars.set("variables", "nl");
-  oops::Variables vars(modelvars);
-// Should get variables from model. YT
-  stash_.reset(new FieldsMPAS(*fields_, vars));
-  swap(fields_, stash_);
-  ASSERT(fields_);
-  ASSERT(stash_);
-  oops::Log::trace() << "StateMPAS activated for Model" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::deactivateModel() {
-  swap(fields_, stash_);
-  *fields_ = *stash_;
-  stash_.reset();
-  ASSERT(fields_);
-  ASSERT(!stash_);
-  oops::Log::trace() << "StateMPAS deactivated for Model" << std::endl;
-}
-// -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
 StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {

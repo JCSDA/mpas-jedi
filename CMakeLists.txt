@@ -43,6 +43,32 @@ find_package( Boost ${Boost_MINIMUM_VERSION} REQUIRED
               COMPONENTS unit_test_framework )
 include_directories( ${Boost_INCLUDE_DIR} )
 
+# MPI
+ecbuild_add_option( FEATURE MPI DEFAULT ON
+                    DESCRIPTION "Support for MPI distributed parallelism"
+                    REQUIRED_PACKAGES "MPI COMPONENTS CXX Fortran" )
+
+if ( NOT ECKIT_HAVE_MPI )
+  ecbuild_error("OOPS requested to build with MPI but eckit wasn't built with MPI: ECKIT_HAVE_MPI = ${ECKIT_HAVE_MPI}")
+endif()
+
+#if( HAVE_MPI )
+  set( OOPS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
+  ecbuild_include_mpi()
+  link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+#endif()
+
+# OpenMP
+ecbuild_add_option( FEATURE OMP
+                    DESCRIPTION "Support for OpenMP threaded parallelism"
+                    REQUIRED_PACKAGES "OMP COMPONENTS CXX Fortran" )
+
+if( HAVE_OMP )
+  ecbuild_enable_omp()
+else()
+  ecbuild_enable_ompstubs()
+endif()
+
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.2.1 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
