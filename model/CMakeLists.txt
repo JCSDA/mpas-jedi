@@ -35,6 +35,7 @@ mpas_model_interface.F90
 mpas_model_mod.F90
 mpas_trajectories.F90
 mpas_vars_mod.F90
+mpas_subdriver.F90
 )
 
 set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )

@@ -37,11 +37,11 @@ public :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
 
-!> Fortran derived type to hold LFRic fields
+!> Fortran derived type to hold MPAS fields
 type :: mpas_field
   type (domain_type), pointer :: domain 
   type (core_type), pointer :: corelist
-  type (dm_info), pointer :: dminfo
+  !type (dm_info), pointer :: dminfo
   type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
   integer :: nf                           !< Number of variables in fld
   integer :: sum_scalar                   !< Number of variables in fld
@@ -79,17 +79,21 @@ subroutine create(self, geom, vars)
     type (dm_info), pointer :: dminfo
     type (domain_type), pointer :: domain_ptr
 
+ 
+    !--- it compiles --------------------------
+    !allocate(corelist)
+    !nullify(corelist % next)
 
-    allocate(corelist)
-    nullify(corelist % next)
+    !allocate(corelist % domainlist)
+    !nullify(corelist % domainlist % next)
 
-    allocate(corelist % domainlist)
-    nullify(corelist % domainlist % next)
+    !domain_ptr => corelist % domainlist
+    !domain_ptr % core => corelist
 
-    domain_ptr => corelist % domainlist
-    domain_ptr % core => corelist
+    !call mpas_allocate_domain(domain_ptr)
+    ! --- end of it compiles ------------------
 
-    call mpas_allocate_domain(domain_ptr)
+    !call mpas_init()
 
 end subroutine create
 
@@ -215,27 +219,27 @@ end subroutine change_resol
 
 subroutine read_file(fld, c_conf, vdate)
 
-use mpas_derived_types
-use mpas_pool_routines
-use mpas_dmpar
-use mpas_abort, only : mpas_dmpar_global_abort
-use mpas_stream_manager
+!use mpas_derived_types
+!use mpas_pool_routines
+!use mpas_dmpar
+!use mpas_abort, only : mpas_dmpar_global_abort
+!use mpas_stream_manager
 
-!type (MPAS_Clock_type), pointer :: clock
+!!type (MPAS_Clock_type), pointer :: clock
 implicit none
 type(mpas_field), intent(inout) :: fld      !< Fields
 type(c_ptr), intent(in)          :: c_conf   !< Configuration
 type(datetime), intent(inout)    :: vdate    !< DateTime
-logical, pointer :: config_do_restart
-integer :: ierr
-real (kind=RKIND), pointer :: dt
+!logical, pointer :: config_do_restart
+!integer :: ierr
+!real (kind=RKIND), pointer :: dt
 
       !
       ! Set "local" clock to point to the clock contained in the domain type
       !
       !clock => fld % domain % clock
-      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_do_restart', config_do_restart)
-      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_dt', dt)
+!      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_do_restart', config_do_restart)
+!      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_dt', dt)
       !
       ! If this is a restart run, read the restart stream, else read the input
       ! stream.
@@ -243,20 +247,20 @@ real (kind=RKIND), pointer :: dt
       ! input alarms for both input and restart before reading any remaining
       ! input streams.
       !
-      if (config_do_restart) then
-         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='restart', ierr=ierr)
-      else
-         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='input', ierr=ierr)
-      end if
-      if (ierr /= MPAS_STREAM_MGR_NOERR) then
-         call mpas_dmpar_global_abort('********************************************************************************', &
-                                      deferredAbort=.true.)
-         call mpas_dmpar_global_abort('Error reading initial conditions', &
-                                      deferredAbort=.true.)
-         call mpas_dmpar_global_abort('********************************************************************************')
-      end if
-      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='input', direction=MPAS_STREAM_INPUT, ierr=ierr)
-      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='restart', direction=MPAS_STREAM_INPUT, ierr=ierr)
+!      if (config_do_restart) then
+!         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='restart', ierr=ierr)
+!      else
+!         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='input', ierr=ierr)
+!      end if
+!      if (ierr /= MPAS_STREAM_MGR_NOERR) then
+!         call mpas_dmpar_global_abort('********************************************************************************', &
+!                                      deferredAbort=.true.)
+!         call mpas_dmpar_global_abort('Error reading initial conditions', &
+!                                      deferredAbort=.true.)
+!         call mpas_dmpar_global_abort('********************************************************************************')
+!      end if
+!      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='input', direction=MPAS_STREAM_INPUT, ierr=ierr)
+!      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='restart', direction=MPAS_STREAM_INPUT, ierr=ierr)
 
 end subroutine read_file
 

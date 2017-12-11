@@ -31,6 +31,12 @@ ecbuild_declare_project()
 ecbuild_enable_fortran( REQUIRED )
 ecbuild_add_cxx11_flags()
 
+include(CheckFortranCompilerFlag)
+check_fortran_compiler_flag("-my-flag" -ffree-line-length-none)
+if(_my_flag)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -my-flag")
+endif()
+
 set( MPAS_LINKER_LANGUAGE CXX )
 
 ################################################################################
