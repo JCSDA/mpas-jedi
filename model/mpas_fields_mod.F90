@@ -132,7 +132,7 @@ subroutine random(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
-  !call da_random(self % subFields)
+   call da_random(self % subFields)
 
 end subroutine random
 
@@ -142,8 +142,14 @@ subroutine copy(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-
-      !call mpas_pool_clone_pool(da_state, da_state_incr)
+   
+   ! Duplicate the members of rhs into self and do a deep copy
+   ! of the fields from self % subFields to rhs % subFields
+   call mpas_pool_empty_pool(self % subFields)
+   call mpas_pool_destroy_pool(self % subFields)
+   call mpas_pool_clone_pool(rhs % subFields, self % subFields)
+   ! We should consider adding a subroutine just updating the fields
+   ! call mpas_pool_copy_fied() 
 
 end subroutine copy
 
@@ -284,17 +290,20 @@ end subroutine change_resol
 
 subroutine read_file(fld, c_conf, vdate)
 
-!use mpas_derived_types
-!use mpas_pool_routines
-!use mpas_dmpar
-!use mpas_abort, only : mpas_dmpar_global_abort
-!use mpas_stream_manager
-
-!!type (MPAS_Clock_type), pointer :: clock
 implicit none
 type(mpas_field), intent(inout) :: fld      !< Fields
 type(c_ptr), intent(in)          :: c_conf   !< Configuration
 type(datetime), intent(inout)    :: vdate    !< DateTime
+character (len=StrKIND) :: dateTimeString
+
+! GD look at oops/src/util/datetime_mod.F90
+! we probably need to extract from vdate a string to enforce the reading ..
+! and then can be like this ....
+!dateTimeString = '2010-10-24_04:00:00'
+!write(0,*)''
+!write(0,*)'Reading ',dateTimeString
+!call MPAS_stream_mgr_read(field0 % domain % streamManager,streamID='restart',when=dateTimeString)
+
 
 end subroutine read_file
 
