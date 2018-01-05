@@ -1,68 +1,120 @@
-#!/bin/csh -f
-# set echo
-#------------------------------------------------------------------------------#
-# Building jedi with a the MPAS model interface
-#
-# Make sure directory "jedi" has been checked out first with the command:
-#   git clone https://github.com/UCAR/oops.git
-#
-# Make sure to be on the nicas branch with the command:
-#   git checkout feature/nicas
-#
-# Make sure directory "wrf" has been checked out first with the command:
-#    git clone https://github.com/JCSDA/wrf.git
-#
-# Make sure directories "mpas" and "jedi" are at the same level in the top dir
-#
-# Build will be done in ../build_jedi
-#
-#------------------------------------------------------------------------------#
-# Define environment
-#------------------------------------------------------------------------------#
-setenv MODEL "mpas"
-setenv SRC_MPAS "/home/vagrant/jedi/code/jedi-bundle/MPAS-Release/src"
-setenv MPAS_LIBRARIES "${SRC_MPAS}/libframework.a;${SRC_MPAS}/libdycore.a;${SRC_MPAS}/libops.a;${SRC_MPAS}/external/esmf_time_f90/libesmf_time.a;/home/vagrant/jedi/libs/build/src/flib/libpiof.a"
-setenv MPAS_INCLUDES "${SRC_MPAS}/driver;${SRC_MPAS}/framework;${SRC_MPAS}/operators;${SRC_MPAS}/core_atmosphere;${SRC_MPAS}/external/esmf_time_f90;/home/vagrant/jedi/libs/build/src/flib"
-echo "MPAS LIBS:     ${MPAS_LIBRARIES}"
-echo "MPAS INCLUDE:  ${MPAS_INCLUDES}"
+#!/bin/csh
+#---------------------------------------------------------
+# Author: Gael DESCOMBES, MMM/NCAR, 01/2018
+# Build PIO and MPAS libraries for OOPS-MPAS
+# Prerequies:
+# - mpas-bundle github done
+# - mpas github done
+# - pio2 github done
+#---------------------------------------------------------
+setenv MODEL mpas
+setenv BUNDLE_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
+setenv BUILD_MODEL "/home/vagrant/jedi/build/mpas-bundle/${MODEL}"
 
-setenv FFLAGS "-ffree-line-length-none"
-setenv CFLAGS "-ffree-line-length-none"
-setenv FCFLAGS "-ffree-line-length-none"
-setenv LDFLAGS "-ffree-line-length-none"
+setenv SRCBUNDLE /home/vagrant/jedi/code/mpas-bundle
+setenv SRCMPAS /home/vagrant/jedi/code/jedi-bundle/MPAS-Release
+setenv SRCPIO /home/vagrant/jedi/libs/ParallelIO 
+setenv BUILDPIO /home/vagrant/jedi/libs/build6 
+setenv LIBPIO ${BUILDPIO}/writable/pio2
+setenv LIBMPAS ${SRCMPAS}/link_libs
+#setenv NETCDF /somewhere/already set
+#setenv PNETCDF /somewhere/already set 
 
+set comp_pio2=0 
+set comp_mpas=0
+set libr_mpas=0
+set oops_mpas=1
 
-setenv SRC_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
-setenv BUILD "/home/vagrant/jedi/build_test/mpas-bundle/${MODEL}"
-echo "BUILD $BUILD"
-#rm -rf $BUILD
-#mkdir -p $BUILD
-cd $BUILD
+#===========================================================
 
-#setenv PIO_LIBRARIES /home/vagrant/jedi/libs/build/src/flib
-#setenv PIO_INCLUDES /home/vagrant/jedi/libs/build/src/flib
+if ( $comp_pio2 ) then
+   echo ""
+   echo "======================================================"
+   echo " Compiling PIO2"
+   echo "======================================================"
+   setenv FFLAGS "-fPIC"
+   setenv CFLAGS "-fPIC"
+   setenv FCFLAGS "-fPIC"
+   setenv LDFLAGS "-fPIC"
 
-#ecbuild --build=debug -DBOOST_ROOT=$BOOST_ROOT -DBoost_NO_SYSTEM_PATHS=ON -DLAPACK_PATH=$LAPACK_PATH -DLAPACK_LIBRARIES=$LAPACK_LIBRARIES -DNETCDF_LIBRARIES=${NETCDF_LIBRARIES} -DNETCDF_PATH=${NETCDF} -DMPAS_LIBRARIES=${MPAS_LIBRARIES} -DMPAS_INCLUDE=$MPAS_INCLUDE -DOOPS_PATH=${BUILD}/${OOPS} ${SRC_MODEL}
-#  ecbuild --build=debug -DLAPACK_LIBRARIES=$LAPACK_LIBRARIES -DOOPS_PATH=${BUILD}/jedi/${OOPS} ${SRC_MODEL}
+   rm -rf $BUILDPIO
+   mkdir -p $LIBPIO
+   cd $BUILDPIO
+   setenv CC mpicc
+   setenv FC mpif90
+   cmake -DNetCDF_C_PATH=$NETCDF -DNetCDF_Fortran_PATH=$NETCDF -DPnetCDF_PATH=$PNETCDF -DCMAKE_INSTALL_PREFIX=${LIBPIO} -DPIO_ENABLE_TIMING=OFF $SRCPIO -DPIO_ENABLE_TIMING=OFF
+   make
+   make install
 
-#ecbuild -DPIO_LIBRARIES=$PIO_LIBRARIES -DPIO_PATH=${PIO_INCLUDES} /home/vagrant/jedi/code/mpas-bundle
-ecbuild  /home/vagrant/jedi/code/mpas-bundle
+endif
 
-#ecbuild -DMPAS_LIBRARIES=${MPAS_LIBRARIES} -DMPAS_INCLUDES=$MPAS_INCLUDES /home/vagrant/jedi/code/mpas-bundle
-# Compile
-#make -j4
-make
+if ( $comp_mpas ) then
+   # adding -fPIC in the MPAS makefile
+   echo ""
+   echo "======================================================"
+   echo " Compiling MPAS"
+   echo "======================================================"
+   cd ${SRCMPAS}
+   setenv PIO ${LIBPIO} 
+   echo "PIO $PIO"
+   pwd
+   echo "make gfortran CORE=atmosphere USE_PIO2=true"
+   make gfortran CORE=atmosphere USE_PIO2=true
+endif
 
-echo "MPAS LIBS:     ${MPAS_LIBRARIES}"
-echo "MPAS INCLUDE:  ${MPAS_INCLUDES}"
+if ( $libr_mpas ) then
+   echo ""
+   echo "======================================================"
+   echo " Building MPAS Library libmpas.a for OOPS"
+   echo "======================================================"
+   cd ${LIBMPAS}
+   mkdir ${LIBMPAS}
+   cd ${LIBMPAS}
+   rm -rf include
+   mkdir include
+   rm -f libmpas.a
 
+   set list_dirlib = "${SRCMPAS}/src/driver ${SRCMPAS}/src/external/esmf_time_f90/ ${SRCMPAS}/src/framework ${SRCMPAS}/src/core_atmosphere ${SRCMPAS}/src/operators"
 
-exit 0
+   foreach dirlib ( $list_dirlib )
+      echo "-------------------------------------------------------------------"
+      echo " dirlib $dirlib"
+      echo "-------------------------------------------------------------------"
+      set lib="$dirlib/*.a"
+      set mod="$dirlib/*.mod"
+      set hhh="$dirlib/*.h"
+      cp -v $lib .
+      cp -v $mod .
+      cp -v $hhh .
+      ar -x $lib
+   end
 
-#------------------------------------------------------------------------------#
-# The following is needed at run time:
-#------------------------------------------------------------------------------#
-   unsetenv LD_LIBRARY_PATH module purge
-   module load gnu mpich/3.2 cmake/3.7.2 netcdf
-   setenv BOOST_ROOT /glade/p/ral/nsap/jcsda/code/boost_1_64_0
-   setenv LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${BOOST_ROOT}/stage/lib"
+   # link river
+   set dirlib="${SRCMPAS}/src/driver"
+   cp -v ${SRCMPAS}/src/driver/*o .
+
+   # build libmpas.a
+   mv *.a *.o *.mod *.h ./include
+   ar -ru libmpas.a ./include/*.o
+
+endif
+
+if ( $oops_mpas ) then
+   echo ""
+   echo "======================================================"
+   echo " Compiling OOPS-MPAS"
+   echo "======================================================" 
+
+   setenv MPAS_LIBRARIES "${LIBPIO}/lib/libpiof.a;${LIBPIO}/lib/libpioc.a;${LIBMPAS}/libmpas.a;/usr/local/lib/libnetcdf.so;/usr/local/lib/libmpi.so;/usr/local/lib/libpnetcdf.so"
+   setenv MPAS_INCLUDES "${LIBMPAS}/include;${LIBPIO}/include"
+   echo "MPAS_LIBRARIES: ${MPAS_LIBRARIES}"
+   echo "MPAS_INCLUDES:  ${MPAS_INCLUDES}"
+   echo "BUILD $BUILD_MODEL"
+   echo "BUNDLE CODE $BUNDLE_MODEL"
+
+   cd $BUILD_MODEL
+   ecbuild  /home/vagrant/jedi/code/mpas-bundle
+   make -j4
+
+endif
+

@@ -19,10 +19,9 @@ use mpas_derived_types
 use mpas_framework
 use mpas_kind_types
 !use init_atm_core_interface
-!use mpas_subdriver
-!use mpas_core
-!use mpas_subdriver
-
+use mpas_subdriver
+use atm_core
+use mpas2da_mod
 
 implicit none
 private
@@ -44,10 +43,11 @@ type :: mpas_field
   !type (dm_info), pointer :: dminfo
   type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
   integer :: nf                           !< Number of variables in fld
-  integer :: sum_scalar                   !< Number of variables in fld
-  integer :: sum_aero                     !< Number of variables in fld
-  integer :: ns                           !< Number of surface fields (x1d [nCells])
+  !integer :: sum_scalar                   !< Number of variables in fld
+  !integer :: sum_aero                     !< Number of variables in fld
+  !integer :: ns                           !< Number of surface fields (x1d [nCells])
   character(len=20), allocatable :: fldnames(:)      !< Variable identifiers
+  type (mpas_pool_type), pointer :: subFields
 end type mpas_field
 
 #define LISTED_TYPE mpas_field
@@ -72,28 +72,33 @@ subroutine create(self, geom, vars)
     implicit none
 
     type(mpas_field), intent(inout) :: self
-    type(mpas_geom),  intent(in)    :: geom
+    type(mpas_geom),  intent(inout)    :: geom
     type(mpas_vars),  intent(in)    :: vars
 
-    type (core_type), pointer :: corelist => null()
     type (dm_info), pointer :: dminfo
-    type (domain_type), pointer :: domain_ptr
+    integer :: nsize
 
- 
-    !--- it compiles --------------------------
-    !allocate(corelist)
-    !nullify(corelist % next)
+    ! from the namelist
+    self % nf = vars % nv
+    allocate(self % fldnames(self % nf))
+    self % fldnames(:) = vars % fldnames(:)
 
-    !allocate(corelist % domainlist)
-    !nullify(corelist % domainlist % next)
+    ! coming from mpas_subdriver
+    call mpas_init(self % corelist, self % domain)
 
-    !domain_ptr => corelist % domainlist
-    !domain_ptr % core => corelist
+    ! update geom
+    self % geom = geom
+    ! This or create a subpool dminfo and clone
+    geom % dminfo => self % domain % dminfo
 
-    !call mpas_allocate_domain(domain_ptr)
-    ! --- end of it compiles ------------------
-
-    !call mpas_init()
+    ! Create a subpool from allfields
+    nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
+    if ( self % nf .ne. nsize  ) then
+       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
+    end if
+    write(0,*)'-- Create a sub Pool from list of variable ',nsize
+    call mpas_pool_create_pool(self % subFields,self % nf)
+    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
 
 end subroutine create
 
@@ -103,7 +108,11 @@ subroutine delete(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
-!call  mpas_finalize()
+   write(0,*)'--> deallocate subFields Pool'
+   call mpas_pool_empty_pool(self % subFields)
+   call mpas_pool_destroy_pool(self % subFields)
+   write(0,*)'--> deallocate domain and core'
+   call mpas_finalize(self % corelist, self % domain)
 
 end subroutine delete
 
@@ -113,6 +122,8 @@ subroutine zeros(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
+  call da_zeros(self % subFields)
+
 end subroutine zeros
 
 ! ------------------------------------------------------------------------------
@@ -120,6 +131,8 @@ end subroutine zeros
 subroutine random(self)
 implicit none
 type(mpas_field), intent(inout) :: self
+
+  !call da_random(self % subFields)
 
 end subroutine random
 
@@ -130,6 +143,8 @@ implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
 
+      !call mpas_pool_clone_pool(da_state, da_state_incr)
+
 end subroutine copy
 
 ! ------------------------------------------------------------------------------
@@ -138,6 +153,10 @@ subroutine self_add(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
+character(len=StrKIND) :: kind_op
+
+kind_op = 'add'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_add
 
@@ -147,6 +166,10 @@ subroutine self_schur(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
+character(len=StrKIND) :: kind_op
+
+kind_op = 'schur'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_schur
 
@@ -156,6 +179,10 @@ subroutine self_sub(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
+character(len=StrKIND) :: kind_op
+
+kind_op = 'sub'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_sub
 
@@ -166,6 +193,8 @@ implicit none
 type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 
+call da_self_mult(self % subFields, zz)
+
 end subroutine self_mul
 
 ! ------------------------------------------------------------------------------
@@ -175,6 +204,8 @@ implicit none
 type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 type(mpas_field), intent(in)     :: rhs
+
+call da_axpy(self % subFields, rhs % subFields, zz)
 
 end subroutine axpy
 
@@ -193,6 +224,17 @@ subroutine add_incr(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
+character(len=StrKIND) :: kind_op
+
+! GD: I don't see any difference than for self_add other than subFields can contain
+! different variables than mpas_field and the resolution of incr can be different. 
+
+if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
+   kind_op = 'add'
+   call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+else
+   call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
+endif
 
 end subroutine add_incr
 
@@ -203,6 +245,21 @@ implicit none
 type(mpas_field), intent(inout) :: lhs
 type(mpas_field), intent(in)    :: x1
 type(mpas_field), intent(in)    :: x2
+character(len=StrKIND) :: kind_op
+
+call zeros(lhs)
+if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
+  if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
+     kind_op = 'sub'
+     call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
+  else
+    call abor1_ftn("mpas_fields:diff_incr: dimension mismatch between the two variables.")
+  endif
+else
+  call abor1_ftn("mpas_fields:diff_incr: states not at same resolution")
+endif
+
+return
 
 end subroutine diff_incr
 
@@ -212,6 +269,14 @@ subroutine change_resol(fld,rhs)
 implicit none
 type(mpas_field), intent(inout) :: fld
 type(mpas_field), intent(in)    :: rhs
+
+! FIXME: We just copy rhs to fld for now. Need an actual interpolation routine later. (SH)
+if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
+  call copy(fld, rhs)
+else
+  write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
+  call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
+endif
 
 end subroutine change_resol
 
@@ -230,37 +295,6 @@ implicit none
 type(mpas_field), intent(inout) :: fld      !< Fields
 type(c_ptr), intent(in)          :: c_conf   !< Configuration
 type(datetime), intent(inout)    :: vdate    !< DateTime
-!logical, pointer :: config_do_restart
-!integer :: ierr
-!real (kind=RKIND), pointer :: dt
-
-      !
-      ! Set "local" clock to point to the clock contained in the domain type
-      !
-      !clock => fld % domain % clock
-!      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_do_restart', config_do_restart)
-!      call mpas_pool_get_config(fld % domain % blocklist % configs, 'config_dt', dt)
-      !
-      ! If this is a restart run, read the restart stream, else read the input
-      ! stream.
-      ! Regardless of which stream we read for initial conditions, reset the
-      ! input alarms for both input and restart before reading any remaining
-      ! input streams.
-      !
-!      if (config_do_restart) then
-!         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='restart', ierr=ierr)
-!      else
-!         call MPAS_stream_mgr_read(fld % domain % streamManager, streamID='input', ierr=ierr)
-!      end if
-!      if (ierr /= MPAS_STREAM_MGR_NOERR) then
-!         call mpas_dmpar_global_abort('********************************************************************************', &
-!                                      deferredAbort=.true.)
-!         call mpas_dmpar_global_abort('Error reading initial conditions', &
-!                                      deferredAbort=.true.)
-!         call mpas_dmpar_global_abort('********************************************************************************')
-!      end if
-!      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='input', direction=MPAS_STREAM_INPUT, ierr=ierr)
-!      call MPAS_stream_mgr_reset_alarms(fld % domain % streamManager, streamID='restart', direction=MPAS_STREAM_INPUT, ierr=ierr)
 
 end subroutine read_file
 
@@ -271,7 +305,6 @@ implicit none
 type(mpas_field), intent(in) :: fld    !< Fields
 type(c_ptr), intent(in)       :: c_conf !< Configuration
 type(datetime), intent(in)    :: vdate  !< DateTime
-
 
 !call mpas_dmpar_get_time(output_start_time)
 !call mpas_stream_mgr_write(domain % streamManager, ierr=ierr)

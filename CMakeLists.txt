@@ -31,11 +31,12 @@ ecbuild_declare_project()
 ecbuild_enable_fortran( REQUIRED )
 ecbuild_add_cxx11_flags()
 
-include(CheckFortranCompilerFlag)
-check_fortran_compiler_flag("-my-flag" -ffree-line-length-none)
-if(_my_flag)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -my-flag")
-endif()
+# doesn t work
+#include(CheckFortranCompilerFlag)
+#check_fortran_compiler_flag("-my-flag" -ffree-line-length-none)
+#if(_my_flag)
+#  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -my-flag")
+#endif()
 
 set( MPAS_LINKER_LANGUAGE CXX )
 
@@ -54,6 +55,7 @@ ecbuild_add_option( FEATURE MPI DEFAULT ON
                     DESCRIPTION "Support for MPI distributed parallelism"
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX Fortran" )
 
+
 if ( NOT ECKIT_HAVE_MPI )
   ecbuild_error("OOPS requested to build with MPI but eckit wasn't built with MPI: ECKIT_HAVE_MPI = ${ECKIT_HAVE_MPI}")
 endif()
@@ -64,12 +66,10 @@ endif()
   link_libraries(${MPI_CXX_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 #endif()
 
-# PIO
-#ecbuild_add_option( FEATURE PIO DEFAULT ON
-#                    DESCRIPTION "Support for PIO distributed parallelism"
-#                    REQUIRED_PACKAGES "PIO COMPONENTS CXX Fortran" )
-#ecbuild_include_pio()
-#link_libraries(${PIO_CXX_LIBRARIES} ${PIO_Fortran_LIBRARIES})
+#
+find_package( LibXml2 REQUIRED )
+include_directories( ${LIBXML2_INCLUDE_DIR} )
+
 
 # OpenMP
 ecbuild_add_option( FEATURE OMP
@@ -89,6 +89,10 @@ include_directories( ${OOPS_INCLUDE_DIRS} )
 # ufo
 ecbuild_use_package( PROJECT ufo )
 include_directories( ${UFO_INCLUDE_DIRS} )
+
+# PIO
+#ecbuild_use_package( PROJECT PROJECT PIO )
+#include_directories( ${PIO_INCLUDE_DIRS} )
 
 ################################################################################
 # Export package info
