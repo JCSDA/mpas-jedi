@@ -25,6 +25,22 @@ list( APPEND mpas_test_input
   testinput/truth.json
   testinput/test_op_obs.json
   compare.sh
+  ../statics/CAM_ABS_DATA.DBL
+  ../statics/CAM_AEROPT_DATA.DBL
+  ../statics/GENPARM.TBL
+  ../statics/LANDUSE.TBL
+  ../statics/namelist.atmosphere
+  ../statics/OZONE_DAT.TBL
+  ../statics/OZONE_LAT.TBL
+  ../statics/OZONE_PLEV.TBL
+  ../statics/RRTMG_LW_DATA.DBL
+  ../statics/RRTMG_SW_DATA.DBL
+  ../statics/SOILPARM.TBL
+  ../statics/stream_list.atmosphere.diagnostics
+  ../statics/stream_list.atmosphere.output
+  ../statics/stream_list.atmosphere.surface
+  ../statics/VEGPARM.TBL
+  ../statics/streams.atmosphere
 )
 
 list( APPEND mpas_testoutput
@@ -124,7 +140,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 #                       testoutput/makeobsbias.test
 #                  DEPENDS mpas_makeobs.x )
 
-# Test interface classes with LFRic
+# Test interface classes with MPAS
 
 ecbuild_add_test( TARGET  test_mpas_geometry
                   BOOST

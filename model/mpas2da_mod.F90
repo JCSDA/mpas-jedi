@@ -6,7 +6,6 @@ module mpas2da_mod
    use mpas_abort, only : mpas_dmpar_global_abort
    !use random_vectors_mod
  
-   type (MPAS_Clock_type), pointer :: clock
 
    contains
 
@@ -542,6 +541,79 @@ module mpas2da_mod
    end subroutine da_axpy
 
 
+   !***********************************************************************
+   !
+   !  subroutine da_gpnorm
+   !
+   !> \brief   Performs basic statistics min/max/avg given a pool
+   !> \author  Gael Descombes
+   !> \date    January 2018
+   !> \details
+   !>  Given a pool of fields, return min/max/avg array
+   !
+   !-----------------------------------------------------------------------
+   
+   subroutine da_gpnorm(pool_a, nf, pstat)
+
+   implicit none
+   type (mpas_pool_type), intent(in),  pointer :: pool_a
+   integer,              intent(in) :: nf
+   real(kind=RKIND), intent(inout)  :: pstat(3, nf)
+
+   type (mpas_pool_iterator_type) :: poolItr
+   real (kind=RKIND), pointer :: r0d_ptr_a
+   real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+   real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+   real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
+
+   integer :: jj
+
+   pstat = 0.
+
+   !
+   ! Iterate over all fields in pool_a
+   ! name in pool_a
+   !
+   call mpas_pool_begin_iteration(pool_a)
+   jj = 1
+
+      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+
+         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+         ! so we select only those members of the pool that are fields
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+
+            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+
+               ! Depending on the dimensionality of the field, we need to set pointers of
+               ! the correct type
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+                  pstat(1,jj)=minval(r1d_ptr_a)
+                  pstat(2,jj)=maxval(r1d_ptr_a)
+                  !pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
+               else if (poolItr % nDims == 2) then
+                  pstat(1,jj)=minval(r2d_ptr_a)
+                  pstat(2,jj)=maxval(r2d_ptr_a)
+                  !pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
+                  pstat(1,jj)=minval(r3d_ptr_a)
+                  pstat(2,jj)=maxval(r3d_ptr_a)
+                  !pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
+               end if
+
+            end if
+         end if
+         jj = jj + 1
+
+      end do
+
+   end subroutine da_gpnorm
 
 end module 
 

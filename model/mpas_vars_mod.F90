@@ -48,7 +48,7 @@ self%nv = size(cvars)
 self%lbc = .false.
 
 do jj=1,self%nv
-  if (trim(cvars(jj))/="theta" .and. trim(cvars(jj))/="rho" .and. trim(cvars(jj))/="qv" .and. &
+  if (trim(cvars(jj))/="theta" .and. trim(cvars(jj))/="theta_m" .and. trim(cvars(jj))/="rho" .and. trim(cvars(jj))/="qv" .and. &
       trim(cvars(jj))/="u" .and. trim(cvars(jj))/="uReconstructZonal" .and. trim(cvars(jj))/="uReconstructMeridional") &
       call abor1_ftn ("mpas_vars_setup: unknown field")
 enddo
@@ -97,7 +97,8 @@ case ("onevar")
   self%nv = 1
   self%lbc = .false.
   allocate(self%fldnames(self%nv))
-  self%fldnames(1) = "theta"
+  !self%fldnames(1) = "theta"
+  self%fldnames(1) = "theta_m"
 case default
   call abor1_ftn("c_mpas_vars_create: undefined variables")
 end select

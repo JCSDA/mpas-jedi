@@ -11,7 +11,6 @@ setenv MODEL mpas
 setenv BUNDLE_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
 setenv BUILD_MODEL "/home/vagrant/jedi/build/mpas-bundle/${MODEL}"
 
-setenv SRCBUNDLE /home/vagrant/jedi/code/mpas-bundle
 setenv SRCMPAS /home/vagrant/jedi/code/jedi-bundle/MPAS-Release
 setenv SRCPIO /home/vagrant/jedi/libs/ParallelIO 
 setenv BUILDPIO /home/vagrant/jedi/libs/build6 
@@ -24,6 +23,7 @@ set comp_pio2=0
 set comp_mpas=0
 set libr_mpas=0
 set oops_mpas=1
+set test_mpas=1
 
 #===========================================================
 
@@ -116,5 +116,21 @@ if ( $oops_mpas ) then
    ecbuild  /home/vagrant/jedi/code/mpas-bundle
    make -j4
 
+   mkdir -p $BUILD_MODEL/${MODEL}
+   cp -R $BUNDLE_MODEL/statics $BUILD_MODEL/${MODEL}/statics
+
 endif
 
+
+if ( $oops_mpas ) then
+   echo ""
+   echo "======================================================"
+   echo " Testing OOPS-MPAS"
+   echo "======================================================"
+
+   cd $BUILD_MODEL
+   export OOPS_TRACE=1
+   ctest -V -R test_mpas_geometry
+   ctest -V -R test_mpas_state
+   #ctest -V -R test_mpas_geometry
+endif

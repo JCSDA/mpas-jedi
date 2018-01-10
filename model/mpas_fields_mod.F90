@@ -15,13 +15,13 @@ use mpas_kinds
 use ufo_locs_mod
 use ufo_geovals_mod
 
-use mpas_derived_types
-use mpas_framework
+!use mpas_derived_types
+!use mpas_framework
 use mpas_kind_types
 !use init_atm_core_interface
-use mpas_subdriver
-use atm_core
-use mpas2da_mod
+!use mpas_subdriver
+!use atm_core
+!use mpas2da_mod
 
 implicit none
 private
@@ -38,16 +38,16 @@ public :: mpas_field_registry
 
 !> Fortran derived type to hold MPAS fields
 type :: mpas_field
-  type (domain_type), pointer :: domain 
-  type (core_type), pointer :: corelist
+  !type (domain_type), pointer :: domain 
+  !type (core_type), pointer :: corelist
   !type (dm_info), pointer :: dminfo
   type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
   integer :: nf                           !< Number of variables in fld
   !integer :: sum_scalar                   !< Number of variables in fld
   !integer :: sum_aero                     !< Number of variables in fld
   !integer :: ns                           !< Number of surface fields (x1d [nCells])
-  character(len=20), allocatable :: fldnames(:)      !< Variable identifiers
-  type (mpas_pool_type), pointer :: subFields
+  character(len=22), allocatable :: fldnames(:)      !< Variable identifiers
+  !type (mpas_pool_type), pointer :: subFields
 end type mpas_field
 
 #define LISTED_TYPE mpas_field
@@ -72,33 +72,37 @@ subroutine create(self, geom, vars)
     implicit none
 
     type(mpas_field), intent(inout) :: self
-    type(mpas_geom),  intent(inout)    :: geom
+    type(mpas_geom),  intent(in), pointer    :: geom
     type(mpas_vars),  intent(in)    :: vars
 
-    type (dm_info), pointer :: dminfo
+    !type (dm_info), pointer :: dminfo
     integer :: nsize
 
     ! from the namelist
     self % nf = vars % nv
     allocate(self % fldnames(self % nf))
-    self % fldnames(:) = vars % fldnames(:)
+    !self % fldnames(:) = vars % fldnames(:)
 
     ! coming from mpas_subdriver
-    call mpas_init(self % corelist, self % domain)
+    !call mpas_init(self % corelist, self % domain)
 
     ! update geom
-    self % geom = geom
+    self % geom => geom
     ! This or create a subpool dminfo and clone
-    geom % dminfo => self % domain % dminfo
+    !geom % dminfo => self % domain % dminfo
 
     ! Create a subpool from allfields
-    nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
-    if ( self % nf .ne. nsize  ) then
-       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
-    end if
-    write(0,*)'-- Create a sub Pool from list of variable ',nsize
-    call mpas_pool_create_pool(self % subFields,self % nf)
-    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
+    !nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
+    !if ( self % nf .ne. nsize  ) then
+    !   call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
+    !end if
+    !write(0,*)'-- Create a sub Pool from list of variable ',nsize
+    !call mpas_pool_create_pool(self % subFields,self % nf)
+    !call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
+    
+    call abor1_ftn('lfric_fields_mod: create: call not implemented yet')
+
+    return
 
 end subroutine create
 
@@ -107,12 +111,15 @@ end subroutine create
 subroutine delete(self)
 implicit none
 type(mpas_field), intent(inout) :: self
-
+   
+   if (allocated(self % fldnames)) deallocate(self % fldnames)
    write(0,*)'--> deallocate subFields Pool'
-   call mpas_pool_empty_pool(self % subFields)
-   call mpas_pool_destroy_pool(self % subFields)
-   write(0,*)'--> deallocate domain and core'
-   call mpas_finalize(self % corelist, self % domain)
+   !call mpas_pool_empty_pool(self % subFields)
+   !call mpas_pool_destroy_pool(self % subFields)
+   !write(0,*)'--> deallocate domain and core'
+   !call mpas_finalize(self % corelist, self % domain)
+
+   return
 
 end subroutine delete
 
@@ -122,7 +129,7 @@ subroutine zeros(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
-  call da_zeros(self % subFields)
+  !call da_zeros(self % subFields)
 
 end subroutine zeros
 
@@ -132,7 +139,7 @@ subroutine random(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
-   call da_random(self % subFields)
+   !call da_random(self % subFields)
 
 end subroutine random
 
@@ -145,9 +152,9 @@ type(mpas_field), intent(in)    :: rhs
    
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
-   call mpas_pool_empty_pool(self % subFields)
-   call mpas_pool_destroy_pool(self % subFields)
-   call mpas_pool_clone_pool(rhs % subFields, self % subFields)
+   !call mpas_pool_empty_pool(self % subFields)
+   !call mpas_pool_destroy_pool(self % subFields)
+   !call mpas_pool_clone_pool(rhs % subFields, self % subFields)
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
 
@@ -159,10 +166,10 @@ subroutine self_add(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-character(len=StrKIND) :: kind_op
+!character(len=StrKIND) :: kind_op
 
-kind_op = 'add'
-call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+!kind_op = 'add'
+!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_add
 
@@ -172,10 +179,10 @@ subroutine self_schur(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-character(len=StrKIND) :: kind_op
+!character(len=StrKIND) :: kind_op
 
-kind_op = 'schur'
-call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+!kind_op = 'schur'
+!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_schur
 
@@ -185,10 +192,10 @@ subroutine self_sub(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-character(len=StrKIND) :: kind_op
+!character(len=StrKIND) :: kind_op
 
-kind_op = 'sub'
-call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+!kind_op = 'sub'
+!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_sub
 
@@ -199,7 +206,7 @@ implicit none
 type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 
-call da_self_mult(self % subFields, zz)
+!call da_self_mult(self % subFields, zz)
 
 end subroutine self_mul
 
@@ -211,7 +218,9 @@ type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 type(mpas_field), intent(in)     :: rhs
 
-call da_axpy(self % subFields, rhs % subFields, zz)
+!call da_axpy(self % subFields, rhs % subFields, zz)
+
+
 
 end subroutine axpy
 
@@ -230,17 +239,19 @@ subroutine add_incr(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-character(len=StrKIND) :: kind_op
+!character(len=StrKIND) :: kind_op
 
 ! GD: I don't see any difference than for self_add other than subFields can contain
 ! different variables than mpas_field and the resolution of incr can be different. 
 
-if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
-   kind_op = 'add'
-   call da_operator(trim(kind_op), self % subFields, rhs % subFields)
-else
-   call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
-endif
+!if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
+!   kind_op = 'add'
+!   call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+!else
+!   call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
+!endif
+
+return
 
 end subroutine add_incr
 
@@ -251,19 +262,19 @@ implicit none
 type(mpas_field), intent(inout) :: lhs
 type(mpas_field), intent(in)    :: x1
 type(mpas_field), intent(in)    :: x2
-character(len=StrKIND) :: kind_op
+!character(len=StrKIND) :: kind_op
 
-call zeros(lhs)
-if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
-  if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
-     kind_op = 'sub'
-     call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
-  else
-    call abor1_ftn("mpas_fields:diff_incr: dimension mismatch between the two variables.")
-  endif
-else
-  call abor1_ftn("mpas_fields:diff_incr: states not at same resolution")
-endif
+!call zeros(lhs)
+!if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
+!  if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
+!     kind_op = 'sub'
+!     call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
+!  else
+!    call abor1_ftn("mpas_fields:diff_incr: dimension mismatch between the two variables.")
+!  endif
+!else
+!  call abor1_ftn("mpas_fields:diff_incr: states not at same resolution")
+!endif
 
 return
 
@@ -277,12 +288,12 @@ type(mpas_field), intent(inout) :: fld
 type(mpas_field), intent(in)    :: rhs
 
 ! FIXME: We just copy rhs to fld for now. Need an actual interpolation routine later. (SH)
-if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
-  call copy(fld, rhs)
-else
-  write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
-  call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
-endif
+!if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
+!  call copy(fld, rhs)
+!else
+!  write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
+!  call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
+!endif
 
 end subroutine change_resol
 
@@ -295,7 +306,9 @@ type(mpas_field), intent(inout) :: fld      !< Fields
 type(c_ptr), intent(in)          :: c_conf   !< Configuration
 type(datetime), intent(inout)    :: vdate    !< DateTime
 character (len=StrKIND) :: dateTimeString
+character(len=20) :: sdate
 
+sdate = config_get_string(c_conf,len(sdate),"date")
 ! GD look at oops/src/util/datetime_mod.F90
 ! we probably need to extract from vdate a string to enforce the reading ..
 ! and then can be like this ....
@@ -303,7 +316,8 @@ character (len=StrKIND) :: dateTimeString
 !write(0,*)''
 !write(0,*)'Reading ',dateTimeString
 !call MPAS_stream_mgr_read(field0 % domain % streamManager,streamID='restart',when=dateTimeString)
-
+sdate = config_get_string(c_conf,len(sdate),"date")
+call datetime_set(sdate, vdate)
 
 end subroutine read_file
 
