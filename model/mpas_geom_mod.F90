@@ -40,6 +40,7 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
    type (dm_info), pointer :: dminfo
+   logical :: use_mpi = .false.
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom

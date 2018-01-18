@@ -15,13 +15,14 @@ use mpas_kinds
 use ufo_locs_mod
 use ufo_geovals_mod
 
-!use mpas_derived_types
-!use mpas_framework
+use mpas_derived_types
+use mpas_framework
 use mpas_kind_types
 !use init_atm_core_interface
-!use mpas_subdriver
-!use atm_core
-!use mpas2da_mod
+use mpas_subdriver
+use atm_core
+use mpas2da_mod
+use mpi ! only MPI_COMM_WORLD
 
 implicit none
 private
@@ -38,8 +39,8 @@ public :: mpas_field_registry
 
 !> Fortran derived type to hold MPAS fields
 type :: mpas_field
-  !type (domain_type), pointer :: domain 
-  !type (core_type), pointer :: corelist
+  type (domain_type), pointer :: domain 
+  type (core_type), pointer :: corelist
   !type (dm_info), pointer :: dminfo
   type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
   integer :: nf                           !< Number of variables in fld
@@ -47,7 +48,7 @@ type :: mpas_field
   !integer :: sum_aero                     !< Number of variables in fld
   !integer :: ns                           !< Number of surface fields (x1d [nCells])
   character(len=22), allocatable :: fldnames(:)      !< Variable identifiers
-  !type (mpas_pool_type), pointer :: subFields
+  type (mpas_pool_type), pointer :: subFields
 end type mpas_field
 
 #define LISTED_TYPE mpas_field
@@ -68,40 +69,55 @@ contains
 
 subroutine create(self, geom, vars)
 
+    use mpas_kind_types
 
     implicit none
 
+
     type(mpas_field), intent(inout) :: self
-    type(mpas_geom),  intent(in), pointer    :: geom
+    type(mpas_geom),  intent(inout), pointer    :: geom
+    !type(mpas_geom),  intent(in)    :: geom
     type(mpas_vars),  intent(in)    :: vars
 
     !type (dm_info), pointer :: dminfo
     integer :: nsize
+    integer :: mpi_comm
+    
 
     ! from the namelist
-    self % nf = vars % nv
+    self % nf = 1 ! vars % nv
     allocate(self % fldnames(self % nf))
-    !self % fldnames(:) = vars % fldnames(:)
-
+    self % fldnames(1) = "theta_m" !vars % fldnames(:)
+    write(*,*)'allocate ',self % fldnames(:)
+   
     ! coming from mpas_subdriver
-    !call mpas_init(self % corelist, self % domain)
+    write(*,*)'Before calling the subdriver of mpas'
+    if ( geom % use_mpi ) then
+       call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
+    else
+       call mpas_init(self % corelist, self % domain)
+       geom % use_mpi = .true.
+    end if
+    ! dminfo % initialized_mpi
+    write(*,*)'After calling the subdriver of mpas'
 
     ! update geom
-    self % geom => geom
+!    self % geom => geom
     ! This or create a subpool dminfo and clone
-    !geom % dminfo => self % domain % dminfo
+!    geom % dminfo => self % domain % dminfo
 
     ! Create a subpool from allfields
-    !nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
-    !if ( self % nf .ne. nsize  ) then
-    !   call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
-    !end if
+!    nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
+!    if ( self % nf .ne. nsize  ) then
+!       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
+!    end if
     !write(0,*)'-- Create a sub Pool from list of variable ',nsize
     !call mpas_pool_create_pool(self % subFields,self % nf)
-    !call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
+!    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
     
-    call abor1_ftn('lfric_fields_mod: create: call not implemented yet')
-
+    !call abor1_ftn('lfric_fields_mod: create: call not implemented yet')
+    write(*,*)'Leaving create'
+ 
     return
 
 end subroutine create
@@ -113,11 +129,12 @@ implicit none
 type(mpas_field), intent(inout) :: self
    
    if (allocated(self % fldnames)) deallocate(self % fldnames)
-   write(0,*)'--> deallocate subFields Pool'
-   !call mpas_pool_empty_pool(self % subFields)
-   !call mpas_pool_destroy_pool(self % subFields)
-   !write(0,*)'--> deallocate domain and core'
-   !call mpas_finalize(self % corelist, self % domain)
+   write(*,*)'--> deallocate subFields Pool'
+  ! call mpas_pool_empty_pool(self % subFields)
+  ! call mpas_pool_destroy_pool(self % subFields)
+  ! write(*,*)'--> deallocate domain and core'
+  ! call mpas_finalize(self % corelist, self % domain)
+   write(*,*)'--> done'
 
    return
 
@@ -154,6 +171,8 @@ type(mpas_field), intent(in)    :: rhs
    ! of the fields from self % subFields to rhs % subFields
    !call mpas_pool_empty_pool(self % subFields)
    !call mpas_pool_destroy_pool(self % subFields)
+   self % nf = rhs % nf
+   !call mpas_pool_create_pool(self % subFields,self % nf)
    !call mpas_pool_clone_pool(rhs % subFields, self % subFields)
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
@@ -308,6 +327,7 @@ type(datetime), intent(inout)    :: vdate    !< DateTime
 character (len=StrKIND) :: dateTimeString
 character(len=20) :: sdate
 
+write(*,*)'inside read'
 sdate = config_get_string(c_conf,len(sdate),"date")
 ! GD look at oops/src/util/datetime_mod.F90
 ! we probably need to extract from vdate a string to enforce the reading ..
@@ -318,6 +338,7 @@ sdate = config_get_string(c_conf,len(sdate),"date")
 !call MPAS_stream_mgr_read(field0 % domain % streamManager,streamID='restart',when=dateTimeString)
 sdate = config_get_string(c_conf,len(sdate),"date")
 call datetime_set(sdate, vdate)
+write(*,*)'outside read'
 
 end subroutine read_file
 
@@ -342,6 +363,8 @@ type(mpas_field), intent(in) :: fld
 integer, intent(in) :: nf
 real(kind=kind_real), intent(inout) :: pstat(3, nf)
 
+pstat(3, nf) = 15.0
+
 end subroutine gpnorm
 
 ! ------------------------------------------------------------------------------
@@ -350,6 +373,8 @@ subroutine fldrms(fld, prms)
 implicit none
 type(mpas_field), intent(in)      :: fld
 real(kind=kind_real), intent(out) :: prms
+
+prms = 15.0
 
 end subroutine fldrms
 
