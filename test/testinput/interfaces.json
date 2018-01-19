@@ -1,18 +1,21 @@
 {
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log"
+  },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-  "gridfname": "/home/vagrant/jedi/data/mpas/restart.2010-10-24_00.00.00.nc"
+    "gridfname": "/home/vagrant/jedi/data/mpas/restart.2010-10-24_00.00.00.nc"
   },
   "Variables": {
-    "variables": "onevar"
+    "variables": ["cv"]
   },
   "TestDate": "2010-10-24T00:00:00Z",
   "State": {
-    "date": "2009-12-31T00:00:00Z"
+    "date": "2010-10-24T00:00:00Z"
   },
   "StateTest": {
-    "date": "2009-12-31T00:00:00Z"
     "norm": "15.010",
-    "tolerance": "0.005"
-  },
+    "tolerance": "1.00",
+    "date": "2010-10-24T00:00:00Z"
+  }
 }

@@ -133,7 +133,7 @@ type(mpas_field), intent(inout) :: self
   ! call mpas_pool_empty_pool(self % subFields)
   ! call mpas_pool_destroy_pool(self % subFields)
   ! write(*,*)'--> deallocate domain and core'
-  ! call mpas_finalize(self % corelist, self % domain)
+   call mpas_finalize(self % corelist, self % domain)
    write(*,*)'--> done'
 
    return
@@ -363,7 +363,8 @@ type(mpas_field), intent(in) :: fld
 integer, intent(in) :: nf
 real(kind=kind_real), intent(inout) :: pstat(3, nf)
 
-pstat(3, nf) = 15.0
+!pstat(3, nf) = 15.0
+call da_gpnorm(pool_a, nf, pstat) 
 
 end subroutine gpnorm
 

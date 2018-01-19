@@ -11,7 +11,8 @@ setenv MODEL mpas
 setenv BUNDLE_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
 setenv BUILD_MODEL "/home/vagrant/jedi/build/mpas-bundle/${MODEL}"
 
-setenv SRCMPAS /home/vagrant/jedi/code/jedi-bundle/MPAS-Release
+#setenv SRCMPAS /home/vagrant/jedi/code/jedi-bundle/MPAS-Release
+setenv SRCMPAS /home/vagrant/jedi/data/MPAS-Release
 setenv SRCPIO /home/vagrant/jedi/libs/ParallelIO 
 setenv BUILDPIO /home/vagrant/jedi/libs/build6 
 setenv LIBPIO ${BUILDPIO}/writable/pio2
@@ -21,7 +22,7 @@ setenv LIBMPAS ${SRCMPAS}/link_libs
 
 set comp_pio2=0 
 set comp_mpas=0
-set libr_mpas=0
+set libr_mpas=1
 set oops_mpas=1
 set test_mpas=1
 
@@ -59,7 +60,7 @@ if ( $comp_mpas ) then
    echo "PIO $PIO"
    pwd
    echo "make gfortran CORE=atmosphere USE_PIO2=true"
-   make gfortran CORE=atmosphere USE_PIO2=true
+   make gfortran CORE=atmosphere USE_PIO2=true DEBUG=true
 endif
 
 if ( $libr_mpas ) then
@@ -67,8 +68,8 @@ if ( $libr_mpas ) then
    echo "======================================================"
    echo " Building MPAS Library libmpas.a for OOPS"
    echo "======================================================"
-   cd ${LIBMPAS}
    mkdir ${LIBMPAS}
+   cd ${LIBMPAS}
    cd ${LIBMPAS}
    rm -rf include
    mkdir include
@@ -117,20 +118,21 @@ if ( $oops_mpas ) then
    make -j4
 
    mkdir -p $BUILD_MODEL/${MODEL}
-   cp -R $BUNDLE_MODEL/statics $BUILD_MODEL/${MODEL}/statics
+   #cp -v $BUNDLE_MODEL/statics/* $BUILD_MODEL/${MODEL}/test
+   #cp -v ~/jedi/data/mpas2/* $BUILD_MODEL/${MODEL}/test
 
 endif
 
 
-if ( $oops_mpas ) then
+if ( $test_mpas ) then
    echo ""
    echo "======================================================"
    echo " Testing OOPS-MPAS"
    echo "======================================================"
 
    cd $BUILD_MODEL
-   export OOPS_TRACE=1
-   ctest -V -R test_mpas_geometry
-   ctest -V -R test_mpas_state
+   setenv OOPS_TRACE 1
+   #ctest -V -R test_mpas_geometry
+   ctest -VV -R test_mpas_state
    #ctest -V -R test_mpas_geometry
 endif
