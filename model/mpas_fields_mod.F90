@@ -203,7 +203,7 @@ subroutine zeros(self)
 implicit none
 type(mpas_field), intent(inout) :: self
 
-  !call da_zeros(self % subFields)
+  call da_zeros(self % subFields)
 
 end subroutine zeros
 
@@ -212,7 +212,10 @@ end subroutine zeros
 subroutine random(self)
 implicit none
 type(mpas_field), intent(inout) :: self
-
+real(kind=kind_real) :: zz
+   
+   zz = 0.1
+   call da_self_mult(self % subFields, zz)
    !call da_random(self % subFields)
 
 end subroutine random
@@ -245,10 +248,10 @@ subroutine self_add(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-!character(len=StrKIND) :: kind_op
+character(len=StrKIND) :: kind_op
 
-!kind_op = 'add'
-!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+kind_op = 'add'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_add
 
@@ -258,10 +261,10 @@ subroutine self_schur(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-!character(len=StrKIND) :: kind_op
+character(len=StrKIND) :: kind_op
 
-!kind_op = 'schur'
-!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+kind_op = 'schur'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_schur
 
@@ -271,10 +274,10 @@ subroutine self_sub(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-!character(len=StrKIND) :: kind_op
+character(len=StrKIND) :: kind_op
 
-!kind_op = 'sub'
-!call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+kind_op = 'sub'
+call da_operator(trim(kind_op), self % subFields, rhs % subFields)
 
 end subroutine self_sub
 
@@ -285,7 +288,7 @@ implicit none
 type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 
-!call da_self_mult(self % subFields, zz)
+call da_self_mult(self % subFields, zz)
 
 end subroutine self_mul
 
@@ -297,9 +300,7 @@ type(mpas_field), intent(inout)  :: self
 real(kind=kind_real), intent(in) :: zz
 type(mpas_field), intent(in)     :: rhs
 
-!call da_axpy(self % subFields, rhs % subFields, zz)
-
-
+call da_axpy(self % subFields, rhs % subFields, zz)
 
 end subroutine axpy
 
@@ -318,17 +319,17 @@ subroutine add_incr(self,rhs)
 implicit none
 type(mpas_field), intent(inout) :: self
 type(mpas_field), intent(in)    :: rhs
-!character(len=StrKIND) :: kind_op
+character(len=StrKIND) :: kind_op
 
 ! GD: I don't see any difference than for self_add other than subFields can contain
 ! different variables than mpas_field and the resolution of incr can be different. 
 
-!if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
-!   kind_op = 'add'
-!   call da_operator(trim(kind_op), self % subFields, rhs % subFields)
-!else
-!   call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
-!endif
+if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
+   kind_op = 'add'
+   call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+else
+   call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
+endif
 
 return
 
@@ -341,19 +342,19 @@ implicit none
 type(mpas_field), intent(inout) :: lhs
 type(mpas_field), intent(in)    :: x1
 type(mpas_field), intent(in)    :: x2
-!character(len=StrKIND) :: kind_op
+character(len=StrKIND) :: kind_op
 
-!call zeros(lhs)
-!if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
-!  if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
-!     kind_op = 'sub'
-!     call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
-!  else
-!    call abor1_ftn("mpas_fields:diff_incr: dimension mismatch between the two variables.")
-!  endif
-!else
-!  call abor1_ftn("mpas_fields:diff_incr: states not at same resolution")
-!endif
+call zeros(lhs)
+if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
+  if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
+     kind_op = 'sub'
+     call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
+  else
+    call abor1_ftn("mpas_fields:diff_incr: dimension mismatch between the two variables.")
+  endif
+else
+  call abor1_ftn("mpas_fields:diff_incr: states not at same resolution")
+endif
 
 return
 
@@ -367,12 +368,12 @@ type(mpas_field), intent(inout) :: fld
 type(mpas_field), intent(in)    :: rhs
 
 ! FIXME: We just copy rhs to fld for now. Need an actual interpolation routine later. (SH)
-!if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
-!  call copy(fld, rhs)
-!else
-!  write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
-!  call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
-!endif
+if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
+  call copy(fld, rhs)
+else
+  write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
+  call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
+endif
 
 end subroutine change_resol
 

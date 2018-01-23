@@ -60,7 +60,7 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine geo_setup(self, c_conf)
 implicit none
-type(mpas_geom)        :: self
+type(mpas_geom), intent(inout) :: self
 type(c_ptr), intent(in) :: c_conf
 character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
@@ -135,7 +135,8 @@ end subroutine geo_setup
 
 subroutine geo_clone(self, other)
 implicit none
-type(mpas_geom), pointer :: self, other
+type(mpas_geom), intent(in) :: self
+type(mpas_geom), intent(inout) :: other
 
 other%nCells        = self%nCells
 other%nEdges        = self%nEdges
@@ -161,7 +162,7 @@ end subroutine geo_clone
 subroutine geo_delete(self)
 
 implicit none
-type(mpas_geom), pointer :: self
+type(mpas_geom), intent(inout) :: self
 
 write(*,*)'GD delete geom'
 if (associated(self % dminfo)) nullify(self % dminfo) 
@@ -174,8 +175,6 @@ if (allocated(self%areaCell)) deallocate(self%areaCell)
 if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
 if (allocated(self%zgrid)) deallocate(self%zgrid)
 
-
-
 end subroutine geo_delete
 
 ! ------------------------------------------------------------------------------
@@ -183,7 +182,7 @@ end subroutine geo_delete
 subroutine geo_info(self, nCells, nEdges, nVertLevels, nVertLevelsP1)
 
 implicit none
-type(mpas_geom), pointer :: self
+type(mpas_geom), intent(in) :: self
 integer, intent(inout) :: nCells
 integer, intent(inout) :: nEdges
 integer, intent(inout) :: nVertLevels
