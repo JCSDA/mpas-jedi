@@ -42,9 +42,8 @@ integer(c_int), intent(inout) :: c_key_self
 type(mpas_model), pointer :: self
 
 call mpas_model_registry%get(c_key_self, self)
-call mpas_model_registry%remove(c_key_self)
-
 call model_delete(self)
+call mpas_model_registry%remove(c_key_self)
 
 end subroutine c_mpas_model_delete
 

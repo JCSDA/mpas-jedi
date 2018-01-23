@@ -159,3 +159,9 @@ ecbuild_add_test( TARGET  test_mpas_model
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/interfaces.json"
                   LIBS    mpas )
+
+ecbuild_add_test( TARGET  test_mpas_increment
+                  BOOST
+                  SOURCES executables/TestIncrement.cc
+                  ARGS    "testinput/interfaces.json"
+                  LIBS    mpas )

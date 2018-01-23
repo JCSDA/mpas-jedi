@@ -39,7 +39,7 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
-   type (dm_info), pointer :: dminfo
+   type (dm_info), pointer :: dminfo => null()
    logical :: use_mpi = .false.
 end type mpas_geom
 
@@ -65,6 +65,8 @@ type(c_ptr), intent(in) :: c_conf
 character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
 real(kind=RKIND), parameter :: deg2rad = pii/180.      
+
+write(*,*)'create geom'
 
 !> Open a grid mesh file
 self%gridfname = config_get_string(c_conf, StrKIND, "gridfname")
@@ -161,7 +163,18 @@ subroutine geo_delete(self)
 implicit none
 type(mpas_geom), pointer :: self
 
+write(*,*)'GD delete geom'
 if (associated(self % dminfo)) nullify(self % dminfo) 
+if (allocated(self%latCell)) deallocate(self%latCell)
+if (allocated(self%lonCell)) deallocate(self%lonCell)
+if (allocated(self%latEdge)) deallocate(self%latEdge)
+if (allocated(self%lonEdge)) deallocate(self%lonEdge)
+if (allocated(self%xland)) deallocate(self%xland)
+if (allocated(self%areaCell)) deallocate(self%areaCell)
+if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
+if (allocated(self%zgrid)) deallocate(self%zgrid)
+
+
 
 end subroutine geo_delete
 

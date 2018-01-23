@@ -22,8 +22,8 @@ setenv LIBMPAS ${SRCMPAS}/link_libs
 
 set comp_pio2=0 
 set comp_mpas=0
-set libr_mpas=1
-set oops_mpas=1
+set libr_mpas=0
+set oops_mpas=0
 set test_mpas=1
 
 #===========================================================
@@ -113,11 +113,11 @@ if ( $oops_mpas ) then
    echo "BUILD $BUILD_MODEL"
    echo "BUNDLE CODE $BUNDLE_MODEL"
 
+   mkdir -p $BUILD_MODEL/${MODEL}
    cd $BUILD_MODEL
    ecbuild  /home/vagrant/jedi/code/mpas-bundle
    make -j4
 
-   mkdir -p $BUILD_MODEL/${MODEL}
    #cp -v $BUNDLE_MODEL/statics/* $BUILD_MODEL/${MODEL}/test
    #cp -v ~/jedi/data/mpas2/* $BUILD_MODEL/${MODEL}/test
 
@@ -133,6 +133,7 @@ if ( $test_mpas ) then
    cd $BUILD_MODEL
    setenv OOPS_TRACE 1
    #ctest -V -R test_mpas_geometry
-   ctest -VV -R test_mpas_state
+   #ctest -VV -R test_mpas_state
+   ctest -VV -R test_mpas_increment
    #ctest -V -R test_mpas_geometry
 endif

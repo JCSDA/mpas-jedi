@@ -23,6 +23,7 @@ use mpas_subdriver
 use atm_core
 use mpas2da_mod
 use mpi ! only MPI_COMM_WORLD
+use mpas_stream_manager
 
 implicit none
 private
@@ -47,8 +48,9 @@ type :: mpas_field
   !integer :: sum_scalar                   !< Number of variables in fld
   !integer :: sum_aero                     !< Number of variables in fld
   !integer :: ns                           !< Number of surface fields (x1d [nCells])
-  character(len=22), allocatable :: fldnames(:)      !< Variable identifiers
-  type (mpas_pool_type), pointer :: subFields
+  character(len=22), allocatable  :: fldnames(:)      !< Variable identifiers
+  type (mpas_pool_type), pointer  :: subFields
+   
 end type mpas_field
 
 #define LISTED_TYPE mpas_field
@@ -75,14 +77,15 @@ subroutine create(self, geom, vars)
 
 
     type(mpas_field), intent(inout) :: self
-    type(mpas_geom),  intent(inout), pointer    :: geom
-    !type(mpas_geom),  intent(in)    :: geom
+    !type(mpas_geom),  intent(inout), pointer    :: geom
+    type(mpas_geom),  intent(in), pointer    :: geom
     type(mpas_vars),  intent(in)    :: vars
 
     !type (dm_info), pointer :: dminfo
     integer :: nsize
     integer :: mpi_comm
-    
+    real(kind=kind_real), allocatable :: pstat(:, :)
+    !type (dm_info) :: dminfo
 
     ! from the namelist
     self % nf = 1 ! vars % nv
@@ -92,17 +95,28 @@ subroutine create(self, geom, vars)
    
     ! coming from mpas_subdriver
     write(*,*)'Before calling the subdriver of mpas'
-    if ( geom % use_mpi ) then
+    !if ( geom % use_mpi ) then
+    !if ( self % domain % dminfo % initialized_mpi  ) then
+    !write(*,*)'dminfo % initialized_mpi: ',dminfo % initialized_mpi,geom % use_mpi
+    !if ( geom % use_mpi  ) then
+       !self % domain % dminfo => dminfo
        call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
-    else
-       call mpas_init(self % corelist, self % domain)
-       geom % use_mpi = .true.
-    end if
+    !else
+    !   call mpas_init(self % corelist, self % domain)
+    !   geom % use_mpi = .true.
+    !   dminfo % initialized_mpi = .true.
+    !end if
     ! dminfo % initialized_mpi
-    write(*,*)'After calling the subdriver of mpas'
+    !write(*,*)'After calling the subdriver of mpas'
 
     ! update geom
-!    self % geom => geom
+    if (associated(geom)) then
+      write(*,*)'geom associated'
+      self % geom => geom
+    else
+      write(*,*)'geom not associated'
+      self % geom =>null()
+    end if
     ! This or create a subpool dminfo and clone
 !    geom % dminfo => self % domain % dminfo
 
@@ -110,13 +124,18 @@ subroutine create(self, geom, vars)
 !    nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
 !    if ( self % nf .ne. nsize  ) then
 !       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
-!    end if
+!    end  if
     !write(0,*)'-- Create a sub Pool from list of variable ',nsize
-    !call mpas_pool_create_pool(self % subFields,self % nf)
-!    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
-    
+!    call mpas_pool_create_pool(self % subFields,self % nf)
+    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
+    allocate(pstat(3, self % nf))
+    call da_gpnorm(self % subFields, self % nf, pstat)
+    write(0,*)'Pstat: ',pstat
+    deallocate(pstat)
     !call abor1_ftn('lfric_fields_mod: create: call not implemented yet')
     write(*,*)'Leaving create'
+
+    
  
     return
 
@@ -127,12 +146,50 @@ end subroutine create
 subroutine delete(self)
 implicit none
 type(mpas_field), intent(inout) :: self
+type (MPAS_streamManager_type), pointer :: manager
+integer :: ierr = 0 
+  
+   call mpas_timer_set_context( self % domain )
    
+   !
+   ! Set up run-time streams
+   !
+   !   call MPAS_stream_mgr_init(self % domain % streamManager, self % domain % ioContext, & 
+   !      self % domain % clock, self % domain % blocklist % allFields, &
+   !      self % domain % packages, self % domain % blocklist % allStructs)
+   !
+   !   call add_stream_attributes(domain)
+   !
+   !   ierr = domain % core % setup_immutable_streams(domain % streamManager)
+   !   if ( ierr /= 0 ) then
+   !      call mpas_dmpar_global_abort('ERROR: Immutable streams setup failed for core ' // trim(domain % core % coreName))
+   !   end if
+   !
+   !   mgr_p = c_loc(domain_ptr % streamManager)
+   !   call xml_stream_parser(c_filename, mgr_p, c_comm, c_ierr)
+   !   if (c_ierr /= 0) then
+   !      call mpas_dmpar_abort(domain_ptr % dminfo)
+   !   end if
+
+   if (.not. associated(manager)) then  
+     write(0,*)'GD manager not associated'
+   else
+     write(0,*)'GD manager associated'
+   end if
+   !  manager % ioContext => self % domain % ioContext
+   !  manager % allFields => self % domain % blocklist % allFields
+   !  manager % allPackages => self % domain % Packages
+   !  manager % allStructs => self % domain % blocklist % allStructs
+   !  manager % streamClock => self % domain % clock
+   !  manager % numStreams = 0
+   !  manager % errorLevel = MPAS_STREAM_ERR_SILENT
+
+ 
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    write(*,*)'--> deallocate subFields Pool'
-  ! call mpas_pool_empty_pool(self % subFields)
-  ! call mpas_pool_destroy_pool(self % subFields)
-  ! write(*,*)'--> deallocate domain and core'
+   call mpas_pool_empty_pool(self % subFields)
+   call mpas_pool_destroy_pool(self % subFields)
+   write(*,*)'--> deallocate domain and core'
    call mpas_finalize(self % corelist, self % domain)
    write(*,*)'--> done'
 
@@ -169,11 +226,14 @@ type(mpas_field), intent(in)    :: rhs
    
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
-   !call mpas_pool_empty_pool(self % subFields)
-   !call mpas_pool_destroy_pool(self % subFields)
+   call mpas_pool_empty_pool(self % subFields)
+   call mpas_pool_destroy_pool(self % subFields)
    self % nf = rhs % nf
-   !call mpas_pool_create_pool(self % subFields,self % nf)
-   !call mpas_pool_clone_pool(rhs % subFields, self % subFields)
+   call mpas_pool_create_pool(self % subFields,self % nf)
+   !write(0,*)'copy pool before 1' 
+   call mpas_pool_clone_pool(rhs % subFields, self % subFields)
+   !call mpas_pool_clone_pool(rhs % domain % blocklist % allFields, self % domain % blocklist % allFields)
+   !write(0,*)'copy pool before 2' 
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
 
@@ -361,10 +421,15 @@ subroutine gpnorm(fld, nf, pstat)
 implicit none
 type(mpas_field), intent(in) :: fld
 integer, intent(in) :: nf
-real(kind=kind_real), intent(inout) :: pstat(3, nf)
+real(kind=kind_real), intent(out) :: pstat(3, nf)
+real(kind=kind_real), allocatable :: pstat2(:, :)
 
-!pstat(3, nf) = 15.0
-call da_gpnorm(pool_a, nf, pstat) 
+allocate(pstat2(3, fld% nf))
+pstat(3, nf) = 15.0
+write(0,*)'Inside gpnorm 1'
+call da_gpnorm(fld % subFields, fld%nf, pstat2) 
+write(0,*)'Inside gpnorm 2'
+deallocate(pstat2)
 
 end subroutine gpnorm
 
@@ -374,8 +439,15 @@ subroutine fldrms(fld, prms)
 implicit none
 type(mpas_field), intent(in)      :: fld
 real(kind=kind_real), intent(out) :: prms
+real(kind=kind_real), allocatable :: pstat(:,:)
 
-prms = 15.0
+allocate(pstat(3,fld % nf))
+pstat(:, :) = 15.0
+write(0,*)'Inside fldrms 1'
+call da_gpnorm(fld % subFields, fld % nf, pstat) 
+write(0,*)'Inside fldrms 2'
+prms =  pstat(2,1)
+deallocate(pstat)
 
 end subroutine fldrms
 

@@ -50,9 +50,8 @@ integer(c_int), intent(inout) :: c_key_self
 type(mpas_geom), pointer :: self
 
 call mpas_geom_registry%get(c_key_self, self)
-call mpas_geom_registry%remove(c_key_self)
-
 call geo_delete(self)
+call mpas_geom_registry%remove(c_key_self)
 
 end subroutine c_mpas_geo_delete
 

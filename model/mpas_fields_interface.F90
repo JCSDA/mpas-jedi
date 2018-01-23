@@ -324,12 +324,12 @@ integer :: jj, js, jf
 
 call mpas_field_registry%get(c_key_fld,fld)
 
-call gpnorm(fld, kf, zstat)
+!call gpnorm(fld, kf, zstat)
 jj=0
 do jf = 1, kf
   do js = 1, 3
     jj=jj+1
-    pstat(jj) = zstat(js,jf)
+    pstat(jj) = 0. !zstat(js,jf)
   enddo
 enddo
 

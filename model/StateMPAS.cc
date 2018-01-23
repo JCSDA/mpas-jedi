@@ -39,14 +39,43 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
   : fields_(), stash_()
 {
 // Should get variables from file. YT
-  eckit::LocalConfiguration modelvars;
-  modelvars.set("variables", "cv");
-  oops::Variables vars(modelvars);
+//  eckit::LocalConfiguration modelvars;
+//  modelvars.set("variables", "cv");
+//  oops::Variables vars(modelvars);
+
+//  eckit::LocalConfiguration modelvars;
+//  const std::vector<std::string> vv{"cv"};
+//  modelvars.set("variables", vv); 
+//  oops::Variables vars(vv);
+
+/*
 // Should get variables from file. YT
-  fields_.reset(new FieldsMPAS(resol, vars, util::DateTime()));
+  const std::vector<std::string> vv{"x","bc"};
+  oops::Variables vars(vv);
+  fields_.reset(new FieldsQG(resol, vars, util::DateTime()));
   fields_->read(file);
 
   ASSERT(fields_);
+  Log::trace() << "StateQG::StateQG created and read in." << std::endl;
+
+ */
+// Should get variables from file. YT
+
+// WORKING WITHOUT READING THE NAMELIST AS QG/
+  oops::Log::trace() << "StateMPAS::GD0 enforcing to variable to cv" << std::endl;
+  const std::vector<std::string> vv{"cv"};
+  oops::Log::trace() << "StateMPAS::GD1 enforcing to variable to cv" << std::endl;
+  oops::Variables vars(vv);
+  oops::Log::trace() << "StateMPAS::GD2" << std::endl;
+
+
+  fields_.reset(new FieldsMPAS(resol, vars, util::DateTime()));
+  oops::Log::trace() << "StateMPAS::GD3 before read" << std::endl;
+  fields_->read(file);
+  oops::Log::trace() << "StateMPAS::GD3 after read" << std::endl;
+
+  ASSERT(fields_);
+
   oops::Log::trace() << "StateMPAS::StateMPAS created and read in." << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -60,6 +89,8 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const StateMPAS & other)
 StateMPAS::StateMPAS(const StateMPAS & other)
   : fields_(new FieldsMPAS(*other.fields_)), stash_()
 {
+  
+  oops::Log::trace() << "StateMPAS::StateMPAS before copied." << std::endl;
   ASSERT(fields_);
   oops::Log::trace() << "StateMPAS::StateMPAS copied." << std::endl;
 }

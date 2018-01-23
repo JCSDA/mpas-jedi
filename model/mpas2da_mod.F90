@@ -206,7 +206,7 @@ module mpas2da_mod
       implicit none
 
       type (mpas_pool_type), pointer, intent(in) :: pool_a
-      type (mpas_pool_type), pointer, intent(inout) :: pool_b
+      type (mpas_pool_type), pointer, intent(out) :: pool_b
       character (len=*), intent(in) :: fieldname(:)
 
       type (mpas_pool_iterator_type) :: poolItr
@@ -750,14 +750,17 @@ module mpas2da_mod
    implicit none
    type (mpas_pool_type), intent(in),  pointer :: pool_a
    integer,              intent(in) :: nf
-   !real(kind=RKIND), intent(inout)  :: pstat(3, nf)
-   real(kind=RKIND), intent(inout)  :: pstat(:, :)
+   real(kind=RKIND), intent(inout)  :: pstat(3, nf)
 
    type (mpas_pool_iterator_type) :: poolItr
-   real (kind=RKIND), pointer :: r0d_ptr_a
-   real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
-   real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
-   real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
+   type (field1DReal), pointer :: r1d_ptr_a
+   type (field2DReal), pointer :: r2d_ptr_a
+   type (field3DReal), pointer :: r3d_ptr_a
+   !real (field0DReal), pointer :: r0d_ptr_a
+   !real (kind=RKIND), pointer :: r0d_ptr_a
+   !real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+   !real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+   !real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
 
    integer :: jj
 
@@ -781,22 +784,26 @@ module mpas2da_mod
 
                ! Depending on the dimensionality of the field, we need to set pointers of
                ! the correct type
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  pstat(1,jj)=minval(r1d_ptr_a)
-                  pstat(2,jj)=maxval(r1d_ptr_a)
+               !if (poolItr % nDims == 0) then
+               !   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), r0d_ptr_a)
+               !else if (poolItr % nDims == 1) then
+               if (poolItr % nDims == 1) then
+                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+                  !pstat(1,jj)=minval(r1d_ptr_a%array)
+                  !pstat(2,jj)=maxval(r1d_ptr_a%array)
                   !pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
+                  !deallocate(r1d_ptr_a)
                else if (poolItr % nDims == 2) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  pstat(1,jj)=minval(r2d_ptr_a)
-                  pstat(2,jj)=maxval(r2d_ptr_a)
+                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), r2d_ptr_a)
+                  pstat(1,jj)= minval(r2d_ptr_a%array)
+                  pstat(2,jj)= maxval(r2d_ptr_a%array)
                   !!pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
+                  !deallocate(r2d_ptr_a) 
                else if (poolItr % nDims == 3) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  pstat(1,jj)=minval(r3d_ptr_a)
-                  pstat(2,jj)=maxval(r3d_ptr_a)
+                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), r3d_ptr_a)
+                  !pstat(1,jj)=minval(r3d_ptr_a)
+                  !pstat(2,jj)=maxval(r3d_ptr_a)
+                  !deallocate(r3d_ptr_a) 
                   !pstat(3,jj)=sqrt(sum(fld%fld(:,:,jj)**2) && /real(nl*nC,kind_real))
                end if
                write(0,*)'Variable: ',trim(poolItr % memberName),jj

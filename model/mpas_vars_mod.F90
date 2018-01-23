@@ -7,6 +7,7 @@ module mpas_vars_mod
 
 use iso_c_binding
 use config_mod
+use fckit_log_module, only : log
 
 implicit none
 private
@@ -59,6 +60,47 @@ end subroutine mpas_vars_setup
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_vars_create(self, svar)
+
+   character(len=20), intent(inout) :: svar
+   type(mpas_vars), pointer, intent(out) :: self
+   
+   svar = "cv"  !config_get_string(c_conf,len(svar),"variables")
+!call log%info('GD SVAR: '//svar)
+!select case (trim(svar))
+!case ("reconstructed_winds")
+!  self%nv = 5
+!  self%lbc = .false.
+!  allocate(self%fldnames(self%nv))
+!  self%fldnames(1) = "theta"
+!  self%fldnames(2) = "rho"
+!  self%fldnames(3) = "qv"
+!  self%fldnames(4) = "uReconstructZonal"
+!  self%fldnames(5) = "uReconstructMeridional"
+!case ("normal_speed")
+!  self%nv = 4
+!  self%lbc = .false.
+!  allocate(self%fldnames(self%nv))
+!  !self%fldnames(:) = (/"theta","rho","qv","u"/)
+!  self%fldnames(1) = "theta"
+!  self%fldnames(2) = "rho"
+!  self%fldnames(3) = "qv"
+!  self%fldnames(4) = "u"
+!case ("onevar")
+  self%nv = 1
+  self%lbc = .false.
+  allocate(self%fldnames(self%nv))
+  !self%fldnames(1) = "theta"
+  self%fldnames(1) = "theta_m"
+!case default
+!  call abor1_ftn("c_mpas_vars_create: undefined variables")
+!end select
+
+end subroutine mpas_vars_create
+
+
+! ------------------------------------------------------------------------------
+
 subroutine c_mpas_vars_create(c_key_self, c_conf) bind(c,name='mpas_var_create_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
@@ -93,7 +135,7 @@ case ("normal_speed")
   self%fldnames(2) = "rho"
   self%fldnames(3) = "qv"
   self%fldnames(4) = "u"
-case ("onevar")
+case ("cv")
   self%nv = 1
   self%lbc = .false.
   allocate(self%fldnames(self%nv))
