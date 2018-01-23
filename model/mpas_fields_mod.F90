@@ -214,8 +214,9 @@ implicit none
 type(mpas_field), intent(inout) :: self
 real(kind=kind_real) :: zz
    
-   zz = 0.1
-   call da_self_mult(self % subFields, zz)
+   zz = 10.
+   write(0,*)'Calling da_setval: ' 
+   call da_setval(self % subFields, zz)
    !call da_random(self % subFields)
 
 end subroutine random

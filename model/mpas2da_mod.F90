@@ -662,6 +662,68 @@ module mpas2da_mod
 
    end subroutine da_zeros
 
+   !***********************************************************************
+   !
+   !  subroutine da_setval
+   !
+   !> \brief   Performs A = Val_R. for pool A
+   !> \author  Gael Descombes
+   !> \date    22 December 2017
+   !> \details
+   !
+   !-----------------------------------------------------------------------
+   subroutine da_setval(pool_a,zz)
+
+      implicit none
+
+      type (mpas_pool_type), pointer :: pool_a
+      real (kind=RKIND) :: zz
+
+      type (mpas_pool_iterator_type) :: poolItr
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
+
+      !
+      ! Iterate over all fields in pool_b, adding them to fields of the same
+      ! name in pool_a
+      !
+      call mpas_pool_begin_iteration(pool_a)
+
+      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+
+         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+         ! so we select only those members of the pool that are fields
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+
+            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+
+               ! Depending on the dimensionality of the field, we need to set pointers of
+               ! the correct type
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
+                  r0d_ptr_a = zz
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+                  r1d_ptr_a = zz
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
+                  r2d_ptr_a = zz
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
+                  r3d_ptr_a = zz
+               end if
+
+            end if
+         end if
+      end do
+
+   end subroutine da_setval
+
+
+
 
 
    !***********************************************************************
