@@ -23,8 +23,8 @@ setenv LIBMPAS ${SRCMPAS}/link_libs
 set comp_pio2=0 
 set comp_mpas=0
 set libr_mpas=0
-set oops_mpas=0
-set test_mpas=1
+set oops_mpas=1
+set test_mpas=0
 
 #===========================================================
 
