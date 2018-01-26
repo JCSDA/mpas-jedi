@@ -92,8 +92,10 @@ write(*,*) 'welcome to mpas_vars_create'
 !  self%fldnames(4) = "u"
 !case ("onevar")
 !write(*,*) ' allocated(self%fldnames)=',allocated(self%fldnames)
+write(*,*) 'svar(1)=',svar(1)
 self%nv=0
 
+write(*,*) 'svar(1)=',svar(1)
 do jj=1,svar(1)
   write(*,*) 'jj=',jj
   ii=jj+1

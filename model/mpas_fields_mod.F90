@@ -24,6 +24,7 @@ use atm_core
 use mpas2da_mod
 use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
+use type_mpl, only: mpl,mpl_recv,mpl_send,mpl_bcast
 
 implicit none
 private
@@ -33,7 +34,7 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
-        & change_resol, interp_tl, interp_ad
+        & change_resol, interp_tl, interp_ad, define_ug, convert_to_ug, convert_from_ug
 public :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
@@ -474,6 +475,171 @@ type(mpas_vars), intent(in)     :: vars
 type(ufo_geovals), intent(inout) :: gom
 
 end subroutine interp_ad
+
+! ------------------------------------------------------------------------------
+
+subroutine define_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(in) :: self
+type(unstructured_grid), intent(inout) :: ug
+
+integer,allocatable :: imask(:,:)
+real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:)
+!integer :: nc0a,ic0a,jx,jy,jl,jf,joff
+integer :: nc0a,ic0a,jC,jl,jf,joff
+
+! Define local index
+nc0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) nc0a = nc0a+1
+enddo
+
+! Allocation
+allocate(lon(nc0a))
+allocate(lat(nc0a))
+allocate(area(nc0a))
+allocate(vunit(self%geom%nVertLevels))
+allocate(imask(nc0a,self%geom%nVertLevels))
+
+! Copy coordinates
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    lon(ic0a) = self%geom%lonCell(jC)
+    lat(ic0a) = self%geom%latCell(jC)
+    area(ic0a) = self%geom%areaCell(jC)
+  endif
+enddo
+imask = 1
+
+! Define vertical unit
+do jl=1,self%geom%nVertLevels
+  vunit(jl) = real(jl,kind=kind_real)
+enddo
+
+! Create unstructured grid
+call create_unstructured_grid(ug, nc0a, self%geom%nVertLevels, self%nf, 1, lon, lat, area, vunit, imask)
+
+end subroutine define_ug
+
+! ------------------------------------------------------------------------------
+
+subroutine convert_to_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(in) :: self
+type(unstructured_grid), intent(inout) :: ug
+
+integer :: ic0a,jC,jl,jf,joff
+
+! Copy field
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    do jf=1,self%nf
+      joff = (jf-1)*self%geom%nVertLevels
+      do jl=1,self%geom%nVertLevels
+!        W/ mpas field type
+!        ug%fld(ic0a,jl,jf,1) = self%gfld3d(jx,jy,joff+jl)
+      enddo
+    enddo
+  endif
+enddo
+
+end subroutine convert_to_ug
+
+! ------------------------------------------------------------------------------
+
+subroutine convert_from_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(inout) :: self
+type(unstructured_grid), intent(in) :: ug
+
+integer :: ic0a,jC,jl,jf,joff,nbuf,jbuf,iproc
+real(kind=kind_real),allocatable :: rbuf(:),sbuf(:)
+
+! Copy field
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    do jf=1,self%nf
+      joff = (jf-1)*self%geom%nVertLevels
+      do jl=1,self%geom%nVertLevels
+!        W/ mpas field type
+!        self%gfld3d(jx,jy,joff+jl) = ug%fld(ic0a,jl,jf,1)
+      enddo
+    enddo
+  endif
+enddo
+
+! Communication
+if (mpl%main) then
+   do iproc=1,mpl%nproc
+      if (iproc/=mpl%ioproc) then
+         ! Allocation
+         nbuf = count(self%geom%iproc==iproc)*self%geom%nVertLevels*self%nf
+         allocate(rbuf(nbuf))
+
+         ! Receive data on ioproc
+         call mpl_recv(nbuf,rbuf,iproc,mpl%tag)
+
+         ! Format data
+         jbuf = 0
+         do jC=1,self%geom%nCells
+           if (self%geom%iproc(jC)==iproc) then
+             do jf=1,self%nf
+               joff = (jf-1)*self%geom%nVertLevels
+               do jl=1,self%geom%nVertLevels
+                 jbuf = jbuf+1
+!                 W/ mpas field type
+!                 self%gfld3d(jx,jy,joff+jl) = rbuf(jbuf)
+               enddo
+             enddo
+           endif
+         enddo
+
+         ! Release memory
+         deallocate(rbuf)
+      end if
+   end do
+else
+   ! Allocation
+   nbuf = count(self%geom%iproc==mpl%myproc)*self%nf*self%geom%nVertLevels
+   allocate(sbuf(nbuf))
+
+   ! Format data
+   jbuf = 0
+   do jC=1,self%geom%nCells
+     if (self%geom%iproc(jC)==mpl%myproc) then
+       do jf=1,self%nf
+         joff = (jf-1)*self%geom%nVertLevels
+         do jl=1,self%geom%nVertLevels
+           jbuf = jbuf+1
+!           W/ mpas field type
+!           sbuf(jbuf) = self%gfld3d(jx,jy,joff+jl)
+         enddo
+       enddo
+     endif
+   enddo
+
+   ! Send data to ioproc
+   call mpl_send(nbuf,sbuf,mpl%ioproc,mpl%tag)
+
+   ! Release memory
+   deallocate(sbuf)
+end if
+mpl%tag = mpl%tag+1
+
+! Broadcast
+!W/ mpas field type
+!call mpl_bcast(self%gfld3d,mpl%ioproc)
+
+end subroutine convert_from_ug
 
 ! ------------------------------------------------------------------------------
 

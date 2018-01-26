@@ -270,6 +270,63 @@ end subroutine mpas_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_field_define_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_define_f90')
+use iso_c_binding
+use mpas_fields_mod
+use unstructured_grid_mod
+implicit none
+integer(c_int), intent(in) :: c_key_fld
+integer(c_int), intent(in) :: c_key_ug
+type(mpas_field), pointer :: fld
+type(unstructured_grid), pointer :: ug
+
+call mpas_field_registry%get(c_key_fld,fld)
+call unstructured_grid_registry%get(c_key_ug,ug)
+
+call define_ug(fld, ug)
+
+end subroutine mpas_field_define_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_convert_to_f90')
+use iso_c_binding
+use mpas_fields_mod
+use unstructured_grid_mod
+implicit none
+integer(c_int), intent(in) :: c_key_fld
+integer(c_int), intent(in) :: c_key_ug
+type(mpas_field), pointer :: fld
+type(unstructured_grid), pointer :: ug
+
+call mpas_field_registry%get(c_key_fld,fld)
+call unstructured_grid_registry%get(c_key_ug,ug)
+
+call convert_to_ug(fld, ug)
+
+end subroutine mpas_field_convert_to_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_convert_from_f90')
+use iso_c_binding
+use mpas_fields_mod
+use unstructured_grid_mod
+implicit none
+integer(c_int), intent(in) :: c_key_fld
+integer(c_int), intent(in) :: c_key_ug
+type(mpas_field), pointer :: fld
+type(unstructured_grid), pointer :: ug
+
+call mpas_field_registry%get(c_key_fld,fld)
+call unstructured_grid_registry%get(c_key_ug,ug)
+
+call convert_from_ug(fld, ug)
+
+end subroutine mpas_field_convert_from_c
+
+! ------------------------------------------------------------------------------
+
 subroutine mpas_field_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='mpas_field_read_file_f90')
 use iso_c_binding
 use mpas_fields_mod
@@ -378,15 +435,20 @@ integer(c_int), dimension(*), intent(in) :: c_vars  !< List of requested variabl
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
 type(ufo_locs),  pointer :: locs
-type(mpas_vars),  pointer :: vars
+type(mpas_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
+write(*,*) 'call mpas_field_registry%get(c_key_fld, fld)'
 call mpas_field_registry%get(c_key_fld, fld)
+write(*,*) 'call ufo_locs_registry%get(c_key_loc, locs)'
 call ufo_locs_registry%get(c_key_loc, locs)
 !call mpas_vars_registry%get(c_key_var, vars)
+write(*,*) 'call mpas_vars_create(vars, c_vars)'
 call mpas_vars_create(vars, c_vars)
+write(*,*) 'call ufo_geovals_registry%get(c_key_gom, gom)'
 call ufo_geovals_registry%get(c_key_gom, gom)
 
+write(*,*) 'call interp_tl(fld, locs, vars, gom)'
 call interp_tl(fld, locs, vars, gom)
 
 end subroutine mpas_field_interp_tl_c

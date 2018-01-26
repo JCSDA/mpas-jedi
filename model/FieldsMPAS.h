@@ -27,6 +27,7 @@ namespace eckit {
 }
 
 namespace oops {
+  class UnstructuredGrid;
   class Variables;
 }
 
@@ -71,6 +72,11 @@ class FieldsMPAS : public util::Printable,
   void changeResolution(const FieldsMPAS &);
   void add(const FieldsMPAS &);
   void diff(const FieldsMPAS &, const FieldsMPAS &);
+
+// Define and convert to/from unstructured grid
+  void define(oops::UnstructuredGrid &) const;
+  void convert_to(oops::UnstructuredGrid &) const;
+  void convert_from(const oops::UnstructuredGrid &);
 
 // Utilities
   void read(const eckit::Configuration &);

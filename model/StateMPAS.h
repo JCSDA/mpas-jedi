@@ -28,6 +28,7 @@ namespace ufo {
 }
 
 namespace oops {
+  class UnstructuredGrid;
   class Variables;
 }
 
@@ -70,6 +71,11 @@ class StateMPAS : public util::Printable,
   double norm() const {return fields_->norm();}
   const util::DateTime & validTime() const {return fields_->time();}
   util::DateTime & validTime() {return fields_->time();}
+
+/// Define and convert to/from unstructured grid
+  void define(oops::UnstructuredGrid &) const;
+  void convert_to(oops::UnstructuredGrid &) const;
+  void convert_from(const oops::UnstructuredGrid &);
 
 /// Access to fields
   FieldsMPAS & fields() {return *fields_;}

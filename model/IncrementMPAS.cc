@@ -19,6 +19,7 @@
 #include "GeometryMPAS.h"
 #include "StateMPAS.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
 
@@ -132,6 +133,20 @@ void IncrementMPAS::interpolateAD(const ufo::Locations & locs, const oops::Varia
   oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
   oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
   fields_->interpolateAD(locs, vars, cols);
+}
+// -----------------------------------------------------------------------------
+/// Define and convert to/from unstructured grid
+// -----------------------------------------------------------------------------
+void IncrementMPAS::define(oops::UnstructuredGrid & ug) const {
+  fields_->define(ug);
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::convert_to(oops::UnstructuredGrid & ug) const {
+  fields_->convert_to(ug);
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::convert_from(const oops::UnstructuredGrid & ug) {
+  fields_->convert_from(ug);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

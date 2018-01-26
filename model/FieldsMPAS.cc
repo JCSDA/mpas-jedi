@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 #include "util/Logger.h"
@@ -143,6 +144,18 @@ void FieldsMPAS::add(const FieldsMPAS & rhs) {
 // -----------------------------------------------------------------------------
 void FieldsMPAS::diff(const FieldsMPAS & x1, const FieldsMPAS & x2) {
   mpas_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::define(oops::UnstructuredGrid & ug) const {
+  mpas_field_define_f90(keyFlds_, ug.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::convert_to(oops::UnstructuredGrid & ug) const {
+  mpas_field_convert_to_f90(keyFlds_, ug.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::convert_from(const oops::UnstructuredGrid & ug) {
+  mpas_field_convert_from_f90(keyFlds_, ug.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::read(const eckit::Configuration & config) {

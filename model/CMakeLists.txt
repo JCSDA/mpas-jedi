@@ -42,6 +42,7 @@ tools_nc.f90
 mpas_vars_mod.F90
 mpas2da_mod.F90
 mpas_run_interface.F90
+#mpas_fields_interp_mod.F90
 )
 
 set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )
