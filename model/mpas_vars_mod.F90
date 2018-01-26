@@ -12,6 +12,7 @@ use fckit_log_module, only : log
 implicit none
 private
 public :: mpas_vars
+public :: mpas_vars_create
 public :: mpas_vars_registry
 
 
@@ -62,10 +63,13 @@ end subroutine mpas_vars_setup
 
 subroutine mpas_vars_create(self, svar)
 
-   character(len=20), intent(inout) :: svar
-   type(mpas_vars), pointer, intent(out) :: self
+   type(mpas_vars), intent(inout) :: self
+   integer(c_int), dimension(*), intent(in) :: svar
+   integer :: ii, jj
    
-   svar = "cv"  !config_get_string(c_conf,len(svar),"variables")
+write(*,*) 'welcome to mpas_vars_create'
+!   svar = "cv"  !config_get_string(c_conf,len(svar),"variables")
+
 !call log%info('GD SVAR: '//svar)
 !select case (trim(svar))
 !case ("reconstructed_winds")
@@ -87,10 +91,18 @@ subroutine mpas_vars_create(self, svar)
 !  self%fldnames(3) = "qv"
 !  self%fldnames(4) = "u"
 !case ("onevar")
-  self%nv = 1
+!write(*,*) ' allocated(self%fldnames)=',allocated(self%fldnames)
+self%nv=0
+
+do jj=1,svar(1)
+  write(*,*) 'jj=',jj
+  ii=jj+1
+  self%nv=self%nv+1
+enddo
+
+
   self%lbc = .false.
   allocate(self%fldnames(self%nv))
-  !self%fldnames(1) = "theta"
   self%fldnames(1) = "theta_m"
 !case default
 !  call abor1_ftn("c_mpas_vars_create: undefined variables")

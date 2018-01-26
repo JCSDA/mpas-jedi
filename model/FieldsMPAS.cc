@@ -20,7 +20,7 @@
 #include "GeometryMPAS.h"
 #include "eckit/config/Configuration.h"
 #include "util/DateTime.h"
-
+#include "VariablesMPAS.h" // Adding
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
@@ -117,17 +117,20 @@ void FieldsMPAS::random() {
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolate(const ufo::Locations & locs, const oops::Variables & vars,
                               ufo::GeoVaLs & gom) const {
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+  const VariablesMPAS varmpas(vars);
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars,
                                 ufo::GeoVaLs & gom) const {
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+  const VariablesMPAS varmpas(vars);
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars,
                                 const ufo::GeoVaLs & gom) {
-  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), vars.toFortran(), gom.toFortran());
+  const VariablesMPAS varmpas(vars);
+  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::changeResolution(const FieldsMPAS & other) {

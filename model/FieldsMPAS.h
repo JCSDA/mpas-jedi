@@ -14,7 +14,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "GeometryMPAS.h"
-#include "oops/base/Variables.h"
+//#include "oops/base/Variables.h"
+#include "VariablesMPAS.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
 #include "util/ObjectCounter.h"
@@ -23,6 +24,10 @@
 // Forward declarations
 namespace eckit {
   class Configuration;
+}
+
+namespace oops {
+  class Variables;
 }
 
 namespace ufo {
@@ -83,7 +88,8 @@ class FieldsMPAS : public util::Printable,
   void print(std::ostream &) const;
   F90flds keyFlds_;
   boost::shared_ptr<const GeometryMPAS> geom_;
-  oops::Variables vars_;
+//  oops::Variables vars_;
+  const VariablesMPAS vars_;
   util::DateTime time_;
 };
 // -----------------------------------------------------------------------------

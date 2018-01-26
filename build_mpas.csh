@@ -8,19 +8,18 @@
 # - pio2 github done
 #---------------------------------------------------------
 setenv MODEL mpas
-setenv BUNDLE_MODEL "/home/vagrant/jedi/code/mpas-bundle/${MODEL}"
-setenv BUILD_MODEL "/home/vagrant/jedi/build/mpas-bundle/${MODEL}"
+setenv BUNDLE_MODEL "/home/vagrant/jedi2/code/mpas-bundle/"
+setenv BUILD_MODEL "/home/vagrant/jedi2/build/mpas-bundle/"
 
-#setenv SRCMPAS /home/vagrant/jedi/code/jedi-bundle/MPAS-Release
-setenv SRCMPAS /home/vagrant/jedi/data/MPAS-Release
-setenv SRCPIO /home/vagrant/jedi/libs/ParallelIO 
-setenv BUILDPIO /home/vagrant/jedi/libs/build6 
+setenv SRCMPAS /home/vagrant/jedi2/code/MPAS-Release
+setenv SRCPIO /home/vagrant/jedi2/libs/ParallelIO 
+setenv BUILDPIO /home/vagrant/jedi2/libs/build6 
 setenv LIBPIO ${BUILDPIO}/writable/pio2
 setenv LIBMPAS ${SRCMPAS}/link_libs
 #setenv NETCDF /somewhere/already set
 #setenv PNETCDF /somewhere/already set 
 
-set comp_pio2=0 
+set comp_pio2=0
 set comp_mpas=0
 set libr_mpas=0
 set oops_mpas=1
@@ -60,7 +59,8 @@ if ( $comp_mpas ) then
    echo "PIO $PIO"
    pwd
    echo "make gfortran CORE=atmosphere USE_PIO2=true"
-   make gfortran CORE=atmosphere USE_PIO2=true DEBUG=true
+   #make gfortran CORE=atmosphere USE_PIO2=true DEBUG=true
+   make gfortran CORE=atmosphere USE_PIO2=true
 endif
 
 if ( $libr_mpas ) then
@@ -106,7 +106,8 @@ if ( $oops_mpas ) then
    echo " Compiling OOPS-MPAS"
    echo "======================================================" 
 
-   setenv MPAS_LIBRARIES "${LIBPIO}/lib/libpiof.a;${LIBPIO}/lib/libpioc.a;${LIBMPAS}/libmpas.a;/usr/local/lib/libnetcdf.so;/usr/local/lib/libmpi.so;/usr/local/lib/libpnetcdf.so"
+   setenv MPAS_LIBRARIES "${LIBPIO}/lib/libpiof.a;${LIBPIO}/lib/libpioc.a;${LIBMPAS}/libmpas.a;/usr/local/lib/libnetcdf.so;/usr/local/lib/libmpi.so;/usr/local/lib/libpnetcdf.so;/usr/local/lib/libmpi_mpifh.so"
+   #setenv MPAS_LIBRARIES "${LIBPIO}/lib/libpiof.a;${LIBPIO}/lib/libpioc.a;${LIBMPAS}/libmpas.a;/usr/local/lib/libnetcdf.so;/usr/local/lib/libmpi.so;/usr/local/lib/libpnetcdf.so"
    setenv MPAS_INCLUDES "${LIBMPAS}/include;${LIBPIO}/include"
    echo "MPAS_LIBRARIES: ${MPAS_LIBRARIES}"
    echo "MPAS_INCLUDES:  ${MPAS_INCLUDES}"
@@ -115,7 +116,7 @@ if ( $oops_mpas ) then
 
    mkdir -p $BUILD_MODEL/${MODEL}
    cd $BUILD_MODEL
-   ecbuild  /home/vagrant/jedi/code/mpas-bundle
+   ecbuild  /home/vagrant/jedi2/code/mpas-bundle
    make -j4
 
    #cp -v $BUNDLE_MODEL/statics/* $BUILD_MODEL/${MODEL}/test
@@ -131,9 +132,9 @@ if ( $test_mpas ) then
    echo "======================================================"
 
    cd $BUILD_MODEL
-   setenv OOPS_TRACE 1
-   #ctest -V -R test_mpas_geometry
+   setenv OOPS_TRACE=1
+   #ctest -VV -R test_mpas_geometry
    #ctest -VV -R test_mpas_state
    ctest -VV -R test_mpas_increment
-   #ctest -V -R test_mpas_geometry
+   #ctest -VV -R test_mpas_geometry
 endif

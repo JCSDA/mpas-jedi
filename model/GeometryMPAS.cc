@@ -15,8 +15,9 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf) {
   const eckit::Configuration * configc = &conf;
-  oops::Log::trace()<<"==================setp1"<<std::endl;
+  oops::Log::trace() << "============ GeometryMPAS::GeometryMPAS step 1 =============" << std::endl;
   mpas_geo_setup_f90(keyGeom_, &configc);
+  oops::Log::trace() << "============ GeometryMPAS::GeometryMPAS step 2 =============" << std::endl;
 }
 // -----------------------------------------------------------------------------
 GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) {

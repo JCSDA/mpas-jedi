@@ -1,6 +1,8 @@
 list( APPEND oops_mpas_src_files
 ErrorCovarianceMPAS.cc
 ErrorCovarianceMPAS.h
+VariablesMPAS.cc
+VariablesMPAS.h
 FieldsMPAS.cc
 FieldsMPAS.h
 Fortran.h
@@ -24,6 +26,8 @@ TlmIdMPAS.cc
 TlmIdMPAS.h
 TlmMPAS.cc
 TlmMPAS.h
+#VariablesMPAS.cc
+#VariablesMPAS.h
 mpas_covariance_interface.F90
 mpas_covariance_mod.F90
 mpas_fields_interface.F90
