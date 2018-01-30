@@ -24,6 +24,7 @@ use atm_core
 use mpas2da_mod
 use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
+use type_mpl, only: mpl,mpl_recv,mpl_send,mpl_bcast
 
 implicit none
 private
@@ -33,7 +34,7 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
-        & change_resol, interp_tl, interp_ad
+        & change_resol, interp_tl, interp_ad, define_ug, convert_to_ug, convert_from_ug
 public :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
@@ -456,11 +457,304 @@ end subroutine fldrms
 ! ------------------------------------------------------------------------------
 
 subroutine interp_tl(fld, locs, vars, gom)
+
+use model_oops, only: model_oops_coord
+use obsop_apply, only: apply_obsop 
+use obsop_parameters, only: compute_parameters
+use type_nam, only: namtype
+use type_geom, only: geomtype,compute_grid_mesh
+use type_odata, only: odatatype
+use type_randgen, only: create_randgen
+use mpi
+use mpas_pool_routines
+
 implicit none
 type(mpas_field), intent(in)    :: fld
 type(ufo_locs), intent(in)  :: locs
 type(mpas_vars), intent(in)     :: vars
 type(ufo_geovals), intent(inout) :: gom
+
+logical, save :: interp_initialized = .FALSE.
+integer :: n
+real(kind=kind_real), parameter :: deg2rad = 0.01745329251
+real(kind=kind_real), parameter :: rad2deg = 57.29577954572
+
+integer :: mod_nC,mod_nz,mod_ns
+real(kind=kind_real), allocatable :: mod_lat(:), mod_lon(:) 
+real(kind=kind_real), allocatable :: mod_field(:,:)
+integer :: obs_num
+real(kind=kind_real), allocatable :: obs_lat(:), obs_lon(:) 
+real(kind=kind_real), allocatable :: obs_field(:,:)
+
+type(geomtype), save, target :: geom
+type(namtype), target :: nam
+integer, allocatable :: imask(:)
+real(kind=kind_real), allocatable :: area(:),vunit(:)
+type(odatatype), save :: odata
+
+integer :: ierr, i, j
+
+type (mpas_pool_type), pointer :: pool_a
+type (mpas_pool_iterator_type) :: poolItr
+real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+
+
+!Get the Solution dimensions
+!---------------------------
+mod_nC  = fld%geom%nCells
+mod_nz  = fld%geom%nVertLevels
+mod_ns  = 1
+
+
+!Check things are the sizes we expect
+!------------------------------------
+if( gom%nvar .lt. mod_ns )then
+   call abor1_ftn("mpas_fields_mod:interp_tl nvar wrong size")
+endif
+if( .not. allocated(gom%geovals) )then
+   call abor1_ftn("mpas_fields_mod:interp_tl geovals unallocated")
+endif
+if( size(gom%geovals, 1) .lt. mod_ns )then
+   call abor1_ftn("mpas_fields_mod:interp_tl geovals wrong size")
+endif
+do n=1,mod_ns
+   if( allocated(gom%geovals(n)%vals) )then  
+      if( gom%geovals(n)%nval .ne. mod_nz )then
+         call abor1_ftn("mpas_fields_mod:interp_tl nval wrong size")
+      endif
+      if( gom%geovals(n)%nobs .ne. mod_nC )then
+         call abor1_ftn("mpas_fields_mod:interp_tl nobs wrong size")
+      endif
+      if( size(gom%geovals(n)%vals, 1) .eq. mod_nz )then
+         call abor1_ftn("mpas_fields_mod:interp_tl vals wrong size 1")
+      endif
+      if( size(gom%geovals(n)%vals, 2) .eq. mod_nC )then
+         call abor1_ftn("mpas_fields_mod:interp_tl vals wrong size 2")
+      endif       
+   endif 
+enddo
+
+
+!Calculate interpolation weight using nicas
+!------------------------------------------
+if( .NOT. interp_initialized )then
+   
+   !Initialized flag
+   interp_initialized = .TRUE. 
+
+   allocate( mod_lat(mod_nC), mod_lon(mod_nC) )
+   mod_lat = fld%geom%latCell
+   mod_lon = fld%geom%lonCell
+
+   !*!HARDCODED!*! obsnum to 2 for testing, when deleting change intent to in
+   obs_num = 0
+!   if (mpp_pe() == 1) then
+      obs_num = obs_num + 1
+      !Uncomment to give observation on this processor, then put in json file
+      !locs%lat(1) = rad2deg*fld%geom%grid_lat(fld%geom%bd%isc+5,fld%geom%bd%jsc+7) + 0.47
+      !locs%lon(1) = rad2deg*fld%geom%grid_lon(fld%geom%bd%isc+5,fld%geom%bd%jsc+7) + 0.27
+      print*, 'TestOB 1', locs%lat(1), locs%lon(1)
+!   elseif (mpp_pe() == 2) then
+      obs_num = obs_num + 1
+      !Uncomment to give observation on this processor, then put in json file
+      !locs%lat(2) = rad2deg*fld%geom%grid_lat(fld%geom%bd%isc+9,fld%geom%bd%jsc+8) + 0.62
+      !locs%lon(2) = rad2deg*fld%geom%grid_lon(fld%geom%bd%isc+9,fld%geom%bd%jsc+8) + 0.25
+      print*, 'TestOB 2', locs%lat(2), locs%lon(2)
+!   endif
+   !*!END HARDCODED!*!
+
+   allocate( obs_lat(obs_num), obs_lon(obs_num) )
+
+   !*!HARDCODED!*! test mode
+   !Uncomment below lines
+!   if (mpp_pe() == 1) then
+   obs_lat(1)  = deg2rad * locs%lat(1)
+   obs_lon(1)  = deg2rad * locs%lon(1)
+!   elseif (mpp_pe() == 2) then
+   obs_lat(2)  = deg2rad * locs%lat(2)
+   obs_lon(2)  = deg2rad * locs%lon(2)
+!   endif
+   !*!END HARDCODED!*!
+
+   !obs_lat(:)  = deg2rad * locs%lat(:)
+   !obs_lon(:)  = deg2rad * locs%lon(:)
+
+   !Important namelist options
+   nam%obsop_interp = 'bilin' ! Interpolation type (bilinear)
+   nam%obsdis = 0.0           ! Observation distribution parameter (0.0 => local distribution, 1.0 => perfect load balancing)
+   nam%datadir = '.'          ! Data directory
+   nam%prefix = 'oops_data'   ! Prefix for files output
+
+   !Less important namelist options (should not be changed)
+   nam%default_seed = .true.
+   nam%model = 'oops'
+   nam%mask_type = 'none'
+   nam%new_hdiag = .false.
+   nam%displ_diag = .false.
+   nam%new_param = .false.
+   nam%new_lct = .false.
+   nam%mask_check = .false.
+   nam%new_obsop = .true.
+   nam%check_dirac = .false.
+   nam%nc3 = 1
+   nam%dc = 1.0
+
+   !Initialize random number generator
+   call create_randgen(nam)
+
+   !Initialize geometry
+   geom%nc0a = mod_nC   ! Number of grid points (local)
+   geom%nl0 = 1         ! Number of levels: only one level here (same interpolation for all levels)
+   geom%nlev = geom%nl0 ! Copy
+   allocate(area(mod_nC))
+   allocate(vunit(1))
+   allocate(imask(mod_nC))
+   area = 1.0           ! Dummy area
+   vunit = 1.0          ! Dummy vertical unit
+   imask = 1            ! Mask
+   call model_oops_coord(geom,mod_lon,mod_lat,area,vunit,imask)
+
+   !Compute grid mesh
+   call compute_grid_mesh(nam,geom)
+
+   !Initialize observation operator with observations coordinates (local)
+   odata%nobsa = obs_num
+   allocate(odata%lonobs(odata%nobsa))
+   allocate(odata%latobs(odata%nobsa))
+   odata%lonobs = obs_lon
+   odata%latobs = obs_lat
+
+   !Setup observation operator
+   odata%nam => nam
+   odata%geom => geom
+   call compute_parameters(odata,.true.)
+
+   deallocate( mod_lat, mod_lon )
+   deallocate( obs_lat, obs_lon )
+
+endif
+
+
+!Make sure the return values are allocated and set
+!-------------------------------------------------
+do n=1,mod_ns
+   if( .not. allocated(gom%geovals(n)%vals) )then
+      allocate( gom%geovals(n)%vals(mod_nz,obs_num) )
+      gom%geovals(n)%nval = mod_nz
+      gom%geovals(n)%nobs = mod_nC
+   endif
+enddo
+
+
+!Create Buffer for interpolated values
+!--------------------------------------
+allocate(mod_field(mod_nC,1))
+allocate(obs_field(obs_num,1))
+
+!Interpolate fields to obs locations using pre-calculated weights
+!----------------------------------------------------------------
+call mpas_pool_begin_iteration(fld % subFields)
+
+do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
+     write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+     ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+     ! so we select only those members of the pool that are fields
+     if (poolItr % memberType == MPAS_POOL_FIELD) then
+     ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+     if (poolItr % dataType == MPAS_POOL_REAL) then
+        ! Depending on the dimensionality of the field, we need to set pointers of
+        ! the correct type
+        if (poolItr % nDims == 1) then
+           !call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+           !select case (op_type)
+           !case ('TL')
+           !   call apply_linop(geov_hinterp_op, r1d_ptr_a(:), fld_dst)
+           !case ('AD')
+           !   !call apply_linop_ad(hinterp_op,fld_dst,r1d_ptr_a(:))
+           !end select
+        else if (poolItr % nDims == 2) then
+           call mpas_pool_get_array(fld % subFields, trim(poolItr % memberName), r2d_ptr_a)
+           !call mpas_pool_get_array(poolItr, trim(poolItr % memberName), r2d_ptr_a)
+           do n = 1, mod_nz
+              mod_field(:,1) = r2d_ptr_a(n,:)
+              call apply_obsop(geom,odata,mod_field,obs_field)
+              write(0,*)"n, MIN/MAX: ",minval(r2d_ptr_a(:,n)),maxval(r2d_ptr_a(:,n))
+              write(*,*)"n, Interp. value = ", n, obs_field(:,1)
+              gom%geovals(1)%vals(n,:) = obs_field(:,1)
+           end do
+        else if (poolItr % nDims == 3) then
+           write(*,*)'Not implemented yet'
+           !call abort
+        end if
+     end if
+     end if
+end do
+
+!!ua
+!do n = 1, mod_nz
+!
+!   mod_field(:,1) = reshape( fld%Atm%ua(fld%geom%bd%isc:fld%geom%bd%iec,      &
+!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
+!                                   n), [mod_num])
+!
+!   call apply_obsop(geom,odata,mod_field,obs_field)
+!
+!   gom%geovals(1)%vals(n,:) = obs_field(:,1)
+!enddo
+!
+!!va
+!do n = 1, mod_nz
+!
+!   mod_field(:,1) = reshape( fld%Atm%va(fld%geom%bd%isc:fld%geom%bd%iec,      &
+!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
+!                                   n), [mod_num])
+!
+!   call apply_obsop(geom,odata,mod_field,obs_field)
+!
+!   gom%geovals(2)%vals(n,:) = obs_field(:,1)
+!enddo                      
+!
+!!pt
+!do n = 1, mod_nz
+!
+!   mod_field(:,1) = reshape( fld%Atm%pt(fld%geom%bd%isc:fld%geom%bd%iec,      &
+!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
+!                                   n), [mod_num])
+!
+!   call apply_obsop(geom,odata,mod_field,obs_field)
+!
+!   gom%geovals(3)%vals(n,:) = obs_field(:,1)
+!enddo 
+!
+!!q (tracer 1)
+!do n = 1, mod_nz
+!
+!   mod_field(:,1) = reshape( fld%Atm%q(fld%geom%bd%isc:fld%geom%bd%iec,      &
+!                                     fld%geom%bd%jsc:fld%geom%bd%jec,      &
+!                                     n, 1), [mod_num])
+!
+!   call apply_obsop(geom,odata,mod_field,obs_field)
+!
+!   gom%geovals(4)%vals(n,:) = obs_field(:,1)
+!enddo 
+!
+!!delp
+!do n = 1, mod_nz
+!
+!   mod_field(:,1) = reshape( fld%Atm%delp(fld%geom%bd%isc:fld%geom%bd%iec,      &
+!                                     fld%geom%bd%jsc:fld%geom%bd%jec,      &
+!                                     n), [mod_num])
+!
+!   call apply_obsop(geom,odata,mod_field,obs_field)
+!
+!   gom%geovals(5)%vals(n,:) = obs_field(:,1)
+!enddo                                                                   
+
+deallocate(mod_field)
+deallocate(obs_field)
 
 end subroutine interp_tl
 
@@ -474,6 +768,171 @@ type(mpas_vars), intent(in)     :: vars
 type(ufo_geovals), intent(inout) :: gom
 
 end subroutine interp_ad
+
+! ------------------------------------------------------------------------------
+
+subroutine define_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(in) :: self
+type(unstructured_grid), intent(inout) :: ug
+
+integer,allocatable :: imask(:,:)
+real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:)
+!integer :: nc0a,ic0a,jx,jy,jl,jf,joff
+integer :: nc0a,ic0a,jC,jl,jf,joff
+
+! Define local index
+nc0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) nc0a = nc0a+1
+enddo
+
+! Allocation
+allocate(lon(nc0a))
+allocate(lat(nc0a))
+allocate(area(nc0a))
+allocate(vunit(self%geom%nVertLevels))
+allocate(imask(nc0a,self%geom%nVertLevels))
+
+! Copy coordinates
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    lon(ic0a) = self%geom%lonCell(jC)
+    lat(ic0a) = self%geom%latCell(jC)
+    area(ic0a) = self%geom%areaCell(jC)
+  endif
+enddo
+imask = 1
+
+! Define vertical unit
+do jl=1,self%geom%nVertLevels
+  vunit(jl) = real(jl,kind=kind_real)
+enddo
+
+! Create unstructured grid
+call create_unstructured_grid(ug, nc0a, self%geom%nVertLevels, self%nf, 1, lon, lat, area, vunit, imask)
+
+end subroutine define_ug
+
+! ------------------------------------------------------------------------------
+
+subroutine convert_to_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(in) :: self
+type(unstructured_grid), intent(inout) :: ug
+
+integer :: ic0a,jC,jl,jf,joff
+
+! Copy field
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    do jf=1,self%nf
+      joff = (jf-1)*self%geom%nVertLevels
+      do jl=1,self%geom%nVertLevels
+!        W/ mpas field type
+!        ug%fld(ic0a,jl,jf,1) = self%gfld3d(jx,jy,joff+jl)
+      enddo
+    enddo
+  endif
+enddo
+
+end subroutine convert_to_ug
+
+! ------------------------------------------------------------------------------
+
+subroutine convert_from_ug(self, ug)
+use unstructured_grid_mod
+implicit none
+type(mpas_field), intent(inout) :: self
+type(unstructured_grid), intent(in) :: ug
+
+integer :: ic0a,jC,jl,jf,joff,nbuf,jbuf,iproc
+real(kind=kind_real),allocatable :: rbuf(:),sbuf(:)
+
+! Copy field
+ic0a = 0
+do jC=1,self%geom%nCells
+  if (self%geom%iproc(jC)==mpl%myproc) then
+    ic0a = ic0a+1
+    do jf=1,self%nf
+      joff = (jf-1)*self%geom%nVertLevels
+      do jl=1,self%geom%nVertLevels
+!        W/ mpas field type
+!        self%gfld3d(jx,jy,joff+jl) = ug%fld(ic0a,jl,jf,1)
+      enddo
+    enddo
+  endif
+enddo
+
+! Communication
+if (mpl%main) then
+   do iproc=1,mpl%nproc
+      if (iproc/=mpl%ioproc) then
+         ! Allocation
+         nbuf = count(self%geom%iproc==iproc)*self%geom%nVertLevels*self%nf
+         allocate(rbuf(nbuf))
+
+         ! Receive data on ioproc
+         call mpl_recv(nbuf,rbuf,iproc,mpl%tag)
+
+         ! Format data
+         jbuf = 0
+         do jC=1,self%geom%nCells
+           if (self%geom%iproc(jC)==iproc) then
+             do jf=1,self%nf
+               joff = (jf-1)*self%geom%nVertLevels
+               do jl=1,self%geom%nVertLevels
+                 jbuf = jbuf+1
+!                 W/ mpas field type
+!                 self%gfld3d(jx,jy,joff+jl) = rbuf(jbuf)
+               enddo
+             enddo
+           endif
+         enddo
+
+         ! Release memory
+         deallocate(rbuf)
+      end if
+   end do
+else
+   ! Allocation
+   nbuf = count(self%geom%iproc==mpl%myproc)*self%nf*self%geom%nVertLevels
+   allocate(sbuf(nbuf))
+
+   ! Format data
+   jbuf = 0
+   do jC=1,self%geom%nCells
+     if (self%geom%iproc(jC)==mpl%myproc) then
+       do jf=1,self%nf
+         joff = (jf-1)*self%geom%nVertLevels
+         do jl=1,self%geom%nVertLevels
+           jbuf = jbuf+1
+!           W/ mpas field type
+!           sbuf(jbuf) = self%gfld3d(jx,jy,joff+jl)
+         enddo
+       enddo
+     endif
+   enddo
+
+   ! Send data to ioproc
+   call mpl_send(nbuf,sbuf,mpl%ioproc,mpl%tag)
+
+   ! Release memory
+   deallocate(sbuf)
+end if
+mpl%tag = mpl%tag+1
+
+! Broadcast
+!W/ mpas field type
+!call mpl_bcast(self%gfld3d,mpl%ioproc)
+
+end subroutine convert_from_ug
 
 ! ------------------------------------------------------------------------------
 

@@ -111,6 +111,8 @@ contains
 !> Linked list implementation
 #include "linkedList_c.f"
 
+#define TEST_INTERP
+#ifdef TEST_INTERP
 ! ------------------------------------------------------------------------------
 ! Routine to test interpolation inside MPAS, based on read_file
 ! ------------------------------------------------------------------------------
@@ -212,13 +214,13 @@ subroutine mpas_test_interp(fld, c_conf, vdate)
 
   write(*,*) "=== call interp_tl ===="
   locs%nloc = 2
-  allocate( locs%xyz(3,locs%nloc) ) ! 1=lon, 2=lat, 3=pressure or height ?!
-  locs%xyz(1,1) = fld%geom%lonCell(1) !185.047045203329 !0.0
-  locs%xyz(2,1) = fld%geom%latCell(1) !26.5650501506626 !30.0
-  locs%xyz(3,1) = 850.0 ! hPa
-  locs%xyz(1,2) = 10.0_kind_real
-  locs%xyz(2,2) = 80.0_kind_real
-  locs%xyz(3,2) = 850.0 ! hPa
+  allocate( locs%lat(locs%nlocs) )
+  allocate( locs%lon(locs%nlocs) )
+
+  locs%lon(1) = fld%geom%lonCell(1)
+  locs%lat(1) = fld%geom%latCell(1) !26.5650501506626 !30.0
+  locs%lon(2) = 10.0_kind_real
+  locs%lat(2) = 80.0_kind_real
 
   
   Nc = fld%geom%nCell
@@ -287,8 +289,8 @@ subroutine mpas_test_interp(fld, c_conf, vdate)
   allocate( ival(1) )
 
   do iobs=1, locs%nloc
-     locs_single%lon = locs%xyz(1,iobs)
-     locs_single%lat = locs%xyz(2,iobs)
+     locs_single%lon = locs%lon(iobs)
+     locs_single%lat = locs%lat(iobs)
      !locs_single%vloc = locs%xyz(3,iobs)
      do i=1, nfunc
         x_dart(:) = reshape(x_func(:,:), (/nfunc*fld%geom%nCells/))   ! fld(:,:,:) ~ [nCells,nVertLevels,nf]
@@ -301,7 +303,7 @@ subroutine mpas_test_interp(fld, c_conf, vdate)
      end do
   end do
 
-  deallocate (x)
+  deallocate (x_dart)
   deallocate (dval)
   deallocate (ival)
   deallocate(nEdgesOnCell)
@@ -318,6 +320,7 @@ subroutine mpas_test_interp(fld, c_conf, vdate)
   return
 
 end subroutine mpas_test_interp
+#endif
 
 ! ------------------------------------------------------------------------------
 
@@ -326,7 +329,7 @@ subroutine mpas_nicas_interph_weight(lat1d, lon1d, locs, geov, geov_hinterp_op)
 implicit none
 
     use type_linop
-    use tools_interp, only: interp_horiz
+    use tools_interp, only: compute_interp
     use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
     use module_namelist, only: namtype
 
@@ -354,7 +357,7 @@ implicit none
           lato = deg2rad*locs%xyz(2,:)
           lon  = deg2rad*lon1d
           lat  = deg2rad*lat1d
-          call interp_horiz(rng, Nc, lon,  lat,  mask, No, lono, lato, masko, geov_hinterp_op)
+          call compute_interp(rng, Nc, lon,  lat,  mask, No, lono, lato, masko, geov_hinterp_op)
           geov_hinterp_initialized = .true.
           write(*,*) " NICAS Weights    =", geov_hinterp_op%S(:)  
           write(*,*) " NICAS ColumnIndex=", geov_hinterp_op%col(:)
@@ -370,7 +373,7 @@ end subroutine mpas_nicas_interph_weight
 subroutine nicas_interph(fld, locs, geov, op_type)
 
     use type_linop
-    use tools_interp, only: interp_horiz
+    use tools_interp, only: compute_interp
     use type_randgen, only: rng,initialize_sampling,create_randgen !randgentype
     use module_namelist, only: namtype    
     !use tools_const, only: deg2rad

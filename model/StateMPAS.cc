@@ -20,6 +20,7 @@
 #include "IncrementMPAS.h"
 #include "ModelMPAS.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
 
@@ -127,6 +128,20 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   ASSERT(fields_);
   fields_->add(dx.fields());
   return *this;
+}
+// -----------------------------------------------------------------------------
+/// Define and convert to/from unstructured grid
+// -----------------------------------------------------------------------------
+void StateMPAS::define(oops::UnstructuredGrid & ug) const {
+  fields_->define(ug);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::convert_to(oops::UnstructuredGrid & ug) const {
+  fields_->convert_to(ug);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::convert_from(const oops::UnstructuredGrid & ug) {
+  fields_->convert_from(ug);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

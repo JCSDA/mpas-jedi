@@ -19,8 +19,24 @@
       "date": "2010-10-23T00:00:00Z"
     },
     "date": "2010-10-23T00:00:00Z",
+    "StateGenerate" : {
+      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "date": "2010-10-23T00:00:00Z",
+      "mean": 8.0,
+      "sinus": 2.0
+    },
     "norm-file": "800.0",
     "norm-gen": "800.0",
-    "tolerance": "100."
-  }
+    "tolerance": "100.",
+    "Locations": {
+      "lats": [50.0, 30.0, 10.0],
+      "lons": [50.0, 30.0, 10.0],
+      "positions": [0.717]
+    },
+    "Variables": {
+      "variables": ["x"]
+    },
+    "values": [6.042838]
+  },
+  "nvars": 1
 }

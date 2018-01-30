@@ -33,6 +33,7 @@ namespace ufo {
 }
 
 namespace oops {
+  class UnstructuredGrid;
   class Variables;
 }
 
@@ -88,7 +89,12 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   util::DateTime & validTime() {return fields_->time();}
   void updateTime(const util::Duration & dt) {fields_->time() += dt;}
 
-/// Access to fields
+/// Define and convert to/from unstructured grid
+  void define(oops::UnstructuredGrid &) const;
+  void convert_to(oops::UnstructuredGrid &) const;
+  void convert_from(const oops::UnstructuredGrid &);
+
+//Access to fields
   FieldsMPAS & fields() {return *fields_;}
   const FieldsMPAS & fields() const {return *fields_;}
 
