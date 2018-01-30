@@ -4,7 +4,7 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "/home/vagrant/jedi/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
     "variables": ["cv"]
@@ -15,7 +15,7 @@
   },
   "StateTest": {
     "StateFile": {
-      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "filename": "/home/vagrant/jedi/build/mpas-bundle/mpas/test/x1.2562.init.nc",
       "date": "2010-10-23T00:00:00Z"
     },
     "date": "2010-10-23T00:00:00Z",
