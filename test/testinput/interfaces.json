@@ -29,8 +29,8 @@
     "norm-gen": "800.0",
     "tolerance": "100.",
     "Locations": {
-      "lats": [50.0],
-      "lons": [50.0],
+      "lats": [50.0, 30.0, 10.0],
+      "lons": [50.0, 30.0, 10.0],
       "positions": [0.717]
     },
     "Variables": {
