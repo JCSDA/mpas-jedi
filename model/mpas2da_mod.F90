@@ -201,41 +201,48 @@ module mpas2da_mod
    !>  Given pool A, create pool B as a subset of the fields in A
    !
    !-----------------------------------------------------------------------
-   subroutine da_make_subpool(pool_a, pool_b, fieldname)
+   subroutine da_make_subpool(domain, pool_b, fieldname)
 
       implicit none
 
-      type (mpas_pool_type), pointer, intent(in) :: pool_a
+      type (domain_type), pointer, intent(in) :: domain
       type (mpas_pool_type), pointer, intent(out) :: pool_b
-      type (mpas_pool_type), pointer :: pool_c
       character (len=*), intent(in) :: fieldname(:)
+      type (mpas_pool_type), pointer :: pool_a, pool_c, state
 
       type (mpas_pool_iterator_type) :: poolItr
       type (field0DReal), pointer :: field0d
       type (field1DReal), pointer :: field1d
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
-      integer, pointer :: index_qv 
+      integer, pointer :: index_scalar 
       integer :: nsize, ii, jj
 
       jj = 0
-      nsize = da_common_vars(pool_a, fieldname)
-      !write(0,*)'--Create a sub Pool from list of variable'
-      !call mpas_pool_create_pool(pool_b)
+      call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
+      pool_a => domain % blocklist % allFields
+      write(0,*)'before da_common_vars' 
+     nsize = da_common_vars(pool_a, fieldname)
+      write(0,*)'after da_common_vars' 
+ 
+      write(0,*)'--Create a sub Pool from list of variable: ',nsize
+      call mpas_pool_create_pool(pool_b, nsize)
       call mpas_pool_create_pool(pool_c, nsize)
-      write(0,*)'Fieldname: ',nsize,fieldname(:)
+      !write(0,*)'Fieldname: ',nsize,fieldname(:)
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
       call mpas_pool_begin_iteration(pool_a)
-
-      do ii=1, nsize
-         do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-            ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-            ! so we select only those members of the pool that are fields
-            if (poolItr % memberType == MPAS_POOL_FIELD) then
-               ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-               if (poolItr % dataType == MPAS_POOL_REAL) then
+      write(0,*)'Before iterating'
+         
+ 
+      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+         ! so we select only those members of the pool that are fields
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+              do ii=1, nsize
                   if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
                      write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
                      ! Depending on the dimensionality of the field, we need to set pointers of
@@ -259,26 +266,28 @@ module mpas2da_mod
                      jj = jj + 1
                   
                   else if ( trim(poolItr % memberName).eq.'scalars' ) then
-                     write(0,*)'Scalars pool qv  case'
-                     if ( trim(fieldname(ii)).eq.'qv') then        
+                     write(0,*)'Scalars pool case'
+                     if ( trim(fieldname(ii)).eq.'index_qv') then        
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                        call mpas_pool_get_dimension(pool_a, 'index_qv', index_qv)
+                        call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
                         call mpas_pool_get_field(pool_a, 'theta', field2d)
-                        field2d % array = field3d % array(index_qv,:,:)
+                        field2d % fieldName = trim(fieldname(ii))
+                        field2d % array = field3d % array(index_scalar,:,:)
+                        field2d % array = field3d % array(index_scalar,:,:)
                         call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d)
                         write(0,*) '2D MIN/MAX value: ', maxval(field2d % array),minval(field2d % array)
                         jj = jj + 1
                      end if
                   end if
-
-               end if
-            end if
-         end do
-         if ( ii.ne.jj ) then
-            write(0,*)'Missing field in the pool da_make_subpool: '//trim(fieldname(ii))
-            ! call mpas_dmpar_global_abort('Missing field in the pool da_make_subpool: '//trim(fieldname(ii))) 
-         end if
+               end do
+             end if
+          end if
       end do
+
+      if ( nsize.ne.jj ) then
+        write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,jj
+      end if
+
 
       write(0,*)'da_make_subpool new Pool size ',Pool_c % size
       call mpas_pool_clone_pool(pool_c, pool_b)
@@ -321,7 +330,7 @@ module mpas2da_mod
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
                         write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
-                     else if (( trim(fieldname(ii)).eq.'qv').and.(trim(poolItr % memberName).eq.'scalars')) then
+                     else if (( trim(fieldname(ii)).eq.'index_qv').and.(trim(poolItr % memberName).eq.'scalars')) then
                         write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1 
                      end if
