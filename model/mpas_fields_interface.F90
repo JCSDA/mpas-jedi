@@ -27,6 +27,7 @@ call mpas_field_registry%add(c_key_self)
 call mpas_field_registry%get(c_key_self,self)
 
 call mpas_vars_create(vars, c_vars)
+write(*,*) vars % nv, vars % fldnames(:)
 
 call create(self, geom, vars)
 
@@ -450,6 +451,7 @@ call ufo_geovals_registry%get(c_key_gom, gom)
 
 write(*,*) 'call interp_tl(fld, locs, vars, gom)'
 call interp_tl(fld, locs, vars, gom)
+write(*,*) 'done interp_tl(fld, locs, vars, gom)'
 
 end subroutine mpas_field_interp_tl_c
 

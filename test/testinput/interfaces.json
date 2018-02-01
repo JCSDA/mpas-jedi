@@ -4,7 +4,7 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "/home/vagrant/jedi/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
     "variables": ["cv"]
@@ -15,7 +15,7 @@
   },
   "StateTest": {
     "StateFile": {
-      "filename": "/home/vagrant/jedi/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
       "date": "2010-10-23T00:00:00Z"
     },
     "date": "2010-10-23T00:00:00Z",
@@ -25,8 +25,8 @@
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-file": "800.0",
-    "norm-gen": "800.0",
+    "norm-file": "0.018",
+    "norm-gen": "0.018",
     "tolerance": "100.",
     "Locations": {
       "lats": [50.0, 30.0, 10.0],
@@ -34,7 +34,7 @@
       "positions": [0.717]
     },
     "Variables": {
-      "variables": ["x"]
+      "variables": ["cv"]
     },
     "values": [6.042838]
   },

@@ -73,14 +73,14 @@ write(*,*) 'welcome to mpas_vars_create'
 !call log%info('GD SVAR: '//svar)
 !select case (trim(svar))
 !case ("reconstructed_winds")
-!  self%nv = 5
-!  self%lbc = .false.
-!  allocate(self%fldnames(self%nv))
-!  self%fldnames(1) = "theta"
-!  self%fldnames(2) = "rho"
-!  self%fldnames(3) = "qv"
-!  self%fldnames(4) = "uReconstructZonal"
-!  self%fldnames(5) = "uReconstructMeridional"
+  self%nv = 5
+  self%lbc = .false.
+  allocate(self%fldnames(self%nv))
+  self%fldnames(1) = "theta"
+  self%fldnames(2) = "rho"
+  self%fldnames(3) = "index_qv"
+  self%fldnames(4) = "uReconstructZonal"
+  self%fldnames(5) = "uReconstructMeridional"
 !case ("normal_speed")
 !  self%nv = 4
 !  self%lbc = .false.
@@ -92,20 +92,20 @@ write(*,*) 'welcome to mpas_vars_create'
 !  self%fldnames(4) = "u"
 !case ("onevar")
 !write(*,*) ' allocated(self%fldnames)=',allocated(self%fldnames)
-write(*,*) 'svar(1)=',svar(1)
-self%nv=0
-
-write(*,*) 'svar(1)=',svar(1)
-do jj=1,svar(1)
-  write(*,*) 'jj=',jj
-  ii=jj+1
-  self%nv=self%nv+1
-enddo
-
-
-  self%lbc = .false.
-  allocate(self%fldnames(self%nv))
-  self%fldnames(1) = "theta_m"
+!write(*,*) 'svar(1)=',svar(1)
+!self%nv=0
+!
+!write(*,*) 'svar(1)=',svar(1)
+!do jj=1,svar(1)
+!  write(*,*) 'jj=',jj
+!  ii=jj+1
+!  self%nv=self%nv+1
+!enddo
+!
+!
+!  self%lbc = .false.
+!  allocate(self%fldnames(self%nv))
+!  self%fldnames(1) = "theta_m"
 !case default
 !  call abor1_ftn("c_mpas_vars_create: undefined variables")
 !end select
@@ -121,7 +121,7 @@ integer(c_int), intent(inout) :: c_key_self
 type(c_ptr), intent(in)    :: c_conf
 
 type(mpas_vars), pointer :: self
-character(len=20) :: svar
+character(len=22) :: svar
 
 call mpas_vars_registry%init()
 call mpas_vars_registry%add(c_key_self)

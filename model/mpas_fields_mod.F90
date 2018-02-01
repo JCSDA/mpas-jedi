@@ -78,37 +78,23 @@ subroutine create(self, geom, vars)
     implicit none
 
     type(mpas_field), intent(inout) :: self
-    !type(mpas_geom),  intent(inout), pointer    :: geom
     type(mpas_geom),  intent(in), pointer    :: geom
     type(mpas_vars),  intent(in)    :: vars
 
-    !type (dm_info), pointer :: dminfo
     integer :: nsize
     integer :: mpi_comm
     real(kind=kind_real), allocatable :: pstat(:, :)
-    !type (dm_info) :: dminfo
 
     ! from the namelist
-    self % nf = 1 ! vars % nv
+    self % nf =  vars % nv
     allocate(self % fldnames(self % nf))
-    self % fldnames(1) = "theta_m" !vars % fldnames(:)
-    write(*,*)'allocate ',self % fldnames(:)
+    self % fldnames(:) = vars % fldnames(:)
+    write(*,*)'self % nf =',self % nf
+    write(*,*)'allocate ::',self % fldnames(:)
    
     ! coming from mpas_subdriver
     write(*,*)'Before calling the subdriver of mpas'
-    !if ( geom % use_mpi ) then
-    !if ( self % domain % dminfo % initialized_mpi  ) then
-    !write(*,*)'dminfo % initialized_mpi: ',dminfo % initialized_mpi,geom % use_mpi
-    !if ( geom % use_mpi  ) then
-       !self % domain % dminfo => dminfo
-       call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
-    !else
-    !   call mpas_init(self % corelist, self % domain)
-    !   geom % use_mpi = .true.
-    !   dminfo % initialized_mpi = .true.
-    !end if
-    ! dminfo % initialized_mpi
-    !write(*,*)'After calling the subdriver of mpas'
+    call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
 
     ! update geom
     if (associated(geom)) then
@@ -118,17 +104,8 @@ subroutine create(self, geom, vars)
       write(*,*)'geom not associated'
       self % geom =>null()
     end if
-    ! This or create a subpool dminfo and clone
-!    geom % dminfo => self % domain % dminfo
 
-    ! Create a subpool from allfields
-!    nsize = da_common_vars(self % domain % blocklist % allFields, self % fldnames)
-!    if ( self % nf .ne. nsize  ) then
-!       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nsize)
-!    end  if
-    !write(0,*)'-- Create a sub Pool from list of variable ',nsize
-!    call mpas_pool_create_pool(self % subFields,self % nf)
-    call da_make_subpool(self % domain % blocklist % allFields, self % subFields, self % fldnames)
+    call da_make_subpool(self % domain, self % subFields, self % fldnames)
     allocate(pstat(3, self % nf))
     call da_gpnorm(self % subFields, self % nf, pstat)
     write(0,*)'Pstat: ',pstat
@@ -521,6 +498,7 @@ if( size(gom%geovals, 1) .lt. mod_ns )then
    call abor1_ftn("mpas_fields_mod:interp_tl geovals wrong size")
 endif
 do n=1,mod_ns
+   write(*,*) 'allocated(gom%geovals(n)%vals)=',allocated(gom%geovals(n)%vals)
    if( allocated(gom%geovals(n)%vals) )then  
       if( gom%geovals(n)%nval .ne. mod_nz )then
          call abor1_ftn("mpas_fields_mod:interp_tl nval wrong size")
@@ -550,37 +528,17 @@ if( .NOT. interp_initialized )then
    mod_lon = fld%geom%lonCell
 
    !*!HARDCODED!*! obsnum to 2 for testing, when deleting change intent to in
-   obs_num = 0
-!   if (mpp_pe() == 1) then
-      obs_num = obs_num + 1
-      !Uncomment to give observation on this processor, then put in json file
-      !locs%lat(1) = rad2deg*fld%geom%grid_lat(fld%geom%bd%isc+5,fld%geom%bd%jsc+7) + 0.47
-      !locs%lon(1) = rad2deg*fld%geom%grid_lon(fld%geom%bd%isc+5,fld%geom%bd%jsc+7) + 0.27
-      print*, 'TestOB 1', locs%lat(1), locs%lon(1)
-!   elseif (mpp_pe() == 2) then
-      obs_num = obs_num + 1
-      !Uncomment to give observation on this processor, then put in json file
-      !locs%lat(2) = rad2deg*fld%geom%grid_lat(fld%geom%bd%isc+9,fld%geom%bd%jsc+8) + 0.62
-      !locs%lon(2) = rad2deg*fld%geom%grid_lon(fld%geom%bd%isc+9,fld%geom%bd%jsc+8) + 0.25
-      print*, 'TestOB 2', locs%lat(2), locs%lon(2)
-!   endif
+   write(*,*) 'size( locs%lat(:) )=', size( locs%lat(:) )
+   obs_num = size( locs%lat(:) )
+   do i=1, obs_num
+      write(*,*) 'TestOB #=',i,locs%lat(i), locs%lon(i)
+   enddo
    !*!END HARDCODED!*!
 
    allocate( obs_lat(obs_num), obs_lon(obs_num) )
 
-   !*!HARDCODED!*! test mode
-   !Uncomment below lines
-!   if (mpp_pe() == 1) then
-   obs_lat(1)  = deg2rad * locs%lat(1)
-   obs_lon(1)  = deg2rad * locs%lon(1)
-!   elseif (mpp_pe() == 2) then
-   obs_lat(2)  = deg2rad * locs%lat(2)
-   obs_lon(2)  = deg2rad * locs%lon(2)
-!   endif
-   !*!END HARDCODED!*!
-
-   !obs_lat(:)  = deg2rad * locs%lat(:)
-   !obs_lon(:)  = deg2rad * locs%lon(:)
+   obs_lat(:)  = deg2rad * locs%lat(:)
+   obs_lon(:)  = deg2rad * locs%lon(:)
 
    !Important namelist options
    nam%obsop_interp = 'bilin' ! Interpolation type (bilinear)
@@ -678,6 +636,7 @@ do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
         else if (poolItr % nDims == 2) then
            call mpas_pool_get_array(fld % subFields, trim(poolItr % memberName), r2d_ptr_a)
            !call mpas_pool_get_array(poolItr, trim(poolItr % memberName), r2d_ptr_a)
+           write(*,*) "Interp. var=",trim(poolItr % memberName)
            do n = 1, mod_nz
               mod_field(:,1) = r2d_ptr_a(n,:)
               call apply_obsop(geom,odata,mod_field,obs_field)
@@ -693,65 +652,6 @@ do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
      end if
 end do
 
-!!ua
-!do n = 1, mod_nz
-!
-!   mod_field(:,1) = reshape( fld%Atm%ua(fld%geom%bd%isc:fld%geom%bd%iec,      &
-!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
-!                                   n), [mod_num])
-!
-!   call apply_obsop(geom,odata,mod_field,obs_field)
-!
-!   gom%geovals(1)%vals(n,:) = obs_field(:,1)
-!enddo
-!
-!!va
-!do n = 1, mod_nz
-!
-!   mod_field(:,1) = reshape( fld%Atm%va(fld%geom%bd%isc:fld%geom%bd%iec,      &
-!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
-!                                   n), [mod_num])
-!
-!   call apply_obsop(geom,odata,mod_field,obs_field)
-!
-!   gom%geovals(2)%vals(n,:) = obs_field(:,1)
-!enddo                      
-!
-!!pt
-!do n = 1, mod_nz
-!
-!   mod_field(:,1) = reshape( fld%Atm%pt(fld%geom%bd%isc:fld%geom%bd%iec,      &
-!                                   fld%geom%bd%jsc:fld%geom%bd%jec,      &
-!                                   n), [mod_num])
-!
-!   call apply_obsop(geom,odata,mod_field,obs_field)
-!
-!   gom%geovals(3)%vals(n,:) = obs_field(:,1)
-!enddo 
-!
-!!q (tracer 1)
-!do n = 1, mod_nz
-!
-!   mod_field(:,1) = reshape( fld%Atm%q(fld%geom%bd%isc:fld%geom%bd%iec,      &
-!                                     fld%geom%bd%jsc:fld%geom%bd%jec,      &
-!                                     n, 1), [mod_num])
-!
-!   call apply_obsop(geom,odata,mod_field,obs_field)
-!
-!   gom%geovals(4)%vals(n,:) = obs_field(:,1)
-!enddo 
-!
-!!delp
-!do n = 1, mod_nz
-!
-!   mod_field(:,1) = reshape( fld%Atm%delp(fld%geom%bd%isc:fld%geom%bd%iec,      &
-!                                     fld%geom%bd%jsc:fld%geom%bd%jec,      &
-!                                     n), [mod_num])
-!
-!   call apply_obsop(geom,odata,mod_field,obs_field)
-!
-!   gom%geovals(5)%vals(n,:) = obs_field(:,1)
-!enddo                                                                   
 
 deallocate(mod_field)
 deallocate(obs_field)

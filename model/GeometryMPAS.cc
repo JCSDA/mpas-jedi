@@ -22,6 +22,7 @@ GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf) {
 // -----------------------------------------------------------------------------
 GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) {
   const int key_geo = other.keyGeom_;
+  oops::Log::trace() << "============ GeometryMPAS mpas_geo_clone_f90   =============" << std::endl;
   mpas_geo_clone_f90(key_geo, keyGeom_);
 }
 // -----------------------------------------------------------------------------

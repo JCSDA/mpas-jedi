@@ -270,7 +270,7 @@ module mpas2da_mod
                      if ( trim(fieldname(ii)).eq.'index_qv') then        
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
                         call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
-                        call mpas_pool_get_field(pool_a, 'theta', field2d)
+                        call mpas_pool_get_field(pool_a, 'theta_m', field2d)
                         field2d % fieldName = trim(fieldname(ii))
                         field2d % array = field3d % array(index_scalar,:,:)
                         field2d % array = field3d % array(index_scalar,:,:)
