@@ -164,5 +164,9 @@ void IncrementMPAS::print(std::ostream & os) const {
   os << *fields_;
 }
 // -----------------------------------------------------------------------------
+void IncrementMPAS::dirac(const eckit::Configuration & config) {
+  fields_->dirac(config);
+}
+// -----------------------------------------------------------------------------
 
 }  // namespace mpas

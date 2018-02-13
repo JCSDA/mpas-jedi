@@ -31,6 +31,7 @@ namespace mpas {
 
 struct MPASTraits {
   static std::string name() {return "MPAS";}
+  static std::string nameCovar() {return "MPASstatic";}
 
   typedef mpas::GeometryMPAS             Geometry;
 

@@ -14,8 +14,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "GeometryMPAS.h"
-//#include "oops/base/Variables.h"
-#include "VariablesMPAS.h"
+#include "oops/base/Variables.h"
 #include "util/DateTime.h"
 #include "util/Duration.h"
 #include "util/ObjectCounter.h"
@@ -28,7 +27,7 @@ namespace eckit {
 
 namespace oops {
   class UnstructuredGrid;
-  class Variables;
+//  class Variables;
 }
 
 namespace ufo {
@@ -62,6 +61,7 @@ class FieldsMPAS : public util::Printable,
   double dot_product_with(const FieldsMPAS &) const;
   void schur_product_with(const FieldsMPAS &);
   void random();
+  void dirac(const eckit::Configuration &);
 
 // Interpolate to given location
   void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
@@ -94,8 +94,7 @@ class FieldsMPAS : public util::Printable,
   void print(std::ostream &) const;
   F90flds keyFlds_;
   boost::shared_ptr<const GeometryMPAS> geom_;
-//  oops::Variables vars_;
-  const VariablesMPAS vars_;
+  oops::Variables vars_;
   util::DateTime time_;
 };
 // -----------------------------------------------------------------------------

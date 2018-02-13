@@ -10,24 +10,23 @@ subroutine mpas_field_create_c(c_key_self, c_key_geom, c_vars) bind(c,name='mpas
 use iso_c_binding
 use mpas_fields_mod
 use mpas_geom_mod
-use mpas_vars_mod
+use ufo_vars_mod
 implicit none
 integer(c_int), intent(inout) :: c_key_self
 integer(c_int), intent(in) :: c_key_geom !< Geometry
 !integer(c_int), intent(in) :: c_key_vars !< List of variables
-integer(c_int), dimension(*), intent(in) :: c_vars !< List of variables
+type(c_ptr), intent(in) :: c_vars !< List of variables
 
 type(mpas_field), pointer :: self
 type(mpas_geom),  pointer :: geom
-type(mpas_vars) :: vars
+type(ufo_vars) :: vars
 
 call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_field_registry%init()
 call mpas_field_registry%add(c_key_self)
 call mpas_field_registry%get(c_key_self,self)
 
-call mpas_vars_create(vars, c_vars)
-write(*,*) vars % nv, vars % fldnames(:)
+call ufo_vars_setup(vars, c_vars)
 
 call create(self, geom, vars)
 
@@ -63,6 +62,21 @@ call mpas_field_registry%get(c_key_self,self)
 call zeros(self)
 
 end subroutine mpas_field_zero_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_dirac_c(c_key_self,c_conf) bind(c,name='mpas_field_dirac_f90')
+use iso_c_binding
+use mpas_fields_mod
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), intent(in)    :: c_conf !< Configuration
+type(mpas_field), pointer :: self
+
+call mpas_field_registry%get(c_key_self,self)
+call dirac(self,c_conf)
+
+end subroutine mpas_field_dirac_c
 
 ! ------------------------------------------------------------------------------
 
@@ -425,27 +439,26 @@ use iso_c_binding
 use mpas_fields_mod
 use ufo_locs_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
-use mpas_vars_mod
+use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 implicit none
 integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
 !integer(c_int), intent(in) :: c_key_var  !< List of requested variables
-integer(c_int), dimension(*), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
 type(ufo_locs),  pointer :: locs
-type(mpas_vars)  :: vars
+type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
 write(*,*) 'call mpas_field_registry%get(c_key_fld, fld)'
 call mpas_field_registry%get(c_key_fld, fld)
 write(*,*) 'call ufo_locs_registry%get(c_key_loc, locs)'
 call ufo_locs_registry%get(c_key_loc, locs)
-!call mpas_vars_registry%get(c_key_var, vars)
-write(*,*) 'call mpas_vars_create(vars, c_vars)'
-call mpas_vars_create(vars, c_vars)
+write(*,*) 'call ufo_vars_setup(vars, c_vars)'
+call ufo_vars_setup(vars, c_vars)
 write(*,*) 'call ufo_geovals_registry%get(c_key_gom, gom)'
 call ufo_geovals_registry%get(c_key_gom, gom)
 
@@ -463,25 +476,24 @@ use iso_c_binding
 use mpas_fields_mod
 use ufo_locs_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
-use mpas_vars_mod
+use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
 implicit none
 integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
 !integer(c_int), intent(in) :: c_key_var  !< List of requested variables
-integer(c_int), dimension(*), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
 type(ufo_locs),  pointer :: locs
-type(mpas_vars),  pointer :: vars
+type(ufo_vars),  pointer :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_field_registry%get(c_key_fld, fld)
 call ufo_locs_registry%get(c_key_loc, locs)
-!call mpas_vars_registry%get(c_key_var, vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
-call mpas_vars_create(vars, c_vars)
+call ufo_vars_setup(vars, c_vars)
 
 call interp_ad(fld, locs, vars, gom)
 

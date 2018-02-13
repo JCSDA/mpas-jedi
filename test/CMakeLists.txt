@@ -16,6 +16,8 @@ list( APPEND mpas_test_input
   testinput/dfi.json
   testinput/forecast.json
   testinput/genenspert.json
+  testinput/hofx.json
+  testinput/dirac.nicas.json
   testinput/interfaces.json
   testinput/makeobs3d.json
   testinput/makeobs4d.json
@@ -61,6 +63,8 @@ list( APPEND mpas_testoutput
   testoutput/dfi.test
   testoutput/forecast.test
   testoutput/genenspert.test
+  testoutput/hofx.test
+  testoutput/dirac.nicas.test
   testoutput/makeobs3d.test
   testoutput/makeobs4d.test
   testoutput/makeobs4d12h.test
@@ -165,3 +169,18 @@ ecbuild_add_test( TARGET  test_mpas_increment
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/interfaces.json"
                   LIBS    mpas )
+
+ecbuild_add_test( TARGET  test_mpas_hofx
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx.json"
+                       testoutput/hofx.test
+                  DEPENDS mpas_hofx.x )
+
+ecbuild_add_test( TARGET test_mpas_dirac_nicas
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.nicas.json"
+                       testoutput/dirac.nicas.test
+                  DEPENDS mpas_dirac.x )
+

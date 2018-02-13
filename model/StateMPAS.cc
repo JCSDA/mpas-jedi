@@ -64,7 +64,8 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
 
 // WORKING WITHOUT READING THE NAMELIST AS QG/
   oops::Log::trace() << "StateMPAS::GD0 enforcing to variable to cv" << std::endl;
-  const std::vector<std::string> vv{"cv"};
+//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
+  const std::vector<std::string> vv{"theta", "index_qv", "pressure_base"};
   oops::Log::trace() << "StateMPAS::GD1 enforcing to variable to cv" << std::endl;
   oops::Variables vars(vv);
   oops::Log::trace() << "StateMPAS::GD2" << std::endl;

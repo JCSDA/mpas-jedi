@@ -81,7 +81,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Fields
 // -----------------------------------------------------------------------------
-  void mpas_field_create_f90(F90flds &, const F90geom &, const F90vars *);
+  void mpas_field_create_f90(F90flds &, const F90geom &, const eckit::Configuration * const *);
   void mpas_field_delete_f90(F90flds &);
 
   void mpas_field_copy_f90(const F90flds &, const F90flds &);
@@ -104,9 +104,9 @@ extern "C" {
   void mpas_field_write_file_f90(const F90flds &, const eckit::Configuration * const *,
                                const util::DateTime * const *);
 
-  void mpas_field_interp_f90(const F90flds &, const F90locs &, const F90vars *, const F90goms &);
-  void mpas_field_interp_tl_f90(const F90flds &, const F90locs &, const F90vars *, const F90goms &);
-  void mpas_field_interp_ad_f90(const F90flds &, const F90locs &, const F90vars *, const F90goms &);
+  void mpas_field_interp_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *, const F90goms &);
+  void mpas_field_interp_tl_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *, const F90goms &);
+  void mpas_field_interp_ad_f90(const F90flds &, const F90locs &, const eckit::Configuration * const *, const F90goms &);
   void mpas_field_define_f90(const F90flds &, const int &);
   void mpas_field_convert_to_f90(const F90flds &, const int &);
   void mpas_field_convert_from_f90(const F90flds &, const int &);
@@ -114,6 +114,8 @@ extern "C" {
   void mpas_field_gpnorm_f90(const F90flds &, const int &, double &);
   void mpas_field_sizes_f90(const F90flds &, int &, int &, int &, int &);
   void mpas_field_rms_f90(const F90flds &, double &);
+
+  void mpas_field_dirac_f90(const F90flds &, const eckit::Configuration * const *);
 
 // -----------------------------------------------------------------------------
 //  Background error
@@ -135,14 +137,6 @@ extern "C" {
                                  const F90geom &);
   void mpas_localization_delete_f90(F90lclz &);
   void mpas_localization_mult_f90(const F90lclz &, const F90flds &);
-
-// -----------------------------------------------------------------------------
-//  Variables
-// -----------------------------------------------------------------------------
-  void mpas_var_create_f90(F90vars *, const eckit::Configuration * const *);
-  void mpas_var_clone_f90(const F90vars *, F90vars *);
-  void mpas_var_info_f90(const F90vars *, int &, int &);
-  void mpas_var_delete_f90(F90vars *);
 
 // -----------------------------------------------------------------------------
 //  Run

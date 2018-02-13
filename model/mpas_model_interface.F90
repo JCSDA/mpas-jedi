@@ -5,7 +5,7 @@
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_mpas_model_setup(c_key_self, c_key_geom, c_conf) bind (c,name='mpas_model_setup_f90')
+subroutine c_mpas_model_setup(c_conf, c_key_geom, c_key_self) bind (c,name='mpas_model_setup_f90')
 
 use iso_c_binding
 use config_mod
@@ -66,7 +66,9 @@ type(mpas_field), pointer :: flds
 call mpas_field_registry%get(c_key_state,flds)
 call mpas_model_registry%get(c_key_self, self)
 
+write(*,*) '   CALL model_prepare_integration(self, flds)'
 call model_prepare_integration(self, flds)
+write(*,*) '   DONE model_prepare_integration(self, flds)'
 
 end subroutine c_mpas_model_prepare_integration
 

@@ -42,7 +42,6 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
    type (dm_info), pointer :: dminfo => null()
    logical :: use_mpi = .false.
-   integer,allocatable :: iproc(:)
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom
@@ -67,7 +66,7 @@ type(c_ptr), intent(in) :: c_conf
 character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
 real(kind=RKIND), parameter :: deg2rad = pii/180.      
-integer :: iC,nC_loc,iC_loc,iproc
+integer :: iC,nC_loc,iC_loc
 
 write(*,*)'create geom'
 
@@ -104,7 +103,6 @@ allocate(self%xland(self%nCells))
 allocate(self%areaCell(self%nCells))
 allocate(self%edgeNormalVectors(3, self%nEdges))
 allocate(self%zgrid(self%nVertLevelsP1, self%nCells))
-allocate(self%iproc(self%nCells))
 
 !> Read mesh variables
 call ncerr(string1, nf90_inq_varid(ncid,'latCell',varid))
@@ -132,20 +130,6 @@ self%lonEdge = self%lonEdge / deg2rad
 
 !> close file
 call ncerr(string1,nf90_close(ncid))
-
-! Artificial grid distribution for tests
-nC_loc = self%nCells/mpl%nproc
-if (nC_loc*mpl%nproc<self%nCells) nC_loc = nC_loc+1
-iC_loc = 1
-iproc = 1
-do iC=1,self%nCells
-   self%iproc(iC) = iproc
-   iC_loc = iC_loc+1
-   if (iC_loc>nC_loc) then
-      iC_loc = 1
-      iproc = iproc+1
-   end if
-end do
 
 end subroutine geo_setup
 

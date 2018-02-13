@@ -33,8 +33,8 @@ namespace ufo {
 }
 
 namespace oops {
-  class UnstructuredGrid;
   class Variables;
+  class UnstructuredGrid;
 }
 
 namespace mpas {
@@ -76,6 +76,7 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   double dot_product_with(const IncrementMPAS &) const;
   void schur_product_with(const IncrementMPAS &);
   void random();
+  void dirac(const eckit::Configuration &);
 
 /// Interpolate to observation location
   void interpolateTL(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;

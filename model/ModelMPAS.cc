@@ -34,6 +34,7 @@ ModelMPAS::~ModelMPAS() {
 }
 // -----------------------------------------------------------------------------
 void ModelMPAS::initialize(StateMPAS & xx) const {
+  oops::Log::debug() << "   %%%ModelMPAS::initialize(StateMPAS & xx)" << xx.fields() << std::endl;
   mpas_model_prepare_integration_f90(keyConfig_, xx.fields().toFortran());
   oops::Log::debug() << "ModelMPAS::initialize" << xx.fields() << std::endl;
 }

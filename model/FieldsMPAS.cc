@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "eckit/config/Configuration.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "ufo/GeoVaLs.h"
@@ -19,9 +20,8 @@
 #include "util/Logger.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
-#include "eckit/config/Configuration.h"
 #include "util/DateTime.h"
-#include "VariablesMPAS.h" // Adding
+
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
@@ -29,13 +29,15 @@ FieldsMPAS::FieldsMPAS(const GeometryMPAS & geom, const oops::Variables & vars,
                          const util::DateTime & time):
   geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
 }
 // -----------------------------------------------------------------------------
 FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const bool copy)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
   if (copy) {
     mpas_field_copy_f90(keyFlds_, other.keyFlds_);
   } else {
@@ -46,21 +48,24 @@ FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const bool copy)
 FieldsMPAS::FieldsMPAS(const FieldsMPAS & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
   mpas_field_copy_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
 FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const GeometryMPAS & geom)
   : geom_(new GeometryMPAS(geom)), vars_(other.vars_), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
   mpas_field_change_resol_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
 FieldsMPAS::FieldsMPAS(const FieldsMPAS & other, const oops::Variables & vars)
   : geom_(other.geom_), vars_(vars), time_(other.time_)
 {
-  mpas_field_create_f90(keyFlds_, geom_->toFortran(), vars_.toFortran());
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_field_create_f90(keyFlds_, geom_->toFortran(), &conf);
   mpas_field_copy_f90(keyFlds_, other.keyFlds_);
 }
 // -----------------------------------------------------------------------------
@@ -93,6 +98,11 @@ void FieldsMPAS::zero() {
   mpas_field_zero_f90(keyFlds_);
 }
 // -----------------------------------------------------------------------------
+void FieldsMPAS::dirac(const eckit::Configuration & config) {
+  const eckit::Configuration * conf = &config;
+  mpas_field_dirac_f90(keyFlds_, &conf);
+}
+// -----------------------------------------------------------------------------
 void FieldsMPAS::zero(const util::DateTime & time) {
   mpas_field_zero_f90(keyFlds_);
   time_ = time;
@@ -118,20 +128,20 @@ void FieldsMPAS::random() {
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolate(const ufo::Locations & locs, const oops::Variables & vars,
                               ufo::GeoVaLs & gom) const {
-  const VariablesMPAS varmpas(vars);
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars,
                                 ufo::GeoVaLs & gom) const {
-  const VariablesMPAS varmpas(vars);
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars,
                                 const ufo::GeoVaLs & gom) {
-  const VariablesMPAS varmpas(vars);
-  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), varmpas.toFortran(), gom.toFortran());
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::changeResolution(const FieldsMPAS & other) {
@@ -177,10 +187,10 @@ double FieldsMPAS::norm() const {
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::print(std::ostream & os) const {
-  int nx = -1;
-  int ny = -1;
-  int nf = -1;
-  int nb = -1;
+  int nx = 1;
+  int ny = 1;
+  int nf = 1;
+  int nb = 1;
 //  mpas_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
   os << std::endl << "  Resolution = " << nx << ", " << ny
      << ", Fields = " << nf << ", " << nb;
