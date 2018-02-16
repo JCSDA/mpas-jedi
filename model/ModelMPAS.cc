@@ -23,6 +23,7 @@ ModelMPAS::ModelMPAS(const GeometryMPAS & resol, const eckit::Configuration & mo
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
   tstep_ = util::Duration(model.getString("tstep"));
+  oops::Log::trace() << "ModelMPAS::tstep_"<<tstep_<<std::endl;
   const eckit::Configuration * configc = &model;
   mpas_model_setup_f90(&configc, geom_.toFortran(), keyConfig_);
   oops::Log::trace() << "ModelMPAS created" << std::endl;
@@ -34,7 +35,6 @@ ModelMPAS::~ModelMPAS() {
 }
 // -----------------------------------------------------------------------------
 void ModelMPAS::initialize(StateMPAS & xx) const {
-  oops::Log::debug() << "   %%%ModelMPAS::initialize(StateMPAS & xx)" << xx.fields() << std::endl;
   mpas_model_prepare_integration_f90(keyConfig_, xx.fields().toFortran());
   oops::Log::debug() << "ModelMPAS::initialize" << xx.fields() << std::endl;
 }

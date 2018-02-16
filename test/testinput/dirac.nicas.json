@@ -17,9 +17,10 @@
   },
   "Covariance": {
     "covariance": "ensemble",
-    "members": "5",
+    "members": "4",
     "variables": {
-      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+      "variables": ["theta"],
+      "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "variables_save": ["cv"]
     },
     "date": "2010-10-23T00:00:00Z",
@@ -45,10 +46,6 @@
         },
         {
           "filename": "/home/vagrant/data/x1.40962.init.2012061500.e4.nc",
-          "date": "2010-10-23T00:00:00Z"
-        },
-        {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e5.nc",
           "date": "2010-10-23T00:00:00Z"
         }
       ],
@@ -111,7 +108,25 @@
       "obsdis": 1.0,
       "obsop_interp": "bilin",
       "nproc": 1
-    }
+    },
+    "state": [
+      {
+        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e1.nc",
+        "date": "2010-10-23T00:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e2.nc",
+        "date": "2010-10-23T00:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e3.nc",
+        "date": "2010-10-23T00:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e4.nc",
+        "date": "2010-10-23T00:00:00Z"
+      }
+    ]
   },
   "dirac": {
     "ndir": 3,

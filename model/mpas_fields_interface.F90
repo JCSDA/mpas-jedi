@@ -285,25 +285,6 @@ end subroutine mpas_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_field_define_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_define_f90')
-use iso_c_binding
-use mpas_fields_mod
-use unstructured_grid_mod
-implicit none
-integer(c_int), intent(in) :: c_key_fld
-integer(c_int), intent(in) :: c_key_ug
-type(mpas_field), pointer :: fld
-type(unstructured_grid), pointer :: ug
-
-call mpas_field_registry%get(c_key_fld,fld)
-call unstructured_grid_registry%get(c_key_ug,ug)
-
-call define_ug(fld, ug)
-
-end subroutine mpas_field_define_c
-
-! ------------------------------------------------------------------------------
-
 subroutine mpas_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_convert_to_f90')
 use iso_c_binding
 use mpas_fields_mod

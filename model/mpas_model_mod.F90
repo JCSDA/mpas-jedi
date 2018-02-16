@@ -36,6 +36,7 @@ public :: mpas_model, &
 type :: mpas_model
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
+   real (kind=RKIND) :: dt
 end type mpas_model
 
 #define LISTED_TYPE mpas_model
@@ -64,14 +65,37 @@ type(mpas_geom)        :: geom
 character(len=20) :: ststep
 type(duration) :: dtstep
 
+real (kind=RKIND), pointer :: config_dt
+character (len=StrKIND), pointer :: config_start_time
+character (len=StrKIND), pointer :: config_restart_timestamp_name
+character (len=StrKIND), pointer :: config_run_duration
+character (len=StrKIND), pointer :: config_stop_time
+character (len=StrKIND) :: startTimeStamp
+
+write(*,*) "---- Inside of Sub. model_setup ----"
+#ifdef ModelMPAS
+self % corelist => geom % corelist
+self % domain => geom % domain
+
+call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', config_dt)
+call mpas_pool_get_config(self % domain % blocklist % configs, 'config_start_time', config_start_time)
+call mpas_pool_get_config(self % domain % blocklist % configs, 'config_restart_timestamp_name', config_restart_timestamp_name)
+call mpas_pool_get_config(self % domain % blocklist % configs, 'config_run_duration', config_run_duration)
+call mpas_pool_get_config(self % domain % blocklist % configs, 'config_stop_time', config_stop_time)
+write(*,*)'config_dt: ',config_dt
+write(*,*)'config_start_time: ',trim(config_start_time)
+write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
+write(*,*)'config_run_duration: ',trim(config_run_duration)
+write(*,*)'config_stop_time: ',trim(config_stop_time)
 write(0,*)'geom % nCells: ',geom % nCells
-!self % corelist => geom % corelist
-!self % domain => geom % domain
 
 write(*,*)'===> model_setup'
 
 ststep = config_get_string(c_conf,len(ststep),"tstep")
+dtstep = trim(ststep)
 write(0,*)'ststep, dtstep: ', ststep
+self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
+#endif
 
 end subroutine model_setup
 
@@ -94,7 +118,10 @@ type(mpas_field) :: flds
 
 write(*,*)'===> model_prepare_integration'
 
-!call da_copy_sub2all_fields(self % domain, self % flds)
+#ifdef ModelMPAS
+! this should be from sub field to state
+call da_copy_sub2all_fields(self % domain, flds % subFields)
+#endif
 
 end subroutine model_prepare_integration
 
@@ -105,6 +132,8 @@ implicit none
 type(mpas_model) :: self
 type(mpas_field) :: flds
 
+write(*,*)'===> model_prepare_integration_ad'
+
 end subroutine model_prepare_integration_ad
 
 ! ------------------------------------------------------------------------------
@@ -113,6 +142,8 @@ subroutine model_prepare_integration_tl(self, flds)
 implicit none
 type(mpas_model) :: self
 type(mpas_field) :: flds
+
+write(*,*)'===> model_prepare_integration_tl'
 
 end subroutine model_prepare_integration_tl
 
@@ -125,25 +156,27 @@ type(mpas_field) :: flds
 type (mpas_pool_type), pointer :: state
 
 real (kind=RKIND) :: dt
-integer :: itimestep, ii
+integer :: itimestep
 
 write(*,*)'===> model_propagate'
+#ifdef ModelMPAS
+itimestep = 1
+dt = 1200.
+call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
 
-!dt = 1200.
-!itimestep = 1
-!call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
-!
-!do ii=1, 1
-!   
-!   call atm_do_timestep(self % domain, dt, ii)
-!   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
-!   call mpas_pool_shift_time_levels(state)
-!   itimestep = itimestep + 1
-!   call mpas_advance_clock(clock)
-!
+!do itimstep=1, 12
+   
+   call atm_do_timestep(self % domain, dt, itimestep)
+   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
+   call mpas_pool_shift_time_levels(state)
+   itimestep = itimestep + 1
+   call mpas_advance_clock(clock)
+
 !end do
-!
-!call da_copy_all2sub_fields(self % domain, flds % subFields)
+
+! this should be from state to sub field
+call da_copy_all2sub_fields(self % domain, flds % subFields)
+#endif
 
 end subroutine model_propagate
 
@@ -156,6 +189,8 @@ type(mpas_model)      :: self
 type(mpas_field)      :: flds
 type(mpas_trajectory) :: traj
 
+write(*,*)'===> model_prepare_integration_ad'
+
 end subroutine model_propagate_ad
 
 ! ------------------------------------------------------------------------------
@@ -165,6 +200,8 @@ implicit none
 type(mpas_model)      :: self
 type(mpas_field)      :: flds
 type(mpas_trajectory) :: traj
+
+write(*,*)'===> model_propagate_tl'
 
 end subroutine model_propagate_tl
 
@@ -176,6 +213,8 @@ type(mpas_model)      :: self
 type(mpas_field)      :: flds
 type(mpas_trajectory) :: traj
 
+write(*,*)'===> model_prop_traj'
+
 end subroutine model_prop_traj
 
 ! ------------------------------------------------------------------------------
@@ -183,6 +222,8 @@ end subroutine model_prop_traj
 subroutine model_wipe_traj(traj)
 implicit none
 type(mpas_trajectory) :: traj
+
+write(*,*)'===> model_wipe_traj'
 
 end subroutine model_wipe_traj
 

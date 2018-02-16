@@ -64,8 +64,13 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
 
 // WORKING WITHOUT READING THE NAMELIST AS QG/
   oops::Log::trace() << "StateMPAS::GD0 enforcing to variable to cv" << std::endl;
-//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
-  const std::vector<std::string> vv{"theta", "index_qv", "pressure_base"};
+//  --- For Interface ---
+  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
+//  --- For HofX ---
+//  const std::vector<std::string> vv{"theta", "index_qv", "pressure_base"};
+//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure_base"};
+//  --- For Dirac ---
+//  const std::vector<std::string> vv{"theta"};
   oops::Log::trace() << "StateMPAS::GD1 enforcing to variable to cv" << std::endl;
   oops::Variables vars(vv);
   oops::Log::trace() << "StateMPAS::GD2" << std::endl;
@@ -131,11 +136,7 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
-/// Define and convert to/from unstructured grid
-// -----------------------------------------------------------------------------
-void StateMPAS::define(oops::UnstructuredGrid & ug) const {
-  fields_->define(ug);
-}
+/// Convert to/from unstructured grid
 // -----------------------------------------------------------------------------
 void StateMPAS::convert_to(oops::UnstructuredGrid & ug) const {
   fields_->convert_to(ug);

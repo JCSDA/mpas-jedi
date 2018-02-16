@@ -7,8 +7,8 @@
     "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
-    "variables_save": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-    "variables": ["theta", "index_qv"]
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables_": ["theta", "index_qv"]
   },
   "TestDate": "2010-10-23T00:00:00Z",
   "State": {
@@ -26,8 +26,8 @@
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-file": "0.018",
-    "norm-gen": "0.018",
+    "norm-file": "441.0",
+    "norm-gen": "441.0",
     "tolerance": "100.",
     "Locations": {
       "lats": [50.0, 30.0, 10.0, -20.5],
@@ -35,21 +35,22 @@
       "positions": [0.717]
     },
     "Variables": {
-      "variables": ["theta", "index_qv"]
+      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+      "variables_": ["theta", "index_qv"]
     },
     "values": [6.042838]
   },
   "nvars": 1,
   "ModelTest": {
     "fclength": "PT15M",
-    "finalnorm": 0.020383,
-    "tolerance": 0.005
+    "finalnorm": 441.0,
+    "tolerance": 100.0
     },
   "ModelBias": null,
   "Model": {
     "tstep": "PT15M",
     "fclength": "PT1H",
-    "finalnorm": 0.020383,
-    "tolerance": 0.005
+    "finalnorm": 441.0,
+    "tolerance": 100.0
   }
 }

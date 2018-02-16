@@ -13,7 +13,9 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "GeometryMPAS.h"
 #include "eckit/config/Configuration.h"
+#include "oops/interface/LocalizationBase.h"
 #include "util/DateTime.h"
 #include "util/ObjectCounter.h"
 #include "util/Printable.h"

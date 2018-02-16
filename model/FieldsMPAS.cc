@@ -156,10 +156,6 @@ void FieldsMPAS::diff(const FieldsMPAS & x1, const FieldsMPAS & x2) {
   mpas_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::define(oops::UnstructuredGrid & ug) const {
-  mpas_field_define_f90(keyFlds_, ug.toFortran());
-}
-// -----------------------------------------------------------------------------
 void FieldsMPAS::convert_to(oops::UnstructuredGrid & ug) const {
   mpas_field_convert_to_f90(keyFlds_, ug.toFortran());
 }
