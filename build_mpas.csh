@@ -8,8 +8,8 @@
 # - pio2 github done
 #---------------------------------------------------------
 setenv MODEL mpas
-setenv BUNDLE_MODEL "/home/vagrant/jedi2/code/mpas-bundle/"
-setenv BUILD_MODEL "/home/vagrant/jedi2/build/mpas-bundle/"
+setenv BUNDLE_MODEL "/home/vagrant/jedi3/code/mpas-bundle/"
+setenv BUILD_MODEL "/home/vagrant/jedi3/build/mpas-bundle/"
 
 setenv SRCMPAS /home/vagrant/jedi2/code/MPAS-Release
 setenv SRCPIO /home/vagrant/jedi2/libs/ParallelIO 
@@ -116,7 +116,7 @@ if ( $oops_mpas ) then
 
    mkdir -p $BUILD_MODEL/${MODEL}
    cd $BUILD_MODEL
-   ecbuild  /home/vagrant/jedi2/code/mpas-bundle
+   ecbuild  /home/vagrant/jedi3/code/mpas-bundle
    make -j4
 
    #cp -v $BUNDLE_MODEL/statics/* $BUILD_MODEL/${MODEL}/test

@@ -4,11 +4,11 @@
 ! Additional copyright and license information can be found in the LICENSE file
 ! distributed with this code, or at http://mpas-dev.github.com/license.html
 
-module mpas2da_mod
+module mpas4da_mod
 
    !***********************************************************************
    !
-   !  Module mpas2da_mod to encapsulate operations needed for
+   !  Module mpas4da_mod to encapsulate operations needed for
    !  Data assimilation purpose.
    !  It can be used from /somewhere/MPAS/src/operators 
    !  or from /somewhere/mpas-bundle/mpas/model (OOPS) 
@@ -376,13 +376,15 @@ module mpas2da_mod
    !>  Given pool A, create pool B as a subset of the fields in A
    !
    !-----------------------------------------------------------------------
-   subroutine da_make_subpool(domain, pool_b, fieldname)
+   subroutine da_make_subpool(domain, pool_b, nsize, fieldname, nfields)
 
       implicit none
 
       type (domain_type), pointer, intent(in) :: domain
       type (mpas_pool_type), pointer, intent(out) :: pool_b
       character (len=*), intent(in) :: fieldname(:)
+      integer, intent(out) :: nfields
+      integer, intent(in) :: nsize
       type (mpas_pool_type), pointer :: pool_a, pool_c, state
 
       type (mpas_pool_iterator_type) :: poolItr
@@ -391,14 +393,14 @@ module mpas2da_mod
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
       integer, pointer :: index_scalar, dim0d
-      integer :: nsize, ii, jj
+      integer :: ii
 
-      jj = 0
+      nfields = 0
       call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
       pool_a => domain % blocklist % allFields
-      write(0,*)'before da_common_vars' 
-     nsize = da_common_vars(pool_a, fieldname)
-      write(0,*)'after da_common_vars' 
+      !write(0,*)'before da_common_vars' 
+      !nsize = da_common_vars(pool_a, fieldname)
+      !write(0,*)'after da_common_vars' 
  
       write(0,*)'--Create a sub Pool from list of variable: ',nsize
       call mpas_pool_create_pool(pool_b, nsize)
@@ -438,7 +440,7 @@ module mpas2da_mod
                         call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field3d)
                         write(0,*) '3D MIN/MAX value: ', maxval(field3d % array),minval(field3d % array)
                      end if
-                     jj = jj + 1
+                     nfields = nfields + 1
                   
                   else if ( trim(poolItr % memberName).eq.'scalars' ) then
                      write(0,*)'Scalars pool case'
@@ -451,17 +453,13 @@ module mpas2da_mod
                         field2d % array = field3d % array(index_scalar,:,:)
                         call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d)
                         write(0,*) '2D MIN/MAX value: ', maxval(field2d % array),minval(field2d % array)
-                        jj = jj + 1
+                        nfields = nfields + 1
                      end if
                   end if
                end do
              end if
           end if
       end do
-
-      if ( nsize.ne.jj ) then
-        write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,jj
-      end if
 
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nCellsSolve', dim0d)
       write(0,*)'Adding dimension nCellsSolve: ',dim0d
@@ -488,8 +486,11 @@ module mpas2da_mod
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'vertexDegree', dim0d)
       call mpas_pool_add_dimension(pool_c, 'vertexDegree', dim0d)
 
-      !write(0,*)'nCells, nEdges, nVertices, vertexDegree: ',nCells, nEdges, nVertices, vertexDegree
-      !write(0,*)'Solve dimsensions                      : ',nCells, nEdges, nVertices, vertexDegree
+
+      if ( nsize.ne.nfields ) then
+        write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,nfields
+      end if
+
 
       write(0,*)'da_make_subpool new Pool size ',Pool_c % size
       call mpas_pool_clone_pool(pool_c, pool_b)
@@ -1270,12 +1271,12 @@ module mpas2da_mod
                   else
                       call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1)), solveDim2)
                   end if
-                  dimtot  = real(solveDim1*solveDim2,RKIND)
+                  dimtot  = real(solveDim1*solveDim2,RKIND) + dimtot
                   prodtot = sum((field2d % array(1:solveDim1,1:solveDim2))**2)
                   write(*,*)'fldrms dims: ',solveDim1, solveDim2
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   rmstot  = rmstot + globalSum
-                  write(*,*)'fldrms rmstot: ',rmstot, dimtot
+                  write(*,*)'fldrms, globalSum, rmstot: ',rmstot, globalSum ,dimtot
 
                 else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
@@ -1438,5 +1439,5 @@ module mpas2da_mod
 
 !===============================================================================================================
 
-end module 
+end module mpas4da_mod
 

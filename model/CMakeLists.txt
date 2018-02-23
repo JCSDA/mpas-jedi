@@ -40,8 +40,9 @@ mpas_model_mod.F90
 mpas_trajectories.F90
 tools_nc.f90
 #mpas_vars_mod.F90
-mpas2da_mod.F90
+mpas4da_mod.F90
 mpas_run_interface.F90
+mpas2ufo_vars_mod.F90
 #mpas_fields_interp_mod.F90
 )
 

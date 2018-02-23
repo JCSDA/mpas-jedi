@@ -19,7 +19,7 @@ use mpas_subdriver
 use atm_core
 use mpi 
 use mpas_stream_manager
-use mpas2da_mod
+use mpas4da_mod
 
 implicit none
 private
@@ -57,44 +57,47 @@ contains
 ! ------------------------------------------------------------------------------
 
 subroutine model_setup(self, geom, c_conf)
-implicit none
-type(c_ptr), intent(in) :: c_conf !< pointer to object of class Config
-type(mpas_model), intent(inout) :: self  ! should I put intent on these?
-type(mpas_geom)        :: geom
 
-character(len=20) :: ststep
-type(duration) :: dtstep
+   implicit none
+   type(c_ptr), intent(in) :: c_conf !< pointer to object of class Config
+   type(mpas_model), intent(inout) :: self  ! should I put intent on these?
+   type(mpas_geom)        :: geom
 
-real (kind=RKIND), pointer :: config_dt
-character (len=StrKIND), pointer :: config_start_time
-character (len=StrKIND), pointer :: config_restart_timestamp_name
-character (len=StrKIND), pointer :: config_run_duration
-character (len=StrKIND), pointer :: config_stop_time
-character (len=StrKIND) :: startTimeStamp
+   character(len=20) :: ststep
+   type(duration) :: dtstep
 
-write(*,*) "---- Inside of Sub. model_setup ----"
+   real (kind=RKIND), pointer :: config_dt
+   character (len=StrKIND), pointer :: config_start_time
+   character (len=StrKIND), pointer :: config_restart_timestamp_name
+   character (len=StrKIND), pointer :: config_run_duration
+   character (len=StrKIND), pointer :: config_stop_time
+   character (len=StrKIND) :: startTimeStamp
+   
+   write(*,*) "---- Inside of Sub. model_setup ----"
 #ifdef ModelMPAS
-self % corelist => geom % corelist
-self % domain => geom % domain
+   self % corelist => geom % corelist
+   self % domain => geom % domain
 
-call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', config_dt)
-call mpas_pool_get_config(self % domain % blocklist % configs, 'config_start_time', config_start_time)
-call mpas_pool_get_config(self % domain % blocklist % configs, 'config_restart_timestamp_name', config_restart_timestamp_name)
-call mpas_pool_get_config(self % domain % blocklist % configs, 'config_run_duration', config_run_duration)
-call mpas_pool_get_config(self % domain % blocklist % configs, 'config_stop_time', config_stop_time)
-write(*,*)'config_dt: ',config_dt
-write(*,*)'config_start_time: ',trim(config_start_time)
-write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
-write(*,*)'config_run_duration: ',trim(config_run_duration)
-write(*,*)'config_stop_time: ',trim(config_stop_time)
-write(0,*)'geom % nCells: ',geom % nCells
+   ! GD:  we need to update some parameters here regarding the json namelist file of oops.
+   ! Also, we can add new DA parameters in the MPAS configs file if needed.
+   call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', config_dt)
+   call mpas_pool_get_config(self % domain % blocklist % configs, 'config_start_time', config_start_time)
+   call mpas_pool_get_config(self % domain % blocklist % configs, 'config_restart_timestamp_name', config_restart_timestamp_name)
+   call mpas_pool_get_config(self % domain % blocklist % configs, 'config_run_duration', config_run_duration)
+   call mpas_pool_get_config(self % domain % blocklist % configs, 'config_stop_time', config_stop_time)
+   write(*,*)'config_dt: ',config_dt
+   write(*,*)'config_start_time: ',trim(config_start_time)
+   write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
+   write(*,*)'config_run_duration: ',trim(config_run_duration)
+   write(*,*)'config_stop_time: ',trim(config_stop_time)
+   write(0,*)'geom % nCells: ',geom % nCells
 
-write(*,*)'===> model_setup'
-
-ststep = config_get_string(c_conf,len(ststep),"tstep")
-dtstep = trim(ststep)
-write(0,*)'ststep, dtstep: ', ststep
-self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
+   write(*,*)'===> model_setup'
+   
+   ststep = config_get_string(c_conf,len(ststep),"tstep")
+   dtstep = trim(ststep)
+   write(0,*)'ststep, dtstep: ', ststep
+   self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
 #endif
 
 end subroutine model_setup
@@ -102,25 +105,28 @@ end subroutine model_setup
 ! ------------------------------------------------------------------------------
 
 subroutine model_delete(self)
-implicit none
-type(mpas_model) :: self
 
-write(*,*)'===> model_delete'
+   implicit none
+   type(mpas_model) :: self
+
+   ! For now, all the structure is hold by geom
+   write(*,*)'===> model_delete'
 
 end subroutine model_delete
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_prepare_integration(self, flds)
-implicit none
-type(mpas_model) :: self
-type(mpas_field) :: flds
 
-write(*,*)'===> model_prepare_integration'
+   implicit none
+   type(mpas_model) :: self
+   type(mpas_field) :: flds
+
+   write(*,*)'===> model_prepare_integration'
 
 #ifdef ModelMPAS
-! this should be from sub field to state
-call da_copy_sub2all_fields(self % domain, flds % subFields)
+   ! this should be from sub field to state
+   call da_copy_sub2all_fields(self % domain, flds % subFields)
 #endif
 
 end subroutine model_prepare_integration
@@ -128,54 +134,50 @@ end subroutine model_prepare_integration
 ! ------------------------------------------------------------------------------
 
 subroutine model_prepare_integration_ad(self, flds)
-implicit none
-type(mpas_model) :: self
-type(mpas_field) :: flds
 
-write(*,*)'===> model_prepare_integration_ad'
+   implicit none
+   type(mpas_model) :: self
+   type(mpas_field) :: flds
+
+   write(*,*)'===> model_prepare_integration_ad'
 
 end subroutine model_prepare_integration_ad
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_prepare_integration_tl(self, flds)
-implicit none
-type(mpas_model) :: self
-type(mpas_field) :: flds
 
-write(*,*)'===> model_prepare_integration_tl'
+   implicit none
+   type(mpas_model) :: self
+   type(mpas_field) :: flds
+
+   write(*,*)'===> model_prepare_integration_tl'
 
 end subroutine model_prepare_integration_tl
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_propagate(self, flds)
-implicit none
-type(mpas_model) :: self
-type(mpas_field) :: flds
-type (mpas_pool_type), pointer :: state
 
-real (kind=RKIND) :: dt
-integer :: itimestep
+   implicit none
+   type(mpas_model) :: self
+   type(mpas_field) :: flds
 
-write(*,*)'===> model_propagate'
+   type (mpas_pool_type), pointer :: state
+   real (kind=RKIND) :: dt
+   integer :: itimestep
+
+   write(*,*)'===> model_propagate'
 #ifdef ModelMPAS
-itimestep = 1
-dt = 1200.
-call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
-
-!do itimstep=1, 12
-   
+   itimestep = 1
    call atm_do_timestep(self % domain, dt, itimestep)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
    call mpas_pool_shift_time_levels(state)
-   itimestep = itimestep + 1
+   call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(clock)
 
-!end do
-
-! this should be from state to sub field
-call da_copy_all2sub_fields(self % domain, flds % subFields)
+   ! this should be from state to sub field
+   call da_copy_all2sub_fields(self % domain, flds % subFields)
 #endif
 
 end subroutine model_propagate
@@ -183,47 +185,51 @@ end subroutine model_propagate
 ! ------------------------------------------------------------------------------
 
 subroutine model_propagate_ad(self, flds, traj)
-implicit none
 
-type(mpas_model)      :: self
-type(mpas_field)      :: flds
-type(mpas_trajectory) :: traj
+   implicit none
 
-write(*,*)'===> model_prepare_integration_ad'
+   type(mpas_model)      :: self
+   type(mpas_field)      :: flds
+   type(mpas_trajectory) :: traj
+
+   write(*,*)'===> model_prepare_integration_ad'
 
 end subroutine model_propagate_ad
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_propagate_tl(self, flds, traj)
-implicit none
-type(mpas_model)      :: self
-type(mpas_field)      :: flds
-type(mpas_trajectory) :: traj
 
-write(*,*)'===> model_propagate_tl'
+   implicit none
+   type(mpas_model)      :: self
+   type(mpas_field)      :: flds
+   type(mpas_trajectory) :: traj
+
+   write(*,*)'===> model_propagate_tl'
 
 end subroutine model_propagate_tl
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_prop_traj(self, flds, traj)
-implicit none
-type(mpas_model)      :: self
-type(mpas_field)      :: flds
-type(mpas_trajectory) :: traj
 
-write(*,*)'===> model_prop_traj'
+   implicit none
+   type(mpas_model)      :: self
+   type(mpas_field)      :: flds
+   type(mpas_trajectory) :: traj
+
+   write(*,*)'===> model_prop_traj'
 
 end subroutine model_prop_traj
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_wipe_traj(traj)
-implicit none
-type(mpas_trajectory) :: traj
 
-write(*,*)'===> model_wipe_traj'
+   implicit none
+   type(mpas_trajectory) :: traj
+
+   write(*,*)'===> model_wipe_traj'
 
 end subroutine model_wipe_traj
 
