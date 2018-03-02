@@ -40,6 +40,8 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
+!   integer, allocatable :: nEdgesOnCell(:)
+!   integer, allocatable :: edgesOnCell(:,:)
    type (dm_info), pointer :: dminfo => null()
    logical :: use_mpi = .false.
 end type mpas_geom
@@ -103,6 +105,8 @@ allocate(self%xland(self%nCells))
 allocate(self%areaCell(self%nCells))
 allocate(self%edgeNormalVectors(3, self%nEdges))
 allocate(self%zgrid(self%nVertLevelsP1, self%nCells))
+!allocate(self%nEdgesOnCell(self%nCells))
+!allocate(self%edgesOnCell(self% maxEdges,self % nCells))
 
 !> Read mesh variables
 call ncerr(string1, nf90_inq_varid(ncid,'latCell',varid))
@@ -121,6 +125,10 @@ call ncerr(string1, nf90_inq_varid(ncid,'edgeNormalVectors',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%edgeNormalVectors,(/1,1/),(/3,self%nEdges/)))
 call ncerr(string1, nf90_inq_varid(ncid,'zgrid',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%zgrid,(/1,1/),(/self%nVertLevelsP1,self%nCells/)))
+!call ncerr(string1, nf90_inq_varid(ncid,'nEdgesOnCell',varid))
+!call ncerr(string1, nf90_get_var  (ncid,varid,self%nEdgesOnCell))
+!call ncerr(string1, nf90_inq_varid(ncid,'edgesOnCell',varid))
+!call ncerr(string1, nf90_get_var  (ncid,varid,self%edgesOnCell,(/1,1/),(/self%maxEdges,self%nCells/)))
 
 !> radians to degrees
 self%latCell = self%latCell / deg2rad
@@ -148,6 +156,18 @@ other%nVertLevelsP1 = self%nVertLevelsP1
 other%nSoilLevels   = self%nSoilLevels 
 other%vertexDegree  = self%vertexDegree
 other%maxEdges      = self%maxEdges
+
+if (.not.allocated(other%latCell)) allocate(other%latCell(self%nCells))
+if (.not.allocated(other%lonCell)) allocate(other%lonCell(self%nCells))
+if (.not.allocated(other%latEdge)) allocate(other%latEdge(self%nEdges))
+if (.not.allocated(other%lonEdge)) allocate(other%lonEdge(self%nEdges))
+if (.not.allocated(other%xland)) allocate(other%xland(self%nCells))
+if (.not.allocated(other%areaCell)) allocate(other%areaCell(self%nCells))
+if (.not.allocated(other%edgeNormalVectors)) allocate(other%edgeNormalVectors(3, self%nEdges))
+if (.not.allocated(other%zgrid)) allocate(other%zgrid(self%nVertLevelsP1, self%nCells))
+!if (.not.allocated(other%edgesOnCell)) allocate(other%edgesOnCell(self%maxEdges,self%nCells))
+!if (.not.allocated(other%nEdgesOnCell)) allocate(other%nEdgesOnCell(self%nCells))
+
 other%latCell       = self%latCell
 other%lonCell       = self%lonCell
 other%areaCell      = self%areaCell
@@ -156,6 +176,8 @@ other%lonEdge       = self%lonEdge
 other%xland         = self%xland
 other%edgeNormalVectors = self%edgeNormalVectors
 other%zgrid         = self%zgrid
+!other%edgesOnCell   = self%edgesOnCell
+!other%nEdgesOnCell  = self%nEdgesOnCell
 
 end subroutine geo_clone
 
@@ -176,6 +198,8 @@ if (allocated(self%xland)) deallocate(self%xland)
 if (allocated(self%areaCell)) deallocate(self%areaCell)
 if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
 if (allocated(self%zgrid)) deallocate(self%zgrid)
+!if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
+!if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
 
 end subroutine geo_delete
 

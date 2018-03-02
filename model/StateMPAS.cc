@@ -68,7 +68,8 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
 //  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
 //  --- For HofX ---
 //  const std::vector<std::string> vv{"theta", "index_qv", "pressure_base"};
-  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure_base"};
+//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure_base"};
+  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"};
 //  --- For Dirac ---
 //  const std::vector<std::string> vv{"theta"};
   oops::Log::trace() << "StateMPAS::GD1 enforcing to variable to cv" << std::endl;

@@ -17,6 +17,7 @@ module mpas4da_mod
    !
    !-----------------------------------------------------------------------
 
+   use mpas_constants
    use mpas_derived_types
    use mpas_pool_routines
    use mpas_dmpar
@@ -450,7 +451,6 @@ module mpas4da_mod
                         call mpas_pool_get_field(pool_a, 'theta_m', field2d)
                         field2d % fieldName = trim(fieldname(ii))
                         field2d % array = field3d % array(index_scalar,:,:)
-                        field2d % array = field3d % array(index_scalar,:,:)
                         call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d)
                         write(0,*) '2D MIN/MAX value: ', maxval(field2d % array),minval(field2d % array)
                         nfields = nfields + 1
@@ -470,9 +470,6 @@ module mpas4da_mod
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVerticesSolve', dim0d)
       write(0,*)'Adding dimension nVerticesSolve: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nVerticesSolve', dim0d)
-      !call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVertLevelsSolve', dim0d)
-      !write(0,*)'Adding dimension nVertLevelsSolve: ',dim0d
-      !call mpas_pool_add_dimension(pool_c, 'nVertLevelsSolve', dim0d)
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVertLevels', dim0d)
       write(0,*)'Adding dimension nVertLevels: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nVertLevels', dim0d)
@@ -1229,8 +1226,9 @@ module mpas4da_mod
    integer :: jj, ndims
    integer, pointer :: solveDim1, solveDim2, solveDim3
 
-   prodtot = 0.0
-   rmstot  = 0.0
+   prodtot = 0.0_RKIND
+   rmstot  = 0.0_RKIND
+   dimtot  = 0.0_RKIND
 
    !
    ! Iterate over all fields in pool_a
@@ -1350,8 +1348,8 @@ module mpas4da_mod
    !
    call mpas_pool_begin_iteration(pool_a)
 
-   globalSum = 0.0
-   dimtot = 0.0
+   globalSum = 0.0_RKIND
+   dimtot = 0.0_RKIND
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
@@ -1359,8 +1357,8 @@ module mpas4da_mod
             if (poolItr % memberType == MPAS_POOL_FIELD) then
 
                write(*,*)'variable: ',trim(poolItr % memberName)
-               zprod = 0.0
-               fieldSum = 0.0
+               zprod = 0.0_RKIND
+               fieldSum = 0.0_RKIND
                ndims = poolItr % nDims 
 
                if (ndims == 1) then
@@ -1437,7 +1435,198 @@ module mpas4da_mod
   end subroutine da_dot_product
 
 
+  subroutine cvt_oopsmpas_date(inString2,outString2,iconv)
+   
+     implicit none
+
+     character (len=*), intent(in) :: inString2     
+     character (len=*), intent(inout) :: outString2     
+     integer, intent(in) :: iconv
+     integer :: i, curLen
+     integer :: year, month, day, hour, minute, second
+
+     character (len=ShortStrKIND) :: timePart
+     character (len=ShortStrKIND) :: yearFormat
+     logical :: charExpand    
+     character (len=4) :: YYYY
+     character (len=2) :: MM, DD, h, m, s
+     character (len=21) :: outString, inString
+ 
+     ! 2017-08-08T00:00:00Z OOPS/JSON format
+     ! 2010-10-24_02.00.00  MPAS format
+     ! iconv=1: MPAS --> OOPS/JSON
+     ! iconv=-1: OOPS/JSON --> MPAS
+
+     if (iconv.eq.-1) then
+        YYYY = inString2(1:4)
+        MM   = inString2(6:7)     
+        DD   = inString2(9:10)     
+        h    = inString2(12:13)     
+        m    = inString2(15:16)     
+        s    = inString2(18:19)
+     else
+        YYYY = inString2(1:4)
+        MM   = inString2(6:7)
+        DD   = inString2(9:10)
+        h    = inString2(12:13)
+        m    = inString2(15:16)
+        s    = inString2(18:19)
+     end if
+
+     write(*,*)'cvt_oopsmpas_date instring: ',trim(YYYY),trim(MM),trim(DD),trim(h),trim(m),trim(s)
+     write(*,*)'cvt_oopsmpas_date input ',trim(instring2)
+
+     write(outString,*) ''
+     instring = trim(outstring2)     
+     
+     curLen = 0
+     charExpand = .false.
+     do i = 1, len_trim(inString)
+           if (inString(i:i) == '$' ) then
+               charExpand = .true.
+           else if (inString(i:i) /= '$') then
+               !write(*,*)'inString: ',trim(inString(i:i)),charExpand
+               if (charExpand) then
+                  select case (inString(i:i))
+                     case ('Y')
+                         outString = trim(outString) // trim(YYYY)
+                     case ('M')
+                         outString = trim(outString) // trim(MM)
+                     case ('D')
+                         outString = trim(outString) // trim(DD)
+                     case ('h')
+                         outString = trim(outString) // trim(h)
+                     case ('m')
+                         outString = trim(outString) // trim(m)
+                     case ('s')
+                         outString = trim(outString) // trim(s)
+                     case default
+                        write(*, *) 'ERROR: mpas_expand_string option $', inString(i:i), ' is not a valid expansion character.'
+                        call mpas_dmpar_global_abort('ERROR: mpas_timekeeping')
+                  end select
+                  curLen = len_trim(outString)
+                  charExpand = .false.
+                  !write(*,*)'outString: ',trim(outString)
+               else
+                  outString(curLen+1:curLen+1) = outString2(i:i)
+                  curLen = curLen+1
+               end if
+           end if
+     end do
+
+     outString2 = trim(outString)
+     write(*,*)'cvt_oopsmpas_date output ',trim(outstring2)
+
+  end subroutine cvt_oopsmpas_date
+
+
+
+! ------------------------------------------------------------------------
+!  chunk of code from DART
+! ------------------------------------------------------------------------
+
+subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, & 
+                            &  nCells, edgeNormalVectors, nEdgesOnCell, edgesOnCell, nVertLevels)
+
+   ! Project u, v wind increments at cell centers onto the edges.
+   ! FIXME:
+   !        we can hard-code R3 here since it comes from the (3d) x/y/z cartesian coordinate.
+   !        We define nEdgesOnCell in get_grid_dims, and read edgesOnCell in get_grid.
+   !        We read edgeNormalVectors in get_grid to use this subroutine.
+   !        Here "U" is the prognostic variable in MPAS, and we update it with the wind
+   !        increments at cell centers.
+
+   implicit none
+
+   type (domain_type), pointer, intent(inout) :: domain
+   type (field2DReal), pointer, intent(in) :: u_field    ! u wind updated from filter
+   type (field2DReal), pointer, intent(in) :: v_field    ! v wind updated from filter
+   type (field2DReal), pointer, intent(inout) :: du       ! normal velocity increment on the edges
+   real(RKIND), intent(in) :: lonCell(1:nCells), latCell(1:nCells)    ! normal velocity increment on the edges
+   real(RKIND), intent(in) :: edgeNormalVectors(:,:)
+   integer, intent(in) :: nEdgesOnCell(:), edgesOnCell(:,:)
+   integer, intent(in) :: nCells, nVertLevels
+
+   ! Local variables
+   integer, parameter :: R3 = 3
+   real(RKIND), dimension(:,:), allocatable :: east, north
+   real(RKIND), dimension(:), allocatable :: lonCell_rad, latCell_rad
+   integer  :: iCell, iEdge, jEdge, k
+   real(kind=RKIND), parameter :: deg2rad = pii/180. !-BJJ To-be-removed, when MPAS-release updated from Gael.
+
+   ! allocation
+   allocate(east(R3,nCells))
+   allocate(north(R3,nCells))
+   allocate(lonCell_rad(nCells))
+   allocate(latCell_rad(nCells))
+
+   ! Initialization
+   du%array(:,:) = 0.0_RKIND
+
+   ! Back to radians (locally)
+   lonCell_rad = lonCell*deg2rad
+   latCell_rad = latCell*deg2rad
+
+   ! Compute unit vectors in east and north directions for each cell:
+   do iCell = 1, nCells
+       east(1,iCell) = -sin(lonCell_rad(iCell))
+       east(2,iCell) =  cos(lonCell_rad(iCell))
+       east(3,iCell) =  0.0_RKIND
+       call r3_normalize(east(1,iCell), east(2,iCell), east(3,iCell))
+       north(1,iCell) = -cos(lonCell_rad(iCell))*sin(latCell_rad(iCell))
+       north(2,iCell) = -sin(lonCell_rad(iCell))*sin(latCell_rad(iCell))
+       north(3,iCell) =  cos(latCell_rad(iCell))
+       call r3_normalize(north(1,iCell), north(2,iCell), north(3,iCell))
+   end do
+
+   ! Project analysis increments from the cell centers to the edges
+
+   do iCell = 1, nCells
+      do jEdge = 1, nEdgesOnCell(iCell)
+         iEdge = edgesOnCell(jEdge, iCell)
+            do k = 1, nVertLevels
+               du%array(k,iEdge) = du%array(k,iEdge) + 0.5_RKIND * u_field%array(k,iCell)   &
+                     * (edgeNormalVectors(1,iEdge) * east(1,iCell)  &
+                     +  edgeNormalVectors(2,iEdge) * east(2,iCell)  &
+                     +  edgeNormalVectors(3,iEdge) * east(3,iCell)) &
+                     + 0.5_RKIND * v_field%array(k,iCell)            &
+                     * (edgeNormalVectors(1,iEdge) * north(1,iCell) &
+                     +  edgeNormalVectors(2,iEdge) * north(2,iCell) &
+                     +  edgeNormalVectors(3,iEdge) * north(3,iCell))
+            end do
+      end do
+   end do
+
+   ! deallocation
+   deallocate(east)
+   deallocate(north)
+   deallocate(lonCell_rad)
+   deallocate(latCell_rad)
+
+end subroutine uv_cell_to_edges
+
+!----------------------------------------------------------------------
+
+subroutine r3_normalize(ax, ay, az)
+
+   implicit none
+
+   real(RKIND), intent(inout) :: ax, ay, az
+   real(RKIND) :: mi
+
+   mi = 1.0_RKIND / sqrt(ax**2 + ay**2 + az**2)
+
+   ax = ax * mi
+   ay = ay * mi
+   az = az * mi
+
+end subroutine r3_normalize
+
+!-----------------------------------------------------------------------
+
+
+
 !===============================================================================================================
 
-end module mpas4da_mod
+end module mpas4da_mod 
 

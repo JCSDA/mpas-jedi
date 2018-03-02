@@ -43,22 +43,22 @@ public :: mpas_field_registry
 ! ------------------------------------------------------------------------------
 
 !> Fortran derived type to hold MPAS fields
-!type :: mpas_field
-!  type (domain_type), pointer :: domain 
-!  type (core_type), pointer :: corelist
-!  !type (dm_info), pointer :: dminfo
-!  type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
-!  integer :: nf                           !< Number of variables in fld
-!  !integer :: sum_scalar                   !< Number of variables in fld
-!  !integer :: sum_aero                     !< Number of variables in fld
-!  !integer :: ns                           !< Number of surface fields (x1d [nCells])
-!  character(len=22), allocatable  :: fldnames(:)      !< Variable identifiers
-!  type (mpas_pool_type), pointer  :: subFields ---> 	1) model prognostic variables : theta_m, u(NO, zonal&meridional), w, roh_zz, m_ps, scalars
-!							2) regular meteorological variables : zonal, meridional, Temp/Theta, qv/RH, pres, Psfc(?)
-!							3) any ?!
-!end type mpas_field
+type :: mpas_field
+  type (domain_type), pointer :: domain
+  type (core_type), pointer :: corelist
+  !type (dm_info), pointer :: dminfo
+  type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
+  integer :: nf                           !< Number of variables in fld
+  character(len=22), allocatable  :: fldnames(:)      !< Variable identifiers
+!  type (mpas_pool_type), pointer  :: auxFields2 !--->  t2m, u10, v10, Tsfc, ??? !--additional
+  type (mpas_pool_type), pointer  :: subFields  !---> 	1) model prognostic variables : theta_m, u(NO, zonal&meridional), w, roh_zz, m_ps, scalars
+!						!	2) regular meteorological variables : zonal, meridional, Temp/Theta, qv/RH, pres, Psfc(?)
+!						!	3) any ?!
+  type (MPAS_streamManager_type), pointer :: manager
+  type (MPAS_Clock_type), pointer :: clock
+end type mpas_field
 
-#include "mpas_fields_oops_type.inc"
+!#include "mpas_fields_oops_type.inc"
 
 #define LISTED_TYPE mpas_field
 
@@ -88,7 +88,15 @@ subroutine create(self, geom, vars)
 
     integer :: nsize, nfields
     integer :: mpi_comm
+    integer :: ierr
+
+    !-- fortran level test
     real(kind=kind_real), allocatable :: pstat(:, :)
+    real(kind=kind_real)              :: prms
+    type (MPAS_Time_type) :: local_time, write_time, fld_time
+    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
+    character (len=StrKIND) :: dateTimeString_oops
+
 
     ! from the namelist
     self % nf =  vars % nv
@@ -101,13 +109,13 @@ subroutine create(self, geom, vars)
     write(*,*)'Before calling the subdriver of mpas'
     call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
 
-    ! update geom
+    ! link geom
     if (associated(geom)) then
       write(*,*)'geom associated'
       self % geom => geom
     else
-      write(*,*)'geom not associated'
-      call abor1_ftn("geom not associated")
+      write(*,*)'mpas_fields: geom not associated'
+      call abor1_ftn("mpas_fields: geom not associated")
     end if
 
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
@@ -116,17 +124,68 @@ subroutine create(self, geom, vars)
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
 
-    !-- 
-    call update_mpas_field(self % domain, self % subFields)
+    ! clock creation
+    allocate(self % clock)
+    call atm_simulation_clock_init(self % clock, self % domain % blocklist % configs, ierr)
+    if ( ierr .ne. 0 ) then
+       call abor1_ftn("mpas_fields: atm_simulation_clock_init problem")
+    end if
 
-    !-- da_gpnorm test---
+    !-------------------------------------------------------------
+    ! Few temporary tests
+    !-------------------------------------------------------------
+    call update_mpas_field(self % domain, self % subFields)
+!    call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
+    call da_fldrms(self % subFields, self % domain % dminfo, prms)
     allocate(pstat(3, self % nf))
     call da_gpnorm(self % subFields, self % domain % dminfo, self % nf, pstat)
-    write(0,*)'Pstat: ',pstat
     deallocate(pstat)
-    !call abor1_ftn('lfric_fields_mod: create: call not implemented yet')
-    write(*,*)'Leaving create'
+!    call abor1_ftn("MPAS test")
 
+   ! mpas_get_time(curr_time, YYYY, MM, DD, DoY, H, M, S, S_n, S_d, dateTimeString, ierr)
+   ! call mpas_get_time(curr_time, YYYY, MM, DD, H, M, S, dateTimeString, ierr)
+   ! call mpas_set_timeInterval(runDuration, timeString=config_run_duration, ierr=local_err)
+   ! call mpas_create_clock(core_clock, startTime=startTime, timeStep=timeStep, runDuration=runDuration, ierr=local_err)
+   ! currTime = mpas_get_clock_time(clock, MPAS_NOW, ierr)
+   ! startTime = mpas_get_clock_time(clock, MPAS_START_TIME, ierr)
+   ! currTime = mpas_get_clock_time(clock, MPAS_NOW, ierr)
+   ! xtimeTime = currTime - startTime
+   ! call mpas_get_timeInterval(interval=xtimeTime, S=s, S_n=s_n, S_d=s_d, ierr=ierr)
+   ! xtime_s = (s + s_n / s_d)
+
+
+ !--------------------------------------------------------------------------------------- 
+
+   write(0,*)''
+   write(0,*)'=========== MPAS WRITE A RESTART ===================='
+
+   !call mpas_pool_get_subpool(block_ptr % structs, 'state', state)
+!   call mpas_pool_get_subpool(block_ptr % structs, 'diag', diag)
+!   all mpas_pool_get_subpool(block_ptr % structs, 'diag_physics', diag_physics)
+!   call mpas_pool_get_subpool(block_ptr % structs, 'mesh', mesh)
+!   call atm_compute_restart_diagnostics(state, 1, diag, mesh)
+
+!   dateTimeString_oops = '2010-10-24T_02.00.00Z'
+!   dateTimeString = '$Y-$M-$D_$h:$m:$s'
+!   call cvt_oopsmpas_date(dateTimeString_oops,dateTimeString,1)
+!   call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
+!   fld_time = mpas_get_clock_time(self % clock, MPAS_START_TIME, ierr)
+!   call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
+!   if ( fld_time .NE. write_time ) then
+!      write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+!      call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
+!   end if
+!   temp_filename = 'restart.out.$Y-$M-$D_$h.$m.$s.nc'
+!   call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
+!   streamID = 'restart'
+!   call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
+
+!   call da_copy_sub2all_fields(self % geom % domain, self % subFields)
+!   write(*,*)'writing ',trim(filename)
+!   call mpas_stream_mgr_write(self % geom % domain % streamManager,forceWriteNow=.true., ierr=ierr)
+!   if ( ierr .ne. 0  ) then
+!     call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
+!   end if
     
  
     return
@@ -144,44 +203,16 @@ subroutine delete(self)
   
    call mpas_timer_set_context( self % domain )
    
-   !
-   ! Set up run-time streams
-   !
-   !   call MPAS_stream_mgr_init(self % domain % streamManager, self % domain % ioContext, & 
-   !      self % domain % clock, self % domain % blocklist % allFields, &
-   !      self % domain % packages, self % domain % blocklist % allStructs)
-   !
-   !   call add_stream_attributes(domain)
-   !
-   !   ierr = domain % core % setup_immutable_streams(domain % streamManager)
-   !   if ( ierr /= 0 ) then
-   !      call mpas_dmpar_global_abort('ERROR: Immutable streams setup failed for core ' // trim(domain % core % coreName))
-   !   end if
-   !
-   !   mgr_p = c_loc(domain_ptr % streamManager)
-   !   call xml_stream_parser(c_filename, mgr_p, c_comm, c_ierr)
-   !   if (c_ierr /= 0) then
-   !      call mpas_dmpar_abort(domain_ptr % dminfo)
-   !   end if
-
-   if (.not. associated(manager)) then  
-     write(0,*)'GD manager not associated'
-   else
-     write(0,*)'GD manager associated'
-   end if
-   !  manager % ioContext => self % domain % ioContext
-   !  manager % allFields => self % domain % blocklist % allFields
-   !  manager % allPackages => self % domain % Packages
-   !  manager % allStructs => self % domain % blocklist % allStructs
-   !  manager % streamClock => self % domain % clock
-   !  manager % numStreams = 0
-   !  manager % errorLevel = MPAS_STREAM_ERR_SILENT
-
- 
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    write(*,*)'--> deallocate subFields Pool'
-   call mpas_pool_empty_pool(self % subFields)
-   call mpas_pool_destroy_pool(self % subFields)
+   if (associated(self % subFields)) then
+      call mpas_pool_empty_pool(self % subFields)
+      call mpas_pool_destroy_pool(self % subFields)
+   end if
+   call mpas_destroy_clock(self % clock, ierr)
+   if ( ierr .ne. 0  ) then
+      write(*,*)'mpas_fields eallocate clock failed'
+   end if
    write(*,*)'--> deallocate domain and core'
    call mpas_finalize(self % corelist, self % domain)
    write(*,*)'--> done'
@@ -230,10 +261,7 @@ subroutine copy(self,rhs)
    call mpas_pool_destroy_pool(self % subFields)
    self % nf = rhs % nf
    call mpas_pool_create_pool(self % subFields,self % nf)
-   !write(0,*)'copy pool before 1' 
    call mpas_pool_clone_pool(rhs % subFields, self % subFields)
-   !call mpas_pool_clone_pool(rhs % domain % blocklist % allFields, self % domain % blocklist % allFields)
-   !write(0,*)'copy pool before 2' 
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
 
@@ -393,20 +421,40 @@ subroutine read_file(fld, c_conf, vdate)
    type(mpas_field), intent(inout) :: fld      !< Fields
    type(c_ptr), intent(in)          :: c_conf   !< Configuration
    type(datetime), intent(inout)    :: vdate    !< DateTime
-   character (len=StrKIND) :: dateTimeString
    character(len=20) :: sdate
+   type (MPAS_Time_type) :: local_time
+   character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
+   integer :: ierr = 0
 
-   write(*,*)'inside read'
+   write(*,*)'==> read fields'
    sdate = config_get_string(c_conf,len(sdate),"date")
+   call datetime_set(sdate, vdate)
+#ifdef READ_TEST_READY
+   temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
+   write(*,*)'Reading ',trim(temp_filename)
+   !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
    ! and then can be like this ....
-   !dateTimeString = '2010-10-24_04:00:00'
-   !write(0,*)''
-   !write(0,*)'Reading ',dateTimeString
-   !call MPAS_stream_mgr_read(field0 % domain % streamManager,streamID='restart',when=dateTimeString)
-   call datetime_set(sdate, vdate)
-   write(*,*)'outside read'
+   streamID = 'restart'
+   ierr = 0
+   fld % manager => fld % geom % domain % streamManager
+   dateTimeString = '$Y-$M-$D_$h:$m:$s'
+   call cvt_oopsmpas_date(sdate,dateTimeString,1)
+   write(*,*)'dateTimeString: ',trim(dateTimeString)
+   call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
+   call mpas_set_clock_time(fld % clock, local_time, MPAS_START_TIME)
+   call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
+   call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
+   write(*,*)'Reading ',trim(filename)
+   !call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
+   !                        & when=dateTimeString, rightNow=.True., ierr=ierr)
+   !if ( ierr .ne. 0  ) then
+   !   call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
+   !end if
+   !
+   !call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+#endif
 
 end subroutine read_file
 
@@ -418,9 +466,31 @@ subroutine write_file(fld, c_conf, vdate)
    type(mpas_field), intent(in) :: fld    !< Fields
    type(c_ptr), intent(in)       :: c_conf !< Configuration
    type(datetime), intent(in)    :: vdate  !< DateTime
+   character(len=20) :: sdate
+   integer :: ierr
+   type (MPAS_Time_type) :: fld_time, write_time
+   character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
 
-   !call mpas_dmpar_get_time(output_start_time)
-   !call mpas_stream_mgr_write(domain % streamManager, ierr=ierr)
+   !call datetime_get(sdate,vdate)
+   write(*,*)'==> write fields ',trim(sdate)
+   !call cvt_oopsmpas_date(sdate,dateTimeString,1) 
+   !call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr) 
+   !fld_time = mpas_get_clock_time(fld % clock, MPAS_START_TIME, ierr)
+   !call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr) 
+   !if ( fld_time .NE. write_time ) then
+   !   write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+   !   call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
+   !end if
+   !temp_filename = 'restart.out.$Y-$M-$D_$h.$m.$s.nc'
+   !call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
+   !streamID = 'restart'
+   !call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
+   !call da_copy_sub2all_fields(fld % geom % domain, fld % subFields)
+   !write(*,*)'writing ',trim(filename)
+   !call mpas_stream_mgr_write(fld % geom % domain % streamManager,forceWriteNow=.true., ierr=ierr)
+   !if ( ierr .ne. 0  ) then
+   !  call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
+   !end if
 
 end subroutine write_file
 
@@ -447,9 +517,7 @@ subroutine fldrms(fld, prms)
    type(mpas_field), intent(in)      :: fld
    real(kind=kind_real), intent(out) :: prms
 
-   write(0,*)'Inside fldrms 1'
    call da_fldrms(fld % subFields, fld % domain % dminfo, prms)
-   write(0,*)'Inside fldrms 2'
 
 end subroutine fldrms
 
@@ -531,7 +599,7 @@ end subroutine dirac
 subroutine interp_tl(fld, locs, vars, gom)
 
    use obsop_apply, only: apply_obsop 
-   use type_geom, only: geomtype,compute_grid_mesh
+   use type_geom, only: geomtype
    use type_odata, only: odatatype
    
    implicit none
@@ -543,11 +611,11 @@ subroutine interp_tl(fld, locs, vars, gom)
    type(geomtype), pointer :: pgeom
    type(odatatype), pointer :: odata
    
-   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs
+   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    
-   type (mpas_pool_type), pointer :: pool_a
+   type (mpas_pool_type), pointer :: pool_b
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -595,51 +663,75 @@ subroutine interp_tl(fld, locs, vars, gom)
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    
 
-   call mpas_pool_begin_iteration(fld % subFields)
+!   call mpas_pool_begin_iteration(fld % subFields)
+!   
+!   do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+!        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+!        ! so we select only those members of the pool that are fields
+!        if (poolItr % memberType == MPAS_POOL_FIELD) then
+!        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+!        if (poolItr % dataType == MPAS_POOL_REAL) then
+!           ! Depending on the dimensionality of the field, we need to set pointers of
+!           ! the correct type
+!           if (poolItr % nDims == 1) then
+!              !call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+!              !select case (op_type)
+!              !case ('TL')
+!              !   call apply_linop(geov_hinterp_op, r1d_ptr_a(:), fld_dst)
+!              !case ('AD')
+!              !   !call apply_linop_ad(hinterp_op,fld_dst,r1d_ptr_a(:))
+!              !end select
+!           else if (poolItr % nDims == 2) then
+!              call mpas_pool_get_array(fld % subFields, trim(poolItr % memberName), r2d_ptr_a)
+!              !call mpas_pool_get_array(poolItr, trim(poolItr % memberName), r2d_ptr_a)
+!              write(*,*) "Interp. var=",trim(poolItr % memberName)
+!              write(*,*) "size(:,1), size(1,:)=", size(r2d_ptr_a(:,1)), size(r2d_ptr_a(1,:))
+!              write(*,*) "r2d_ptr_a(1,1), r2d_ptr_a(1,END) =", r2d_ptr_a(1,1), r2d_ptr_a(1,size(r2d_ptr_a(1,:)))
+!              do jlev = 1, fld%geom%nVertLevels
+!                 mod_field(:,1) = r2d_ptr_a(jlev,:)
+!                 call apply_obsop(pgeom,odata,mod_field,obs_field)
+!                 !write(0,*)"n, MIN/MAX: ",minval(r2d_ptr_a(n,:)),maxval(r2d_ptr_a(n,:))
+!                 !write(*,*)"n, Interp. value = ", n, obs_field(:,1)
+!                 !!gom%geovals(1)%vals(n,:) = obs_field(:,1)
+!                 !if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(n,:) = obs_field(:,1)
+!                 !if(trim(poolItr % memberName).eq.'index_qv') gom%geovals(2)%vals(n,:) = obs_field(:,1)
+!                 !UFO BJJ SIMPLE TEST
+!                 if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(jlev,:) = obs_field(:,1)
+!                 if(trim(poolItr % memberName).eq.'pressure') gom%geovals(2)%vals(jlev,:) = obs_field(:,1)
+!              end do
+!           else if (poolItr % nDims == 3) then
+!              write(*,*)'Not implemented yet'
+!              !call abort
+!           end if
+!        end if
+!        end if
+!   end do
    
-   do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
+   call convert_mpas_field2ufo(fld % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call mpas_pool_begin_iteration(pool_b)
+   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
-        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-        ! so we select only those members of the pool that are fields
         if (poolItr % memberType == MPAS_POOL_FIELD) then
-        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
         if (poolItr % dataType == MPAS_POOL_REAL) then
-           ! Depending on the dimensionality of the field, we need to set pointers of
-           ! the correct type
            if (poolItr % nDims == 1) then
-              !call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-              !select case (op_type)
-              !case ('TL')
-              !   call apply_linop(geov_hinterp_op, r1d_ptr_a(:), fld_dst)
-              !case ('AD')
-              !   !call apply_linop_ad(hinterp_op,fld_dst,r1d_ptr_a(:))
-              !end select
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(fld % subFields, trim(poolItr % memberName), r2d_ptr_a)
-              !call mpas_pool_get_array(poolItr, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
               write(*,*) "Interp. var=",trim(poolItr % memberName)
-              write(*,*) "size(:,1), size(1,:)=", size(r2d_ptr_a(:,1)), size(r2d_ptr_a(1,:))
-              write(*,*) "r2d_ptr_a(1,1), r2d_ptr_a(1,END) =", r2d_ptr_a(1,1), r2d_ptr_a(1,size(r2d_ptr_a(1,:)))
+              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+              write(*,*) "ufo_vars_getindex, ivar=",ivar
               do jlev = 1, fld%geom%nVertLevels
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call apply_obsop(pgeom,odata,mod_field,obs_field)
-                 !write(0,*)"n, MIN/MAX: ",minval(r2d_ptr_a(n,:)),maxval(r2d_ptr_a(n,:))
-                 !write(*,*)"n, Interp. value = ", n, obs_field(:,1)
-                 !!gom%geovals(1)%vals(n,:) = obs_field(:,1)
-                 !if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(n,:) = obs_field(:,1)
-                 !if(trim(poolItr % memberName).eq.'index_qv') gom%geovals(2)%vals(n,:) = obs_field(:,1)
-                 !UFO BJJ SIMPLE TEST
-                 if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(jlev,:) = obs_field(:,1)
-                 if(trim(poolItr % memberName).eq.'pressure_base') gom%geovals(2)%vals(jlev,:) = obs_field(:,1)
+                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
               end do
+
            else if (poolItr % nDims == 3) then
-              write(*,*)'Not implemented yet'
-              !call abort
            end if
         end if
         end if
    end do
-   
+
 
    deallocate(mod_field)
    deallocate(obs_field)
@@ -650,11 +742,78 @@ end subroutine interp_tl
 
 subroutine interp_ad(fld, locs, vars, gom)
 
+   use obsop_apply, only: apply_obsop_ad
+   use type_geom, only: geomtype
+   use type_odata, only: odatatype
+
    implicit none
-   type(mpas_field), intent(inout) :: fld
-   type(ufo_locs), intent(in)  :: locs
-   type(ufo_vars), intent(in)     :: vars
+   type(mpas_field), intent(inout)  :: fld
+   type(ufo_locs), intent(in)       :: locs
+   type(ufo_vars), intent(in)       :: vars
    type(ufo_geovals), intent(inout) :: gom
+
+   type(geomtype), pointer :: pgeom
+   type(odatatype), pointer :: odata
+
+   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
+   real(kind=kind_real), allocatable :: mod_field(:,:)
+   real(kind=kind_real), allocatable :: obs_field(:,:)
+
+   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_iterator_type) :: poolItr
+   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+
+   ! Get grid dimensions and checks
+   ! ------------------------------
+   ngrid = fld%geom%nCells
+   nobs = locs%nlocs
+   write(*,*)'interp_ad ngrid, nobs = : ',ngrid, nobs
+   call interp_checks("ad", fld, locs, vars, gom)
+
+   !Create Buffer for interpolated values
+   !--------------------------------------
+   allocate(mod_field(ngrid,1))
+   allocate(obs_field(nobs,1))
+
+   !Interpolate fields to obs locations using pre-calculated weights
+   !----------------------------------------------------------------
+   write(0,*)'interp vars%nv       : ',vars%nv
+   write(0,*)'interp vars%fldnames : ',vars%fldnames
+
+! AD of   call convert_mpas_field2ufo(fld % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+!   call mpas_pool_begin_iteration(pool_b)
+!   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+!        if (poolItr % memberType == MPAS_POOL_FIELD) then
+!        if (poolItr % dataType == MPAS_POOL_REAL) then
+!           if (poolItr % nDims == 1) then
+!           else if (poolItr % nDims == 2) then
+!              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+!              write(*,*) "Interp. var=",trim(poolItr % memberName)
+!              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+!              write(*,*) "ufo_vars_getindex, ivar=",ivar
+!              do jlev = 1, fld%geom%nVertLevels
+!TL                 mod_field(:,1) = r2d_ptr_a(jlev,:)
+!TL                 call apply_obsop(pgeom,odata,mod_field,obs_field)
+!TL                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+!AD                 obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
+!AD                 call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
+!AD                 r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
+!              end do
+!
+!           else if (poolItr % nDims == 3) then
+!           end if
+!        end if
+!        end if
+!   end do
+
+
+   deallocate(mod_field)
+   deallocate(obs_field)
+
    
 end subroutine interp_ad
 
