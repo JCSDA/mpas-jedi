@@ -1,48 +1,55 @@
-
-!> Fortran module handling geometry for the MPAS-A model
+! (C) Copyright 2017 UCAR
+! 
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
 module mpas_geom_mod
 
 use iso_c_binding
 use config_mod
-use kinds
-use tools_nc
 use netcdf
-use mpas_constants, only: deg2rad
+use tools_nc
+use type_mpl, only: mpl
+
+use mpas_derived_types
+use mpas_kind_types
+use mpas_constants
 
 implicit none
 private
-public :: mpas_geom
+public :: mpas_geom, &
+        & geo_setup, geo_clone, geo_delete, geo_info
 public :: mpas_geom_registry
 
-! ------------------------------------------------------------------------------
- integer, parameter :: max_string_length = 128
+
 ! ------------------------------------------------------------------------------
 
-!> Fortran derived type to hold geometry data for the MPAS-A model
-
-!> Grid dimensions
+!> Fortran derived type to hold geometry definition
 type :: mpas_geom
- integer :: nCells
- integer :: nEdges
- integer :: nVertices
- integer :: nVertLevels
- integer :: nVertLevelsP1
- integer :: nSoilLevels
- integer :: vertexDegree
- integer :: maxEdges
- character(len=max_string_length) :: gridfname
- real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell, xland
- real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: areaCell
- real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
- real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
- real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: zgrid
+   integer :: nCells
+   integer :: nEdges
+   integer :: nVertices
+   integer :: nVertLevels
+   integer :: nVertLevelsP1
+   integer :: nSoilLevels
+   integer :: vertexDegree
+   integer :: maxEdges
+   character(len=StrKIND) :: gridfname
+   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell, xland
+   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: areaCell
+   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
+   real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
+   real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
+!   integer, allocatable :: nEdgesOnCell(:)
+!   integer, allocatable :: edgesOnCell(:,:)
+   type (dm_info), pointer :: dminfo => null()
+   logical :: use_mpi = .false.
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom
 
 !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_geom_registry
@@ -51,26 +58,22 @@ type(registry_t) :: mpas_geom_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
-
-subroutine c_mpas_geo_setup(c_key_self, c_conf) bind(c,name='mpas_geo_setup_f90')
+subroutine geo_setup(self, c_conf)
 implicit none
-integer(c_int), intent(inout) :: c_key_self
-type(c_ptr), intent(in)    :: c_conf
-
-type(mpas_geom), pointer :: self
-
-character(len=max_string_length) :: string1
+type(mpas_geom), intent(inout) :: self
+type(c_ptr), intent(in) :: c_conf
+character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
+real(kind=RKIND), parameter :: deg2rad = pii/180.      
+integer :: iC,nC_loc,iC_loc
 
-call mpas_geom_registry%init()
-call mpas_geom_registry%add(c_key_self)
-call mpas_geom_registry%get(c_key_self,self)
+write(*,*)'create geom'
 
 !> Open a grid mesh file
-self%gridfname = config_get_string(c_conf, max_string_length, "gridfname")
+self%gridfname = config_get_string(c_conf, StrKIND, "gridfname")
 string1 = self%gridfname
 call ncerr(string1, nf90_open(trim(self%gridfname),nf90_nowrite,ncid))
 
@@ -102,6 +105,8 @@ allocate(self%xland(self%nCells))
 allocate(self%areaCell(self%nCells))
 allocate(self%edgeNormalVectors(3, self%nEdges))
 allocate(self%zgrid(self%nVertLevelsP1, self%nCells))
+!allocate(self%nEdgesOnCell(self%nCells))
+!allocate(self%edgesOnCell(self% maxEdges,self % nCells))
 
 !> Read mesh variables
 call ncerr(string1, nf90_inq_varid(ncid,'latCell',varid))
@@ -110,6 +115,7 @@ call ncerr(string1, nf90_inq_varid(ncid,'lonCell',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%lonCell)) !,1,self%nCells))
 call ncerr(string1, nf90_inq_varid(ncid,'areaCell',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%areaCell)) !,1,self%nCells))
+write(0,*)'BJJ areaCell MIN/MAX: ',minval(self%areaCell),maxval(self%areaCell)
 call ncerr(string1, nf90_inq_varid(ncid,'latEdge',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%latEdge)) !,1,self%nEdges))
 call ncerr(string1, nf90_inq_varid(ncid,'lonEdge',varid))
@@ -120,30 +126,28 @@ call ncerr(string1, nf90_inq_varid(ncid,'edgeNormalVectors',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%edgeNormalVectors,(/1,1/),(/3,self%nEdges/)))
 call ncerr(string1, nf90_inq_varid(ncid,'zgrid',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%zgrid,(/1,1/),(/self%nVertLevelsP1,self%nCells/)))
+!call ncerr(string1, nf90_inq_varid(ncid,'nEdgesOnCell',varid))
+!call ncerr(string1, nf90_get_var  (ncid,varid,self%nEdgesOnCell))
+!call ncerr(string1, nf90_inq_varid(ncid,'edgesOnCell',varid))
+!call ncerr(string1, nf90_get_var  (ncid,varid,self%edgesOnCell,(/1,1/),(/self%maxEdges,self%nCells/)))
 
 !> radians to degrees
-self%latCell = self%latCell / deg2rad
-self%lonCell = self%lonCell / deg2rad
-self%latEdge = self%latEdge / deg2rad
-self%lonEdge = self%lonEdge / deg2rad
+self%latCell = self%latCell !/ deg2rad
+self%lonCell = self%lonCell !/ deg2rad
+self%latEdge = self%latEdge !/ deg2rad
+self%lonEdge = self%lonEdge !/ deg2rad
 
 !> close file
 call ncerr(string1,nf90_close(ncid))
 
-end subroutine c_mpas_geo_setup
+end subroutine geo_setup
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_clone(c_key_self, c_key_other) bind(c,name='mpas_geo_clone_f90')
+subroutine geo_clone(self, other)
 implicit none
-integer(c_int), intent(in   ) :: c_key_self
-integer(c_int), intent(inout) :: c_key_other
-
-type(mpas_geom), pointer :: self, other
-
-call mpas_geom_registry%add(c_key_other)
-call mpas_geom_registry%get(c_key_other, other)
-call mpas_geom_registry%get(c_key_self , self )
+type(mpas_geom), intent(in) :: self
+type(mpas_geom), intent(inout) :: other
 
 other%nCells        = self%nCells
 other%nEdges        = self%nEdges
@@ -153,6 +157,18 @@ other%nVertLevelsP1 = self%nVertLevelsP1
 other%nSoilLevels   = self%nSoilLevels 
 other%vertexDegree  = self%vertexDegree
 other%maxEdges      = self%maxEdges
+
+if (.not.allocated(other%latCell)) allocate(other%latCell(self%nCells))
+if (.not.allocated(other%lonCell)) allocate(other%lonCell(self%nCells))
+if (.not.allocated(other%latEdge)) allocate(other%latEdge(self%nEdges))
+if (.not.allocated(other%lonEdge)) allocate(other%lonEdge(self%nEdges))
+if (.not.allocated(other%xland)) allocate(other%xland(self%nCells))
+if (.not.allocated(other%areaCell)) allocate(other%areaCell(self%nCells))
+if (.not.allocated(other%edgeNormalVectors)) allocate(other%edgeNormalVectors(3, self%nEdges))
+if (.not.allocated(other%zgrid)) allocate(other%zgrid(self%nVertLevelsP1, self%nCells))
+!if (.not.allocated(other%edgesOnCell)) allocate(other%edgesOnCell(self%maxEdges,self%nCells))
+!if (.not.allocated(other%nEdgesOnCell)) allocate(other%nEdgesOnCell(self%nCells))
+
 other%latCell       = self%latCell
 other%lonCell       = self%lonCell
 other%areaCell      = self%areaCell
@@ -161,38 +177,50 @@ other%lonEdge       = self%lonEdge
 other%xland         = self%xland
 other%edgeNormalVectors = self%edgeNormalVectors
 other%zgrid         = self%zgrid
+!other%edgesOnCell   = self%edgesOnCell
+!other%nEdgesOnCell  = self%nEdgesOnCell
 
-end subroutine c_mpas_geo_clone
-
-! ------------------------------------------------------------------------------
-
-subroutine c_mpas_geo_delete(c_key_self) bind(c,name='mpas_geo_delete_f90')
-
-implicit none
-integer(c_int), intent(inout) :: c_key_self     
-
-call mpas_geom_registry%remove(c_key_self)
-
-end subroutine c_mpas_geo_delete
+end subroutine geo_clone
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_info(c_key_self, c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1 ) bind(c,name='mpas_geo_info_f90')
+subroutine geo_delete(self)
+
 implicit none
-integer(c_int), intent(in   ) :: c_key_self
-integer(c_int), intent(inout) :: c_nCells
-integer(c_int), intent(inout) :: c_nEdges
-integer(c_int), intent(inout) :: c_nVertLevels
-integer(c_int), intent(inout) :: c_nVertLevelsP1
-type(mpas_geom), pointer :: self
+type(mpas_geom), intent(inout) :: self
 
-call mpas_geom_registry%get(c_key_self , self )
-c_nCells        = self%nCells
-c_nEdges        = self%nEdges
-c_nVertLevels   = self%nVertLevels
-c_nVertLevelsP1 = self%nVertLevelsP1
+write(*,*)'GD delete geom'
+if (associated(self % dminfo)) nullify(self % dminfo) 
+if (allocated(self%latCell)) deallocate(self%latCell)
+if (allocated(self%lonCell)) deallocate(self%lonCell)
+if (allocated(self%latEdge)) deallocate(self%latEdge)
+if (allocated(self%lonEdge)) deallocate(self%lonEdge)
+if (allocated(self%xland)) deallocate(self%xland)
+if (allocated(self%areaCell)) deallocate(self%areaCell)
+if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
+if (allocated(self%zgrid)) deallocate(self%zgrid)
+!if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
+!if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
 
-end subroutine c_mpas_geo_info
+end subroutine geo_delete
+
+! ------------------------------------------------------------------------------
+
+subroutine geo_info(self, nCells, nEdges, nVertLevels, nVertLevelsP1)
+
+implicit none
+type(mpas_geom), intent(in) :: self
+integer, intent(inout) :: nCells
+integer, intent(inout) :: nEdges
+integer, intent(inout) :: nVertLevels
+integer, intent(inout) :: nVertLevelsP1
+
+nCells        = self%nCells
+nEdges        = self%nEdges
+nVertLevels   = self%nVertLevels
+nVertLevelsP1 = self%nVertLevelsP1
+
+end subroutine geo_info
 
 ! ------------------------------------------------------------------------------
 

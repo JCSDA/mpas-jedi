@@ -8,13 +8,13 @@
  * does it submit to any jurisdiction.
  */
 
-#include "model/Traits.h"
+#include "MPASTraits.h"
 #include "oops/runs/Dirac.h"
-#include "oops/runs/Run.h"
+#include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
-  oops::Dirac<mpas::Traits> dir;
+  mpas::RunMPAS run(argc, argv);
+  oops::Dirac<mpas::MPASTraits> dir;
   run.execute(dir);
   return 0;
 };

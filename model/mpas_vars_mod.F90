@@ -1,19 +1,24 @@
+! (C) Copyright 2017 UCAR
+! 
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
-!> Fortran module to handle variables for the MPAS-A model
 module mpas_vars_mod
 
-use fckit_log_module, only : log
 use iso_c_binding
 use config_mod
+use fckit_log_module, only : log
 
 implicit none
 private
-public :: mpas_vars, mpas_vars_setup, mpas_vars_clone
+public :: mpas_vars
+public :: mpas_vars_create
 public :: mpas_vars_registry
+
 
 ! ------------------------------------------------------------------------------
 
-!> Fortran derived type to represent MPAS-A model variables
+!> Fortran derived type to hold variables definition
 type :: mpas_vars
   integer :: nv
   character(len=22), allocatable :: fldnames(:) !< Variable identifiers
@@ -23,7 +28,7 @@ end type mpas_vars
 #define LISTED_TYPE mpas_vars
 
 !> Linked list interface - defines registry_t type
-#include "util/linkedList_i.f"
+#include "linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_vars_registry
@@ -32,9 +37,8 @@ type(registry_t) :: mpas_vars_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "util/linkedList_c.f"
+#include "linkedList_c.f"
 
-! ------------------------------------------------------------------------------
 
 subroutine mpas_vars_setup(self, cvars)
 implicit none
@@ -46,7 +50,7 @@ self%nv = size(cvars)
 self%lbc = .false.
 
 do jj=1,self%nv
-  if (trim(cvars(jj))/="theta" .and. trim(cvars(jj))/="rho" .and. trim(cvars(jj))/="qv" .and. &
+  if (trim(cvars(jj))/="theta" .and. trim(cvars(jj))/="theta_m" .and. trim(cvars(jj))/="rho" .and. trim(cvars(jj))/="qv" .and. &
       trim(cvars(jj))/="u" .and. trim(cvars(jj))/="uReconstructZonal" .and. trim(cvars(jj))/="uReconstructMeridional") &
       call abor1_ftn ("mpas_vars_setup: unknown field")
 enddo
@@ -57,20 +61,74 @@ end subroutine mpas_vars_setup
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_vars_create(self, svar)
+
+   type(mpas_vars), intent(inout) :: self
+   integer(c_int), dimension(*), intent(in) :: svar
+   integer :: ii, jj
+   
+write(*,*) 'welcome to mpas_vars_create'
+!   svar = "cv"  !config_get_string(c_conf,len(svar),"variables")
+
+!call log%info('GD SVAR: '//svar)
+!select case (trim(svar))
+!case ("reconstructed_winds")
+  self%nv = 5
+  self%lbc = .false.
+  allocate(self%fldnames(self%nv))
+  self%fldnames(1) = "theta"
+  self%fldnames(2) = "rho"
+  self%fldnames(3) = "index_qv"
+  self%fldnames(4) = "uReconstructZonal"
+  self%fldnames(5) = "uReconstructMeridional"
+!case ("normal_speed")
+!  self%nv = 4
+!  self%lbc = .false.
+!  allocate(self%fldnames(self%nv))
+!  !self%fldnames(:) = (/"theta","rho","qv","u"/)
+!  self%fldnames(1) = "theta"
+!  self%fldnames(2) = "rho"
+!  self%fldnames(3) = "qv"
+!  self%fldnames(4) = "u"
+!case ("onevar")
+!write(*,*) ' allocated(self%fldnames)=',allocated(self%fldnames)
+!write(*,*) 'svar(1)=',svar(1)
+!self%nv=0
+!
+!write(*,*) 'svar(1)=',svar(1)
+!do jj=1,svar(1)
+!  write(*,*) 'jj=',jj
+!  ii=jj+1
+!  self%nv=self%nv+1
+!enddo
+!
+!
+!  self%lbc = .false.
+!  allocate(self%fldnames(self%nv))
+!  self%fldnames(1) = "theta_m"
+!case default
+!  call abor1_ftn("c_mpas_vars_create: undefined variables")
+!end select
+
+end subroutine mpas_vars_create
+
+
+! ------------------------------------------------------------------------------
+
 subroutine c_mpas_vars_create(c_key_self, c_conf) bind(c,name='mpas_var_create_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
 type(c_ptr), intent(in)    :: c_conf
 
 type(mpas_vars), pointer :: self
-character(len=20) :: svar
+character(len=22) :: svar
 
 call mpas_vars_registry%init()
 call mpas_vars_registry%add(c_key_self)
 call mpas_vars_registry%get(c_key_self, self)
 
 svar = config_get_string(c_conf,len(svar),"variables")
-call log%info('SVAR: '//svar)
+!call log%info('SVAR: '//svar)
 select case (trim(svar))
 case ("reconstructed_winds")
   self%nv = 5
@@ -91,11 +149,12 @@ case ("normal_speed")
   self%fldnames(2) = "rho"
   self%fldnames(3) = "qv"
   self%fldnames(4) = "u"
-case ("onevar")
+case ("cv")
   self%nv = 1
   self%lbc = .false.
   allocate(self%fldnames(self%nv))
-  self%fldnames(1) = "theta"
+  !self%fldnames(1) = "theta"
+  self%fldnames(1) = "theta_m"
 case default
   call abor1_ftn("c_mpas_vars_create: undefined variables")
 end select
@@ -169,6 +228,8 @@ if (self%lbc) c_nl = 1
 
 return
 end subroutine c_mpas_vars_info
+
+
 
 ! ------------------------------------------------------------------------------
 

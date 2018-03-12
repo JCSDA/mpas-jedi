@@ -1,25 +1,63 @@
 {
   "logging": {
-    "categories": "Warning, Error"
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc"
+    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
-    "variables": "onevar"
+    "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"],
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables_": ["theta", "index_qv"]
   },
-  "TestDate": "2012-06-15T00:00:00Z",
+  "TestDate": "2010-10-23T00:00:00Z",
   "State": {
-    "read_from_file": "1",
-    "filename": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc",
-    "date": "2012-06-15T00:00:00Z"
+    "date": "2010-10-23T00:00:00Z"
   },
   "StateTest": {
-    "read_from_file": "1",
-    "filename": "/home/vagrant/jedi/data/mpas/x1.40962.init.nc",
-    "date": "2012-06-15T00:00:00Z",
-    "norm": "410.46802873296025",
-    "tolerance": "0.005"
+    "StateFile": {
+      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "date": "2010-10-23T00:00:00Z",
+      "filename_": "restart.2010-10-24_00.00.00.nc",
+      "Rfilename": "restart.mem1.$Y-$M-$D_$h.$m.$s.nc",
+      "Rdate": "2010-10-24T00:00:00Z"
+    },
+    "date": "2010-10-23T00:00:00Z",
+    "StateGenerate" : {
+      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "date": "2010-10-23T00:00:00Z",
+      "mean": 8.0,
+      "sinus": 2.0
+    },
+    "norm-file": "441.0",
+    "norm-gen": "441.0",
+    "tolerance": "100.",
+    "Locations": {
+      "lats": [0.0, 0.2, 0.3, -0.1],
+      "lons": [0.0, 0.2, 0.3,-0.2],
+      "lats_deg": [50.0, 30.0, 10.0, -20.5],
+      "lons_deg": [50.0, 30.0, 10.0,-143.2],
+      "positions": [0.717]
+    },
+    "Variables": {
+      "variables": ["virtual_temperature"],
+      "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+      "variables_": ["theta", "index_qv"]
+    },
+    "values": [6.042838]
+  },
+  "nvars": 1,
+  "ModelTest": {
+    "fclength": "PT15M",
+    "finalnorm": 441.0,
+    "tolerance": 100.0
+    },
+  "ModelBias": null,
+  "Model": {
+    "tstep": "PT15M",
+    "fclength": "PT1H",
+    "finalnorm": 441.0,
+    "tolerance": 100.0
   }
 }
