@@ -429,17 +429,12 @@ subroutine read_file(fld, c_conf, vdate)
    write(*,*)'Reading ',trim(filename)
    call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
-write(*,*)'here   1'
    if ( ierr .ne. 0  ) then
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
-write(*,*)'here   2'
    !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
    !call update_mpas_field(fld % domain, fld % subFields)
-   
    call da_copy_all2sub_fields(fld % domain, fld % subFields) 
-write(*,*)'here   3'
-   call mpas_timer_set_context( fld % domain )
 #endif
 
 end subroutine read_file
@@ -492,17 +487,10 @@ subroutine write_file(fld, c_conf, vdate)
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    call da_copy_sub2all_fields(fld % domain, fld % subFields)
    write(*,*)'writing ',trim(filename)
-   call mpas_stream_mgr_write(fld % domain % streamManager,forceWriteNow=.true., ierr=ierr)
+   call mpas_stream_mgr_write(fld % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
    if ( ierr .ne. 0  ) then
      call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
    end if
-   !BJJ test
-   !call MPAS_stream_mgr_destroy_stream(fld % manager, streamID, ierr)
-   !if ( ierr .ne. 0  ) then
-   !  call abor1_ftn('MPAS_stream_mgr_destroy_stream failed ierr=',ierr)
-   !end if
- !  call abor1_ftn("================= Let's check the output")
-   CALL system('rm restart.2010-10-23_00.00.00.nc') !diag.2010-10-23_00.00.00.nc')
 #endif
 
 end subroutine write_file
