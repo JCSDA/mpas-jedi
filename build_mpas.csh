@@ -132,7 +132,7 @@ if ( $test_mpas ) then
    echo "======================================================"
 
    cd $BUILD_MODEL
-   setenv OOPS_TRACE=1
+   export OOPS_TRACE=1
    #ctest -VV -R test_mpas_geometry
    #ctest -VV -R test_mpas_state
    ctest -VV -R test_mpas_increment

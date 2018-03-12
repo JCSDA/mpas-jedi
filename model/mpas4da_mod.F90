@@ -238,7 +238,7 @@ module mpas4da_mod
 
             ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
             if (poolItr_b % dataType == MPAS_POOL_REAL) then
-
+!write(0,*) '-------------- test', trim(poolItr_b % memberName)
              call mpas_pool_begin_iteration(pool_a)
              do while ( mpas_pool_get_next_member(pool_a, poolItr_a) )
 
@@ -257,17 +257,19 @@ module mpas4da_mod
                   else if (poolItr_b % nDims == 2) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
-                     r2d_ptr_a = r2d_ptr_a
-                     write(0,*)'Copy all2sub field MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     r2d_ptr_a = r2d_ptr_b
+                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( trim(poolItr_b % memberName).eq.'scalar' ) then
+               else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
+                       write(0,*)'Copy all2sub field: Looking at SCALARS now'
                        if ( trim(poolItr_a % memberName).eq.'index_qv') then
-                          call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                           call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
+                          call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                           !call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                           index_scalar = 1
-                          field3d % array(index_scalar,:,:) = field2d % array(:,:)
+                          !field3d % array(index_scalar,:,:) = field2d % array(:,:)
+                          field2d % array(:,:) = field3d % array(index_scalar,:,:)
                           write(0,*)'Copy all2sub field index_qv: ',minval(field2d % array), maxval(field2d % array)
                        end if
                end if
@@ -346,17 +348,18 @@ module mpas4da_mod
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_b = r2d_ptr_a
-                     write(0,*)'Copy all2sub field MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( trim(poolItr_b % memberName).eq.'scalar' ) then
+               else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
+                       !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
                        if ( trim(poolItr_a % memberName).eq.'index_qv' ) then
                           call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                           call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                           !call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                           index_scalar = 1
-                          field2d % array(:,:) = field3d % array(index_scalar,:,:)
-                          write(0,*)'Copy all2sub field index_qv: ',minval(field2d % array), maxval(field2d % array)
+                          field3d % array(index_scalar,:,:) = field2d % array(:,:)
+                          write(0,*)'Copy sub2all field index_qv: ',minval(field2d % array), maxval(field2d % array)
                        end if
                end if
             end do

@@ -15,7 +15,7 @@
   "Initial Condition": {
     "datapath_in": "./",
     "read_from_file": "1",
-    "filename": "INPUT/fv_core.res.nc",
+    "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
     "date": "2010-10-23T00:00:00Z"
   },
   "Observations": {

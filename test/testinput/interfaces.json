@@ -7,8 +7,8 @@
     "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"],
-    "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"],
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "variables_": ["theta", "index_qv"]
   },
   "TestDate": "2010-10-23T00:00:00Z",
@@ -18,7 +18,10 @@
   "StateTest": {
     "StateFile": {
       "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-      "date": "2010-10-23T00:00:00Z"
+      "date": "2010-10-23T00:00:00Z",
+      "filename_": "restart.2010-10-24_00.00.00.nc",
+      "Rfilename": "restart.mem1.$Y-$M-$D_$h.$m.$s.nc",
+      "Rdate": "2010-10-24T00:00:00Z"
     },
     "date": "2010-10-23T00:00:00Z",
     "StateGenerate" : {
@@ -31,8 +34,10 @@
     "norm-gen": "441.0",
     "tolerance": "100.",
     "Locations": {
-      "lats": [50.0, 30.0, 10.0, -20.5],
-      "lons": [50.0, 30.0, 10.0,-143.2],
+      "lats": [0.0, 0.2, 0.3, -0.1],
+      "lons": [0.0, 0.2, 0.3,-0.2],
+      "lats_deg": [50.0, 30.0, 10.0, -20.5],
+      "lons_deg": [50.0, 30.0, 10.0,-143.2],
       "positions": [0.717]
     },
     "Variables": {

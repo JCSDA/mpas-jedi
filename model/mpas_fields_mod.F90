@@ -94,7 +94,7 @@ subroutine create(self, geom, vars)
     real(kind=kind_real), allocatable :: pstat(:, :)
     real(kind=kind_real)              :: prms
     type (MPAS_Time_type) :: local_time, write_time, fld_time
-    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
+    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename
     character (len=StrKIND) :: dateTimeString_oops
 
 
@@ -154,39 +154,16 @@ subroutine create(self, geom, vars)
    ! xtime_s = (s + s_n / s_d)
 
 
- !--------------------------------------------------------------------------------------- 
+!--------------------------------------------------------------------------------------- 
 
-   write(0,*)''
-   write(0,*)'=========== MPAS WRITE A RESTART ===================='
+!   write(0,*)''
+!   write(0,*)'=========== MPAS WRITE A RESTART ===================='
 
    !call mpas_pool_get_subpool(block_ptr % structs, 'state', state)
 !   call mpas_pool_get_subpool(block_ptr % structs, 'diag', diag)
 !   all mpas_pool_get_subpool(block_ptr % structs, 'diag_physics', diag_physics)
 !   call mpas_pool_get_subpool(block_ptr % structs, 'mesh', mesh)
 !   call atm_compute_restart_diagnostics(state, 1, diag, mesh)
-
-!   dateTimeString_oops = '2010-10-24T_02.00.00Z'
-!   dateTimeString = '$Y-$M-$D_$h:$m:$s'
-!   call cvt_oopsmpas_date(dateTimeString_oops,dateTimeString,1)
-!   call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
-!   fld_time = mpas_get_clock_time(self % clock, MPAS_START_TIME, ierr)
-!   call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
-!   if ( fld_time .NE. write_time ) then
-!      write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
-!      call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
-!   end if
-!   temp_filename = 'restart.out.$Y-$M-$D_$h.$m.$s.nc'
-!   call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
-!   streamID = 'restart'
-!   call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-
-!   call da_copy_sub2all_fields(self % geom % domain, self % subFields)
-!   write(*,*)'writing ',trim(filename)
-!   call mpas_stream_mgr_write(self % geom % domain % streamManager,forceWriteNow=.true., ierr=ierr)
-!   if ( ierr .ne. 0  ) then
-!     call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
-!   end if
-    
  
     return
 
@@ -429,6 +406,7 @@ subroutine read_file(fld, c_conf, vdate)
    write(*,*)'==> read fields'
    sdate = config_get_string(c_conf,len(sdate),"date")
    call datetime_set(sdate, vdate)
+#define READ_TEST_READY
 #ifdef READ_TEST_READY
    temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
    write(*,*)'Reading ',trim(temp_filename)
@@ -436,9 +414,11 @@ subroutine read_file(fld, c_conf, vdate)
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
    ! and then can be like this ....
-   streamID = 'restart'
+   !streamID = 'restart'
+   !streamID = 'input'
+   streamID = 'output'
    ierr = 0
-   fld % manager => fld % geom % domain % streamManager
+   fld % manager => fld % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
    write(*,*)'dateTimeString: ',trim(dateTimeString)
@@ -447,13 +427,19 @@ subroutine read_file(fld, c_conf, vdate)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    write(*,*)'Reading ',trim(filename)
-   !call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
-   !                        & when=dateTimeString, rightNow=.True., ierr=ierr)
-   !if ( ierr .ne. 0  ) then
-   !   call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
-   !end if
-   !
-   !call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+   call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
+                           & when=dateTimeString, rightNow=.True., ierr=ierr)
+write(*,*)'here   1'
+   if ( ierr .ne. 0  ) then
+      call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
+   end if
+write(*,*)'here   2'
+   !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
+   !call update_mpas_field(fld % domain, fld % subFields)
+   
+   call da_copy_all2sub_fields(fld % domain, fld % subFields) 
+write(*,*)'here   3'
+   call mpas_timer_set_context( fld % domain )
 #endif
 
 end subroutine read_file
@@ -463,34 +449,61 @@ end subroutine read_file
 subroutine write_file(fld, c_conf, vdate)
 
    implicit none
-   type(mpas_field), intent(in) :: fld    !< Fields
-   type(c_ptr), intent(in)       :: c_conf !< Configuration
-   type(datetime), intent(in)    :: vdate  !< DateTime
+   type(mpas_field), intent(inout) :: fld    !< Fields
+   type(c_ptr), intent(in)         :: c_conf !< Configuration
+   type(datetime), intent(inout)   :: vdate  !< DateTime
    character(len=20) :: sdate
    integer :: ierr
    type (MPAS_Time_type) :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
 
-   !call datetime_get(sdate,vdate)
+#define WRITE_TEST_READY
+#ifdef WRITE_TEST_READY
+   sdate = config_get_string(c_conf,len(sdate),"date")
    write(*,*)'==> write fields ',trim(sdate)
-   !call cvt_oopsmpas_date(sdate,dateTimeString,1) 
-   !call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr) 
-   !fld_time = mpas_get_clock_time(fld % clock, MPAS_START_TIME, ierr)
-   !call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr) 
-   !if ( fld_time .NE. write_time ) then
-   !   write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
-   !   call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
-   !end if
+   call datetime_set(sdate,vdate)
+   temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
+   write(*,*)'Writing ',trim(temp_filename)
+   !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
+   ! GD look at oops/src/util/datetime_mod.F90
+   ! we probably need to extract from vdate a string to enforce the reading ..
+   ! and then can be like this ....
+
+   !dateTimeString_oops = '2010-10-23T00.00.00Z'  ! <- sdate form
+   dateTimeString = '$Y-$M-$D_$h:$m:$s'
+   call cvt_oopsmpas_date(sdate,dateTimeString,-1)
+   !write(*,*) 'dateTimeString_oops=',dateTimeString_oops
+   !write(*,*) 'dateTimeString=',dateTimeString
+   ierr = 0
+   call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
+   fld_time = mpas_get_clock_time(fld % clock, MPAS_START_TIME, ierr)
+   call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
+   if ( fld_time .NE. write_time ) then
+      write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+      call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
+   end if
    !temp_filename = 'restart.out.$Y-$M-$D_$h.$m.$s.nc'
-   !call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
+   write(*,*) 'temp_filename = ',trim(temp_filename)
+   call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
+   write(*,*) '     filename = ',trim(filename)
+   fld % manager => fld % domain % streamManager
    !streamID = 'restart'
-   !call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   !call da_copy_sub2all_fields(fld % geom % domain, fld % subFields)
-   !write(*,*)'writing ',trim(filename)
-   !call mpas_stream_mgr_write(fld % geom % domain % streamManager,forceWriteNow=.true., ierr=ierr)
+   streamID = 'output'
+   call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
+   call da_copy_sub2all_fields(fld % domain, fld % subFields)
+   write(*,*)'writing ',trim(filename)
+   call mpas_stream_mgr_write(fld % domain % streamManager,forceWriteNow=.true., ierr=ierr)
+   if ( ierr .ne. 0  ) then
+     call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
+   end if
+   !BJJ test
+   !call MPAS_stream_mgr_destroy_stream(fld % manager, streamID, ierr)
    !if ( ierr .ne. 0  ) then
-   !  call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
+   !  call abor1_ftn('MPAS_stream_mgr_destroy_stream failed ierr=',ierr)
    !end if
+ !  call abor1_ftn("================= Let's check the output")
+   CALL system('rm restart.2010-10-23_00.00.00.nc') !diag.2010-10-23_00.00.00.nc')
+#endif
 
 end subroutine write_file
 
@@ -534,6 +547,7 @@ use mpas_pool_routines
    integer :: ndir,idir,ildir,ifdir,itiledir
    integer,allocatable :: iCell(:)
    character(len=3) :: idirchar
+   character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
 
@@ -547,6 +561,7 @@ use mpas_pool_routines
    end do
    ildir = config_get_int(c_conf,"ildir")
    ifdir = config_get_int(c_conf,"ifdir")
+   dirvar = config_get_string(c_conf,len(dirvar),"dirvar")
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_fields:dirac non-positive ndir")
@@ -581,10 +596,12 @@ use mpas_pool_routines
               write(*,*)'Not implemented yet'
           else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-              do idir=1, ndir
-                r2d_ptr_a(ildir,iCell(idir))=1.0
-              end do
-              write(*,*) ' Dirac is set in ',ndir,'locations for',trim(poolItr % memberName)
+              if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
+                do idir=1, ndir
+                  r2d_ptr_a(ildir,iCell(idir))=1.0
+                end do
+                write(*,*) ' Dirac is set in ',ndir,'locations for',trim(poolItr % memberName)
+              end if
            else if (poolItr % nDims == 3) then
               write(*,*)'Not implemented yet'
            end if
@@ -1022,6 +1039,8 @@ subroutine convert_to_ug(self, ug)
      lat(jC) = self%geom%latCell(jC)
      area(jC) = self%geom%areaCell(jC)
    enddo
+write(0,*)'BJJ area MIN/MAX: ',minval(area),maxval(area)
+
    imask = 1
    
    ! Define vertical unit
@@ -1033,7 +1052,8 @@ subroutine convert_to_ug(self, ug)
    enddo
 
    ! Should this come from self/vars?
-   nf = 5
+   nf = self%nf !5
+   write(0,*)'convert_to_ug: nf=',nf
    !if (.not. self%geom%hydrostatic) nf = 7
 
    ! Create unstructured grid
@@ -1068,13 +1088,20 @@ subroutine convert_to_ug(self, ug)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
    
+              idx_var=-999
               if(trim(poolItr % memberName).eq.'theta'   ) idx_var=1
-              if(trim(poolItr % memberName).eq.'index_qv') idx_var=2
-              do jC=1,self%geom%nCells
-                do jl=1,self%geom%nVertLevels
-                  ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
-                enddo
-              enddo
+              if(trim(poolItr % memberName).eq.'rho'     ) idx_var=2
+              if(trim(poolItr % memberName).eq.'index_qv') idx_var=3
+              if(trim(poolItr % memberName).eq.'uReconstructZonal') idx_var=4
+              if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
+              if(idx_var.gt.0) then
+                 write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 do jC=1,self%geom%nCells
+                   do jl=1,self%geom%nVertLevels
+                     ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                   enddo
+                 enddo
+              endif
            else if (poolItr % nDims == 3) then
               write(*,*)'Not implemented yet'
            end if
@@ -1137,13 +1164,20 @@ subroutine convert_from_ug(self, ug)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
 
+              idx_var=-999
               if(trim(poolItr % memberName).eq.'theta'   ) idx_var=1
-              if(trim(poolItr % memberName).eq.'index_qv') idx_var=2
-              do jC=1,self%geom%nCells
-                do jl=1,self%geom%nVertLevels
-                  r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
-                enddo
-              enddo
+              if(trim(poolItr % memberName).eq.'rho'     ) idx_var=2
+              if(trim(poolItr % memberName).eq.'index_qv') idx_var=3
+              if(trim(poolItr % memberName).eq.'uReconstructZonal') idx_var=4
+              if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
+              if(idx_var.gt.0) then
+                 write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 do jC=1,self%geom%nCells
+                   do jl=1,self%geom%nVertLevels
+                     r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
+                   enddo
+                 enddo
+              end if
            else if (poolItr % nDims == 3) then
               write(*,*)'Not implemented yet'
            end if

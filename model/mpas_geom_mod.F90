@@ -115,6 +115,7 @@ call ncerr(string1, nf90_inq_varid(ncid,'lonCell',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%lonCell)) !,1,self%nCells))
 call ncerr(string1, nf90_inq_varid(ncid,'areaCell',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%areaCell)) !,1,self%nCells))
+write(0,*)'BJJ areaCell MIN/MAX: ',minval(self%areaCell),maxval(self%areaCell)
 call ncerr(string1, nf90_inq_varid(ncid,'latEdge',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,self%latEdge)) !,1,self%nEdges))
 call ncerr(string1, nf90_inq_varid(ncid,'lonEdge',varid))
@@ -131,10 +132,10 @@ call ncerr(string1, nf90_get_var  (ncid,varid,self%zgrid,(/1,1/),(/self%nVertLev
 !call ncerr(string1, nf90_get_var  (ncid,varid,self%edgesOnCell,(/1,1/),(/self%maxEdges,self%nCells/)))
 
 !> radians to degrees
-self%latCell = self%latCell / deg2rad
-self%lonCell = self%lonCell / deg2rad
-self%latEdge = self%latEdge / deg2rad
-self%lonEdge = self%lonEdge / deg2rad
+self%latCell = self%latCell !/ deg2rad
+self%lonCell = self%lonCell !/ deg2rad
+self%latEdge = self%latEdge !/ deg2rad
+self%lonEdge = self%lonEdge !/ deg2rad
 
 !> close file
 call ncerr(string1,nf90_close(ncid))
