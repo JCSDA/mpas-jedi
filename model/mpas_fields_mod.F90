@@ -36,7 +36,7 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
-        & change_resol, interp_tl, interp_ad, convert_to_ug, convert_from_ug, &
+        & change_resol, interp, interp_tl, interp_ad, convert_to_ug, convert_from_ug, &
         & dirac
 public :: mpas_field_registry
 
@@ -586,6 +586,105 @@ end subroutine dirac
 
 ! ------------------------------------------------------------------------------
 
+subroutine interp(fld, locs, vars, gom)
+
+   use obsop_apply, only: apply_obsop 
+   use type_geom, only: geomtype
+   use type_odata, only: odatatype
+   
+   implicit none
+   type(mpas_field),  intent(in)    :: fld
+   type(ufo_locs),    intent(in)    :: locs
+   type(ufo_vars),    intent(in)    :: vars
+   type(ufo_geovals), intent(inout) :: gom
+   
+   type(geomtype), pointer :: pgeom
+   type(odatatype), pointer :: odata
+   
+   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
+   real(kind=kind_real), allocatable :: mod_field(:,:)
+   real(kind=kind_real), allocatable :: obs_field(:,:)
+   
+   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_iterator_type) :: poolItr
+   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+   
+   ! Get grid dimensions and checks
+   ! ------------------------------
+   ngrid = fld%geom%nCells
+   nobs = locs%nlocs 
+   write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
+   call interp_checks("tl", fld, locs, vars, gom)
+   
+   ! Calculate interpolation weight using nicas
+   ! ------------------------------------------
+   call initialize_interp(fld%geom, locs, pgeom, odata)
+   write(*,*)'interp: after initialize_interp'
+   
+   !Make sure the return values are allocated and set
+   !-------------------------------------------------
+   do jvar=1,vars%nv
+      if( .not. allocated(gom%geovals(jvar)%vals) )then
+         gom%geovals(jvar)%nval = fld%geom%nVertLevels
+         gom%geovals(jvar)%nobs = ngrid
+         allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
+         write(*,*) ' gom%geovals(n)%vals allocated'
+      endif
+   enddo
+   gom%linit = .true.
+   
+
+   !Create Buffer for interpolated values
+   !--------------------------------------
+   allocate(mod_field(ngrid,1))
+   allocate(obs_field(nobs,1))
+   
+   !Interpolate fields to obs locations using pre-calculated weights
+   !----------------------------------------------------------------
+   write(0,*)'interp: vars%nv       : ',vars%nv
+   write(0,*)'interp: vars%fldnames : ',vars%fldnames
+   
+
+   !------- need some table matching UFO_Vars & related MPAS_Vars
+   !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
+   !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
+   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+
+   call mpas_pool_begin_iteration(pool_b)
+   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+        if (poolItr % memberType == MPAS_POOL_FIELD) then
+        if (poolItr % dataType == MPAS_POOL_REAL) then
+           if (poolItr % nDims == 1) then
+
+           else if (poolItr % nDims == 2) then
+              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              write(*,*) "interp: var=",trim(poolItr % memberName)
+              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+              write(*,*) "ufo_vars_getindex: ivar=",ivar
+              do jlev = 1, fld%geom%nVertLevels
+                 mod_field(:,1) = r2d_ptr_a(jlev,:)
+                 call apply_obsop(pgeom,odata,mod_field,obs_field)
+                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+              end do
+
+           else if (poolItr % nDims == 3) then
+           end if
+        end if
+        end if
+   end do
+
+
+   deallocate(mod_field)
+   deallocate(obs_field)
+   
+end subroutine interp
+
+! ------------------------------------------------------------------------------
+
 subroutine interp_tl(fld, locs, vars, gom)
 
    use obsop_apply, only: apply_obsop 
@@ -616,13 +715,13 @@ subroutine interp_tl(fld, locs, vars, gom)
    ! ------------------------------
    ngrid = fld%geom%nCells
    nobs = locs%nlocs 
-   write(*,*)'interp_tl ngrid, nobs = : ',ngrid, nobs
+   write(*,*)'interp_tl: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("tl", fld, locs, vars, gom)
    
    ! Calculate interpolation weight using nicas
    ! ------------------------------------------
    call initialize_interp(fld%geom, locs, pgeom, odata)
-   write(*,*)'interp_tl after initialize_interp'
+   write(*,*)'interp_tl: after initialize_interp'
    
    !Make sure the return values are allocated and set
    !-------------------------------------------------
@@ -644,72 +743,27 @@ subroutine interp_tl(fld, locs, vars, gom)
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'interp vars%nv       : ',vars%nv
-   write(0,*)'interp vars%fldnames : ',vars%fldnames
+   write(0,*)'interp: vars%nv       : ',vars%nv
+   write(0,*)'interp: vars%fldnames : ',vars%fldnames
    
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   
+   call convert_mpas_field2ufoTL(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
-!   call mpas_pool_begin_iteration(fld % subFields)
-!   
-!   do while ( mpas_pool_get_next_member(fld % subFields, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
-!        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-!        ! so we select only those members of the pool that are fields
-!        if (poolItr % memberType == MPAS_POOL_FIELD) then
-!        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-!        if (poolItr % dataType == MPAS_POOL_REAL) then
-!           ! Depending on the dimensionality of the field, we need to set pointers of
-!           ! the correct type
-!           if (poolItr % nDims == 1) then
-!              !call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-!              !select case (op_type)
-!              !case ('TL')
-!              !   call apply_linop(geov_hinterp_op, r1d_ptr_a(:), fld_dst)
-!              !case ('AD')
-!              !   !call apply_linop_ad(hinterp_op,fld_dst,r1d_ptr_a(:))
-!              !end select
-!           else if (poolItr % nDims == 2) then
-!              call mpas_pool_get_array(fld % subFields, trim(poolItr % memberName), r2d_ptr_a)
-!              !call mpas_pool_get_array(poolItr, trim(poolItr % memberName), r2d_ptr_a)
-!              write(*,*) "Interp. var=",trim(poolItr % memberName)
-!              write(*,*) "size(:,1), size(1,:)=", size(r2d_ptr_a(:,1)), size(r2d_ptr_a(1,:))
-!              write(*,*) "r2d_ptr_a(1,1), r2d_ptr_a(1,END) =", r2d_ptr_a(1,1), r2d_ptr_a(1,size(r2d_ptr_a(1,:)))
-!              do jlev = 1, fld%geom%nVertLevels
-!                 mod_field(:,1) = r2d_ptr_a(jlev,:)
-!                 call apply_obsop(pgeom,odata,mod_field,obs_field)
-!                 !write(0,*)"n, MIN/MAX: ",minval(r2d_ptr_a(n,:)),maxval(r2d_ptr_a(n,:))
-!                 !write(*,*)"n, Interp. value = ", n, obs_field(:,1)
-!                 !!gom%geovals(1)%vals(n,:) = obs_field(:,1)
-!                 !if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(n,:) = obs_field(:,1)
-!                 !if(trim(poolItr % memberName).eq.'index_qv') gom%geovals(2)%vals(n,:) = obs_field(:,1)
-!                 !UFO BJJ SIMPLE TEST
-!                 if(trim(poolItr % memberName).eq.'theta') gom%geovals(1)%vals(jlev,:) = obs_field(:,1)
-!                 if(trim(poolItr % memberName).eq.'pressure') gom%geovals(2)%vals(jlev,:) = obs_field(:,1)
-!              end do
-!           else if (poolItr % nDims == 3) then
-!              write(*,*)'Not implemented yet'
-!              !call abort
-!           end if
-!        end if
-!        end if
-!   end do
-   
-   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
    call mpas_pool_begin_iteration(pool_b)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
+
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
-              write(*,*) "Interp. var=",trim(poolItr % memberName)
+              write(*,*) "interp_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "ufo_vars_getindex, ivar=",ivar
+              write(*,*) "ufo_vars_getindex: ivar=",ivar
               do jlev = 1, fld%geom%nVertLevels
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call apply_obsop(pgeom,odata,mod_field,obs_field)
@@ -717,6 +771,7 @@ subroutine interp_tl(fld, locs, vars, gom)
               end do
 
            else if (poolItr % nDims == 3) then
+
            end if
         end if
         end if
@@ -760,7 +815,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    ! ------------------------------
    ngrid = fld%geom%nCells
    nobs = locs%nlocs
-   write(*,*)'interp_ad ngrid, nobs = : ',ngrid, nobs
+   write(*,*)'interp_ad: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("ad", fld, locs, vars, gom)
 
    !Create Buffer for interpolated values
@@ -770,36 +825,41 @@ subroutine interp_ad(fld, locs, vars, gom)
 
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'interp vars%nv       : ',vars%nv
-   write(0,*)'interp vars%fldnames : ',vars%fldnames
+   write(0,*)'interp_ad: vars%nv       : ',vars%nv
+   write(0,*)'interp_ad: vars%fldnames : ',vars%fldnames
 
-! AD of   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
-!   call mpas_pool_begin_iteration(pool_b)
-!   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
-!        if (poolItr % memberType == MPAS_POOL_FIELD) then
-!        if (poolItr % dataType == MPAS_POOL_REAL) then
-!           if (poolItr % nDims == 1) then
-!           else if (poolItr % nDims == 2) then
-!              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
-!              write(*,*) "Interp. var=",trim(poolItr % memberName)
-!              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-!              write(*,*) "ufo_vars_getindex, ivar=",ivar
-!              do jlev = 1, fld%geom%nVertLevels
+   call convert_mpas_field2ufoTL(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+
+   call mpas_pool_begin_iteration(pool_b)
+   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+        if (poolItr % memberType == MPAS_POOL_FIELD) then
+        if (poolItr % dataType == MPAS_POOL_REAL) then
+           if (poolItr % nDims == 1) then
+
+           else if (poolItr % nDims == 2) then
+              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              r2d_ptr_a=0.0
+              write(*,*) "Interp. var=",trim(poolItr % memberName)
+              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+              write(*,*) "ufo_vars_getindex, ivar=",ivar
+              do jlev = 1, fld%geom%nVertLevels
 !TL                 mod_field(:,1) = r2d_ptr_a(jlev,:)
 !TL                 call apply_obsop(pgeom,odata,mod_field,obs_field)
 !TL                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
-!AD                 obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
-!AD                 call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
-!AD                 r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
-!              end do
-!
-!           else if (poolItr % nDims == 3) then
-!           end if
-!        end if
-!        end if
-!   end do
+                 obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
+                 call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
+                 r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
+              end do
 
+           else if (poolItr % nDims == 3) then
+
+           end if
+        end if
+        end if
+   end do
+
+   call convert_mpas_field2ufoAD(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)

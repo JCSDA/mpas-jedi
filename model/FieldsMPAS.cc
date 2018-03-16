@@ -129,7 +129,7 @@ void FieldsMPAS::random() {
 void FieldsMPAS::interpolate(const ufo::Locations & locs, const oops::Variables & vars,
                               ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars,
