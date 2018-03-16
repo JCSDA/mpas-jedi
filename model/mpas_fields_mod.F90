@@ -44,21 +44,16 @@ public :: mpas_field_registry
 
 !> Fortran derived type to hold MPAS fields
 type :: mpas_field
-  type (domain_type), pointer :: domain
-  type (core_type), pointer :: corelist
-  !type (dm_info), pointer :: dminfo
-  type (mpas_geom), pointer :: geom                                 !< Number of unstructured grid cells
-  integer :: nf                           !< Number of variables in fld
-  character(len=22), allocatable  :: fldnames(:)      !< Variable identifiers
-!  type (mpas_pool_type), pointer  :: auxFields2 !--->  t2m, u10, v10, Tsfc, ??? !--additional
-  type (mpas_pool_type), pointer  :: subFields  !---> 	1) model prognostic variables : theta_m, u(NO, zonal&meridional), w, roh_zz, m_ps, scalars
-!						!	2) regular meteorological variables : zonal, meridional, Temp/Theta, qv/RH, pres, Psfc(?)
-!						!	3) any ?!
+  !type (domain_type), pointer :: domain          ! NOW in geom, For convenience not used 
+  !type (core_type), pointer :: corelist          ! NOW in geom, For convenience not used
+  type (mpas_geom), pointer :: geom              ! grid and MPI infos
+  integer :: nf                                  ! Number of variables in fld
+  character(len=22), allocatable  :: fldnames(:) ! Variable identifiers
+  type (mpas_pool_type), pointer  :: subFields
+!  type (mpas_pool_type), pointer  :: auxFields   !--->  t2m, u10, v10, Tsfc, ??? !--additional
   type (MPAS_streamManager_type), pointer :: manager
   type (MPAS_Clock_type), pointer :: clock
 end type mpas_field
-
-!#include "mpas_fields_oops_type.inc"
 
 #define LISTED_TYPE mpas_field
 
@@ -82,12 +77,11 @@ subroutine create(self, geom, vars)
 
     implicit none
 
-    type(mpas_field), intent(inout) :: self
-    type(mpas_geom),  intent(in), pointer    :: geom
-    type(ufo_vars),  intent(in)    :: vars
+    type(mpas_field), intent(inout)       :: self
+    type(mpas_geom),  intent(in), pointer :: geom
+    type(ufo_vars),   intent(in)          :: vars
 
     integer :: nsize, nfields
-    integer :: mpi_comm
     integer :: ierr
 
     !-- fortran level test
@@ -105,13 +99,8 @@ subroutine create(self, geom, vars)
     write(*,*)'self % nf =',self % nf
     write(*,*)'allocate ::',self % fldnames(:)
    
-    ! coming from mpas_subdriver
-    write(*,*)'Before calling the subdriver of mpas'
-    call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
-
     ! link geom
     if (associated(geom)) then
-      write(*,*)'geom associated'
       self % geom => geom
     else
       write(*,*)'mpas_fields: geom not associated'
@@ -119,14 +108,14 @@ subroutine create(self, geom, vars)
     end if
 
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
-    call da_make_subpool(self % domain, self % subFields, self % nf, self % fldnames, nfields)
+    call da_make_subpool(self % geom % domain, self % subFields, self % nf, self % fldnames, nfields)
     if ( self % nf .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
 
     ! clock creation
     allocate(self % clock)
-    call atm_simulation_clock_init(self % clock, self % domain % blocklist % configs, ierr)
+    call atm_simulation_clock_init(self % clock, self % geom % domain % blocklist % configs, ierr)
     if ( ierr .ne. 0 ) then
        call abor1_ftn("mpas_fields: atm_simulation_clock_init problem")
     end if
@@ -134,11 +123,11 @@ subroutine create(self, geom, vars)
     !-------------------------------------------------------------
     ! Few temporary tests
     !-------------------------------------------------------------
-    call update_mpas_field(self % domain, self % subFields)
-!    call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
-    call da_fldrms(self % subFields, self % domain % dminfo, prms)
+    call update_mpas_field(self % geom % domain, self % subFields)
+!    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs,'state',state)
+    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms)
     allocate(pstat(3, self % nf))
-    call da_gpnorm(self % subFields, self % domain % dminfo, self % nf, pstat)
+    call da_gpnorm(self % subFields, self % geom % domain % dminfo, self % nf, pstat)
     deallocate(pstat)
 !    call abor1_ftn("MPAS test")
 
@@ -175,11 +164,8 @@ subroutine delete(self)
 
    implicit none
    type(mpas_field), intent(inout) :: self
-   type (MPAS_streamManager_type), pointer :: manager
    integer :: ierr = 0 
   
-   call mpas_timer_set_context( self % domain )
-   
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    write(*,*)'--> deallocate subFields Pool'
    if (associated(self % subFields)) then
@@ -190,9 +176,7 @@ subroutine delete(self)
    if ( ierr .ne. 0  ) then
       write(*,*)'mpas_fields eallocate clock failed'
    end if
-   write(*,*)'--> deallocate domain and core'
-   call mpas_finalize(self % corelist, self % domain)
-   write(*,*)'--> done'
+   write(*,*)'--> mpas_fields done deallocate'
 
    return
 
@@ -291,8 +275,8 @@ end subroutine self_sub
 subroutine self_mul(self,zz)
 
    implicit none
-   type(mpas_field), intent(inout)  :: self
-   real(kind=kind_real), intent(in) :: zz
+   type(mpas_field),     intent(inout) :: self
+   real(kind=kind_real), intent(in)    :: zz
 
    call da_self_mult(self % subFields, zz)
 
@@ -303,9 +287,9 @@ end subroutine self_mul
 subroutine axpy(self,zz,rhs)
 
    implicit none
-   type(mpas_field), intent(inout)  :: self
-   real(kind=kind_real), intent(in) :: zz
-   type(mpas_field), intent(in)     :: rhs
+   type(mpas_field),     intent(inout) :: self
+   real(kind=kind_real), intent(in)    :: zz
+   type(mpas_field),     intent(in)    :: rhs
 
    call da_axpy(self % subFields, rhs % subFields, zz)
 
@@ -316,10 +300,10 @@ end subroutine axpy
 subroutine dot_prod(fld1,fld2,zprod)
 
    implicit none
-   type(mpas_field), intent(in) :: fld1, fld2
+   type(mpas_field),     intent(in)    :: fld1, fld2
    real(kind=kind_real), intent(inout) :: zprod
 
-   call da_dot_product(fld1 % subFields, fld2 % subFields, fld1 % domain % dminfo, zprod)
+   call da_dot_product(fld1 % subFields, fld2 % subFields, fld1 % geom % domain % dminfo, zprod)
 
 end subroutine dot_prod
 
@@ -396,12 +380,12 @@ subroutine read_file(fld, c_conf, vdate)
 
    implicit none
    type(mpas_field), intent(inout) :: fld      !< Fields
-   type(c_ptr), intent(in)          :: c_conf   !< Configuration
-   type(datetime), intent(inout)    :: vdate    !< DateTime
-   character(len=20) :: sdate
-   type (MPAS_Time_type) :: local_time
+   type(c_ptr),      intent(in)    :: c_conf   !< Configuration
+   type(datetime),   intent(inout) :: vdate    !< DateTime
+   character(len=20)       :: sdate
+   type (MPAS_Time_type)   :: local_time
    character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
-   integer :: ierr = 0
+   integer                 :: ierr = 0
 
    write(*,*)'==> read fields'
    sdate = config_get_string(c_conf,len(sdate),"date")
@@ -418,12 +402,13 @@ subroutine read_file(fld, c_conf, vdate)
    !streamID = 'input'
    streamID = 'output'
    ierr = 0
-   fld % manager => fld % domain % streamManager
+   fld % manager => fld % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
    write(*,*)'dateTimeString: ',trim(dateTimeString)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
-   call mpas_set_clock_time(fld % clock, local_time, MPAS_START_TIME)
+   !call mpas_set_clock_time(fld % clock, local_time, MPAS_START_TIME)
+   call mpas_set_clock_time(fld % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    write(*,*)'Reading ',trim(filename)
@@ -433,8 +418,8 @@ subroutine read_file(fld, c_conf, vdate)
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
    !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % domain, fld % subFields)
-   call da_copy_all2sub_fields(fld % domain, fld % subFields) 
+   !call update_mpas_field(fld % geom % domain, fld % subFields)
+   call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
 #endif
 
 end subroutine read_file
@@ -445,11 +430,11 @@ subroutine write_file(fld, c_conf, vdate)
 
    implicit none
    type(mpas_field), intent(inout) :: fld    !< Fields
-   type(c_ptr), intent(in)         :: c_conf !< Configuration
-   type(datetime), intent(inout)   :: vdate  !< DateTime
-   character(len=20) :: sdate
-   integer :: ierr
-   type (MPAS_Time_type) :: fld_time, write_time
+   type(c_ptr),      intent(in)    :: c_conf !< Configuration
+   type(datetime),   intent(inout) :: vdate  !< DateTime
+   character(len=20)       :: sdate
+   integer                 :: ierr
+   type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
 
 #define WRITE_TEST_READY
@@ -481,13 +466,13 @@ subroutine write_file(fld, c_conf, vdate)
    write(*,*) 'temp_filename = ',trim(temp_filename)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
    write(*,*) '     filename = ',trim(filename)
-   fld % manager => fld % domain % streamManager
+   fld % manager => fld % geom % domain % streamManager
    !streamID = 'restart'
    streamID = 'output'
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   call da_copy_sub2all_fields(fld % domain, fld % subFields)
+   call da_copy_sub2all_fields(fld % geom % domain, fld % subFields)
    write(*,*)'writing ',trim(filename)
-   call mpas_stream_mgr_write(fld % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
+   call mpas_stream_mgr_write(fld % geom % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
    if ( ierr .ne. 0  ) then
      call abor1_ftn('MPAS_stream_mgr_write failed ierr=',ierr)
    end if
@@ -500,12 +485,12 @@ end subroutine write_file
 subroutine gpnorm(fld, nf, pstat)
 
    implicit none
-   type(mpas_field), intent(in) :: fld
-   integer, intent(in) :: nf
+   type(mpas_field),     intent(in)  :: fld
+   integer,              intent(in)  :: nf
    real(kind=kind_real), intent(out) :: pstat(3, nf)
 
    write(0,*)'Inside gpnorm 1'
-   call da_gpnorm(fld % subFields, fld % domain % dminfo, fld%nf, pstat) 
+   call da_gpnorm(fld % subFields, fld % geom % domain % dminfo, fld%nf, pstat) 
    write(0,*)'Inside gpnorm 2'
 
 end subroutine gpnorm
@@ -515,10 +500,10 @@ end subroutine gpnorm
 subroutine fldrms(fld, prms)
 
    implicit none
-   type(mpas_field), intent(in)      :: fld
+   type(mpas_field),     intent(in)  :: fld
    real(kind=kind_real), intent(out) :: prms
 
-   call da_fldrms(fld % subFields, fld % domain % dminfo, prms)
+   call da_fldrms(fld % subFields, fld % geom % domain % dminfo, prms)
 
 end subroutine fldrms
 
@@ -531,10 +516,10 @@ use mpas_pool_routines
 
    implicit none
    type(mpas_field), intent(inout) :: self
-   type(c_ptr), intent(in)       :: c_conf   !< Configuration
-   integer :: ndir,idir,ildir,ifdir,itiledir
-   integer,allocatable :: iCell(:)
-   character(len=3) :: idirchar
+   type(c_ptr),      intent(in)    :: c_conf   !< Configuration
+   integer                :: ndir,idir,ildir,ifdir,itiledir
+   integer,allocatable    :: iCell(:)
+   character(len=3)       :: idirchar
    character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
@@ -608,9 +593,9 @@ subroutine interp_tl(fld, locs, vars, gom)
    use type_odata, only: odatatype
    
    implicit none
-   type(mpas_field), intent(in)     :: fld
-   type(ufo_locs),   intent(in)     :: locs
-   type(ufo_vars),   intent(in)     :: vars
+   type(mpas_field),  intent(in)    :: fld
+   type(ufo_locs),    intent(in)    :: locs
+   type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
    
    type(geomtype), pointer :: pgeom
@@ -713,7 +698,7 @@ subroutine interp_tl(fld, locs, vars, gom)
 !        end if
 !   end do
    
-   call convert_mpas_field2ufo(fld % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
    call mpas_pool_begin_iteration(pool_b)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
@@ -752,9 +737,9 @@ subroutine interp_ad(fld, locs, vars, gom)
    use type_odata, only: odatatype
 
    implicit none
-   type(mpas_field), intent(inout)  :: fld
-   type(ufo_locs), intent(in)       :: locs
-   type(ufo_vars), intent(in)       :: vars
+   type(mpas_field),  intent(inout) :: fld
+   type(ufo_locs),    intent(in)    :: locs
+   type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
 
    type(geomtype), pointer :: pgeom
@@ -788,7 +773,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    write(0,*)'interp vars%nv       : ',vars%nv
    write(0,*)'interp vars%fldnames : ',vars%fldnames
 
-! AD of   call convert_mpas_field2ufo(fld % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+! AD of   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 !   call mpas_pool_begin_iteration(pool_b)
 !   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 !        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
@@ -835,9 +820,9 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    use type_randgen, only: create_randgen
    
    implicit none
-   type(mpas_geom), intent(in) :: grid
-   type(ufo_locs), intent(in)    :: locs
-   type(geomtype), pointer, intent(out) :: pgeom
+   type(mpas_geom),          intent(in)  :: grid
+   type(ufo_locs),           intent(in)  :: locs
+   type(geomtype), pointer,  intent(out) :: pgeom
    type(odatatype), pointer, intent(out) :: pdata
    
    logical, save :: interp_initialized = .FALSE.
@@ -935,10 +920,10 @@ end subroutine initialize_interp
 subroutine interp_checks(cop, fld, locs, vars, gom)
 
    implicit none
-   character(len=2), intent(in) :: cop
-   type(mpas_field), intent(in) :: fld
-   type(ufo_locs), intent(in)    :: locs
-   type(ufo_vars), intent(in)    :: vars
+   character(len=2),  intent(in) :: cop
+   type(mpas_field),  intent(in) :: fld
+   type(ufo_locs),    intent(in) :: locs
+   type(ufo_vars),    intent(in) :: vars
    type(ufo_geovals), intent(in) :: gom
    
    integer :: jvar
@@ -996,7 +981,7 @@ subroutine convert_to_ug(self, ug)
    use unstructured_grid_mod
    
    implicit none
-   type(mpas_field), intent(in) :: self
+   type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    
    integer :: nc0a,ic0a,jC,jl,nf
@@ -1107,8 +1092,8 @@ subroutine convert_from_ug(self, ug)
    use unstructured_grid_mod
 
    implicit none
-   type(mpas_field), intent(inout) :: self
-   type(unstructured_grid), intent(in) :: ug
+   type(mpas_field),        intent(inout) :: self
+   type(unstructured_grid), intent(in)    :: ug
    
    integer :: ic0a,jC,jl
 

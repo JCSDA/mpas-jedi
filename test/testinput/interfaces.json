@@ -13,6 +13,7 @@
   },
   "TestDate": "2010-10-23T00:00:00Z",
   "State": {
+    "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
     "date": "2010-10-23T00:00:00Z"
   },
   "StateTest": {
@@ -49,13 +50,13 @@
   },
   "nvars": 1,
   "ModelTest": {
-    "fclength": "PT15M",
+    "fclength": "PT2H",
     "finalnorm": 441.0,
     "tolerance": 100.0
     },
   "ModelBias": null,
   "Model": {
-    "tstep": "PT15M",
+    "tstep": "PT30M",
     "fclength": "PT1H",
     "finalnorm": 441.0,
     "tolerance": 100.0

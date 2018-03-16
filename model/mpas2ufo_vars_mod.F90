@@ -190,7 +190,7 @@
         write(*,*) 'step 1: test: get from domain % blocklist % allFields'
         call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_a)
 
-        call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
+        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
         field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
 write(*,*) 'ln_p, ln_p, ln_p =', field2d % array(:,1)
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))

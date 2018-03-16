@@ -34,6 +34,9 @@ public :: mpas_model, &
 
 !> Fortran derived type to hold model definition
 type :: mpas_model
+   ! GD: for now, model is just using the full geom structure
+   ! we update the fields for time integration using subfield
+   ! from mpas_field
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
    real (kind=RKIND) :: dt
@@ -75,7 +78,8 @@ subroutine model_setup(self, geom, c_conf)
    character (len=StrKIND) :: startTimeStamp
    
    write(*,*) "---- Inside of Sub. model_setup ----"
-#ifdef ModelMPAS
+#define ModelMPAS_setup
+#ifdef ModelMPAS_setup
    self % corelist => geom % corelist
    self % domain => geom % domain
 
@@ -147,7 +151,6 @@ subroutine model_prepare_integration(self, flds)
 
    write(*,*)'===> model_prepare_integration'
 
-#ifdef ModelMPAS
    !————————————————————————————————————————————---------------------------
    ! GD: the present design relies on the hypothesis that we run
    ! the model member sequentially using the geom structure
@@ -157,8 +160,9 @@ subroutine model_prepare_integration(self, flds)
    !————————————————————————————————————————————---------------------------
 
    ! here or where increment is computed
-   ! call da_copy_sub2all_fields(self % domain, flds % subFields)   
+    call da_copy_sub2all_fields(self % domain, flds % subFields)   
 
+#ifdef ModelMPAS_prepare
    !-------------------------------------------------------------------
    ! WIND processing U and V resconstruct to the edges
    ! not parallel yet, routine initially from DART
@@ -191,35 +195,52 @@ subroutine model_prepare_integration(self, flds)
    ! Computation of rho_zz from rho / zz from updated rho
    ! Recoupling of all the variables
    !——————————————————————————————————----------------------------------
+write(*,*) 'step 1'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_restart', config_do_restart)
+write(*,*) 'step 2'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_DAcycling', config_do_DAcycling)
+write(*,*) 'step 3'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', dt)
+write(*,*) 'step 4'
    config_do_restart = .True.
    config_do_DAcycling = .True.
 
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
+write(*,*) 'step 5'
    !call mpas_pool_get_field(state, 'u', u_field, 1)
    !call mpas_dmpar_exch_halo_field(u_field)
 
    block => self % domain % blocklist
+write(*,*) 'step 6'
    do while (associated(block))
       call mpas_pool_get_subpool(block % structs, 'mesh', mesh)
+write(*,*) 'step 7'
       call mpas_pool_get_subpool(block % structs, 'state', state)
+write(*,*) 'step 8'
       ! GD: if we do cycling in atm_mpas_init_block we propably need to avoid recomputing wind to the 
       ! mass center. (avoiding doing twice ... adding a flag). OK for now, probably same problem with dart 
       call atm_mpas_init_block(self % domain % dminfo, self % domain % streamManager, block, mesh, self % dt)
+write(*,*) 'step 9'
       call mpas_pool_get_array(state, 'xtime', xtime, 1)
+write(*,*) 'step 10'
       xtime = startTimeStamp
       block => block % next
    end do
 
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
+write(*,*) 'step 11'
    call mpas_pool_get_field(diag, 'pv_edge', pv_edge_field)
+write(*,*) 'step 12'
    call mpas_dmpar_exch_halo_field(pv_edge_field)
+write(*,*) 'step 13'
    call mpas_pool_get_field(diag, 'ru', ru_field)
+write(*,*) 'step 14'
    call mpas_dmpar_exch_halo_field(ru_field)
+write(*,*) 'step 15'
    call mpas_pool_get_field(diag, 'rw', rw_field)
+write(*,*) 'step 16'
    call mpas_dmpar_exch_halo_field(rw_field)
+write(*,*) 'step 17'
 #endif
 
 end subroutine model_prepare_integration
@@ -259,15 +280,23 @@ subroutine model_propagate(self, flds)
    type (mpas_pool_type), pointer :: state
    real (kind=RKIND) :: dt
    integer :: itimestep
+!--bjj clock test
+   character (len=StrKIND) :: tmpTimeStamp
+   type (MPAS_Time_Type) :: tmpTime
+   integer :: ierr = 0
 
    write(*,*)'===> model_propagate'
-#ifdef ModelMPAS
    itimestep = 1
    call atm_do_timestep(self % domain, self % dt, itimestep)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
    call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(self % domain % clock)
+!--bjj clock test
+   tmpTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
+   call mpas_get_time(tmpTime, dateTimeString=tmpTimeStamp) 
+   write(*,*) '== BJJ in sub model_propagate time= ',trim(tmpTimeStamp)
 
+#ifdef ModelMPAS_propagate
    ! GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be
    ! interfaced with fortran.
@@ -278,10 +307,10 @@ subroutine model_propagate(self, flds)
       !call atm_compute_restart_diagnostics(state, 1, diag, mesh)
       !!call atm_compute_output_diagnostics(state, 1, diag, mesh) --> add pressure
       ! update mpas wind from the edges to center
-      ! copy from allfields to subfields
-      !call da_copy_all2sub_fields(self % domain, flds % subFields) 
-   !end if
 #endif
+      ! copy from allfields to subfields
+      call da_copy_all2sub_fields(self % domain, flds % subFields) 
+   !end if
 
 end subroutine model_propagate
 

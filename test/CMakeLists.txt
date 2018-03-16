@@ -109,13 +109,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 #                       testoutput/truth.test
 #                  DEPENDS mpas_forecast.x )
 #
-#ecbuild_add_test( TARGET test_mpas_forecast
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.json"
-#                       testoutput/forecast.test
-#                  DEPENDS mpas_forecast.x )
-#
 #ecbuild_add_test( TARGET test_mpas_makeobs3d
 #                  TYPE SCRIPT
 #                  COMMAND "compare.sh"
@@ -183,4 +176,12 @@ ecbuild_add_test( TARGET test_mpas_dirac_nicas
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.nicas.json"
                        testoutput/dirac.nicas.test
                   DEPENDS mpas_dirac.x )
+
+ecbuild_add_test( TARGET test_mpas_forecast
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.json"
+                       testoutput/forecast.test
+                  DEPENDS mpas_forecast.x )
+
 
