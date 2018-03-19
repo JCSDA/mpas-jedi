@@ -91,14 +91,14 @@
 !-------------------------------------------------------------------------------------------
 
    !---- pool_a : self % subFields
-   !---- other "var_struct", such as "diag", "diag_physics", or "allFields" can be found inside domain
-   subroutine convert_mpas_field2ufo(domain, pool_a, pool_b, fieldname, nfield)
+   !---- pool_b : self % auxFields
+   !---- pool_c : pool with UFO vars
+   subroutine convert_mpas_field2ufo(pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (domain_type), pointer, intent(in) :: domain
-   type (mpas_pool_type), pointer, intent(in) :: pool_a
-   type (mpas_pool_type), pointer, intent(out) :: pool_b
+   type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
+   type (mpas_pool_type), pointer, intent(out) :: pool_c
    integer, intent(in) :: nfield
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
@@ -116,87 +116,51 @@
    call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
-   call mpas_pool_create_pool(pool_b, nfield)
+   call mpas_pool_create_pool(pool_c, nfield)
 
-   !--- some ufo_vars can be found outside-of-subFields.
-   allFields => domain % blocklist % allFields
-
+   !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-   write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get theta from subField
-        !get pressure from subField
-        !get qv from subfield
+        !get    theta from subFields
+        !get       qv from subfields
+        !get pressure from auxFields
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-          write(*,*)'Looking for ',trim(poolItr % memberName)
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'theta' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_b)
-                  if( trim(poolItr % memberName) .eq. 'index_qv' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_c)
-               end if
-       end if
-     end if
-   end do
 
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_b)
+        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
+        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
-        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of qv=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
-
 !%%%
-!%%%  NL currently. --> TL with trajectory!
+!%%%  NL 
 !%%%
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_b(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_c(:,:))
+        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
+                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
                   !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
 
-        call mpas_pool_add_field(pool_b, var_tv, field2d)
+        call mpas_pool_add_field(pool_c, var_tv, field2d)
 
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
         !get pressure from subField
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-               end if
-       end if
-     end if
-   end do
 
-        write(*,*) 'step 1: test: get from domain % blocklist % allFields'
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_a)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
         call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
 
@@ -205,25 +169,25 @@
 
         field2d % fieldName = var_prsl
 
-        call mpas_pool_add_field(pool_b, var_prsl, field2d)
+        call mpas_pool_add_field(pool_c, var_prsl, field2d)
 
         write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_mixr
-        call mpas_pool_add_field(pool_b, var_mixr, field2d)
-        write(*,*) "end-of ",var_mixr
+        !call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_mixr
+        !call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        !write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_prs
-        call mpas_pool_add_field(pool_b, var_prs, field2d)
-        write(*,*) "end-of ",var_prs
+        !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_prs
+        !call mpas_pool_add_field(pool_c, var_prs, field2d)
+        !write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
@@ -234,43 +198,43 @@
      case ("effective_radius_of_cloud_ice_particle")
 
      case ("Water_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Land_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Ice_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Snow_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Water_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Land_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Ice_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Snow_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(allFields, "snowh", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(allFields, "vegfra", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
      case ("Sfc_Wind_Speed", "Sfc_Wind_Direction")
         call mpas_pool_get_array(pool_a, "u10", r1d_ptr_a)
         call mpas_pool_get_array(pool_a, "v10", r1d_ptr_b)
      case ("Lai")
-        call mpas_pool_get_array(allFields, "lai", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
      case ("Soil_Moisture")
-        call mpas_pool_get_array(allFields, "smois", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "smois", r1d_ptr_a)
      case ("Soil_Temperature")
-        call mpas_pool_get_array(allFields, "tslb", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "tslb", r1d_ptr_a)
      case ("Land_Type_Index")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Vegetation_Type")
-        call mpas_pool_get_array(allFields, "ivgtyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "ivgtyp", r1d_ptr_a)
      case ("Soil_Type")
-        call mpas_pool_get_array(allFields, "isltyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "isltyp", r1d_ptr_a)
      case ("ice_concentration")
-        call mpas_pool_get_array(allFields, "seaice", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "seaice", r1d_ptr_a)
 
      end select
 
@@ -282,15 +246,14 @@
   
    end subroutine convert_mpas_field2ufo
 
-!-----------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoTL(domain, pool_a, pool_b, fieldname, nfield)
+   subroutine convert_mpas_field2ufoTL(pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (domain_type), pointer, intent(in) :: domain
-   type (mpas_pool_type), pointer, intent(in) :: pool_a
-   type (mpas_pool_type), pointer, intent(out) :: pool_b
+   type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
+   type (mpas_pool_type), pointer, intent(out) :: pool_c
    integer, intent(in) :: nfield
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
@@ -308,87 +271,51 @@
    call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
-   call mpas_pool_create_pool(pool_b, nfield)
+   call mpas_pool_create_pool(pool_c, nfield)
 
-   !--- some ufo_vars can be found outside-of-subFields.
-   allFields => domain % blocklist % allFields
-
+   !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-   write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get theta from subField
-        !get pressure from subField
-        !get qv from subfield
+        !get    theta from subFields
+        !get       qv from subfields
+        !get pressure from auxFields
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-          write(*,*)'Looking for ',trim(poolItr % memberName)
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'theta' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_b)
-                  if( trim(poolItr % memberName) .eq. 'index_qv' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_c)
-               end if
-       end if
-     end if
-   end do
 
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_b)
+        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
+        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
-        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of qv=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
-
 !%%%
-!%%%  NL currently. --> AD with trajectory!
+!%%%  NL currently. --> TL with trajectory!
 !%%%
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_b(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_c(:,:))
+        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
+                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
                   !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
 
-        call mpas_pool_add_field(pool_b, var_tv, field2d)
+        call mpas_pool_add_field(pool_c, var_tv, field2d)
 
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
         !get pressure from subField
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-               end if
-       end if
-     end if
-   end do
 
-        write(*,*) 'step 1: test: get from domain % blocklist % allFields'
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_a)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
         call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
 
@@ -397,25 +324,25 @@
 
         field2d % fieldName = var_prsl
 
-        call mpas_pool_add_field(pool_b, var_prsl, field2d)
+        call mpas_pool_add_field(pool_c, var_prsl, field2d)
 
         write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_mixr
-        call mpas_pool_add_field(pool_b, var_mixr, field2d)
-        write(*,*) "end-of ",var_mixr
+        !call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_mixr
+        !call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        !write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_prs
-        call mpas_pool_add_field(pool_b, var_prs, field2d)
-        write(*,*) "end-of ",var_prs
+        !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_prs
+        !call mpas_pool_add_field(pool_c, var_prs, field2d)
+        !write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
@@ -426,43 +353,43 @@
      case ("effective_radius_of_cloud_ice_particle")
 
      case ("Water_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Land_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Ice_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Snow_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Water_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Land_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Ice_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Snow_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(allFields, "snowh", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(allFields, "vegfra", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
      case ("Sfc_Wind_Speed", "Sfc_Wind_Direction")
         call mpas_pool_get_array(pool_a, "u10", r1d_ptr_a)
         call mpas_pool_get_array(pool_a, "v10", r1d_ptr_b)
      case ("Lai")
-        call mpas_pool_get_array(allFields, "lai", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
      case ("Soil_Moisture")
-        call mpas_pool_get_array(allFields, "smois", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "smois", r1d_ptr_a)
      case ("Soil_Temperature")
-        call mpas_pool_get_array(allFields, "tslb", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "tslb", r1d_ptr_a)
      case ("Land_Type_Index")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Vegetation_Type")
-        call mpas_pool_get_array(allFields, "ivgtyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "ivgtyp", r1d_ptr_a)
      case ("Soil_Type")
-        call mpas_pool_get_array(allFields, "isltyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "isltyp", r1d_ptr_a)
      case ("ice_concentration")
-        call mpas_pool_get_array(allFields, "seaice", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "seaice", r1d_ptr_a)
 
      end select
 
@@ -474,15 +401,14 @@
   
    end subroutine convert_mpas_field2ufoTL
 
-!-----------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoAD(domain, pool_a, pool_b, fieldname, nfield)
+   subroutine convert_mpas_field2ufoAD(pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (domain_type), pointer, intent(in) :: domain
-   type (mpas_pool_type), pointer, intent(inout) :: pool_a
-   type (mpas_pool_type), pointer, intent(inout) :: pool_b
+   type (mpas_pool_type), pointer, intent(inout) :: pool_a, pool_b ! subFields, auxFields
+   type (mpas_pool_type), pointer, intent(inout) :: pool_c
    integer, intent(in) :: nfield
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
@@ -500,84 +426,51 @@
    call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
-   call mpas_pool_create_pool(pool_b, nfield)
+   call mpas_pool_create_pool(pool_c, nfield)
 
-   !--- some ufo_vars can be found outside-of-subFields.
-   allFields => domain % blocklist % allFields
-
+   !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-   write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get theta from subField
-        !get pressure from subField
-        !get qv from subfield
+        !get    theta from subFields
+        !get       qv from subfields
+        !get pressure from auxFields
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-          write(*,*)'Looking for ',trim(poolItr % memberName)
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'theta' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_b)
-                  if( trim(poolItr % memberName) .eq. 'index_qv' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_c)
-               end if
-       end if
-     end if
-   end do
 
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_b)
+        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
+        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
-        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of qv=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
-
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_b(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_c(:,:))
+!%%%
+!%%%  NL currently. --> AD with trajectory!
+!%%%
+        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
+                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
                   !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
 
-        call mpas_pool_add_field(pool_b, var_tv, field2d)
+        call mpas_pool_add_field(pool_c, var_tv, field2d)
 
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
         !get pressure from subField
         !do the conversion : need 'nl', 'tl', 'ad' ?!
-   call mpas_pool_begin_iteration(pool_a)
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-               else if (poolItr % nDims == 2) then
-                  if( trim(poolItr % memberName) .eq. 'pressure' ) &
-                       call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-               end if
-       end if
-     end if
-   end do
 
-        write(*,*) 'step 1: test: get from domain % blocklist % allFields'
-        call mpas_pool_get_array(domain % blocklist % allFields, 'pressure', r2d_ptr_a)
+        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
         call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
 
@@ -586,25 +479,25 @@
 
         field2d % fieldName = var_prsl
 
-        call mpas_pool_add_field(pool_b, var_prsl, field2d)
+        call mpas_pool_add_field(pool_c, var_prsl, field2d)
 
         write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_mixr
-        call mpas_pool_add_field(pool_b, var_mixr, field2d)
-        write(*,*) "end-of ",var_mixr
+        !call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_mixr
+        !call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        !write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        field2d % array(:,:) = r2d_ptr_a(:,:)
-        field2d % fieldName = var_prs
-        call mpas_pool_add_field(pool_b, var_prs, field2d)
-        write(*,*) "end-of ",var_prs
+        !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !field2d % array(:,:) = r2d_ptr_a(:,:)
+        !field2d % fieldName = var_prs
+        !call mpas_pool_add_field(pool_c, var_prs, field2d)
+        !write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
@@ -615,43 +508,43 @@
      case ("effective_radius_of_cloud_ice_particle")
 
      case ("Water_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Land_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Ice_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Snow_Fraction")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Water_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Land_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Ice_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
      case ("Snow_Temperature")
-        call mpas_pool_get_array(allFields, "skintemp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(allFields, "snowh", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(allFields, "vegfra", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
      case ("Sfc_Wind_Speed", "Sfc_Wind_Direction")
         call mpas_pool_get_array(pool_a, "u10", r1d_ptr_a)
         call mpas_pool_get_array(pool_a, "v10", r1d_ptr_b)
      case ("Lai")
-        call mpas_pool_get_array(allFields, "lai", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
      case ("Soil_Moisture")
-        call mpas_pool_get_array(allFields, "smois", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "smois", r1d_ptr_a)
      case ("Soil_Temperature")
-        call mpas_pool_get_array(allFields, "tslb", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "tslb", r1d_ptr_a)
      case ("Land_Type_Index")
-        call mpas_pool_get_array(allFields, "", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
      case ("Vegetation_Type")
-        call mpas_pool_get_array(allFields, "ivgtyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "ivgtyp", r1d_ptr_a)
      case ("Soil_Type")
-        call mpas_pool_get_array(allFields, "isltyp", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "isltyp", r1d_ptr_a)
      case ("ice_concentration")
-        call mpas_pool_get_array(allFields, "seaice", r1d_ptr_a)
+        call mpas_pool_get_array(pool_b, "seaice", r1d_ptr_a)
 
      end select
 

@@ -7,7 +7,7 @@
     "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Model": {
-    "tstep": "PT6H",
+    "tstep": "PT15M",
     "fclength": "PT1H",
     "finalnorm": 0.020383,
     "tolerance": 0.005
@@ -36,6 +36,6 @@
   },
   "Assimilation Window": {
     "Begin": "2010-10-23T00:00:00Z",
-    "Length": "PT6H"
+    "Length": "PT1H"
   }
 }

@@ -31,34 +31,33 @@
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-file": "441.0",
-    "norm-gen": "441.0",
-    "tolerance": "100.",
+    "norm-file": "197.8",
+    "norm-gen": "197.8",
+    "tolerance": "1.0",
     "Locations": {
       "lats": [0.0, 0.2, 0.3, -0.1],
       "lons": [0.0, 0.2, 0.3,-0.2],
       "lats_deg": [50.0, 30.0, 10.0, -20.5],
-      "lons_deg": [50.0, 30.0, 10.0,-143.2],
-      "positions": [0.717]
+      "lons_deg": [50.0, 30.0, 10.0,-143.2]
     },
     "Variables": {
       "variables": ["virtual_temperature"],
       "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "variables_": ["theta", "index_qv"]
     },
-    "values": [6.042838]
+    "values": [1224.0]
   },
   "nvars": 1,
   "ModelTest": {
     "fclength": "PT2H",
-    "finalnorm": 441.0,
-    "tolerance": 100.0
+    "finalnorm": 197.8,
+    "tolerance": 10.0
     },
   "ModelBias": null,
   "Model": {
     "tstep": "PT30M",
     "fclength": "PT1H",
-    "finalnorm": 441.0,
-    "tolerance": 100.0
+    "finalnorm": 197.8,
+    "tolerance": 10.0
   }
 }

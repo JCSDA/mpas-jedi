@@ -49,8 +49,8 @@ type :: mpas_field
   type (mpas_geom), pointer :: geom              ! grid and MPI infos
   integer :: nf                                  ! Number of variables in fld
   character(len=22), allocatable  :: fldnames(:) ! Variable identifiers
-  type (mpas_pool_type), pointer  :: subFields
-!  type (mpas_pool_type), pointer  :: auxFields   !--->  t2m, u10, v10, Tsfc, ??? !--additional
+  type (mpas_pool_type), pointer  :: subFields   !---> state variables (to be analyzed)
+  type (mpas_pool_type), pointer  :: auxFields   !---> auxiliary variables, such as pressure, t2m, u10, v10, Tsfc
   type (MPAS_streamManager_type), pointer :: manager
   type (MPAS_Clock_type), pointer :: clock
 end type mpas_field
@@ -84,7 +84,11 @@ subroutine create(self, geom, vars)
     integer :: nsize, nfields
     integer :: ierr
 
-    !-- fortran level test
+    !aux test: BJJ
+    integer :: nf_aux
+    character(len=22), allocatable  :: fldnames_aux(:)
+
+    !-- fortran level test (temporally sit here)
     real(kind=kind_real), allocatable :: pstat(:, :)
     real(kind=kind_real)              :: prms
     type (MPAS_Time_type) :: local_time, write_time, fld_time
@@ -110,6 +114,17 @@ subroutine create(self, geom, vars)
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
     call da_make_subpool(self % geom % domain, self % subFields, self % nf, self % fldnames, nfields)
     if ( self % nf .ne. nfields  ) then
+       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
+    end  if
+    !--- aux test: BJJ
+    nf_aux=3
+    allocate(fldnames_aux(nf_aux))
+    fldnames_aux(1)='pressure'
+    fldnames_aux(2)='u10'
+    fldnames_aux(3)='t2m'
+    write(0,*)'-- Create a sub Pool for auxFields'
+    call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
+    if ( nf_aux .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
 
@@ -420,6 +435,7 @@ subroutine read_file(fld, c_conf, vdate)
    !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
    !call update_mpas_field(fld % geom % domain, fld % subFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+   call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
 #endif
 
 end subroutine read_file
@@ -471,6 +487,7 @@ subroutine write_file(fld, c_conf, vdate)
    streamID = 'output'
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    call da_copy_sub2all_fields(fld % geom % domain, fld % subFields)
+   call da_copy_sub2all_fields(fld % geom % domain, fld % auxFields)
    write(*,*)'writing ',trim(filename)
    call mpas_stream_mgr_write(fld % geom % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
    if ( ierr .ne. 0  ) then
@@ -651,7 +668,7 @@ subroutine interp(fld, locs, vars, gom)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufo(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufo(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_b)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
@@ -750,7 +767,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufoTL(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_b)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
@@ -828,7 +845,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    write(0,*)'interp_ad: vars%nv       : ',vars%nv
    write(0,*)'interp_ad: vars%fldnames : ',vars%fldnames
 
-   call convert_mpas_field2ufoTL(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_b)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
@@ -859,7 +876,7 @@ subroutine interp_ad(fld, locs, vars, gom)
         end if
    end do
 
-   call convert_mpas_field2ufoAD(fld % geom % domain, fld % subFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)

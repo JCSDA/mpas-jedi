@@ -27,23 +27,23 @@
       },
       "hdiag_ensemble": [
         {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e1.nc",
+          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
           "date": "2010-10-23T00:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e2.nc",
+          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
           "date": "2010-10-23T00:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e3.nc",
+          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
           "date": "2010-10-23T00:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e4.nc",
+          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
           "date": "2010-10-23T00:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/x1.40962.init.2012061500.e5.nc",
+          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
           "date": "2010-10-23T00:00:00Z"
         }
       ],
@@ -110,23 +110,23 @@
     },
     "state": [
       {
-        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e1.nc",
+        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
         "date": "2010-10-23T00:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e2.nc",
+        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
         "date": "2010-10-23T00:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e3.nc",
+        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
         "date": "2010-10-23T00:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e4.nc",
+        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
         "date": "2010-10-23T00:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/x1.40962.init.2012061500.e5.nc",
+        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
         "date": "2010-10-23T00:00:00Z"
       }
     ]
@@ -135,10 +135,6 @@
     "ndir": 2,
     "iCell(1)": 100,
     "iCell(2)": 2,
-    "iCell(3)": 3,
-    "iCell(4)": 4,
-    "iCell(5)": 5,
-    "iCell(6)": 6,
     "ildir": 3,
     "ifdir": 1,
     "dirvar": "uReconstructZonal"

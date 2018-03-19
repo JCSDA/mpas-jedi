@@ -161,6 +161,7 @@ subroutine model_prepare_integration(self, flds)
 
    ! here or where increment is computed
     call da_copy_sub2all_fields(self % domain, flds % subFields)   
+    call da_copy_sub2all_fields(self % domain, flds % auxFields)   
 
 #ifdef ModelMPAS_prepare
    !-------------------------------------------------------------------
@@ -310,6 +311,7 @@ subroutine model_propagate(self, flds)
 #endif
       ! copy from allfields to subfields
       call da_copy_all2sub_fields(self % domain, flds % subFields) 
+      call da_copy_all2sub_fields(self % domain, flds % auxFields) 
    !end if
 
 end subroutine model_propagate
