@@ -183,11 +183,12 @@ double FieldsMPAS::norm() const {
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::print(std::ostream & os) const {
+// TODO: implement this
+//  mpas_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
   int nx = 1;
   int ny = 1;
-  int nf = 1;
+  int nf = 5;
   int nb = 1;
-//  mpas_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
   os << std::endl << "  Resolution = " << nx << ", " << ny
      << ", Fields = " << nf << ", " << nb;
   nf += nb;

@@ -116,7 +116,7 @@ subroutine create(self, geom, vars)
     if ( self % nf .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
-    !--- aux test: BJJ
+    !--- TODO: aux test: BJJ  !- get this from json ???
     nf_aux=3
     allocate(fldnames_aux(nf_aux))
     fldnames_aux(1)='pressure'
@@ -139,12 +139,14 @@ subroutine create(self, geom, vars)
     ! Few temporary tests
     !-------------------------------------------------------------
     call update_mpas_field(self % geom % domain, self % subFields)
-!    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs,'state',state)
-    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms)
-    allocate(pstat(3, self % nf))
-    call da_gpnorm(self % subFields, self % geom % domain % dminfo, self % nf, pstat)
-    deallocate(pstat)
-!    call abor1_ftn("MPAS test")
+!!    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs,'state',state)
+!    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms)
+!    allocate(pstat(3, self % nf))
+!    call da_gpnorm(self % subFields, self % geom % domain % dminfo, self % nf, pstat)
+!    deallocate(pstat)
+!!    call abor1_ftn("MPAS test")
+
+     call zeros(self) !-- set zero for self % subFields
 
    ! mpas_get_time(curr_time, YYYY, MM, DD, DoY, H, M, S, S_n, S_d, dateTimeString, ierr)
    ! call mpas_get_time(curr_time, YYYY, MM, DD, H, M, S, dateTimeString, ierr)
@@ -230,7 +232,13 @@ subroutine copy(self,rhs)
    implicit none
    type(mpas_field), intent(inout) :: self
    type(mpas_field), intent(in)    :: rhs
+   real(kind=kind_real), allocatable :: pstat(:, :) !BJJ for debug
    
+   !BJJ for debug
+   write(*,*) 'INSIDE COPY'
+   allocate(pstat(3, self % nf))
+   call da_gpnorm( rhs % subFields,  rhs % geom % domain % dminfo,  rhs % nf, pstat)
+
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
    call mpas_pool_empty_pool(self % subFields)
@@ -240,6 +248,10 @@ subroutine copy(self,rhs)
    call mpas_pool_clone_pool(rhs % subFields, self % subFields)
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
+   
+   call da_gpnorm( rhs % subFields,  rhs % geom % domain % dminfo,  rhs % nf, pstat)
+   call da_gpnorm(self % subFields, self % geom % domain % dminfo, self % nf, pstat)
+   deallocate(pstat)
 
 end subroutine copy
 
@@ -405,6 +417,7 @@ subroutine read_file(fld, c_conf, vdate)
    write(*,*)'==> read fields'
    sdate = config_get_string(c_conf,len(sdate),"date")
    call datetime_set(sdate, vdate)
+
 #define READ_TEST_READY
 #ifdef READ_TEST_READY
    temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
@@ -413,6 +426,7 @@ subroutine read_file(fld, c_conf, vdate)
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
    ! and then can be like this ....
+   ! TODO: we can get streamID from json
    !streamID = 'restart'
    !streamID = 'input'
    streamID = 'output'
@@ -444,6 +458,7 @@ end subroutine read_file
 
 subroutine write_file(fld, c_conf, vdate)
 
+use duration_mod
    implicit none
    type(mpas_field), intent(inout) :: fld    !< Fields
    type(c_ptr),      intent(in)    :: c_conf !< Configuration
@@ -452,12 +467,27 @@ subroutine write_file(fld, c_conf, vdate)
    integer                 :: ierr
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
+!------------------------------------------
+   character(len=20) :: referencedate, frequency, validitydate, sstep
+   type(duration)    :: step
+   type(datetime)    :: rdate  !< DateTime
 
 #define WRITE_TEST_READY
 #ifdef WRITE_TEST_READY
-   sdate = config_get_string(c_conf,len(sdate),"date")
-   write(*,*)'==> write fields ',trim(sdate)
-   call datetime_set(sdate,vdate)
+!-------------------------------------------
+  referencedate = config_get_string(c_conf,len(referencedate),"date")
+  write(*,*) 'BJJ TMPTMP: referencedate =',referencedate 
+  call datetime_to_string(vdate, validitydate)
+  write(*,*) 'BJJ TMPTMP: validitydate  =',validitydate  
+   write(*,*)'==> write fields ',trim(validitydate)
+  call datetime_create(TRIM(referencedate), rdate)
+  call datetime_diff(vdate, rdate, step)
+  call duration_to_string(step, sstep)
+  write(*,*) 'BJJ TMPTMP: sstep         =',sstep
+!-------------------------------------------
+!   sdate = config_get_string(c_conf,len(sdate),"date")
+!   write(*,*)'==> write fields ',trim(sdate)
+!   call datetime_set(sdate,vdate)
    temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
    write(*,*)'Writing ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
@@ -467,12 +497,13 @@ subroutine write_file(fld, c_conf, vdate)
 
    !dateTimeString_oops = '2010-10-23T00.00.00Z'  ! <- sdate form
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
-   call cvt_oopsmpas_date(sdate,dateTimeString,-1)
+   call cvt_oopsmpas_date(validitydate,dateTimeString,-1)
    !write(*,*) 'dateTimeString_oops=',dateTimeString_oops
    !write(*,*) 'dateTimeString=',dateTimeString
    ierr = 0
    call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
-   fld_time = mpas_get_clock_time(fld % clock, MPAS_START_TIME, ierr)
+   !fld_time = mpas_get_clock_time(fld % clock, MPAS_START_TIME, ierr)
+   fld_time = mpas_get_clock_time(fld % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
    if ( fld_time .NE. write_time ) then
       write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
@@ -833,7 +864,28 @@ subroutine interp_ad(fld, locs, vars, gom)
    ngrid = fld%geom%nCells
    nobs = locs%nlocs
    write(*,*)'interp_ad: ngrid, nobs = : ',ngrid, nobs
+   write(*,*)'interp_ad: gom%linit = ',gom%linit
+   if(allocated(gom%geovals)) gom%linit=.true. !BJJ temporary
+   write(*,*)'interp_ad: gom%nvar=', gom%nvar
+   write(*,*)'interp_ad: gom%nobs=', gom%nobs
+   write(*,*)'interp_ad: allocated(gom%geovals)=', allocated(gom%geovals)
+   write(*,*)'interp_ad: size(gom%geovals)=', size(gom%geovals)
+   write(*,*)'interp_ad: gom%geovals(1)%nval=', gom%geovals(1)%nval
+   if(gom%geovals(1)%nval.eq.0) gom%geovals(1)%nval=size(gom%geovals(1)%vals(:,1)) !BJJ temporary, might need ufo_geovals_assign
+   if(gom%geovals(2)%nval.eq.0) gom%geovals(2)%nval=size(gom%geovals(2)%vals(:,1)) !BJJ temporary
+   write(*,*)'interp_ad: gom%geovals(1)%nobs=', gom%geovals(1)%nobs
+   write(*,*)'interp_ad: allocated(gom%geovals(1)%vals)=', allocated(gom%geovals(1)%vals)
+   write(*,*)'interp_ad: size(gom%geovals(1)%vals(:,1))=', size(gom%geovals(1)%vals(:,1))
+   write(*,*)'interp_ad: size(gom%geovals(1)%vals(1,:))=', size(gom%geovals(1)%vals(1,:))
+   write(*,*)'interp_ad: print array: gom%geovals(1)%vals(:,1) = ',gom%geovals(1)%vals(:,1)
+   write(*,*)'interp_ad: print array: gom%geovals(2)%vals(:,1) = ',gom%geovals(2)%vals(:,1)
+
    call interp_checks("ad", fld, locs, vars, gom)
+
+   ! Calculate interpolation weight using nicas
+   ! ------------------------------------------
+   call initialize_interp(fld%geom, locs, pgeom, odata)
+   write(*,*)'interp: after initialize_interp'
 
    !Create Buffer for interpolated values
    !--------------------------------------
@@ -864,9 +916,14 @@ subroutine interp_ad(fld, locs, vars, gom)
 !TL                 mod_field(:,1) = r2d_ptr_a(jlev,:)
 !TL                 call apply_obsop(pgeom,odata,mod_field,obs_field)
 !TL                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+                     write(*,*) 'step a, jlev=',jlev
                  obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
+                     write(*,*) 'step b'
                  call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
+                     write(*,*) 'step c'
+                 r2d_ptr_a(jlev,:) = 0.0
                  r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
+                     write(*,*) 'step d'
               end do
 
            else if (poolItr % nDims == 3) then
@@ -1029,6 +1086,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    do jvar=1,vars%nv
       if (allocated(gom%geovals(jvar)%vals)) then  
          if( gom%geovals(jvar)%nval .ne. fld%geom%nVertLevels )then
+            write(*,*) jvar, gom%geovals(jvar)%nval, fld%geom%nVertLevels
             call abor1_ftn(cinfo//"nval wrong size")
          endif
          if( gom%geovals(jvar)%nobs .ne. locs%nlocs )then

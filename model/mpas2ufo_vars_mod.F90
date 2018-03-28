@@ -121,7 +121,7 @@
    !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -140,6 +140,7 @@
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
+#ifdef READY_TRAJ
 !%%%
 !%%%  NL 
 !%%%
@@ -147,6 +148,9 @@
                                (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
                   !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
+#else
+        field2d % array(:,:) = r2d_ptr_a(:,:) !BJJ test: pass theta as T_v
+#endif
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
@@ -276,7 +280,7 @@
    !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -295,6 +299,7 @@
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
+#ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> TL with trajectory!
 !%%%
@@ -302,6 +307,10 @@
                                (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
                   !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
+#else
+        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+        field2d % array(:,:) = r2d_ptr_a(:,:) !BJJ test: pass theta as T_v
+#endif
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
@@ -422,16 +431,16 @@
    type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
    integer :: ii, ivar
    !--- test
-   call mpas_pool_create_pool(clone_pool_a)
-   call mpas_pool_clone_pool(pool_a,clone_pool_a)
+   !call mpas_pool_create_pool(clone_pool_a)
+   !call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
-   call mpas_pool_create_pool(pool_c, nfield)
+   !call mpas_pool_create_pool(pool_c, nfield)
 
    !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
-     write(*,*) '---------inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -448,20 +457,23 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
-        call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
+        !call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
+#ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> AD with trajectory!
 !%%%
         field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
                                (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
-             !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
-                  !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
+             !Tv = T * ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05
+                  !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature   
+#else
+        call mpas_pool_get_field(pool_c, 'virtual_temperature', field2d)
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
-
-        field2d % fieldName = var_tv
-
-        call mpas_pool_add_field(pool_c, var_tv, field2d)
+        r2d_ptr_a(:,:)=0.0
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + field2d % array(:,:) !BJJ test: pass theta as T_v
+        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+#endif
 
         write(*,*) "end-of ",var_tv
 
@@ -469,18 +481,18 @@
         !get pressure from subField
         !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-
-        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
-
-        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
-        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
-
-        field2d % fieldName = var_prsl
-
-        call mpas_pool_add_field(pool_c, var_prsl, field2d)
-
+!        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!
+!        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
+!
+!        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
+!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+!
+!        field2d % fieldName = var_prsl
+!
+!        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+!
         write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
@@ -551,8 +563,8 @@
    end do !ivar
 
 
-   call mpas_pool_empty_pool(clone_pool_a)
-   call mpas_pool_destroy_pool(clone_pool_a)
+   !call mpas_pool_empty_pool(clone_pool_a)
+   !call mpas_pool_destroy_pool(clone_pool_a)
   
    end subroutine convert_mpas_field2ufoAD
 

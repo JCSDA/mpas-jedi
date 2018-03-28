@@ -59,11 +59,16 @@ class TlmIdMPAS: public oops::LinearModelBase<MPASTraits>,
 
  private:
   void print(std::ostream &) const override;
+  typedef std::map< util::DateTime, int >::iterator trajIter;
+  typedef std::map< util::DateTime, int >::const_iterator trajICst;
 
 // Data
-  int keyConfig_;
+//ORG  int keyConfig_;
+  F90model keyConfig_; //BJJ
   util::Duration tstep_;
   const GeometryMPAS resol_;
+  std::map< util::DateTime, F90traj> traj_; //BJJ
+  const ModelMPAS lrmodel_; //BJJ
 };
 // -----------------------------------------------------------------------------
 

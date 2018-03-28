@@ -380,12 +380,12 @@ integer :: jj, js, jf
 
 call mpas_field_registry%get(c_key_fld,fld)
 
-!call gpnorm(fld, kf, zstat)
+call gpnorm(fld, kf, zstat)
 jj=0
 do jf = 1, kf
   do js = 1, 3
     jj=jj+1
-    pstat(jj) = 0. !zstat(js,jf)
+    pstat(jj) = zstat(js,jf)
   enddo
 enddo
 
@@ -434,13 +434,9 @@ type(ufo_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
-write(*,*) 'call mpas_field_registry%get(c_key_fld, fld)'
 call mpas_field_registry%get(c_key_fld, fld)
-write(*,*) 'call ufo_locs_registry%get(c_key_loc, locs)'
 call ufo_locs_registry%get(c_key_loc, locs)
-write(*,*) 'call ufo_vars_setup(vars, c_vars)'
 call ufo_vars_setup(vars, c_vars)
-write(*,*) 'call ufo_geovals_registry%get(c_key_gom, gom)'
 call ufo_geovals_registry%get(c_key_gom, gom)
 
 write(*,*) 'call interp(fld, locs, vars, gom)'
@@ -471,13 +467,9 @@ type(ufo_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
-write(*,*) 'call mpas_field_registry%get(c_key_fld, fld)'
 call mpas_field_registry%get(c_key_fld, fld)
-write(*,*) 'call ufo_locs_registry%get(c_key_loc, locs)'
 call ufo_locs_registry%get(c_key_loc, locs)
-write(*,*) 'call ufo_vars_setup(vars, c_vars)'
 call ufo_vars_setup(vars, c_vars)
-write(*,*) 'call ufo_geovals_registry%get(c_key_gom, gom)'
 call ufo_geovals_registry%get(c_key_gom, gom)
 
 write(*,*) 'call interp_tl(fld, locs, vars, gom)'
@@ -505,7 +497,7 @@ type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
 type(ufo_locs),  pointer :: locs
-type(ufo_vars),  pointer :: vars
+type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_field_registry%get(c_key_fld, fld)
@@ -513,7 +505,9 @@ call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call ufo_vars_setup(vars, c_vars)
 
+write(*,*) 'call interp_ad(fld, locs, vars, gom)'
 call interp_ad(fld, locs, vars, gom)
+write(*,*) 'done interp_ad(fld, locs, vars, gom)'
 
 end subroutine mpas_field_interp_ad_c
 

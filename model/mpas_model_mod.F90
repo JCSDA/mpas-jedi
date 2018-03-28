@@ -163,6 +163,7 @@ subroutine model_prepare_integration(self, flds)
     call da_copy_sub2all_fields(self % domain, flds % subFields)   
     call da_copy_sub2all_fields(self % domain, flds % auxFields)   
 
+!#define ModelMPAS_prepare
 #ifdef ModelMPAS_prepare
    !-------------------------------------------------------------------
    ! WIND processing U and V resconstruct to the edges
@@ -196,52 +197,36 @@ subroutine model_prepare_integration(self, flds)
    ! Computation of rho_zz from rho / zz from updated rho
    ! Recoupling of all the variables
    !——————————————————————————————————----------------------------------
-write(*,*) 'step 1'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_restart', config_do_restart)
-write(*,*) 'step 2'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_DAcycling', config_do_DAcycling)
-write(*,*) 'step 3'
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', dt)
-write(*,*) 'step 4'
    config_do_restart = .True.
    config_do_DAcycling = .True.
 
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
-write(*,*) 'step 5'
    !call mpas_pool_get_field(state, 'u', u_field, 1)
    !call mpas_dmpar_exch_halo_field(u_field)
 
    block => self % domain % blocklist
-write(*,*) 'step 6'
    do while (associated(block))
       call mpas_pool_get_subpool(block % structs, 'mesh', mesh)
-write(*,*) 'step 7'
       call mpas_pool_get_subpool(block % structs, 'state', state)
 write(*,*) 'step 8'
       ! GD: if we do cycling in atm_mpas_init_block we propably need to avoid recomputing wind to the 
       ! mass center. (avoiding doing twice ... adding a flag). OK for now, probably same problem with dart 
       call atm_mpas_init_block(self % domain % dminfo, self % domain % streamManager, block, mesh, self % dt)
-write(*,*) 'step 9'
       call mpas_pool_get_array(state, 'xtime', xtime, 1)
-write(*,*) 'step 10'
       xtime = startTimeStamp
       block => block % next
    end do
 
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
-write(*,*) 'step 11'
    call mpas_pool_get_field(diag, 'pv_edge', pv_edge_field)
-write(*,*) 'step 12'
    call mpas_dmpar_exch_halo_field(pv_edge_field)
-write(*,*) 'step 13'
    call mpas_pool_get_field(diag, 'ru', ru_field)
-write(*,*) 'step 14'
    call mpas_dmpar_exch_halo_field(ru_field)
-write(*,*) 'step 15'
    call mpas_pool_get_field(diag, 'rw', rw_field)
-write(*,*) 'step 16'
    call mpas_dmpar_exch_halo_field(rw_field)
-write(*,*) 'step 17'
 #endif
 
 end subroutine model_prepare_integration
@@ -287,11 +272,13 @@ subroutine model_propagate(self, flds)
    integer :: ierr = 0
 
    write(*,*)'===> model_propagate'
+
    itimestep = 1
    call atm_do_timestep(self % domain, self % dt, itimestep)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
    call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(self % domain % clock)
+   call mpas_advance_clock(flds % clock) !Advance flds % clock, Too
 !--bjj clock test
    tmpTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
    call mpas_get_time(tmpTime, dateTimeString=tmpTimeStamp) 
@@ -352,7 +339,8 @@ subroutine model_prop_traj(self, flds, traj)
    type(mpas_field)      :: flds
    type(mpas_trajectory) :: traj
 
-   write(*,*)'===> model_prop_traj'
+   write(*,*)'===> model_prop_traj in mpas_model_mod.F90'
+   call set_traj(traj,flds)
 
 end subroutine model_prop_traj
 

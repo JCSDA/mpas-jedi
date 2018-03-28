@@ -8,7 +8,7 @@
   },
   "Model": {
     "tstep": "PT15M",
-    "fclength": "PT1H",
+    "fclength": "PT0H",
     "finalnorm": 0.020383,
     "tolerance": 0.005
   },
@@ -36,6 +36,6 @@
   },
   "Assimilation Window": {
     "Begin": "2010-10-23T00:00:00Z",
-    "Length": "PT1H"
+    "Length": "PT0H"
   }
 }

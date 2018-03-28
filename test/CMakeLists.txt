@@ -1,7 +1,7 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
   testinput/3dfgat.json
-  testinput/4densvar.json
+  testinput/4denvar_nicas.json
   testinput/4dvar.alpha.json
   testinput/4dforcing.json
   testinput/4dhybrid.json
@@ -48,7 +48,7 @@ list( APPEND mpas_test_input
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dfgat.test
-  testoutput/4densvar.test
+  testoutput/4denvar_nicas.test
   testoutput/4dvar.alpha.test
   testoutput/4dforcing.test
   testoutput/4dhybrid.test
@@ -184,4 +184,17 @@ ecbuild_add_test( TARGET test_mpas_forecast
                        testoutput/forecast.test
                   DEPENDS mpas_forecast.x )
 
+ecbuild_add_test( TARGET test_mpas_3dvar
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.json"
+                       testoutput/3dvar.test
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_4denvar
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_nicas.json"
+                       testoutput/4denvar_nicas.test
+                  DEPENDS mpas_variational.x )
 
