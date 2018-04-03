@@ -1,6 +1,7 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
   testinput/3dfgat.json
+  testinput/3denvar_nicas.json
   testinput/4denvar_nicas.json
   testinput/4dvar.alpha.json
   testinput/4dforcing.json
@@ -48,6 +49,7 @@ list( APPEND mpas_test_input
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dfgat.test
+  testoutput/3denvar_nicas.test
   testoutput/4denvar_nicas.test
   testoutput/4dvar.alpha.test
   testoutput/4dforcing.test
@@ -191,10 +193,10 @@ ecbuild_add_test( TARGET test_mpas_3dvar
                        testoutput/3dvar.test
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_4denvar
+ecbuild_add_test( TARGET test_mpas_3denvar_nicas
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_nicas.json"
-                       testoutput/4denvar_nicas.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_nicas.json"
+                       testoutput/3denvar_nicas.test
                   DEPENDS mpas_variational.x )
 

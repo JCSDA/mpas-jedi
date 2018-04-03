@@ -3,15 +3,14 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "resolution": {
-    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "variables": {
     "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "initial": {
-    "read_from_file": "1",
-    "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "Covariance": {
     "covariance": "ensemble",
@@ -19,7 +18,7 @@
     "variables": {
       "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
     },
-    "date": "2010-10-23T00:00:00Z",
+    "date": "2016-03-04T06:00:00Z",
     "localization": {
       "localization": "HDIAG_NICAS",
       "variables": {
@@ -27,24 +26,24 @@
       },
       "hdiag_ensemble": [
         {
-          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+          "date": "2016-03-04T06:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+          "date": "2016-03-04T06:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+          "date": "2016-03-04T06:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+          "date": "2016-03-04T06:00:00Z"
         },
         {
-          "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+          "date": "2016-03-04T06:00:00Z"
         }
       ],
       "datadir": ".",
@@ -110,24 +109,24 @@
     },
     "state": [
       {
-        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
-        "date": "2010-10-23T00:00:00Z"
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+        "date": "2016-03-04T06:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
-        "date": "2010-10-23T00:00:00Z"
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+        "date": "2016-03-04T06:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
-        "date": "2010-10-23T00:00:00Z"
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+        "date": "2016-03-04T06:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
-        "date": "2010-10-23T00:00:00Z"
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+        "date": "2016-03-04T06:00:00Z"
       },
       {
-        "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
-        "date": "2010-10-23T00:00:00Z"
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+        "date": "2016-03-04T06:00:00Z"
       }
     ]
   },
@@ -141,29 +140,29 @@
   },
   "output_nicas": {
     "datadir": "Data",
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "input_nicas": {
     "datadir": "Data",
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "output_Bens": {
     "datadir": "Data",
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "output_nicasRnd": {
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "input_nicasRnd": {
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "output_BensRnd": {
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   }
 }

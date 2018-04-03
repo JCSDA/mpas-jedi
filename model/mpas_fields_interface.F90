@@ -439,9 +439,7 @@ call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
-write(*,*) 'call interp(fld, locs, vars, gom)'
 call interp(fld, locs, vars, gom)
-write(*,*) 'done interp(fld, locs, vars, gom)'
 
 end subroutine mpas_field_interp_c
 
@@ -472,9 +470,7 @@ call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
-write(*,*) 'call interp_tl(fld, locs, vars, gom)'
 call interp_tl(fld, locs, vars, gom)
-write(*,*) 'done interp_tl(fld, locs, vars, gom)'
 
 end subroutine mpas_field_interp_tl_c
 
@@ -505,9 +501,7 @@ call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call ufo_vars_setup(vars, c_vars)
 
-write(*,*) 'call interp_ad(fld, locs, vars, gom)'
 call interp_ad(fld, locs, vars, gom)
-write(*,*) 'done interp_ad(fld, locs, vars, gom)'
 
 end subroutine mpas_field_interp_ad_c
 

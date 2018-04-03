@@ -4,7 +4,7 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "resolution" : {
-    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
     "tstep": "PT15M",
@@ -14,15 +14,15 @@
   },
   "cost_function": {
     "cost_type": "3D-Var",
-    "window_begin": "2010-10-23T00:00:00Z",
+    "window_begin": "2016-03-04T06:00:00Z",
     "window_length": "PT0H",
     "nvars" : 5,
     "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
         "state": [{
-          "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+          "date": "2016-03-04T06:00:00Z"
         }]
       },
       "Covariance": {
@@ -31,7 +31,7 @@
         "vertical_correlation": "0.2",
         "horizontal_length_scale": "1e6",
         "maximum_condition_number": "1.0e6",
-        "date": "2010-10-23T00:00:00Z"
+        "date": "2016-03-04T06:00:00Z"
       }
     },
     "Jo": {
@@ -59,8 +59,8 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "/home/vagrant/jedi3/build/mpas-bundle/mpas/test/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z",
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z",
     "_first": "PT3H",
     "_frequency": "PT06H",
     "_datadir": "Data",
@@ -71,12 +71,10 @@
     "iteration": [
       {
         "resolution": {
-          "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
-          "_version": "IdTLM",
           "version": "MPASIdTLM",
-          "_version": "MPASTLM",
           "tstep": "PT1H",
           "trajectory": {
             "tstep": "PT1H",
@@ -93,11 +91,10 @@
       },
       {
         "resolution": {
-          "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
           "version": "MPASIdTLM",
-          "_version": "MPASTLM",
           "tstep": "PT1H",
           "trajectory": {
             "tstep": "PT1H",

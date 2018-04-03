@@ -14,7 +14,7 @@
   },
   "cost_function": {
     "cost_type": "4D-Ens-Var",
-    "window_begin": "2010-10-23T00:00:00Z",
+    "window_begin": "2016-03-04T06:00:00Z",
     "window_length": "PT0H",
     "window_sub": "PT1H",
     "nvars" : 5,
@@ -23,7 +23,7 @@
       "Background": {
         "state": [{
           "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-          "date": "2010-10-23T00:00:00Z"
+          "date": "2016-03-04T06:00:00Z"
         }]
       },
       "Covariance": {
@@ -34,7 +34,7 @@
           "variables": {
             "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
           },
-          "date": "2010-10-23T00:00:00Z",
+          "date": "2016-03-04T06:00:00Z",
           "localization": {
             "localization": "HDIAG_NICAS",
             "variables": {
@@ -42,24 +42,24 @@
             },
             "hdiag_ensemble": [
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
-                "date": "2010-10-23T00:00:00Z"
+                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+                "date": "2016-03-04T06:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
-                "date": "2010-10-23T00:00:00Z"
+                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+                "date": "2016-03-04T06:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
-                "date": "2010-10-23T00:00:00Z"
+                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+                "date": "2016-03-04T06:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
-                "date": "2010-10-23T00:00:00Z"
+                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+                "date": "2016-03-04T06:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
-                "date": "2010-10-23T00:00:00Z"
+                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+                "date": "2016-03-04T06:00:00Z"
               }
             ],
             "datadir": ".",
@@ -128,24 +128,24 @@
           },
           "state": [
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+              "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+              "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+              "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+              "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+              "date": "2016-03-04T06:00:00Z"
             }
           ]
          }
@@ -178,7 +178,7 @@
   },
   "output": {
     "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.4denvar.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z",
+    "date": "2016-03-04T06:00:00Z",
     "_first": "PT3H",
     "_frequency": "PT06H",
     "_datadir": "Data",
@@ -192,7 +192,6 @@
           "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
-          "_version": "IdTLM",
           "version": "MPASIdTLM",
           "tstep": "PT1H",
           "trajectory": {

@@ -238,7 +238,7 @@ module mpas4da_mod
 
             ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
             if (poolItr_b % dataType == MPAS_POOL_REAL) then
-!write(0,*) '-------------- test', trim(poolItr_b % memberName)
+
              call mpas_pool_begin_iteration(pool_a)
              do while ( mpas_pool_get_next_member(pool_a, poolItr_a) )
 
@@ -255,6 +255,7 @@ module mpas4da_mod
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_a = r1d_ptr_b
                   else if (poolItr_b % nDims == 2) then
+write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_a = r2d_ptr_b
@@ -268,7 +269,6 @@ module mpas4da_mod
                           call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                           !call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                           index_scalar = 1
-                          !field3d % array(index_scalar,:,:) = field2d % array(:,:)
                           field2d % array(:,:) = field3d % array(index_scalar,:,:)
                           write(0,*)'Copy all2sub field index_qv: ',minval(field2d % array), maxval(field2d % array)
                        end if
@@ -402,9 +402,6 @@ module mpas4da_mod
       nfields = 0
       call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
       pool_a => domain % blocklist % allFields
-      !write(0,*)'before da_common_vars' 
-      !nsize = da_common_vars(pool_a, fieldname)
-      !write(0,*)'after da_common_vars' 
  
       write(0,*)'--Create a sub Pool from list of variable: ',nsize
       call mpas_pool_create_pool(pool_b, nsize)
@@ -665,7 +662,7 @@ module mpas4da_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r0d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r0d_ptr_c)
-                     r0d_ptr_a = 0.
+                     r0d_ptr_a = 0.0_RKIND
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      r0d_ptr_a = r0d_ptr_a + r0d_ptr_b
@@ -693,7 +690,7 @@ module mpas4da_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r1d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r1d_ptr_c)
-                     r1d_ptr_a = 0.
+                     r1d_ptr_a = 0.0_RKIND
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      if (present(pool_c)) then
@@ -718,19 +715,20 @@ module mpas4da_mod
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_b)
-                  write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
-                  write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b) 
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r2d_ptr_c)
-                     r2d_ptr_a = 0.
+                     r2d_ptr_a = 0.0_RKIND
                   end if
                   if ( trim(kind_op).eq.'add' ) then
+                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
+                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b) 
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b + r2d_ptr_c
                      else
                         write(*,*)'regular addition'
                         r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
                      end if
+                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
                   else if ( trim(kind_op).eq.'schur' ) then
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b * r2d_ptr_c
@@ -744,14 +742,13 @@ module mpas4da_mod
                         r2d_ptr_a = r2d_ptr_a - r2d_ptr_b
                      end if
                   end if
-                  write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
 
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r3d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r3d_ptr_c)
-                     r3d_ptr_a = 0.
+                     r3d_ptr_a = 0.0_RKIND
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      if (present(pool_c)) then
@@ -882,16 +879,16 @@ module mpas4da_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  r0d_ptr_a = 0.
+                  r0d_ptr_a = 0.0_RKIND
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  r1d_ptr_a = 0.
+                  r1d_ptr_a = 0.0_RKIND
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  r2d_ptr_a = 0.
+                  r2d_ptr_a = 0.0_RKIND
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  r3d_ptr_a = 0.
+                  r3d_ptr_a = 0.0_RKIND
                end if
 
             end if
@@ -1097,7 +1094,7 @@ module mpas4da_mod
    integer, pointer :: solveDim1, solveDim2, solveDim3
    !integer, pointer :: solveDim(:)
 
-   pstat = 0.
+   pstat = 0.0_RKIND
 
    !
    ! Iterate over all fields in pool_a

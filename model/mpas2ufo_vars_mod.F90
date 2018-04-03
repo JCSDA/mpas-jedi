@@ -140,6 +140,7 @@
 
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
+#define READY_TRAJ
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL 
@@ -168,7 +169,7 @@
 
         call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
 
-        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
+        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100. ) !- Pa -> hPa 
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_prsl
@@ -252,10 +253,12 @@
 
 !-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoTL(pool_a, pool_b, pool_c, fieldname, nfield)
+   !subroutine convert_mpas_field2ufoTL(pool_a, pool_b, pool_c, fieldname, nfield)
+   subroutine convert_mpas_field2ufoTL(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
+   type (mpas_pool_type), pointer, intent(in) :: traj_pool_a, traj_pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(out) :: pool_c
    integer, intent(in) :: nfield
@@ -267,6 +270,7 @@
    real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+   real (kind=RKIND), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
    integer :: ii, ivar
@@ -297,18 +301,28 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
+        call mpas_pool_get_array(traj_pool_a,    'theta', traj_r2d_a)
+        call mpas_pool_get_array(traj_pool_a, 'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(traj_pool_b, 'pressure', traj_r2d_c)
+        write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
+        write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
+        write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
+
         call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> TL with trajectory!
 !%%%
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
-             !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
-                  !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
-#else
+        !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
+        !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
+        !     !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
+        !          !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
+        field2d % array(:,:) = ( ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
+                                + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) * r2d_ptr_b(:,:) ) &
+                               / ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) )
         write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+#else
         field2d % array(:,:) = r2d_ptr_a(:,:) !BJJ test: pass theta as T_v
 #endif
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
@@ -412,10 +426,12 @@
 
 !-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoAD(pool_a, pool_b, pool_c, fieldname, nfield)
+   !subroutine convert_mpas_field2ufoAD(pool_a, pool_b, pool_c, fieldname, nfield)
+   subroutine convert_mpas_field2ufoAD(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
+   type (mpas_pool_type), pointer, intent(inout) :: traj_pool_a, traj_pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(inout) :: pool_a, pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(inout) :: pool_c
    integer, intent(in) :: nfield
@@ -427,6 +443,7 @@
    real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+   real (kind=RKIND), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
    integer :: ii, ivar
@@ -457,16 +474,36 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
+        call mpas_pool_get_array(traj_pool_a,    'theta', traj_r2d_a)
+        call mpas_pool_get_array(traj_pool_a, 'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(traj_pool_b, 'pressure', traj_r2d_c)
+        write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
+        write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
+        write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
+
         !call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
 
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> AD with trajectory!
 !%%%
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
-             !Tv = T * ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05
-                  !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature   
+        !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
+        !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
+        !     !Tv = T * ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05
+        !          !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature   
+        !field2d % array(:,:) = ( ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
+        !                        + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) * r2d_ptr_b(:,:) ) &
+        !                       / ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) )
+        call mpas_pool_get_field(pool_c, 'virtual_temperature', field2d)
+        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+        r2d_ptr_a(:,:)=0.0
+        r2d_ptr_b(:,:)=0.0
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) / &
+                         ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) ) * field2d % array(:,:)
+        r2d_ptr_b(:,:) = r2d_ptr_b(:,:) + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) / &
+                         ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) ) * field2d % array(:,:)
+        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b(:,:)),maxval(r2d_ptr_b(:,:))
 #else
         call mpas_pool_get_field(pool_c, 'virtual_temperature', field2d)
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
