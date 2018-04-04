@@ -1,7 +1,8 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
   testinput/3dfgat.json
-  testinput/4densvar.json
+  testinput/3denvar_nicas.json
+  testinput/4denvar_nicas.json
   testinput/4dvar.alpha.json
   testinput/4dforcing.json
   testinput/4dhybrid.json
@@ -48,7 +49,8 @@ list( APPEND mpas_test_input
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dfgat.test
-  testoutput/4densvar.test
+  testoutput/3denvar_nicas.test
+  testoutput/4denvar_nicas.test
   testoutput/4dvar.alpha.test
   testoutput/4dforcing.test
   testoutput/4dhybrid.test
@@ -107,13 +109,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 #                  COMMAND "compare.sh"
 #                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/truth.json"
 #                       testoutput/truth.test
-#                  DEPENDS mpas_forecast.x )
-#
-#ecbuild_add_test( TARGET test_mpas_forecast
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.json"
-#                       testoutput/forecast.test
 #                  DEPENDS mpas_forecast.x )
 #
 #ecbuild_add_test( TARGET test_mpas_makeobs3d
@@ -183,4 +178,25 @@ ecbuild_add_test( TARGET test_mpas_dirac_nicas
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.nicas.json"
                        testoutput/dirac.nicas.test
                   DEPENDS mpas_dirac.x )
+
+ecbuild_add_test( TARGET test_mpas_forecast
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.json"
+                       testoutput/forecast.test
+                  DEPENDS mpas_forecast.x )
+
+ecbuild_add_test( TARGET test_mpas_3dvar
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.json"
+                       testoutput/3dvar.test
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3denvar_nicas
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_nicas.json"
+                       testoutput/3denvar_nicas.test
+                  DEPENDS mpas_variational.x )
 

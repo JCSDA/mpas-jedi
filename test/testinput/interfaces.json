@@ -4,60 +4,55 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "Variables": {
     "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"],
     "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "variables_": ["theta", "index_qv"]
   },
-  "TestDate": "2010-10-23T00:00:00Z",
+  "TestDate": "2016-03-04T06:00:00Z",
   "State": {
-    "date": "2010-10-23T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "StateTest": {
     "StateFile": {
-      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-      "date": "2010-10-23T00:00:00Z",
-      "filename_": "restart.2010-10-24_00.00.00.nc",
+      "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "date": "2016-03-04T06:00:00Z",
       "Rfilename": "restart.mem1.$Y-$M-$D_$h.$m.$s.nc",
       "Rdate": "2010-10-24T00:00:00Z"
     },
-    "date": "2010-10-23T00:00:00Z",
+    "date": "2016-03-04T06:00:00Z",
     "StateGenerate" : {
-      "filename": "/home/vagrant/jedi2/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-      "date": "2010-10-23T00:00:00Z",
+      "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+      "date": "2016-03-04T06:00:00Z",
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-file": "441.0",
-    "norm-gen": "441.0",
-    "tolerance": "100.",
+    "norm-file": "197.497",
+    "norm-gen": "197.497",
+    "tolerance": "0.005",
     "Locations": {
       "lats": [0.0, 0.2, 0.3, -0.1],
       "lons": [0.0, 0.2, 0.3,-0.2],
       "lats_deg": [50.0, 30.0, 10.0, -20.5],
-      "lons_deg": [50.0, 30.0, 10.0,-143.2],
-      "positions": [0.717]
+      "lons_deg": [50.0, 30.0, 10.0,-143.2]
     },
     "Variables": {
       "variables": ["virtual_temperature"],
-      "variables_": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "variables_": ["theta", "index_qv"]
     },
-    "values": [6.042838]
+    "values": [1224.0]
   },
   "nvars": 1,
   "ModelTest": {
-    "fclength": "PT15M",
-    "finalnorm": 441.0,
-    "tolerance": 100.0
+    "fclength": "PT2H",
+    "finalnorm": 197.8,
+    "tolerance": 10.0
     },
   "ModelBias": null,
   "Model": {
-    "tstep": "PT15M",
-    "fclength": "PT1H",
-    "finalnorm": 441.0,
-    "tolerance": 100.0
+    "tstep": "PT30M"
   }
 }

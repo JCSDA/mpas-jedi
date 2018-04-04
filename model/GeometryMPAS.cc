@@ -31,10 +31,12 @@ GeometryMPAS::~GeometryMPAS() {
 }
 // -----------------------------------------------------------------------------
 void GeometryMPAS::print(std::ostream & os) const {
-  int nx;
-  int ny;
-  mpas_geo_info_f90(keyGeom_, nx, ny);
-  os << "nx = " << nx << ", ny = " << ny;
+  int nCells;
+  int nEdges;
+  int nVertLevels;
+  int nVertLevelsP1;
+  mpas_geo_info_f90(keyGeom_,nCells, nEdges, nVertLevels, nVertLevelsP1);
+  os << "nCells = " << nCells << ", nEdges = " << nEdges <<", nVertLevels = "<<nVertLevels<<", nVertLevelsP1 = "<<nVertLevelsP1 ;
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas

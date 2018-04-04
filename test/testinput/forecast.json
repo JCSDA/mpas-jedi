@@ -1,27 +1,23 @@
 {
   "resolution": {
-    "nx": "40",
-    "ny": "20",
-    "bc": "1"
+    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
-    "tstep": "PT1H",
-    "top_layer_depth": "5500.0",
-    "bottom_layer_depth": "4500.0"
+    "tstep": "PT30M",
+    "finalnorm": 441.0,
+    "tolerance": 0.05
   },
   "initial": {
-    "filename": "Data/truth.fc.2009-12-15T00:00:00Z.P16D",
-    "date": "2009-12-31T00:00:00Z"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
-  "forecast_length": "P2D",
+  "forecast_length": "PT6H",
   "output": {
     "frequency": "PT1H",
-    "datadir": "Data",
-    "exp": "example",
-    "date": "2009-12-31T00:00:00Z",
-    "type": "fc"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas_forecast.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
   },
   "prints": {
-    "frequency": "PT3H"
+    "frequency": "PT30M"
   }
 }

@@ -18,3 +18,9 @@ ecbuild_add_executable( TARGET  mpas_dirac.x
                         SOURCES mpasDirac.cc
                         LIBS	mpas
                       )
+
+ecbuild_add_executable( TARGET  mpas_variational.x
+                        SOURCES mpasVariational.cc
+                        LIBS    mpas
+                      )
+

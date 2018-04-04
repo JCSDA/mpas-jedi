@@ -15,6 +15,10 @@ use mpas_derived_types
 use mpas_kind_types
 use mpas_constants
 
+use mpas_subdriver
+use atm_core
+use mpi ! only MPI_COMM_WORLD
+
 implicit none
 private
 public :: mpas_geom, &
@@ -42,8 +46,9 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
 !   integer, allocatable :: nEdgesOnCell(:)
 !   integer, allocatable :: edgesOnCell(:,:)
-   type (dm_info), pointer :: dminfo => null()
-   logical :: use_mpi = .false.
+
+   type (domain_type), pointer :: domain => null() 
+   type (core_type), pointer :: corelist => null()
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom
@@ -68,9 +73,8 @@ type(c_ptr), intent(in) :: c_conf
 character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
 real(kind=RKIND), parameter :: deg2rad = pii/180.      
-integer :: iC,nC_loc,iC_loc
 
-write(*,*)'create geom'
+write(*,*)' ==> create geom'
 
 !> Open a grid mesh file
 self%gridfname = config_get_string(c_conf, StrKIND, "gridfname")
@@ -140,6 +144,19 @@ self%lonEdge = self%lonEdge !/ deg2rad
 !> close file
 call ncerr(string1,nf90_close(ncid))
 
+!> MPAS subdriver
+call mpas_init(self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD)
+if (associated(self % domain)) then
+    write(*,*)'inside geom: geom % domain associated'
+end if
+if (associated(self % corelist)) then
+    write(*,*)'inside geom: geom % corelist associated'
+else
+    write(*,*)'inside geom: geom % corelist not associated'
+end if
+
+write(*,*)'End of geo_setup'
+
 end subroutine geo_setup
 
 ! ------------------------------------------------------------------------------
@@ -148,6 +165,13 @@ subroutine geo_clone(self, other)
 implicit none
 type(mpas_geom), intent(in) :: self
 type(mpas_geom), intent(inout) :: other
+
+write(*,*)'====> copy of geom array'
+if (allocated(other%latCell)) then 
+   write(*,*)'Allocated array other%latCell'
+else
+   write(*,*)'Not Allocated array other%latCell'
+end if   
 
 other%nCells        = self%nCells
 other%nEdges        = self%nEdges
@@ -180,6 +204,17 @@ other%zgrid         = self%zgrid
 !other%edgesOnCell   = self%edgesOnCell
 !other%nEdgesOnCell  = self%nEdgesOnCell
 
+write(*,*)'====> copy of geom corelist and domain'
+
+if ((associated(other % corelist)).and.(associated(other % domain))) then 
+   write(*,*)'associated(other % corelist), associated(other % domain)'
+else
+   write(*,*)'not associated(other % corelist), associated(other % domain)'
+   call mpas_init(other % corelist, other % domain, mpi_comm=MPI_COMM_WORLD)
+end if
+
+write(*,*)'====> copy of geom done'
+
 end subroutine geo_clone
 
 ! ------------------------------------------------------------------------------
@@ -189,8 +224,7 @@ subroutine geo_delete(self)
 implicit none
 type(mpas_geom), intent(inout) :: self
 
-write(*,*)'GD delete geom'
-if (associated(self % dminfo)) nullify(self % dminfo) 
+write(*,*)'==> delete geom array'
 if (allocated(self%latCell)) deallocate(self%latCell)
 if (allocated(self%lonCell)) deallocate(self%lonCell)
 if (allocated(self%latEdge)) deallocate(self%latEdge)
@@ -201,6 +235,15 @@ if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
 if (allocated(self%zgrid)) deallocate(self%zgrid)
 !if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
 !if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
+
+if ((associated(self % corelist)).and.(associated(self % domain))) then
+   write(*,*)'==> delete geom corelist and domain'
+   call mpas_timer_set_context( self % domain )
+   call mpas_finalize(self % corelist, self % domain)
+end if
+write(*,*)'==> delete geom done'
+!self % corelist => null()
+!self % domain => null()
 
 end subroutine geo_delete
 

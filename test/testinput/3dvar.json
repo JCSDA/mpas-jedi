@@ -1,77 +1,49 @@
 {
-  "resolution": {
-    "nx": "40",
-    "ny": "20",
-    "bc": "1"
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "resolution" : {
+    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
-    "tstep": "PT1H",
-    "top_layer_depth": "5500.0",
-    "bottom_layer_depth": "4500.0"
+    "tstep": "PT15M",
+    "fclength": "PT0H",
+    "finalnorm": 0.020383,
+    "tolerance": 0.005
   },
   "cost_function": {
     "cost_type": "3D-Var",
-    "window_begin": "2010-01-01T09:00:00Z",
-    "window_length": "PT6H",
-    "variables": "ci",
+    "window_begin": "2016-03-04T06:00:00Z",
+    "window_length": "PT0H",
+    "nvars" : 5,
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
         "state": [{
-          "filename": "Data/example.fc.2009-12-31T00:00:00Z.P1DT12H",
-          "date": "2010-01-01T12:00:00Z"
+          "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+          "date": "2016-03-04T06:00:00Z"
         }]
       },
       "Covariance": {
-        "covariance": "static",
+        "covariance": "MPASstatic",
         "standard_deviation": "0.8",
         "vertical_correlation": "0.2",
         "horizontal_length_scale": "1e6",
         "maximum_condition_number": "1.0e6",
-        "date": "2010-01-01T12:00:00Z"
+        "date": "2016-03-04T06:00:00Z"
       }
     },
     "Jo": {
       "ObsTypes": [
         {
-          "ObsType": "Stream",
+          "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
+              "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/qg.3dvar.obt"
-            },
-            "obsvalue": "ObsVal"
-          },
-          "Covariance": {
-            "covariance": "diagonal",
-            "obserror": "ObsErr"
-          }
-        },
-        {
-          "ObsType": "Wind",
-          "ObsData": {
-            "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
-            },
-            "ObsDataOut": {
-              "obsfile": "Data/qg.3dvar.obt"
-            },
-            "obsvalue": "ObsVal"
-          },
-          "Covariance": {
-            "covariance": "diagonal",
-            "obserror": "ObsErr"
-          }
-        },
-        {
-          "ObsType": "WSpeed",
-          "ObsData": {
-            "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
-            },
-            "ObsDataOut": {
-              "obsfile": "Data/qg.3dvar.obt"
+              "obsfile": "Data/3dvar.obt"
             },
             "obsvalue": "ObsVal"
           },
@@ -87,25 +59,23 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "first": "PT3H",
-    "frequency": "PT06H",
-    "datadir": "Data",
-    "exp": "example",
-    "type": "an"
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z",
+    "_first": "PT3H",
+    "_frequency": "PT06H",
+    "_datadir": "Data",
+    "_exp": "example",
+    "_type": "an"
   },
   "variational": {
     "iteration": [
       {
         "resolution": {
-          "nx": "40",
-          "ny": "20",
-          "bc": "1"
+          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
-          "version": "QgIdTLM",
+          "version": "MPASIdTLM",
           "tstep": "PT1H",
-          "top_layer_depth": "5500.0",
-          "bottom_layer_depth": "4500.0",
           "trajectory": {
             "tstep": "PT1H",
             "top_layer_depth": "5500.0",
@@ -121,15 +91,11 @@
       },
       {
         "resolution": {
-          "nx": "40",
-          "ny": "20",
-          "bc": "1"
+          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
-          "version": "QgIdTLM",
+          "version": "MPASIdTLM",
           "tstep": "PT1H",
-          "top_layer_depth": "5500.0",
-          "bottom_layer_depth": "4500.0",
           "trajectory": {
             "tstep": "PT1H",
             "top_layer_depth": "5500.0",

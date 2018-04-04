@@ -55,6 +55,7 @@ use iso_c_binding
 use mpas_covariance_mod
 use mpas_fields_mod
 use kinds
+use mpas_framework !BJJ
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
@@ -67,6 +68,26 @@ type(mpas_field), pointer :: xout
 call mpas_covar_registry%get(c_key_self,self)
 call mpas_field_registry%get(c_key_in,xin)
 call mpas_field_registry%get(c_key_out,xout)
+!TODO BJJ
+!Implement this
+!xout = xin
+!xout => xin
+   call mpas_pool_empty_pool(xout % subFields)
+   call mpas_pool_destroy_pool(xout % subFields)
+   xout % nf = xin % nf
+   call mpas_pool_create_pool(xout % subFields, xout % nf)
+   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
+
+
+!TODO BJJ
+!Implement this
+!xout = xin
+!xout => xin
+   call mpas_pool_empty_pool(xout % subFields)
+   call mpas_pool_destroy_pool(xout % subFields)
+   xout % nf = xin % nf
+   call mpas_pool_create_pool(xout % subFields, xout % nf)
+   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
 
 !call mpas_covar_sqrt_inv_mult(self%nx,self%ny,xctl,xin,self)
 !call zeros(xout)
@@ -84,6 +105,7 @@ use iso_c_binding
 use mpas_covariance_mod
 use mpas_fields_mod
 use kinds
+use mpas_framework !BJJ
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
@@ -96,6 +118,17 @@ type(mpas_field), pointer :: xout
 call mpas_covar_registry%get(c_key_self,self)
 call mpas_field_registry%get(c_key_in,xin)
 call mpas_field_registry%get(c_key_out,xout)
+
+   write(*,*) '---- inside sub c_mpas_b_mult ----'
+!TODO BJJ
+!Implement this
+!xout = xin
+!xout => xin
+   call mpas_pool_empty_pool(xout % subFields)
+   call mpas_pool_destroy_pool(xout % subFields)
+   xout % nf = xin % nf
+   call mpas_pool_create_pool(xout % subFields, xout % nf)
+   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
 
 !call mpas_covar_sqrt_mult_ad(self%nx,self%ny,xin,xctl,self)
 !call zeros(xout)
