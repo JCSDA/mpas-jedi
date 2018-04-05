@@ -394,7 +394,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
       type (mpas_pool_iterator_type) :: poolItr
       type (field0DReal), pointer :: field0d
       type (field1DReal), pointer :: field1d
-      type (field2DReal), pointer :: field2d
+      type (field2DReal), pointer :: field2d, field2d_src, field2d_dst
       type (field3DReal), pointer :: field3d
       integer, pointer :: index_scalar, dim0d
       integer :: ii
@@ -446,13 +446,17 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   else if ( trim(poolItr % memberName).eq.'scalars' ) then
                      write(0,*)'Scalars pool case'
                      if ( trim(fieldname(ii)).eq.'index_qv') then        
+
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
                         call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
-                        call mpas_pool_get_field(pool_a, 'theta_m', field2d)
-                        field2d % fieldName = trim(fieldname(ii))
-                        field2d % array = field3d % array(index_scalar,:,:)
-                        call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d)
-                        write(0,*) '2D MIN/MAX value: ', maxval(field2d % array),minval(field2d % array)
+                        call mpas_pool_get_field(pool_a, 'theta_m', field2d_src)
+                        call mpas_duplicate_field(field2d_src, field2d_dst)
+                        field2d_dst % fieldName = trim(fieldname(ii))
+                        field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
+                        write(0,*) '2D MIN/MAX value: ', maxval(field2d_dst % array),minval(field2d_dst % array)
+                        write(0,*) '2D MIN/MAX value: ', maxval(field3d % array(index_scalar,:,:)), &
+                                       minval(field3d % array(index_scalar,:,:))
+                        call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d_dst)
                         nfields = nfields + 1
                      end if
                   end if

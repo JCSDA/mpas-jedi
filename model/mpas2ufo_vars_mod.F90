@@ -103,17 +103,14 @@
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (mpas_pool_type), pointer :: allFields, clone_pool_a
+   type (mpas_pool_type), pointer :: allFields
    real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
 
-   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
+   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c, field2d_src
    integer :: ii, ivar
-   !--- test
-   call mpas_pool_create_pool(clone_pool_a)
-   call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(pool_c, nfield)
@@ -138,7 +135,8 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
-        call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
+        call mpas_pool_get_field(pool_a, 'theta', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
 
 #define READY_TRAJ
 #ifdef READY_TRAJ
@@ -167,7 +165,8 @@
         call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
-        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
+        call mpas_pool_get_field(pool_a, 'rho', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)
 
         field2d % array(:,:) = log( r2d_ptr_a(:,:)/100. ) !- Pa -> hPa 
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
@@ -244,10 +243,6 @@
      end select
 
    end do !ivar
-
-
-   call mpas_pool_empty_pool(clone_pool_a)
-   call mpas_pool_destroy_pool(clone_pool_a)
   
    end subroutine convert_mpas_field2ufo
 
@@ -265,18 +260,15 @@
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (mpas_pool_type), pointer :: allFields, clone_pool_a
+   type (mpas_pool_type), pointer :: allFields
    real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    real (kind=RKIND), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
-   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
+   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c, field2d_src
    integer :: ii, ivar
-   !--- test
-   call mpas_pool_create_pool(clone_pool_a)
-   call mpas_pool_clone_pool(pool_a,clone_pool_a)
 
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(pool_c, nfield)
@@ -308,7 +300,8 @@
         write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
         write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
 
-        call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
+        call mpas_pool_get_field(pool_a, 'theta', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)
 
 #ifdef READY_TRAJ
 !%%%
@@ -340,7 +333,8 @@
         call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
-        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
+        call mpas_pool_get_field(pool_a, 'rho', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
 
         field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
@@ -418,9 +412,6 @@
 
    end do !ivar
 
-
-   call mpas_pool_empty_pool(clone_pool_a)
-   call mpas_pool_destroy_pool(clone_pool_a)
   
    end subroutine convert_mpas_field2ufoTL
 
