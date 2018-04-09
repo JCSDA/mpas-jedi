@@ -48,8 +48,8 @@
   "nvars": 1,
   "ModelTest": {
     "fclength": "PT2H",
-    "finalnorm": 197.8,
-    "tolerance": 10.0
+    "finalnorm": 197.497,
+    "tolerance": 0.005
     },
   "ModelBias": null,
   "Model": {

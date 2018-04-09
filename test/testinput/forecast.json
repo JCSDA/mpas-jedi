@@ -3,9 +3,7 @@
     "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
-    "tstep": "PT30M",
-    "finalnorm": 441.0,
-    "tolerance": 0.05
+    "tstep": "PT30M"
   },
   "initial": {
     "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
