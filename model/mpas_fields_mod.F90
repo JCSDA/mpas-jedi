@@ -27,6 +27,7 @@ use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
 use type_mpl, only: mpl,mpl_recv,mpl_send,mpl_bcast
 use mpas_pool_routines
+use mpas_constants
 
 implicit none
 private
@@ -643,7 +644,6 @@ subroutine interp(fld, locs, vars, gom)
    do jvar=1,vars%nv
       if( .not. allocated(gom%geovals(jvar)%vals) )then
          gom%geovals(jvar)%nval = fld%geom%nVertLevels
-         gom%geovals(jvar)%nobs = ngrid
          allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
          write(*,*) ' gom%geovals(n)%vals allocated'
       endif
@@ -749,7 +749,6 @@ subroutine interp_tl(fld, locs, vars, gom)
    do jvar=1,vars%nv
       if( .not. allocated(gom%geovals(jvar)%vals) )then
          gom%geovals(jvar)%nval = fld%geom%nVertLevels
-         gom%geovals(jvar)%nobs = ngrid
          allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
          write(*,*) ' gom%geovals(n)%vals allocated'
       endif
@@ -890,10 +889,6 @@ subroutine interp_ad(fld, locs, vars, gom)
    ! ------------------------------
    ngrid = fld%geom%nCells
    nobs = locs%nlocs
-   !BJJ hack to pass "interp_checks" : might not necessary
-   gom%linit  = .true.
-   if(gom%geovals(1)%nval.eq.0) gom%geovals(1)%nval=size(gom%geovals(1)%vals(:,1))
-   if(gom%geovals(2)%nval.eq.0) gom%geovals(2)%nval=size(gom%geovals(2)%vals(:,1))
 
    call interp_checks("ad", fld, locs, vars, gom)
 
@@ -1033,7 +1028,9 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    real(kind=kind_real), allocatable :: area(:),vunit(:)
    
    integer :: ii, jj, ji, jvar, jlev
-   
+  
+   real(kind=RKIND), parameter :: deg2rad = pii/180. !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
+ 
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels
@@ -1093,8 +1090,8 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
       odata%nobsa = obs_num
       allocate(odata%lonobs(odata%nobsa))
       allocate(odata%latobs(odata%nobsa))
-      odata%lonobs(:) = locs%lon(:)
-      odata%latobs(:) = locs%lat(:)
+      odata%lonobs(:) = locs%lon(:) * deg2rad !BJJ
+      odata%latobs(:) = locs%lat(:) * deg2rad !BJJ
    
       !Setup observation operator
       odata%nam => nam

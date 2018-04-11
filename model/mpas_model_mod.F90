@@ -263,7 +263,7 @@ subroutine model_propagate(self, flds)
    type(mpas_model) :: self
    type(mpas_field) :: flds
 
-   type (mpas_pool_type), pointer :: state
+   type (mpas_pool_type), pointer :: state, diag, mesh
    real (kind=RKIND) :: dt
    integer :: itimestep
 !--bjj clock test
@@ -284,18 +284,16 @@ subroutine model_propagate(self, flds)
    call mpas_get_time(tmpTime, dateTimeString=tmpTimeStamp) 
    write(*,*) '== BJJ in sub model_propagate time= ',trim(tmpTimeStamp)
 
-#ifdef ModelMPAS_propagate
-   ! GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
+   ! TODO: GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be
    ! interfaced with fortran.
    !if ( mpas_is_clock_time(self % domain % clock) ) then 
       !call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
-      !call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
-      !call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
-      !call atm_compute_restart_diagnostics(state, 1, diag, mesh)
-      !!call atm_compute_output_diagnostics(state, 1, diag, mesh) --> add pressure
+      call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
+      call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
+      call atm_compute_restart_diagnostics(state, 1, diag, mesh)
+      call atm_compute_output_diagnostics(state, 1, diag, mesh) !--> add pressure
       ! update mpas wind from the edges to center
-#endif
       ! copy from allfields to subfields
       call da_copy_all2sub_fields(self % domain, flds % subFields) 
       call da_copy_all2sub_fields(self % domain, flds % auxFields) 

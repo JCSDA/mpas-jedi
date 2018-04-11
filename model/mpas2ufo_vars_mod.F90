@@ -142,7 +142,7 @@
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL 
-!%%%
+!%%%  TODO: use clean formula
         field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
                                (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
@@ -168,7 +168,7 @@
         call mpas_pool_get_field(pool_a, 'rho', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)
 
-        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100. ) !- Pa -> hPa 
+        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa ->cb
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_prsl
@@ -306,7 +306,7 @@
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> TL with trajectory!
-!%%%
+!%%%  TODO: use clean formula
         !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
         !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
         !     !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
@@ -477,7 +477,7 @@
 #ifdef READY_TRAJ
 !%%%
 !%%%  NL currently. --> AD with trajectory!
-!%%%
+!%%%  TODO: use clean formula
         !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
         !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
         !     !Tv = T * ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05

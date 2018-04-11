@@ -7,7 +7,7 @@
     "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
-    "tstep": "PT15M",
+    "tstep": "PT30M",
     "fclength": "PT0H",
     "finalnorm": 0.020383,
     "tolerance": 0.005
@@ -115,8 +115,7 @@
             "diag_interp": "bilin",
             "diag_rhflt": 0.0,
             "lsqrt": 0,
-            "_resol": 4.0,
-            "resol": 10.0,
+            "resol": 4.0,
             "nicas_interp": "bilin",
             "network": 0,
             "mpicom": 2,
@@ -161,7 +160,7 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/4denvar.obt"
+              "obsfile": "Data/3denvar.obt"
             },
             "obsvalue": "ObsVal"
           },
@@ -177,7 +176,7 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.4denvar.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.3denvar.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z",
     "_first": "PT3H",
     "_frequency": "PT06H",
