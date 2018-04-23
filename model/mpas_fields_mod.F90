@@ -11,7 +11,7 @@ use config_mod
 use datetime_mod
 use mpas_geom_mod
 use ufo_vars_mod
-use mpas_kinds
+use mpas_kinds, only : kind_real
 use ufo_locs_mod
 use ufo_geovals_mod
 
@@ -118,11 +118,15 @@ subroutine create(self, geom, vars)
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
     !--- TODO: aux test: BJJ  !- get this from json ???
-    nf_aux=3
+    nf_aux=15 ! 3
     allocate(fldnames_aux(nf_aux))
-    fldnames_aux(1)='pressure'
-    fldnames_aux(2)='u10'
-    fldnames_aux(3)='t2m'
+    !fldnames_aux(1)='pressure'
+    !fldnames_aux(2)='u10'
+    !fldnames_aux(3)='t2m'
+    !fldnames_aux=(/"pressure", "u10", "t2m"/)
+    fldnames_aux = [ character(len=22) :: "pressure", "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
+                                          "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w" ]
+                                          !BJJ- w is for var_prsi
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
     if ( nf_aux .ne. nfields  ) then
@@ -586,7 +590,7 @@ use mpas_pool_routines
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
               if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
                 do idir=1, ndir
-                  r2d_ptr_a(ildir,iCell(idir))=1.0
+                  r2d_ptr_a(ildir,iCell(idir))=1.0_kind_real
                 end do
                 write(*,*) ' Dirac is set in ',ndir,'locations for',trim(poolItr % memberName)
               end if
@@ -626,13 +630,14 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
    
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCells
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
-   call interp_checks("tl", fld, locs, vars, gom)
+   call interp_checks("nl", fld, locs, vars, gom)
    
    ! Calculate interpolation weight using nicas
    ! ------------------------------------------
@@ -641,13 +646,14 @@ subroutine interp(fld, locs, vars, gom)
    
    !Make sure the return values are allocated and set
    !-------------------------------------------------
-   do jvar=1,vars%nv
-      if( .not. allocated(gom%geovals(jvar)%vals) )then
-         gom%geovals(jvar)%nval = fld%geom%nVertLevels
-         allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
-         write(*,*) ' gom%geovals(n)%vals allocated'
-      endif
-   enddo
+! BJJ: move allocation inside mpas_pool iteration
+!   do jvar=1,vars%nv
+!      if( .not. allocated(gom%geovals(jvar)%vals) )then
+!         gom%geovals(jvar)%nval = fld%geom%nVertLevels
+!         allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
+!         write(*,*) ' gom%geovals(n)%vals allocated'
+!      endif
+!   enddo
    gom%linit = .true.
    
 
@@ -671,30 +677,75 @@ subroutine interp(fld, locs, vars, gom)
    do while ( mpas_pool_get_next_member(pool_b, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
+
+        if (poolItr % dataType == MPAS_POOL_INTEGER) then
+           if (poolItr % nDims == 1) then
+              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), i1d_ptr_a)
+              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+              if( .not. allocated(gom%geovals(ivar)%vals) )then
+                 gom%geovals(ivar)%nval = 1
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 write(*,*) ' gom%geovals(n)%vals allocated'
+              endif
+              mod_field(:,1) = real( i1d_ptr_a(:) )
+!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
+              call apply_obsop(pgeom,odata,mod_field,obs_field)
+              gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+           end if
+        end if
+
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
+              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r1d_ptr_a)
+              ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
+              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+              if( .not. allocated(gom%geovals(ivar)%vals) )then
+                 gom%geovals(ivar)%nval = 1
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 write(*,*) ' gom%geovals(n)%vals allocated'
+              endif
+              mod_field(:,1) = r1d_ptr_a(:)
+write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+              call apply_obsop(pgeom,odata,mod_field,obs_field)
+              gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
-              write(*,*) "interp: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "ufo_vars_getindex: ivar=",ivar
-              do jlev = 1, fld%geom%nVertLevels
+              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+              if( .not. allocated(gom%geovals(ivar)%vals) )then
+                 gom%geovals(ivar)%nval = fld%geom%nVertLevels
+                 if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = fld%geom%nVertLevelsP1 !BJJ: Can we do this better ??
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 write(*,*) ' gom%geovals(n)%vals allocated'
+              endif
+!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+              do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call apply_obsop(pgeom,odata,mod_field,obs_field)
-                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+                 !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+                 gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
+!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 3) then
            end if
         end if
+
         end if
    end do
 
 
    deallocate(mod_field)
    deallocate(obs_field)
-   
+
+   call mpas_pool_empty_pool(pool_b)
+   call mpas_pool_destroy_pool(pool_b)
+
+   write(*,*) '---- Leaving interp ---'
 end subroutine interp
 
 ! ------------------------------------------------------------------------------
@@ -824,10 +875,11 @@ subroutine interp_tl(fld, locs, vars, gom)
               write(*,*) "interp_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex: ivar=",ivar
-              do jlev = 1, fld%geom%nVertLevels
+              do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call apply_obsop(pgeom,odata,mod_field,obs_field)
-                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+                 !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
+                 gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
 
            else if (poolItr % nDims == 3) then
@@ -848,7 +900,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    call mpas_pool_empty_pool(Traj_subFields)
    call mpas_pool_destroy_pool(Traj_subFields)
 
-   
+   write(*,*) '---- Leaving interp_tl ---'
 end subroutine interp_tl
 
 ! ------------------------------------------------------------------------------
@@ -964,13 +1016,11 @@ subroutine interp_ad(fld, locs, vars, gom)
               write(*,*) "Interp. var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex, ivar=",ivar
-              do jlev = 1, fld%geom%nVertLevels
-!TL                 mod_field(:,1) = r2d_ptr_a(jlev,:)
-!TL                 call apply_obsop(pgeom,odata,mod_field,obs_field)
-!TL                 gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
-                 obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
+              do jlev = 1, gom%geovals(ivar)%nval
+                 !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
+                 obs_field(:,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
                  call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
-                 r2d_ptr_a(jlev,:) = 0.0
+                 r2d_ptr_a(jlev,:) = 0.0_kind_real
                  r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
               end do
 
@@ -1029,7 +1079,7 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    
    integer :: ii, jj, ji, jvar, jlev
   
-   real(kind=RKIND), parameter :: deg2rad = pii/180. !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
+   real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
  
    !Get the Solution dimensions
    !---------------------------
@@ -1138,7 +1188,8 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    if( size(gom%geovals) .ne. vars%nv )then
       call abor1_ftn(cinfo//"geovals wrong size")
    endif
-   if (cop/="tl") then
+   if (cop/="tl" .and. cop/='nl') then !BJJ or cop='ad'.   why only check ad??? because ad is set/allocated in UFO side ??
+                                                           ! also, the dimension is not general for all possible geovals.
    if (.not.gom%linit) then
       call abor1_ftn(cinfo//"geovals not initialized")
    endif

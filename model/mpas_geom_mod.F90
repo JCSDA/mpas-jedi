@@ -14,6 +14,7 @@ use type_mpl, only: mpl
 use mpas_derived_types
 use mpas_kind_types
 use mpas_constants
+use mpas_kinds, only : kind_real
 
 use mpas_subdriver
 use atm_core
@@ -39,11 +40,11 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    character(len=StrKIND) :: gridfname
-   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell, xland
-   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: areaCell
-   real(kind=RKIND), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
-   real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
-   real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: zgrid
+   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell, xland
+   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: areaCell
+   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
+   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
+   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: zgrid
 !   integer, allocatable :: nEdgesOnCell(:)
 !   integer, allocatable :: edgesOnCell(:,:)
 
@@ -72,7 +73,7 @@ type(mpas_geom), intent(inout) :: self
 type(c_ptr), intent(in) :: c_conf
 character(len=StrKIND) :: string1
 integer :: ncid, dimid, varid
-real(kind=RKIND), parameter :: deg2rad = pii/180.      
+real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
 
 write(*,*)' ==> create geom'
 
