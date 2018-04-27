@@ -183,19 +183,15 @@ double FieldsMPAS::norm() const {
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::print(std::ostream & os) const {
-// TODO: implement this
-//  mpas_field_sizes_f90(keyFlds_, nx, ny, nf, nb);
-  int nx = 1;
-  int ny = 1;
-  int nf = 5;
-  int nb = 1;
-  os << std::endl << "  Resolution = " << nx << ", " << ny
-     << ", Fields = " << nf << ", " << nb;
-  nf += nb;
+  int nc = 0;
+  int nf = 0;
+  mpas_field_sizes_f90(keyFlds_, nc, nf);
+  os << std::endl << "  Resolution: nCells = " << nc << 
+     ", Fields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {
-    os << std::endl << "  Min=" << zstat[3*jj]
+    os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
        << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2];
   }
 }

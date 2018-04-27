@@ -4,13 +4,10 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "resolution" : {
-    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "./x1.2562.init.nc"
   },
   "model": {
-    "tstep": "PT30M",
-    "fclength": "PT0H",
-    "finalnorm": 0.020383,
-    "tolerance": 0.005
+    "tstep": "PT30M"
   },
   "cost_function": {
     "cost_type": "3D-Var",
@@ -21,7 +18,8 @@
     "Jb": {
       "Background": {
         "state": [{
-          "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+          "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./x1.2562.init.nc",
           "date": "2016-03-04T06:00:00Z"
         }]
       },
@@ -59,19 +57,13 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z",
-    "_first": "PT3H",
-    "_frequency": "PT06H",
-    "_datadir": "Data",
-    "_exp": "example",
-    "_type": "an"
+    "filename": "./mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
   },
   "variational": {
     "iteration": [
       {
         "resolution": {
-          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
           "version": "MPASIdTLM",
@@ -91,7 +83,7 @@
       },
       {
         "resolution": {
-          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
           "version": "MPASIdTLM",

@@ -507,3 +507,21 @@ end subroutine mpas_field_interp_ad_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_field_sizes_c(c_key_self,nc,nf) bind(c,name='mpas_field_sizes_f90')
+
+use iso_c_binding
+use mpas_fields_mod
+
+implicit none
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(inout) :: nc,nf
+type(mpas_field), pointer :: self
+
+call mpas_field_registry%get(c_key_self,self)
+
+nf = self%nf
+nc = self%geom%nCells
+
+end subroutine mpas_field_sizes_c
+
+! ------------------------------------------------------------------------------   

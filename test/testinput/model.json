@@ -1,22 +1,23 @@
 {
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
   "test_framework_runtime_config": "--log_level=test_suite",
-  "resolution": {
+  "Geometry": {
     "gridfname": "./x1.2562.init.nc"
   },
-  "initial": {
+  "State": {
     "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "filename": "./x1.2562.init.nc",
     "date": "2016-03-04T06:00:00Z"
   },
-  "forecast_length": "PT6H",
-  "model": {
+  "ModelTest": {
+    "fclength": "PT2H",
+    "finalnorm": 197.497,
+    "tolerance": 0.005
+    },
+  "ModelBias": null,
+  "Model": {
     "tstep": "PT30M"
-  },
-  "output": {
-    "frequency": "PT1H",
-    "filename": "./mpas_forecast.$Y-$M-$D_$h.$m.$s.nc"
-  },
-  "prints": {
-    "frequency": "PT30M"
   }
 }

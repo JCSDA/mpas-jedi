@@ -126,7 +126,7 @@ subroutine create(self, geom, vars)
     !fldnames_aux=(/"pressure", "u10", "t2m"/)
     fldnames_aux = [ character(len=22) :: "pressure", "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
                                           "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w" ]
-                                          !BJJ- w is for var_prsi
+                                          !BJJ- "w" is for var_prsi 
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
     if ( nf_aux .ne. nfields  ) then
@@ -451,26 +451,15 @@ use duration_mod
    type(mpas_field), intent(inout) :: fld    !< Fields
    type(c_ptr),      intent(in)    :: c_conf !< Configuration
    type(datetime),   intent(inout) :: vdate  !< DateTime
-   character(len=20)       :: sdate
+   character(len=20)       :: validitydate
    integer                 :: ierr
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
-!------------------------------------------
-   character(len=20) :: referencedate, frequency, validitydate, sstep
-   type(duration)    :: step
-   type(datetime)    :: rdate  !< DateTime
 
-   referencedate = config_get_string(c_conf,len(referencedate),"date")
-   !write(*,*) 'BJJ TMPTMP: referencedate =',referencedate 
    call datetime_to_string(vdate, validitydate)
-   !write(*,*) 'BJJ TMPTMP: validitydate  =',validitydate  
-    write(*,*)'==> write fields ',trim(validitydate)
-   call datetime_create(TRIM(referencedate), rdate)
-   call datetime_diff(vdate, rdate, step)
-   call duration_to_string(step, sstep)
-   !write(*,*) 'BJJ TMPTMP: sstep         =',sstep
+   write(*,*)'==> write fields at ',trim(validitydate)
    temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
-   write(*,*)'Writing ',trim(temp_filename)
+   write(*,*)'==> writing ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -563,15 +552,12 @@ use mpas_pool_routines
    if ((ildir<1).or.(ildir>self%geom%nVertLevels)) then
       call abor1_ftn("mpas_fields:dirac invalid ildir")
    endif
-   if ((ifdir<1).or.(ifdir>5)) then
+   if ((ifdir<1).or.(ifdir>self%nf)) then
       call abor1_ftn("mpas_fields:dirac invalid ifdir")
    endif
 
    ! Setup Diracs
    call zeros(self)
-   !do idir=1,ndir
-   !   self%fld(iCell(idir),ildir,ifdir) = 1.0
-   !end do
 
    call mpas_pool_begin_iteration(self % subFields)
 

@@ -2,6 +2,7 @@ list( APPEND mpas_test_input
   testinput/3dvar.json
   testinput/3dfgat.json
   testinput/3denvar_nicas.json
+  testinput/3dhybrid_nicas.json
   testinput/4denvar_nicas.json
   testinput/4dvar.alpha.json
   testinput/4dforcing.json
@@ -20,7 +21,12 @@ list( APPEND mpas_test_input
   testinput/hofx.json
   testinput/hofx_crtm.json
   testinput/dirac.nicas.json
-  testinput/interfaces.json
+  testinput/geometry.json
+  testinput/state.json
+  testinput/increment.json
+  testinput/model.json
+  testinput/localization.json
+  testinput/errorcov.json
   testinput/makeobs3d.json
   testinput/makeobs4d.json
   testinput/makeobs4d12h.json
@@ -29,28 +35,13 @@ list( APPEND mpas_test_input
   testinput/truth.json
   testinput/test_op_obs.json
   compare.sh
-  ../statics/CAM_ABS_DATA.DBL
-  ../statics/CAM_AEROPT_DATA.DBL
-  ../statics/GENPARM.TBL
-  ../statics/LANDUSE.TBL
-  ../statics/namelist.atmosphere
-  ../statics/OZONE_DAT.TBL
-  ../statics/OZONE_LAT.TBL
-  ../statics/OZONE_PLEV.TBL
-  ../statics/RRTMG_LW_DATA.DBL
-  ../statics/RRTMG_SW_DATA.DBL
-  ../statics/SOILPARM.TBL
-  ../statics/stream_list.atmosphere.diagnostics
-  ../statics/stream_list.atmosphere.output
-  ../statics/stream_list.atmosphere.surface
-  ../statics/VEGPARM.TBL
-  ../statics/streams.atmosphere
 )
 
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dfgat.test
   testoutput/3denvar_nicas.test
+  testoutput/3dhybrid_nicas.test
   testoutput/4denvar_nicas.test
   testoutput/4dvar.alpha.test
   testoutput/4dforcing.test
@@ -146,25 +137,37 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 ecbuild_add_test( TARGET  test_mpas_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/geometry.json"
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_state
                   BOOST
                   SOURCES executables/TestState.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/state.json"
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_model
                   BOOST
                   SOURCES executables/TestModel.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/model.json"
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_increment
                   BOOST
                   SOURCES executables/TestIncrement.cc
-                  ARGS    "testinput/interfaces.json"
+                  ARGS    "testinput/increment.json"
+                  LIBS    mpas )
+
+ecbuild_add_test( TARGET  test_mpas_localization
+                  BOOST
+                  SOURCES executables/TestLocalization.cc
+                  ARGS    "testinput/localization.json"
+                  LIBS    mpas )
+
+ecbuild_add_test( TARGET  test_mpas_errorcovariance
+                  BOOST
+                  SOURCES executables/TestErrorCovariance.cc
+                  ARGS    "testinput/errorcov.json"
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_hofx
@@ -207,5 +210,12 @@ ecbuild_add_test( TARGET test_mpas_3denvar_nicas
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_nicas.json"
                        testoutput/3denvar_nicas.test
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3dhybrid_nicas
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_nicas.json"
+                       testoutput/3dhybrid_nicas.test
                   DEPENDS mpas_variational.x )
 

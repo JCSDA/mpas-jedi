@@ -3,8 +3,12 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "test_framework_runtime_config": "--log_level=test_suite",
+  "Assimilation Window": {
+    "Begin": "2016-03-04T06:00:00Z",
+    "Length": "PT0H"
+  },
   "Geometry": {
-    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "./x1.2562.init.nc"
   },
   "Model": {
     "tstep": "PT30M",
@@ -13,7 +17,8 @@
     "tolerance": 0.005
   },
   "Initial Condition": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "filename": "./x1.2562.init.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "Observations": {
@@ -31,9 +36,5 @@
   },
   "Prints": {
     "frequency": "PT3H"
-  },
-  "Assimilation Window": {
-    "Begin": "2016-03-04T06:00:00Z",
-    "Length": "PT0H"
   }
 }
