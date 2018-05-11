@@ -56,6 +56,8 @@ type :: mpas_field
   type (MPAS_Clock_type), pointer :: clock
 end type mpas_field
 
+real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
+ 
 #define LISTED_TYPE mpas_field
 
 !> Linked list interface - defines registry_t type
@@ -419,6 +421,7 @@ subroutine read_file(fld, c_conf, vdate)
    !streamID = 'restart'
    !streamID = 'input'
    streamID = 'output'
+   !streamID = 'da'
    ierr = 0
    fld % manager => fld % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
@@ -479,6 +482,7 @@ use duration_mod
    ! TODO: we can get streamID from json
    !streamID = 'restart'
    streamID = 'output'
+   !streamID = 'da'
    call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    call da_copy_sub2all_fields(fld % geom % domain, fld % subFields)
    call da_copy_sub2all_fields(fld % geom % domain, fld % auxFields)
@@ -609,6 +613,7 @@ subroutine interp(fld, locs, vars, gom)
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
+   real(kind=kind_real), allocatable :: tmp_field(:,:) !< BJJ for wspeed/wdir
    
    type (mpas_pool_type), pointer :: pool_b
    type (mpas_pool_iterator_type) :: poolItr
@@ -617,7 +622,15 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
-   
+
+   real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
+   integer               :: iquadrant !BJJ for wind...
+   real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
+   real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
+   real(kind=kind_real),parameter:: quadcof  (4, 2  ) =      &
+      reshape((/0.0_kind_real, 1.0_kind_real, 1.0_kind_real, 2.0_kind_real, 1.0_kind_real, &
+               -1.0_kind_real, 1.0_kind_real, -1.0_kind_real/), (/4, 2/))
+
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCells
@@ -675,10 +688,10 @@ subroutine interp(fld, locs, vars, gom)
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = real( i1d_ptr_a(:) )
-!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
+              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
               call apply_obsop(pgeom,odata,mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
            end if
         end if
 
@@ -693,10 +706,10 @@ subroutine interp(fld, locs, vars, gom)
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = r1d_ptr_a(:)
-write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
               call apply_obsop(pgeom,odata,mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
@@ -708,14 +721,14 @@ write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%val
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call apply_obsop(pgeom,odata,mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
-!write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 3) then
            end if
@@ -724,6 +737,67 @@ write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%val
         end if
    end do
 
+!---add special cases: var_sfc_wspeed and/or var_sfc_wdir
+   if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
+
+     write(*,*) ' BJJ: NEED TO DO SOMETHING HERE'
+
+     !- allocate
+     allocate(tmp_field(nobs,2))
+
+     !- read/interp.
+     call mpas_pool_get_array(fld % auxFields, "u10", r1d_ptr_a)
+     write(*,*) 'MIN/MAX of u10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+     mod_field(:,1) = r1d_ptr_a(:)
+     call apply_obsop(pgeom,odata,mod_field,obs_field)
+     tmp_field(:,1)=obs_field(:,1)
+     call mpas_pool_get_array(fld % auxFields, "v10", r1d_ptr_a)
+     write(*,*) 'MIN/MAX of v10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+     mod_field(:,1) = r1d_ptr_a(:)
+     call apply_obsop(pgeom,odata,mod_field,obs_field)
+     tmp_field(:,2)=obs_field(:,1)
+
+     !- allocate geoval & put values
+     ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     ivar = ufo_vars_getindex(vars, var_sfc_wdir)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       !-from subroutine call_crtm in GSI/crtm_interface.f90
+       do ii=1,nobs
+         uu5 = tmp_field(ii,1)
+         vv5 = tmp_field(ii,2)
+         if (uu5 >= 0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 1
+         if (uu5 >= 0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 2
+         if (uu5 <  0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 4
+         if (uu5 <  0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 3
+         if (abs(vv5) >= windlimit) then
+           windratio = uu5 / vv5
+         else
+           windratio = 0.0_kind_real
+           if (abs(uu5) > windlimit) then
+              windratio = windscale * uu5
+           endif
+         endif
+         windangle        = atan(abs(windratio))   ! wind azimuth is in radians
+         wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) ) 
+         gom%geovals(ivar)%vals(1,ii) = wind10_direction / deg2rad 
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+     !- deallocate
+     deallocate(tmp_field)
+    
+   endif
+!---end special cases
 
    deallocate(mod_field)
    deallocate(obs_field)
@@ -1065,8 +1139,6 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    
    integer :: ii, jj, ji, jvar, jlev
   
-   real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
- 
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels

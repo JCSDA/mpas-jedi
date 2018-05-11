@@ -345,6 +345,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_b = r1d_ptr_a
+                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
                   else if (poolItr_b % nDims == 2) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
