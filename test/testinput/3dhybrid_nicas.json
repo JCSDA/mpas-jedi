@@ -25,9 +25,19 @@
         }]
       },
       "Covariance": {
-        "covariance_time": [
-         {
-          "covariance": "ensemble",
+       "covariance_time": [
+        {
+        "covariance": "hybrid",
+        "ensemble_weight": "0.3",
+        "static": {
+          "covariance": "MPASstatic",
+          "standard_deviation": "0.8",
+          "vertical_correlation": "0.2",
+          "horizontal_length_scale": "1e6",
+          "maximum_condition_number": "1.0e6",
+          "date": "2016-03-04T06:00:00Z"
+        },
+        "ensemble": {
           "members": "5",
           "variables": {
             "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
@@ -145,8 +155,9 @@
               "date": "2016-03-04T06:00:00Z"
             }
           ]
-         }
-        ]
+        }
+        }
+       ]
       }
     },
     "Jo": {
@@ -158,7 +169,7 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/3denvar.obt"
+              "obsfile": "Data/3dhybrid_nicas.obt"
             },
             "obsvalue": "ObsVal"
           },
@@ -174,7 +185,7 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "./mpas.3denvar.$Y-$M-$D_$h.$m.$s.nc"
+    "filename": "./mpas.3dhybrid_nicas.$Y-$M-$D_$h.$m.$s.nc"
   },
   "variational": {
     "iteration": [

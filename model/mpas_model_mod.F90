@@ -20,6 +20,7 @@ use atm_core
 use mpi 
 use mpas_stream_manager
 use mpas4da_mod
+use mpas_kinds, only : kind_real
 
 implicit none
 private
@@ -39,7 +40,7 @@ type :: mpas_model
    ! from mpas_field
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
-   real (kind=RKIND) :: dt
+   real (kind=kind_real) :: dt
 end type mpas_model
 
 #define LISTED_TYPE mpas_model
@@ -70,7 +71,7 @@ subroutine model_setup(self, geom, c_conf)
    character(len=20) :: ststep
    type(duration) :: dtstep
 
-   real (kind=RKIND), pointer :: config_dt
+   real (kind=kind_real), pointer :: config_dt
    character (len=StrKIND), pointer :: config_start_time
    character (len=StrKIND), pointer :: config_restart_timestamp_name
    character (len=StrKIND), pointer :: config_run_duration
@@ -134,7 +135,7 @@ subroutine model_prepare_integration(self, flds)
    type(mpas_field) :: flds
    logical, pointer :: config_do_restart, config_do_DAcycling, config_dt
    integer :: ierr = 0
-   real (kind=RKIND), pointer :: dt
+   real (kind=kind_real), pointer :: dt
    type (block_type), pointer :: block
 
    character(len=StrKIND) :: startTimeStamp, stopTimeStamp
@@ -264,7 +265,7 @@ subroutine model_propagate(self, flds)
    type(mpas_field) :: flds
 
    type (mpas_pool_type), pointer :: state, diag, mesh
-   real (kind=RKIND) :: dt
+   real (kind=kind_real) :: dt
    integer :: itimestep
 !--bjj clock test
    character (len=StrKIND) :: tmpTimeStamp

@@ -39,52 +39,21 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
 StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & file)
   : fields_(), stash_()
 {
-// Should get variables from file. YT
-//  eckit::LocalConfiguration modelvars;
-//  modelvars.set("variables", "cv");
-//  oops::Variables vars(modelvars);
 
-//  eckit::LocalConfiguration modelvars;
-//  const std::vector<std::string> vv{"cv"};
-//  modelvars.set("variables", vv); 
-//  oops::Variables vars(vv);
+  const std::vector<std::string> *vv;
 
-/*
-// Should get variables from file. YT
-  const std::vector<std::string> vv{"x","bc"};
-  oops::Variables vars(vv);
-  fields_.reset(new FieldsQG(resol, vars, util::DateTime()));
-  fields_->read(file);
+  if (file.has("variables")) {
+    vv = new std::vector<std::string>(file.getStringVector("variables"));
+    oops::Log::trace() << "StateMPAS::StateMPAS variables are set from config file" << std::endl; 
+  } else {
+    vv = new std::vector<std::string>({"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"});
+    oops::Log::trace() << "StateMPAS::StateMPAS variables are set by default" << std::endl; 
+  }
 
-  ASSERT(fields_);
-  Log::trace() << "StateQG::StateQG created and read in." << std::endl;
-
- */
-// Should get variables from file. YT
-
-// WORKING WITHOUT READING THE NAMELIST AS QG/
-  oops::Log::trace() << "StateMPAS::GD0 enforcing to variable to cv" << std::endl;
-//  --- For Interface ---
-//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
-//  --- For HofX ---
-//  const std::vector<std::string> vv{"theta", "index_qv", "pressure_base"};
-//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure_base"};
-//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"};
-//  --- For Dirac ---
-//  const std::vector<std::string> vv{"theta"};
-//  const std::vector<std::string> vv{"theta", "uReconstructZonal"};
-//  const std::vector<std::string> vv{"uReconstructZonal", "theta"};
-  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"};
-//  const std::vector<std::string> vv{"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional", "pressure"};
-  oops::Log::trace() << "StateMPAS::GD1 enforcing to variable to cv" << std::endl;
-  oops::Variables vars(vv);
-  oops::Log::trace() << "StateMPAS::GD2" << std::endl;
-
-
+  oops::Variables vars(*vv);
   fields_.reset(new FieldsMPAS(resol, vars, util::DateTime()));
-  oops::Log::trace() << "StateMPAS::GD3 before read" << std::endl;
+
   fields_->read(file);
-  oops::Log::trace() << "StateMPAS::GD3 after read" << std::endl;
 
   ASSERT(fields_);
 

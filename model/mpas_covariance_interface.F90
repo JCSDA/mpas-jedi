@@ -156,7 +156,7 @@ type(mpas_field), pointer :: xout
 call mpas_covar_registry%get(c_key_self,self)
 call mpas_field_registry%get(c_key_out,xout)
 
-!call mpas_covar_sqrt_mult(self%nx,self%ny,xout,xctl,self)
+call random(xout)
 
 end subroutine c_mpas_b_randomize
 

@@ -24,10 +24,10 @@
   "Observations": {
     "ObsTypes": [
       {
-        "ObsType": "Radiosonde",
+        "ObsType": "Radiance",
         "ObsData": {
           "ObsDataIn": {
-            "obsfile": "Data/diag_t_01_wprofiles.nc4"
+            "obsfile": "Data/amsua_n19_obs.nc4"
           }
         },
         "ObsBias": {}

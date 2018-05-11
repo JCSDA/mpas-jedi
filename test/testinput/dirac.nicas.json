@@ -3,13 +3,14 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "resolution": {
-    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "./x1.2562.init.nc"
   },
   "variables": {
     "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "initial": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "filename": "./x1.2562.init.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "Covariance": {
@@ -140,29 +141,29 @@
   },
   "output_nicas": {
     "datadir": "Data",
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "input_nicas": {
     "datadir": "Data",
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "output_Bens": {
     "datadir": "Data",
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "output_nicasRnd": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "input_nicasRnd": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "output_BensRnd": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "./mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2016-03-04T06:00:00Z"
   }
 }

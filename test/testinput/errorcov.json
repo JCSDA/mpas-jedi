@@ -1,0 +1,27 @@
+{
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "CovarianceTest": {
+    "tolerance": "0.01"
+  },
+  "Geometry" : {
+    "gridfname": "./x1.2562.init.nc"
+  },
+  "Variables": {
+    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+  },
+  "State": {
+    "filename": "./x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "Covariance": {
+    "covariance": "MPASstatic",
+    "standard_deviation": "0.8",
+    "vertical_correlation": "0.2",
+    "horizontal_length_scale": "1e6",
+    "maximum_condition_number": "1.0e6",
+    "date": "2016-03-04T06:00:00Z"
+  }
+}
