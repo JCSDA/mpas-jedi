@@ -15,6 +15,7 @@
 #include "IncrementMPAS.h"
 #include "LocalizationMatrixMPAS.h"
 #include "ModelMPAS.h"
+#include "Nothing.h"
 #include "ModelBiasMPAS.h"
 #include "ModelBiasIncrementMPAS.h"
 #include "ModelBiasCovarianceMPAS.h"
@@ -39,6 +40,7 @@ struct MPASTraits {
   typedef mpas::ModelMPAS                Model;
   typedef mpas::IncrementMPAS            Increment;
   typedef mpas::ErrorCovarianceMPAS      Covariance;
+  typedef mpas::Nothing                  InterpolatorTraj;
 
   typedef mpas::ModelBiasMPAS            ModelAuxControl;
   typedef mpas::ModelBiasIncrementMPAS   ModelAuxIncrement;

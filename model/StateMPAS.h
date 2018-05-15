@@ -35,6 +35,7 @@ namespace oops {
 namespace mpas {
   class GeometryMPAS;
   class IncrementMPAS;
+  class Nothing;
 
 /// MPAS model state
 /*!
@@ -58,6 +59,7 @@ class StateMPAS : public util::Printable,
 
 /// Interpolate to observation location
   void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+  void interpolate(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;
 
 /// Interpolate full fields
   void changeResolution(const StateMPAS & xx);

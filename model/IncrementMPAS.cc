@@ -18,6 +18,7 @@
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
 #include "StateMPAS.h"
+#include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "util/DateTime.h"
@@ -123,13 +124,15 @@ void IncrementMPAS::random() {
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+void IncrementMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars,
+                                  ufo::GeoVaLs & cols, const Nothing &) const {
   oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
   fields_->interpolateTL(locs, vars, cols);
   oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
+void IncrementMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars,
+                                  const ufo::GeoVaLs & cols, const Nothing &) {
   oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
   oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
   fields_->interpolateAD(locs, vars, cols);

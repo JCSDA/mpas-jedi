@@ -41,6 +41,7 @@ TlmIdMPAS::~TlmIdMPAS() {
 void TlmIdMPAS::setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &) {}
 // -----------------------------------------------------------------------------
 void TlmIdMPAS::initializeTL(IncrementMPAS & dx) const {
+  oops::Log::debug() << "TlmIdMPAS::initializeTL BJJ input" << dx.fields() << std::endl;
   mpas_model_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
   oops::Log::debug() << "TlmIdMPAS::initializeTL" << dx.fields() << std::endl;
 }
@@ -62,6 +63,7 @@ void TlmIdMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmIdMPAS::finalizeAD(IncrementMPAS & dx) const {
+  oops::Log::debug() << "TlmIdMPAS::finalizeAD BJJ input" << dx.fields() << std::endl;
   mpas_model_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
   oops::Log::debug() << "TlmIdMPAS::finalizeAD" << dx.fields() << std::endl;
 }
