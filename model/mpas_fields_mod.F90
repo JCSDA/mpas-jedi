@@ -145,7 +145,7 @@ subroutine create(self, geom, vars)
     !-------------------------------------------------------------
     ! Few temporary tests
     !-------------------------------------------------------------
-    call update_mpas_field(self % geom % domain, self % subFields)
+    call update_mpas_field(self % geom % domain, self % auxFields)
 !!    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs,'state',state)
 !    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms)
 !    allocate(pstat(3, self % nf))
@@ -439,7 +439,7 @@ subroutine read_file(fld, c_conf, vdate)
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
    !--TODO: BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % subFields)
+   !call update_mpas_field(fld % geom % domain, fld % auxFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
    call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
 
@@ -895,7 +895,7 @@ subroutine interp_tl(fld, locs, vars, gom)
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
    !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % subFields)
+   !call update_mpas_field(fld % geom % domain, fld % auxFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields)
 !--------Save Traj 
@@ -1037,7 +1037,7 @@ subroutine interp_ad(fld, locs, vars, gom)
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
    !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % subFields)
+   !call update_mpas_field(fld % geom % domain, fld % auxFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields)
    call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields)
 !--------Save Traj 
