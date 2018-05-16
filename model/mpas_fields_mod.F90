@@ -12,7 +12,7 @@ use datetime_mod
 use mpas_geom_mod
 use ufo_vars_mod
 use mpas_kinds, only : kind_real
-use ufo_locs_mod
+use ioda_locs_mod
 use ufo_geovals_mod
 
 use mpas_derived_types
@@ -603,7 +603,7 @@ subroutine interp(fld, locs, vars, gom)
    
    implicit none
    type(mpas_field),  intent(in)    :: fld
-   type(ufo_locs),    intent(in)    :: locs
+   type(ioda_locs),   intent(in)    :: locs
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
    
@@ -819,7 +819,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    implicit none
    !type(mpas_field),  intent(in)    :: fld
    type(mpas_field),  intent(inout) :: fld
-   type(ufo_locs),    intent(in)    :: locs
+   type(ioda_locs),   intent(in)    :: locs
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
    
@@ -973,7 +973,7 @@ subroutine interp_ad(fld, locs, vars, gom)
 
    implicit none
    type(mpas_field),  intent(inout) :: fld
-   type(ufo_locs),    intent(in)    :: locs
+   type(ioda_locs),   intent(in)    :: locs
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
 
@@ -1122,7 +1122,7 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    
    implicit none
    type(mpas_geom),          intent(in)  :: grid
-   type(ufo_locs),           intent(in)  :: locs
+   type(ioda_locs),          intent(in)  :: locs
    type(geomtype), pointer,  intent(out) :: pgeom
    type(odatatype), pointer, intent(out) :: pdata
    
@@ -1223,7 +1223,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    implicit none
    character(len=2),  intent(in) :: cop
    type(mpas_field),  intent(in) :: fld
-   type(ufo_locs),    intent(in) :: locs
+   type(ioda_locs),   intent(in) :: locs
    type(ufo_vars),    intent(in) :: vars
    type(ufo_geovals), intent(in) :: gom
    
