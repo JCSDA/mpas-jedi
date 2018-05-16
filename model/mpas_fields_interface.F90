@@ -418,8 +418,8 @@ end subroutine mpas_field_rms_c
 subroutine mpas_field_interp_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_f90')
 use iso_c_binding
 use mpas_fields_mod
-use ufo_locs_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
+use ioda_locs_mod
+use ioda_locs_mod_c, only: ioda_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
@@ -430,12 +430,12 @@ integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
-type(ufo_locs),  pointer :: locs
+type(ioda_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_field_registry%get(c_key_fld, fld)
-call ufo_locs_registry%get(c_key_loc, locs)
+call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
@@ -449,8 +449,8 @@ end subroutine mpas_field_interp_c
 subroutine mpas_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_tl_f90')
 use iso_c_binding
 use mpas_fields_mod
-use ufo_locs_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
+use ioda_locs_mod
+use ioda_locs_mod_c, only: ioda_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
@@ -461,12 +461,12 @@ integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
-type(ufo_locs),  pointer :: locs
+type(ioda_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_field_registry%get(c_key_fld, fld)
-call ufo_locs_registry%get(c_key_loc, locs)
+call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
@@ -480,8 +480,8 @@ end subroutine mpas_field_interp_tl_c
 subroutine mpas_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_ad_f90')
 use iso_c_binding
 use mpas_fields_mod
-use ufo_locs_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
+use ioda_locs_mod
+use ioda_locs_mod_c, only: ioda_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
@@ -492,12 +492,12 @@ integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
-type(ufo_locs),  pointer :: locs
+type(ioda_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_field_registry%get(c_key_fld, fld)
-call ufo_locs_registry%get(c_key_loc, locs)
+call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call ufo_vars_setup(vars, c_vars)
 

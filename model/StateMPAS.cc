@@ -13,7 +13,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 #include "ModelBiasMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
@@ -90,7 +90,7 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void StateMPAS::interpolate(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+void StateMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
   fields_->interpolate(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------

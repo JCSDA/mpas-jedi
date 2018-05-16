@@ -29,6 +29,9 @@ namespace eckit {
 
 namespace ufo {
   class GeoVaLs;
+}
+
+namespace ioda {
   class Locations;
 }
 
@@ -79,8 +82,8 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void dirac(const eckit::Configuration &);
 
 /// Interpolate to observation location
-  void interpolateTL(const ufo::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void interpolateAD(const ufo::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
+  void interpolateTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+  void interpolateAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);

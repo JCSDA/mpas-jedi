@@ -13,7 +13,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
+#include "ioda/Locations.h"
 #include "ErrorCovarianceMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
@@ -123,13 +123,13 @@ void IncrementMPAS::random() {
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateTL(const ufo::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+void IncrementMPAS::interpolateTL(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
   oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
   fields_->interpolateTL(locs, vars, cols);
   oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateAD(const ufo::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
+void IncrementMPAS::interpolateAD(const ioda::Locations & locs, const oops::Variables & vars, const ufo::GeoVaLs & cols) {
   oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
   oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
   fields_->interpolateAD(locs, vars, cols);
