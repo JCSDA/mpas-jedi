@@ -120,14 +120,15 @@ subroutine create(self, geom, vars)
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
     !--- TODO: aux test: BJJ  !- get this from json ???
-    nf_aux=15 ! 3
+    nf_aux=19 !15 ! 3
     allocate(fldnames_aux(nf_aux))
     !fldnames_aux(1)='pressure'
     !fldnames_aux(2)='u10'
     !fldnames_aux(3)='t2m'
     !fldnames_aux=(/"pressure", "u10", "t2m"/)
     fldnames_aux = [ character(len=22) :: "pressure", "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
-                                          "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w" ]
+                                          "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w", &
+                                          "index_qc", "index_qi", "re_cloud", "re_ice" ]
                                           !BJJ- "w" is for var_prsi 
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
@@ -615,7 +616,7 @@ subroutine interp(fld, locs, vars, gom)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:) !< BJJ for wspeed/wdir
    
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo !< pool with ufo variables
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -670,16 +671,16 @@ subroutine interp(fld, locs, vars, gom)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufo(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufo(fld % geom, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
 
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
            if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), i1d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -697,7 +698,7 @@ subroutine interp(fld, locs, vars, gom)
 
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r1d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -712,7 +713,7 @@ subroutine interp(fld, locs, vars, gom)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -741,7 +742,7 @@ subroutine interp(fld, locs, vars, gom)
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
 
-     write(*,*) ' BJJ: NEED TO DO SOMETHING HERE'
+     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
      !- allocate
      allocate(tmp_field(nobs,2))
@@ -802,8 +803,8 @@ subroutine interp(fld, locs, vars, gom)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
    write(*,*) '---- Leaving interp ---'
 end subroutine interp
@@ -830,7 +831,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -921,17 +922,17 @@ subroutine interp_tl(fld, locs, vars, gom)
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    !call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
    call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               write(*,*) "interp_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex: ivar=",ivar
@@ -953,8 +954,8 @@ subroutine interp_tl(fld, locs, vars, gom)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
 !--------Remove temporary pool
    call mpas_pool_empty_pool(Traj_subFields)
@@ -984,7 +985,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
 
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -1059,19 +1060,19 @@ subroutine interp_ad(fld, locs, vars, gom)
    call mpas_pool_empty_pool(auxFields1)
    call mpas_pool_destroy_pool(auxFields1)
 !--------------------------
-   !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
    call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               r2d_ptr_a=0.0
               write(*,*) "Interp. var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
@@ -1091,15 +1092,15 @@ subroutine interp_ad(fld, locs, vars, gom)
         end if
    end do
 
-   !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
    call convert_mpas_field2ufoAD(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
 !--------Remove temporary pool
    call mpas_pool_empty_pool(Traj_subFields)

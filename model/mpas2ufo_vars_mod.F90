@@ -95,12 +95,16 @@
    !---- pool_a : self % subFields
    !---- pool_b : self % auxFields
    !---- pool_c : pool with UFO vars
-   subroutine convert_mpas_field2ufo(pool_a, pool_b, pool_c, fieldname, nfield)
+   subroutine convert_mpas_field2ufo(geom, pool_a, pool_b, pool_c, fieldname, nfield)
+
+   use mpas_geom_mod
+   use mpas_constants, only : gravity
 
    implicit none
 
+   type(mpas_geom), intent(in)  :: geom
    type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(out) :: pool_c
+   type (mpas_pool_type), pointer, intent(out) :: pool_c ! pool with UFO vars
    integer, intent(in) :: nfield
    character (len=*), intent(in) :: fieldname(:) ! ufo
 
@@ -121,6 +125,8 @@
    integer :: i, j, k, its, ite, jts, jte, kts, kte
    real (kind=kind_real) :: tem1, z0, z1, z2, w1, w2
    real (kind=kind_real), dimension(:,:,:), allocatable :: fzm_p, fzp_p
+
+   real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    logical, SAVE :: l_detsfctyp = .false.
    !-- from GSI/crtm_interface.f90
@@ -149,7 +155,6 @@
    integer, parameter :: igbp_to_crtm_mw(IGBP_n_type) = &
       (/  4,  1,  5,  2,  3,  8,  9,  6,  6,  7, &
           8, 12,  7, 12, 13, 11,  0, 10, 10, 11 /)
-
 
 
    !--- create new pull for ufo_vars
@@ -229,36 +234,27 @@
         call mpas_pool_add_field(pool_c, var_prs, field2d)
         write(*,*) "end-of ",var_prs
 
-     case ("air_pressure_levels") !-var_prsi :TODO
+     case ("air_pressure_levels") !-var_prsi
         call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
         call mpas_pool_get_field(pool_b, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        ! BJJ: TODO: hard-coded here.
-#ifndef PRSI_READY
-        do ii=2, 6
-          field2d % array(ii,:) = ( r2d_ptr_a(ii-1,:) + r2d_ptr_a(ii,:) ) /2. /100.
-        enddo
-        field2d % array(7,:) =    5.0 !r2d_ptr_b(6,:) /2. /100.
-        field2d % array(1,:) = 1000.0 !r2d_ptr_b(1,:) /100. + 50.0
-#endif
 
-#ifdef PRSI_READY
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F >> formula   Line 365.
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F      >> declarations
-        ! TODO: This routine is trying to access GEOM (dimension, zgrid )
-        ! ite = nCells??  nCellsSolve???  MPI consideration ??? 
-        its=1 ; ite = size(r2d_ptr_a(1,:)) - 1 
+        ! This routine is trying to access GEOM (dimension, zgrid )
+        ! TODO: Check: ite = nCells??  nCellsSolve???  MPI consideration ??? 
+        its=1 ; ite = geom % nCells
         jts=1 ; jte = 1
-        kts=1 ; kte = size(r2d_ptr_a(:,1)) !nVertLevels
+        kts=1 ; kte = geom % nVertLevels
         allocate( fzm_p(its:ite,jts:jte,kts:kte), fzp_p(its:ite,jts:jte,kts:kte) )
 
         do j = jts,jte !dummy index to mimic a rectangular grid, NOT clean
         do k = kts+1,kte
         do i = its,ite
-          tem1 = 1./(zgrid(k+1,i)-zgrid(k-1,i))
-          fzm_p(i,k,j) = (zgrid(k,i)-zgrid(k-1,i)) * tem1
-          fzp_p(i,k,j) = (zgrid(k+1,i)-zgrid(k,i)) * tem1
+          tem1 = 1.0_kind_real/(geom % zgrid(k+1,i)-geom % zgrid(k-1,i))
+          fzm_p(i,k,j) = (geom % zgrid(k,i)-geom % zgrid(k-1,i)) * tem1
+          fzp_p(i,k,j) = (geom % zgrid(k+1,i)-geom % zgrid(k,i)) * tem1
           !pres2_p(i,k,j) = fzm_p(i,k,j)*pres_p(i,k,j) + fzp_p(i,k,j)*pres_p(i,k-1,j)
           field2d % array(k,i) = fzm_p(i,k,j)*r2d_ptr_a(k,i) + fzp_p(i,k,j)*r2d_ptr_a(k-1,i)
         enddo
@@ -267,11 +263,11 @@
         k = kte+1
         do j = jts,jte
         do i = its,ite
-          z0 = zgrid(k,i)
-          z1 = 0.5*(zgrid(k,i)+zgrid(k-1,i))
-          z2 = 0.5*(zgrid(k-1,i)+zgrid(k-2,i))
+          z0 = geom % zgrid(k,i)
+          z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k-1,i))
+          z2 = 0.5_kind_real*(geom % zgrid(k-1,i)+geom % zgrid(k-2,i))
           w1 = (z0-z2)/(z1-z2)
-          w2 = 1.-w1
+          w2 = 1.0_kind_real-w1
           !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
           !pres2_p(i,k,j) = exp(w1*log(pres_p(i,k-1,j))+w2*log(pres_p(i,k-2,j)))
           field2d % array(k,i) = exp( w1*log(r2d_ptr_a(k-1,i)) + w2*log(r2d_ptr_a(k-1,i)) )
@@ -280,22 +276,28 @@
         k = kts
         do j = jts,jte
         do i = its,ite
-          z0 = zgrid(k,i)
-          z1 = 0.5*(zgrid(k,i)+zgrid(k+1,i))
-          z2 = 0.5*(zgrid(k+1,i)+zgrid(k+2,i))
+          z0 = geom % zgrid(k,i)
+          z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k+1,i))
+          z2 = 0.5_kind_real*(geom % zgrid(k+1,i)+geom % zgrid(k+2,i))
           w1 = (z0-z2)/(z1-z2)
-          w2 = 1.-w1
+          w2 = 1.0_kind_real-w1
           !pres2_p(i,k,j) = w1*pres_p(i,k,j)+w2*pres_p(i,k+1,j)
-          field2d % array(k,i) = fzm_p(i,k,j)*r2d_ptr_a(k,i) + fzp_p(i,k,j)*r2d_ptr_a(k+1,i)
+          field2d % array(k,i) = w1*r2d_ptr_a(k,i) + w2*r2d_ptr_a(k+1,i)
         enddo
         enddo
-#endif
+
+        deallocate( fzm_p, fzp_p )
+
+        field2d % array = field2d % array / 100.0_kind_real ! [Pa] -> [hPa]
+        write(*,*) 'MIN/MAX of prsi=',minval(field2d % array),maxval(field2d % array)
+        write(*,*) 'test prs       =',r2d_ptr_a(:,1)
+        write(*,*) 'test prsi      =',field2d % array(:,1)
 
         field2d % fieldName = var_prsi
         call mpas_pool_add_field(pool_c, var_prsi, field2d)
         write(*,*) "end-of ",var_prsi
 
-     case ("mass_concentration_of_ozone_in_air") !-var_oz :TODO
+     case ("mass_concentration_of_ozone_in_air") !-var_oz :TODO: not directly available from MPAS
         call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
@@ -304,7 +306,7 @@
         call mpas_pool_add_field(pool_c, var_oz, field2d)
         write(*,*) "end-of ",var_oz
 
-     case ("mass_concentration_of_carbon_dioxide_in_air") !-var_co2 :TODO
+     case ("mass_concentration_of_carbon_dioxide_in_air") !-var_co2 :TODO: not directly available from MPAS
         call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
@@ -313,38 +315,62 @@
         call mpas_pool_add_field(pool_c, var_co2, field2d)
         write(*,*) "end-of ",var_co2
 
-     case ("atmosphere_mass_content_of_cloud_liquid_water") !-var_clw :TODO
-        call mpas_pool_get_array(pool_a, "qc", r2d_ptr_a) !- [kg/kg]
+     case ("atmosphere_mass_content_of_cloud_liquid_water") !-var_clw 
+        call mpas_pool_get_array(pool_b, "index_qc", r2d_ptr_a) !- [kg/kg] 
+        write(*,*) 'MIN/MAX of index_qc=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
+        !--TODO: Trial: Should already have "var_prsi"
+        call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+        do i=1,geom % nCells
+        do k=1,geom % nVertLevels
+          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
+          field2d % array(k,i) = r2d_ptr_a(k,i) * kgkg_kgm2 
+        enddo
+        enddo
+        write(*,*) 'MIN/MAX of index_qc.converted=',minval(field2d % array),maxval(field2d % array)
+        !field2d % array(:,:) = r2d_ptr_a(:,:) ! TODO: [kg/kg] -> [kg/m2]
+                                              ! multiply kgkg_kgm2=(atmosphere(1)%level_pressure(k)-atmosphere(1)%level_pressure(k-1))*r100/grav
+                                              ! see gsi/crtm_interface.f90 or wrfda/da_get_innov_vector_crtm.inc
         field2d % fieldName = var_clw
         call mpas_pool_add_field(pool_c, var_clw, field2d)
         write(*,*) "end-of ",var_clw
 
-     case ("atmosphere_mass_content_of_cloud_ice") !-var_cli :TODO
-        call mpas_pool_get_array(pool_a, "qi", r2d_ptr_a) !- [kg/kg]
+     case ("atmosphere_mass_content_of_cloud_ice") !-var_cli 
+        call mpas_pool_get_array(pool_b, "index_qi", r2d_ptr_a) !- [kg/kg] 
+        write(*,*) 'MIN/MAX of index_qi=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
+        !--TODO: Trial: Should already have "var_prsi"
+        call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+        do i=1,geom % nCells
+        do k=1,geom % nVertLevels
+          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
+          field2d % array(k,i) = r2d_ptr_a(k,i) * kgkg_kgm2 
+        enddo
+        enddo
+        !field2d % array(:,:) = r2d_ptr_a(:,:) ! TODO: [kg/kg] -> [kg/m2]
+        !                                      ! same as var_clw
         field2d % fieldName = var_cli
         call mpas_pool_add_field(pool_c, var_cli, field2d)
         write(*,*) "end-of ",var_cli
 
-     case ("effective_radius_of_cloud_liquid_water_particle") !-var_clwefr :TODO
-        call mpas_pool_get_array(pool_a, "re_cloud", r2d_ptr_a) !- [m]
+     case ("effective_radius_of_cloud_liquid_water_particle") !-var_clwefr :TODO: currently filled w/ default value
+        call mpas_pool_get_array(pool_b, "re_cloud", r2d_ptr_a) !- [m]
+        write(*,*) 'MIN/MAX of re_cloud=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
+        field2d % array(:,:) = 10.0_kind_real !r2d_ptr_a(:,:) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_clwefr
         call mpas_pool_add_field(pool_c, var_clwefr, field2d)
         write(*,*) "end-of ",var_clwefr
 
-     case ("effective_radius_of_cloud_ice_particle") !-var_cliefr :TODO
-        call mpas_pool_get_array(pool_a, "re_ice", r2d_ptr_a) !- [m]
+     case ("effective_radius_of_cloud_ice_particle") !-var_cliefr :TODO: currently filled w/ default value
+        call mpas_pool_get_array(pool_b, "re_ice", r2d_ptr_a) !- [m]
+        write(*,*) 'MIN/MAX of re_ice=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
         call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
+        field2d % array(:,:) = 30.0_kind_real !r2d_ptr_a(:,:) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_cliefr
         call mpas_pool_add_field(pool_c, var_cliefr, field2d)
         write(*,*) "end-of ",var_cliefr
@@ -357,8 +383,10 @@
         if( .not. l_detsfctyp) then
           call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
 
-        !--- fraction: TODO: split fractions...
-          call mpas_pool_get_array(pool_b, "landmask", i1d_ptr_a)
+        !--- fraction: TODO: split fractions... Need interp. weights
+                       ! see gsi/deter_sfc_mod.f90. sub deter_sfc (simple), sub deter_sfc_fov (complex)
+                       ! see wrfda/da_detsurtyp.inc
+          call mpas_pool_get_array(pool_b, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
           write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
           call mpas_duplicate_field(field1d_src, field1d)
           field1d % array(:) = 1.0_kind_real !real(i1d_ptr_a(:)) ! quantity and unit might change
@@ -370,14 +398,14 @@
           field1d % fieldName = var_sfc_lfrac
           call mpas_pool_add_field(pool_c, var_sfc_lfrac, field1d)
 
-          call mpas_pool_get_array(pool_b, "xice", r1d_ptr_a)
+          call mpas_pool_get_array(pool_b, "xice", r1d_ptr_a) !"fractional area coverage of sea-ice"
           write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
           call mpas_duplicate_field(field1d_src, field1d)
           field1d % array(:) = 0.0_kind_real !r1d_ptr_a(:) ! quantity and unit might change
           field1d % fieldName = var_sfc_ifrac
           call mpas_pool_add_field(pool_c, var_sfc_ifrac, field1d)
 
-          call mpas_pool_get_array(pool_b, "snowc", r1d_ptr_a)
+          call mpas_pool_get_array(pool_b, "snowc", r1d_ptr_a) !"flag for snow on ground (=0 no snow; =1,otherwise"
           write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
           call mpas_duplicate_field(field1d_src, field1d)
           field1d % array(:) = 0.0_kind_real !r1d_ptr_a(:) ! quantity and unit might change
@@ -385,7 +413,7 @@
           call mpas_pool_add_field(pool_c, var_sfc_sfrac, field1d)
 
         !--- temperature
-          call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+          call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
           write(*,*) 'MIN/MAX of skintemp=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
           call mpas_duplicate_field(field1d_src, field1d)
           field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
@@ -409,7 +437,7 @@
 
         !--- type: TODO: How to do "nearest neighbor" interp. for these integer variables??
                       !: Choosing the grid value of maximum weights ??
-                      !: more complex: Consider FOV ??
+                      !: more complex one in future: Consider FOV ??
           call mpas_pool_get_field(pool_b, 'landmask', field1di_src) ! as a dummy array
 
           call mpas_pool_get_array(pool_b, "ivgtyp", i1d_ptr_a)
@@ -420,14 +448,14 @@
           call mpas_pool_add_field(pool_c, var_sfc_landtyp, field1di)
 
           call mpas_duplicate_field(field1di_src, field1di)
-          field1di % array(:) = 1 !max(1,usgs_to_crtm_mw(i1d_ptr_a(:))  !chage category, BJJ-tmp: hardcoded as 1
+          field1di % array(:) = 1 !max(1,usgs_to_crtm_mw(i1d_ptr_a(:))  !chage category, TMP: hardcoded as 1
           field1di % fieldName = var_sfc_vegtyp
           call mpas_pool_add_field(pool_c, var_sfc_vegtyp, field1di)
 
           call mpas_pool_get_array(pool_b, "isltyp", i1d_ptr_a)
           write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
           call mpas_duplicate_field(field1di_src, field1di)
-          field1di % array(:) = 1 !max(1,wrf_to_crtm_soil(i1d_ptr_a(:)) ! chage category, BJJ-tmp: hardcoded as 1
+          field1di % array(:) = 1 !max(1,wrf_to_crtm_soil(i1d_ptr_a(:)) ! chage category, TMP: hardcoded as 1
           field1di % fieldName = var_sfc_soiltyp
           call mpas_pool_add_field(pool_c, var_sfc_soiltyp, field1di)
 
@@ -455,6 +483,7 @@
         call mpas_pool_add_field(pool_c, var_sfc_vegfrac, field1d)
         write(*,*) "end-of ",var_sfc_vegfrac
 
+!----- These two variables are moved into subroutine interp of mpas_fields_mod.F90
 !     case ("Sfc_Wind_Speed")
 !        call mpas_pool_get_array(pool_b, "u10", r1d_ptr_a)
 !        call mpas_pool_get_array(pool_b, "v10", r1d_ptr_b)
@@ -467,19 +496,19 @@
 !        call mpas_pool_add_field(pool_c, var_sfc_wspeed, field1d)
 !        write(*,*) "end-of ",var_sfc_wspeed
 !
-!     case ("Sfc_Wind_Direction") !-var_sfc_wdir :TODO
+!     case ("Sfc_Wind_Direction") !-var_sfc_wdir 
 !        call mpas_pool_get_array(pool_b, "u10", r1d_ptr_a)
 !        call mpas_pool_get_array(pool_b, "v10", r1d_ptr_b)
 !        write(*,*) 'MIN/MAX of u10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
 !        write(*,*) 'MIN/MAX of v10=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
 !        call mpas_pool_get_field(pool_b, 'skintemp', field1d_src) ! as a dummy array
 !        call mpas_duplicate_field(field1d_src, field1d)
-!        field1d % array(:) = 0.0_kind_real !BJJ: TODO: do this here? or after interpolated to obs location ??
+!        field1d % array(:) = 0.0_kind_real !NOTE: Do this here? or after interpolated to obs location ??
 !        field1d % fieldName = var_sfc_wdir
 !        call mpas_pool_add_field(pool_c, var_sfc_wdir, field1d)
 !        write(*,*) "end-of ",var_sfc_wdir
 !
-     case ("Lai") !-var_sfc_lai :TODO
+     case ("Lai") !-var_sfc_lai :TODO, has a value for restart file, not for init file
         call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
         write(*,*) 'MIN/MAX of lai=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
         call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
@@ -489,7 +518,7 @@
         call mpas_pool_add_field(pool_c, var_sfc_lai, field1d)
         write(*,*) "end-of ",var_sfc_lai
 
-     case ("Soil_Moisture") !-var_sfc_soilm : use 1st level
+     case ("Soil_Moisture") !-var_sfc_soilm : NOTE: use 1st level
         call mpas_pool_get_array(pool_b, "smois", r2d_ptr_a)
         write(*,*) 'MIN/MAX of smois=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
         call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
@@ -499,7 +528,7 @@
         call mpas_pool_add_field(pool_c, var_sfc_soilm, field1d)
         write(*,*) "end-of ",var_sfc_soilm
 
-     case ("Soil_Temperature") !-var_sfc_soilt : use 1st level
+     case ("Soil_Temperature") !-var_sfc_soilt : NOTE: use 1st level
         call mpas_pool_get_array(pool_b, "tslb", r2d_ptr_a)
         write(*,*) 'MIN/MAX of tslb=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
         call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
