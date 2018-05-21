@@ -9,7 +9,7 @@
 
 #include <cmath>
 
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "FieldsMPAS.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"

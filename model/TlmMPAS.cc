@@ -16,9 +16,9 @@
 #include "ModelMPAS.h"
 #include "StateMPAS.h"
 #include "MPASTraits.h"
-#include "util/DateTime.h"
-#include "util/Logger.h"
-#include "util/abor1_cpp.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
+#include "oops/util/abor1_cpp.h"
 
 namespace mpas {
 

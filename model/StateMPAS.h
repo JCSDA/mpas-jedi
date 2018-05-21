@@ -14,9 +14,9 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "FieldsMPAS.h"
-#include "util/DateTime.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 namespace eckit {
   class Configuration;
@@ -59,6 +59,10 @@ class StateMPAS : public util::Printable,
   StateMPAS(const StateMPAS &);
   virtual ~StateMPAS();
   StateMPAS & operator=(const StateMPAS &);
+
+/// Get state values at observation locations
+  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;
 
 /// Interpolate to observation location
   void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;

@@ -11,7 +11,7 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
 #include "ErrorCovarianceMPAS.h"
@@ -21,8 +21,8 @@
 #include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
 
 namespace mpas {
 
@@ -120,6 +120,22 @@ double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
 // -----------------------------------------------------------------------------
 void IncrementMPAS::random() {
   fields_->random();
+}
+// -----------------------------------------------------------------------------
+/// Get increment values at observation locations
+// -----------------------------------------------------------------------------
+void IncrementMPAS::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars,
+                              ufo::GeoVaLs & cols, const Nothing &) const {
+  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
+  fields_->getValuesTL(locs, vars, cols);
+  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars,
+                             const ufo::GeoVaLs & cols, const Nothing &) {
+  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
+  fields_->getValuesAD(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location

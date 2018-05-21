@@ -17,11 +17,11 @@
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
 #include "oops/base/GeneralizedDepartures.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
-#include "util/dot_product.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
+#include "oops/util/dot_product.h"
 
 namespace eckit {
   class Configuration;
@@ -81,6 +81,10 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void schur_product_with(const IncrementMPAS &);
   void random();
   void dirac(const eckit::Configuration &);
+
+/// Get increment values at observation locations
+  void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, const Nothing &) const;
+  void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const Nothing &);
 
 /// Interpolate to observation location
   void interpolateTL(const ioda::Locations &, const oops::Variables &,

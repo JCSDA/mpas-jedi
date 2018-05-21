@@ -7,14 +7,14 @@
 
 #include "ModelMPAS.h"
 
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "ModelBiasMPAS.h"
 #include "FieldsMPAS.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
 #include "StateMPAS.h"
 #include "eckit/config/Configuration.h"
-#include "util/DateTime.h"
+#include "oops/util/DateTime.h"
 
 namespace mpas {
 // -----------------------------------------------------------------------------

@@ -15,10 +15,10 @@
 
 #include "GeometryMPAS.h"
 #include "oops/base/Variables.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
-#include "util/ObjectCounter.h"
-#include "util/Printable.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 // Forward declarations
 namespace eckit {
@@ -65,6 +65,11 @@ class FieldsMPAS : public util::Printable,
   void schur_product_with(const FieldsMPAS &);
   void random();
   void dirac(const eckit::Configuration &);
+
+/// Get state values or increments at observation locations
+  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+  void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
+  void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
 
 // Interpolate to given location
   void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;

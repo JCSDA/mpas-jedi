@@ -11,7 +11,7 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
 #include "ModelBiasMPAS.h"
@@ -22,8 +22,8 @@
 #include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
-#include "util/DateTime.h"
-#include "util/Duration.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Duration.h"
 
 namespace mpas {
 
@@ -88,6 +88,20 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
   ASSERT(fields_);
   *fields_ = *rhs.fields_;
   return *this;
+}
+// -----------------------------------------------------------------------------
+/// Get state values at observation locations
+// -----------------------------------------------------------------------------
+void StateMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
+                        ufo::GeoVaLs & cols) const {
+  oops::Log::trace() << "StateMPAS::getValues STANDARD ONE" << std::endl;
+  fields_->getValues(locs, vars, cols);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
+                        ufo::GeoVaLs & cols, Nothing &) const {
+  oops::Log::trace() << "StateMPAS::getValues PPTRAJ" << std::endl;
+  fields_->getValues(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location

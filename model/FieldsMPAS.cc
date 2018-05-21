@@ -17,10 +17,10 @@
 #include "oops/generic/UnstructuredGrid.h"
 #include "ufo/GeoVaLs.h"
 #include "ioda/Locations.h"
-#include "util/Logger.h"
+#include "oops/util/Logger.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
-#include "util/DateTime.h"
+#include "oops/util/DateTime.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
@@ -124,6 +124,24 @@ void FieldsMPAS::schur_product_with(const FieldsMPAS & dx) {
 // -----------------------------------------------------------------------------
 void FieldsMPAS::random() {
   mpas_field_random_f90(keyFlds_);
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
+                              ufo::GeoVaLs & gom) const {
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars,
+                                ufo::GeoVaLs & gom) const {
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars,
+                                const ufo::GeoVaLs & gom) {
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars,
