@@ -19,6 +19,7 @@
 #include "GeometryMPAS.h"
 #include "IncrementMPAS.h"
 #include "ModelMPAS.h"
+#include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "util/DateTime.h"
@@ -63,6 +64,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
 StateMPAS::StateMPAS(const GeometryMPAS & resol, const StateMPAS & other)
   : fields_(new FieldsMPAS(*other.fields_, resol)), stash_()
 {
+  oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation." << std::endl;
   ASSERT(fields_);
   oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation." << std::endl;
 }
@@ -91,6 +93,13 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
 void StateMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+  oops::Log::trace() << "StateMPAS::interpolate STANDARD ONE" << std::endl;
+  fields_->interpolate(locs, vars, cols);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars,
+                            ufo::GeoVaLs & cols, Nothing &) const {
+  oops::Log::trace() << "StateMPAS::interpolate PPTRAJ" << std::endl;
   fields_->interpolate(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
