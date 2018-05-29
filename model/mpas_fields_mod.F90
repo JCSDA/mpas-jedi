@@ -25,7 +25,6 @@ use mpas4da_mod
 use mpas2ufo_vars_mod
 use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
-use type_mpl, only: mpl,mpl_recv,mpl_send,mpl_bcast
 use mpas_pool_routines
 use mpas_constants
 
@@ -597,9 +596,7 @@ end subroutine dirac
 
 subroutine interp(fld, locs, vars, gom)
 
-   use obsop_apply, only: apply_obsop 
-   use type_geom, only: geomtype
-   use type_odata, only: odatatype
+   use type_bump, only: bump_type
    
    implicit none
    type(mpas_field),  intent(in)    :: fld
@@ -607,8 +604,7 @@ subroutine interp(fld, locs, vars, gom)
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
    
-   type(geomtype), pointer :: pgeom
-   type(odatatype), pointer :: odata
+   type(bump_type), pointer :: pbump
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -638,9 +634,9 @@ subroutine interp(fld, locs, vars, gom)
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
    
-   ! Calculate interpolation weight using nicas
+   ! Calculate interpolation weight using BUMP
    ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pgeom, odata)
+   call initialize_interp(fld%geom, locs, pbump)
    write(*,*)'interp: after initialize_interp'
    
    !Make sure the return values are allocated and set
@@ -689,7 +685,7 @@ subroutine interp(fld, locs, vars, gom)
               endif
               mod_field(:,1) = real( i1d_ptr_a(:) )
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
-              call apply_obsop(pgeom,odata,mod_field,obs_field)
+              call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
            end if
@@ -707,7 +703,7 @@ subroutine interp(fld, locs, vars, gom)
               endif
               mod_field(:,1) = r1d_ptr_a(:)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
-              call apply_obsop(pgeom,odata,mod_field,obs_field)
+              call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
@@ -724,7 +720,7 @@ subroutine interp(fld, locs, vars, gom)
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
-                 call apply_obsop(pgeom,odata,mod_field,obs_field)
+                 call pbump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
@@ -750,12 +746,12 @@ subroutine interp(fld, locs, vars, gom)
      call mpas_pool_get_array(fld % auxFields, "u10", r1d_ptr_a)
      write(*,*) 'MIN/MAX of u10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
      mod_field(:,1) = r1d_ptr_a(:)
-     call apply_obsop(pgeom,odata,mod_field,obs_field)
+     call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,1)=obs_field(:,1)
      call mpas_pool_get_array(fld % auxFields, "v10", r1d_ptr_a)
      write(*,*) 'MIN/MAX of v10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
      mod_field(:,1) = r1d_ptr_a(:)
-     call apply_obsop(pgeom,odata,mod_field,obs_field)
+     call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,2)=obs_field(:,1)
 
      !- allocate geoval & put values
@@ -812,9 +808,7 @@ end subroutine interp
 
 subroutine interp_tl(fld, locs, vars, gom)
 
-   use obsop_apply, only: apply_obsop 
-   use type_geom, only: geomtype
-   use type_odata, only: odatatype
+   use type_bump, only: bump_type
    
    implicit none
    !type(mpas_field),  intent(in)    :: fld
@@ -823,8 +817,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
    
-   type(geomtype), pointer :: pgeom
-   type(odatatype), pointer :: odata
+   type(bump_type), pointer :: pbump
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -850,9 +843,9 @@ subroutine interp_tl(fld, locs, vars, gom)
    write(*,*)'interp_tl: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("tl", fld, locs, vars, gom)
    
-   ! Calculate interpolation weight using nicas
+   ! Calculate interpolation weight using BUMP
    ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pgeom, odata)
+   call initialize_interp(fld%geom, locs, pbump)
    write(*,*)'interp_tl: after initialize_interp'
    
    !Make sure the return values are allocated and set
@@ -937,7 +930,7 @@ subroutine interp_tl(fld, locs, vars, gom)
               write(*,*) "ufo_vars_getindex: ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
-                 call apply_obsop(pgeom,odata,mod_field,obs_field)
+                 call pbump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
@@ -967,9 +960,7 @@ end subroutine interp_tl
 
 subroutine interp_ad(fld, locs, vars, gom)
 
-   use obsop_apply, only: apply_obsop_ad
-   use type_geom, only: geomtype
-   use type_odata, only: odatatype
+   use type_bump, only: bump_type
 
    implicit none
    type(mpas_field),  intent(inout) :: fld
@@ -977,8 +968,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    type(ufo_vars),    intent(in)    :: vars
    type(ufo_geovals), intent(inout) :: gom
 
-   type(geomtype), pointer :: pgeom
-   type(odatatype), pointer :: odata
+   type(bump_type), pointer :: pbump
 
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -1004,9 +994,9 @@ subroutine interp_ad(fld, locs, vars, gom)
 
    call interp_checks("ad", fld, locs, vars, gom)
 
-   ! Calculate interpolation weight using nicas
+   ! Calculate interpolation weight using BUMP
    ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pgeom, odata)
+   call initialize_interp(fld%geom, locs, pbump)
    write(*,*)'interp_ad: after initialize_interp'
 
    !Create Buffer for interpolated values
@@ -1079,7 +1069,7 @@ subroutine interp_ad(fld, locs, vars, gom)
               do jlev = 1, gom%geovals(ivar)%nval
                  !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
                  obs_field(:,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-                 call apply_obsop_ad(pgeom,odata,obs_field,mod_field)
+                 call pbump%apply_obsop_ad(obs_field,mod_field)
                  r2d_ptr_a(jlev,:) = 0.0_kind_real
                  r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
               end do
@@ -1110,32 +1100,24 @@ end subroutine interp_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine initialize_interp(grid, locs, pgeom, pdata)
+subroutine initialize_interp(grid, locs, pbump)
 
    use mpas_geom_mod, only: mpas_geom
-   use model_oops, only: model_oops_coord
-   use obsop_parameters, only: compute_parameters
-   use type_nam, only: namtype
-   use type_geom, only: geomtype,compute_grid_mesh
-   use type_odata, only: odatatype
-   use type_randgen, only: create_randgen
+   use type_bump, only: bump_type
    
    implicit none
    type(mpas_geom),          intent(in)  :: grid
    type(ioda_locs),          intent(in)  :: locs
-   type(geomtype), pointer,  intent(out) :: pgeom
-   type(odatatype), pointer, intent(out) :: pdata
+   type(bump_type), pointer, intent(out) :: pbump
    
    logical, save :: interp_initialized = .FALSE.
-   type(geomtype), save, target :: geom
-   type(odatatype), save, target :: odata
+   type(bump_type), save, target :: bump
    
    integer :: mod_nz,mod_num,obs_num
    real(kind=kind_real), allocatable :: mod_lat(:), mod_lon(:) 
    
-   type(namtype), target :: nam
-   integer, allocatable :: imask(:)
-   real(kind=kind_real), allocatable :: area(:),vunit(:)
+   real(kind=kind_real), allocatable :: area(:),vunit(:,:)
+   logical, allocatable :: lmask(:,:)
    
    integer :: ii, jj, ji, jvar, jlev
   
@@ -1146,73 +1128,55 @@ subroutine initialize_interp(grid, locs, pgeom, pdata)
    obs_num = locs%nlocs 
    write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
    
-   !Calculate interpolation weight using nicas
+   !Calculate interpolation weight using BUMP
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      mod_lat = grid%latCell
-      mod_lon = grid%lonCell
+      mod_lat = grid%latCell / deg2rad !- to Degrees
+      mod_lon = grid%lonCell / deg2rad !- to Degrees
    
       !Important namelist options
-      nam%obsop_interp = 'bilin' ! Interpolation type (bilinear)
-      nam%obsdis = 0.0           ! Observation distribution parameter (0.0 => local distribution, 1.0 => perfect load balancing)
-      nam%datadir = '.'          ! Data directory
-      nam%prefix = 'oops_data'   ! Prefix for files output
+      bump%nam%prefix       = 'oops_data'  ! Prefix for files output
+      bump%nam%nobs         = obs_num      ! Number of observations
+      bump%nam%obsop_interp = 'bilin'      ! Interpolation type (bilinear)
+      bump%nam%obsdis       = 'local'      ! Observation distribution parameter ('random', 'local', or 'adjusted')
    
       !Less important namelist options (should not be changed)
-      nam%default_seed = .true.
-      nam%model = 'oops'
-      nam%mask_type = 'none'
-      nam%new_hdiag = .false.
-      nam%displ_diag = .false.
-      nam%new_param = .false.
-      nam%new_lct = .false.
-      nam%mask_check = .false.
-      nam%new_obsop = .true.
-      nam%check_dirac = .false.
-      nam%nc3 = 1
-      nam%dc = 1.0
-   
-      !Initialize random number generator
-      call create_randgen(nam)
-   
+      bump%nam%default_seed        = .true.
+      bump%nam%new_hdiag           = .false.
+      bump%nam%new_param           = .false.
+      bump%nam%check_adjoints      = .false.
+      bump%nam%check_pos_def       = .false.
+      bump%nam%check_sqrt          = .false.
+      bump%nam%check_dirac         = .false.
+      bump%nam%check_randomization = .false.
+      bump%nam%check_consistency   = .false.
+      bump%nam%check_optimality    = .false.
+      bump%nam%new_lct             = .false.
+      bump%nam%new_obsop           = .true.
+
       !Initialize geometry
-      geom%nc0a = mod_num  ! Number of grid points (local)
-      geom%nl0 = 1         ! Number of levels: only one level here (same interpolation for all levels)
-      geom%nlev = geom%nl0 ! Copy
       allocate(area(mod_num))
-      allocate(vunit(1))
-      allocate(imask(mod_num))
-      area = 1.0           ! Dummy area
+      allocate(vunit(mod_num,1))
+      allocate(lmask(mod_num,1))
+      area  = 1.0          ! Dummy area, unit [m^2]
       vunit = 1.0          ! Dummy vertical unit
-      imask = 1            ! Mask
-      call model_oops_coord(geom,mod_lon,mod_lat,area,vunit,imask)
+      lmask = .true.       ! Mask
+
+      !Initialize BUMP
+      call bump%setup_online(mpi_comm_world,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
+                             nobs=obs_num,lonobs=locs%lon(:),latobs=locs%lat(:))
+
+      !Release memory
       deallocate(area)
       deallocate(vunit)
-      deallocate(imask)
-   
-      !Compute grid mesh
-      call compute_grid_mesh(nam,geom)
-   
-      !Initialize observation operator with observations coordinates (local)
-      odata%nobsa = obs_num
-      allocate(odata%lonobs(odata%nobsa))
-      allocate(odata%latobs(odata%nobsa))
-      odata%lonobs(:) = locs%lon(:) * deg2rad !BJJ
-      odata%latobs(:) = locs%lat(:) * deg2rad !BJJ
-   
-      !Setup observation operator
-      odata%nam => nam
-      odata%geom => geom
-      call compute_parameters(odata,.true.)
-   
+      deallocate(lmask)
       deallocate( mod_lat, mod_lon )
 
       interp_initialized = .TRUE. 
    endif
 
-   pgeom => geom
-   pdata => odata
+   pbump => bump
 
 end subroutine initialize_interp
 
@@ -1287,9 +1251,9 @@ subroutine convert_to_ug(self, ug)
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    
-   integer :: nc0a,ic0a,jC,jl,nf
+   integer :: nmga,jC,jl,nf
    integer,allocatable :: imask(:,:)
-   real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:)
+   real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:,:)
    real(kind=kind_real) :: sigmaup,sigmadn
    
    type (mpas_pool_iterator_type) :: poolItr
@@ -1300,19 +1264,19 @@ subroutine convert_to_ug(self, ug)
    integer :: idx_var
    
    ! Define local number of gridpoints
-   nc0a = self%geom%nCells
+   nmga = self%geom%nCells
    
    ! Allocation
-   allocate(lon(nc0a))
-   allocate(lat(nc0a))
-   allocate(area(nc0a))
-   allocate(vunit(self%geom%nVertLevels))
-   allocate(imask(nc0a,self%geom%nVertLevels))
+   allocate(lon(nmga))
+   allocate(lat(nmga))
+   allocate(area(nmga))
+   allocate(vunit(nmga,self%geom%nVertLevels))
+   allocate(imask(nmga,self%geom%nVertLevels))
    
    ! Copy coordinates
    do jC=1,self%geom%nCells
-     lon(jC) = self%geom%lonCell(jC)
-     lat(jC) = self%geom%latCell(jC)
+     lon(jC) = self%geom%lonCell(jC) / deg2rad !- to Degrees
+     lat(jC) = self%geom%latCell(jC) / deg2rad !- to Degrees
      area(jC) = self%geom%areaCell(jC)
    enddo
 
@@ -1323,7 +1287,7 @@ subroutine convert_to_ug(self, ug)
      !sigmaup = self%geom%ak(jl+1)/101300.0+self%geom%bk(jl+1) ! si are now sigmas
      !sigmadn = self%geom%ak(jl  )/101300.0+self%geom%bk(jl  )
      !vunit(jl) = 0.5*(sigmaup+sigmadn) ! 'fake' sigma coordinates
-     vunit(jl) = real(jl,kind=kind_real)
+     vunit(:,jl) = real(jl,kind=kind_real)
    enddo
 
    ! Should this come from self/vars?
@@ -1332,7 +1296,7 @@ subroutine convert_to_ug(self, ug)
    !if (.not. self%geom%hydrostatic) nf = 7
 
    ! Create unstructured grid
-   call create_unstructured_grid(ug, nc0a, self%geom%nVertLevels, nf, 1, lon, lat, area, vunit, imask)
+   call create_unstructured_grid(ug, nmga, self%geom%nVertLevels, nf, 1, lon, lat, area, vunit, imask)
 
    !! Copy field
    call mpas_pool_begin_iteration(self % subFields)
@@ -1385,7 +1349,7 @@ subroutine convert_from_ug(self, ug)
    type(mpas_field),        intent(inout) :: self
    type(unstructured_grid), intent(in)    :: ug
    
-   integer :: ic0a,jC,jl
+   integer :: jC,jl
 
    type (mpas_pool_iterator_type) :: poolItr
    !real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
