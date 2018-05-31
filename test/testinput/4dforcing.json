@@ -59,7 +59,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dforcing.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",
@@ -75,7 +75,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dforcing.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",
@@ -91,7 +91,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dforcing.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",

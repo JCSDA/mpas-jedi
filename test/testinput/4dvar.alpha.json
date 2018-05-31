@@ -69,7 +69,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.drplanczos.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",
@@ -85,7 +85,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.drplanczos.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",
@@ -101,7 +101,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.drplanczos.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",

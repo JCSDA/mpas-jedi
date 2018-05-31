@@ -43,7 +43,7 @@
             "ObsDataOut": {
               "obsfile": "Data/3dvar.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           },
           "Covariance": {
             "covariance": "diagonal",

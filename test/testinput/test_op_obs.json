@@ -42,7 +42,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.dripcg.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           }
         },
         "Covariance": {
@@ -60,7 +60,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.dripcg.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           }
         },
         "Covariance": {
@@ -78,7 +78,7 @@
             "ObsDataOut": {
               "obsfile": "Data/qg.4dvar.dripcg.obt"
             },
-            "obsvalue": "ObsVal"
+            "obsvalue": "Observation"
           }
         },
         "Covariance": {
