@@ -106,7 +106,7 @@
             "nicas_interp": "bilin",
             "network": 0,
             "mpicom": 2,
-            "advmod": 0,
+            "advmode": 0,
             "ndir": 0,
             "nobs": 200,
             "nldwh": 0,
