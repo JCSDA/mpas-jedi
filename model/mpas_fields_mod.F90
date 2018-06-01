@@ -601,7 +601,8 @@ subroutine interp(fld, locs, vars, gom)
    use obsop_apply, only: apply_obsop 
    use type_geom, only: geomtype
    use type_odata, only: odatatype
-   
+   use mpas2ufo_vars_mod !, only: usgs_to_crtm_mw, wrf_to_crtm_soil
+
    implicit none
    type(mpas_field),  intent(in)    :: fld
    type(ioda_locs),   intent(in)    :: locs
@@ -623,6 +624,9 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
+   type (field1DInteger), pointer :: field1di, field1di_src !BJJ for sfc type !tmp
+   real (kind=kind_real) :: ObsS(3) !BJJ for nearest...
+   integer :: ivarw, ivarl, ivari, ivars !BJJ for sfc fraction indexes
 
    real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
    integer               :: iquadrant !BJJ for wind...
@@ -738,6 +742,7 @@ subroutine interp(fld, locs, vars, gom)
         end if
    end do
 
+
 !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
@@ -799,6 +804,171 @@ subroutine interp(fld, locs, vars, gom)
     
    endif
 !---end special cases
+
+!---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
+   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+
+     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
+
+     call mpas_pool_get_array(fld % auxFields, "ivgtyp", i1d_ptr_a)
+     write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+
+     call mpas_pool_get_array(fld % auxFields, "isltyp", i1d_ptr_b)
+     write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
+
+     !- allocate geoval & put values
+     ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, odata%h%n_s, odata%h%n_src, odata%h%n_dst
+       write(*,*) '          size(row), size(col) =', size(odata%h%row), size(odata%h%col)
+       !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)
+       !compare odata%h%S( 3*(ii-1) + 1, 3*(ii-1) + 2, 3*(ii-1) + 3 ), find minimum, then specify odata%h%col( that index ) for geoval.
+       !write(*,*) minloc(odata%h%S), minloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ))
+       do ii=1,nobs
+         !write(*,*) ' i-th obs, max weight, Cell index=',ii, maxval(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
+         !            maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
+         !            odata%h%col( 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )) )
+!         ObsS=odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )
+!         ji=maxloc(ObsS,1)
+!         jj=3*(ii-1) + ji
+         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj) !nearest-interp. / maximum-weight specific.
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+     ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       do ii=1,nobs
+         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         gom%geovals(ivar)%vals(1,ii) = max(1, usgs_to_crtm_mw( i1d_ptr_a(jj) ) ) !nearest-interp. / maximum-weight specific.
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+     ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       do ii=1,nobs
+         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         gom%geovals(ivar)%vals(1,ii) = max(1, wrf_to_crtm_soil( i1d_ptr_b(jj) ) ) !nearest-interp. / maximum-weight specific.
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+   endif
+!---end special cases
+
+!---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
+   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
+
+     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
+
+     call mpas_pool_get_array(fld % auxFields, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
+     write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+     call mpas_pool_get_array(fld % auxFields, "xice", r1d_ptr_a)     !"fractional area coverage of sea-ice"
+     write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+     call mpas_pool_get_array(fld % auxFields, "snowc", r1d_ptr_b)    !"flag for snow on ground (=0 no snow; =1,otherwise"
+     write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
+     write(*,*) 'MIN/MAX of lnad+xice+snowc=', &
+                minval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b),maxval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b)
+
+     ivarw = ufo_vars_getindex(vars, var_sfc_wfrac)
+     ivarl = ufo_vars_getindex(vars, var_sfc_lfrac)
+     ivari = ufo_vars_getindex(vars, var_sfc_ifrac)
+     ivars = ufo_vars_getindex(vars, var_sfc_sfrac)
+
+     !--- Land first. will be adjusted later
+     ivar = ivarl
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = real(i1d_ptr_a(:))
+       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     !--- determine ICE
+     ivar = ivari
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = r1d_ptr_a(:)
+       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     !--- detemine/adjust SNOW & SEA
+     ivar = ivars
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       gom%geovals(ivarw)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
+       mod_field(:,1) = r1d_ptr_b(:)
+       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       do ii=1, nobs
+         if(gom%geovals(ivari)%vals(1,ii).gt.0.0_kind_real) then
+           gom%geovals(ivar)%vals(1,ii) = min( gom%geovals(ivar)%vals(1,ii), 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) )
+           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) - gom%geovals(ivar)%vals(1,ii)
+         else
+           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivarl)%vals(1,ii)
+         endif
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_wfrac),minval(gom%geovals(ivarw)%vals),maxval(gom%geovals(ivarw)%vals)
+     endif
+     !--- Final adjust LAND
+     ivar = ivarl
+     if(ivar .ne. -1) then
+       do ii=1, nobs
+         gom%geovals(ivar)%vals(1,ii) = max( 1.0_kind_real - gom%geovals(ivarw)%vals(1,ii) - gom%geovals(ivari)%vals(1,ii) &
+                                                          - gom%geovals(ivars)%vals(1,ii), 0.0_kind_real)
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+!do ii=1,nobs
+do ii=17,19
+write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
+           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
+enddo
+   endif
+!---end special cases
+
+!--- OMG: adjust between sfc coverage & sfc type
+!         see wrfda/da_get_innov_vector_crtm.inc#L521
+   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
+   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+
+   do ii=1, nobs
+     if(gom%geovals(ivarl)%vals(1,ii) .gt. 0.0) then
+       if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,ii)) .eq. 9 .or. &
+          nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,ii)) .eq. 13 ) then
+         gom%geovals(ivari)%vals(1,ii) = min( gom%geovals(ivari)%vals(1,ii) + gom%geovals(ivarl)%vals(1,ii), 1.0_kind_real )
+         gom%geovals(ivarl)%vals(1,ii) = 0.0_kind_real
+       endif
+     endif
+   enddo
+
+   endif
+   endif
+!--- OMG: end
 
    deallocate(mod_field)
    deallocate(obs_field)
