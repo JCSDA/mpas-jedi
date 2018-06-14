@@ -44,11 +44,11 @@
           },
           "date": "2016-03-04T06:00:00Z",
           "localization": {
-            "localization": "HDIAG_NICAS",
+            "localization": "BUMP",
             "variables": {
               "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
-            "hdiag_ensemble": [
+            "bump_ensemble": [
               {
                 "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
                 "date": "2016-03-04T06:00:00Z"
@@ -70,10 +70,9 @@
                 "date": "2016-03-04T06:00:00Z"
               }
             ],
-            "datadir": ".",
             "prefix": "mpas",
             "default_seed": 1,
-            "method": "loc",
+            "method": "cor",
             "strategy": "common",
             "_strategy": "specific_univariate",
             "new_hdiag": 1,
@@ -87,13 +86,13 @@
             "check_consistency": 0,
             "check_optimality": 0,
             "new_lct": 0,
-            "new_obsop": 1,
-            "logpres": 0,
-            "transform": 0,
-            "timeslot": 1,
+            "new_obsop": 0,
+            "sam_write": 0,
+            "sam_read": 0,
             "mask_type": "none",
             "mask_th": 0,
             "mask_check": 0,
+            "draw_type": "random_uniform",
             "nc1": 1024,
             "ntry": 3,
             "nrep": 2,
@@ -105,33 +104,23 @@
             "gau_approx": 0,
             "full_var": 0,
             "local_diag": 0,
-            "local_rad": 0.0,
             "displ_diag": 0,
-            "displ_rad": 0.0,
-            "displ_explicit": 0,
-            "displ_niter": 0,
-            "displ_rhflt": 0.0,
-            "displ_tol": 0.0,
-            "fit_wgt": 1,
+            "minim_algo": "hooke",
             "lhomh": 0,
             "lhomv": 0,
             "rvflt": 0.0,
-            "nldwh": 0,
-            "nldwv": 0,
-            "fit_type": "fast",
-            "flt_type": "average",
-            "diag_interp": "bilin",
-            "diag_rhflt": 0.0,
-            "lsqrt": 0,
+            "lsqrt": 1,
             "resol": 4.0,
             "nicas_interp": "bilin",
             "network": 0,
             "mpicom": 2,
+            "advmode": 0,
             "ndir": 0,
-            "nobs": 200,
-            "obsdis": 1.0,
-            "obsop_interp": "bilin",
-            "nproc": 1
+            "nldwh": 0,
+            "nldwv": 0,
+            "diag_rhflt": 0.0,
+            "diag_interp": "bilin",
+            "grid_output": 0
           },
           "state": [
             {
