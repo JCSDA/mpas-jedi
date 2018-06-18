@@ -819,8 +819,10 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, odata%h%n_s, odata%h%n_src, odata%h%n_dst
-       write(*,*) '          size(row), size(col) =', size(odata%h%row), size(odata%h%col)
+       !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, odata%h%n_s, odata%h%n_src, odata%h%n_dst
+       !write(*,*) '          size(row), size(col) =', size(odata%h%row), size(odata%h%col)
+       write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
+       write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
        !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)
        !compare odata%h%S( 3*(ii-1) + 1, 3*(ii-1) + 2, 3*(ii-1) + 3 ), find minimum, then specify odata%h%col( that index ) for geoval.
        !write(*,*) minloc(odata%h%S), minloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ))
@@ -831,7 +833,7 @@ subroutine interp(fld, locs, vars, gom)
 !         ObsS=odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )
 !         ji=maxloc(ObsS,1)
 !         jj=3*(ii-1) + ji
-         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
          gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj) !nearest-interp. / maximum-weight specific.
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -842,7 +844,7 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
          gom%geovals(ivar)%vals(1,ii) = max(1, usgs_to_crtm_mw( i1d_ptr_a(jj) ) ) !nearest-interp. / maximum-weight specific.
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -853,7 +855,7 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
          gom%geovals(ivar)%vals(1,ii) = max(1, wrf_to_crtm_soil( i1d_ptr_b(jj) ) ) !nearest-interp. / maximum-weight specific.
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -890,7 +892,7 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real(i1d_ptr_a(:))
-       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -900,7 +902,7 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_a(:)
-       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -912,7 +914,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_b(:)
-       call apply_obsop(pgeom,odata,mod_field,obs_field)
+       call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        do ii=1, nobs
          if(gom%geovals(ivari)%vals(1,ii).gt.0.0_kind_real) then
