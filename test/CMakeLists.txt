@@ -1,9 +1,9 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
   testinput/3dfgat.json
-  testinput/3denvar_nicas.json
-  testinput/3dhybrid_nicas.json
-  testinput/4denvar_nicas.json
+  testinput/3denvar_bump.json
+  testinput/3dhybrid_bump.json
+  testinput/4denvar_bump.json
   testinput/4dvar.alpha.json
   testinput/4dforcing.json
   testinput/4dhybrid.json
@@ -20,7 +20,7 @@ list( APPEND mpas_test_input
   testinput/genenspert.json
   testinput/hofx.json
   testinput/hofx_crtm.json
-  testinput/dirac.nicas.json
+  testinput/dirac.bump.json
   testinput/geometry.json
   testinput/state.json
   testinput/increment.json
@@ -40,9 +40,9 @@ list( APPEND mpas_test_input
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dfgat.test
-  testoutput/3denvar_nicas.test
-  testoutput/3dhybrid_nicas.test
-  testoutput/4denvar_nicas.test
+  testoutput/3denvar_bump.test
+  testoutput/3dhybrid_bump.test
+  testoutput/4denvar_bump.test
   testoutput/4dvar.alpha.test
   testoutput/4dforcing.test
   testoutput/4dhybrid.test
@@ -59,7 +59,7 @@ list( APPEND mpas_testoutput
   testoutput/genenspert.test
   testoutput/hofx.test
   testoutput/hofx_crtm.test
-  testoutput/dirac.nicas.test
+  testoutput/dirac.bump.test
   testoutput/makeobs3d.test
   testoutput/makeobs4d.test
   testoutput/makeobs4d12h.test
@@ -184,11 +184,11 @@ ecbuild_add_test( TARGET  test_mpas_hofx_crtm
                        testoutput/hofx_crtm.test
                   DEPENDS mpas_hofx.x )
 
-ecbuild_add_test( TARGET test_mpas_dirac_nicas
+ecbuild_add_test( TARGET test_mpas_dirac_bump
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.nicas.json"
-                       testoutput/dirac.nicas.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bump.json"
+                       testoutput/dirac.bump.test
                   DEPENDS mpas_dirac.x )
 
 ecbuild_add_test( TARGET test_mpas_forecast
@@ -205,17 +205,17 @@ ecbuild_add_test( TARGET test_mpas_3dvar
                        testoutput/3dvar.test
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3denvar_nicas
+ecbuild_add_test( TARGET test_mpas_3denvar_bump
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_nicas.json"
-                       testoutput/3denvar_nicas.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bump.json"
+                       testoutput/3denvar_bump.test
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3dhybrid_nicas
+ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_nicas.json"
-                       testoutput/3dhybrid_nicas.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.json"
+                       testoutput/3dhybrid_bump.test
                   DEPENDS mpas_variational.x )
 
