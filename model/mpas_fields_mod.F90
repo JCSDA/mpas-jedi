@@ -611,26 +611,19 @@ subroutine interp(fld, locs, vars, gom)
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
-   real(kind=kind_real), allocatable :: tmp_field(:,:) !< BJJ for wspeed/wdir
+   real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
    
-   type (mpas_pool_type), pointer :: pool_ufo !< pool with ufo variables
+   type (mpas_pool_type), pointer :: pool_ufo  !< pool with ufo variables
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
-   type (field1DInteger), pointer :: field1di, field1di_src !BJJ for sfc type !tmp
-   real (kind=kind_real) :: ObsS(3) !BJJ for nearest...
-   integer :: ivarw, ivarl, ivari, ivars !BJJ for sfc fraction indexes
 
-   real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
-   integer               :: iquadrant !BJJ for wind...
-   real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
-   real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
-   real(kind=kind_real),parameter:: quadcof  (4, 2  ) =      &
-      reshape((/0.0_kind_real, 1.0_kind_real, 1.0_kind_real, 2.0_kind_real, 1.0_kind_real, &
-               -1.0_kind_real, 1.0_kind_real, -1.0_kind_real/), (/4, 2/))
+   real(kind=kind_real) :: wdir           !< for wind direction
+   integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
+
 
    ! Get grid dimensions and checks
    ! ------------------------------
@@ -674,6 +667,7 @@ subroutine interp(fld, locs, vars, gom)
    call convert_mpas_field2ufo(fld % geom, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)
+
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
@@ -736,10 +730,10 @@ subroutine interp(fld, locs, vars, gom)
         end if
 
         end if
-   end do
+   end do !- end of pool iteration
 
 
-!---add special cases: var_sfc_wspeed and/or var_sfc_wdir
+   !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
 
@@ -760,7 +754,7 @@ subroutine interp(fld, locs, vars, gom)
      call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,2)=obs_field(:,1)
 
-     !- allocate geoval & put values
+     !- allocate geoval & put values for var_sfc_wspeed
      ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
@@ -768,29 +762,15 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
+
+     !- allocate geoval & put values for var_sfc_wdir
      ivar = ufo_vars_getindex(vars, var_sfc_wdir)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       !-from subroutine call_crtm in GSI/crtm_interface.f90
        do ii=1,nobs
-         uu5 = tmp_field(ii,1)
-         vv5 = tmp_field(ii,2)
-         if (uu5 >= 0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 1
-         if (uu5 >= 0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 2
-         if (uu5 <  0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 4
-         if (uu5 <  0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 3
-         if (abs(vv5) >= windlimit) then
-           windratio = uu5 / vv5
-         else
-           windratio = 0.0_kind_real
-           if (abs(uu5) > windlimit) then
-              windratio = windscale * uu5
-           endif
-         endif
-         windangle        = atan(abs(windratio))   ! wind azimuth is in radians
-         wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) ) 
-         gom%geovals(ivar)%vals(1,ii) = wind10_direction / deg2rad 
+         call uv_to_wdir(tmp_field(ii,1), tmp_field(ii,2), wdir) ! uu, vv, wind10_direction in radian
+         gom%geovals(ivar)%vals(1,ii) = wdir / deg2rad           ! radian -> degree
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -798,10 +778,10 @@ subroutine interp(fld, locs, vars, gom)
      !- deallocate
      deallocate(tmp_field)
     
-   endif
-!---end special cases
+   endif  !---end special cases
 
-!---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
+
+   !---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
    if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
@@ -814,15 +794,14 @@ subroutine interp(fld, locs, vars, gom)
      call mpas_pool_get_array(fld % auxFields, "isltyp", i1d_ptr_b)
      write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
 
-     !- allocate geoval & put values
+     !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, odata%h%n_s, odata%h%n_src, odata%h%n_dst
-       !write(*,*) '          size(row), size(col) =', size(odata%h%row), size(odata%h%col)
-       write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
-       write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
+       !BJJ: How I implement the nearest neighbor interp. using existing barycentric interp. weights
+       !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
+       !write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
        !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)
        !compare odata%h%S( 3*(ii-1) + 1, 3*(ii-1) + 2, 3*(ii-1) + 3 ), find minimum, then specify odata%h%col( that index ) for geoval.
        !write(*,*) minloc(odata%h%S), minloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ))
@@ -830,41 +809,41 @@ subroutine interp(fld, locs, vars, gom)
          !write(*,*) ' i-th obs, max weight, Cell index=',ii, maxval(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
          !            maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
          !            odata%h%col( 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )) )
-!         ObsS=odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )
-!         ji=maxloc(ObsS,1)
-!         jj=3*(ii-1) + ji
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj) !nearest-interp. / maximum-weight specific.
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+         gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj)
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
+     !- allocate geoval & put values for var_sfc_vegtyp
      ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
          jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = max(1, usgs_to_crtm_mw( i1d_ptr_a(jj) ) ) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = convert_type_veg( i1d_ptr_a(jj) )  !nearest-interp. / maximum-weight specific.
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
+     !- allocate geoval & put values for var_sfc_soiltyp
      ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
          jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = max(1, wrf_to_crtm_soil( i1d_ptr_b(jj) ) ) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = convert_type_soil( i1d_ptr_b(jj) )  !nearest-interp. / maximum-weight specific.
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
-   endif
-!---end special cases
+   endif  !---end special cases
 
-!---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
+
+   !---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
+   !---    simple interpolation now, but can be more complex: Consider FOV ??
    if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
@@ -936,16 +915,14 @@ subroutine interp(fld, locs, vars, gom)
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
-!do ii=1,nobs
-do ii=17,19
-write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
-           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
-enddo
-   endif
-!---end special cases
+     !do ii=17,19  !1,nobs
+     !write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
+     !           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
+     !enddo
+   endif  !---end special cases
 
-!--- OMG: adjust between sfc coverage & sfc type
-!         see wrfda/da_get_innov_vector_crtm.inc#L521
+   !--- OMG: adjust between sfc coverage & sfc type
+   !         see wrfda/da_get_innov_vector_crtm.inc#L521
    if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
@@ -953,20 +930,17 @@ enddo
    if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
-
-   do ii=1, nobs
-     if(gom%geovals(ivarl)%vals(1,ii) .gt. 0.0) then
-       if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,ii)) .eq. 9 .or. &
-          nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,ii)) .eq. 13 ) then
-         gom%geovals(ivari)%vals(1,ii) = min( gom%geovals(ivari)%vals(1,ii) + gom%geovals(ivarl)%vals(1,ii), 1.0_kind_real )
-         gom%geovals(ivarl)%vals(1,ii) = 0.0_kind_real
+     do ii=1, nobs
+       if(gom%geovals(ivarl)%vals(1,ii) .gt. 0.0_kind_real) then
+         if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,ii)) .eq. 9 .or. &
+            nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,ii)) .eq. 13 ) then
+           gom%geovals(ivari)%vals(1,ii) = min( gom%geovals(ivari)%vals(1,ii) + gom%geovals(ivarl)%vals(1,ii), 1.0_kind_real )
+           gom%geovals(ivarl)%vals(1,ii) = 0.0_kind_real
+         endif
        endif
-     endif
-   enddo
-
+     enddo
    endif
-   endif
-!--- OMG: end
+   endif  !--- OMG: end
 
    deallocate(mod_field)
    deallocate(obs_field)

@@ -24,47 +24,21 @@
    use mpas_abort, only : mpas_dmpar_global_abort
    use atm_core
    use mpi 
+   use mpas_constants
    use mpas_kinds, only : kind_real
 
 
    use ufo_vars_mod !, only : var_tv, var_prsl
 
-!   private
+   private
 
    public :: update_mpas_field
    public :: convert_mpas_field2ufo,   &
              convert_mpas_field2ufoTL, &
              convert_mpas_field2ufoAD
 
-   public :: wrf_to_crtm_soil, usgs_to_crtm_mw
-
-   !-- from WRFDA/da_crtm.f90
-   integer, parameter :: n_soil_type = 16  ! wrf num_soil_cat
-   integer, parameter :: USGS_n_type = 24 
-   integer, parameter :: IGBP_n_type = 20 
-   integer, parameter :: wrf_to_crtm_soil(n_soil_type) = &
-      (/ 1, 1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9 /)
-   ! vegetation type mapping for GFS classification scheme
-   ! REL-2.1.3.CRTM_User_Guide.pdf table 4.16
-   integer, parameter :: usgs_to_crtm_mw(USGS_n_type) = &
-      (/  7, 12, 12, 12, 12, 12,  7,  9,  8,  6, &
-          2,  5,  1,  4,  3,  0,  8,  8, 11, 10, &
-         10, 10, 11, 13 /)  
-   integer, parameter :: igbp_to_crtm_mw(IGBP_n_type) = &
-      (/  4,  1,  5,  2,  3,  8,  9,  6,  6,  7, &
-          8, 12,  7, 12, 13, 11,  0, 10, 10, 11 /)
-!  !-- from GSI/crtm_interface.f90
-!  integer(i_kind), parameter :: USGS_N_TYPES = 24
-!  integer(i_kind), parameter :: IGBP_N_TYPES = 20
-!  integer(i_kind), parameter :: NAM_SOIL_N_TYPES = 16
-!  integer(i_kind), parameter, dimension(1:IGBP_N_TYPES) :: igbp_to_gfs=(/4, &
-!    1, 5, 2, 3, 8, 9, 6, 6, 7, 8, 12, 7, 12, 13, 11, 0, 10, 10, 11/)
-!  integer(i_kind), parameter, dimension(1:USGS_N_TYPES) :: usgs_to_gfs=(/7, &
-!    12, 12, 12, 12, 12, 7, 9, 8, 6, 2, 5, 1, 4, 3, 0, 8, 8, 11, 10, 10, &
-!    10, 11, 13/)
-!  integer(i_kind), parameter, dimension(1:NAM_SOIL_N_TYPES) :: nmm_soil_to_crtm=(/1, &
-!    1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9/)
-
+   public :: convert_type_soil, convert_type_veg
+   public :: uv_to_wdir
 
    contains
 
@@ -130,6 +104,85 @@
 
 !-------------------------------------------------------------------------------------------
 
+   !-- from WRFDA/da_crtm.f90
+   integer function convert_type_soil(type_in)
+   implicit none
+   integer, intent(in) :: type_in
+   integer, parameter :: n_soil_type = 16  ! wrf num_soil_cat
+   integer, parameter :: wrf_to_crtm_soil(n_soil_type) = &
+      (/ 1, 1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9 /)
+
+   convert_type_soil = max( 1, wrf_to_crtm_soil(type_in) )
+
+   end function convert_type_soil
+
+   integer function convert_type_veg(type_in)
+   integer, intent(in) :: type_in
+   integer, parameter :: USGS_n_type = 24 
+   integer, parameter :: IGBP_n_type = 20 
+   ! vegetation type mapping for GFS classification scheme
+   ! REL-2.1.3.CRTM_User_Guide.pdf table 4.16
+   integer, parameter :: usgs_to_crtm_mw(USGS_n_type) = &
+      (/  7, 12, 12, 12, 12, 12,  7,  9,  8,  6, &
+          2,  5,  1,  4,  3,  0,  8,  8, 11, 10, &
+         10, 10, 11, 13 /)  
+   integer, parameter :: igbp_to_crtm_mw(IGBP_n_type) = &
+      (/  4,  1,  5,  2,  3,  8,  9,  6,  6,  7, &
+          8, 12,  7, 12, 13, 11,  0, 10, 10, 11 /)
+
+   !TODO: make this general: consider both dataset, usgs & igbp
+   convert_type_veg = max( 1, usgs_to_crtm_mw(type_in) )
+
+   end function convert_type_veg
+
+!  !-- from GSI/crtm_interface.f90
+!  integer(i_kind), parameter :: USGS_N_TYPES = 24
+!  integer(i_kind), parameter :: IGBP_N_TYPES = 20
+!  integer(i_kind), parameter :: NAM_SOIL_N_TYPES = 16
+!  integer(i_kind), parameter, dimension(1:IGBP_N_TYPES) :: igbp_to_gfs=(/4, &
+!    1, 5, 2, 3, 8, 9, 6, 6, 7, 8, 12, 7, 12, 13, 11, 0, 10, 10, 11/)
+!  integer(i_kind), parameter, dimension(1:USGS_N_TYPES) :: usgs_to_gfs=(/7, &
+!    12, 12, 12, 12, 12, 7, 9, 8, 6, 2, 5, 1, 4, 3, 0, 8, 8, 11, 10, 10, &
+!    10, 11, 13/)
+!  integer(i_kind), parameter, dimension(1:NAM_SOIL_N_TYPES) :: nmm_soil_to_crtm=(/1, &
+!    1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9/)
+
+!-------------------------------------------------------------------------------------------
+
+   !-from subroutine call_crtm in GSI/crtm_interface.f90
+   subroutine uv_to_wdir(uu5, vv5, wind10_direction)
+
+   implicit none
+
+   real (kind=kind_real), intent(in)  :: uu5, vv5
+   real (kind=kind_real), intent(out) :: wind10_direction
+   real (kind=kind_real)              :: windratio, windangle
+   integer                            :: iquadrant  
+   real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
+   real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
+   real(kind=kind_real),parameter:: quadcof  (4, 2  ) =      &
+      reshape((/0.0_kind_real, 1.0_kind_real, 1.0_kind_real, 2.0_kind_real, 1.0_kind_real, &
+               -1.0_kind_real, 1.0_kind_real, -1.0_kind_real/), (/4, 2/))
+
+   if (uu5 >= 0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 1
+   if (uu5 >= 0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 2
+   if (uu5 <  0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 4
+   if (uu5 <  0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 3
+   if (abs(vv5) >= windlimit) then
+      windratio = uu5 / vv5
+   else
+      windratio = 0.0_kind_real
+      if (abs(uu5) > windlimit) then
+         windratio = windscale * uu5
+      endif
+   endif
+   windangle        = atan(abs(windratio))   ! wind azimuth is in radians
+   wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) )
+
+   end subroutine uv_to_wdir
+
+!-------------------------------------------------------------------------------------------
+
    !---- pool_a : self % subFields
    !---- pool_b : self % auxFields
    !---- pool_c : pool with UFO vars
@@ -166,7 +219,7 @@
 
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
-   logical, SAVE :: l_detsfctyp = .false.
+   logical, SAVE :: l_detsfctemp = .false.
 
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(pool_c, nfield)
@@ -360,6 +413,7 @@
           field2d % array(k,i) = r2d_ptr_a(k,i) * kgkg_kgm2 
         enddo
         enddo
+        write(*,*) 'MIN/MAX of index_qi.converted=',minval(field2d % array),maxval(field2d % array)
         !field2d % array(:,:) = r2d_ptr_a(:,:) ! TODO: [kg/kg] -> [kg/m2]
         !                                      ! same as var_clw
         field2d % fieldName = var_cli
@@ -386,46 +440,12 @@
         call mpas_pool_add_field(pool_c, var_cliefr, field2d)
         write(*,*) "end-of ",var_cliefr
 
-
-!     case ("Water_Fraction", "Land_Fraction", "Ice_Fraction", "Snow_Fraction", &
-!           "Water_Temperature", "Land_Temperature", "Ice_Temperature", "Snow_Temperature", &
-!           "Land_Type_Index", "Vegetation_Type", "Soil_Type" )
      case ("Water_Temperature", "Land_Temperature", "Ice_Temperature", "Snow_Temperature" )
 
-        if( .not. l_detsfctyp) then
+        if( .not. l_detsfctemp) then
           call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
 
-!----- These variables are moved into subroutine interp of mpas_fields_mod.F90
-!        !--- fraction: TODO: split fractions... Need interp. weights
-!                       ! see gsi/deter_sfc_mod.f90. sub deter_sfc (simple), sub deter_sfc_fov (complex)
-!                       ! see wrfda/da_detsurtyp.inc
-!          call mpas_pool_get_array(pool_b, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
-!          write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
-!          call mpas_duplicate_field(field1d_src, field1d)
-!          field1d % array(:) = 1.0_kind_real !real(i1d_ptr_a(:)) ! quantity and unit might change
-!          field1d % fieldName = var_sfc_wfrac
-!          call mpas_pool_add_field(pool_c, var_sfc_wfrac, field1d)
-!
-!          call mpas_duplicate_field(field1d_src, field1d)
-!          field1d % array(:) = 0.0_kind_real !real(i1d_ptr_a(:)) ! quantity and unit might change
-!          field1d % fieldName = var_sfc_lfrac
-!          call mpas_pool_add_field(pool_c, var_sfc_lfrac, field1d)
-!
-!          call mpas_pool_get_array(pool_b, "xice", r1d_ptr_a) !"fractional area coverage of sea-ice"
-!          write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-!          call mpas_duplicate_field(field1d_src, field1d)
-!          field1d % array(:) = 0.0_kind_real !r1d_ptr_a(:) ! quantity and unit might change
-!          field1d % fieldName = var_sfc_ifrac
-!          call mpas_pool_add_field(pool_c, var_sfc_ifrac, field1d)
-!
-!          call mpas_pool_get_array(pool_b, "snowc", r1d_ptr_a) !"flag for snow on ground (=0 no snow; =1,otherwise"
-!          write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-!          call mpas_duplicate_field(field1d_src, field1d)
-!          field1d % array(:) = 0.0_kind_real !r1d_ptr_a(:) ! quantity and unit might change
-!          field1d % fieldName = var_sfc_sfrac
-!          call mpas_pool_add_field(pool_c, var_sfc_sfrac, field1d)
-
-        !--- temperature
+          !--- currently assign "skintemp" for all temperature, TODO: more proper variable?
           call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
           write(*,*) 'MIN/MAX of skintemp=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
           call mpas_duplicate_field(field1d_src, field1d)
@@ -448,34 +468,8 @@
           field1d % fieldName = var_sfc_stmp
           call mpas_pool_add_field(pool_c, var_sfc_stmp, field1d)
 
-!----- These variables are moved into subroutine interp of mpas_fields_mod.F90
-!        !--- type: TODO: How to do "nearest neighbor" interp. for these integer variables??
-!                      !: Choosing the grid value of maximum weights ??
-!                      !: more complex one in future: Consider FOV ??
-!          call mpas_pool_get_field(pool_b, 'landmask', field1di_src) ! as a dummy array
-!
-!          call mpas_pool_get_array(pool_b, "ivgtyp", i1d_ptr_a)
-!          write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
-!          call mpas_duplicate_field(field1di_src, field1di)
-!          field1di % array(:) = 1 !i1d_ptr_a(:)
-!          field1di % fieldName = var_sfc_landtyp
-!          call mpas_pool_add_field(pool_c, var_sfc_landtyp, field1di)
-!
-!          call mpas_duplicate_field(field1di_src, field1di)
-!          field1di % array(:) = 1 !max(1,usgs_to_crtm_mw(i1d_ptr_a(:))  !chage category, TMP: hardcoded as 1
-!          field1di % fieldName = var_sfc_vegtyp
-!          call mpas_pool_add_field(pool_c, var_sfc_vegtyp, field1di)
-!
-!          call mpas_pool_get_array(pool_b, "isltyp", i1d_ptr_a)
-!          write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
-!          call mpas_duplicate_field(field1di_src, field1di)
-!          field1di % array(:) = 1 !max(1,wrf_to_crtm_soil(i1d_ptr_a(:)) ! chage category, TMP: hardcoded as 1
-!          field1di % fieldName = var_sfc_soiltyp
-!          call mpas_pool_add_field(pool_c, var_sfc_soiltyp, field1di)
-
-          l_detsfctyp = .true.
+          l_detsfctemp = .true.
         endif
-
 
      case ("Snow_Depth")
         call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
@@ -497,31 +491,6 @@
         call mpas_pool_add_field(pool_c, var_sfc_vegfrac, field1d)
         write(*,*) "end-of ",var_sfc_vegfrac
 
-!----- These two variables are moved into subroutine interp of mpas_fields_mod.F90
-!     case ("Sfc_Wind_Speed")
-!        call mpas_pool_get_array(pool_b, "u10", r1d_ptr_a)
-!        call mpas_pool_get_array(pool_b, "v10", r1d_ptr_b)
-!        write(*,*) 'MIN/MAX of u10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-!        write(*,*) 'MIN/MAX of v10=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
-!        call mpas_pool_get_field(pool_b, 'skintemp', field1d_src) ! as a dummy array
-!        call mpas_duplicate_field(field1d_src, field1d)
-!        field1d % array(:) = sqrt( r1d_ptr_a(:)**2 + r1d_ptr_b(:)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
-!        field1d % fieldName = var_sfc_wspeed
-!        call mpas_pool_add_field(pool_c, var_sfc_wspeed, field1d)
-!        write(*,*) "end-of ",var_sfc_wspeed
-!
-!     case ("Sfc_Wind_Direction") !-var_sfc_wdir 
-!        call mpas_pool_get_array(pool_b, "u10", r1d_ptr_a)
-!        call mpas_pool_get_array(pool_b, "v10", r1d_ptr_b)
-!        write(*,*) 'MIN/MAX of u10=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-!        write(*,*) 'MIN/MAX of v10=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
-!        call mpas_pool_get_field(pool_b, 'skintemp', field1d_src) ! as a dummy array
-!        call mpas_duplicate_field(field1d_src, field1d)
-!        field1d % array(:) = 0.0_kind_real !NOTE: Do this here? or after interpolated to obs location ??
-!        field1d % fieldName = var_sfc_wdir
-!        call mpas_pool_add_field(pool_c, var_sfc_wdir, field1d)
-!        write(*,*) "end-of ",var_sfc_wdir
-!
      case ("Lai") !-var_sfc_lai :TODO, has a value for restart file, not for init file
         call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
         write(*,*) 'MIN/MAX of lai=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
