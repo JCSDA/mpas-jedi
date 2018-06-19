@@ -184,7 +184,7 @@ subroutine geo_get_local ( self )
 
    type (mpas_geom), intent(inout) :: self
    type (block_type), pointer :: block_ptr
-   integer, pointer :: nCellsSolve_blk, indexToCellIDPool(:)
+   integer, pointer :: nCellsSolve_blk, indexToCellIDPool(:), nCellsSolveArray_blk(:)
    integer          :: CellStart, CellEnd
 !   integer, pointer :: nEdgesSolve_blk, indexToEdgeIDPool(:)
 !   integer          :: EdgeStart, EdgeEnd
@@ -197,6 +197,14 @@ subroutine geo_get_local ( self )
       do while(associated(block_ptr))
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
          self % nCellsLocal = self % nCellsLocal + nCellsSolve_blk
+
+
+         call mpas_pool_add_dimension(block_ptr % dimensions, 'nCellsArray', nCellsSolveArray_blk)
+
+
+write(*,*) 'size(nCellsSolveArray_blk) = ', size(nCellsSolveArray_blk)
+write(*,*) 'sum(nCellsSolveArray_blk) = ', sum(nCellsSolveArray_blk)
+write(*,*) 'nCellsSolveArray_blk = ', nCellsSolveArray_blk
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdgesSolve', nEdgesSolve_blk)
 !         self % nEdgesLocal = self % nEdgesLocal + nEdgesSolve_blk
