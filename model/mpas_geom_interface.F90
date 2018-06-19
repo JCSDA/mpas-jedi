@@ -57,7 +57,8 @@ end subroutine c_mpas_geo_delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_info(c_key_self, c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1, c_nCellsLocal) bind(c,name='mpas_geo_info_f90')
+subroutine c_mpas_geo_info(c_key_self, c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1, c_nCellsLocal) &
+   bind(c,name='mpas_geo_info_f90')
 use iso_c_binding
 use mpas_geom_mod
 implicit none
