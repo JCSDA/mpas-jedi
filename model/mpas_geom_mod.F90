@@ -222,7 +222,7 @@ write(*,*) 'indexToCellID = ', dummy_1d
          call mpas_pool_get_array(block_ptr % dimensions, 'cellsOnCell', dummy_2d)
 write(*,*) 'size(cellsOnCell,1) = ', size(dummy_2d,1)
 write(*,*) 'size(cellsOnCell,2) = ', size(dummy_2d,2)
-write(*,*) 'count(cellsOnCell.gt.0) = ', count(dummy_2d.gt.0)
+!write(*,*) 'count(cellsOnCell.gt.0) = ', count(dummy_2d.gt.0)
 !write(*,*) 'sum(cellsOnCell) = ', sum(dummy_2d)
 !write(*,*) 'cellsOnCell = ', dummy_2d
 
