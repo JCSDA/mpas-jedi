@@ -35,8 +35,9 @@ void GeometryMPAS::print(std::ostream & os) const {
   int nEdges;
   int nVertLevels;
   int nVertLevelsP1;
-  mpas_geo_info_f90(keyGeom_,nCells, nEdges, nVertLevels, nVertLevelsP1);
-  os << "nCells = " << nCells << ", nEdges = " << nEdges <<", nVertLevels = "<<nVertLevels<<", nVertLevelsP1 = "<<nVertLevelsP1 ;
+  int nCellsLocal;
+  mpas_geo_info_f90(keyGeom_,nCells, nCellsLocal, nEdges, nVertLevels, nVertLevelsP1);
+  os << "nCells = " << nCells << ", nEdges = " << nEdges <<", nVertLevels = "<<nVertLevels<<", nVertLevelsP1 = "<<nVertLevelsP1 << "nCellsLocal = " << nCellsLocal ;
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas

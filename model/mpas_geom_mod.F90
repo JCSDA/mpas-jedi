@@ -32,7 +32,6 @@ public :: mpas_geom_registry
 !> Fortran derived type to hold geometry definition
 type :: mpas_geom
    integer :: nCells
-   integer :: nCellsSolve !Local cell count
    integer :: nEdges
    integer :: nVertices
    integer :: nVertLevels
@@ -40,6 +39,13 @@ type :: mpas_geom
    integer :: nSoilLevels
    integer :: vertexDegree
    integer :: maxEdges
+   integer :: nCellsLocal
+   integer, allocatable :: CellsLocal(:)
+!   integer :: nEdgesLocal
+!   integer, allocatable :: EdgesLocal(:)
+!   integer :: nVerticesLocal
+!   integer, allocatable :: VerticesLocal(:)
+
    character(len=StrKIND) :: gridfname
    real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell, xland
    real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: areaCell
@@ -158,9 +164,75 @@ else
 end if
 !call mpas_pool_get_dimension(self % domain % blocklist % dimensions, 'nCellsSolve', self % nCellsSolve)
 
+call geo_get_local ( self )
+ 
 write(*,*)'End of geo_setup'
 
 end subroutine geo_setup
+
+! ------------------------------------------------------------------------------
+
+subroutine geo_get_local ( self )
+   ! Description : This subroutine transfers the local geom info to an mpas_geom type.
+   !               It is required to loop through the local MPAS blocklist, each member
+   !               of which contains a subset of the local geometry.
+   ! See the subroutine mpas_block_creator_finalize_block_phase1 in mpas_block_creator.F 
+   ! for more details.
+
+   implicit none
+
+   type(mpas_geom), intent(inout) :: self
+
+   integer, pointer :: nCellsSolve_blk, indexToCellIDPool(:)
+   integer          :: CellStart, CellEnd
+!   integer, pointer :: nEdgesSolve_blk, indexToEdgeIDPool(:)
+!   integer          :: EdgeStart, EdgeEnd
+!   integer, pointer :: nVerticesSolve_blk, indexToVerticeIDPool(:)
+!   integer          :: VerticeStart, VerticeEnd
+
+   if (.not. allocated(self % CellsLocal)) then
+      block_ptr => self % domain % blocklist
+      self % nCellsLocal = 0
+      do while(associated(block_ptr))
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
+         self % nCellsLocal = self % nCellsLocal + nCellsSolve_blk
+
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdgesSolve', nEdgesSolve_blk)
+!         self % nEdgesLocal = self % nEdgesLocal + nEdgesSolve_blk
+
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nVerticesSolve', nVerticesSolve_blk)
+!         self % nVerticesLocal = self % nVerticesLocal + nVerticesSolve_blk
+
+         block_ptr => block_ptr % next
+      end do
+
+      allocate(self % CellsLocal(self % nCellsLocal))
+
+      block_ptr => self % domain % blocklist
+      CellEnd = 0
+      do while(associated(block_ptr))
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
+         call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID_blk', indexToCellIDPool)
+         CellStart = CellEnd + 1
+         CellEnd = CellStart + nCellsSolve_blk - 1
+         self % CellsLocal(CellStart:CellEnd) = indexToCellIDPool(1:nCellsSolve_blk)
+
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdgesSolve', nEdgesSolve_blk)
+!         call mpas_pool_get_array(block_ptr % allFields, 'indexToEdgeID_blk', indexToEdgeIDPool)
+!         EdgeStart = EdgeEnd + 1
+!         EdgeEnd = EdgeStart + nEdgesSolve_blk - 1
+!         self % EdgesLocal(EdgeStart:EdgeEnd) = indexToEdgeIDPool(1:nEdgesSolve_blk)
+
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nVerticesSolve', nVerticesSolve_blk)
+!         call mpas_pool_get_array(block_ptr % allFields, 'indexToVerticeID_blk', indexToVerticeIDPool)
+!         VerticeStart = VerticeEnd + 1
+!         VerticeEnd = VerticeStart + nVerticesSolve_blk - 1
+!         self % VerticesLocal(VerticeStart:VerticeEnd) = indexToVerticeIDPool(1:nVerticesSolve_blk)
+
+         block_ptr => block_ptr % next
+      end do
+   end if
+end subroutine geo_get_local   
 
 ! ------------------------------------------------------------------------------
 
@@ -184,6 +256,9 @@ other%nVertLevelsP1 = self%nVertLevelsP1
 other%nSoilLevels   = self%nSoilLevels 
 other%vertexDegree  = self%vertexDegree
 other%maxEdges      = self%maxEdges
+other%nCellsLocal   = self%nCellsLocal
+if (.not.allocated(other%CellsLocal)) allocate(other%CellsLocal(self%nCellsLocal))
+other%CellsLocal    = self%CellsLocal
 
 if (.not.allocated(other%latCell)) allocate(other%latCell(self%nCells))
 if (.not.allocated(other%lonCell)) allocate(other%lonCell(self%nCells))
@@ -228,6 +303,7 @@ implicit none
 type(mpas_geom), intent(inout) :: self
 
 write(*,*)'==> delete geom array'
+if (allocated(self%CellsLocal)) deallocate(self%CellsLocal)
 if (allocated(self%latCell)) deallocate(self%latCell)
 if (allocated(self%lonCell)) deallocate(self%lonCell)
 if (allocated(self%latEdge)) deallocate(self%latEdge)
@@ -252,7 +328,7 @@ end subroutine geo_delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine geo_info(self, nCells, nEdges, nVertLevels, nVertLevelsP1)
+subroutine geo_info(self, nCells, nEdges, nVertLevels, nVertLevelsP1, nCellsLocal)
 
 implicit none
 type(mpas_geom), intent(in) :: self
@@ -260,11 +336,13 @@ integer, intent(inout) :: nCells
 integer, intent(inout) :: nEdges
 integer, intent(inout) :: nVertLevels
 integer, intent(inout) :: nVertLevelsP1
+integer, intent(inout) :: nCellsLocal
 
 nCells        = self%nCells
 nEdges        = self%nEdges
 nVertLevels   = self%nVertLevels
 nVertLevelsP1 = self%nVertLevelsP1
+nCellsLocal   = self%nCellsLocal
 
 end subroutine geo_info
 

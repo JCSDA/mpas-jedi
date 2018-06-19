@@ -97,6 +97,8 @@ subroutine model_setup(self, geom, c_conf)
    write(*,*)'config_run_duration: ',trim(config_run_duration)
    write(*,*)'config_stop_time: ',trim(config_stop_time)
    write(0,*)'geom % nCells: ',geom % nCells
+   write(0,*)'geom % nCellsLocal: ',geom % nCellsLocal
+
 
 
    ! GD: needs a converter from oops json file format to mpas if the json file drives MPAS

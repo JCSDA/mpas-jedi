@@ -549,7 +549,9 @@ use mpas_pool_routines
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_fields:dirac non-positive ndir")
+!JJG I think this needs to be local.  Where is iCell read from? May be able to use list at self%geom%CellsLocal instead.  To what are idir, ndir referring? Indices of dirac tests?
    if (any(iCell<1).or.any(iCell>self%geom%nCells)) then
+!!   if (any(iCell<1).or.any(iCell>self%geom%nCellsLocal)) then
       call abor1_ftn("mpas_fields:dirac invalid iCell")
    endif
    if ((ildir<1).or.(ildir>self%geom%nVertLevels)) then
@@ -618,7 +620,6 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
-   integer, pointer :: dim0d
 
    real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
    integer               :: iquadrant !BJJ for wind...
@@ -630,9 +631,7 @@ subroutine interp(fld, locs, vars, gom)
 
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCells
-   call mpas_pool_get_dimension(fld % subFields, 'nCellsSolve', dim0d)
-   fld % geom % nCellsSolve = dim0d
+   ngrid = fld%geom%nCellsLocal
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
@@ -849,7 +848,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCells
+   ngrid = fld%geom%nCellsLocal
    nobs = locs%nlocs 
    write(*,*)'interp_tl: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("tl", fld, locs, vars, gom)
@@ -1000,7 +999,7 @@ subroutine interp_ad(fld, locs, vars, gom)
 
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCells
+   ngrid = fld%geom%nCellsLocal
    nobs = locs%nlocs
 
    call interp_checks("ad", fld, locs, vars, gom)
@@ -1135,8 +1134,7 @@ subroutine initialize_interp(grid, locs, pbump)
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels
-   mod_num = grid%nCells
-!   mod_num = grid%nCellsSolve !Local # of grid points
+   mod_num = grid%nCellsLocal
    obs_num = locs%nlocs 
    write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
    
@@ -1144,9 +1142,10 @@ subroutine initialize_interp(grid, locs, pbump)
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      mod_lat = grid%latCell / deg2rad !- to Degrees !Needs to be local values
-      mod_lon = grid%lonCell / deg2rad !- to Degrees !Needs to be local values
-   
+      do ii = 1, grid%nCellsLocal
+         mod_lat(ii) = grid%latCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+         mod_lon(ii) = grid%lonCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+      end do
       !Important namelist options
       bump%nam%prefix       = 'oops_data'  ! Prefix for files output
       bump%nam%nobs         = obs_num      ! Number of observations
@@ -1276,7 +1275,7 @@ subroutine convert_to_ug(self, ug)
    integer :: idx_var
    
    ! Define local number of gridpoints
-   nmga = self%geom%nCells
+   nmga = self%geom%nCellsLocal
    
    ! Allocation
    allocate(lon(nmga))
@@ -1286,10 +1285,10 @@ subroutine convert_to_ug(self, ug)
    allocate(imask(nmga,self%geom%nVertLevels))
    
    ! Copy coordinates
-   do jC=1,self%geom%nCells
-     lon(jC) = self%geom%lonCell(jC) / deg2rad !- to Degrees
-     lat(jC) = self%geom%latCell(jC) / deg2rad !- to Degrees
-     area(jC) = self%geom%areaCell(jC)
+   do jC=1,self%geom%nCellsLocal
+     lon(jC) = self%geom%lonCell(self%geom%CellsLocal(jC)) / deg2rad !- to Degrees
+     lat(jC) = self%geom%latCell(self%geom%CellsLocal(jC)) / deg2rad !- to Degrees
+     area(jC) = self%geom%areaCell(self%geom%CellsLocal(jC))
    enddo
 
    imask = 1
@@ -1335,7 +1334,7 @@ subroutine convert_to_ug(self, ug)
               if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
               if(idx_var.gt.0) then
                  write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
-                 do jC=1,self%geom%nCells
+                 do jC=1,self%geom%nCellsLocal
                    do jl=1,self%geom%nVertLevels
                      ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
                    enddo
@@ -1395,7 +1394,7 @@ subroutine convert_from_ug(self, ug)
               if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
               if(idx_var.gt.0) then
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
-                 do jC=1,self%geom%nCells
+                 do jC=1,self%geom%nCellsLocal
                    do jl=1,self%geom%nVertLevels
                      r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
                    enddo
