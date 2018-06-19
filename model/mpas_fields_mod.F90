@@ -115,6 +115,7 @@ subroutine create(self, geom, vars)
 
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
     call da_make_subpool(self % geom % domain, self % subFields, self % nf, self % fldnames, nfields)
+!    call mpas_pool_get_dimension(self % subFields, 'nCellsSolve', self % geom % nCellsSolve)
     if ( self % nf .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
@@ -630,6 +631,7 @@ subroutine interp(fld, locs, vars, gom)
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCells
+   call mpas_pool_get_dimension(fld % subFields, 'nCellsSolve', fld % geom % nCellsSolve)
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
@@ -701,6 +703,10 @@ subroutine interp(fld, locs, vars, gom)
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
+!JJG DEBUG
+write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
+write(*,*) 'size(r1d_ptr_a) = ', size(r1d_ptr_a) !JJG DEBUG
+!JJG DEBUG
               mod_field(:,1) = r1d_ptr_a(:)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
@@ -718,6 +724,10 @@ subroutine interp(fld, locs, vars, gom)
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!JJG DEBUG
+write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
+write(*,*) 'size(r2d_ptr_a) = ', size(r2d_ptr_a), gom%geovals(ivar)%nval !JJG DEBUG
+!JJG DEBUG
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,:)
                  call pbump%apply_obsop(mod_field,obs_field)
@@ -1125,6 +1135,7 @@ subroutine initialize_interp(grid, locs, pbump)
    !---------------------------
    mod_nz  = grid%nVertLevels
    mod_num = grid%nCells
+!   mod_num = grid%nCellsSolve !Local # of grid points
    obs_num = locs%nlocs 
    write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
    
@@ -1132,8 +1143,8 @@ subroutine initialize_interp(grid, locs, pbump)
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      mod_lat = grid%latCell / deg2rad !- to Degrees
-      mod_lon = grid%lonCell / deg2rad !- to Degrees
+      mod_lat = grid%latCell / deg2rad !- to Degrees !Needs to be local values
+      mod_lon = grid%lonCell / deg2rad !- to Degrees !Needs to be local values
    
       !Important namelist options
       bump%nam%prefix       = 'oops_data'  ! Prefix for files output

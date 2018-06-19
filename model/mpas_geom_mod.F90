@@ -32,6 +32,7 @@ public :: mpas_geom_registry
 !> Fortran derived type to hold geometry definition
 type :: mpas_geom
    integer :: nCells
+   integer :: nCellsSolve !Local cell count
    integer :: nEdges
    integer :: nVertices
    integer :: nVertLevels
@@ -155,6 +156,7 @@ if (associated(self % corelist)) then
 else
     write(*,*)'inside geom: geom % corelist not associated'
 end if
+!call mpas_pool_get_dimension(self % domain % blocklist % dimensions, 'nCellsSolve', self % nCellsSolve)
 
 write(*,*)'End of geo_setup'
 
