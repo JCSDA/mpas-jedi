@@ -199,7 +199,7 @@ subroutine geo_get_local ( self )
          self % nCellsLocal = self % nCellsLocal + nCellsSolve_blk
 
 
-         call mpas_pool_add_dimension(block_ptr % dimensions, 'nCellsArray', nCellsSolveArray_blk)
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsArray', nCellsSolveArray_blk)
 
 
 write(*,*) 'size(nCellsSolveArray_blk) = ', size(nCellsSolveArray_blk)
