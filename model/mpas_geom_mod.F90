@@ -240,11 +240,12 @@ write(*,*) 'count(cellsOnCell.gt.0) = ', count(dummy_2d.gt.0)
       block_ptr => self % domain % blocklist
       CellEnd = 0
       do while(associated(block_ptr))
-         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCells_blk)
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
          call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID_blk', indexToCellIDPool)
          CellStart = CellEnd + 1
-         CellEnd = CellStart + nCellsSolve_blk - 1
-         self % CellsLocal(CellStart:CellEnd) = indexToCellIDPool(1:nCellsSolve_blk)
+         CellEnd = CellStart + nCells_blk - 1
+         self % CellsLocal(CellStart:CellEnd) = indexToCellIDPool(1:nCells_blk)
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdgesSolve', nEdgesSolve_blk)
 !         call mpas_pool_get_array(block_ptr % allFields, 'indexToEdgeID_blk', indexToEdgeIDPool)
