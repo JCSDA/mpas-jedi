@@ -18,6 +18,8 @@ use mpas_kinds, only : kind_real
 
 use mpas_subdriver
 use atm_core
+use mpas_pool_routines
+
 use mpi ! only MPI_COMM_WORLD
 
 implicit none
@@ -162,7 +164,6 @@ if (associated(self % corelist)) then
 else
     write(*,*)'inside geom: geom % corelist not associated'
 end if
-!call mpas_pool_get_dimension(self % domain % blocklist % dimensions, 'nCellsSolve', self % nCellsSolve)
 
 call geo_get_local ( self )
  
