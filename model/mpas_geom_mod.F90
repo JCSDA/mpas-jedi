@@ -209,14 +209,14 @@ write(*,*) 'size(nCellsArray) = ', size(dummy_1d)
 write(*,*) 'nCellsArray = ', dummy_1d
          call mpas_pool_get_array(block_ptr % dimensions, 'indexToCellID_blk', dummy_1d)
 write(*,*) 'size(indexToCellID_blk) = ', size(dummy_1d)
-write(*,*) 'min(indexToCellID_blk) = ', min(dummy_1d)
-write(*,*) 'max(indexToCellID_blk) = ', max(dummy_1d)
+write(*,*) 'minval(indexToCellID_blk) = ', minval(dummy_1d)
+write(*,*) 'maxval(indexToCellID_blk) = ', maxval(dummy_1d)
 write(*,*) 'count(indexToCellID_blk.gt.0) = ', count(dummy_1d.gt.0)
 write(*,*) 'indexToCellID_blk = ', dummy_1d
          call mpas_pool_get_array(block_ptr % dimensions, 'indexToCellID', dummy_1d)
 write(*,*) 'size(indexToCellID) = ', size(dummy_1d)
-write(*,*) 'min(indexToCellID) = ', min(dummy_1d)
-write(*,*) 'max(indexToCellID) = ', max(dummy_1d)
+write(*,*) 'minval(indexToCellID) = ', minval(dummy_1d)
+write(*,*) 'maxval(indexToCellID) = ', maxval(dummy_1d)
 write(*,*) 'count(indexToCellID.gt.0) = ', count(dummy_1d.gt.0)
 write(*,*) 'indexToCellID = ', dummy_1d
          call mpas_pool_get_array(block_ptr % dimensions, 'cellsOnCell', dummy_2d)
