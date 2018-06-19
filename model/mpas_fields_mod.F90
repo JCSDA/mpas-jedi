@@ -115,7 +115,6 @@ subroutine create(self, geom, vars)
 
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
     call da_make_subpool(self % geom % domain, self % subFields, self % nf, self % fldnames, nfields)
-!    call mpas_pool_get_dimension(self % subFields, 'nCellsSolve', self % geom % nCellsSolve)
     if ( self % nf .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
@@ -619,6 +618,7 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
+   integer, pointer :: dim0d
 
    real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
    integer               :: iquadrant !BJJ for wind...
@@ -631,7 +631,8 @@ subroutine interp(fld, locs, vars, gom)
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCells
-   call mpas_pool_get_dimension(fld % subFields, 'nCellsSolve', fld % geom % nCellsSolve)
+   call mpas_pool_get_dimension(fld % subFields, 'nCellsSolve', dim0d)
+   fld % geom % nCellsSolve = dim0d
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
