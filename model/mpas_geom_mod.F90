@@ -181,8 +181,8 @@ subroutine geo_get_local ( self )
 
    implicit none
 
-   type(mpas_geom), intent(inout) :: self
-
+   type (mpas_geom), intent(inout) :: self
+   type (block_type), pointer :: block_ptr
    integer, pointer :: nCellsSolve_blk, indexToCellIDPool(:)
    integer          :: CellStart, CellEnd
 !   integer, pointer :: nEdgesSolve_blk, indexToEdgeIDPool(:)
