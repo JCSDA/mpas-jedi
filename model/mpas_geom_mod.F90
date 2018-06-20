@@ -41,10 +41,10 @@ type :: mpas_geom
    integer :: nSoilLevels
    integer :: vertexDegree
    integer :: maxEdges
+   integer :: nCellsHalo
+   integer, allocatable :: CellsHalo(:)
    integer :: nCellsLocal
    integer, allocatable :: CellsLocal(:)
-   integer :: nCellsSolveLocal
-   integer, allocatable :: CellsSolveLocal(:)
 !   integer :: nEdgesLocal
 !   integer, allocatable :: EdgesLocal(:)
 !   integer :: nVerticesLocal
@@ -199,13 +199,14 @@ subroutine geo_get_local ( self )
 
    if (.not. allocated(self % CellsLocal)) then
       block_ptr => self % domain % blocklist
+      self % nCellsHalo = 0
       self % nCellsLocal = 0
       do while(associated(block_ptr))
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
-         self % nCellsSolveLocal = self % nCellsSolveLocal + nCellsSolve_blk
+         self % nCellsLocal = self % nCellsLocal + nCellsSolve_blk
 
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
-         self % nCellsLocal = self % nCellsLocal + nCells_blk
+         self % nCellsHalo = self % nCellsHalo + nCells_blk
 
 !         call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', dummy_1d)
 !write(*,*) 'size(indexToCellID) = ', size(dummy_1d)
@@ -223,23 +224,24 @@ subroutine geo_get_local ( self )
          block_ptr => block_ptr % next
       end do
 
+      allocate(self % CellsHalo(self % nCellsHalo))
       allocate(self % CellsLocal(self % nCellsLocal))
-      allocate(self % CellsSolveLocal(self % nCellsSolveLocal))
 
       block_ptr => self % domain % blocklist
       CellsEnd = 0
       CellsSolveEnd = 0
       do while(associated(block_ptr))
-         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
-         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
          call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', indexToCellID)
+
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
          CellsStart = CellsEnd + 1
          CellsEnd = CellsStart + nCells_blk - 1
-         self % CellsLocal(CellsStart:CellsEnd) = indexToCellID(1:nCells_blk)
+         self % CellsHalo(CellsStart:CellsEnd) = indexToCellID(1:nCells_blk)
 
+         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
          CellsSolveStart = CellsSolveEnd + 1
          CellsSolveEnd = CellsSolveStart + nCellsSolve_blk - 1
-         self % CellsSolveLocal(CellsSolveStart:CellsSolveEnd) = indexToCellID(1:nCellsSolve_blk)
+         self % CellsLocal(CellsSolveStart:CellsSolveEnd) = indexToCellID(1:nCellsSolve_blk)
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdges', nEdges_blk)
 !         call mpas_pool_get_array(block_ptr % allFields, 'indexToEdgeID', indexToEdgeID)
