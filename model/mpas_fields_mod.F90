@@ -1388,6 +1388,7 @@ subroutine convert_from_ug(self, ug)
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsLocal
                    do jl=1,self%geom%nVertLevels
+                     !JJG: Since only local locations are updated/transferred, need HALO comms before using these fields in MPAS
                      r2d_ptr_a(jl,self%geom%CellsMemToLocal(jC)) = ug%fld(jC,jl,idx_var,1)
                    enddo
                  enddo
