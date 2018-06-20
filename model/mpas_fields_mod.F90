@@ -629,7 +629,7 @@ subroutine interp(fld, locs, vars, gom)
 
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCellsSolveLocal
+   ngrid = fld%geom%nCellsLocal
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
@@ -1132,7 +1132,7 @@ subroutine initialize_interp(grid, locs, pbump)
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels
-   mod_num = grid%nCellsSolveLocal
+   mod_num = grid%nCellsLocal
    obs_num = locs%nlocs 
    write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
    
@@ -1140,9 +1140,9 @@ subroutine initialize_interp(grid, locs, pbump)
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      do ii = 1, grid%nCellsSolveLocal
-         mod_lat(ii) = grid%latCell( grid%CellsSolveLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
-         mod_lon(ii) = grid%lonCell( grid%CellsSolveLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+      do ii = 1, grid%nCellsLocal
+         mod_lat(ii) = grid%latCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+         mod_lon(ii) = grid%lonCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
       end do
       !Important namelist options
       bump%nam%prefix       = 'oops_data'  ! Prefix for files output
