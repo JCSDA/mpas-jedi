@@ -96,7 +96,7 @@ subroutine model_setup(self, geom, c_conf)
    write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
    write(*,*)'config_run_duration: ',trim(config_run_duration)
    write(*,*)'config_stop_time: ',trim(config_stop_time)
-   write(0,*)'geom % nCells: ',geom % nCells
+   write(0,*)'geom % nCellsGlobal: ',geom % nCellsGlobal
    write(0,*)'geom % nCellsLocal: ',geom % nCellsLocal
 
 
@@ -179,7 +179,7 @@ subroutine model_prepare_integration(self, flds)
    !call mpas_pool_get_field(state, 'u', u_field, 1)
    !call uv_cell_to_edges(self%domain, uReconstructZonal, uReconstructMeridional, u_field, & 
    !                  & flds%geom%lonCell, flds%geom%latCell, &
-   !                  & flds%geom%nCells, flds%geom%edgeNormalVectors, &
+   !                  & flds%geom%nCellsGlobal, flds%geom%edgeNormalVectors, &
    !                  & flds%geom%nEdgesOnCell, flds%geom%edgesOnCell, flds%geom%nVertLevels)
 
    !——————————————————————————————————----------------------------------

@@ -338,7 +338,7 @@ subroutine add_incr(self,rhs)
    ! GD: I don't see any difference than for self_add other than subFields can contain
    ! different variables than mpas_field and the resolution of incr can be different. 
 
-   if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
+   if (self%geom%nCellsGlobal==rhs%geom%nCellsGlobal .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
       kind_op = 'add'
       call da_operator(trim(kind_op), self % subFields, rhs % subFields)
    else
@@ -360,8 +360,8 @@ subroutine diff_incr(lhs,x1,x2)
    character(len=StrKIND) :: kind_op
 
    call zeros(lhs)
-   if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
-     if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
+   if (x1%geom%nCellsGlobal==x2%geom%nCellsGlobal .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
+     if (lhs%geom%nCellsGlobal==x1%geom%nCellsGlobal .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
         kind_op = 'sub'
         call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields)
      else
@@ -384,10 +384,10 @@ subroutine change_resol(fld,rhs)
    type(mpas_field), intent(in)    :: rhs
 
    ! FIXME: We just copy rhs to fld for now. Need an actual interpolation routine later. (SH)
-   if (fld%geom%nCells == rhs%geom%nCells .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
+   if (fld%geom%nCellsGlobal == rhs%geom%nCellsGlobal .and.  fld%geom%nVertLevels == rhs%geom%nVertLevels) then
      call copy(fld, rhs)
    else
-     write(0,*) fld%geom%nCells, rhs%geom%nCells, fld%geom%nVertLevels, rhs%geom%nVertLevels
+     write(0,*) fld%geom%nCellsGlobal, rhs%geom%nCellsGlobal, fld%geom%nVertLevels, rhs%geom%nVertLevels
      call abor1_ftn("mpas_fields:field_resol: dimension mismatch")
    endif
 
@@ -549,7 +549,7 @@ use mpas_pool_routines
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_fields:dirac non-positive ndir")
-   if (any(iCell<1).or.any(iCell>self%geom%nCells)) then
+   if (any(iCell<1).or.any(iCell>self%geom%nCellsGlobal)) then
       call abor1_ftn("mpas_fields:dirac invalid iCell")
    endif
    if ((ildir<1).or.(ildir>self%geom%nVertLevels)) then
@@ -683,7 +683,7 @@ subroutine interp(fld, locs, vars, gom)
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-              mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+              mod_field(:,1) = real( i1d_ptr_a(fld%geom%CellsMemToLocal) )
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
@@ -701,11 +701,7 @@ subroutine interp(fld, locs, vars, gom)
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-!JJG DEBUG
-write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
-write(*,*) 'size(r1d_ptr_a) = ', size(r1d_ptr_a) !JJG DEBUG
-!JJG DEBUG
-              mod_field(:,1) = r1d_ptr_a(1:ngrid)
+              mod_field(:,1) = r1d_ptr_a(fld%geom%CellsMemToLocal)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
@@ -722,12 +718,8 @@ write(*,*) 'size(r1d_ptr_a) = ', size(r1d_ptr_a) !JJG DEBUG
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!JJG DEBUG
-write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
-write(*,*) 'size(r2d_ptr_a) = ', size(r2d_ptr_a), gom%geovals(ivar)%nval !JJG DEBUG
-!JJG DEBUG
               do jlev = 1, gom%geovals(ivar)%nval
-                 mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
+                 mod_field(:,1) = r2d_ptr_a(jlev,fld%geom%CellsMemToLocal)
                  call pbump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -1140,10 +1132,9 @@ subroutine initialize_interp(grid, locs, pbump)
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      do ii = 1, grid%nCellsLocal
-         mod_lat(ii) = grid%latCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
-         mod_lon(ii) = grid%lonCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
-      end do
+      mod_lat(:) = grid%latCell( grid%CellsGlobalToLocal ) / deg2rad !- to Degrees
+      mod_lon(:) = grid%lonCell( grid%CellsGlobalToLocal ) / deg2rad !- to Degrees
+
       !Important namelist options
       bump%nam%prefix       = 'oops_data'  ! Prefix for files output
       bump%nam%nobs         = obs_num      ! Number of observations
@@ -1283,11 +1274,14 @@ subroutine convert_to_ug(self, ug)
    allocate(imask(nmga,self%geom%nVertLevels))
    
    ! Copy coordinates
-   do jC=1,self%geom%nCellsLocal
-     lon(jC) = self%geom%lonCell(self%geom%CellsLocal(jC)) / deg2rad !- to Degrees
-     lat(jC) = self%geom%latCell(self%geom%CellsLocal(jC)) / deg2rad !- to Degrees
-     area(jC) = self%geom%areaCell(self%geom%CellsLocal(jC))
-   enddo
+!   do jC=1,nmga
+!     lon(jC) = self%geom%lonCell(self%geom%CellsGlobalToLocal(jC)) / deg2rad !- to Degrees
+!     lat(jC) = self%geom%latCell(self%geom%CellsGlobalToLocal(jC)) / deg2rad !- to Degrees
+!     area(jC) = self%geom%areaCell(self%geom%CellsGlobalToLocal(jC))
+!   enddo
+   lon(:) = self%geom%lonCell(self%geom%CellsGlobalToLocal) / deg2rad !- to Degrees
+   lat(:) = self%geom%latCell(self%geom%CellsGlobalToLocal) / deg2rad !- to Degrees
+   area(:) = self%geom%areaCell(self%geom%CellsGlobalToLocal)
 
    imask = 1
    
@@ -1334,7 +1328,7 @@ subroutine convert_to_ug(self, ug)
                  write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsLocal
                    do jl=1,self%geom%nVertLevels
-                     ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                     ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,self%geom%CellsMemToLocal(jC))
                    enddo
                  enddo
               endif
@@ -1394,7 +1388,7 @@ subroutine convert_from_ug(self, ug)
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsLocal
                    do jl=1,self%geom%nVertLevels
-                     r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
+                     r2d_ptr_a(jl,self%geom%CellsMemToLocal(jC)) = ug%fld(jC,jl,idx_var,1)
                    enddo
                  enddo
               end if

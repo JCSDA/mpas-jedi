@@ -520,7 +520,7 @@ type(mpas_field), pointer :: self
 call mpas_field_registry%get(c_key_self,self)
 
 nf = self%nf
-nc = self%geom%nCells
+nc = self%geom%nCellsGlobal
 
 end subroutine mpas_field_sizes_c
 
