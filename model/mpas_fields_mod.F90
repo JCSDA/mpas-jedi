@@ -549,9 +549,7 @@ use mpas_pool_routines
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_fields:dirac non-positive ndir")
-!JJG I think this needs to be local.  Where is iCell read from? May be able to use list at self%geom%CellsLocal instead.  To what are idir, ndir referring? Indices of dirac tests?
    if (any(iCell<1).or.any(iCell>self%geom%nCells)) then
-!!   if (any(iCell<1).or.any(iCell>self%geom%nCellsLocal)) then
       call abor1_ftn("mpas_fields:dirac invalid iCell")
    endif
    if ((ildir<1).or.(ildir>self%geom%nVertLevels)) then
@@ -631,7 +629,7 @@ subroutine interp(fld, locs, vars, gom)
 
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCellsLocal
+   ngrid = fld%geom%nCellsSolveLocal
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
@@ -685,7 +683,7 @@ subroutine interp(fld, locs, vars, gom)
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-              mod_field(:,1) = real( i1d_ptr_a(:) )
+              mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
@@ -707,7 +705,7 @@ subroutine interp(fld, locs, vars, gom)
 write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
 write(*,*) 'size(r1d_ptr_a) = ', size(r1d_ptr_a) !JJG DEBUG
 !JJG DEBUG
-              mod_field(:,1) = r1d_ptr_a(:)
+              mod_field(:,1) = r1d_ptr_a(1:ngrid)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
@@ -729,7 +727,7 @@ write(*,*) 'size(mod_field) = ', size(mod_field) !JJG DEBUG
 write(*,*) 'size(r2d_ptr_a) = ', size(r2d_ptr_a), gom%geovals(ivar)%nval !JJG DEBUG
 !JJG DEBUG
               do jlev = 1, gom%geovals(ivar)%nval
-                 mod_field(:,1) = r2d_ptr_a(jlev,:)
+                 mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
                  call pbump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -1134,7 +1132,7 @@ subroutine initialize_interp(grid, locs, pbump)
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels
-   mod_num = grid%nCellsLocal
+   mod_num = grid%nCellsSolveLocal
    obs_num = locs%nlocs 
    write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
    
@@ -1142,9 +1140,9 @@ subroutine initialize_interp(grid, locs, pbump)
    !------------------------------------------
    if (.NOT.interp_initialized) then
       allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      do ii = 1, grid%nCellsLocal
-         mod_lat(ii) = grid%latCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
-         mod_lon(ii) = grid%lonCell( grid%CellsLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+      do ii = 1, grid%nCellsSolveLocal
+         mod_lat(ii) = grid%latCell( grid%CellsSolveLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
+         mod_lon(ii) = grid%lonCell( grid%CellsSolveLocal(ii) ) / deg2rad !- to Degrees !Needs to be local values
       end do
       !Important namelist options
       bump%nam%prefix       = 'oops_data'  ! Prefix for files output
