@@ -227,14 +227,15 @@ subroutine geo_get_local ( self )
       allocate(self % CellsSolveLocal(self % nCellsSolveLocal))
 
       block_ptr => self % domain % blocklist
-      CellEnd = 0
+      CellsEnd = 0
+      CellsSolveEnd = 0
       do while(associated(block_ptr))
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
          call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', indexToCellID)
          CellsStart = CellsEnd + 1
          CellsEnd = CellsStart + nCells_blk - 1
-         self % CellsLocal(CellStart:CellEnd) = indexToCellID(1:nCells_blk)
+         self % CellsLocal(CellsStart:CellsEnd) = indexToCellID(1:nCells_blk)
 
          CellsSolveStart = CellsSolveEnd + 1
          CellsSolveEnd = CellsSolveStart + nCellsSolve_blk - 1
