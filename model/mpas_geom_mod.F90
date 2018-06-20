@@ -184,11 +184,11 @@ subroutine geo_get_local ( self )
 
    type (mpas_geom), intent(inout) :: self
    type (block_type), pointer :: block_ptr
-   integer, pointer :: nCells_blk, indexToCellIDPool(:)!, nCellsArray_blk(:)
+   integer, pointer :: nCells_blk, indexToCellID(:)!, nCellsArray_blk(:)
    integer          :: CellStart, CellEnd
-!   integer, pointer :: nEdges_blk, indexToEdgeIDPool(:)
+!   integer, pointer :: nEdges_blk, indexToEdgeID(:)
 !   integer          :: EdgeStart, EdgeEnd
-!   integer, pointer :: nVertices_blk, indexToVerticeIDPool(:)
+!   integer, pointer :: nVertices_blk, indexToVerticeID(:)
 !   integer          :: VerticeStart, VerticeEnd
    integer, pointer :: dummy_1d(:), dummy_2d(:,:)
 
@@ -196,35 +196,25 @@ subroutine geo_get_local ( self )
       block_ptr => self % domain % blocklist
       self % nCellsLocal = 0
       do while(associated(block_ptr))
-         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCells_blk)
-write(*,*) 'nCellsSolve_blk = ', nCells_blk
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCells_blk)
+!write(*,*) 'nCellsSolve_blk = ', nCells_blk
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
-write(*,*) 'nCells = ', nCells_blk
+!write(*,*) 'nCells = ', nCells_blk
 
          self % nCellsLocal = self % nCellsLocal + nCells_blk
 
-
-         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsArray', dummy_1d)
-write(*,*) 'size(nCellsArray) = ', size(dummy_1d)
-write(*,*) 'nCellsArray = ', dummy_1d
-         call mpas_pool_get_array(block_ptr % dimensions, 'indexToCellID_blk', dummy_1d)
-write(*,*) 'size(indexToCellID_blk) = ', size(dummy_1d)
-!write(*,*) 'minval(indexToCellID_blk) = ', minval(dummy_1d)
-!write(*,*) 'maxval(indexToCellID_blk) = ', maxval(dummy_1d)
-!write(*,*) 'count(indexToCellID_blk.gt.0) = ', count(dummy_1d.gt.0)
-write(*,*) 'indexToCellID_blk = ', dummy_1d
+!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsArray', dummy_1d)
+!write(*,*) 'size(nCellsArray) = ', size(dummy_1d)
+!write(*,*) 'nCellsArray = ', dummy_1d
+!         call mpas_pool_get_array(block_ptr % dimensions, 'indexToCellID_blk', dummy_1d)
+!write(*,*) 'size(indexToCellID_blk) = ', size(dummy_1d)
+!write(*,*) 'indexToCellID_blk = ', dummy_1d
          call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', dummy_1d)
 write(*,*) 'size(indexToCellID) = ', size(dummy_1d)
-!write(*,*) 'minval(indexToCellID) = ', minval(dummy_1d)
-!write(*,*) 'maxval(indexToCellID) = ', maxval(dummy_1d)
-!write(*,*) 'count(indexToCellID.gt.0) = ', count(dummy_1d.gt.0)
 write(*,*) 'indexToCellID = ', dummy_1d
-         call mpas_pool_get_array(block_ptr % allFields, 'cellsOnCell', dummy_2d)
-write(*,*) 'size(cellsOnCell,1) = ', size(dummy_2d,1)
-write(*,*) 'size(cellsOnCell,2) = ', size(dummy_2d,2)
-!write(*,*) 'count(cellsOnCell.gt.0) = ', count(dummy_2d.gt.0)
-!write(*,*) 'sum(cellsOnCell) = ', sum(dummy_2d)
-!write(*,*) 'cellsOnCell = ', dummy_2d
+!         call mpas_pool_get_array(block_ptr % allFields, 'cellsOnCell', dummy_2d)
+!write(*,*) 'size(cellsOnCell,1) = ', size(dummy_2d,1)
+!write(*,*) 'size(cellsOnCell,2) = ', size(dummy_2d,2)
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdgesSolve', nEdgesSolve_blk)
 !         self % nEdgesLocal = self % nEdgesLocal + nEdgesSolve_blk
@@ -242,22 +232,22 @@ write(*,*) 'size(cellsOnCell,2) = ', size(dummy_2d,2)
       do while(associated(block_ptr))
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCells_blk)
          call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
-         call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID_blk', indexToCellIDPool)
+         call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', indexToCellID)
          CellStart = CellEnd + 1
          CellEnd = CellStart + nCells_blk - 1
-         self % CellsLocal(CellStart:CellEnd) = indexToCellIDPool(1:nCells_blk)
+         self % CellsLocal(CellStart:CellEnd) = indexToCellID(1:nCells_blk)
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nEdges', nEdges_blk)
-!         call mpas_pool_get_array(block_ptr % allFields, 'indexToEdgeID_blk', indexToEdgeIDPool)
+!         call mpas_pool_get_array(block_ptr % allFields, 'indexToEdgeID', indexToEdgeID)
 !         EdgeStart = EdgeEnd + 1
 !         EdgeEnd = EdgeStart + nEdges_blk - 1
-!         self % EdgesLocal(EdgeStart:EdgeEnd) = indexToEdgeIDPool(1:nEdges_blk)
+!         self % EdgesLocal(EdgeStart:EdgeEnd) = indexToEdgeID(1:nEdges_blk)
 
 !         call mpas_pool_get_dimension(block_ptr % dimensions, 'nVertices', nVertices_blk)
-!         call mpas_pool_get_array(block_ptr % allFields, 'indexToVerticeID_blk', indexToVerticeIDPool)
+!         call mpas_pool_get_array(block_ptr % allFields, 'indexToVerticeID', indexToVerticeID)
 !         VerticeStart = VerticeEnd + 1
 !         VerticeEnd = VerticeStart + nVertices_blk - 1
-!         self % VerticesLocal(VerticeStart:VerticeEnd) = indexToVerticeIDPool(1:nVertices_blk)
+!         self % VerticesLocal(VerticeStart:VerticeEnd) = indexToVerticeID(1:nVertices_blk)
 
          block_ptr => block_ptr % next
       end do
