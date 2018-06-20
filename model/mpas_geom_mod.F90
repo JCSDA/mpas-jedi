@@ -218,7 +218,7 @@ end subroutine geo_setup
 ! ------------------------------------------------------------------------------
 
 subroutine geo_to_local ( self )
-   ! Description : This subroutine transfers creates index converters from
+   ! Description : This subroutine creates index converters from
    !               global and memory arrays to local arrays used by BUMP
    !               It is required to loop through the local MPAS blocklist, each member
    !               of which contains a subset of the local geometry (if nblock>1).
