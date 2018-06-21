@@ -57,16 +57,25 @@ end subroutine c_mpas_geo_delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_info(c_key_self, c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1, c_nCellsLocal) &
-   bind(c,name='mpas_geo_info_f90')
+subroutine c_mpas_geo_info(c_key_self, c_nCellsGlobal, c_nCells, c_nCellsSolve, &
+                                       c_nEdgesGlobal, c_nEdges, c_nEdgesSolve, &
+                                       c_nVertLevels, c_nVertLevelsP1) &
+                                       bind(c,name='mpas_geo_info_f90')
 use iso_c_binding
 use mpas_geom_mod
 implicit none
 integer(c_int), intent(in)    :: c_key_self
-integer(c_int), intent(inout) :: c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1, c_nCellsLocal
+integer(c_int), intent(inout) :: &
+   c_nCellsGlobal, c_nCells, c_nCellsSolve, &
+   c_nEdgesGlobal, c_nEdges, c_nEdgesSolve, &
+   c_nVertLevels, c_nVertLevelsP1
+
 type(mpas_geom), pointer :: self
 
 call mpas_geom_registry%get(c_key_self, self)
-call geo_info(self, c_nCells, c_nEdges, c_nVertLevels, c_nVertLevelsP1, c_nCellsLocal)
+call geo_info(self, c_nCellsGlobal, c_nCells, c_nCellsSolve, &
+                    c_nEdgesGlobal, c_nEdges, c_nEdgesSolve, &
+                    c_nVertLevels, c_nVertLevelsP1)
+
 
 end subroutine c_mpas_geo_info

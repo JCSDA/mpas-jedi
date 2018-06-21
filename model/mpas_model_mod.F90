@@ -97,7 +97,8 @@ subroutine model_setup(self, geom, c_conf)
    write(*,*)'config_run_duration: ',trim(config_run_duration)
    write(*,*)'config_stop_time: ',trim(config_stop_time)
    write(0,*)'geom % nCellsGlobal: ',geom % nCellsGlobal
-   write(0,*)'geom % nCellsLocal: ',geom % nCellsLocal
+   write(0,*)'geom % nCells: ',geom % nCells
+   write(0,*)'geom % nCellsSolve: ',geom % nCellsSolve
 
 
 

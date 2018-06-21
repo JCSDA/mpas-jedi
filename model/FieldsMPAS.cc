@@ -204,7 +204,7 @@ void FieldsMPAS::print(std::ostream & os) const {
   int nc = 0;
   int nf = 0;
   mpas_field_sizes_f90(keyFlds_, nc, nf);
-  os << std::endl << "  Resolution: nCells = " << nc << 
+  os << std::endl << "  Resolution: nCellsGlobal = " << nc << 
      ", Fields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_field_gpnorm_f90(keyFlds_, nf, zstat[0]);
