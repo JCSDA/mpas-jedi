@@ -800,6 +800,9 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        !BJJ: How I implement the nearest neighbor interp. using existing barycentric interp. weights
+       !   : Bilinear interp. method in BUMP assumes a unstructured "triangular mesh" ( 3 vertices ).
+       !   =========== WARNING =============
+       !   Only works with single processor. "index" does not know about necessary communication!!!
        !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
        !write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
        !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)

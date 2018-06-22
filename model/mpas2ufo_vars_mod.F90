@@ -213,9 +213,9 @@
    integer :: ii, ivar
 
    !-- for var_prsi
-   integer :: i, j, k, its, ite, jts, jte, kts, kte
+   integer :: i, k, its, ite, kts, kte
    real (kind=kind_real) :: tem1, z0, z1, z2, w1, w2
-   real (kind=kind_real), dimension(:,:,:), allocatable :: fzm_p, fzp_p
+   real (kind=kind_real), dimension(:,:), allocatable :: fzm_p, fzp_p
 
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
@@ -306,26 +306,21 @@
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F >> formula   Line 365.
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F      >> declarations
-        ! This routine is trying to access GEOM (dimension, zgrid )
+        ! This routine needs to access GEOM (dimension, zgrid )
         ! TODO: Check: ite = nCells??  nCellsSolve???  MPI consideration ??? 
         its=1 ; ite = geom % nCells
-        jts=1 ; jte = 1
         kts=1 ; kte = geom % nVertLevels
-        allocate( fzm_p(its:ite,jts:jte,kts:kte), fzp_p(its:ite,jts:jte,kts:kte) )
+        allocate( fzm_p(its:ite,kts:kte), fzp_p(its:ite,kts:kte) )
 
-        do j = jts,jte !dummy index to mimic a rectangular grid, NOT clean
         do k = kts+1,kte
         do i = its,ite
           tem1 = 1.0_kind_real/(geom % zgrid(k+1,i)-geom % zgrid(k-1,i))
-          fzm_p(i,k,j) = (geom % zgrid(k,i)-geom % zgrid(k-1,i)) * tem1
-          fzp_p(i,k,j) = (geom % zgrid(k+1,i)-geom % zgrid(k,i)) * tem1
-          !pres2_p(i,k,j) = fzm_p(i,k,j)*pres_p(i,k,j) + fzp_p(i,k,j)*pres_p(i,k-1,j)
-          field2d % array(k,i) = fzm_p(i,k,j)*r2d_ptr_a(k,i) + fzp_p(i,k,j)*r2d_ptr_a(k-1,i)
-        enddo
+          fzm_p(i,k) = (geom % zgrid(k,i)-geom % zgrid(k-1,i)) * tem1
+          fzp_p(i,k) = (geom % zgrid(k+1,i)-geom % zgrid(k,i)) * tem1
+          field2d % array(k,i) = fzm_p(i,k)*r2d_ptr_a(k,i) + fzp_p(i,k)*r2d_ptr_a(k-1,i)
         enddo
         enddo
         k = kte+1
-        do j = jts,jte
         do i = its,ite
           z0 = geom % zgrid(k,i)
           z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k-1,i))
@@ -333,21 +328,16 @@
           w1 = (z0-z2)/(z1-z2)
           w2 = 1.0_kind_real-w1
           !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
-          !pres2_p(i,k,j) = exp(w1*log(pres_p(i,k-1,j))+w2*log(pres_p(i,k-2,j)))
           field2d % array(k,i) = exp( w1*log(r2d_ptr_a(k-1,i)) + w2*log(r2d_ptr_a(k-1,i)) )
         enddo
-        enddo
         k = kts
-        do j = jts,jte
         do i = its,ite
           z0 = geom % zgrid(k,i)
           z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k+1,i))
           z2 = 0.5_kind_real*(geom % zgrid(k+1,i)+geom % zgrid(k+2,i))
           w1 = (z0-z2)/(z1-z2)
           w2 = 1.0_kind_real-w1
-          !pres2_p(i,k,j) = w1*pres_p(i,k,j)+w2*pres_p(i,k+1,j)
           field2d % array(k,i) = w1*r2d_ptr_a(k,i) + w2*r2d_ptr_a(k+1,i)
-        enddo
         enddo
 
         deallocate( fzm_p, fzp_p )
