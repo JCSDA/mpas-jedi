@@ -813,7 +813,7 @@ subroutine interp(fld, locs, vars, gom)
          !            maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
          !            odata%h%col( 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )) )
          jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
-         gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj)
+         gom%geovals(ivar)%vals(1,ii) = real(i1d_ptr_a(jj), kind=kind_real)
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -824,8 +824,8 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = convert_type_veg( i1d_ptr_a(jj) )  !nearest-interp. / maximum-weight specific.
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real(convert_type_veg( i1d_ptr_a(jj) ), kind=kind_real)
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -836,8 +836,8 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = convert_type_soil( i1d_ptr_b(jj) )  !nearest-interp. / maximum-weight specific.
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real(convert_type_soil( i1d_ptr_b(jj) ), kind=kind_real)
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
