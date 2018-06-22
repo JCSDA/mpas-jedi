@@ -36,12 +36,12 @@ type :: mpas_geom
    integer :: nCellsGlobal !Global count
    integer :: nEdgesGlobal !Global count
    integer :: nVerticesGlobal !Global count
-   integer :: nCells !Memory count
-   integer :: nEdges !Memory count
-   integer :: nVertices !Memory count
+   integer :: nCells !Memory count (Local + Halo)
+   integer :: nEdges !Memory count (Local + Halo)
+   integer :: nVertices !Memory count (Local + Halo)
    integer :: nCellsSolve !Local count
    integer :: nEdgesSolve !Local count
-   integer :: nVerticesSolve !Global count
+   integer :: nVerticesSolve !Local count
    integer :: nVertLevels
    integer :: nVertLevelsP1
    integer :: nSoilLevels
@@ -141,16 +141,16 @@ end if
 
 !  Could make this more flexible/clean by using pointers for array variables in mpas_geom 
 !  + all later value modifications must be consistent with MPAS modeling
-!  + should nullify instead of allocate/dellocate
+!  + would need to nullify instead of allocate/dellocate
 
-    allocate ( self%latCell ( self%nCells ) )
-    allocate ( self%lonCell ( self%nCells ) )
-    allocate ( self%latEdge ( self%nEdges ) )
-    allocate ( self%lonEdge ( self%nEdges ) )
-    allocate ( self%xland ( self%nCells ) )
-    allocate ( self%areaCell ( self%nCells ) )
-    allocate ( self%edgeNormalVectors (3,  self%nEdges ) )
-    allocate ( self%zgrid ( self%nVertLevelsP1, self%nCells ) )
+    allocate ( self % latCell ( self % nCells ) )
+    allocate ( self % lonCell ( self % nCells ) )
+    allocate ( self % latEdge ( self % nEdges ) )
+    allocate ( self % lonEdge ( self % nEdges ) )
+    allocate ( self % xland ( self % nCells ) )
+    allocate ( self % areaCell ( self % nCells ) )
+    allocate ( self % edgeNormalVectors (3,  self % nEdges ) )
+    allocate ( self % zgrid ( self % nVertLevelsP1, self % nCells ) )
 
     call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )           
     self % latCell = r1d_ptr
@@ -163,143 +163,58 @@ end if
     call mpas_pool_get_array ( meshPool, 'lonEdge', r1d_ptr )           
     self % lonEdge = r1d_ptr
     call mpas_pool_get_array ( meshPool, 'edgeNormalVectors', r2d_ptr ) 
-    self % edgeNormalVectors = r2d_ptr ( 1:3,1:self%nEdges )
+    self % edgeNormalVectors = r2d_ptr ( 1:3, 1:self % nEdges )
     call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )             
-    self % zgrid = r2d_ptr ( 1:self%nVertLevelsP1,1:self%nCells )
+    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
 !   !Not using these edges yet
-!    allocate ( self%nEdgesOnCell ( self%nCells ) )
-!    allocate ( self%edgesOnCell ( self%maxEdges,self%nCells ) )
+!    allocate ( self % nEdgesOnCell ( self % nCells ) )
+!    allocate ( self % edgesOnCell ( self % maxEdges,self % nCells ) )
 !    call mpas_pool_get_array ( mesh, 'nEdgesOnCell', i1d_ptr )
 !    self % nEdgesOnCell = i1d_ptr
 !    call mpas_pool_get_array ( mesh, 'edgesOnCell', i1d_ptr )
-!    self % edgesOnCell = i1d_ptr ( 1:self%maxEdges,1:self%nCells )
+!    self % edgesOnCell = i1d_ptr ( 1:self % maxEdges, 1:self % nCells )
 
-!XLAND MIGHT NEED TO BE DONE AFTER FG IS INITIALIZED...WHEN IS THAT?
+!THIS CODE CAUSES ERROR; XLAND MIGHT NEED TO BE COPIED AFTER FG IS INITIALIZED...WHEN IS THAT?
 !    call mpas_pool_get_subpool(block_ptr % structs, 'fg', fg)
 !    call mpas_pool_get_array(fg, 'xland', r1d_ptr)
 !    self % xland = r1d_ptr
 
 !> radians to degrees
-self%latCell = self%latCell !/ deg2rad
-self%lonCell = self%lonCell !/ deg2rad
-self%latEdge = self%latEdge !/ deg2rad
-self%lonEdge = self%lonEdge !/ deg2rad
+self % latCell = self % latCell !/ deg2rad
+self % lonCell = self % lonCell !/ deg2rad
+self % latEdge = self % latEdge !/ deg2rad
+self % lonEdge = self % lonEdge !/ deg2rad
 
 
 !> Open a grid mesh file
-self%gridfname = config_get_string(c_conf, StrKIND, "gridfname")
-string1 = self%gridfname
-call ncerr(string1, nf90_open(trim(self%gridfname),nf90_nowrite,ncid))
+self % gridfname = config_get_string(c_conf, StrKIND, "gridfname")
+string1 = self % gridfname
+call ncerr(string1, nf90_open(trim(self % gridfname),nf90_nowrite,ncid))
 
-!> Grid dimensions
+!> Global grid dimensions (for reference only right now, not used)
 call ncerr(string1, nf90_inq_dimid        (ncid,'nCells',dimid))
-call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self%nCellsGlobal))
+call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self % nCellsGlobal))
 call ncerr(string1, nf90_inq_dimid        (ncid,'nEdges',dimid))
-call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self%nEdgesGlobal))
+call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self % nEdgesGlobal))
 call ncerr(string1, nf90_inq_dimid        (ncid,'nVertices',dimid))
-call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self%nVerticesGlobal))
+call ncerr(string1, nf90_inquire_dimension(ncid,dimid,len=self % nVerticesGlobal))
 
-!Still need to figure out where/when to get land from block_ptr%structs =>
-allocate(r1d_ptr(self%nCellsGlobal))
+!Still need to figure out where/when to get xland from block_ptr % structs => fg (above)
+allocate(r1d_ptr(self % nCellsGlobal))
 call ncerr(string1, nf90_inq_varid(ncid,'xland',varid))
 call ncerr(string1, nf90_get_var  (ncid,varid,r1d_ptr))
 call mpas_pool_get_array( block_ptr % allFields, 'indexToCellID', i1d_ptr)
-self % xland = r1d_ptr(i1d_ptr(1:self%nCells))
+self % xland = r1d_ptr(i1d_ptr(1:self % nCells))
 deallocate(r1d_ptr)
-
-
 
 !> close file
 call ncerr(string1,nf90_close(ncid))
 
 
-!call geo_to_local ( self )
- 
 write(*,*)'End of geo_setup'
 
 end subroutine geo_setup
-
-! ------------------------------------------------------------------------------
-
-!subroutine geo_to_local ( self )
-!   ! Description : This subroutine transfers creates index converters from
-!   !               global and memory arrays to local arrays used by BUMP
-!   !               It is required to loop through the local MPAS blocklist, each member
-!   !               of which contains a subset of the local geometry (if nblock>1).
-!   ! See the subroutine mpas_block_creator_finalize_block_phase1 in mpas_block_creator.F 
-!   ! for more details.
-!
-!   implicit none
-!
-!   type (mpas_geom), intent(inout) :: self
-!   type (block_type), pointer :: block_ptr
-!   integer, pointer :: indexToCellID(:)
-!   integer, allocatable :: CellsGlobalToHalo(:)
-!   integer, pointer :: nCells_blk, nCellsSolve_blk
-!   integer          :: nCellsHalo, CellsStart, CellsEnd, CellsSolveStart, CellsSolveEnd, ii, jj, nblock
-!
-!   if (.not. allocated(self % CellsGlobalToLocal)) then
-!      block_ptr => self % domain % blocklist
-!      nCellsHalo = 0
-!      self % nCellsLocal = 0
-!      nblock = 0
-!      do while(associated(block_ptr))
-!         nblock = nblock + 1
-!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
-!         self % nCellsLocal = self % nCellsLocal + nCellsSolve_blk
-!
-!         !Useful if local+halo cells are needed at a later time
-!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
-!         nCellsHalo = nCellsHalo + nCells_blk
-!
-!         block_ptr => block_ptr % next
-!      end do
-!
-!      allocate(CellsGlobalToHalo(nCellsHalo))
-!      allocate(self % CellsGlobalToLocal(self % nCellsLocal))
-!
-!      block_ptr => self % domain % blocklist
-!      CellsEnd = 0
-!      CellsSolveEnd = 0
-!      do while(associated(block_ptr))
-!         call mpas_pool_get_array(block_ptr % allFields, 'indexToCellID', indexToCellID)
-!
-!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCellsSolve', nCellsSolve_blk)
-!         CellsSolveStart = CellsSolveEnd + 1
-!         CellsSolveEnd = CellsSolveStart + nCellsSolve_blk - 1
-!         self % CellsGlobalToLocal(CellsSolveStart:CellsSolveEnd) = indexToCellID(1:nCellsSolve_blk)
-!
-!         call mpas_pool_get_dimension(block_ptr % dimensions, 'nCells', nCells_blk)
-!         CellsStart = CellsEnd + 1
-!         CellsEnd = CellsStart + nCells_blk - 1
-!         CellsGlobalToHalo(CellsStart:CellsEnd) = indexToCellID(1:nCells_blk)
-!
-!         block_ptr => block_ptr % next
-!      end do
-!
-!      ! Generate index converter from Local+Halo array to Local array
-!      allocate(self % CellsMemToLocal(self % nCellsLocal))
-!      if (nblock .eq. 1) then
-!         self % CellsMemToLocal = self % CellsGlobalToLocal         
-!      else
-!         ! More complicated when there is more than one block (Is that ever the case?)
-!         do ii = 1, nCellsHalo
-!            do jj = 1, self % nCellsLocal
-!               if ( CellsGlobalToHalo(ii) .eq. self % CellsGlobalToLocal(jj) ) then
-!                  self % CellsMemToLocal(jj) = ii
-!                  exit
-!               end if
-!            end do
-!         end do
-!      end if
-!      deallocate(CellsGlobalToHalo)
-!
-!!write(*,*) 'self % CellsGlobalToLocal = ', self % CellsGlobalToLocal
-!!write(*,*) 'self % CellsMemToLocal = ', self % CellsMemToLocal
-!
-!   end if
-!end subroutine geo_to_local   
 
 ! ------------------------------------------------------------------------------
 
