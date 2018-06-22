@@ -49,7 +49,7 @@
       ],
       "prefix": "mpas",
       "default_seed": 1,
-      "method": "loc",
+      "method": "cor",
       "strategy": "common",
       "new_hdiag": 1,
       "new_param": 1,
