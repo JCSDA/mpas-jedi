@@ -24,19 +24,22 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 
 class ModelBiasCovarianceMPAS : public util::Printable,
-                                 private boost::noncopyable,
-                                 private util::ObjectCounter<ModelBiasCovarianceMPAS> {
+                          private boost::noncopyable,
+                          private util::ObjectCounter<ModelBiasCovarianceMPAS> {
  public:
   static const std::string classname() {return "mpas::ModelBiasCovarianceMPAS";}
 
 /// Constructor, destructor
-  ModelBiasCovarianceMPAS(const eckit::Configuration & conf, const GeometryMPAS &): conf_(conf) {}
+  ModelBiasCovarianceMPAS(const eckit::Configuration & conf,
+                          const GeometryMPAS &): conf_(conf) {}
   ~ModelBiasCovarianceMPAS() {}
 
 /// Linear algebra operators
   void linearize(const ModelBiasMPAS &, const GeometryMPAS &) {}
-  void multiply(const ModelBiasIncrementMPAS &, ModelBiasIncrementMPAS) const {}
-  void inverseMultiply(const ModelBiasIncrementMPAS &, ModelBiasIncrementMPAS) const {}
+  void multiply(const ModelBiasIncrementMPAS &,
+                ModelBiasIncrementMPAS) const {}
+  void inverseMultiply(const ModelBiasIncrementMPAS &,
+                       ModelBiasIncrementMPAS) const {}
   void randomize(ModelBiasIncrementMPAS &) const {}
 
   const eckit::Configuration & config() const {return conf_;}

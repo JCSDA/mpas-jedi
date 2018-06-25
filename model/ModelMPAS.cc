@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "ModelMPAS.h"
+#include "model/ModelMPAS.h"
 
 #include "oops/util/Logger.h"
 #include "ModelBiasMPAS.h"
@@ -18,12 +18,13 @@
 
 namespace mpas {
 // -----------------------------------------------------------------------------
-ModelMPAS::ModelMPAS(const GeometryMPAS & resol, const eckit::Configuration & model)
+ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
+                     const eckit::Configuration & model)
   : keyConfig_(0), tstep_(0), geom_(resol)
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
   tstep_ = util::Duration(model.getString("tstep"));
-  oops::Log::trace() << "ModelMPAS::tstep_"<<tstep_<<std::endl;
+  oops::Log::trace() << "ModelMPAS::tstep_" << tstep_ << std::endl;
   const eckit::Configuration * configc = &model;
   mpas_model_setup_f90(&configc, geom_.toFortran(), keyConfig_);
   oops::Log::trace() << "ModelMPAS created" << std::endl;
@@ -43,7 +44,8 @@ void ModelMPAS::step(StateMPAS & xx, const ModelBiasMPAS &) const {
   oops::Log::debug() << "ModelMPAS::step fields in" << xx.fields() << std::endl;
   mpas_model_propagate_f90(keyConfig_, xx.fields().toFortran());
   xx.validTime() += tstep_;
-  oops::Log::debug() << "ModelMPAS::step fields out" << xx.fields() << std::endl;
+  oops::Log::debug() << "ModelMPAS::step fields out" << xx.fields()
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
 void ModelMPAS::finalize(StateMPAS & xx) const {
@@ -52,10 +54,12 @@ void ModelMPAS::finalize(StateMPAS & xx) const {
 // -----------------------------------------------------------------------------
 int ModelMPAS::saveTrajectory(StateMPAS & xx, const ModelBiasMPAS &) const {
   int ftraj = 0;
-  oops::Log::debug() << "ModelMPAS::saveTrajectory fields in" << xx.fields() << std::endl;
+  oops::Log::debug() << "ModelMPAS::saveTrajectory fields in" << xx.fields()
+                     << std::endl;
   mpas_model_prop_traj_f90(keyConfig_, xx.fields().toFortran(), ftraj);
   ASSERT(ftraj != 0);
-  oops::Log::debug() << "ModelMPAS::saveTrajectory fields out" << xx.fields() << std::endl;
+  oops::Log::debug() << "ModelMPAS::saveTrajectory fields out" << xx.fields()
+                     << std::endl;
   return ftraj;
 }
 // -----------------------------------------------------------------------------

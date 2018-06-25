@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "LocalizationMatrixMPAS.h"
+#include "model/LocalizationMatrixMPAS.h"
 
 #include "GeometryMPAS.h"
 #include "IncrementMPAS.h"
@@ -15,7 +15,7 @@
 namespace mpas {
 // -----------------------------------------------------------------------------
 LocalizationMatrixMPAS::LocalizationMatrixMPAS(const GeometryMPAS & resol,
-                                                 const eckit::Configuration & config) {
+                                          const eckit::Configuration & config) {
   const eckit::Configuration * configc = &config;
 }
 // -----------------------------------------------------------------------------

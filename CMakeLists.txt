@@ -119,6 +119,7 @@ endforeach()
 
 include( mpas_compiler_flags )
 include_directories( ${MPAS_INCLUDE_DIRS} ${MPAS_EXTRA_INCLUDE_DIRS}
+                     ${CMAKE_CURRENT_SOURCE_DIR}
                      ${CMAKE_CURRENT_SOURCE_DIR}/model )
 
 add_subdirectory( model )
@@ -135,3 +136,7 @@ ecbuild_install_project( NAME mpas )
 # print the summary of the configuration
 ecbuild_print_summary()
 
+ecbuild_add_test( TARGET mpas_coding_norms
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+                  ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR} )

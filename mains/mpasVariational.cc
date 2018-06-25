@@ -16,9 +16,9 @@ int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   mpas::instantiateLocalizationFactory();
   ufo::instantiateObsOperatorFactory<mpas::MPASTraits>();
-  ufo::instantiateLinearObsOpFactory<mpas::MPASTraits>();    
+  ufo::instantiateLinearObsOpFactory<mpas::MPASTraits>();
   oops::Variational<mpas::MPASTraits> var;
   run.execute(var);
   return 0;
-};
+}
 

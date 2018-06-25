@@ -14,4 +14,4 @@ int main(int argc,  char ** argv) {
   oops::GenEnsPertB<lfric::LfricTraits> ensgen;
   run.execute(ensgen);
   return 0;
-};
+}

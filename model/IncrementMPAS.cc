@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "IncrementMPAS.h"
+#include "model/IncrementMPAS.h"
 
 #include <algorithm>
 #include <string>
@@ -29,15 +29,17 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
-                         const util::DateTime & vt)
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
+                             const oops::Variables & vars,
+                             const util::DateTime & vt)
   : fields_(new FieldsMPAS(resol, vars, vt)), stash_()
 {
   fields_->zero();
   oops::Log::trace() << "IncrementMPAS constructed." << std::endl;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol, const IncrementMPAS & other)
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
+                             const IncrementMPAS & other)
   : fields_(new FieldsMPAS(*other.fields_, resol)), stash_()
 {
   oops::Log::trace() << "IncrementMPAS constructed from other." << std::endl;
@@ -124,33 +126,45 @@ void IncrementMPAS::random() {
 // -----------------------------------------------------------------------------
 /// Get increment values at observation locations
 // -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars,
-                              ufo::GeoVaLs & cols, const Nothing &) const {
-  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
+void IncrementMPAS::getValuesTL(const ioda::Locations & locs,
+                                const oops::Variables & vars,
+                                ufo::GeoVaLs & cols, const Nothing &) const {
+  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_
+                     << std::endl;
   fields_->getValuesTL(locs, vars, cols);
-  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars,
-                             const ufo::GeoVaLs & cols, const Nothing &) {
-  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
-  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
+void IncrementMPAS::getValuesAD(const ioda::Locations & locs,
+                                const oops::Variables & vars,
+                                const ufo::GeoVaLs & cols, const Nothing &) {
+  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols
+                     << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_
+                     << std::endl;
   fields_->getValuesAD(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateTL(const ioda::Locations & locs, const oops::Variables & vars,
+void IncrementMPAS::interpolateTL(const ioda::Locations & locs,
+                                  const oops::Variables & vars,
                                   ufo::GeoVaLs & cols, const Nothing &) const {
-  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_ << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_
+                     << std::endl;
   fields_->interpolateTL(locs, vars, cols);
-  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateAD(const ioda::Locations & locs, const oops::Variables & vars,
+void IncrementMPAS::interpolateAD(const ioda::Locations & locs,
+                                  const oops::Variables & vars,
                                   const ufo::GeoVaLs & cols, const Nothing &) {
-  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols << std::endl;
-  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_ << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols
+                     << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_
+                     << std::endl;
   fields_->interpolateAD(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------

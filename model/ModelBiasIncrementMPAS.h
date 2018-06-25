@@ -28,15 +28,19 @@ class ModelBiasIncrementMPAS : public util::Printable {
 /// Constructor, destructor
   ModelBiasIncrementMPAS(const GeometryMPAS &, const eckit::Configuration &) {}
   ModelBiasIncrementMPAS(const ModelBiasIncrementMPAS &, const bool) {}
-  ModelBiasIncrementMPAS(const ModelBiasIncrementMPAS &, const eckit::Configuration &) {}
+  ModelBiasIncrementMPAS(const ModelBiasIncrementMPAS &,
+                         const eckit::Configuration &) {}
   ~ModelBiasIncrementMPAS() {}
 
 /// Linear algebra operators
   void diff(const ModelBiasMPAS &, const ModelBiasMPAS &) {}
   void zero() {}
-  ModelBiasIncrementMPAS & operator=(const ModelBiasIncrementMPAS &) {return *this;}
-  ModelBiasIncrementMPAS & operator+=(const ModelBiasIncrementMPAS &) {return *this;}
-  ModelBiasIncrementMPAS & operator-=(const ModelBiasIncrementMPAS &) {return *this;}
+  ModelBiasIncrementMPAS & operator=(const ModelBiasIncrementMPAS &)
+                                    {return *this;}
+  ModelBiasIncrementMPAS & operator+=(const ModelBiasIncrementMPAS &)
+                                     {return *this;}
+  ModelBiasIncrementMPAS & operator-=(const ModelBiasIncrementMPAS &)
+                                     {return *this;}
   ModelBiasIncrementMPAS & operator*=(const double) {return *this;}
   void axpy(const double, const ModelBiasIncrementMPAS &) {}
   double dot_product_with(const ModelBiasIncrementMPAS &) const {return 0.0;}

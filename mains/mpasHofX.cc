@@ -16,5 +16,5 @@ int main(int argc,  char ** argv) {
   oops::HofX<mpas::MPASTraits> hofx;
   run.execute(hofx);
   return 0;
-};
+}
 
