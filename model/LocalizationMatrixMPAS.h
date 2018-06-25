@@ -31,8 +31,8 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 class LocalizationMatrixMPAS: public util::Printable,
-                            private boost::noncopyable,
-                            private util::ObjectCounter<LocalizationMatrixMPAS> {
+                           private boost::noncopyable,
+                           private util::ObjectCounter<LocalizationMatrixMPAS> {
  public:
   static const std::string classname() {return "mpas::LocalizationMatrixMPAS";}
 

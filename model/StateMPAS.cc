@@ -5,10 +5,11 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "StateMPAS.h"
+#include "model/StateMPAS.h"
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
@@ -37,18 +38,22 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & file)
+StateMPAS::StateMPAS(const GeometryMPAS & resol,
+                     const eckit::Configuration & file)
   : fields_(), stash_()
 {
-
   const std::vector<std::string> *vv;
 
   if (file.has("variables")) {
     vv = new std::vector<std::string>(file.getStringVector("variables"));
-    oops::Log::trace() << "StateMPAS::StateMPAS variables are set from config file" << std::endl; 
+    oops::Log::trace()
+          << "StateMPAS::StateMPAS variables are set from config file"
+          << std::endl;
   } else {
-    vv = new std::vector<std::string>({"theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"});
-    oops::Log::trace() << "StateMPAS::StateMPAS variables are set by default" << std::endl; 
+    vv = new std::vector<std::string>({"theta", "rho", "index_qv",
+                                "uReconstructZonal", "uReconstructMeridional"});
+    oops::Log::trace() << "StateMPAS::StateMPAS variables are set by default"
+                       << std::endl;
   }
 
   oops::Variables vars(*vv);
@@ -58,21 +63,23 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const eckit::Configuration & fi
 
   ASSERT(fields_);
 
-  oops::Log::trace() << "StateMPAS::StateMPAS created and read in." << std::endl;
+  oops::Log::trace() << "StateMPAS::StateMPAS created and read in."
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & resol, const StateMPAS & other)
   : fields_(new FieldsMPAS(*other.fields_, resol)), stash_()
 {
-  oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation." << std::endl;
+  oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation."
+                     << std::endl;
   ASSERT(fields_);
-  oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation." << std::endl;
+  oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation."
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const StateMPAS & other)
   : fields_(new FieldsMPAS(*other.fields_)), stash_()
 {
-  
   oops::Log::trace() << "StateMPAS::StateMPAS before copied." << std::endl;
   ASSERT(fields_);
   oops::Log::trace() << "StateMPAS::StateMPAS copied." << std::endl;
@@ -92,26 +99,31 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 // -----------------------------------------------------------------------------
 /// Get state values at observation locations
 // -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
-                        ufo::GeoVaLs & cols) const {
+void StateMPAS::getValues(const ioda::Locations & locs,
+                          const oops::Variables & vars,
+                          ufo::GeoVaLs & cols) const {
   oops::Log::trace() << "StateMPAS::getValues STANDARD ONE" << std::endl;
   fields_->getValues(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
-                        ufo::GeoVaLs & cols, Nothing &) const {
+void StateMPAS::getValues(const ioda::Locations & locs,
+                          const oops::Variables & vars,
+                          ufo::GeoVaLs & cols, Nothing &) const {
   oops::Log::trace() << "StateMPAS::getValues PPTRAJ" << std::endl;
   fields_->getValues(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
 /// Interpolate to observation location
 // -----------------------------------------------------------------------------
-void StateMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars, ufo::GeoVaLs & cols) const {
+void StateMPAS::interpolate(const ioda::Locations & locs,
+                            const oops::Variables & vars,
+                            ufo::GeoVaLs & cols) const {
   oops::Log::trace() << "StateMPAS::interpolate STANDARD ONE" << std::endl;
   fields_->interpolate(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars,
+void StateMPAS::interpolate(const ioda::Locations & locs,
+                            const oops::Variables & vars,
                             ufo::GeoVaLs & cols, Nothing &) const {
   oops::Log::trace() << "StateMPAS::interpolate PPTRAJ" << std::endl;
   fields_->interpolate(locs, vars, cols);

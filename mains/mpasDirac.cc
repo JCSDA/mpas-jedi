@@ -17,4 +17,4 @@ int main(int argc,  char ** argv) {
   oops::Dirac<mpas::MPASTraits> dir;
   run.execute(dir);
   return 0;
-};
+}

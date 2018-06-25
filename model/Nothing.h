@@ -18,7 +18,7 @@ namespace mpas {
 
 class Nothing : public util::Printable {
  public:
-  explicit Nothing() {}
+  Nothing() {}
   ~Nothing() {}
 
  private:

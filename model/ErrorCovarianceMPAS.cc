@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "ErrorCovarianceMPAS.h"
+#include "model/ErrorCovarianceMPAS.h"
 
 #include <cmath>
 
@@ -22,8 +22,10 @@
 namespace mpas {
 // -----------------------------------------------------------------------------
 
-ErrorCovarianceMPAS::ErrorCovarianceMPAS(const GeometryMPAS & resol, const oops::Variables &,
-                                     const eckit::Configuration & conf, const StateMPAS &) {
+ErrorCovarianceMPAS::ErrorCovarianceMPAS(const GeometryMPAS & resol,
+                                         const oops::Variables &,
+                                         const eckit::Configuration & conf,
+                                         const StateMPAS &) {
   time_ = util::DateTime(conf.getString("date"));
   const eckit::Configuration * configc = &conf;
   mpas_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
@@ -39,15 +41,17 @@ ErrorCovarianceMPAS::~ErrorCovarianceMPAS() {
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::linearize(const StateMPAS &, const GeometryMPAS & resol) {
+void ErrorCovarianceMPAS::linearize(const StateMPAS &,
+                                    const GeometryMPAS & resol) {
   geom_.reset(new GeometryMPAS(resol));
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin, IncrementMPAS & dxout) const {
+void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin,
+                                   IncrementMPAS & dxout) const {
   mpas_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                            dxout.fields().toFortran());
+                  dxout.fields().toFortran());
 }
 
 // -----------------------------------------------------------------------------

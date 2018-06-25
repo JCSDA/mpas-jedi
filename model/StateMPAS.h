@@ -53,7 +53,8 @@ class StateMPAS : public util::Printable,
   static const std::string classname() {return "mpas::StateMPAS";}
 
 /// Constructor, destructor
-  StateMPAS(const GeometryMPAS &, const oops::Variables &, const util::DateTime &);  // Is it used?
+  StateMPAS(const GeometryMPAS &, const oops::Variables &,
+            const util::DateTime &);  // Is it used?
   StateMPAS(const GeometryMPAS &, const eckit::Configuration &);
   StateMPAS(const GeometryMPAS &, const StateMPAS &);
   StateMPAS(const StateMPAS &);
@@ -61,12 +62,16 @@ class StateMPAS : public util::Printable,
   StateMPAS & operator=(const StateMPAS &);
 
 /// Get state values at observation locations
-  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;
+  void getValues(const ioda::Locations &, const oops::Variables &,
+                 ufo::GeoVaLs &) const;
+  void getValues(const ioda::Locations &, const oops::Variables &,
+                 ufo::GeoVaLs &, Nothing &) const;
 
 /// Interpolate to observation location
-  void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, Nothing &) const;
+  void interpolate(const ioda::Locations &, const oops::Variables &,
+                   ufo::GeoVaLs &) const;
+  void interpolate(const ioda::Locations &, const oops::Variables &,
+                   ufo::GeoVaLs &, Nothing &) const;
 
 /// Interpolate full fields
   void changeResolution(const StateMPAS & xx);

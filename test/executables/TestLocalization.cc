@@ -14,5 +14,5 @@ int main(int argc,  char ** argv) {
   test::Localization<mpas::MPASTraits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

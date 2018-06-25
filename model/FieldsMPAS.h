@@ -47,7 +47,8 @@ class FieldsMPAS : public util::Printable,
   static const std::string classname() {return "mpas::FieldsMPAS";}
 
 // Constructors and basic operators
-  FieldsMPAS(const GeometryMPAS &, const oops::Variables &, const util::DateTime &);
+  FieldsMPAS(const GeometryMPAS &, const oops::Variables &,
+             const util::DateTime &);
   FieldsMPAS(const FieldsMPAS &, const GeometryMPAS &);
   FieldsMPAS(const FieldsMPAS &, const oops::Variables &);
   FieldsMPAS(const FieldsMPAS &, const bool);
@@ -67,14 +68,20 @@ class FieldsMPAS : public util::Printable,
   void dirac(const eckit::Configuration &);
 
 /// Get state values or increments at observation locations
-  void getValues(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
+  void getValues(const ioda::Locations &, const oops::Variables &,
+                 ufo::GeoVaLs &) const;
+  void getValuesTL(const ioda::Locations &, const oops::Variables &,
+                   ufo::GeoVaLs &) const;
+  void getValuesAD(const ioda::Locations &, const oops::Variables &,
+                   const ufo::GeoVaLs &);
 
 // Interpolate to given location
-  void interpolate(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void interpolateTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &) const;
-  void interpolateAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &);
+  void interpolate(const ioda::Locations &, const oops::Variables &,
+                   ufo::GeoVaLs &) const;
+  void interpolateTL(const ioda::Locations &, const oops::Variables &,
+                     ufo::GeoVaLs &) const;
+  void interpolateAD(const ioda::Locations &, const oops::Variables &,
+                     const ufo::GeoVaLs &);
 
 // Interpolate full fields
   void changeResolution(const FieldsMPAS &);

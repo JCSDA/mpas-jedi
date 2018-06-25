@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "FieldsMPAS.h"
+#include "model/FieldsMPAS.h"
 
 #include <cmath>
 #include <map>
@@ -126,38 +126,44 @@ void FieldsMPAS::random() {
   mpas_field_random_f90(keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::getValues(const ioda::Locations & locs, const oops::Variables & vars,
-                              ufo::GeoVaLs & gom) const {
+void FieldsMPAS::getValues(const ioda::Locations & locs,
+                           const oops::Variables & vars,
+                           ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::getValuesTL(const ioda::Locations & locs, const oops::Variables & vars,
-                                ufo::GeoVaLs & gom) const {
+void FieldsMPAS::getValuesTL(const ioda::Locations & locs,
+                             const oops::Variables & vars,
+                             ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::getValuesAD(const ioda::Locations & locs, const oops::Variables & vars,
-                                const ufo::GeoVaLs & gom) {
+void FieldsMPAS::getValuesAD(const ioda::Locations & locs,
+                             const oops::Variables & vars,
+                             const ufo::GeoVaLs & gom) {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::interpolate(const ioda::Locations & locs, const oops::Variables & vars,
-                              ufo::GeoVaLs & gom) const {
+void FieldsMPAS::interpolate(const ioda::Locations & locs,
+                             const oops::Variables & vars,
+                             ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::interpolateTL(const ioda::Locations & locs, const oops::Variables & vars,
-                                ufo::GeoVaLs & gom) const {
+void FieldsMPAS::interpolateTL(const ioda::Locations & locs,
+                               const oops::Variables & vars,
+                               ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::interpolateAD(const ioda::Locations & locs, const oops::Variables & vars,
-                                const ufo::GeoVaLs & gom) {
+void FieldsMPAS::interpolateAD(const ioda::Locations & locs,
+                               const oops::Variables & vars,
+                               const ufo::GeoVaLs & gom) {
   const eckit::Configuration * conf = &vars.toFortran();
   mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
 }

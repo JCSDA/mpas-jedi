@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "TlmMPAS.h"
+#include "model/TlmMPAS.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "Fortran.h"
@@ -25,7 +25,8 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 static oops::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
 // -----------------------------------------------------------------------------
-TlmMPAS::TlmMPAS(const GeometryMPAS & resol, const eckit::Configuration & tlConf)
+TlmMPAS::TlmMPAS(const GeometryMPAS & resol,
+                 const eckit::Configuration & tlConf)
   : keyConfig_(0), tstep_(), resol_(resol), traj_(),
     lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory"))
 {
@@ -45,7 +46,8 @@ TlmMPAS::~TlmMPAS() {
   oops::Log::trace() << "TlmMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr, const ModelBiasMPAS & bias) {
+void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr,
+                            const ModelBiasMPAS & bias) {
 // StateMPAS xlr(resol_, xx);
   xlr.changeResolution(xx);
   int ftraj = lrmodel_.saveTrajectory(xlr, bias);
@@ -54,7 +56,8 @@ void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr, const ModelBi
 // should be in print method
   std::vector<double> zstat(15);
 //  mpas_traj_minmaxrms_f90(ftraj, zstat[0]);
-  oops::Log::debug() << "TlmMPAS trajectory at time " << xx.validTime() << std::endl;
+  oops::Log::debug() << "TlmMPAS trajectory at time " << xx.validTime()
+                     << std::endl;
   for (unsigned int jj = 0; jj < 5; ++jj) {
     oops::Log::debug() << "  Min=" << zstat[3*jj] << ", Max=" << zstat[3*jj+1]
                        << ", RMS=" << zstat[3*jj+2] << std::endl;
@@ -70,12 +73,15 @@ void TlmMPAS::initializeTL(IncrementMPAS & dx) const {
 void TlmMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
   trajICst itra = traj_.find(dx.validTime());
   if (itra == traj_.end()) {
-    oops::Log::error() << "TlmMPAS: trajectory not available at time " << dx.validTime() << std::endl;
+    oops::Log::error() << "TlmMPAS: trajectory not available at time "
+                       << dx.validTime() << std::endl;
     ABORT("TlmMPAS: trajectory not available");
   }
   oops::Log::debug() << "TlmMPAS::stepTL fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_tl_f90(keyConfig_, dx.fields().toFortran(), itra->second);
-  oops::Log::debug() << "TlmMPAS::stepTL fields out" << dx.fields() << std::endl;
+  mpas_model_propagate_tl_f90(keyConfig_, dx.fields().toFortran(),
+                              itra->second);
+  oops::Log::debug() << "TlmMPAS::stepTL fields out" << dx.fields()
+                     << std::endl;
   dx.validTime() += tstep_;
 }
 // -----------------------------------------------------------------------------
@@ -91,12 +97,15 @@ void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
   dx.validTime() -= tstep_;
   trajICst itra = traj_.find(dx.validTime());
   if (itra == traj_.end()) {
-    oops::Log::error() << "TlmMPAS: trajectory not available at time " << dx.validTime() << std::endl;
+    oops::Log::error() << "TlmMPAS: trajectory not available at time "
+                       << dx.validTime() << std::endl;
     ABORT("TlmMPAS: trajectory not available");
   }
   oops::Log::debug() << "TlmMPAS::stepAD fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_ad_f90(keyConfig_, dx.fields().toFortran(), itra->second);
-  oops::Log::debug() << "TlmMPAS::stepAD fields out" << dx.fields() << std::endl;
+  mpas_model_propagate_ad_f90(keyConfig_, dx.fields().toFortran(),
+                              itra->second);
+  oops::Log::debug() << "TlmMPAS::stepAD fields out" << dx.fields()
+                     << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::finalizeAD(IncrementMPAS & dx) const {
