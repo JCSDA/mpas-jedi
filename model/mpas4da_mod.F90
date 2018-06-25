@@ -217,7 +217,7 @@ module mpas4da_mod
       real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
       real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
       real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-      integer :: index_scalar
+      integer, pointer :: index_scalar
 
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
@@ -265,13 +265,15 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
 
                else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
                        write(0,*)'Copy all2sub field: Looking at SCALARS now'
-                       if ( trim(poolItr_a % memberName).eq.'index_qv') then
+                       if ( trim(poolItr_a % memberName).eq.'index_qv' .or. &
+                            trim(poolItr_a % memberName).eq.'index_qc' .or. &
+                            trim(poolItr_a % memberName).eq.'index_qi' ) then
                           call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                           call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
-                          !call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
-                          index_scalar = 1
+                          call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                           field2d % array(:,:) = field3d % array(index_scalar,:,:)
-                          write(0,*)'Copy all2sub field index_qv: ',minval(field2d % array), maxval(field2d % array)
+                          write(0,*)'Copy all2sub field ',trim(poolItr_a % memberName), &
+                                    minval(field2d % array), maxval(field2d % array)
                        end if
                end if
             end do
@@ -307,7 +309,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
       real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
       real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
       real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-      integer :: index_scalar
+      integer, pointer :: index_scalar
 
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
@@ -355,13 +357,15 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
 
                else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
                        !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
-                       if ( trim(poolItr_a % memberName).eq.'index_qv' ) then
-                          call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
+                       if ( trim(poolItr_a % memberName).eq.'index_qv' .or. &
+                            trim(poolItr_a % memberName).eq.'index_qc' .or. &
+                            trim(poolItr_a % memberName).eq.'index_qi' ) then
                           call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
-                          !call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
-                          index_scalar = 1
+                          call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
+                          call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                           field3d % array(index_scalar,:,:) = field2d % array(:,:)
-                          write(0,*)'Copy sub2all field index_qv: ',minval(field2d % array), maxval(field2d % array)
+                          write(0,*)'Copy sub2all field ',trim(poolItr_a % memberName), &
+                                    minval(field2d % array), maxval(field2d % array)
                        end if
                end if
             end do
@@ -448,8 +452,9 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   
                   else if ( trim(poolItr % memberName).eq.'scalars' ) then
                      write(0,*)'Scalars pool case'
-                     if ( trim(fieldname(ii)).eq.'index_qv') then        
-
+                     if ( trim(fieldname(ii)).eq.'index_qv' .or. &
+                          trim(fieldname(ii)).eq.'index_qc' .or. &
+                          trim(fieldname(ii)).eq.'index_qi' ) then
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
                         call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
                         call mpas_pool_get_field(pool_a, 'theta_m', field2d_src)

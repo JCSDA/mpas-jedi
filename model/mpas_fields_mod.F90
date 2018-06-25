@@ -119,14 +119,15 @@ subroutine create(self, geom, vars)
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
     !--- TODO: aux test: BJJ  !- get this from json ???
-    nf_aux=15 ! 3
+    nf_aux=19 !15 ! 3
     allocate(fldnames_aux(nf_aux))
     !fldnames_aux(1)='pressure'
     !fldnames_aux(2)='u10'
     !fldnames_aux(3)='t2m'
     !fldnames_aux=(/"pressure", "u10", "t2m"/)
     fldnames_aux = [ character(len=22) :: "pressure", "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
-                                          "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w" ]
+                                          "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w", &
+                                          "index_qc", "index_qi", "re_cloud", "re_ice" ]
                                           !BJJ- "w" is for var_prsi 
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
@@ -597,7 +598,8 @@ end subroutine dirac
 subroutine interp(fld, locs, vars, gom)
 
    use type_bump, only: bump_type
-   
+   use mpas2ufo_vars_mod !, only: usgs_to_crtm_mw, wrf_to_crtm_soil
+
    implicit none
    type(mpas_field),  intent(in)    :: fld
    type(ioda_locs),   intent(in)    :: locs
@@ -609,9 +611,9 @@ subroutine interp(fld, locs, vars, gom)
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
-   real(kind=kind_real), allocatable :: tmp_field(:,:) !< BJJ for wspeed/wdir
+   real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
    
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo  !< pool with ufo variables
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -619,13 +621,9 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
 
-   real (kind=kind_real) :: uu5, vv5, windratio, windangle, wind10_direction
-   integer               :: iquadrant !BJJ for wind...
-   real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
-   real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
-   real(kind=kind_real),parameter:: quadcof  (4, 2  ) =      &
-      reshape((/0.0_kind_real, 1.0_kind_real, 1.0_kind_real, 2.0_kind_real, 1.0_kind_real, &
-               -1.0_kind_real, 1.0_kind_real, -1.0_kind_real/), (/4, 2/))
+   real(kind=kind_real) :: wdir           !< for wind direction
+   integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
+
 
    ! Get grid dimensions and checks
    ! ------------------------------
@@ -666,16 +664,17 @@ subroutine interp(fld, locs, vars, gom)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufo(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufo(fld % geom, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
 
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
            if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), i1d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -693,7 +692,7 @@ subroutine interp(fld, locs, vars, gom)
 
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r1d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -708,7 +707,7 @@ subroutine interp(fld, locs, vars, gom)
               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
@@ -731,13 +730,14 @@ subroutine interp(fld, locs, vars, gom)
         end if
 
         end if
-   end do
+   end do !- end of pool iteration
 
-!---add special cases: var_sfc_wspeed and/or var_sfc_wdir
+
+   !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
 
-     write(*,*) ' BJJ: NEED TO DO SOMETHING HERE'
+     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
      !- allocate
      allocate(tmp_field(nobs,2))
@@ -754,7 +754,7 @@ subroutine interp(fld, locs, vars, gom)
      call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,2)=obs_field(:,1)
 
-     !- allocate geoval & put values
+     !- allocate geoval & put values for var_sfc_wspeed
      ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
@@ -762,29 +762,15 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
+
+     !- allocate geoval & put values for var_sfc_wdir
      ivar = ufo_vars_getindex(vars, var_sfc_wdir)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       !-from subroutine call_crtm in GSI/crtm_interface.f90
        do ii=1,nobs
-         uu5 = tmp_field(ii,1)
-         vv5 = tmp_field(ii,2)
-         if (uu5 >= 0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 1
-         if (uu5 >= 0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 2
-         if (uu5 <  0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 4
-         if (uu5 <  0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 3
-         if (abs(vv5) >= windlimit) then
-           windratio = uu5 / vv5
-         else
-           windratio = 0.0_kind_real
-           if (abs(uu5) > windlimit) then
-              windratio = windscale * uu5
-           endif
-         endif
-         windangle        = atan(abs(windratio))   ! wind azimuth is in radians
-         wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) ) 
-         gom%geovals(ivar)%vals(1,ii) = wind10_direction / deg2rad 
+         call uv_to_wdir(tmp_field(ii,1), tmp_field(ii,2), wdir) ! uu, vv, wind10_direction in radian
+         gom%geovals(ivar)%vals(1,ii) = wdir / deg2rad           ! radian -> degree
        enddo
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -792,14 +778,178 @@ subroutine interp(fld, locs, vars, gom)
      !- deallocate
      deallocate(tmp_field)
     
+   endif  !---end special cases
+
+
+   !---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
+   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+
+     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
+
+     call mpas_pool_get_array(fld % auxFields, "ivgtyp", i1d_ptr_a)
+     write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+
+     call mpas_pool_get_array(fld % auxFields, "isltyp", i1d_ptr_b)
+     write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
+
+     !- allocate geoval & put values for var_sfc_landtyp
+     ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       !BJJ: How I implement the nearest neighbor interp. using existing barycentric interp. weights
+       !   : Bilinear interp. method in BUMP assumes a unstructured "triangular mesh" ( 3 vertices ).
+       !   =========== WARNING =============
+       !   Only works with single processor. "index" does not know about necessary communication!!!
+       !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
+       !write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
+       !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)
+       !compare odata%h%S( 3*(ii-1) + 1, 3*(ii-1) + 2, 3*(ii-1) + 3 ), find minimum, then specify odata%h%col( that index ) for geoval.
+       !write(*,*) minloc(odata%h%S), minloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ))
+       do ii=1,nobs
+         !write(*,*) ' i-th obs, max weight, Cell index=',ii, maxval(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
+         !            maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
+         !            odata%h%col( 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )) )
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+         gom%geovals(ivar)%vals(1,ii) = real(i1d_ptr_a(pbump%obsop%h%col(jj)), kind=kind_real)
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+     !- allocate geoval & put values for var_sfc_vegtyp
+     ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       do ii=1,nobs
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real(convert_type_veg( i1d_ptr_a(pbump%obsop%h%col(jj)) ), kind=kind_real)
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+     !- allocate geoval & put values for var_sfc_soiltyp
+     ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       do ii=1,nobs
+         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real(convert_type_soil( i1d_ptr_b(pbump%obsop%h%col(jj)) ), kind=kind_real)
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+
+   endif  !---end special cases
+
+
+   !---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
+   !---    simple interpolation now, but can be more complex: Consider FOV ??
+   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
+
+     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
+
+     call mpas_pool_get_array(fld % auxFields, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
+     write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+     call mpas_pool_get_array(fld % auxFields, "xice", r1d_ptr_a)     !"fractional area coverage of sea-ice"
+     write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+     call mpas_pool_get_array(fld % auxFields, "snowc", r1d_ptr_b)    !"flag for snow on ground (=0 no snow; =1,otherwise"
+     write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
+     write(*,*) 'MIN/MAX of lnad+xice+snowc=', &
+                minval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b),maxval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b)
+
+     ivarw = ufo_vars_getindex(vars, var_sfc_wfrac)
+     ivarl = ufo_vars_getindex(vars, var_sfc_lfrac)
+     ivari = ufo_vars_getindex(vars, var_sfc_ifrac)
+     ivars = ufo_vars_getindex(vars, var_sfc_sfrac)
+
+     !--- Land first. will be adjusted later
+     ivar = ivarl
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = real(i1d_ptr_a(:))
+       call pbump%apply_obsop(mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     !--- determine ICE
+     ivar = ivari
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = r1d_ptr_a(:)
+       call pbump%apply_obsop(mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     !--- detemine/adjust SNOW & SEA
+     ivar = ivars
+     if(ivar .ne. -1) then
+       gom%geovals(ivar)%nval = 1
+       gom%geovals(ivarw)%nval = 1
+       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
+       mod_field(:,1) = r1d_ptr_b(:)
+       call pbump%apply_obsop(mod_field,obs_field)
+       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
+       do ii=1, nobs
+         if(gom%geovals(ivari)%vals(1,ii).gt.0.0_kind_real) then
+           gom%geovals(ivar)%vals(1,ii) = min( gom%geovals(ivar)%vals(1,ii), 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) )
+           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) - gom%geovals(ivar)%vals(1,ii)
+         else
+           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivarl)%vals(1,ii)
+         endif
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_wfrac),minval(gom%geovals(ivarw)%vals),maxval(gom%geovals(ivarw)%vals)
+     endif
+     !--- Final adjust LAND
+     ivar = ivarl
+     if(ivar .ne. -1) then
+       do ii=1, nobs
+         gom%geovals(ivar)%vals(1,ii) = max( 1.0_kind_real - gom%geovals(ivarw)%vals(1,ii) - gom%geovals(ivari)%vals(1,ii) &
+                                                          - gom%geovals(ivars)%vals(1,ii), 0.0_kind_real)
+       enddo
+       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+     endif
+     !do ii=17,19  !1,nobs
+     !write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
+     !           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
+     !enddo
+   endif  !---end special cases
+
+   !--- OMG: adjust between sfc coverage & sfc type
+   !         see wrfda/da_get_innov_vector_crtm.inc#L521
+   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
+   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
+        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+     do ii=1, nobs
+       if(gom%geovals(ivarl)%vals(1,ii) .gt. 0.0_kind_real) then
+         if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,ii)) .eq. 9 .or. &
+            nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,ii)) .eq. 13 ) then
+           gom%geovals(ivari)%vals(1,ii) = min( gom%geovals(ivari)%vals(1,ii) + gom%geovals(ivarl)%vals(1,ii), 1.0_kind_real )
+           gom%geovals(ivarl)%vals(1,ii) = 0.0_kind_real
+         endif
+       endif
+     enddo
    endif
-!---end special cases
+   endif  !--- OMG: end
 
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
    write(*,*) '---- Leaving interp ---'
 end subroutine interp
@@ -823,7 +973,7 @@ subroutine interp_tl(fld, locs, vars, gom)
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -914,17 +1064,17 @@ subroutine interp_tl(fld, locs, vars, gom)
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    !call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
    call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               write(*,*) "interp_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex: ivar=",ivar
@@ -946,8 +1096,8 @@ subroutine interp_tl(fld, locs, vars, gom)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
 !--------Remove temporary pool
    call mpas_pool_empty_pool(Traj_subFields)
@@ -974,7 +1124,7 @@ subroutine interp_ad(fld, locs, vars, gom)
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
 
-   type (mpas_pool_type), pointer :: pool_b
+   type (mpas_pool_type), pointer :: pool_ufo
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
@@ -1049,19 +1199,19 @@ subroutine interp_ad(fld, locs, vars, gom)
    call mpas_pool_empty_pool(auxFields1)
    call mpas_pool_destroy_pool(auxFields1)
 !--------------------------
-   !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
    call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
-   call mpas_pool_begin_iteration(pool_b)
-   do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+   call mpas_pool_begin_iteration(pool_ufo)
+   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
 
            else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_a)
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               r2d_ptr_a=0.0
               write(*,*) "Interp. var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
@@ -1081,15 +1231,15 @@ subroutine interp_ad(fld, locs, vars, gom)
         end if
    end do
 
-   !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
    call convert_mpas_field2ufoAD(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_b)
-   call mpas_pool_destroy_pool(pool_b)
+   call mpas_pool_empty_pool(pool_ufo)
+   call mpas_pool_destroy_pool(pool_ufo)
 
 !--------Remove temporary pool
    call mpas_pool_empty_pool(Traj_subFields)
