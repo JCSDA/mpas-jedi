@@ -843,7 +843,6 @@ subroutine interp(fld, locs, vars, gom)
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
-
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) ) 
        enddo

@@ -13,7 +13,7 @@
       "date": "2016-03-04T06:00:00Z"
     },
     "date": "2016-03-04T06:00:00Z",
-    "norm-file": "197.497",
+    "norm-file": "197.58275636070442",
     "StateGenerate" : {
       "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "filename": "./x1.2562.init.nc",
@@ -21,7 +21,7 @@
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-gen": "197.497",
+    "norm-gen": "197.58275636070442",
     "tolerance": "0.005",
     "Locations": {
       "lats": [0.0, 0.2, 0.3, -0.1],
