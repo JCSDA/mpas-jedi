@@ -14,4 +14,4 @@ int main(int argc,  char ** argv) {
   oops::ExternalDFI<lfric::LfricTraits> dfi;
   run.execute(dfi);
   return 0;
-};
+}

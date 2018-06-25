@@ -62,7 +62,8 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   static const std::string classname() {return "mpas::IncrementMPAS";}
 
 /// Constructor, destructor
-  IncrementMPAS(const GeometryMPAS &, const oops::Variables &, const util::DateTime &);
+  IncrementMPAS(const GeometryMPAS &, const oops::Variables &,
+                const util::DateTime &);
   IncrementMPAS(const GeometryMPAS &, const IncrementMPAS &);
   IncrementMPAS(const IncrementMPAS &, const bool);
   IncrementMPAS(const IncrementMPAS &);
@@ -83,8 +84,10 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void dirac(const eckit::Configuration &);
 
 /// Get increment values at observation locations
-  void getValuesTL(const ioda::Locations &, const oops::Variables &, ufo::GeoVaLs &, const Nothing &) const;
-  void getValuesAD(const ioda::Locations &, const oops::Variables &, const ufo::GeoVaLs &, const Nothing &);
+  void getValuesTL(const ioda::Locations &, const oops::Variables &,
+                   ufo::GeoVaLs &, const Nothing &) const;
+  void getValuesAD(const ioda::Locations &, const oops::Variables &,
+                   const ufo::GeoVaLs &, const Nothing &);
 
 /// Interpolate to observation location
   void interpolateTL(const ioda::Locations &, const oops::Variables &,
@@ -104,7 +107,7 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void convert_to(oops::UnstructuredGrid &) const;
   void convert_from(const oops::UnstructuredGrid &);
 
-//Access to fields
+/// Access to fields
   FieldsMPAS & fields() {return *fields_;}
   const FieldsMPAS & fields() const {return *fields_;}
 

@@ -1,5 +1,12 @@
-#ifndef MPAS_RUNMPAS_H_
-#define MPAS_RUNMPAS_H_
+/*
+ * (C) Copyright 2018 UCAR
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+#ifndef MPAS_MODEL_RUNMPAS_H_
+#define MPAS_MODEL_RUNMPAS_H_
 
 #include "oops/runs/Run.h"
 
@@ -20,4 +27,4 @@ class RunMPAS : public oops::Run {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_RUNMPAS_H_
+#endif  // MPAS_MODEL_RUNMPAS_H_

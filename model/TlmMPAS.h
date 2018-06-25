@@ -45,7 +45,8 @@ class TlmMPAS: public oops::LinearModelBase<MPASTraits>,
   ~TlmMPAS();
 
 /// Model trajectory computation
-  void setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &) override;
+  void setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &)
+                    override;
 
 /// Run TLM and its adjoint
   void initializeTL(IncrementMPAS &) const override;

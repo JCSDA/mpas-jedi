@@ -14,5 +14,5 @@ int main(int argc,  char ** argv) {
   test::LinearModel<mpas::MPASTraits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

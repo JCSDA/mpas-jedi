@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "TlmIdMPAS.h"
+#include "model/TlmIdMPAS.h"
 
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
@@ -20,9 +20,11 @@
 namespace mpas {
 
 // -----------------------------------------------------------------------------
-static oops::LinearModelMaker<MPASTraits, TlmIdMPAS> makerMPASIdTLM_("MPASIdTLM");
+static oops::LinearModelMaker<MPASTraits, TlmIdMPAS>
+                             makerMPASIdTLM_("MPASIdTLM");
 // -----------------------------------------------------------------------------
-TlmIdMPAS::TlmIdMPAS(const GeometryMPAS & resol, const eckit::Configuration & tlConf)
+TlmIdMPAS::TlmIdMPAS(const GeometryMPAS & resol,
+                     const eckit::Configuration & tlConf)
   : keyConfig_(0), tstep_(), resol_(resol)
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));
@@ -38,15 +40,18 @@ TlmIdMPAS::~TlmIdMPAS() {
   oops::Log::trace() << "TlmIdMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void TlmIdMPAS::setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &) {}
+void TlmIdMPAS::setTrajectory(const StateMPAS &, StateMPAS &,
+                              const ModelBiasMPAS &) {}
 // -----------------------------------------------------------------------------
 void TlmIdMPAS::initializeTL(IncrementMPAS & dx) const {
-  oops::Log::debug() << "TlmIdMPAS::initializeTL BJJ input" << dx.fields() << std::endl;
+  oops::Log::debug() << "TlmIdMPAS::initializeTL BJJ input" << dx.fields()
+                     << std::endl;
   mpas_model_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
   oops::Log::debug() << "TlmIdMPAS::initializeTL" << dx.fields() << std::endl;
 }
 // -----------------------------------------------------------------------------
-void TlmIdMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
+void TlmIdMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &)
+                      const {
   dx.updateTime(tstep_);
 }
 // -----------------------------------------------------------------------------
@@ -63,7 +68,8 @@ void TlmIdMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
 }
 // -----------------------------------------------------------------------------
 void TlmIdMPAS::finalizeAD(IncrementMPAS & dx) const {
-  oops::Log::debug() << "TlmIdMPAS::finalizeAD BJJ input" << dx.fields() << std::endl;
+  oops::Log::debug() << "TlmIdMPAS::finalizeAD BJJ input" << dx.fields()
+                     << std::endl;
   mpas_model_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
   oops::Log::debug() << "TlmIdMPAS::finalizeAD" << dx.fields() << std::endl;
 }

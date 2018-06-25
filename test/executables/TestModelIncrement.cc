@@ -14,5 +14,5 @@ int main(const int argc, const char ** argv) {
   test::ModelIncrement<mpas::MPASTraits> tests;
   run.execute(tests);
   return 0;
-};
+}
 

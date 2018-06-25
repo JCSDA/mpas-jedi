@@ -14,4 +14,4 @@ int main(int argc,  char ** argv) {
   oops::Forecast<mpas::MPASTraits> fc;
   run.execute(fc);
   return 0;
-};
+}

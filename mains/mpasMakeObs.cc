@@ -14,4 +14,4 @@ int main(int argc,  char ** argv) {
   oops::MakeObs<lfric::LfricTraits> mkobs;
   run.execute(mkobs);
   return 0;
-};
+}

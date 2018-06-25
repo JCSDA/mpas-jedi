@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef MPAS_MODEL_INSTANTIATEMPASLOCALIZATIONFACTORY_H_
-#define MPAS_MODEL_INSTANTIATEMPASLOCALIZATIONFACTORY_H_
+#ifndef MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
+#define MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 
 #include "oops/interface/LocalizationBase.h"
 #include "LocalizationMatrixMPAS.h"
@@ -18,10 +18,11 @@
 namespace mpas {
 
 void instantiateLocalizationFactory() {
-  //static oops::LocalizationMaker<mpas::MPASTraits, LocalizationMatrix> makerWSpeed_("MPAS");
+  // static oops::LocalizationMaker<mpas::MPASTraits, LocalizationMatrix>
+  //               makerWSpeed_("MPAS");
 }
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_INSTANTIATEMPASLOCALIZATIONFACTORY_H_
+#endif  // MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 
