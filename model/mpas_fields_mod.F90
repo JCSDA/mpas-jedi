@@ -611,7 +611,7 @@ subroutine interp(fld, locs, vars, gom)
    type(bump_type), pointer :: pbump
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
-   real(kind=kind_real), allocatable :: mod_field(:,:)
+   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
    
@@ -622,6 +622,8 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
+   integer, dimension(:)          :: index_nn
+   real (kind=kind_real), dimension(:) :: weight_nn
 
    real(kind=kind_real) :: wdir           !< for wind direction
    integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
@@ -796,24 +798,40 @@ subroutine interp(fld, locs, vars, gom)
      call mpas_pool_get_array(fld % auxFields, "isltyp", i1d_ptr_b)
      write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
 
+
+     !initialize vector of nearest neighbor indices
+     allocate( index_nn(nobs) )
+!     allocate( weight_nn(nobs) )
+
+     do ii=1,nobs
+       !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
+!       !Generic method for any interpolation scheme
+!       weight_nn = 0.D0
+!       where ( pbump%obsop%h%row(1:pbump%obsop%h%n_s) .eq. ii ) 
+!          weight_nn(1:pbump%obsop%h%n_s) = pbump%obsop%h%S(1:pbump%obsop%h%n_s)
+!       end where
+!       jj = maxloc(weight_nn,1)
+
+       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
+       jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+
+       !Store index of BUMP extended vector
+       index_nn(ii) = pbump%obsop%h%col(jj)
+     enddo
+!     deallocate(weight_nn)
+
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       !BJJ: How I implement the nearest neighbor interp. using existing barycentric interp. weights
-       !write(*,*) 'BJJ iobs, n_s, n_src, n_dst =', ii, pbump%obsop%h%n_s, pbump%obsop%h%n_src, pbump%obsop%h%n_dst
-       !write(*,*) '          size(row), size(col) =', size(pbump%obsop%h%row), size(pbump%obsop%h%col)
-       !do ii=1,odata%h%n_s;write(*,*) 'BJJ ith operator, ROW = ROW + S * COL =', ii, odata%h%row(ii), odata%h%S(ii), odata%h%col(ii)
-       !compare odata%h%S( 3*(ii-1) + 1, 3*(ii-1) + 2, 3*(ii-1) + 3 ), find minimum, then specify odata%h%col( that index ) for geoval.
-       !write(*,*) minloc(odata%h%S), minloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 ))
+       mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+       allocate( mod_field_ext(pbump%obsop%nc0b,1) )
+       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         !write(*,*) ' i-th obs, max weight, Cell index=',ii, maxval(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
-         !            maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )), &
-         !            odata%h%col( 3*(ii-1) + maxloc(odata%h%S( 3*(ii-1)+1:3*(ii-1)+3 )) )
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
-         gom%geovals(ivar)%vals(1,ii) = i1d_ptr_a(jj)
+         gom%geovals(ivar)%vals(1,ii) = model_field_ext( index_nn(ii), 1 )
        enddo
+       deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
@@ -822,10 +840,14 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+       allocate( mod_field_ext(pbump%obsop%nc0b,1) )
+       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
+
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = convert_type_veg( i1d_ptr_a(jj) )  !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) ) 
        enddo
+       deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
@@ -834,12 +856,17 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       mod_field(:,1) = real( i1d_ptr_b(1:ngrid) )
+       allocate( mod_field_ext(pbump%obsop%nc0b,1) )
+       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1)
-         gom%geovals(ivar)%vals(1,ii) = convert_type_soil( i1d_ptr_b(jj) )  !nearest-interp. / maximum-weight specific.
+         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( mod_field_ext( index_nn(ii), 1 ) ) )
        enddo
+       deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
+
+     deallocate(index_nn)
 
    endif  !---end special cases
 
@@ -872,7 +899,7 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       mod_field(:,1) = real(i1d_ptr_a(:))
+       mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
        call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -882,7 +909,7 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       mod_field(:,1) = r1d_ptr_a(:)
+       mod_field(:,1) = r1d_ptr_a(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -894,7 +921,7 @@ subroutine interp(fld, locs, vars, gom)
        gom%geovals(ivarw)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
-       mod_field(:,1) = r1d_ptr_b(:)
+       mod_field(:,1) = r1d_ptr_b(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
        gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
        do ii=1, nobs
