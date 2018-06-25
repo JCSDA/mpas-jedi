@@ -686,7 +686,7 @@ subroutine interp(fld, locs, vars, gom)
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-              mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+              mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
               !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
               gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
@@ -801,31 +801,41 @@ subroutine interp(fld, locs, vars, gom)
 
      !initialize vector of nearest neighbor indices
      allocate( index_nn(nobs) )
-!     allocate( weight_nn(nobs) )
+     allocate( weight_nn(pbump%obsop%h%n_s) )
+
+!WRITE(*,*) 'size(pbump%obsop%h%S) nobs pbump%obsop%h%n_s'
+!WRITE(*,*) size(pbump%obsop%h%S), nobs, pbump%obsop%h%n_s
+!WRITE(*,*) size(pbump%obsop%h%col), size(pbump%obsop%h%row)
+!WRITE(*,*) minval(pbump%obsop%h%col), minval(pbump%obsop%h%row)
+!WRITE(*,*) maxval(pbump%obsop%h%col), maxval(pbump%obsop%h%row)
 
      do ii=1,nobs
        !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
-!       !Generic method for any interpolation scheme
-!       weight_nn = 0.D0
-!       where ( pbump%obsop%h%row(1:pbump%obsop%h%n_s) .eq. ii ) 
-!          weight_nn(1:pbump%obsop%h%n_s) = pbump%obsop%h%S(1:pbump%obsop%h%n_s)
-!       end where
-!       jj = maxloc(weight_nn,1)
+       !Generic method for any interpolation scheme
+       weight_nn = 0.D0
+       where ( pbump%obsop%h%row(1:pbump%obsop%h%n_s) .eq. ii ) 
+          weight_nn(1:pbump%obsop%h%n_s) = pbump%obsop%h%S(1:pbump%obsop%h%n_s)
+       end where
+       jj = maxloc(weight_nn,1)
 
-       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
-       jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+!       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
+!       jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+!WRITE(*,*) '1', ii, jj
+!WRITE(*,*) '2', pbump%obsop%h%S(jj)
+!WRITE(*,*) '3', count(weight_nn .gt. 0._kind_real)
 
        !Store index of BUMP extended vector
        index_nn(ii) = pbump%obsop%h%col(jj)
      enddo
-!     deallocate(weight_nn)
+     deallocate(weight_nn)
+!WRITE(*,*) '3'
 
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+       mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
@@ -840,11 +850,11 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       mod_field(:,1) = real( i1d_ptr_a(1:ngrid) )
+       mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) ) 
+         gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) , kind_real)
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -855,11 +865,11 @@ subroutine interp(fld, locs, vars, gom)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       mod_field(:,1) = real( i1d_ptr_b(1:ngrid) )
+       mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( int(mod_field_ext( index_nn(ii), 1 )) ) )
+         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( int(mod_field_ext( index_nn(ii), 1 )) ), kind_real)
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
