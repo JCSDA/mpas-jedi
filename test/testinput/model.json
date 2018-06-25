@@ -13,7 +13,7 @@
   },
   "ModelTest": {
     "fclength": "PT2H",
-    "finalnorm": 197.497,
+    "finalnorm": 197.56901741507093,
     "tolerance": 0.005
     },
   "ModelBias": null,

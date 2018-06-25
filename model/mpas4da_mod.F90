@@ -1115,7 +1115,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
-   real(kind=kind_real) :: globalSum, globalMin, globalMax, dimtot, prodtot
+   real(kind=kind_real) :: globalSum, globalMin, globalMax, dimtot, dimtot_global, prodtot
 
    integer :: jj, ndims
    integer, pointer :: solveDim1, solveDim2, solveDim3
@@ -1153,13 +1153,14 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims)), solveDim1)
                   end if
                   dimtot = real(solveDim1,kind_real)
-                  prodtot = sum(field1d % array(1:solveDim1)*field1d % array(1:solveDim1)/dimtot)
+                  prodtot = sum(field1d % array(1:solveDim1)**2 )
+                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   call mpas_dmpar_min_real(dminfo, minval(field1d % array(1:solveDim1)), globalMin)
                   call mpas_dmpar_max_real(dminfo, maxval(field1d % array(1:solveDim1)), globalMax)
                   pstat(1,jj) = globalMin
                   pstat(2,jj) = globalMax
-                  pstat(3,jj) = globalSum
+                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
 
                else if (ndims == 2) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
@@ -1174,15 +1175,16 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                       call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1)), solveDim2)
                   end if
                   dimtot  = real(solveDim1*solveDim2,kind_real)
-                  prodtot = sqrt(sum((field2d % array(1:solveDim1,1:solveDim2))**2 / dimtot))
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
+                  prodtot = sum(field2d % array(1:solveDim2,1:solveDim1)**2 )
+                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+                  !BJJ ?? call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-                  call mpas_dmpar_min_real(dminfo, minval(field2d % array(1:solveDim1,1:solveDim2)), globalMin)
-                  call mpas_dmpar_max_real(dminfo, maxval(field2d % array(1:solveDim1,1:solveDim2)), globalMax)
+                  call mpas_dmpar_min_real(dminfo, minval(field2d % array(1:solveDim2,1:solveDim1)), globalMin)
+                  call mpas_dmpar_max_real(dminfo, maxval(field2d % array(1:solveDim2,1:solveDim1)), globalMax)
                   write(*,*)'gpnorm prodtot: ',prodtot, dimtot
                   pstat(1,jj) = globalMin
                   pstat(2,jj) = globalMax
-                  pstat(3,jj) = globalSum
+                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
 
                else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
@@ -1202,14 +1204,15 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2)), solveDim3)
                   end if
                   dimtot  = real(solveDim1*solveDim2*solveDim3,kind_real)
-                  prodtot = sum(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)**2 / dimtot)
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
+                  prodtot = sum(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)**2 )
+                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+                  !BJJ ?? call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-                  call mpas_dmpar_min_real(dminfo, minval(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)), globalMin)
-                  call mpas_dmpar_max_real(dminfo, maxval(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)), globalMax)
+                  call mpas_dmpar_min_real(dminfo, minval(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)), globalMin)
+                  call mpas_dmpar_max_real(dminfo, maxval(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)), globalMax)
                   pstat(1,jj) = globalMin
                   pstat(2,jj) = globalMax
-                  pstat(3,jj) = globalSum
+                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
                end if
 
                write(0,*)'Variable: ',trim(poolItr % memberName),jj
@@ -1248,7 +1251,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
-   real(kind=kind_real) :: dimtot, prodtot, rmstot, globalSum
+   real(kind=kind_real) :: dimtot, dimtot_global, prodtot, rmstot, globalSum
 
    integer :: jj, ndims
    integer, pointer :: solveDim1, solveDim2, solveDim3
@@ -1280,7 +1283,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims)), solveDim1)
                   end if
                   dimtot  = real(solveDim1,kind_real) + dimtot
-                  prodtot = sum(field1d % array(1:solveDim1)*field1d % array(1:solveDim1))
+                  prodtot = sum( field1d % array(1:solveDim1)**2 )
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   rmstot  = rmstot + globalSum
 
@@ -1297,7 +1300,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                       call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1)), solveDim2)
                   end if
                   dimtot  = real(solveDim1*solveDim2,kind_real) + dimtot
-                  prodtot = sum((field2d % array(1:solveDim1,1:solveDim2))**2)
+                  prodtot = sum( field2d % array(1:solveDim2,1:solveDim1)**2 )
                   write(*,*)'fldrms dims: ',solveDim1, solveDim2
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   rmstot  = rmstot + globalSum
@@ -1322,7 +1325,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2)), solveDim3)
                   end if
                   dimtot  = real(solveDim1*solveDim2*solveDim3,kind_real) + dimtot
-                  prodtot = sum(field3d % array(:,:,:))**2
+                  prodtot = sum( field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)**2 )
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   rmstot  = rmstot + globalSum
  
@@ -1334,8 +1337,9 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
 
       end do
 
-      fldrms = sqrt(rmstot / dimtot)
-      write(*,*)'fldrms: ',fldrms
+      call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+      fldrms = sqrt(rmstot / dimtot_global)
+      write(*,*)'fldrms = rmstot / dimtot_global : ',fldrms,rmstot,dimtot_global
       
 
   end subroutine da_fldrms
