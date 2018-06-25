@@ -336,7 +336,7 @@ subroutine add_incr(self,rhs)
    type(mpas_field), intent(in)    :: rhs
    character(len=StrKIND) :: kind_op
 
-   ! GD: I don't see any difference than for self_add other than subFields can contain
+   ! GD: I don''t see any difference than for self_add other than subFields can contain
    ! different variables than mpas_field and the resolution of incr can be different. 
 
    if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
@@ -411,7 +411,8 @@ subroutine read_file(fld, c_conf, vdate)
    sdate = config_get_string(c_conf,len(sdate),"date")
    call datetime_set(sdate, vdate)
 
-   temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
+   temp_filename = config_get_string(c_conf,len(temp_filename),&
+                      "filename")
    write(*,*)'Reading ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
@@ -461,7 +462,8 @@ use duration_mod
 
    call datetime_to_string(vdate, validitydate)
    write(*,*)'==> write fields at ',trim(validitydate)
-   temp_filename = config_get_string(c_conf,len(temp_filename),"filename")
+   temp_filename = config_get_string(c_conf,len(temp_filename)&
+                      ,"filename")
    write(*,*)'==> writing ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
@@ -611,7 +613,7 @@ subroutine interp(fld, locs, vars, gom)
    type(bump_type), pointer :: pbump
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
-   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
+   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:), latlon_ext(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
    
@@ -785,6 +787,8 @@ subroutine interp(fld, locs, vars, gom)
    endif  !---end special cases
 
 
+
+
    !---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
    if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
@@ -803,32 +807,41 @@ subroutine interp(fld, locs, vars, gom)
      allocate( index_nn(nobs) )
      allocate( weight_nn(pbump%obsop%h%n_s) )
 
-!WRITE(*,*) 'size(pbump%obsop%h%S) nobs pbump%obsop%h%n_s'
-!WRITE(*,*) size(pbump%obsop%h%S), nobs, pbump%obsop%h%n_s
-!WRITE(*,*) size(pbump%obsop%h%col), size(pbump%obsop%h%row)
-!WRITE(*,*) minval(pbump%obsop%h%col), minval(pbump%obsop%h%row)
-!WRITE(*,*) maxval(pbump%obsop%h%col), maxval(pbump%obsop%h%row)
+!WRITE(*,*) 'size(pbump%obsop%h%S) nobs pbump%obsop%h%n_s' !JJG DEBUG
+!WRITE(*,*) size(pbump%obsop%h%S), nobs, pbump%obsop%h%n_s !JJG DEBUG
+!WRITE(*,*) size(pbump%obsop%h%col), size(pbump%obsop%h%row) !JJG DEBUG
+!WRITE(*,*) minval(pbump%obsop%h%col), minval(pbump%obsop%h%row) !JJG DEBUG
+!WRITE(*,*) maxval(pbump%obsop%h%col), maxval(pbump%obsop%h%row) !JJG DEBUG
+
+allocate( latlon_ext(pbump%obsop%nc0b,2) ) !JJG DEBUG
+mod_field(:,1) = fld % geom % latCell(1:ngrid) / deg2rad !JJG DEBUG
+call pbump%obsop%com%ext( 1, mod_field,latlon_ext(:,1:1)) !JJG DEBUG
+mod_field(:,1) = fld % geom % lonCell(1:ngrid) / deg2rad !JJG DEBUG
+call pbump%obsop%com%ext( 1, mod_field,latlon_ext(:,2:2)) !JJG DEBUG
 
      do ii=1,nobs
        !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
        !Generic method for any interpolation scheme
        weight_nn = 0.D0
-       where ( pbump%obsop%h%row(1:pbump%obsop%h%n_s) .eq. ii ) 
-          weight_nn(1:pbump%obsop%h%n_s) = pbump%obsop%h%S(1:pbump%obsop%h%n_s)
+       where ( pbump%obsop%h%row .eq. ii ) 
+          weight_nn = pbump%obsop%h%S
        end where
        jj = maxloc(weight_nn,1)
 
 !       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
 !       jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
-!WRITE(*,*) '1', ii, jj
-!WRITE(*,*) '2', pbump%obsop%h%S(jj)
-!WRITE(*,*) '3', count(weight_nn .gt. 0._kind_real)
 
        !Store index of BUMP extended vector
        index_nn(ii) = pbump%obsop%h%col(jj)
+
+WRITE(*,*) '1', ii, jj, index_nn(ii) !JJG DEBUG
+!WRITE(*,*) '2', pbump%obsop%h%S(jj) !JJG DEBUG
+!WRITE(*,*) '3', count(weight_nn .gt. 0._kind_real) !JJG DEBUG
+
      enddo
+
      deallocate(weight_nn)
-!WRITE(*,*) '3'
+!WRITE(*,*) '3' !JJG DEBUG
 
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
@@ -840,6 +853,20 @@ subroutine interp(fld, locs, vars, gom)
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = mod_field_ext( index_nn(ii), 1 )
+
+!WRITE(*,*) 'JJG1: ii, col(jj) = ', ii, index_nn(ii) !JJG DEBUG
+!WRITE(*,*) 'JJG2: LAT = ', &
+!           latlon_ext( index_nn(ii), 1 ), &
+!            ', LON = ', &
+!           latlon_ext( index_nn(ii), 2 ), &
+!            ', var_sfc_landtyp = ', &
+!           mod_field_ext( index_nn(ii), 1 ) !JJG DEBUG
+WRITE(*,*) 'JJGDEBUG ', &
+           latlon_ext( index_nn(ii), 1 ), & !JJG DEBUG
+           latlon_ext( index_nn(ii), 2 ), & !JJG DEBUG
+           mod_field_ext( index_nn(ii), 1 ) !JJG DEBUG
+
+
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -876,6 +903,9 @@ subroutine interp(fld, locs, vars, gom)
      endif
 
      deallocate(index_nn)
+
+deallocate( latlon_ext ) !JJG DEBUG
+
 
    endif  !---end special cases
 
