@@ -622,8 +622,8 @@ subroutine interp(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
-   integer, dimension(:)          :: index_nn
-   real (kind=kind_real), dimension(:) :: weight_nn
+   integer, allocatable  :: index_nn(:)
+   real (kind=kind_real), allocatable :: weight_nn(:)
 
    real(kind=kind_real) :: wdir           !< for wind direction
    integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
@@ -829,7 +829,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = model_field_ext( index_nn(ii), 1 )
+         gom%geovals(ivar)%vals(1,ii) = mod_field_ext( index_nn(ii), 1 )
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -859,7 +859,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( mod_field_ext( index_nn(ii), 1 ) ) )
+         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( int(mod_field_ext( index_nn(ii), 1 )) ) )
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
