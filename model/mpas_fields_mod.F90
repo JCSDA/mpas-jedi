@@ -613,7 +613,7 @@ subroutine interp(fld, locs, vars, gom)
    type(bump_type), pointer :: pbump
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
-   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:), latlon_ext(:,:)
+   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
    
@@ -807,18 +807,6 @@ subroutine interp(fld, locs, vars, gom)
      allocate( index_nn(nobs) )
      allocate( weight_nn(pbump%obsop%h%n_s) )
 
-!WRITE(*,*) 'size(pbump%obsop%h%S) nobs pbump%obsop%h%n_s' !JJG DEBUG
-!WRITE(*,*) size(pbump%obsop%h%S), nobs, pbump%obsop%h%n_s !JJG DEBUG
-!WRITE(*,*) size(pbump%obsop%h%col), size(pbump%obsop%h%row) !JJG DEBUG
-!WRITE(*,*) minval(pbump%obsop%h%col), minval(pbump%obsop%h%row) !JJG DEBUG
-!WRITE(*,*) maxval(pbump%obsop%h%col), maxval(pbump%obsop%h%row) !JJG DEBUG
-
-allocate( latlon_ext(pbump%obsop%nc0b,2) ) !JJG DEBUG
-mod_field(:,1) = fld % geom % latCell(1:ngrid) / deg2rad !JJG DEBUG
-call pbump%obsop%com%ext( 1, mod_field,latlon_ext(:,1:1)) !JJG DEBUG
-mod_field(:,1) = fld % geom % lonCell(1:ngrid) / deg2rad !JJG DEBUG
-call pbump%obsop%com%ext( 1, mod_field,latlon_ext(:,2:2)) !JJG DEBUG
-
      do ii=1,nobs
        !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
        !Generic method for any interpolation scheme
@@ -833,15 +821,9 @@ call pbump%obsop%com%ext( 1, mod_field,latlon_ext(:,2:2)) !JJG DEBUG
 
        !Store index of BUMP extended vector
        index_nn(ii) = pbump%obsop%h%col(jj)
-
-WRITE(*,*) '1', ii, jj, index_nn(ii) !JJG DEBUG
-!WRITE(*,*) '2', pbump%obsop%h%S(jj) !JJG DEBUG
-!WRITE(*,*) '3', count(weight_nn .gt. 0._kind_real) !JJG DEBUG
-
      enddo
 
      deallocate(weight_nn)
-!WRITE(*,*) '3' !JJG DEBUG
 
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
@@ -853,20 +835,6 @@ WRITE(*,*) '1', ii, jj, index_nn(ii) !JJG DEBUG
        call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = mod_field_ext( index_nn(ii), 1 )
-
-!WRITE(*,*) 'JJG1: ii, col(jj) = ', ii, index_nn(ii) !JJG DEBUG
-!WRITE(*,*) 'JJG2: LAT = ', &
-!           latlon_ext( index_nn(ii), 1 ), &
-!            ', LON = ', &
-!           latlon_ext( index_nn(ii), 2 ), &
-!            ', var_sfc_landtyp = ', &
-!           mod_field_ext( index_nn(ii), 1 ) !JJG DEBUG
-WRITE(*,*) 'JJGDEBUG ', &
-           latlon_ext( index_nn(ii), 1 ), & !JJG DEBUG
-           latlon_ext( index_nn(ii), 2 ), & !JJG DEBUG
-           mod_field_ext( index_nn(ii), 1 ) !JJG DEBUG
-
-
        enddo
        deallocate( mod_field_ext )
        write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -903,9 +871,6 @@ WRITE(*,*) 'JJGDEBUG ', &
      endif
 
      deallocate(index_nn)
-
-deallocate( latlon_ext ) !JJG DEBUG
-
 
    endif  !---end special cases
 
@@ -1598,7 +1563,6 @@ subroutine convert_from_ug(self, ug)
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
-                     !JJG: Since only local locations are updated/transferred, need HALO comms before using these fields in MPAS
                      r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
                    enddo
                  enddo
@@ -1609,6 +1573,9 @@ subroutine convert_from_ug(self, ug)
         end if
         end if
    end do
+
+   ! TODO: Since only local locations are updated/transferred from ug, 
+   !       need MPAS HALO comms before using these fields in MPAS
 
 end subroutine convert_from_ug
 
