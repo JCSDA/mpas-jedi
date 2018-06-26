@@ -810,7 +810,7 @@ subroutine interp(fld, locs, vars, gom)
      do ii=1,nobs
        !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
        !Generic method for any interpolation scheme
-       weight_nn = 0.D0
+       weight_nn = 0.0_kind_real
        where ( pbump%obsop%h%row .eq. ii ) 
           weight_nn = pbump%obsop%h%S
        end where
