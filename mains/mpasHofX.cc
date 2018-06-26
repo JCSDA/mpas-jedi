@@ -7,12 +7,10 @@
 
 #include "RunMPAS.h"
 #include "oops/runs/HofX.h"
-#include "ufo/instantiateObsOperatorFactory.h"
 #include "MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  ufo::instantiateObsOperatorFactory<mpas::MPASTraits>();
   oops::HofX<mpas::MPASTraits> hofx;
   run.execute(hofx);
   return 0;

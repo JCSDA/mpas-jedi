@@ -9,14 +9,10 @@
 #include "instantiateLocalizationFactory.h"
 #include "oops/runs/Variational.h"
 #include "RunMPAS.h"
-#include "ufo/instantiateObsOperatorFactory.h"
-#include "ufo/instantiateLinearObsOpFactory.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   mpas::instantiateLocalizationFactory();
-  ufo::instantiateObsOperatorFactory<mpas::MPASTraits>();
-  ufo::instantiateLinearObsOpFactory<mpas::MPASTraits>();
   oops::Variational<mpas::MPASTraits> var;
   run.execute(var);
   return 0;
