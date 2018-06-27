@@ -1109,7 +1109,7 @@ subroutine interp_tl(fld, locs, vars, gom)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex: ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
-                 mod_field(:,1) = r2d_ptr_a(jlev,:)
+                 mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
                  call pbump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -1250,8 +1250,8 @@ subroutine interp_ad(fld, locs, vars, gom)
                  !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
                  obs_field(:,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
                  call pbump%apply_obsop_ad(obs_field,mod_field)
-                 r2d_ptr_a(jlev,:) = 0.0_kind_real
-                 r2d_ptr_a(jlev,:) = r2d_ptr_a(jlev,:) + mod_field(:,1)
+                 r2d_ptr_a(jlev,1:ngrid) = 0.0_kind_real
+                 r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,1)
               end do
 
            else if (poolItr % nDims == 3) then
