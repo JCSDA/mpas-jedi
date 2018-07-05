@@ -523,11 +523,12 @@
 !-------------------------------------------------------------------------------------------
 
    !subroutine convert_mpas_field2ufoTL(pool_a, pool_b, pool_c, fieldname, nfield)
-   subroutine convert_mpas_field2ufoTL(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
+   !subroutine convert_mpas_field2ufoTL(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
+   subroutine convert_mpas_field2ufoTL(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(in) :: traj_pool_a, traj_pool_b ! subFields, auxFields
+   type (mpas_pool_type), pointer, intent(in) :: pool_traj !traj_pool_a, traj_pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(out) :: pool_c
    integer, intent(in) :: nfield
@@ -567,9 +568,9 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
-        call mpas_pool_get_array(traj_pool_a,    'theta', traj_r2d_a)
-        call mpas_pool_get_array(traj_pool_a, 'index_qv', traj_r2d_b)
-        call mpas_pool_get_array(traj_pool_b, 'pressure', traj_r2d_c)
+        call mpas_pool_get_array(pool_traj,    'theta', traj_r2d_a)
+        call mpas_pool_get_array(pool_traj, 'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(pool_traj, 'pressure', traj_r2d_c)
         write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
         write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
         write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
@@ -684,11 +685,12 @@
 !-------------------------------------------------------------------------------------------
 
    !subroutine convert_mpas_field2ufoAD(pool_a, pool_b, pool_c, fieldname, nfield)
-   subroutine convert_mpas_field2ufoAD(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
+   !subroutine convert_mpas_field2ufoAD(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
+   subroutine convert_mpas_field2ufoAD(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(inout) :: traj_pool_a, traj_pool_b ! subFields, auxFields
+   type (mpas_pool_type), pointer, intent(in   ) :: pool_traj !traj_pool_a, traj_pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(inout) :: pool_a, pool_b ! subFields, auxFields
    type (mpas_pool_type), pointer, intent(inout) :: pool_c
    integer, intent(in) :: nfield
@@ -731,9 +733,9 @@
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
 
-        call mpas_pool_get_array(traj_pool_a,    'theta', traj_r2d_a)
-        call mpas_pool_get_array(traj_pool_a, 'index_qv', traj_r2d_b)
-        call mpas_pool_get_array(traj_pool_b, 'pressure', traj_r2d_c)
+        call mpas_pool_get_array(pool_traj,    'theta', traj_r2d_a)
+        call mpas_pool_get_array(pool_traj, 'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(pool_traj, 'pressure', traj_r2d_c)
         write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
         write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
         write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)

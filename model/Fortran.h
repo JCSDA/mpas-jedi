@@ -44,6 +44,8 @@ typedef int F90hop;
 typedef int F90odb;
 // Localization matrix
 typedef int F90lclz;
+// ObOp trajectory
+typedef int F90ootrj;
 
 /// Interface to Fortran MPAS model
 /*!
@@ -111,15 +113,18 @@ extern "C" {
                                  const eckit::Configuration * const *,
                                  const util::DateTime * const *);
 
-  void mpas_field_interp_f90(const F90flds &, const F90locs &,
+  void mpas_field_getvalues_notraj_f90(const F90flds &, const F90locs &,
                              const eckit::Configuration * const *,
                              const F90goms &);
-  void mpas_field_interp_tl_f90(const F90flds &, const F90locs &,
+  void mpas_field_getvalues_f90(const F90flds &, const F90locs &,
                              const eckit::Configuration * const *,
-                             const F90goms &);
-  void mpas_field_interp_ad_f90(const F90flds &, const F90locs &,
+                             const F90goms &, const F90ootrj &);
+  void mpas_field_getvalues_tl_f90(const F90flds &, const F90locs &,
                              const eckit::Configuration * const *,
-                             const F90goms &);
+                             const F90goms &, const F90ootrj &);
+  void mpas_field_getvalues_ad_f90(const F90flds &, const F90locs &,
+                             const eckit::Configuration * const *,
+                             const F90goms &, const F90ootrj &);
   void mpas_field_define_f90(const F90flds &, const int &);
   void mpas_field_convert_to_f90(const F90flds &, const int &);
   void mpas_field_convert_from_f90(const F90flds &, const int &);
@@ -130,6 +135,9 @@ extern "C" {
 
   void mpas_field_dirac_f90(const F90flds &,
                             const eckit::Configuration * const *);
+
+  void mpas_getvaltraj_setup_f90(const F90ootrj &);
+  void mpas_getvaltraj_delete_f90(const F90ootrj &);
 
 // -----------------------------------------------------------------------------
 //  Background error

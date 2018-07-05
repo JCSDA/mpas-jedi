@@ -14,6 +14,7 @@ use ufo_vars_mod
 use mpas_kinds, only : kind_real
 use ioda_locs_mod
 use ufo_geovals_mod
+use mpas_getvaltraj_mod, only: mpas_getvaltraj
 
 use mpas_derived_types
 use mpas_framework
@@ -26,6 +27,7 @@ use mpas2ufo_vars_mod
 use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
 use mpas_pool_routines
+use mpas_field_routines
 use mpas_constants
 
 implicit none
@@ -36,7 +38,7 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
-        & change_resol, interp, interp_tl, interp_ad, convert_to_ug, convert_from_ug, &
+        & change_resol, getvalues, getvalues_tl, getvalues_ad, convert_to_ug, convert_from_ug, &
         & dirac
 public :: mpas_field_registry
 
@@ -599,18 +601,24 @@ end subroutine dirac
 
 ! ------------------------------------------------------------------------------
 
-subroutine interp(fld, locs, vars, gom)
+subroutine getvalues(fld, locs, vars, gom, traj)
 
    use type_bump, only: bump_type
    use mpas2ufo_vars_mod !, only: usgs_to_crtm_mw, wrf_to_crtm_soil
 
    implicit none
-   type(mpas_field),  intent(in)    :: fld
-   type(ioda_locs),   intent(in)    :: locs
-   type(ufo_vars),    intent(in)    :: vars
-   type(ufo_geovals), intent(inout) :: gom
+   type(mpas_field),                        intent(in)    :: fld
+   type(ioda_locs),                         intent(in)    :: locs
+   type(ufo_vars),                          intent(in)    :: vars
+   type(ufo_geovals),                       intent(inout) :: gom
+   type(mpas_getvaltraj), optional, target, intent(inout) :: traj
    
+   character(len=*), parameter :: myname = 'getvalues'
+
+   type(bump_type), target  :: bump
    type(bump_type), pointer :: pbump
+   logical,         target  :: bump_alloc
+   logical,         pointer :: pbumpa
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
@@ -626,6 +634,9 @@ subroutine interp(fld, locs, vars, gom)
    integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
    integer, allocatable  :: index_nn(:)
    real (kind=kind_real), allocatable :: weight_nn(:)
+   type (mpas_pool_type), pointer :: pool_tmp  !< temporary pool for setting trajectory
+   type (field2DReal), pointer :: field2d => null()     !< for setting trajectory
+   type (field2DReal), pointer :: field2d_src => null() !< for setting trajectory
 
    real(kind=kind_real) :: wdir           !< for wind direction
    integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
@@ -637,11 +648,46 @@ subroutine interp(fld, locs, vars, gom)
    nobs = locs%nlocs 
    write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("nl", fld, locs, vars, gom)
-   
-   ! Calculate interpolation weight using BUMP
-   ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pbump)
-   write(*,*)'interp: after initialize_interp'
+
+   ! Allocate and set trajectory for obsop.
+   if (present(traj)) then
+
+     pbump => traj % bump
+
+     if (.not. traj%lalloc) then
+
+       traj%ngrid = ngrid
+       traj%nobs = nobs
+
+       call mpas_pool_create_pool( pool_tmp, traj % nsize )
+       call mpas_pool_get_field(fld % subFields, 'theta', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'theta', field2d_src)
+       call mpas_pool_get_field(fld % subFields, 'index_qv', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'index_qv', field2d_src)
+       call mpas_pool_get_field(fld % auxFields, 'pressure', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'pressure', field2d_src)
+
+       call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
+
+       pbumpa => traj%lalloc
+
+    endif
+
+  else
+
+    pbump => bump
+    bump_alloc = .false.
+    pbumpa => bump_alloc
+
+  endif
+  
+  if (.not. pbumpa) then 
+    ! Calculate interpolation weight using BUMP
+    ! ------------------------------------------
+    call initialize_interp(fld%geom, locs, pbump)
+    pbumpa = .true.
+    write(*,*)'interp: after initialize_interp'
+  endif
    
    !Make sure the return values are allocated and set
    !-------------------------------------------------
@@ -832,7 +878,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
-       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
+       call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = mod_field_ext( index_nn(ii), 1 )
        enddo
@@ -847,7 +893,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
-       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
+       call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) , kind_real)
        enddo
@@ -862,7 +908,7 @@ subroutine interp(fld, locs, vars, gom)
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
-       call pbump%obsop%com%ext(1,mod_field,mod_field_ext)
+       call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
        do ii=1,nobs
          gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( int(mod_field_ext( index_nn(ii), 1 )) ), kind_real)
        enddo
@@ -975,29 +1021,30 @@ subroutine interp(fld, locs, vars, gom)
    endif
    endif  !--- OMG: end
 
+
+   nullify(pbump)
+
    deallocate(mod_field)
    deallocate(obs_field)
 
    call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-   write(*,*) '---- Leaving interp ---'
-end subroutine interp
+   write(*,*) '---- Leaving getvalues ---'
+end subroutine getvalues
 
 ! ------------------------------------------------------------------------------
 
-subroutine interp_tl(fld, locs, vars, gom)
+subroutine getvalues_tl(fld, locs, vars, gom, traj)
 
-   use type_bump, only: bump_type
-   
    implicit none
-   !type(mpas_field),  intent(in)    :: fld
-   type(mpas_field),  intent(inout) :: fld
-   type(ioda_locs),   intent(in)    :: locs
-   type(ufo_vars),    intent(in)    :: vars
-   type(ufo_geovals), intent(inout) :: gom
-   
-   type(bump_type), pointer :: pbump
+   type(mpas_field),      intent(inout) :: fld
+   type(ioda_locs),       intent(in)    :: locs
+   type(ufo_vars),        intent(in)    :: vars
+   type(ufo_geovals),     intent(inout) :: gom
+   type(mpas_getvaltraj), intent(in)    :: traj
+
+   character(len=*), parameter :: myname = 'getvalues_tl'
    
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -1009,24 +1056,18 @@ subroutine interp_tl(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   !--- BJJ tmp: Trajectory hack
-   character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
-   type (mpas_pool_type), pointer :: subFields1, auxFields1
-   type (mpas_pool_type), pointer :: Traj_subFields, Traj_auxFields
-   type (mpas_pool_type), pointer :: subFields3, auxFields3
-   integer :: ierr=0
    
+   ! Check traj is implemented
+   ! -------------------------
+   if (.not.traj%lalloc) &
+   call abor1_ftn(trim(myname)//" trajectory for this obs op not found")
+
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCellsSolve
-   nobs = locs%nlocs 
-   write(*,*)'interp_tl: ngrid, nobs = : ',ngrid, nobs
+   ngrid = fld%geom%nCellsSolve !or traj%ngrid
+   nobs = locs%nlocs            !or traj%nobs
+   write(*,*)'getvalues_tl: ngrid, nobs = : ',ngrid, nobs
    call interp_checks("tl", fld, locs, vars, gom)
-   
-   ! Calculate interpolation weight using BUMP
-   ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pbump)
-   write(*,*)'interp_tl: after initialize_interp'
    
    !Make sure the return values are allocated and set
    !-------------------------------------------------
@@ -1047,54 +1088,16 @@ subroutine interp_tl(fld, locs, vars, gom)
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'interp_tl: vars%nv       : ',vars%nv
-   write(0,*)'interp_tl: vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
+   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
    
-!--- BJJ tmp: Trajectory hack
-!---------Save Original TL--
-   call mpas_pool_create_pool(subFields1)
-   call mpas_pool_clone_pool(fld % subFields, subFields1)
-   call mpas_pool_create_pool(auxFields1)
-   call mpas_pool_clone_pool(fld % auxFields, auxFields1)
-!---------Read Traj. w/ fld--
-   streamID = 'output'
-   fld % manager => fld % geom % domain % streamManager
-   filename='/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc'
-   call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   write(*,*)'Reading ',trim(filename)
-   call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
-                           & rightNow=.True., ierr=ierr)
-   if ( ierr .ne. 0  ) then
-      call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
-   end if
-   !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % auxFields)
-   call da_copy_all2sub_fields(fld % geom % domain, fld % subFields)
-   call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields)
-!--------Save Traj 
-   call mpas_pool_create_pool(Traj_subFields)
-   call mpas_pool_clone_pool(fld % subFields, Traj_subFields)
-   call mpas_pool_create_pool(Traj_auxFields)
-   call mpas_pool_clone_pool(fld % auxFields, Traj_auxFields)
-!--------Recover Original TL : ONLY NEED subFields, NOT auxFields
-   call mpas_pool_empty_pool(fld % subFields)
-   call mpas_pool_destroy_pool(fld % subFields)
-   fld % nf = 5
-   call mpas_pool_create_pool(fld % subFields,fld % nf)
-   call mpas_pool_clone_pool(subFields1, fld % subFields)
-!   call mpas_pool_clone_pool(auxFields1, fld % auxFields)
-!--------Remove temporary pool
-   call mpas_pool_empty_pool(subFields1)
-   call mpas_pool_destroy_pool(subFields1)
-   call mpas_pool_empty_pool(auxFields1)
-   call mpas_pool_destroy_pool(auxFields1)
-!--------------------------
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    !call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
-   call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+  ! call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
+  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
@@ -1105,12 +1108,12 @@ subroutine interp_tl(fld, locs, vars, gom)
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-              write(*,*) "interp_tl: var=",trim(poolItr % memberName)
+              write(*,*) "getvalues_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex: ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
-                 call pbump%apply_obsop(mod_field,obs_field)
+                 call traj%bump%apply_obsop(mod_field,obs_field)
                  !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
                  gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
               end do
@@ -1129,26 +1132,21 @@ subroutine interp_tl(fld, locs, vars, gom)
    call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-!--------Remove temporary pool
-   call mpas_pool_empty_pool(Traj_subFields)
-   call mpas_pool_destroy_pool(Traj_subFields)
-
-   write(*,*) '---- Leaving interp_tl ---'
-end subroutine interp_tl
+   write(*,*) '---- Leaving getvalues_tl ---'
+end subroutine getvalues_tl
 
 ! ------------------------------------------------------------------------------
 
-subroutine interp_ad(fld, locs, vars, gom)
-
-   use type_bump, only: bump_type
+subroutine getvalues_ad(fld, locs, vars, gom, traj)
 
    implicit none
-   type(mpas_field),  intent(inout) :: fld
-   type(ioda_locs),   intent(in)    :: locs
-   type(ufo_vars),    intent(in)    :: vars
-   type(ufo_geovals), intent(inout) :: gom
+   type(mpas_field),      intent(inout) :: fld
+   type(ioda_locs),       intent(in)    :: locs
+   type(ufo_vars),        intent(in)    :: vars
+   type(ufo_geovals),     intent(inout) :: gom
+   type(mpas_getvaltraj), intent(in)    :: traj
 
-   type(bump_type), pointer :: pbump
+   character(len=*), parameter :: myname = 'getvalues_ad'
 
    integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -1160,24 +1158,18 @@ subroutine interp_ad(fld, locs, vars, gom)
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   !--- BJJ tmp: Trajectory hack
-   character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
-   type (mpas_pool_type), pointer :: subFields1, auxFields1
-   type (mpas_pool_type), pointer :: Traj_subFields, Traj_auxFields
-   type (mpas_pool_type), pointer :: subFields3, auxFields3
-   integer :: ierr=0
+
+   ! Check traj is implemented
+   ! -------------------------
+   if (.not.traj%lalloc) &
+   call abor1_ftn(trim(myname)//" trajectory for this obs op not found")
 
    ! Get grid dimensions and checks
    ! ------------------------------
-   ngrid = fld%geom%nCellsSolve
-   nobs = locs%nlocs
+   ngrid = fld%geom%nCellsSolve !or traj%ngrid
+   nobs = locs%nlocs            !or traj%nobs
 
    call interp_checks("ad", fld, locs, vars, gom)
-
-   ! Calculate interpolation weight using BUMP
-   ! ------------------------------------------
-   call initialize_interp(fld%geom, locs, pbump)
-   write(*,*)'interp_ad: after initialize_interp'
 
    !Create Buffer for interpolated values
    !--------------------------------------
@@ -1186,52 +1178,13 @@ subroutine interp_ad(fld, locs, vars, gom)
 
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'interp_ad: vars%nv       : ',vars%nv
-   write(0,*)'interp_ad: vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
+   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
 
-!--- BJJ tmp: Trajectory hack
-!---------Save Original AD--
-   call mpas_pool_create_pool(subFields1)
-   call mpas_pool_clone_pool(fld % subFields, subFields1)
-   call mpas_pool_create_pool(auxFields1)
-   call mpas_pool_clone_pool(fld % auxFields, auxFields1)
-!---------Read Traj. w/ fld--
-   streamID = 'output'
-   fld % manager => fld % geom % domain % streamManager
-   filename='/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc'
-   call MPAS_stream_mgr_set_property(fld % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   write(*,*)'Reading ',trim(filename)
-   call MPAS_stream_mgr_read(fld % manager, streamID=streamID, &
-                           & rightNow=.True., ierr=ierr)
-   if ( ierr .ne. 0  ) then
-      call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
-   end if
-   !-- BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % auxFields)
-   call da_copy_all2sub_fields(fld % geom % domain, fld % subFields)
-   call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields)
-!--------Save Traj 
-   call mpas_pool_create_pool(Traj_subFields)
-   call mpas_pool_clone_pool(fld % subFields, Traj_subFields)
-   call mpas_pool_create_pool(Traj_auxFields)
-   call mpas_pool_clone_pool(fld % auxFields, Traj_auxFields)
-!--------Recover Original AD : ONLY NEED subFields, NOT auxFields
-    write(*,*) 'here ---Recover Original AD'
-   call mpas_pool_empty_pool(fld % subFields)
-   call mpas_pool_destroy_pool(fld % subFields)
-   fld % nf = 5
-   call mpas_pool_create_pool(fld % subFields,fld % nf)
-   call mpas_pool_clone_pool(subFields1, fld % subFields)
-!   call mpas_pool_clone_pool(auxFields1, fld % auxFields)
-!--------Remove temporary pool
-   call mpas_pool_empty_pool(subFields1)
-   call mpas_pool_destroy_pool(subFields1)
-   call mpas_pool_empty_pool(auxFields1)
-   call mpas_pool_destroy_pool(auxFields1)
-!--------------------------
    !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-   call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+  ! call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
+  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
@@ -1249,7 +1202,7 @@ subroutine interp_ad(fld, locs, vars, gom)
               do jlev = 1, gom%geovals(ivar)%nval
                  !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
                  obs_field(:,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-                 call pbump%apply_obsop_ad(obs_field,mod_field)
+                 call traj%bump%apply_obsop_ad(obs_field,mod_field)
                  r2d_ptr_a(jlev,1:ngrid) = 0.0_kind_real
                  r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,1)
               end do
@@ -1262,8 +1215,9 @@ subroutine interp_ad(fld, locs, vars, gom)
    end do
 
    !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-   call convert_mpas_field2ufoAD(Traj_subFields, Traj_auxFields, &
-        fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+  ! call convert_mpas_field2ufoAD(Traj_subFields, Traj_auxFields, &
+  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoAD(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)
@@ -1271,16 +1225,12 @@ subroutine interp_ad(fld, locs, vars, gom)
    call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-!--------Remove temporary pool
-   call mpas_pool_empty_pool(Traj_subFields)
-   call mpas_pool_destroy_pool(Traj_subFields)
-
-   write(*,*) '---- Leaving interp_ad ---' 
-end subroutine interp_ad
+   write(*,*) '---- Leaving getvalues_ad ---' 
+end subroutine getvalues_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine initialize_interp(grid, locs, pbump)
+subroutine initialize_interp(grid, locs, bump)
 
    use mpas_geom_mod, only: mpas_geom
    use type_bump, only: bump_type
@@ -1288,75 +1238,82 @@ subroutine initialize_interp(grid, locs, pbump)
    implicit none
    type(mpas_geom),          intent(in)  :: grid
    type(ioda_locs),          intent(in)  :: locs
-   type(bump_type), pointer, intent(out) :: pbump
+   type(bump_type), pointer, intent(out) :: bump
    
    logical, save :: interp_initialized = .FALSE.
-   type(bump_type), save, target :: bump
    
-   integer :: mod_nz,mod_num,obs_num
+   integer :: mod_nz,mod_num
    real(kind=kind_real), allocatable :: mod_lat(:), mod_lon(:) 
    
    real(kind=kind_real), allocatable :: area(:),vunit(:,:)
    logical, allocatable :: lmask(:,:)
+
+   integer, save :: bumpcount = 0
+   character(len=5) :: cbumpcount
+   character(len=17) :: bump_nam_prefix
    
    integer :: ii, jj, ji, jvar, jlev
-  
+ 
+
+   ! Each bump%nam%prefix must be distinct
+   ! -------------------------------------
+   bumpcount = bumpcount + 1
+   write(cbumpcount,"(I0.2)") bumpcount
+   bump_nam_prefix = 'mpas_bump_data_'//cbumpcount
+
    !Get the Solution dimensions
    !---------------------------
    mod_nz  = grid%nVertLevels
    mod_num = grid%nCellsSolve
-   obs_num = locs%nlocs 
-   write(*,*)'initialize_interp mod_num,obs_num = ',mod_num,obs_num
+   write(*,*)'initialize_interp mod_num,obs_num = ', mod_num, locs%nlocs
    
    !Calculate interpolation weight using BUMP
    !------------------------------------------
-   if (.NOT.interp_initialized) then
-      allocate( mod_lat(mod_num), mod_lon(mod_num) )
-      mod_lat(:) = grid%latCell( 1:mod_num ) / deg2rad !- to Degrees
-      mod_lon(:) = grid%lonCell( 1:mod_num ) / deg2rad !- to Degrees
+    allocate( mod_lat(mod_num), mod_lon(mod_num) )
+    mod_lat(:) = grid%latCell( 1:mod_num ) / deg2rad !- to Degrees
+    mod_lon(:) = grid%lonCell( 1:mod_num ) / deg2rad !- to Degrees
 
-      !Important namelist options
-      bump%nam%prefix       = 'oops_data'  ! Prefix for files output
-      bump%nam%nobs         = obs_num      ! Number of observations
-      bump%nam%obsop_interp = 'bilin'      ! Interpolation type (bilinear)
-      bump%nam%obsdis       = 'local'      ! Observation distribution parameter ('random', 'local', or 'adjusted')
-   
-      !Less important namelist options (should not be changed)
-      bump%nam%default_seed        = .true.
-      bump%nam%new_hdiag           = .false.
-      bump%nam%new_param           = .false.
-      bump%nam%check_adjoints      = .false.
-      bump%nam%check_pos_def       = .false.
-      bump%nam%check_sqrt          = .false.
-      bump%nam%check_dirac         = .false.
-      bump%nam%check_randomization = .false.
-      bump%nam%check_consistency   = .false.
-      bump%nam%check_optimality    = .false.
-      bump%nam%new_lct             = .false.
-      bump%nam%new_obsop           = .true.
+    !Important namelist options
+    call bump%nam%init
 
-      !Initialize geometry
-      allocate(area(mod_num))
-      allocate(vunit(mod_num,1))
-      allocate(lmask(mod_num,1))
-      area  = 1.0          ! Dummy area, unit [m^2]
-      vunit = 1.0          ! Dummy vertical unit
-      lmask = .true.       ! Mask
+    bump%nam%prefix       = bump_nam_prefix  ! Prefix for files output
+    bump%nam%nobs         = locs%nlocs       ! Number of observations
+    bump%nam%obsop_interp = 'bilin'          ! Interpolation type (bilinear)
+    bump%nam%obsdis       = 'local'          ! Observation distribution parameter ('random', 'local', or 'adjusted')
+    bump%nam%diag_interp  = 'bilin'
+    bump%nam%local_diag   = .false.
 
-      !Initialize BUMP
-      call bump%setup_online(mpi_comm_world,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
-                             nobs=obs_num,lonobs=locs%lon(:),latobs=locs%lat(:))
+    !Less important namelist options (should not be changed)
+    bump%nam%default_seed        = .true.
+    bump%nam%new_hdiag           = .false.
+    bump%nam%new_param           = .false.
+    bump%nam%check_adjoints      = .false.
+    bump%nam%check_pos_def       = .false.
+    bump%nam%check_sqrt          = .false.
+    bump%nam%check_dirac         = .false.
+    bump%nam%check_randomization = .false.
+    bump%nam%check_consistency   = .false.
+    bump%nam%check_optimality    = .false.
+    bump%nam%new_lct             = .false.
+    bump%nam%new_obsop           = .true.
 
-      !Release memory
-      deallocate(area)
-      deallocate(vunit)
-      deallocate(lmask)
-      deallocate( mod_lat, mod_lon )
+    !Initialize geometry
+    allocate(area(mod_num))
+    allocate(vunit(mod_num,1))
+    allocate(lmask(mod_num,1))
+    area  = 1.0          ! Dummy area, unit [m^2]
+    vunit = 1.0          ! Dummy vertical unit
+    lmask = .true.       ! Mask
 
-      interp_initialized = .TRUE. 
-   endif
+    !Initialize BUMP
+    call bump%setup_online(mpi_comm_world,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
+                           nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
-   pbump => bump
+    !Release memory
+    deallocate(area)
+    deallocate(vunit)
+    deallocate(lmask)
+    deallocate( mod_lat, mod_lon )
 
 end subroutine initialize_interp
 
