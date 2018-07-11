@@ -5,28 +5,33 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPAS_MODEL_NOTHING_H_
-#define MPAS_MODEL_NOTHING_H_
+#ifndef MPAS_MODEL_GETVALUESTRAJMPAS_H_
+#define MPAS_MODEL_GETVALUESTRAJMPAS_H_
 
 #include <ostream>
 
 #include "oops/util/Printable.h"
+#include "Fortran.h"
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-class Nothing : public util::Printable {
+class GetValuesTrajMPAS : public util::Printable {
  public:
-  Nothing() {}
-  ~Nothing() {}
+  GetValuesTrajMPAS();
+  ~GetValuesTrajMPAS();
+
+  int & toFortran() {return keyGetValuesTraj_;}
+  const int & toFortran() const {return keyGetValuesTraj_;}
 
  private:
   void print(std::ostream &) const {}
+  F90ootrj keyGetValuesTraj_;
 };
 
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_NOTHING_H_
+#endif  // MPAS_MODEL_GETVALUESTRAJMPAS_H_

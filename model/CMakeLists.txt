@@ -1,13 +1,13 @@
 list( APPEND oops_mpas_src_files
 ErrorCovarianceMPAS.cc
 ErrorCovarianceMPAS.h
-#VariablesMPAS.cc
-#VariablesMPAS.h
 FieldsMPAS.cc
 FieldsMPAS.h
 Fortran.h
 GeometryMPAS.cc
 GeometryMPAS.h
+GetValuesTrajMPAS.cc
+GetValuesTrajMPAS.h
 IncrementMPAS.cc
 IncrementMPAS.h
 MPASTraits.h
@@ -26,25 +26,20 @@ TlmIdMPAS.cc
 TlmIdMPAS.h
 TlmMPAS.cc
 TlmMPAS.h
-Nothing.h
-#VariablesMPAS.cc
-#VariablesMPAS.h
 mpas_covariance_interface.F90
 mpas_covariance_mod.F90
 mpas_fields_interface.F90
 mpas_fields_mod.F90
 mpas_geom_interface.F90
 mpas_geom_mod.F90
+mpas_getvaltraj_mod.F90
 mpas_kinds_mod.F90
 mpas_model_interface.F90
 mpas_model_mod.F90
 mpas_trajectories.F90
-#tools_nc.f90
-#mpas_vars_mod.F90
 mpas4da_mod.F90
 mpas_run_interface.F90
 mpas2ufo_vars_mod.F90
-#mpas_fields_interp_mod.F90
 instantiateLocalizationFactory.h
 )
 

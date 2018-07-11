@@ -18,9 +18,9 @@
 #include "ModelBiasMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
+#include "GetValuesTrajMPAS.h"
 #include "IncrementMPAS.h"
 #include "ModelMPAS.h"
-#include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
@@ -108,32 +108,17 @@ void StateMPAS::getValues(const ioda::Locations & locs,
 // -----------------------------------------------------------------------------
 void StateMPAS::getValues(const ioda::Locations & locs,
                           const oops::Variables & vars,
-                          ufo::GeoVaLs & cols, Nothing &) const {
+                          ufo::GeoVaLs & cols,
+                          const GetValuesTrajMPAS & traj) const {
   oops::Log::trace() << "StateMPAS::getValues PPTRAJ" << std::endl;
-  fields_->getValues(locs, vars, cols);
-}
-// -----------------------------------------------------------------------------
-/// Interpolate to observation location
-// -----------------------------------------------------------------------------
-void StateMPAS::interpolate(const ioda::Locations & locs,
-                            const oops::Variables & vars,
-                            ufo::GeoVaLs & cols) const {
-  oops::Log::trace() << "StateMPAS::interpolate STANDARD ONE" << std::endl;
-  fields_->interpolate(locs, vars, cols);
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::interpolate(const ioda::Locations & locs,
-                            const oops::Variables & vars,
-                            ufo::GeoVaLs & cols, Nothing &) const {
-  oops::Log::trace() << "StateMPAS::interpolate PPTRAJ" << std::endl;
-  fields_->interpolate(locs, vars, cols);
+  fields_->getValues(locs, vars, cols, traj);
 }
 // -----------------------------------------------------------------------------
 /// Interpolate full fields
 // -----------------------------------------------------------------------------
 void StateMPAS::changeResolution(const StateMPAS & other) {
   fields_->changeResolution(*other.fields_);
-  oops::Log::trace() << "StateMPAS interpolated" << std::endl;
+  oops::Log::trace() << "StateMPAS changed resolution" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Interactions with Increments

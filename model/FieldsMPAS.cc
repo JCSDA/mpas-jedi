@@ -20,6 +20,7 @@
 #include "oops/util/Logger.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
+#include "GetValuesTrajMPAS.h"
 #include "oops/util/DateTime.h"
 
 // -----------------------------------------------------------------------------
@@ -130,42 +131,35 @@ void FieldsMPAS::getValues(const ioda::Locations & locs,
                            const oops::Variables & vars,
                            ufo::GeoVaLs & gom) const {
   const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  mpas_field_getvalues_notraj_f90(keyFlds_, locs.toFortran(), &conf,
+                                 gom.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::getValues(const ioda::Locations & locs,
+                           const oops::Variables & vars,
+                           ufo::GeoVaLs & gom,
+                           const GetValuesTrajMPAS & traj) const {
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_field_getvalues_f90(keyFlds_, locs.toFortran(), &conf,
+                           gom.toFortran(), traj.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::getValuesTL(const ioda::Locations & locs,
                              const oops::Variables & vars,
-                             ufo::GeoVaLs & gom) const {
+                             ufo::GeoVaLs & gom,
+                             const GetValuesTrajMPAS & traj) const {
   const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  mpas_field_getvalues_tl_f90(keyFlds_, locs.toFortran(), &conf,
+                              gom.toFortran(), traj.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::getValuesAD(const ioda::Locations & locs,
                              const oops::Variables & vars,
-                             const ufo::GeoVaLs & gom) {
+                             const ufo::GeoVaLs & gom,
+                             const GetValuesTrajMPAS & traj) {
   const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
-}
-// -----------------------------------------------------------------------------
-void FieldsMPAS::interpolate(const ioda::Locations & locs,
-                             const oops::Variables & vars,
-                             ufo::GeoVaLs & gom) const {
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
-}
-// -----------------------------------------------------------------------------
-void FieldsMPAS::interpolateTL(const ioda::Locations & locs,
-                               const oops::Variables & vars,
-                               ufo::GeoVaLs & gom) const {
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_tl_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
-}
-// -----------------------------------------------------------------------------
-void FieldsMPAS::interpolateAD(const ioda::Locations & locs,
-                               const oops::Variables & vars,
-                               const ufo::GeoVaLs & gom) {
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_field_interp_ad_f90(keyFlds_, locs.toFortran(), &conf, gom.toFortran());
+  mpas_field_getvalues_ad_f90(keyFlds_, locs.toFortran(), &conf,
+                              gom.toFortran(), traj.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::changeResolution(const FieldsMPAS & other) {

@@ -7,7 +7,7 @@ module mpas_geom_mod
 
 use iso_c_binding
 use config_mod
-use type_mpl, only: mpl
+!use type_mpl, only: mpl
 
 use mpas_derived_types
 use mpas_kind_types

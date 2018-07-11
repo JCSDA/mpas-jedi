@@ -17,8 +17,8 @@
 #include "ErrorCovarianceMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
+#include "GetValuesTrajMPAS.h"
 #include "StateMPAS.h"
-#include "Nothing.h"
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
@@ -128,44 +128,24 @@ void IncrementMPAS::random() {
 // -----------------------------------------------------------------------------
 void IncrementMPAS::getValuesTL(const ioda::Locations & locs,
                                 const oops::Variables & vars,
-                                ufo::GeoVaLs & cols, const Nothing &) const {
+                                ufo::GeoVaLs & cols,
+                                const GetValuesTrajMPAS & traj) const {
   oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_
                      << std::endl;
-  fields_->getValuesTL(locs, vars, cols);
+  fields_->getValuesTL(locs, vars, cols, traj);
   oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::getValuesAD(const ioda::Locations & locs,
                                 const oops::Variables & vars,
-                                const ufo::GeoVaLs & cols, const Nothing &) {
+                                const ufo::GeoVaLs & cols,
+                                const GetValuesTrajMPAS & traj) {
   oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols
                      << std::endl;
   oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_
                      << std::endl;
-  fields_->getValuesAD(locs, vars, cols);
-}
-// -----------------------------------------------------------------------------
-/// Interpolate to observation location
-// -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateTL(const ioda::Locations & locs,
-                                  const oops::Variables & vars,
-                                  ufo::GeoVaLs & cols, const Nothing &) const {
-  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_
-                     << std::endl;
-  fields_->interpolateTL(locs, vars, cols);
-  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols
-                     << std::endl;
-}
-// -----------------------------------------------------------------------------
-void IncrementMPAS::interpolateAD(const ioda::Locations & locs,
-                                  const oops::Variables & vars,
-                                  const ufo::GeoVaLs & cols, const Nothing &) {
-  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols
-                     << std::endl;
-  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_
-                     << std::endl;
-  fields_->interpolateAD(locs, vars, cols);
+  fields_->getValuesAD(locs, vars, cols, traj);
 }
 // -----------------------------------------------------------------------------
 /// Convert to/from unstructured grid
