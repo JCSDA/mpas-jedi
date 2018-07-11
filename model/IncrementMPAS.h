@@ -44,7 +44,7 @@ namespace mpas {
   class ModelBiasIncrementMPAS;
   class ErrorCovarianceMPAS;
   class StateMPAS;
-  class Nothing;
+  class GetValuesTrajMPAS;
 
 /// Increment Class: Difference between two states
 /*!
@@ -85,15 +85,9 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
 
 /// Get increment values at observation locations
   void getValuesTL(const ioda::Locations &, const oops::Variables &,
-                   ufo::GeoVaLs &, const Nothing &) const;
+                   ufo::GeoVaLs &, const GetValuesTrajMPAS &) const;
   void getValuesAD(const ioda::Locations &, const oops::Variables &,
-                   const ufo::GeoVaLs &, const Nothing &);
-
-/// Interpolate to observation location
-  void interpolateTL(const ioda::Locations &, const oops::Variables &,
-                     ufo::GeoVaLs &, const Nothing &) const;
-  void interpolateAD(const ioda::Locations &, const oops::Variables &,
-                     const ufo::GeoVaLs &, const Nothing &);
+                   const ufo::GeoVaLs &, const GetValuesTrajMPAS &);
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);

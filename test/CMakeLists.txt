@@ -19,7 +19,6 @@ list( APPEND mpas_test_input
   testinput/forecast.json
   testinput/genenspert.json
   testinput/hofx.json
-  testinput/hofx_crtm.json
   testinput/dirac.bump.json
   testinput/geometry.json
   testinput/state.json
@@ -58,7 +57,6 @@ list( APPEND mpas_testoutput
   testoutput/forecast.test
   testoutput/genenspert.test
   testoutput/hofx.test
-  testoutput/hofx_crtm.test
   testoutput/dirac.bump.test
   testoutput/makeobs3d.test
   testoutput/makeobs4d.test
@@ -175,13 +173,6 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx.json"
                        testoutput/hofx.test
-                  DEPENDS mpas_hofx.x )
-
-ecbuild_add_test( TARGET  test_mpas_hofx_crtm
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx_crtm.json"
-                       testoutput/hofx_crtm.test
                   DEPENDS mpas_hofx.x )
 
 ecbuild_add_test( TARGET test_mpas_dirac_bump

@@ -414,8 +414,7 @@ end subroutine mpas_field_rms_c
 
 ! ------------------------------------------------------------------------------
 
-!subroutine mpas_field_interp_c(c_key_fld,c_key_loc,c_key_var,c_key_gom) bind(c,name='mpas_field_interp_f90')
-subroutine mpas_field_interp_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_f90')
+subroutine mpas_field_getvalues_notraj_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_getvalues_notraj_f90')
 use iso_c_binding
 use mpas_fields_mod
 use ioda_locs_mod
@@ -426,7 +425,6 @@ use ufo_geovals_mod_c, only: ufo_geovals_registry
 implicit none
 integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-!integer(c_int), intent(in) :: c_key_var  !< List of requested variables
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 type(mpas_field), pointer :: fld
@@ -439,14 +437,13 @@ call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
-call interp(fld, locs, vars, gom)
+call getvalues(fld, locs, vars, gom)
 
-end subroutine mpas_field_interp_c
+end subroutine mpas_field_getvalues_notraj_c
 
 ! ------------------------------------------------------------------------------
 
-!subroutine mpas_field_interp_tl_c(c_key_fld,c_key_loc,c_key_var,c_key_gom) bind(c,name='mpas_field_interp_tl_f90')
-subroutine mpas_field_interp_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_tl_f90')
+subroutine mpas_field_getvalues_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='mpas_field_getvalues_f90')
 use iso_c_binding
 use mpas_fields_mod
 use ioda_locs_mod
@@ -454,30 +451,32 @@ use ioda_locs_mod_c, only: ioda_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
+use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 implicit none
 integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-!integer(c_int), intent(in) :: c_key_var  !< List of requested variables
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
+integer(c_int), intent(in), optional :: c_key_traj !< Trajectory for interpolation/transforms
 type(mpas_field), pointer :: fld
 type(ioda_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
+type(mpas_getvaltraj), pointer :: traj
 
 call mpas_field_registry%get(c_key_fld, fld)
 call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
+call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-call interp_tl(fld, locs, vars, gom)
+call getvalues(fld, locs, vars, gom, traj)
 
-end subroutine mpas_field_interp_tl_c
+end subroutine mpas_field_getvalues_c
 
 ! ------------------------------------------------------------------------------
 
-!subroutine mpas_field_interp_ad_c(c_key_fld,c_key_loc,c_key_var,c_key_gom) bind(c,name='mpas_field_interp_ad_f90')
-subroutine mpas_field_interp_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom) bind(c,name='mpas_field_interp_ad_f90')
+subroutine mpas_field_getvalues_tl_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='mpas_field_getvalues_tl_f90')
 use iso_c_binding
 use mpas_fields_mod
 use ioda_locs_mod
@@ -485,25 +484,61 @@ use ioda_locs_mod_c, only: ioda_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
+use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 implicit none
 integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-!integer(c_int), intent(in) :: c_key_var  !< List of requested variables
 type(c_ptr), intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
+integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 type(mpas_field), pointer :: fld
 type(ioda_locs),  pointer :: locs
 type(ufo_vars)  :: vars
 type(ufo_geovals),  pointer :: gom
+type(mpas_getvaltraj), pointer :: traj
+
+call mpas_field_registry%get(c_key_fld, fld)
+call ioda_locs_registry%get(c_key_loc, locs)
+call ufo_vars_setup(vars, c_vars)
+call ufo_geovals_registry%get(c_key_gom, gom)
+call mpas_getvaltraj_registry%get(c_key_traj, traj)
+
+call getvalues_tl(fld, locs, vars, gom, traj)
+
+end subroutine mpas_field_getvalues_tl_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_getvalues_ad_c(c_key_fld,c_key_loc,c_vars,c_key_gom,c_key_traj) bind(c,name='mpas_field_getvalues_ad_f90')
+use iso_c_binding
+use mpas_fields_mod
+use ioda_locs_mod
+use ioda_locs_mod_c, only: ioda_locs_registry
+use ufo_vars_mod
+use ufo_geovals_mod
+use ufo_geovals_mod_c, only: ufo_geovals_registry
+use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
+implicit none
+integer(c_int), intent(in) :: c_key_fld  !< Fields to be interpolated
+integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
+type(c_ptr), intent(in) :: c_vars  !< List of requested variables
+integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
+integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
+type(mpas_field), pointer :: fld
+type(ioda_locs),  pointer :: locs
+type(ufo_vars)  :: vars
+type(ufo_geovals),  pointer :: gom
+type(mpas_getvaltraj), pointer :: traj
 
 call mpas_field_registry%get(c_key_fld, fld)
 call ioda_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call ufo_vars_setup(vars, c_vars)
+call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-call interp_ad(fld, locs, vars, gom)
+call getvalues_ad(fld, locs, vars, gom, traj)
 
-end subroutine mpas_field_interp_ad_c
+end subroutine mpas_field_getvalues_ad_c
 
 ! ------------------------------------------------------------------------------
 
