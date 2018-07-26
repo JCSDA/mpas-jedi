@@ -188,6 +188,14 @@ void FieldsMPAS::read(const eckit::Configuration & config) {
   mpas_field_read_file_f90(keyFlds_, &conf, &dtp);
 }
 // -----------------------------------------------------------------------------
+void FieldsMPAS::analytic_init(const eckit::Configuration & config,
+                                  const GeometryMPAS & geom) {
+  const eckit::Configuration * conf = &config;
+  util::DateTime * dtp = &time_;
+//JJG: Need to check if geometry is initialized before this!!!
+  mpas_field_analytic_init_f90(keyFlds_, geom.toFortran(), &conf, &dtp);
+}
+// -----------------------------------------------------------------------------
 void FieldsMPAS::write(const eckit::Configuration & config) const {
   const eckit::Configuration * conf = &config;
   const util::DateTime * dtp = &time_;

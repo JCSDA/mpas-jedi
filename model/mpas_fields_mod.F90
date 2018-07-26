@@ -39,8 +39,9 @@ public :: mpas_field, &
         & self_add, self_schur, self_sub, self_mul, axpy, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
-        & change_resol, getvalues, getvalues_tl, getvalues_ad, convert_to_ug, convert_from_ug, &
-        & dirac
+        & change_resol, getvalues, getvalues_tl, getvalues_ad, &
+        & convert_to_ug, convert_from_ug, &
+        & dirac, analytic_IC
 public :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
@@ -51,7 +52,7 @@ type :: mpas_field
   !type (core_type), pointer :: corelist          ! NOW in geom, For convenience not used
   type (mpas_geom), pointer :: geom              ! grid and MPI infos
   integer :: nf                                  ! Number of variables in fld
-  character(len=22), allocatable  :: fldnames(:) ! Variable identifiers
+  character(len=MAXVARLEN), allocatable  :: fldnames(:) ! Variable identifiers
   type (mpas_pool_type), pointer  :: subFields   !---> state variables (to be analyzed)
   type (mpas_pool_type), pointer  :: auxFields   !---> auxiliary variables, such as pressure, t2m, u10, v10, Tsfc
   type (MPAS_streamManager_type), pointer :: manager
@@ -67,6 +68,8 @@ real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  T
 
 !> Global registry
 type(registry_t) :: mpas_field_registry
+
+integer, parameter :: nf_aux = 19
 
 ! ------------------------------------------------------------------------------
 contains
@@ -87,10 +90,10 @@ subroutine create(self, geom, vars)
     type(ufo_vars),   intent(in)          :: vars
 
     integer :: nsize, nfields
-    integer :: ierr
+    integer :: ierr!, ii
 
     !aux test: BJJ
-    integer :: nf_aux
+!    integer :: nf_aux
     character(len=22), allocatable  :: fldnames_aux(:)
 
     !-- fortran level test (temporally sit here)
@@ -100,6 +103,8 @@ subroutine create(self, geom, vars)
     character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename
     character (len=StrKIND) :: dateTimeString_oops
 
+!   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+!   type (field2DReal), pointer :: field2d, field2d_src
 
     ! from the namelist
     self % nf =  vars % nv
@@ -118,11 +123,13 @@ subroutine create(self, geom, vars)
 
     write(0,*)'-- Create a sub Pool from list of variable ',self % nf
     call da_make_subpool(self % geom % domain, self % subFields, self % nf, self % fldnames, nfields)
+
     if ( self % nf .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
     end  if
+
     !--- TODO: aux test: BJJ  !- get this from json ???
-    nf_aux=19 !15 ! 3
+!    nf_aux=19 !15 ! 3
     allocate(fldnames_aux(nf_aux))
     !fldnames_aux(1)='pressure'
     !fldnames_aux(2)='u10'
@@ -135,7 +142,7 @@ subroutine create(self, geom, vars)
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
     if ( nf_aux .ne. nfields  ) then
-       call abor1_ftn("mpas_fields:create: dimension mismatch ",self % nf, nfields)
+       call abor1_ftn("mpas_fields:create: dimension mismatch ",nf_aux, nfields)
     end  if
 
     ! clock creation
@@ -194,14 +201,19 @@ subroutine delete(self)
    integer :: ierr = 0 
   
    if (allocated(self % fldnames)) deallocate(self % fldnames)
-   write(*,*)'--> deallocate subFields Pool'
    if (associated(self % subFields)) then
+      write(*,*)'--> deallocate subFields Pool'
       call mpas_pool_empty_pool(self % subFields)
       call mpas_pool_destroy_pool(self % subFields)
    end if
+   if (associated(self % auxFields)) then
+      write(*,*)'--> deallocate auxFields Pool'
+      call mpas_pool_empty_pool(self % auxFields)
+      call mpas_pool_destroy_pool(self % auxFields)
+   end if
    call mpas_destroy_clock(self % clock, ierr)
    if ( ierr .ne. 0  ) then
-      write(*,*)'mpas_fields eallocate clock failed'
+      write(*,*)'mpas_fields deallocate clock failed'
    end if
    write(*,*)'--> mpas_fields done deallocate'
 
@@ -239,6 +251,8 @@ subroutine copy(self,rhs)
    type(mpas_field), intent(inout) :: self
    type(mpas_field), intent(in)    :: rhs
    
+   write(*,*)'====> copy of mpas_field'
+
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
    call mpas_pool_empty_pool(self % subFields)
@@ -246,9 +260,15 @@ subroutine copy(self,rhs)
    self % nf = rhs % nf
    call mpas_pool_create_pool(self % subFields,self % nf)
    call mpas_pool_clone_pool(rhs % subFields, self % subFields)
+
+   call mpas_pool_create_pool(self % auxFields,nf_aux)
+   call mpas_pool_clone_pool(rhs % auxFields, self % auxFields)
+
    ! We should consider adding a subroutine just updating the fields
    ! call mpas_pool_copy_fied() 
-   
+ 
+   write(*,*)'====> copy of mpas_field done'
+  
 end subroutine copy
 
 ! ------------------------------------------------------------------------------
@@ -397,6 +417,388 @@ subroutine change_resol(fld,rhs)
 
 end subroutine change_resol
 
+! ------------------------------------------------------------------------------
+!> Analytic Initialization for the MPAS Model
+!!
+!! \details **analytic_IC()** initializes the MPAS Field and State objects using one of
+!! several alternative idealized analytic models.  This is intended to facilitate testing by
+!! eliminating the need to read in the initial state from a file and by providing exact expressions
+!! to test interpolations.  This function is activated by setting the "analytic_init" field in the
+!! "initial" or "StateFile" section of the configuration file.
+!!
+!! Initialization options that begin with "dcmip" refer to tests defined by the multi-institutional
+!! 2012 [Dynamical Core Intercomparison Project](https://earthsystealcmcog.org/projects/dcmip-2012)
+!! and the associated Summer School, sponsored by NOAA, NSF, DOE, NCAR, and the University of Michigan.
+!!
+!! Currently implemented options for analytic_init include:
+!! * invent-state: Backward compatibility with original analytic init option
+!! * dcmip-test-1-1: 3D deformational flow
+!! * dcmip-test-1-2: 3D Hadley-like meridional circulation
+!! * dcmip-test-3-1: Non-hydrostatic gravity wave
+!! * dcmip-test-4-0: Baroclinic instability
+!!
+!! \author J. Guerrette (adapted from fv3jedi code by M. Miesch)
+!! \date July, 2018: Created
+!!
+subroutine analytic_IC(fld, geom, c_conf, vdate)
+
+  use kinds
+!  use iso_c_binding
+!  use datetime_mod
+!  use fckit_log_module, only : log
+  use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
+       test1_advection_hadley, test3_gravity_wave
+  use dcmip_initial_conditions_test_4, only : test4_baroclinic_wave
+
+!  !MPAS Test Cases
+!  !JJG: This initialization requires the init_atmospher_core core_type 
+!  !      in the MPAS library for OOPS, but currently it is not included
+!  use init_atm_core, only: init_atm_core_run!, init_atm_core_finalize (could be used for cleanup...)
+
+  implicit none
+
+  type(mpas_field), intent(inout)     :: fld !< Fields
+  type(mpas_geom), target, intent(in) :: geom    !< Geometry 
+  type(c_ptr), intent(in)                :: c_conf   !< Configuration
+  type(datetime), intent(inout)          :: vdate    !< DateTime
+
+  character(len=30) :: IC
+  character(len=20) :: sdate
+  character(len=1024) :: buf
+  Integer :: jlev,ii
+  integer :: ierr = 0 
+  real(kind=kind_real) :: rlat, rlon, z
+  real(kind=kind_real) :: pk,pe1,pe2,ps
+  real(kind=kind_real) :: u0,v0,w0,t0,phis0,ps0,rho0,hum0,q1,q2,q3,q4
+
+  real(kind=kind_real)             :: DTdummy = 900.0
+  logical, allocatable             :: grids_on_this_pe(:)
+  integer                          :: p_split = 1
+  real (kind=kind_real), dimension(:,:), pointer :: &
+              u_ptr, v_ptr, theta_ptr, rho_ptr, p_ptr, &
+              qv_ptr, qc_ptr, qr_ptr, qi_ptr, qs_ptr, &
+              ln_p_ptr
+  integer, pointer :: index_qv, index_qc, index_qr, index_qi, index_qs
+  type (field3DReal), pointer :: field3d
+  type (mpas_pool_type), pointer :: pool_a, pool_b, state
+  real(kind=kind_real) :: zhalf
+
+  ! Pointer to geometry component of field object
+  fld%geom => geom
+
+  If (config_element_exists(c_conf,"analytic_init")) Then
+     IC = Trim(config_get_string(c_conf,len(IC),"analytic_init"))
+  Else
+     ! This default value is for backward compatibility
+     IC = "invent-state"
+  EndIf
+
+  WRITE(*,*) "mpas_fields:analytic_init: "//IC
+
+! Conflicts with natural log below
+!  call log%warning("mpas_fields:analytic_init: "//IC)
+  sdate = config_get_string(c_conf,len(sdate),"date")
+  WRITE(buf,*) 'validity date is: '//sdate
+  WRITE(*,*) buf
+!  call log%info(buf)
+  call datetime_set(sdate, vdate)
+
+   ! Need to initialize variables that are used in interpolation/getVals
+   ! In "create" and "read" subroutines, subFields and auxFields are 
+   ! initialized from geom % domain % blocklist % allFields, zeroed,
+   ! reread from file into allFields, then values copied to sub/auxFields
+   ! -> must initialize allFields here and copy to sub/auxFields
+
+   call mpas_pool_get_subpool(geom % domain % blocklist % structs, &
+                              'state', state)
+
+   pool_a => geom % domain % blocklist % allFields
+
+   !Diagnostic vars (diag pool)
+   call mpas_pool_get_array(pool_a, "pressure", p_ptr)
+   call mpas_pool_get_array(pool_a, "uReconstructZonal", u_ptr)
+   call mpas_pool_get_array(pool_a, "uReconstructMeridional", v_ptr)
+
+   !Prognostic vars (state pool)
+   call mpas_pool_get_array(pool_a, "theta", theta_ptr)
+   call mpas_pool_get_array(pool_a, "rho", rho_ptr)
+
+   !Scalars (state pool)
+   call mpas_pool_get_field(pool_a, "scalars", field3d)
+   call mpas_pool_get_dimension(state, "index_qv", index_qv)
+   if ( index_qv .gt. 0 ) &
+      qv_ptr => field3d % array(index_qv,:,:)
+
+   call mpas_pool_get_dimension(state, "index_qc", index_qc)
+   if ( index_qc .gt. 0 ) &
+      qc_ptr => field3d % array(index_qc,:,:)
+
+   call mpas_pool_get_dimension(state, "index_qr", index_qr)
+   if ( index_qr .gt. 0 ) &
+      qr_ptr => field3d % array(index_qr,:,:)
+
+   call mpas_pool_get_dimension(state, "index_qi", index_qi)
+   if ( index_qi .gt. 0 ) &
+      qi_ptr => field3d % array(index_qi,:,:)
+
+   call mpas_pool_get_dimension(state, "index_qs", index_qs)
+   if ( index_qs .gt. 0 ) &
+      qs_ptr => field3d % array(index_qs,:,:)
+
+  !===================================================================
+  int_option: Select Case (IC)
+
+     Case("invent-state")
+
+        call invent_state(fld,c_conf)
+
+
+!     !TODO: This case requires the init_atmospher_core core_type to be 
+!     !      built as part of the MPAS library.
+!     Case("mpas_init_case") 
+!
+!!Would use init_atm_setup_case in MPAS-Release/src/core_init_atmosphere/mpas_init_atm_cases.F
+!!mpas_init has already been called at this point from geo_setup
+!
+!!init_atms_setup_case is normally called from the following set of subroutines:
+!!mpas_run => core_run [init_atm_core_run] => init_atm_setup_case => [select from preset cases]
+!!Can we bypass the first two somehow?  
+!!Would use "config_init_case" in the json file, then check for matching with one of the ideal cases below... (not 7 or 8)
+!
+!!if ((config_init_case == 1) .or. (config_init_case == 2) .or. (config_init_case == 3)) then
+!!   write(0,*) ' Jablonowski and Williamson baroclinic wave test case '
+!!   if (config_init_case == 1) write(0,*) ' no initial perturbation '
+!!   if (config_init_case == 2) write(0,*) ' initial perturbation included '
+!!   if (config_init_case == 3) write(0,*) ' normal-mode perturbation included '
+!!else if ((config_init_case == 4) .or. (config_init_case == 5)) then
+!!   write(0,*) ' squall line - super cell test case '
+!!   if (config_init_case == 4) write(0,*) ' squall line test case'
+!!   if (config_init_case == 5) write(0,*) ' supercell test case'
+!!      else if (config_init_case == 6 ) then
+!!   write(0,*) ' mountain wave test case '
+!!else if (config_init_case == 7 ) then
+!!   write(0,*) ' real-data GFS test case '
+!!else if (config_init_case == 8 ) then
+!!   write(0,*) 'real-data surface (SST) update test case '
+!
+!       ierr = init_atm_core_run(geom % domain)
+!       if ( ierr .ne. 0  ) then
+!          call abor1_ftn("mpas_fields: init_atm_core_run failed")
+!       end if
+
+     Case ("dcmip-test-1-1")
+        do ii = 1, geom%nCellsSolve
+           rlat = geom%latCell(ii)
+           rlon = geom%lonCell(ii)
+
+           ! Now loop over all levels
+           do jlev = 1, geom%nVertLevels
+
+              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              Call test1_advection_deformation(rlon,rlat,pk,zhalf,1,u0,v0,w0,t0,&
+                                               phis0,ps0,rho0,hum0,q1,q2,q3,q4)
+              p_ptr(jlev,ii) = pk
+
+              u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+                                  ! with A grid winds
+              rho_ptr(jlev,ii) = rho0
+              if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
+              if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
+              if (index_qi.gt.0) qi_ptr(jlev,ii) = q2
+              if (index_qr.gt.0) qr_ptr(jlev,ii) = q3
+              if (index_qs.gt.0) qs_ptr(jlev,ii) = q4 
+
+              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
+              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
+              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+           enddo
+        enddo
+
+     Case ("dcmip-test-1-2")
+
+        do ii = 1, geom%nCellsSolve
+           rlat = geom%latCell(ii)
+           rlon = geom%lonCell(ii)
+
+           ! Now loop over all levels
+           do jlev = 1, geom%nVertLevels
+
+              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              Call test1_advection_hadley(rlon,rlat,pk,zhalf,1,u0,v0,w0,&
+                                          t0,phis0,ps0,rho0,hum0,q1)
+              p_ptr(jlev,ii) = pk
+
+              u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+                                  ! with A grid winds
+              rho_ptr(jlev,ii) = rho0
+              if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
+              if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
+
+              if (index_qi.gt.0) qi_ptr(jlev,ii) = 0._kind_real
+              if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
+              if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
+
+              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
+              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
+              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+           enddo
+        enddo
+
+     Case ("dcmip-test-3-1")
+
+        do ii = 1, geom%nCellsSolve
+           rlat = geom%latCell(ii)
+           rlon = geom%lonCell(ii)
+
+           ! Now loop over all levels
+           do jlev = 1, geom%nVertLevels
+
+              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              Call test3_gravity_wave(rlon,rlat,pk,zhalf,1,u0,v0,w0,&
+                                      t0,phis0,ps0,rho0,hum0)
+
+              p_ptr(jlev,ii) = pk
+              rho_ptr(jlev,ii) = rho0
+              u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+                                  ! with A grid winds
+
+              if (index_qv.gt.0) qv_ptr (jlev,ii) = hum0 !set to zero for this test
+              if (index_qc.gt.0) qc_ptr(jlev,ii) = 0._kind_real
+              if (index_qi.gt.0) qi_ptr(jlev,ii) = 0._kind_real
+              if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
+              if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
+
+              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
+              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
+              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+           enddo
+        enddo
+
+     Case ("dcmip-test-4-0")
+
+        do ii = 1, geom%nCellsSolve
+           rlat = geom%latCell(ii)
+           rlon = geom%lonCell(ii)
+
+           ! Now loop over all levels
+           do jlev = 1, geom%nVertLevels
+
+              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              Call test4_baroclinic_wave(0,1.0_kind_real,rlon,rlat,pk,zhalf,1,u0,v0,w0,&
+                                      t0,phis0,ps0,rho0,hum0,q1,q2)
+
+              p_ptr(jlev,ii) = pk
+
+              rho_ptr(jlev,ii) = rho0
+
+              u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
+
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+                                  ! with A grid winds
+
+              if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
+              if (index_qc.gt.0) qc_ptr(jlev,ii) = 0._kind_real
+              if (index_qi.gt.0) qi_ptr(jlev,ii) = 0._kind_real
+              if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
+              if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
+
+              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
+              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
+              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+           enddo
+        enddo
+
+     Case Default
+
+        call invent_state(fld,c_conf)
+
+     End Select int_option
+
+     call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+     call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
+
+   write(*,*)'==> end mpas_fields:analytic_init'
+
+end subroutine analytic_IC
+
+
+
+! ------------------------------------------------------------------------------
+subroutine invent_state(fld,config)
+
+   use kinds
+
+   implicit none
+
+   type(mpas_field), intent(inout) :: fld    !< Model fields
+   type(c_ptr), intent(in)         :: config  !< Configuration structure
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real) :: t0
+   integer :: jlev,ii
+   type (mpas_pool_type), pointer :: pool_a, state
+   type (field3DReal), pointer :: field3d
+   integer, pointer :: index_qv
+
+   !- read/interp.
+
+   call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs, &
+                              'state', state)
+   pool_a => fld % geom % domain % blocklist % allFields
+
+   !Diagnostic vars (diag pool)
+   !u
+   call mpas_pool_get_array(pool_a, "uReconstructZonal", r2d_ptr_a)
+   do jlev = 1,fld % geom % nVertLevels
+      do ii = 1, fld % geom % nCellsSolve
+         r2d_ptr_a(jlev,ii) = cos(0.25*fld % geom % lonEdge(ii)) + cos(0.25*fld % geom % latEdge(ii))
+      enddo
+   enddo
+
+   !v
+   call mpas_pool_get_array(pool_a, "uReconstructMeridional", r2d_ptr_a)
+   do jlev = 1,fld % geom % nVertLevels
+      do ii = 1, fld % geom % nCellsSolve
+         r2d_ptr_a(jlev,ii) = 1.0_kind_real
+      enddo
+   enddo
+
+   !pt
+   call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
+   call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_b)
+   do jlev = 1,fld % geom % nVertLevels
+      do ii = 1, fld % geom % nCellsSolve
+         t0 = cos(0.25*fld % geom % lonCell(ii)) + cos(0.25*fld % geom % latCell(ii))
+         r2d_ptr_a(jlev,ii) = t0 * ( (100000.0/r2d_ptr_b(jlev,ii))**(287.05/1005.7) )
+      enddo
+   enddo
+
+   !rho and pressure
+   call mpas_pool_get_array(pool_a, "rho", r2d_ptr_a)
+   do jlev = 1,fld % geom % nVertLevels
+      do ii = 1, fld % geom % nCellsSolve
+         r2d_ptr_a(jlev,ii) = 1._kind_real / real(jlev,kind_real)
+         r2d_ptr_b(jlev,ii) = real(jlev,kind_real)
+      enddo
+   enddo
+
+   !Scalars (state pool)
+   !qv
+   call mpas_pool_get_field(pool_a, 'scalars', field3d)
+   call mpas_pool_get_dimension(state, 'index_qv', index_qv)
+   if ( index_qv .gt. 0 ) then
+      r2d_ptr_a => field3d % array(index_qv,:,:)
+      do jlev = 1,fld % geom % nVertLevels
+         do ii = 1, fld % geom % nCellsSolve
+            r2d_ptr_a(jlev,ii) = 0.0
+         enddo
+      enddo
+   end if
+
+return
+end subroutine invent_state
 ! -----------------------------------------------------------------------------------------------------------
 
 subroutine read_file(fld, c_conf, vdate)

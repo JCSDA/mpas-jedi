@@ -59,7 +59,11 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
   oops::Variables vars(*vv);
   fields_.reset(new FieldsMPAS(resol, vars, util::DateTime()));
 
-  fields_->read(file);
+//  fields_->read(file);
+  if (file.has("analytic_init"))
+    fields_->analytic_init(file, resol);
+  else
+    fields_->read(file);
 
   ASSERT(fields_);
 
@@ -144,6 +148,11 @@ void StateMPAS::convert_from(const oops::UnstructuredGrid & ug) {
 // -----------------------------------------------------------------------------
 void StateMPAS::read(const eckit::Configuration & files) {
   fields_->read(files);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::analytic_init(const eckit::Configuration & files,
+                                 const GeometryMPAS & resol) {
+  fields_->analytic_init(files, resol);
 }
 // -----------------------------------------------------------------------------
 void StateMPAS::write(const eckit::Configuration & files) const {

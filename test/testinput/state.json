@@ -15,24 +15,26 @@
     "date": "2016-03-04T06:00:00Z",
     "norm-file": "197.58275636070442",
     "StateGenerate" : {
+      "analytic_init": "dcmip-test-4-0",
       "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-      "filename": "./x1.2562.init.nc",
       "date": "2016-03-04T06:00:00Z",
       "mean": 8.0,
       "sinus": 2.0
     },
-    "norm-gen": "197.58275636070442",
-    "tolerance": "0.005",
+    "InterpTest" : {
+      "variables": ["virtual_temperature","atmosphere_ln_pressure_coordinate"]
+    },
+    "norm-gen": "207.67924239943278",
+    "tolerance": [1.0e-08],
+    "interp_tolerance": [1.0e-04],
     "Locations": {
-      "lats": [0.0, 0.2, 0.3, -0.1],
-      "lons": [0.0, 0.2, 0.3,-0.2],
-      "lats_deg": [50.0, 30.0, 10.0, -20.5],
-      "lons_deg": [50.0, 30.0, 10.0,-143.2]
-    },
-    "Variables": {
-      "variables": ["virtual_temperature"],
-      "variables_": ["theta", "index_qv"]
-    },
-    "values": [1224.0]
+      "lats_rad": [0.0, 0.2, 0.3, -0.1],
+      "lons_rad": [0.0, 0.2, 0.3,-0.2],
+      "lats": [50.0, 30.0, 10.0, -20.5],
+      "lons": [50.0, 30.0, 10.0,-143.2],
+      "Rdist": [1],
+      "Nrandom": [8],
+      "random_seed": [560921]
+    }
   }
 }

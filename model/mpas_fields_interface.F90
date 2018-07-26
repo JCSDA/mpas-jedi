@@ -344,6 +344,31 @@ end subroutine mpas_field_read_file_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_field_analytic_init_c(c_key_fld, c_key_geom, c_conf, c_dt) bind(c,name='mpas_field_analytic_init_f90')
+use iso_c_binding
+use mpas_fields_mod
+use mpas_geom_mod
+use datetime_mod
+
+implicit none
+integer(c_int), intent(in) :: c_key_fld  !< Fields
+integer(c_int), intent(in) :: c_key_geom  !< Geometry
+type(c_ptr), intent(in)    :: c_conf !< Configuration
+type(c_ptr), intent(inout) :: c_dt   !< DateTime
+
+type(mpas_field), pointer :: fld
+type(mpas_geom), pointer :: geom
+type(datetime) :: fdate
+
+call mpas_field_registry%get(c_key_fld,fld)
+call mpas_geom_registry%get(c_key_geom,geom)
+call c_f_datetime(c_dt, fdate)
+call analytic_IC(fld, geom, c_conf, fdate)
+
+end subroutine mpas_field_analytic_init_c
+
+! ------------------------------------------------------------------------------
+
 subroutine mpas_field_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='mpas_field_write_file_f90')
 use iso_c_binding
 use mpas_fields_mod
