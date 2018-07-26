@@ -16,6 +16,7 @@ use ioda_locs_mod
 use ufo_geovals_mod
 use mpas_getvaltraj_mod, only: mpas_getvaltraj
 
+use mpas_dmpar
 use mpas_derived_types
 use mpas_framework
 use mpas_kind_types
@@ -533,37 +534,75 @@ use mpas_pool_routines
    implicit none
    type(mpas_field), intent(inout) :: self
    type(c_ptr),      intent(in)    :: c_conf   !< Configuration
-   integer                :: ndir,idir,ildir,ifdir,itiledir
-   integer,allocatable    :: iCell(:)
+   integer                :: ndir, idir, ildir, ndirlocal
    character(len=3)       :: idirchar
    character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+   integer :: nearestCell
+   integer, allocatable, dimension(:) :: dirOwned, dirOwnedGlobal
+   real (kind=kind_real), allocatable, dimension(:) :: dirLats
+   real (kind=kind_real), allocatable, dimension(:) :: dirLons
+   integer, allocatable, dimension(:) :: dirCells
 
-   ! Get Diracs positions
+   ! Get number and positions of Diracs
    ndir = config_get_int(c_conf,"ndir")
-   allocate(iCell(ndir))
+
+   allocate( dirOwned(ndir) )
+   allocate( dirLats(ndir) )
+   allocate( dirLons(ndir) )
+   allocate( dirCells(ndir) )
 
    do idir=1,ndir
       write(idirchar,'(i3)') idir
-      iCell(idir) = config_get_int(c_conf,"iCell("//trim(adjustl(idirchar))//")")
+      dirLats(idir) = config_get_real(c_conf,"dirLats("//trim(adjustl(idirchar))//")")
+      dirLons(idir) = config_get_real(c_conf,"dirLons("//trim(adjustl(idirchar))//")")
    end do
    ildir = config_get_int(c_conf,"ildir")
-   ifdir = config_get_int(c_conf,"ifdir")
    dirvar = config_get_string(c_conf,len(dirvar),"dirvar")
+
+   !Test if dir is owned and find the nearest local cell
+   ! (repurposed from MPAS-Release/src/core_atmosphere/diagnostics/soundings.F)
+
+   ndirlocal = 0
+   do idir=1,ndir
+      nearestCell = self % geom % nCellsSolve
+      nearestCell = nearest_cell( (dirLats(idir) * deg2rad), &
+                                  (dirLons(idir) * deg2rad), &
+                                  nearestCell, self % geom % nCells, self % geom % maxEdges, &
+                                  self % geom % nEdgesOnCell, self % geom % cellsOnCell, &
+                                  self % geom % latCell, self % geom % lonCell )
+
+      if (nearestCell <= self % geom % nCellsSolve) then
+          dirOwned(idir) = 1
+          dirCells(idir) = nearestCell
+          ndirlocal = ndirlocal + 1
+      else
+          dirOwned(idir) = 0
+          dirCells(idir) = self % geom % nCells + 1
+      end if
+   end do
+
+   write(*,*) ' This processor owns ',ndirlocal, &
+              ' dirac forcing locations'
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_fields:dirac non-positive ndir")
-   if (any(iCell<1).or.any(iCell>self%geom%nCellsGlobal)) then
-!MPI: Need to adjust this logic for multi-processor testing still !JJG
-!   if (any(iCell<1).or.any(iCell>self%geom%nCells)) then
-      call abor1_ftn("mpas_fields:dirac invalid iCell")
-   endif
-   if ((ildir<1).or.(ildir>self%geom%nVertLevels)) then
+
+   allocate( dirOwnedGlobal(ndir) )
+   call mpas_dmpar_max_int_array( self % geom % domain % dminfo, ndir, dirOwned, dirOwnedGlobal)
+   if ( any(dirOwnedGlobal.lt.1) ) then
+         call abor1_ftn("mpas_fields:dirac invalid Lat/Lon")
+   end if
+
+   call mpas_dmpar_sum_int_array( self % geom % domain % dminfo, ndir, dirOwned, dirOwnedGlobal)
+   if ( any(dirOwnedGlobal.gt.1) ) then
+         call abor1_ftn("mpas_fields:duplicated dirac on >1 processors")
+   end if
+   deallocate( dirOwnedGlobal )
+
+  if ((ildir < 1) .or. (ildir > self % geom % nVertLevels)) then
       call abor1_ftn("mpas_fields:dirac invalid ildir")
-   endif
-   if ((ifdir<1).or.(ifdir>self%nf)) then
-      call abor1_ftn("mpas_fields:dirac invalid ifdir")
    endif
 
    ! Setup Diracs
@@ -585,10 +624,14 @@ use mpas_pool_routines
           else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
               if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
+                ndirlocal = 0
                 do idir=1, ndir
-                  r2d_ptr_a(ildir,iCell(idir))=1.0_kind_real
+                   if ( dirOwned(idir).eq.1 ) then
+                      r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
+                      ndirlocal = ndirlocal + 1
+                   end if
                 end do
-                write(*,*) ' Dirac is set in ',ndir,'locations for',trim(poolItr % memberName)
+                write(*,*) ' Dirac is set in ',ndirlocal,'locations for',trim(poolItr % memberName)
               end if
            else if (poolItr % nDims == 3) then
               write(*,*)'Not implemented yet'
@@ -597,7 +640,72 @@ use mpas_pool_routines
         end if
    end do
 
+   deallocate( dirOwned )
+   deallocate( dirLats )
+   deallocate( dirLons )
+   deallocate( dirCells )
+
 end subroutine dirac
+
+!!TODO: Alternatively could make the function nearest_cell public in MPAS
+!!      and then define an interface to it within this module (cleaner)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Finds the MPAS grid cell nearest to (target_lat, target_lon)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdges, &
+                              nEdgesOnCell, cellsOnCell, latCell, lonCell)
+
+   implicit none
+
+   real (kind=kind_real), intent(in) :: target_lat, target_lon
+   integer, intent(in) :: start_cell
+   integer, intent(in) :: nCells, maxEdges
+   integer, dimension(nCells), intent(in) :: nEdgesOnCell
+   integer, dimension(maxEdges,nCells), intent(in) :: cellsOnCell
+   real (kind=kind_real), dimension(nCells), intent(in) :: latCell, lonCell
+
+   integer :: i
+   integer :: iCell
+   integer :: current_cell
+   real (kind=kind_real) :: current_distance, d
+   real (kind=kind_real) :: nearest_distance
+
+   nearest_cell = start_cell
+   current_cell = -1
+
+   do while (nearest_cell /= current_cell)
+      current_cell = nearest_cell
+      current_distance = sphere_distance(latCell(current_cell), lonCell(current_cell), target_lat, &
+                                         target_lon, 1.0_kind_real)
+      nearest_cell = current_cell
+      nearest_distance = current_distance
+      do i = 1, nEdgesOnCell(current_cell)
+         iCell = cellsOnCell(i,current_cell)
+         if (iCell <= nCells) then
+            d = sphere_distance(latCell(iCell), lonCell(iCell), target_lat, target_lon, 1.0_kind_real)
+            if (d < nearest_distance) then
+               nearest_cell = iCell
+               nearest_distance = d
+            end if
+         end if
+      end do
+   end do
+end function nearest_cell
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Compute the great-circle distance between (lat1, lon1) and (lat2, lon2) 
+!    on a sphere with given radius.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+real (kind=kind_real) function sphere_distance(lat1, lon1, lat2, lon2, radius)
+
+   implicit none
+
+   real (kind=kind_real), intent(in) :: lat1, lon1, lat2, lon2, radius
+   real (kind=kind_real) :: arg1
+
+   arg1 = sqrt( sin(0.5*(lat2-lat1))**2 + cos(lat1)*cos(lat2)*sin(0.5*(lon2-lon1))**2 )
+   sphere_distance = 2.0 * radius * asin(arg1)
+
+end function sphere_distance
 
 ! ------------------------------------------------------------------------------
 

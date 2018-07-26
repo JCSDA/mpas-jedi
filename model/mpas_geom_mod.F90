@@ -51,7 +51,8 @@ type :: mpas_geom
    real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
    real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
    real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: zgrid
-!   integer, allocatable :: nEdgesOnCell(:)
+   integer, allocatable :: nEdgesOnCell(:)
+   integer, allocatable :: cellsOnCell(:,:)
 !   integer, allocatable :: edgesOnCell(:,:)
 
    type (domain_type), pointer :: domain => null() 
@@ -86,7 +87,7 @@ implicit none
    type (block_type), pointer :: block_ptr
 
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
-   integer, pointer :: i0d_ptr, i1d_ptr(:)
+   integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
    write(*,*)' ==> create geom'
 
@@ -150,28 +151,32 @@ implicit none
    allocate ( self % areaCell ( self % nCells ) )
    allocate ( self % edgeNormalVectors (3,  self % nEdges ) )
    allocate ( self % zgrid ( self % nVertLevelsP1, self % nCells ) )
+   allocate ( self % nEdgesOnCell ( self % nCells ) )
+   allocate ( self % cellsOnCell ( self % maxEdges, self % nCells ) )
 
    call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )           
-   self % latCell = r1d_ptr
+   self % latCell = r1d_ptr(1:self % nCells)
    call mpas_pool_get_array ( meshPool, 'lonCell', r1d_ptr )           
-   self % lonCell = r1d_ptr
+   self % lonCell = r1d_ptr(1:self % nCells)
    call mpas_pool_get_array ( meshPool, 'areaCell', r1d_ptr )          
-   self % areaCell = r1d_ptr
+   self % areaCell = r1d_ptr(1:self % nCells)
    call mpas_pool_get_array ( meshPool, 'latEdge', r1d_ptr )           
-   self % latEdge = r1d_ptr
+   self % latEdge = r1d_ptr(1:self % nEdges)
    call mpas_pool_get_array ( meshPool, 'lonEdge', r1d_ptr )           
-   self % lonEdge = r1d_ptr
+   self % lonEdge = r1d_ptr(1:self % nEdges)
    call mpas_pool_get_array ( meshPool, 'edgeNormalVectors', r2d_ptr ) 
    self % edgeNormalVectors = r2d_ptr ( 1:3, 1:self % nEdges )
+   call mpas_pool_get_array ( meshPool, 'nEdgesOnCell', i1d_ptr )
+   self % nEdgesOnCell = i1d_ptr(1:self % nCells)
+   call mpas_pool_get_array ( meshPool, 'cellsOnCell', i2d_ptr )
+   self % cellsOnCell = i2d_ptr( 1:self % maxEdges, 1:self % nCells )
+
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )             
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
 !   !Not using these edges yet
-!    allocate ( self % nEdgesOnCell ( self % nCells ) )
 !    allocate ( self % edgesOnCell ( self % maxEdges,i self % nCells ) )
-!    call mpas_pool_get_array ( mesh, 'nEdgesOnCell', i1d_ptr )
-!    self % nEdgesOnCell = i1d_ptr
-!    call mpas_pool_get_array ( mesh, 'edgesOnCell', i1d_ptr )
+!    call mpas_pool_get_array ( meshPool, 'edgesOnCell', i2d_ptr )
 !    self % edgesOnCell = i1d_ptr ( 1:self % maxEdges, 1:self % nCells )
 
    !> radians to degrees (not here for now)
@@ -226,8 +231,11 @@ subroutine geo_clone(self, other)
    if (.not.allocated(other % areaCell)) allocate(other % areaCell(self % nCells))
    if (.not.allocated(other % edgeNormalVectors)) allocate(other % edgeNormalVectors(3, self % nEdges))
    if (.not.allocated(other % zgrid)) allocate(other % zgrid(self % nVertLevelsP1, self % nCells))
+   if (.not.allocated(other % nEdgesOnCell)) allocate(other % nEdgesOnCell(self % nCells))
+   if (.not.allocated(other % cellsOnCell)) allocate (other % cellsOnCell ( self % maxEdges, self % nCells ) )
+
+
 !   if (.not.allocated(other % edgesOnCell)) allocate(other % edgesOnCell(self % maxEdges, self % nCells))
-!   if (.not.allocated(other % nEdgesOnCell)) allocate(other % nEdgesOnCell(self % nCells))
 
    other % latCell           = self % latCell
    other % lonCell           = self % lonCell
@@ -236,8 +244,9 @@ subroutine geo_clone(self, other)
    other % lonEdge           = self % lonEdge
    other % edgeNormalVectors = self % edgeNormalVectors
    other % zgrid             = self % zgrid
+   other % nEdgesOnCell      = self % nEdgesOnCell
+   other % cellsOnCell       = self % cellsOnCell
 !   other % edgesOnCell       = self % edgesOnCell
-!   other % nEdgesOnCell      = self % nEdgesOnCell
 
    write(*,*)'====> copy of geom corelist and domain'
 
@@ -268,7 +277,8 @@ subroutine geo_delete(self)
    if (allocated(self%areaCell)) deallocate(self%areaCell)
    if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
    if (allocated(self%zgrid)) deallocate(self%zgrid)
-!   if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
+   if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
+   if (allocated(self%cellsOnCell)) deallocate(self%cellsOnCell)
 !   if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
 
    if ((associated(self % corelist)).and.(associated(self % domain))) then
