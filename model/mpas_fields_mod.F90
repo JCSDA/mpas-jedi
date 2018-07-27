@@ -260,8 +260,8 @@ subroutine copy(self,rhs)
    call mpas_pool_create_pool(self % subFields,self % nf)
    call mpas_pool_clone_pool(rhs % subFields, self % subFields)
 
-   !call mpas_pool_empty_pool(self % auxFields)
-   !call mpas_pool_destroy_pool(self % auxFields)
+   call mpas_pool_empty_pool(self % auxFields)
+   call mpas_pool_destroy_pool(self % auxFields)
    call mpas_pool_create_pool(self % auxFields,nf_aux)
    call mpas_pool_clone_pool(rhs % auxFields, self % auxFields)
 
