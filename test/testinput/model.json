@@ -7,13 +7,13 @@
     "gridfname": "./x1.2562.init.nc"
   },
   "State": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "filename": "./x1.2562.init.nc",
     "date": "2016-03-04T06:00:00Z"
   },
   "ModelTest": {
     "fclength": "PT2H",
-    "finalnorm": 197.56901741507093,
+    "finalnorm": 22045.046566469442,
     "tolerance": 0.005
     },
   "ModelBias": null,

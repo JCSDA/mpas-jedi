@@ -50,7 +50,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
           << "StateMPAS::StateMPAS variables are set from config file"
           << std::endl;
   } else {
-    vv = new std::vector<std::string>({"theta", "rho", "index_qv",
+    vv = new std::vector<std::string>({"temperature", "pressure", "index_qv",
                                 "uReconstructZonal", "uReconstructMeridional"});
     oops::Log::trace() << "StateMPAS::StateMPAS variables are set by default"
                        << std::endl;

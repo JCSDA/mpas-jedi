@@ -21,6 +21,7 @@ use mpi
 use mpas_stream_manager
 use mpas4da_mod
 use mpas_kinds, only : kind_real
+use mpas_constants, only : rgas, cp
 
 implicit none
 private
@@ -268,6 +269,7 @@ subroutine model_propagate(self, flds)
    type(mpas_field) :: flds
 
    type (mpas_pool_type), pointer :: state, diag, mesh
+   type (field2DReal), pointer :: field2d, field2d_b, field2d_c
    real (kind=kind_real) :: dt
    integer :: itimestep
 !--bjj clock test
@@ -295,12 +297,18 @@ subroutine model_propagate(self, flds)
       !call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
       call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
       call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
-      call atm_compute_restart_diagnostics(state, 1, diag, mesh)
-      call atm_compute_output_diagnostics(state, 1, diag, mesh) !--> add pressure
+      !call atm_compute_restart_diagnostics(state, 1, diag, mesh)
+      call atm_compute_output_diagnostics(state, 1, diag, mesh) !--> diagnose theta, rho, pressure
       ! update mpas wind from the edges to center
       ! copy from allfields to subfields
       call da_copy_all2sub_fields(self % domain, flds % subFields) 
       call da_copy_all2sub_fields(self % domain, flds % auxFields) 
+      !TODO- special case: read theta, pressure and convert to temperature
+      call mpas_pool_get_field(flds % auxFields, 'theta', field2d_b)
+      call mpas_pool_get_field(flds % subFields, 'pressure', field2d_c)
+      call mpas_pool_get_field(flds % subFields, 'temperature', field2d)
+      field2d % array(:,:) = field2d_b % array(:,:) / &
+                ( 100000.0_kind_real / field2d_c % array(:,:) ) ** ( rgas / cp )
    !end if
 
 end subroutine model_propagate
