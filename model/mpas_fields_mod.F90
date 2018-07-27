@@ -248,6 +248,10 @@ subroutine copy(self,rhs)
    
    write(*,*)'====> copy of mpas_field'
 
+   !TODO: Do we need to empty/destroy subFields and re-create/clone it ?
+   !    : Is "mpas_pool_clone_pool" enough?
+   !    : Check this, considering the use of "copy" routine in OOPS.
+
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
    call mpas_pool_empty_pool(self % subFields)
@@ -348,12 +352,21 @@ subroutine dot_prod(fld1,fld2,zprod)
 end subroutine dot_prod
 
 ! ------------------------------------------------------------------------------
-
+!> add increment to state
+!!
+!! \details **add_incr()** adds "increment" to "state", such as
+!!          state (containing analysis) = state (containing guess) + increment
+!!          Here, we also update "theta", "rho", and "u" (edge-normal wind), which are
+!!          close to MPAS prognostic variable.
+!!          While conversion to "theta" and "rho" uses full state variables,
+!!          conversion to "u" from cell center winds uses their increment to reduce 
+!!          the smoothing effect.
+!!
 subroutine add_incr(self,rhs)
 
    implicit none
-   type(mpas_field), intent(inout) :: self
-   type(mpas_field), intent(in)    :: rhs
+   type(mpas_field), intent(inout) :: self !< state
+   type(mpas_field), intent(in)    :: rhs  !< increment
    character(len=StrKIND) :: kind_op
 
    type (mpas_pool_type), pointer :: state, diag, mesh
@@ -403,7 +416,7 @@ subroutine add_incr(self,rhs)
       field2d_u % array(:,:) = field2d_u % array(:,:) + field2d_u_inc % array(:,:)
       write(*,*) 'add_inc: u_analy min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
 
-      ! TODO: DO we need HALO exchange ?
+      ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
 
    else
       call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
@@ -761,7 +774,6 @@ subroutine invent_state(fld,config)
    type(mpas_field), intent(inout) :: fld    !< Model fields
    type(c_ptr), intent(in)         :: config  !< Configuration structure
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   real (kind=kind_real) :: t0
    integer :: jlev,ii
    type (mpas_pool_type), pointer :: pool_a, state
    type (field3DReal), pointer :: field3d
@@ -790,22 +802,19 @@ subroutine invent_state(fld,config)
       enddo
    enddo
 
-   !pt
-   call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
-   call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_b)
+   !temperature
+   call mpas_pool_get_array(pool_a, "temperature", r2d_ptr_a)
    do jlev = 1,fld % geom % nVertLevels
       do ii = 1, fld % geom % nCellsSolve
-         t0 = cos(0.25*fld % geom % lonCell(ii)) + cos(0.25*fld % geom % latCell(ii))
-         r2d_ptr_a(jlev,ii) = t0 * ( (100000.0/r2d_ptr_b(jlev,ii))**(287.05/1005.7) )
+         r2d_ptr_a(jlev,ii) = cos(0.25*fld % geom % lonCell(ii)) + cos(0.25*fld % geom % latCell(ii))
       enddo
    enddo
 
-   !rho and pressure
-   call mpas_pool_get_array(pool_a, "rho", r2d_ptr_a)
+   !pressure
+   call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
    do jlev = 1,fld % geom % nVertLevels
       do ii = 1, fld % geom % nCellsSolve
-         r2d_ptr_a(jlev,ii) = 1._kind_real / real(jlev,kind_real)
-         r2d_ptr_b(jlev,ii) = real(jlev,kind_real)
+         r2d_ptr_a(jlev,ii) = real(jlev,kind_real)
       enddo
    enddo
 
@@ -817,7 +826,7 @@ subroutine invent_state(fld,config)
       r2d_ptr_a => field3d % array(index_qv,:,:)
       do jlev = 1,fld % geom % nVertLevels
          do ii = 1, fld % geom % nCellsSolve
-            r2d_ptr_a(jlev,ii) = 0.0
+            r2d_ptr_a(jlev,ii) = 0.0_kind_real
          enddo
       enddo
    end if
@@ -882,6 +891,9 @@ subroutine read_file(fld, c_conf, vdate)
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
    call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
    !TODO- special case: read theta, pressure and convert to temperature
+   !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner") 
+   !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics 6 lines above,
+   !    : we need to include "exner" in stream_list.for.reading
    call mpas_pool_get_field(fld % auxFields, 'theta', field2d_b)
    call mpas_pool_get_field(fld % subFields, 'pressure', field2d_c)
    call mpas_pool_get_field(fld % subFields, 'temperature', field2d)
@@ -1725,6 +1737,8 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
    write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
    write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
 
+   !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
+   !    : Actually their values are initialized as "zero" in following "do while" loop.
    call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)

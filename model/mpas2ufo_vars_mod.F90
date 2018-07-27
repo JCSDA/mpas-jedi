@@ -567,22 +567,23 @@
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
 
-        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
-        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
-
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to tl of var_prsl. but for general purpose ?!?!
         !BJ: Without this array, 3DVAR gives the same results.
-        field2d % array(:,:) = 0.0_kind_real !log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
-        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
-        field2d % fieldName = var_prsl
-
-        call mpas_pool_add_field(pool_c, var_prsl, field2d)
-
-        write(*,*) "end-of ",var_prsl
+!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!
+!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
+!
+!NL        field2d % array(:,:) = 0.0_kind_real !log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
+!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+!
+!        field2d % fieldName = var_prsl
+!
+!        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+!
+!        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
@@ -714,22 +715,23 @@
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        !get pressure from subField
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
+        !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!
+        !BJ: Without this array, 3DVAR gives the same results.
 
-!        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 !
-!        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
+!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
 !
-!        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
+!NL        field2d % array(:,:) = 0.0_kind_real !log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
 !        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 !
 !        field2d % fieldName = var_prsl
 !
 !        call mpas_pool_add_field(pool_c, var_prsl, field2d)
 !
-        write(*,*) "end-of ",var_prsl
+!        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
