@@ -10,7 +10,7 @@
     "gridfname": "./x1.2562.init.nc"
   },
   "Variables": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "State": {
     "filename": "./x1.2562.init.nc",

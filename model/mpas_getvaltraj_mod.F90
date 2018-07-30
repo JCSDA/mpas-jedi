@@ -20,7 +20,7 @@ type :: mpas_getvaltraj
  integer :: nobs, ngrid
  type (mpas_pool_type), pointer :: pool_traj
  type(bump_type) :: bump
- integer :: nsize = 3 !< size of pool, currently for theta, index_qc, pressure
+ integer :: nsize = 2 !< size of pool, currently for temperature, index_qv
  logical :: lalloc = .false.
 end type mpas_getvaltraj
 

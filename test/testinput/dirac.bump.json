@@ -6,10 +6,10 @@
     "gridfname": "./x1.2562.init.nc"
   },
   "variables": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "initial": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "filename": "./x1.2562.init.nc",
     "date": "2016-03-04T06:00:00Z"
   },
@@ -17,13 +17,13 @@
     "covariance": "ensemble",
     "members": "5",
     "variables": {
-      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
     },
     "date": "2016-03-04T06:00:00Z",
     "localization": {
       "localization": "BUMP",
       "variables": {
-        "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
       },
       "bump_ensemble": [
         {

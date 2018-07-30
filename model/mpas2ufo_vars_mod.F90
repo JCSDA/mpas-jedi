@@ -24,11 +24,10 @@
    use mpas_abort, only : mpas_dmpar_global_abort
    use atm_core
    use mpi 
-   use mpas_constants
+   use mpas_constants, only : gravity, rgas, rv, pii
    use mpas_kinds, only : kind_real
 
-
-   use ufo_vars_mod !, only : var_tv, var_prsl
+   use ufo_vars_mod 
 
    private
 
@@ -183,21 +182,19 @@
 
 !-------------------------------------------------------------------------------------------
 
-   !---- pool_a : self % subFields
-   !---- pool_b : self % auxFields
-   !---- pool_c : pool with UFO vars
+   !--- variables can be found in subFields or auxFields
    subroutine convert_mpas_field2ufo(geom, pool_a, pool_b, pool_c, fieldname, nfield)
 
    use mpas_geom_mod
-   use mpas_constants, only : gravity
 
    implicit none
 
-   type(mpas_geom), intent(in)  :: geom
-   type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(out) :: pool_c ! pool with UFO vars
-   integer, intent(in) :: nfield
-   character (len=*), intent(in) :: fieldname(:) ! ufo
+   type(mpas_geom),                intent(in)  :: geom         !< geometry
+   type (mpas_pool_type), pointer, intent(in ) :: pool_a       !< self % subFields
+   type (mpas_pool_type), pointer, intent(in ) :: pool_b       !< self % auxFields
+   type (mpas_pool_type), pointer, intent(out) :: pool_c       !< pool with geovals variable
+   character (len=*),              intent(in ) :: fieldname(:) !< list of variables for geovals
+   integer,                        intent(in ) :: nfield       !< number of variables
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields
@@ -221,10 +218,8 @@
 
    logical, SAVE :: l_detsfctemp = .false.
 
-   !--- create new pull for ufo_vars
+   !--- create new pool for geovals
    call mpas_pool_create_pool(pool_c, nfield)
-
-   !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
      write(*,*) 'convert_mpas_field2ufo  :inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
@@ -232,27 +227,18 @@
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get    theta from subFields
-        !get       qv from subfields
-        !get pressure from auxFields
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
-        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
-        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
+        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a) !< get temperature
+        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b) !< get index_qv
+        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
 
-!%%%  NL 
-!%%%  TODO: use clean formula
-        field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
-                               (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
+!%%%  NL: Calculate Tv from T and qv. TODO: use clean formula
+        field2d % array(:,:) = r2d_ptr_a(:,:) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,:))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
-                  !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
@@ -262,16 +248,14 @@
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        !get pressure from subField
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a) !< get pressure
         write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
-        call mpas_pool_get_field(pool_a, 'rho', field2d_src)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)
 
-        field2d % array(:,:) = log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
+        field2d % array(:,:) = log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !< unit: Pa -> hPa ->cb
         write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_prsl
@@ -282,7 +266,7 @@
 
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = r2d_ptr_a(:,:) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
@@ -290,8 +274,8 @@
         write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = r2d_ptr_a(:,:) / 100.0_kind_real ! [Pa] -> [hPa]
         field2d % fieldName = var_prs
@@ -299,7 +283,7 @@
         write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels") !-var_prsi
-        call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
+        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
         call mpas_pool_get_field(pool_b, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
 
@@ -352,8 +336,8 @@
         write(*,*) "end-of ",var_prsi
 
      case ("mass_concentration_of_ozone_in_air") !-var_oz :TODO: not directly available from MPAS
-        call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_array(pool_b, "theta", r2d_ptr_a)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
         field2d % fieldName = var_oz
@@ -361,8 +345,8 @@
         write(*,*) "end-of ",var_oz
 
      case ("mass_concentration_of_carbon_dioxide_in_air") !-var_co2 :TODO: not directly available from MPAS
-        call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_array(pool_b, "theta", r2d_ptr_a)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = 0.0_kind_real !r2d_ptr_a(:,:) ! convert ??
         field2d % fieldName = var_co2
@@ -372,7 +356,7 @@
      case ("atmosphere_mass_content_of_cloud_liquid_water") !-var_clw 
         call mpas_pool_get_array(pool_b, "index_qc", r2d_ptr_a) !- [kg/kg] 
         write(*,*) 'MIN/MAX of index_qc=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
         call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
@@ -393,7 +377,7 @@
      case ("atmosphere_mass_content_of_cloud_ice") !-var_cli 
         call mpas_pool_get_array(pool_b, "index_qi", r2d_ptr_a) !- [kg/kg] 
         write(*,*) 'MIN/MAX of index_qi=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
         call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
@@ -413,7 +397,7 @@
      case ("effective_radius_of_cloud_liquid_water_particle") !-var_clwefr :TODO: currently filled w/ default value
         call mpas_pool_get_array(pool_b, "re_cloud", r2d_ptr_a) !- [m]
         write(*,*) 'MIN/MAX of re_cloud=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = 10.0_kind_real !r2d_ptr_a(:,:) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_clwefr
@@ -423,7 +407,7 @@
      case ("effective_radius_of_cloud_ice_particle") !-var_cliefr :TODO: currently filled w/ default value
         call mpas_pool_get_array(pool_b, "re_ice", r2d_ptr_a) !- [m]
         write(*,*) 'MIN/MAX of re_ice=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,:) = 30.0_kind_real !r2d_ptr_a(:,:) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_cliefr
@@ -522,17 +506,16 @@
 
 !-------------------------------------------------------------------------------------------
 
-   !subroutine convert_mpas_field2ufoTL(pool_a, pool_b, pool_c, fieldname, nfield)
-   !subroutine convert_mpas_field2ufoTL(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
    subroutine convert_mpas_field2ufoTL(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(in) :: pool_traj !traj_pool_a, traj_pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(out) :: pool_c
-   integer, intent(in) :: nfield
-   character (len=*), intent(in) :: fieldname(:) ! ufo
+   type (mpas_pool_type), pointer, intent(in ) :: pool_traj    !< linearization state for conversion
+   type (mpas_pool_type), pointer, intent(in ) :: pool_a       !< self % subFields
+   type (mpas_pool_type), pointer, intent(in ) :: pool_b       !< self % auxFields
+   type (mpas_pool_type), pointer, intent(out) :: pool_c       !< pool with geovals variable
+   character (len=*),              intent(in ) :: fieldname(:) !< list of variables for geovals
+   integer,                        intent(in ) :: nfield       !< number of variables
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields
@@ -548,45 +531,32 @@
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(pool_c, nfield)
 
-   !--- ufo_vars can be found in subFields or auxFields
-
    do ivar=1, nfield
      write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get    theta from subFields
-        !get       qv from subfields
-        !get pressure from auxFields
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
-        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
-        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
+        !get TL variables
+        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
+        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
-        call mpas_pool_get_array(pool_traj,    'theta', traj_r2d_a)
-        call mpas_pool_get_array(pool_traj, 'index_qv', traj_r2d_b)
-        call mpas_pool_get_array(pool_traj, 'pressure', traj_r2d_c)
-        write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
-        write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
-        write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
+        !get linearization state
+        call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
+        call mpas_pool_get_array(pool_traj,    'index_qv', traj_r2d_b)
+        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
+        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
-        call mpas_pool_get_field(pool_a, 'theta', field2d_src)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)
 
-!%%%  TL with trajectory!
-!%%%  TODO: use clean formula
-        !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
-        !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
-        !     !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
-        !          !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature	
-        field2d % array(:,:) = ( ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
-                                + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) * r2d_ptr_b(:,:) ) &
-                               / ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) )
+!%%%  TL: Calculate Tv from T and qv. TODO: use clean formula
+        !NL: field2d % array(:,:) = r2d_ptr_a(:,:) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,:))
+        field2d % array(:,:) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
+                                + traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,:)
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
@@ -596,31 +566,33 @@
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        !get pressure from subField
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        !BJ: DO WE NEED THIS? "Currently" UFO do not access to tl of var_prsl. but for general purpose ?!?!
+        !BJ: Without this array, 3DVAR gives the same results.
 
-        call mpas_pool_get_field(pool_a, 'rho', field2d_src)
-        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
-
-        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
-        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
-
-        field2d % fieldName = var_prsl
-
-        call mpas_pool_add_field(pool_c, var_prsl, field2d)
-
-        write(*,*) "end-of ",var_prsl
+!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!
+!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
+!
+!NL        field2d % array(:,:) = 0.0_kind_real !log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
+!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+!
+!        field2d % fieldName = var_prsl
+!
+!        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+!
+!        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        !call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        !field2d % array(:,:) = r2d_ptr_a(:,:)
-        !field2d % fieldName = var_mixr
-        !call mpas_pool_add_field(pool_c, var_mixr, field2d)
-        !write(*,*) "end-of ",var_mixr
+        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_duplicate_field(field2d_src, field2d)
+        field2d % array(:,:) = r2d_ptr_a(:,:) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+        field2d % fieldName = var_mixr
+        call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
         !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
@@ -684,17 +656,16 @@
 
 !-------------------------------------------------------------------------------------------
 
-   !subroutine convert_mpas_field2ufoAD(pool_a, pool_b, pool_c, fieldname, nfield)
-   !subroutine convert_mpas_field2ufoAD(traj_pool_a, traj_pool_b, pool_a, pool_b, pool_c, fieldname, nfield)
    subroutine convert_mpas_field2ufoAD(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(in   ) :: pool_traj !traj_pool_a, traj_pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(inout) :: pool_a, pool_b ! subFields, auxFields
-   type (mpas_pool_type), pointer, intent(inout) :: pool_c
-   integer, intent(in) :: nfield
-   character (len=*), intent(in) :: fieldname(:) ! ufo
+   type (mpas_pool_type), pointer, intent(in   ) :: pool_traj    !< linearization state for conversion
+   type (mpas_pool_type), pointer, intent(inout) :: pool_a       !< self % subFields
+   type (mpas_pool_type), pointer, intent(inout) :: pool_b       !< self % auxFields
+   type (mpas_pool_type), pointer, intent(inout) :: pool_c       !< pool with geovals variable
+   character (len=*),              intent(in   ) :: fieldname(:) !< list of variables for geovals
+   integer,                        intent(in   ) :: nfield       !< number of variables
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields, clone_pool_a
@@ -706,14 +677,6 @@
 
    type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
    integer :: ii, ivar
-   !--- test
-   !call mpas_pool_create_pool(clone_pool_a)
-   !call mpas_pool_clone_pool(pool_a,clone_pool_a)
-
-   !--- create new pull for ufo_vars
-   !call mpas_pool_create_pool(pool_c, nfield)
-
-   !--- ufo_vars can be found in subFields or auxFields
 
    do ivar=1, nfield
      write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
@@ -721,74 +684,66 @@
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-        !get    theta from subFields
-        !get       qv from subfields
-        !get pressure from auxFields
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
 
-        call mpas_pool_get_array(pool_a,    'theta', r2d_ptr_a)
-        call mpas_pool_get_array(pool_a, 'index_qv', r2d_ptr_b)
-        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_c)
-        write(*,*) 'MIN/MAX of    theta=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
-        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_c),maxval(r2d_ptr_c)
+        !get AD variables
+        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
+        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
+        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
-        call mpas_pool_get_array(pool_traj,    'theta', traj_r2d_a)
-        call mpas_pool_get_array(pool_traj, 'index_qv', traj_r2d_b)
-        call mpas_pool_get_array(pool_traj, 'pressure', traj_r2d_c)
-        write(*,*) 'MIN/MAX of TRAJ    theta=',minval(traj_r2d_a),maxval(traj_r2d_a)
-        write(*,*) 'MIN/MAX of TRAJ index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
-        write(*,*) 'MIN/MAX of TRAJ pressure=',minval(traj_r2d_c),maxval(traj_r2d_c)
+        !get linearization state
+        call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
+        call mpas_pool_get_array(pool_traj,    'index_qv', traj_r2d_b)
+        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
+        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
-        !call mpas_pool_get_field(clone_pool_a, 'theta', field2d) ! as a dummy array
-
-!%%%  AD with trajectory!
-!%%%  TODO: use clean formula
-        !field2d % array(:,:) = r2d_ptr_a(:,:) / ( (100000.0/r2d_ptr_c(:,:))**(287.05/1005.7) ) * &
-        !                       (1.0 + (461.50/287.05 - 1.0)*r2d_ptr_b(:,:))
-        !     !Tv = T * ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05
-        !          !T = theta / ( (p0/pressure)**rd_over_cp) : to sensible temperature   
-        !field2d % array(:,:) = ( ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
-        !                        + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) * r2d_ptr_b(:,:) ) &
-        !                       / ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) )
-        call mpas_pool_get_field(pool_c, 'virtual_temperature', field2d)
+!%%%  AD: get T and qv from Tv. TODO: use clean formula
+        !NL: field2d % array(:,:) = r2d_ptr_a(:,:) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,:))
+        !TL: field2d % array(:,:) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
+        !TL:                        + traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,:)
+        call mpas_pool_get_field(pool_c, var_tv, field2d)
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
         r2d_ptr_a(:,:)=0.0_kind_real
         r2d_ptr_b(:,:)=0.0_kind_real
-        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + ( 1.0 + (461.50/287.05 - 1.0)*traj_r2d_b(:,:) ) / &
-                         ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) ) * field2d % array(:,:)
-        r2d_ptr_b(:,:) = r2d_ptr_b(:,:) + traj_r2d_a(:,:) * (461.50/287.05 - 1.0) / &
-                         ( (100000.0/traj_r2d_c(:,:))**(287.05/1005.7) ) * field2d % array(:,:)
-        write(*,*) 'MIN/MAX of theta=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + &
+                         ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * field2d % array(:,:)
+        r2d_ptr_b(:,:) = r2d_ptr_b(:,:) + &
+                         traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * field2d % array(:,:)
+        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
         write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b(:,:)),maxval(r2d_ptr_b(:,:))
 
         write(*,*) "end-of ",var_tv
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        !get pressure from subField
-        !do the conversion : need 'nl', 'tl', 'ad' ?!
+        !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!
+        !BJ: Without this array, 3DVAR gives the same results.
 
-!        call mpas_pool_get_array(pool_b, 'pressure', r2d_ptr_a)
+!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 !
-!        call mpas_pool_get_field(clone_pool_a, 'rho', field2d) ! as a dummy array
+!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
 !
-!        field2d % array(:,:) = log( r2d_ptr_a(:,:)/100./10. ) !- Pa -> hPa -> kPa
+!NL        field2d % array(:,:) = 0.0_kind_real !log( r2d_ptr_a(:,:) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
 !        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 !
 !        field2d % fieldName = var_prsl
 !
 !        call mpas_pool_add_field(pool_c, var_prsl, field2d)
 !
-        write(*,*) "end-of ",var_prsl
+!        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        !call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        !field2d % array(:,:) = r2d_ptr_a(:,:)
-        !field2d % fieldName = var_mixr
-        !call mpas_pool_add_field(pool_c, var_mixr, field2d)
-        !write(*,*) "end-of ",var_mixr
+        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+
+        !TL: field2d % array(:,:) = r2d_ptr_a(:,:) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+        call mpas_pool_get_field(pool_c, var_mixr, field2d)
+        write(*,*) 'MIN/MAX of var_mixr =',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+        r2d_ptr_a(:,:)=0.0_kind_real
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + 1000.0_kind_real * field2d % array(:,:)
+        write(*,*) 'MIN/MAX of index_qv =',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
+
+        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
         !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)

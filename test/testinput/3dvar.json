@@ -13,12 +13,11 @@
     "cost_type": "3D-Var",
     "window_begin": "2016-03-04T06:00:00Z",
     "window_length": "PT0H",
-    "nvars" : 5,
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
         "state": [{
-          "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
           "filename": "./x1.2562.init.nc",
           "date": "2016-03-04T06:00:00Z"
         }]

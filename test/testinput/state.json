@@ -8,15 +8,15 @@
   },
   "StateTest": {
     "StateFile": {
-      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+      "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "filename": "./x1.2562.init.nc",
       "date": "2016-03-04T06:00:00Z"
     },
     "date": "2016-03-04T06:00:00Z",
-    "norm-file": "197.58275636070442",
+    "norm-file": "22050.214248074055",
     "StateGenerate" : {
       "analytic_init": "dcmip-test-4-0",
-      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+      "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
       "date": "2016-03-04T06:00:00Z",
       "mean": 8.0,
       "sinus": 2.0
@@ -24,7 +24,7 @@
     "InterpTest" : {
       "variables": ["virtual_temperature","atmosphere_ln_pressure_coordinate"]
     },
-    "norm-gen": "207.67924239943278",
+    "norm-gen": "21598.849125951634",
     "tolerance": [1.0e-08],
     "interp_tolerance": [1.0e-04],
     "Locations": {

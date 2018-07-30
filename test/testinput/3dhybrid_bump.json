@@ -14,12 +14,11 @@
     "window_begin": "2016-03-04T06:00:00Z",
     "window_length": "PT0H",
     "window_sub": "PT1H",
-    "nvars" : 5,
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
         "state": [{
-          "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
           "filename": "./x1.2562.init.nc",
           "date": "2016-03-04T06:00:00Z"
         }]
@@ -40,13 +39,13 @@
         "ensemble": {
           "members": "5",
           "variables": {
-            "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+            "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
           },
           "date": "2016-03-04T06:00:00Z",
           "localization": {
             "localization": "BUMP",
             "variables": {
-              "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
             "bump_ensemble": [
               {

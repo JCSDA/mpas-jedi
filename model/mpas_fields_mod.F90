@@ -69,7 +69,7 @@ real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  T
 !> Global registry
 type(registry_t) :: mpas_field_registry
 
-integer, parameter :: nf_aux = 19
+integer, parameter :: nf_aux = 21
 
 ! ------------------------------------------------------------------------------
 contains
@@ -92,8 +92,6 @@ subroutine create(self, geom, vars)
     integer :: nsize, nfields
     integer :: ierr!, ii
 
-    !aux test: BJJ
-!    integer :: nf_aux
     character(len=22), allocatable  :: fldnames_aux(:)
 
     !-- fortran level test (temporally sit here)
@@ -129,18 +127,15 @@ subroutine create(self, geom, vars)
     end  if
 
     !--- TODO: aux test: BJJ  !- get this from json ???
-!    nf_aux=19 !15 ! 3
     allocate(fldnames_aux(nf_aux))
-    !fldnames_aux(1)='pressure'
-    !fldnames_aux(2)='u10'
-    !fldnames_aux(3)='t2m'
-    !fldnames_aux=(/"pressure", "u10", "t2m"/)
-    fldnames_aux = [ character(len=22) :: "pressure", "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
+    fldnames_aux = [ character(len=22) :: "theta", "rho", "u", &
+                                          "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
                                           "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w", &
                                           "index_qc", "index_qi", "re_cloud", "re_ice" ]
-                                          !BJJ- "w" is for var_prsi 
+                                          !BJJ- "w" is for dimension information of var_prsi
     write(0,*)'-- Create a sub Pool for auxFields'
     call da_make_subpool(self % geom % domain, self % auxFields, nf_aux, fldnames_aux, nfields)
+    deallocate(fldnames_aux)
     if ( nf_aux .ne. nfields  ) then
        call abor1_ftn("mpas_fields:create: dimension mismatch ",nf_aux, nfields)
     end  if
@@ -155,7 +150,7 @@ subroutine create(self, geom, vars)
     !-------------------------------------------------------------
     ! Few temporary tests
     !-------------------------------------------------------------
-    call update_mpas_field(self % geom % domain, self % auxFields)
+!    call update_mpas_field(self % geom % domain, self % auxFields)
 !!    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs,'state',state)
 !    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms)
 !    allocate(pstat(3, self % nf))
@@ -253,6 +248,10 @@ subroutine copy(self,rhs)
    
    write(*,*)'====> copy of mpas_field'
 
+   !TODO: Do we need to empty/destroy subFields and re-create/clone it ?
+   !    : Is "mpas_pool_clone_pool" enough?
+   !    : Check this, considering the use of "copy" routine in OOPS.
+
    ! Duplicate the members of rhs into self and do a deep copy
    ! of the fields from self % subFields to rhs % subFields
    call mpas_pool_empty_pool(self % subFields)
@@ -261,6 +260,8 @@ subroutine copy(self,rhs)
    call mpas_pool_create_pool(self % subFields,self % nf)
    call mpas_pool_clone_pool(rhs % subFields, self % subFields)
 
+   call mpas_pool_empty_pool(self % auxFields)
+   call mpas_pool_destroy_pool(self % auxFields)
    call mpas_pool_create_pool(self % auxFields,nf_aux)
    call mpas_pool_clone_pool(rhs % auxFields, self % auxFields)
 
@@ -351,20 +352,72 @@ subroutine dot_prod(fld1,fld2,zprod)
 end subroutine dot_prod
 
 ! ------------------------------------------------------------------------------
-
+!> add increment to state
+!!
+!! \details **add_incr()** adds "increment" to "state", such as
+!!          state (containing analysis) = state (containing guess) + increment
+!!          Here, we also update "theta", "rho", and "u" (edge-normal wind), which are
+!!          close to MPAS prognostic variable.
+!!          While conversion to "theta" and "rho" uses full state variables,
+!!          conversion to "u" from cell center winds uses their increment to reduce 
+!!          the smoothing effect.
+!!
 subroutine add_incr(self,rhs)
 
    implicit none
-   type(mpas_field), intent(inout) :: self
-   type(mpas_field), intent(in)    :: rhs
+   type(mpas_field), intent(inout) :: self !< state
+   type(mpas_field), intent(in)    :: rhs  !< increment
    character(len=StrKIND) :: kind_op
+
+   type (mpas_pool_type), pointer :: state, diag, mesh
+   type (field2DReal), pointer :: field2d_t, field2d_p, field2d_qv, field2d_uRz, field2d_uRm, &
+                                  field2d_th, field2d_rho, field2d_u, field2d_u_inc
 
    ! GD: I don''t see any difference than for self_add other than subFields can contain
    ! different variables than mpas_field and the resolution of incr can be different. 
 
    if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
+      !NOTE: first, get full state of "subFields" variables
       kind_op = 'add'
       call da_operator(trim(kind_op), self % subFields, rhs % subFields)
+
+      !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
+      !  update theta from temperature and pressure
+      !  update rho   from temperature, pressure, and index_qv
+      call mpas_pool_get_field(self % subFields,            'temperature', field2d_t)
+      call mpas_pool_get_field(self % subFields,               'pressure', field2d_p)
+      call mpas_pool_get_field(self % subFields,               'index_qv', field2d_qv)
+      call mpas_pool_get_field(self % subFields,      'uReconstructZonal', field2d_uRz)
+      call mpas_pool_get_field(self % subFields, 'uReconstructMeridional', field2d_uRm)
+      call mpas_pool_get_field(self % auxFields,                  'theta', field2d_th)
+      call mpas_pool_get_field(self % auxFields,                    'rho', field2d_rho)
+
+      field2d_th % array(:,:) = field2d_t % array(:,:) * &
+                 ( 100000.0_kind_real / field2d_p % array(:,:) ) ** ( rgas / cp )
+      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
+      field2d_rho % array(:,:) = field2d_p % array(:,:) /  ( rgas * field2d_t % array(:,:) * &
+                 ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * field2d_qv % array(:,:) ) )
+      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)
+
+      !  update u     from uReconstructZonal and uReconstructMeridional "incrementally"
+      call mpas_pool_get_field(self % auxFields,                      'u', field2d_u)
+      call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', field2d_uRz)
+      call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', field2d_uRm)
+      call mpas_pool_get_field( rhs % auxFields,                      'u', field2d_u_inc)
+      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_uRz % array), maxval(field2d_uRz % array)
+      write(*,*) 'add_inc: v_inc min/max = ', minval(field2d_uRm % array), maxval(field2d_uRm % array)
+
+      call uv_cell_to_edges(self % geom % domain, field2d_uRz, field2d_uRm, field2d_u_inc, &
+                 self%geom%latCell, self%geom%lonCell, self%geom%nCellsSolve, &
+                 self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
+                 self%geom%nVertLevels)
+      write(*,*) 'add_inc: u_guess min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
+      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_u_inc % array), maxval(field2d_u_inc % array)
+      field2d_u % array(:,:) = field2d_u % array(:,:) + field2d_u_inc % array(:,:)
+      write(*,*) 'add_inc: u_analy min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
+
+      ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
+
    else
       call abor1_ftn("mpas_fields:add_incr: dimension mismatch")
    endif
@@ -475,7 +528,7 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
   logical, allocatable             :: grids_on_this_pe(:)
   integer                          :: p_split = 1
   real (kind=kind_real), dimension(:,:), pointer :: &
-              u_ptr, v_ptr, theta_ptr, rho_ptr, p_ptr, &
+              u_ptr, v_ptr, temperature_ptr, p_ptr, &
               qv_ptr, qc_ptr, qr_ptr, qi_ptr, qs_ptr, &
               ln_p_ptr
   integer, pointer :: index_qv, index_qc, index_qr, index_qi, index_qs
@@ -518,10 +571,8 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
    call mpas_pool_get_array(pool_a, "pressure", p_ptr)
    call mpas_pool_get_array(pool_a, "uReconstructZonal", u_ptr)
    call mpas_pool_get_array(pool_a, "uReconstructMeridional", v_ptr)
+   call mpas_pool_get_array(pool_a, "temperature", temperature_ptr)
 
-   !Prognostic vars (state pool)
-   call mpas_pool_get_array(pool_a, "theta", theta_ptr)
-   call mpas_pool_get_array(pool_a, "rho", rho_ptr)
 
    !Scalars (state pool)
    call mpas_pool_get_field(pool_a, "scalars", field3d)
@@ -602,16 +653,13 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
               v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
                                   ! with A grid winds
-              rho_ptr(jlev,ii) = rho0
               if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
               if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
               if (index_qi.gt.0) qi_ptr(jlev,ii) = q2
               if (index_qr.gt.0) qr_ptr(jlev,ii) = q3
               if (index_qs.gt.0) qs_ptr(jlev,ii) = q4 
 
-              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
-              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
-              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+              temperature_ptr(jlev,ii) = t0
            enddo
         enddo
 
@@ -632,7 +680,6 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
               v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
                                   ! with A grid winds
-              rho_ptr(jlev,ii) = rho0
               if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
               if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
 
@@ -640,9 +687,7 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
               if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
               if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
 
-              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
-              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
-              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+              temperature_ptr(jlev,ii) = t0
            enddo
         enddo
 
@@ -660,7 +705,6 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
                                       t0,phis0,ps0,rho0,hum0)
 
               p_ptr(jlev,ii) = pk
-              rho_ptr(jlev,ii) = rho0
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
               v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
                                   ! with A grid winds
@@ -671,9 +715,7 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
               if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
               if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
 
-              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
-              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
-              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+              temperature_ptr(jlev,ii) = t0
            enddo
         enddo
 
@@ -692,8 +734,6 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
 
               p_ptr(jlev,ii) = pk
 
-              rho_ptr(jlev,ii) = rho0
-
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
 
               v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
@@ -705,9 +745,7 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
               if (index_qr.gt.0) qr_ptr(jlev,ii) = 0._kind_real
               if (index_qs.gt.0) qs_ptr(jlev,ii) = 0._kind_real
 
-              theta_ptr(jlev,ii) = t0 * ( (100000.0/pk)**(287.05/1005.7) )
-              !theta = T * ( (p0/pressure)**rd_over_cp) : to potential temperature   
-              !T = Tv / ( 1.0 + (rv/rd ?~@~S 1)*qv), rv=461.50 , rd=287.05 (virtual to sensible, not used here)
+              temperature_ptr(jlev,ii) = t0
            enddo
         enddo
 
@@ -736,7 +774,6 @@ subroutine invent_state(fld,config)
    type(mpas_field), intent(inout) :: fld    !< Model fields
    type(c_ptr), intent(in)         :: config  !< Configuration structure
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   real (kind=kind_real) :: t0
    integer :: jlev,ii
    type (mpas_pool_type), pointer :: pool_a, state
    type (field3DReal), pointer :: field3d
@@ -765,22 +802,19 @@ subroutine invent_state(fld,config)
       enddo
    enddo
 
-   !pt
-   call mpas_pool_get_array(pool_a, "theta", r2d_ptr_a)
-   call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_b)
+   !temperature
+   call mpas_pool_get_array(pool_a, "temperature", r2d_ptr_a)
    do jlev = 1,fld % geom % nVertLevels
       do ii = 1, fld % geom % nCellsSolve
-         t0 = cos(0.25*fld % geom % lonCell(ii)) + cos(0.25*fld % geom % latCell(ii))
-         r2d_ptr_a(jlev,ii) = t0 * ( (100000.0/r2d_ptr_b(jlev,ii))**(287.05/1005.7) )
+         r2d_ptr_a(jlev,ii) = cos(0.25*fld % geom % lonCell(ii)) + cos(0.25*fld % geom % latCell(ii))
       enddo
    enddo
 
-   !rho and pressure
-   call mpas_pool_get_array(pool_a, "rho", r2d_ptr_a)
+   !pressure
+   call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
    do jlev = 1,fld % geom % nVertLevels
       do ii = 1, fld % geom % nCellsSolve
-         r2d_ptr_a(jlev,ii) = 1._kind_real / real(jlev,kind_real)
-         r2d_ptr_b(jlev,ii) = real(jlev,kind_real)
+         r2d_ptr_a(jlev,ii) = real(jlev,kind_real)
       enddo
    enddo
 
@@ -792,7 +826,7 @@ subroutine invent_state(fld,config)
       r2d_ptr_a => field3d % array(index_qv,:,:)
       do jlev = 1,fld % geom % nVertLevels
          do ii = 1, fld % geom % nCellsSolve
-            r2d_ptr_a(jlev,ii) = 0.0
+            r2d_ptr_a(jlev,ii) = 0.0_kind_real
          enddo
       enddo
    end if
@@ -811,6 +845,9 @@ subroutine read_file(fld, c_conf, vdate)
    type (MPAS_Time_type)   :: local_time
    character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
    integer                 :: ierr = 0
+
+   type (mpas_pool_type), pointer :: state, diag, mesh
+   type (field2DReal), pointer :: field2d, field2d_b, field2d_c
 
    write(*,*)'==> read fields'
    sdate = config_get_string(c_conf,len(sdate),"date")
@@ -845,9 +882,23 @@ subroutine read_file(fld, c_conf, vdate)
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
    !--TODO: BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
-   !call update_mpas_field(fld % geom % domain, fld % auxFields)
+   !call update_mpas_field(fld % geom % domain, fld % auxFields) !--> this will construct "pressure" from pressure_base & pressure_p
+   call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs,'state',state)
+   call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs, 'diag', diag)
+   call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs, 'mesh', mesh)
+   call atm_compute_output_diagnostics(state, 1, diag, mesh)
+
    call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
    call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
+   !TODO- special case: read theta, pressure and convert to temperature
+   !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner") 
+   !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics 6 lines above,
+   !    : we need to include "exner" in stream_list.for.reading
+   call mpas_pool_get_field(fld % auxFields, 'theta', field2d_b)
+   call mpas_pool_get_field(fld % subFields, 'pressure', field2d_c)
+   call mpas_pool_get_field(fld % subFields, 'temperature', field2d)
+   field2d % array(:,:) = field2d_b % array(:,:) / &
+             ( 100000.0_kind_real / field2d_c % array(:,:) ) ** ( rgas / cp )
 
 end subroutine read_file
 
@@ -1170,12 +1221,10 @@ subroutine getvalues(fld, locs, vars, gom, traj)
        traj%nobs = nobs
 
        call mpas_pool_create_pool( pool_tmp, traj % nsize )
-       call mpas_pool_get_field(fld % subFields, 'theta', field2d_src)
-       call mpas_pool_add_field(pool_tmp, 'theta', field2d_src)
+       call mpas_pool_get_field(fld % subFields, 'temperature', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'temperature', field2d_src)
        call mpas_pool_get_field(fld % subFields, 'index_qv', field2d_src)
        call mpas_pool_add_field(pool_tmp, 'index_qv', field2d_src)
-       call mpas_pool_get_field(fld % auxFields, 'pressure', field2d_src)
-       call mpas_pool_add_field(pool_tmp, 'pressure', field2d_src)
 
        call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
 
@@ -1604,10 +1653,7 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   !call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_b, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
-  ! call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
@@ -1691,10 +1737,9 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
    write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
    write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
 
-   !BJJ tmp:call convert_mpas_field2ufoTL(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-  ! call convert_mpas_field2ufoTL(Traj_subFields, Traj_auxFields, &
-  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
+   !    : Actually their values are initialized as "zero" in following "do while" loop.
+   call convert_mpas_field2ufoTL(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
@@ -1724,10 +1769,7 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
         end if
    end do
 
-   !call convert_mpas_field2ufoAD(fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-  ! call convert_mpas_field2ufoAD(Traj_subFields, Traj_auxFields, &
-  !      fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
-   call convert_mpas_field2ufoAD(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_b is new pool with ufo_vars
+   call convert_mpas_field2ufoAD(traj % pool_traj, fld % subFields, fld % auxFields, pool_ufo, vars % fldnames, vars % nv) !--pool_ufo is new pool with ufo_vars
 
    deallocate(mod_field)
    deallocate(obs_field)
@@ -1909,7 +1951,13 @@ subroutine convert_to_ug(self, ug)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer :: idx_var
+   type(ufo_vars) :: vars ! temporary to access variable "index" easily
    
+   ! Set list of variables
+   vars % nv = self % nf
+   allocate(vars % fldnames(vars % nv))
+   vars % fldnames(:) = self % fldnames(:)
+
    ! Define local number of gridpoints
    nmga = self%geom%nCellsSolve
    
@@ -1938,12 +1986,11 @@ subroutine convert_to_ug(self, ug)
    ! Should this come from self/vars?
    nf = self%nf
    write(0,*)'convert_to_ug: nf=',nf
-   !if (.not. self%geom%hydrostatic) nf = 7
 
    ! Create unstructured grid
    call create_unstructured_grid(ug, nmga, self%geom%nVertLevels, nf, 1, lon, lat, area, vunit, imask)
 
-   !! Copy field
+   ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
    
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
@@ -1960,12 +2007,8 @@ subroutine convert_to_ug(self, ug)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
    
-              idx_var=-999
-              if(trim(poolItr % memberName).eq.'theta'   ) idx_var=1
-              if(trim(poolItr % memberName).eq.'rho'     ) idx_var=2
-              if(trim(poolItr % memberName).eq.'index_qv') idx_var=3
-              if(trim(poolItr % memberName).eq.'uReconstructZonal') idx_var=4
-              if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
+              idx_var = -999
+              idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
                  write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
@@ -1980,6 +2023,9 @@ subroutine convert_to_ug(self, ug)
         end if
         end if
    end do
+
+   ! Cleanup
+   call ufo_vars_delete(vars)
 
 end subroutine convert_to_ug
 
@@ -2002,6 +2048,12 @@ subroutine convert_from_ug(self, ug)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    integer :: idx_var
+   type(ufo_vars) :: vars ! temporary to access variable "index" easily
+
+   ! Set list of variables
+   vars % nv = self % nf
+   allocate(vars % fldnames(vars % nv))
+   vars % fldnames(:) = self % fldnames(:)
 
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
@@ -2020,12 +2072,8 @@ subroutine convert_from_ug(self, ug)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
 
-              idx_var=-999
-              if(trim(poolItr % memberName).eq.'theta'   ) idx_var=1
-              if(trim(poolItr % memberName).eq.'rho'     ) idx_var=2
-              if(trim(poolItr % memberName).eq.'index_qv') idx_var=3
-              if(trim(poolItr % memberName).eq.'uReconstructZonal') idx_var=4
-              if(trim(poolItr % memberName).eq.'uReconstructMeridional') idx_var=5
+              idx_var = -999
+              idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
@@ -2040,6 +2088,9 @@ subroutine convert_from_ug(self, ug)
         end if
         end if
    end do
+
+   ! Cleanup
+   call ufo_vars_delete(vars)
 
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS

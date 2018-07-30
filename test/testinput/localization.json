@@ -7,13 +7,13 @@
     "gridfname": "./x1.2562.init.nc"
   },
   "Variables": {
-    "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "TestDate": "2016-03-04T06:00:00Z",
   "Localization": {
     "localization": "BUMP",
     "variables": {
-      "variables": ["theta", "rho", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
     },
     "bump_ensemble": [
       {

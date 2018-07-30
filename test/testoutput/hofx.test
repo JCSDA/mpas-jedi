@@ -1,3 +1,3 @@
-Test     : Initial state: 197.583
-Test     : Final state: 197.583
-Test     : H(x): Radiosonde nobs= 915 Min=208.799, Max=302.113, Average=254.806Radiance nobs= 12090 Min=135.383, Max=302.663, Average=227.774
+Test     : Initial state: 22050.2
+Test     : Final state: 22050.2
+Test     : H(x): Radiosonde nobs= 915 Min=208.686, Max=302.117, Average=254.768Radiance nobs= 12090 Min=135.383, Max=302.658, Average=227.651
