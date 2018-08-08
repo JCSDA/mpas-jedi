@@ -1931,7 +1931,7 @@ end subroutine interp_checks
 
 ! ------------------------------------------------------------------------------
 
-subroutine convert_to_ug(self, ug)
+subroutine ug_size(self, ug)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -1940,55 +1940,70 @@ subroutine convert_to_ug(self, ug)
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    
-   integer :: nmga,jC,jl,nf
-   integer,allocatable :: imask(:,:)
-   real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:,:)
-   real(kind=kind_real) :: sigmaup,sigmadn
+   ! Set local number of points
+   ug%nmga = self%geom%nCellsSolve
+
+   ! Set number of levels
+   ug%nl0 = self%geom%nVertLevels
+
+   ! Set number of variables
+   ug%nv = self%nf
+
+   ! Set number of timeslots
+   ug%nts = 1
+
+end subroutine ug_size
+
+! ------------------------------------------------------------------------------
+
+subroutine ug_coord(self, ug)
+
+   use mpas_pool_routines
+   use unstructured_grid_mod
    
+   implicit none
+   type(mpas_field),        intent(in)    :: self
+   type(unstructured_grid), intent(inout) :: ug
+   
+   integer :: jl
+   
+   ! Define size
+   call ug_size(self, ug)
+
+   ! Alocate unstructured grid coordinates
+   call allocate_unstructured_grid_coord(ug)
+
+   ! Copy coordinates
+   ug%lon(:) = self%geom%lonCell(1:nmga) / deg2rad !- to Degrees
+   ug%lat(:) = self%geom%latCell(1:nmga) / deg2rad !- to Degrees
+   ug%area(:) = self%geom%areaCell(1:nmga)
+   do jl=1,self%geom%nVertLevels
+     ug%vunit(:,jl) = real(jl,kind=kind_real)
+   enddo
+   ug%lmask = .true.
+
+end subroutine ug_coord
+
+! ------------------------------------------------------------------------------
+
+subroutine field_to_ug(self, ug)
+
+   use mpas_pool_routines
+   use unstructured_grid_mod
+   
+   implicit none
+   type(mpas_field),        intent(in)    :: self
+   type(unstructured_grid), intent(inout) :: ug
+   
+   integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
-   !real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-   !real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer :: idx_var
    type(ufo_vars) :: vars ! temporary to access variable "index" easily
-   
+
    ! Set list of variables
    vars % nv = self % nf
    allocate(vars % fldnames(vars % nv))
    vars % fldnames(:) = self % fldnames(:)
-
-   ! Define local number of gridpoints
-   nmga = self%geom%nCellsSolve
-   
-   ! Allocation
-   allocate(lon(nmga))
-   allocate(lat(nmga))
-   allocate(area(nmga))
-   allocate(vunit(nmga,self%geom%nVertLevels))
-   allocate(imask(nmga,self%geom%nVertLevels))
-   
-   ! Copy coordinates
-   lon(:) = self%geom%lonCell(1:nmga) / deg2rad !- to Degrees
-   lat(:) = self%geom%latCell(1:nmga) / deg2rad !- to Degrees
-   area(:) = self%geom%areaCell(1:nmga)
-
-   imask = 1
-   
-   ! Define vertical unit
-   do jl=1,self%geom%nVertLevels
-     !sigmaup = self%geom%ak(jl+1)/101300.0+self%geom%bk(jl+1) ! si are now sigmas
-     !sigmadn = self%geom%ak(jl  )/101300.0+self%geom%bk(jl  )
-     !vunit(jl) = 0.5*(sigmaup+sigmadn) ! 'fake' sigma coordinates
-     vunit(:,jl) = real(jl,kind=kind_real)
-   enddo
-
-   ! Should this come from self/vars?
-   nf = self%nf
-   write(0,*)'convert_to_ug: nf=',nf
-
-   ! Create unstructured grid
-   call create_unstructured_grid(ug, nmga, self%geom%nVertLevels, nf, 1, lon, lat, area, vunit, imask)
 
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
@@ -2006,7 +2021,6 @@ subroutine convert_to_ug(self, ug)
               write(*,*)'Not implemented yet'
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-   
               idx_var = -999
               idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
@@ -2027,11 +2041,11 @@ subroutine convert_to_ug(self, ug)
    ! Cleanup
    call ufo_vars_delete(vars)
 
-end subroutine convert_to_ug
+end subroutine field_to_ug
 
 ! -----------------------------------------------------------------------------
 
-subroutine convert_from_ug(self, ug)
+subroutine field_from_ug(self, ug)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -2040,14 +2054,9 @@ subroutine convert_from_ug(self, ug)
    type(mpas_field),        intent(inout) :: self
    type(unstructured_grid), intent(in)    :: ug
    
-   integer :: jC,jl
-
+   integer :: idx_var,jC,jl
    type (mpas_pool_iterator_type) :: poolItr
-   !real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-   !real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer :: idx_var
    type(ufo_vars) :: vars ! temporary to access variable "index" easily
 
    ! Set list of variables
@@ -2095,7 +2104,7 @@ subroutine convert_from_ug(self, ug)
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS
 
-end subroutine convert_from_ug
+end subroutine field_from_ug
 
 ! ------------------------------------------------------------------------------
 

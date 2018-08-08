@@ -285,7 +285,7 @@ end subroutine mpas_field_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_field_convert_to_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_convert_to_f90')
+subroutine mpas_field_ug_coord_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_ug_coord_f90')
 use iso_c_binding
 use mpas_fields_mod
 use unstructured_grid_mod
@@ -298,13 +298,13 @@ type(unstructured_grid), pointer :: ug
 call mpas_field_registry%get(c_key_fld,fld)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
-call convert_to_ug(fld, ug)
+call ug_coord_ug(fld, ug)
 
-end subroutine mpas_field_convert_to_c
+end subroutine mpas_field_ug_coord_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_field_convert_from_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_convert_from_f90')
+subroutine mpas_field_field_to_ug_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_field_to_ug_f90')
 use iso_c_binding
 use mpas_fields_mod
 use unstructured_grid_mod
@@ -317,9 +317,28 @@ type(unstructured_grid), pointer :: ug
 call mpas_field_registry%get(c_key_fld,fld)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
-call convert_from_ug(fld, ug)
+call field_to_ug_ug(fld, ug)
 
-end subroutine mpas_field_convert_from_c
+end subroutine mpas_field_field_to_ug_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_field_field_from_ug_c(c_key_fld, c_key_ug) bind (c,name='mpas_field_field_from_ug_f90')
+use iso_c_binding
+use mpas_fields_mod
+use unstructured_grid_mod
+implicit none
+integer(c_int), intent(in) :: c_key_fld
+integer(c_int), intent(in) :: c_key_ug
+type(mpas_field), pointer :: fld
+type(unstructured_grid), pointer :: ug
+
+call mpas_field_registry%get(c_key_fld,fld)
+call unstructured_grid_registry%get(c_key_ug,ug)
+
+call field_from_ug_ug(fld, ug)
+
+end subroutine mpas_field_field_from_ug_c
 
 ! ------------------------------------------------------------------------------
 

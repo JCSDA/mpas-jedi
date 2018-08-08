@@ -81,10 +81,6 @@ class StateMPAS : public util::Printable,
   const util::DateTime & validTime() const {return fields_->time();}
   util::DateTime & validTime() {return fields_->time();}
 
-/// Convert to/from unstructured grid
-  void convert_to(oops::UnstructuredGrid &) const;
-  void convert_from(const oops::UnstructuredGrid &);
-
 /// Access to fields
   FieldsMPAS & fields() {return *fields_;}
   const FieldsMPAS & fields() const {return *fields_;}

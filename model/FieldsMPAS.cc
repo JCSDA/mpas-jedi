@@ -174,12 +174,16 @@ void FieldsMPAS::diff(const FieldsMPAS & x1, const FieldsMPAS & x2) {
   mpas_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::convert_to(oops::UnstructuredGrid & ug) const {
-  mpas_field_convert_to_f90(keyFlds_, ug.toFortran());
+void FieldsMPAS::ug_coord(oops::UnstructuredGrid & ug) const {
+  mpas_field_ug_coord_f90(keyFlds_, ug.toFortran());
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::convert_from(const oops::UnstructuredGrid & ug) {
-  mpas_field_convert_from_f90(keyFlds_, ug.toFortran());
+void FieldsMPAS::field_to_ug(oops::UnstructuredGrid & ug) const {
+  mpas_field_field_to_ug_f90(keyFlds_, ug.toFortran());
+}
+// -----------------------------------------------------------------------------
+void FieldsMPAS::field_from_ug(const oops::UnstructuredGrid & ug) {
+  mpas_field_field_from_ug_f90(keyFlds_, ug.toFortran());
 }
 // -----------------------------------------------------------------------------
 void FieldsMPAS::read(const eckit::Configuration & config) {

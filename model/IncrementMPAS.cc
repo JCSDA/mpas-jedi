@@ -148,14 +148,18 @@ void IncrementMPAS::getValuesAD(const ioda::Locations & locs,
   fields_->getValuesAD(locs, vars, cols, traj);
 }
 // -----------------------------------------------------------------------------
-/// Convert to/from unstructured grid
+/// Unstructured grid
 // -----------------------------------------------------------------------------
-void IncrementMPAS::convert_to(oops::UnstructuredGrid & ug) const {
-  fields_->convert_to(ug);
+void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug) const {
+  fields_->ug_coord(ug);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::convert_from(const oops::UnstructuredGrid & ug) {
-  fields_->convert_from(ug);
+void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug) const {
+  fields_->field_to_ug(ug);
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug) {
+  fields_->field_from_ug(ug);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

@@ -83,9 +83,10 @@ class FieldsMPAS : public util::Printable,
   void add(const FieldsMPAS &);
   void diff(const FieldsMPAS &, const FieldsMPAS &);
 
-// Convert to/from unstructured grid
-  void convert_to(oops::UnstructuredGrid &) const;
-  void convert_from(const oops::UnstructuredGrid &);
+// Unstructured grid
+  void ug_coord(oops::UnstructuredGrid &) const;
+  void field_to_ug(oops::UnstructuredGrid &) const;
+  void field_from_ug(const oops::UnstructuredGrid &);
 
 // Utilities
   void read(const eckit::Configuration &);

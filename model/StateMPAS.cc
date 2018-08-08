@@ -134,16 +134,6 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
-/// Convert to/from unstructured grid
-// -----------------------------------------------------------------------------
-void StateMPAS::convert_to(oops::UnstructuredGrid & ug) const {
-  fields_->convert_to(ug);
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::convert_from(const oops::UnstructuredGrid & ug) {
-  fields_->convert_from(ug);
-}
-// -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void StateMPAS::read(const eckit::Configuration & files) {
