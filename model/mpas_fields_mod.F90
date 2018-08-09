@@ -1933,7 +1933,6 @@ end subroutine interp_checks
 
 subroutine ug_size(self, ug)
 
-   use mpas_pool_routines
    use unstructured_grid_mod
    
    implicit none
@@ -1958,7 +1957,6 @@ end subroutine ug_size
 
 subroutine ug_coord(self, ug)
 
-   use mpas_pool_routines
    use unstructured_grid_mod
    
    implicit none
@@ -1974,9 +1972,9 @@ subroutine ug_coord(self, ug)
    call allocate_unstructured_grid_coord(ug)
 
    ! Copy coordinates
-   ug%lon(:) = self%geom%lonCell(1:nmga) / deg2rad !- to Degrees
-   ug%lat(:) = self%geom%latCell(1:nmga) / deg2rad !- to Degrees
-   ug%area(:) = self%geom%areaCell(1:nmga)
+   ug%lon = self%geom%lonCell(1:ug%nmga) / deg2rad !- to Degrees
+   ug%lat = self%geom%latCell(1:ug%nmga) / deg2rad !- to Degrees
+   ug%area = self%geom%areaCell(1:ug%nmga)
    do jl=1,self%geom%nVertLevels
      ug%vunit(:,jl) = real(jl,kind=kind_real)
    enddo

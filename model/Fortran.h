@@ -128,7 +128,6 @@ extern "C" {
   void mpas_field_getvalues_ad_f90(const F90flds &, const F90locs &,
                              const eckit::Configuration * const *,
                              const F90goms &, const F90ootrj &);
-  void mpas_field_define_f90(const F90flds &, const int &);
   void mpas_field_ug_coord_f90(const F90flds &, const int &);
   void mpas_field_field_to_ug_f90(const F90flds &, const int &);
   void mpas_field_field_from_ug_f90(const F90flds &, const int &);

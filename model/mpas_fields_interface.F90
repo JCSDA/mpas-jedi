@@ -298,7 +298,7 @@ type(unstructured_grid), pointer :: ug
 call mpas_field_registry%get(c_key_fld,fld)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
-call ug_coord_ug(fld, ug)
+call ug_coord(fld, ug)
 
 end subroutine mpas_field_ug_coord_c
 
@@ -317,7 +317,7 @@ type(unstructured_grid), pointer :: ug
 call mpas_field_registry%get(c_key_fld,fld)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
-call field_to_ug_ug(fld, ug)
+call field_to_ug(fld, ug)
 
 end subroutine mpas_field_field_to_ug_c
 
@@ -336,7 +336,7 @@ type(unstructured_grid), pointer :: ug
 call mpas_field_registry%get(c_key_fld,fld)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
-call field_from_ug_ug(fld, ug)
+call field_from_ug(fld, ug)
 
 end subroutine mpas_field_field_from_ug_c
 
