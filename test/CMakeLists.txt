@@ -1,5 +1,6 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
+  testinput/3dvar.chvar.json
   testinput/3dfgat.json
   testinput/3denvar_bump.json
   testinput/3dhybrid_bump.json
@@ -33,11 +34,13 @@ list( APPEND mpas_test_input
   testinput/test.json
   testinput/truth.json
   testinput/test_op_obs.json
+  testinput/varchange.json
   compare.sh
 )
 
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
+  testoutput/3dvar.chvar.test
   testoutput/3dfgat.test
   testoutput/3denvar_bump.test
   testoutput/3dhybrid_bump.test
@@ -63,6 +66,7 @@ list( APPEND mpas_testoutput
   testoutput/makeobs4d12h.test
   testoutput/makeobsbias.test
   testoutput/truth.test
+  testoutput/varchange.test
 )
 
 # This line copies all files to binary dir
@@ -168,6 +172,12 @@ ecbuild_add_test( TARGET  test_mpas_errorcovariance
                   ARGS    "testinput/errorcov.json"
                   LIBS    mpas )
 
+ecbuild_add_test( TARGET  test_mpas_variablechange
+                  BOOST
+                  SOURCES executables/TestVariableChange.cc
+                  ARGS    "testinput/variablechange.json"
+                  LIBS    mpas )
+
 ecbuild_add_test( TARGET  test_mpas_hofx
                   TYPE SCRIPT
                   COMMAND "compare.sh"
@@ -194,6 +204,13 @@ ecbuild_add_test( TARGET test_mpas_3dvar
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.json"
                        testoutput/3dvar.test
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3dvar_chvar
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.chvar.json"
+                       testoutput/3dvar.chvar.test
                   DEPENDS mpas_variational.x )
 
 ecbuild_add_test( TARGET test_mpas_3denvar_bump

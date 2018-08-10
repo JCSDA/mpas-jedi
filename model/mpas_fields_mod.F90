@@ -40,7 +40,7 @@ public :: mpas_field, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
         & change_resol, getvalues, getvalues_tl, getvalues_ad, &
-        & convert_to_ug, convert_from_ug, &
+        & ug_coord, field_to_ug, field_from_ug, &
         & dirac, analytic_IC
 public :: mpas_field_registry
 
@@ -2003,6 +2003,12 @@ subroutine field_to_ug(self, ug)
    allocate(vars % fldnames(vars % nv))
    vars % fldnames(:) = self % fldnames(:)
 
+   ! Define size
+   call ug_size(self, ug)
+
+   ! Allocate unstructured grid field
+   call allocate_unstructured_grid_field(ug)
+
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
    
@@ -2022,7 +2028,8 @@ subroutine field_to_ug(self, ug)
               idx_var = -999
               idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
-                 write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 write(*,*) '  sub. field_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 write(*,*) '  sub. field_to_ug, idx_var=',idx_var
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
                      ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)

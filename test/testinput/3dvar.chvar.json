@@ -1,0 +1,116 @@
+{
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "resolution" : {
+    "gridfname": "./x1.2562.init.nc"
+  },
+  "model": {
+    "tstep": "PT30M"
+  },
+  "cost_function": {
+    "cost_type": "3D-Var",
+    "window_begin": "2016-03-04T06:00:00Z",
+    "window_length": "PT0H",
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "Jb": {
+      "Background": {
+        "state": [{
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./x1.2562.init.nc",
+          "date": "2016-03-04T06:00:00Z"
+        }]
+      },
+      "Covariance": {
+        "covariance": "MPASstatic",
+        "standard_deviation": "0.8",
+        "vertical_correlation": "0.2",
+        "horizontal_length_scale": "1e6",
+        "maximum_condition_number": "1.0e6",
+        "date": "2016-03-04T06:00:00Z",
+        "balance": {
+           "varchange": "StatVariableChange",
+           "inputVariables": {
+              "variables": ["x"]
+            },
+           "outputVariables": {
+              "variables": ["x"]
+            }
+        }
+      }
+    },
+    "Jo": {
+      "ObsTypes": [
+        {
+          "ObsType": "Radiosonde",
+          "ObsData": {
+            "ObsDataIn": {
+              "obsfile": "Data/diag_t_01_wprofiles.nc4"
+            },
+            "ObsDataOut": {
+              "obsfile": "Data/3dvar.obt"
+            },
+            "obsvalue": "Observation"
+          },
+          "Covariance": {
+            "covariance": "diagonal",
+            "obserror": "ObsErr"
+          }
+        }
+      ]
+    }
+  },
+  "minimizer": {
+    "algorithm": "DRIPCG"
+  },
+  "output": {
+    "filename": "./mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
+  },
+  "variational": {
+    "iteration": [
+      {
+        "resolution": {
+          "gridfname": "./x1.2562.init.nc"
+        },
+        "linearmodel": {
+          "version": "MPASIdTLM",
+          "tstep": "PT1H",
+          "trajectory": {
+            "tstep": "PT1H",
+            "top_layer_depth": "5500.0",
+            "bottom_layer_depth": "4500.0"
+          }
+        },
+        "ninner": "10",
+        "gradient_norm_reduction": "1e-10",
+        "test": "on",
+        "diagnostics": {
+          "departures": "ombg"
+        }
+      },
+      {
+        "resolution": {
+          "gridfname": "./x1.2562.init.nc"
+        },
+        "linearmodel": {
+          "version": "MPASIdTLM",
+          "tstep": "PT1H",
+          "trajectory": {
+            "tstep": "PT1H",
+            "top_layer_depth": "5500.0",
+            "bottom_layer_depth": "4500.0"
+          }
+        },
+        "ninner": "10",
+        "gradient_norm_reduction": "1e-10",
+        "test": "on"
+      }
+    ]
+  },
+  "final": {
+    "diagnostics": {
+      "departures": "oman"
+    }
+  }
+}

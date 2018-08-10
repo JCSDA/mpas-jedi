@@ -26,6 +26,8 @@ TlmIdMPAS.cc
 TlmIdMPAS.h
 TlmMPAS.cc
 TlmMPAS.h
+VarChangeMPAS.cc
+VarChangeMPAS.h
 mpas_covariance_interface.F90
 mpas_covariance_mod.F90
 mpas_fields_interface.F90
@@ -41,6 +43,7 @@ mpas4da_mod.F90
 mpas_run_interface.F90
 mpas2ufo_vars_mod.F90
 instantiateLocalizationFactory.h
+instantiateMPASVarChangeFactory.h
 )
 
 set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )
