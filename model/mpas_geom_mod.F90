@@ -18,7 +18,7 @@ use mpas_subdriver
 use atm_core
 use mpas_pool_routines
 
-use mpi ! only MPI_COMM_WORLD
+!use mpi ! only MPI_COMM_WORLD
 
 implicit none
 private
@@ -76,7 +76,9 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine geo_setup(self, c_conf)
 
-implicit none
+   use fckit_mpi_module, only: fckit_mpi_comm
+
+   implicit none
 
    type(mpas_geom), intent(inout) :: self
    type(c_ptr), intent(in) :: c_conf
@@ -89,10 +91,14 @@ implicit none
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
+   type(fckit_mpi_comm) :: f_comm
+
+   f_comm = fckit_mpi_comm()
+
    write(*,*)' ==> create geom'
 
    !> MPAS subdriver
-   call mpas_init( self % corelist, self % domain, mpi_comm=MPI_COMM_WORLD )
+   call mpas_init( self % corelist, self % domain, mpi_comm=f_comm%communicator() )
 
    if (associated(self % domain)) then
        write(*,*)'inside geom: geom % domain associated'
@@ -192,10 +198,16 @@ end subroutine geo_setup
 
 subroutine geo_clone(self, other)
 
+   use fckit_mpi_module, only: fckit_mpi_comm
+
    implicit none
 
    type(mpas_geom), intent(in) :: self
    type(mpas_geom), intent(inout) :: other
+
+   type(fckit_mpi_comm) :: f_comm
+
+   f_comm = fckit_mpi_comm()
 
    write(*,*)'====> copy of geom array'
    if (allocated(other%latCell)) then 
@@ -250,7 +262,7 @@ subroutine geo_clone(self, other)
       write(*,*)'associated(other % corelist), associated(other % domain)'
    else
       write(*,*)'not associated(other % corelist), associated(other % domain)'
-      call mpas_init(other % corelist, other % domain, mpi_comm=MPI_COMM_WORLD)
+      call mpas_init(other % corelist, other % domain, mpi_comm=f_comm%communicator())
    end if
 
    write(*,*)'====> copy of geom done'

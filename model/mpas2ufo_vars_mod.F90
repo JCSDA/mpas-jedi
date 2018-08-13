@@ -23,7 +23,7 @@
    use mpas_dmpar
    use mpas_abort, only : mpas_dmpar_global_abort
    use atm_core
-   use mpi 
+!   use mpi 
    use mpas_constants, only : gravity, rgas, rv, pii
    use mpas_kinds, only : kind_real
 

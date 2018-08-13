@@ -25,7 +25,7 @@ use mpas_subdriver
 use atm_core
 use mpas4da_mod
 use mpas2ufo_vars_mod
-use mpi ! only MPI_COMM_WORLD
+!use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
 use mpas_pool_routines
 use mpas_field_routines
@@ -1784,6 +1784,7 @@ end subroutine getvalues_ad
 
 subroutine initialize_interp(grid, locs, bump)
 
+   use fckit_mpi_module, only: fckit_mpi_comm
    use mpas_geom_mod, only: mpas_geom
    use type_bump, only: bump_type
    
@@ -1792,6 +1793,8 @@ subroutine initialize_interp(grid, locs, bump)
    type(ioda_locs),          intent(in)  :: locs
    type(bump_type), pointer, intent(out) :: bump
    
+   type(fckit_mpi_comm) :: f_comm
+
    logical, save :: interp_initialized = .FALSE.
    
    integer :: mod_nz,mod_num
@@ -1806,6 +1809,7 @@ subroutine initialize_interp(grid, locs, bump)
    
    integer :: ii, jj, ji, jvar, jlev
  
+   f_comm = fckit_mpi_comm()
 
    ! Each bump%nam%prefix must be distinct
    ! -------------------------------------
@@ -1858,7 +1862,7 @@ subroutine initialize_interp(grid, locs, bump)
     lmask = .true.       ! Mask
 
     !Initialize BUMP
-    call bump%setup_online(mpi_comm_world,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
+    call bump%setup_online(f_comm%communicator(),mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
                            nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
     !Release memory
