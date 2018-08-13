@@ -136,6 +136,7 @@ ecbuild_add_test( TARGET  test_mpas_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_state
