@@ -1243,6 +1243,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
   if (.not. pbumpa) then 
     ! Calculate interpolation weight using BUMP
     ! ------------------------------------------
+    write(*,*)'call initialize_interp(...)'
     call initialize_interp(fld%geom, locs, pbump)
     pbumpa = .true.
     write(*,*)'interp: after initialize_interp'
@@ -1858,6 +1859,9 @@ subroutine initialize_interp(grid, locs, bump)
     lmask = .true.       ! Mask
 
     !Initialize BUMP
+    write(*,*) 'call bump%setup_online, nobs=locs%nlocs=',locs%nlocs
+    write(*,*) 'call bump%setup_online, lonobs=locs%lon(1:3)=',locs%lon(1:3)
+    write(*,*) 'call bump%setup_online, lonobs=locs%lat(1:3)=',locs%lat(1:3)
     call bump%setup_online(mpi_comm_world,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
                            nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
@@ -1938,32 +1942,64 @@ subroutine ug_size(self, ug)
    implicit none
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
+   integer :: igrid
    
-   ! Set local number of points
-   ug%nmga = self%geom%nCellsSolve
+   ! Set number of grids
+   if (ug%colocated==1) then
+      ! Colocatd
+      ug%ngrid = 1
+   else
+      ! Not colocatedd
+      ug%ngrid = 1
+   end if
 
-   ! Set number of levels
-   ug%nl0 = self%geom%nVertLevels
+   ! Allocate grid instances
+   if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
 
-   ! Set number of variables
-   ug%nv = self%nf
+   if (ug%colocated==1) then ! colocated
 
-   ! Set number of timeslots
-   ug%nts = 1
+      ! Set local number of points
+      ug%grid(1)%nmga = self%geom%nCellsSolve
 
+      ! Set number of levels
+      ug%grid(1)%nl0 = self%geom%nVertLevels
+
+      ! Set number of variables
+      ug%grid(1)%nv = self%nf
+
+      ! Set number of timeslots
+      ug%grid(1)%nts = 1
+
+   else ! Not colocated
+
+      do igrid=1,ug%ngrid
+         ! Set local number of points
+         ug%grid(igrid)%nmga = self%geom%nCellsSolve
+
+         ! Set number of levels
+         ug%grid(igrid)%nl0 = self%geom%nVertLevels
+
+         ! Set number of variables
+         ug%grid(igrid)%nv = self%nf
+
+         ! Set number of timeslots
+         ug%grid(igrid)%nts = 1
+      enddo
+   end if
 end subroutine ug_size
 
 ! ------------------------------------------------------------------------------
 
-subroutine ug_coord(self, ug)
+subroutine ug_coord(self, ug, colocated)
 
    use unstructured_grid_mod
    
    implicit none
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
+   integer,                 intent(in)    :: colocated
    
-   integer :: jl
+   integer :: jl, igrid
    
    ! Define size
    call ug_size(self, ug)
@@ -1972,19 +2008,31 @@ subroutine ug_coord(self, ug)
    call allocate_unstructured_grid_coord(ug)
 
    ! Copy coordinates
-   ug%lon = self%geom%lonCell(1:ug%nmga) / deg2rad !- to Degrees
-   ug%lat = self%geom%latCell(1:ug%nmga) / deg2rad !- to Degrees
-   ug%area = self%geom%areaCell(1:ug%nmga)
-   do jl=1,self%geom%nVertLevels
-     ug%vunit(:,jl) = real(jl,kind=kind_real)
-   enddo
-   ug%lmask = .true.
+   if (ug%colocated==1) then ! colocated
+     ug%grid(1)%lon = self%geom%lonCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
+     ug%grid(1)%lat = self%geom%latCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
+     ug%grid(1)%area = self%geom%areaCell(1:ug%grid(1)%nmga)
+     do jl=1,self%geom%nVertLevels
+       ug%grid(1)%vunit(:,jl) = real(jl,kind=kind_real)
+       ug%grid(1)%lmask(:,jl) = .true.
+     enddo
+   else ! Not colocated
+     do igrid=1,ug%ngrid
+       ug%grid(igrid)%lon = self%geom%lonCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
+       ug%grid(igrid)%lat = self%geom%latCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
+       ug%grid(igrid)%area = self%geom%areaCell(1:ug%grid(igrid)%nmga)
+       do jl=1,self%geom%nVertLevels
+         ug%grid(igrid)%vunit(:,jl) = real(jl,kind=kind_real)
+         ug%grid(igrid)%lmask(:,jl) = .true.
+       enddo
+     enddo
+   endif
 
 end subroutine ug_coord
 
 ! ------------------------------------------------------------------------------
 
-subroutine field_to_ug(self, ug)
+subroutine field_to_ug(self, ug, colocated)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -1992,6 +2040,7 @@ subroutine field_to_ug(self, ug)
    implicit none
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
+   integer,                 intent(in)    :: colocated
    
    integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
@@ -2032,7 +2081,7 @@ subroutine field_to_ug(self, ug)
                  write(*,*) '  sub. field_to_ug, idx_var=',idx_var
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
-                     ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                     ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
                    enddo
                  enddo
               endif
@@ -2092,7 +2141,7 @@ subroutine field_from_ug(self, ug)
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
-                     r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
+                     r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)
                    enddo
                  enddo
               end if

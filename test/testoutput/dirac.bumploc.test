@@ -1,0 +1,18 @@
+Test     : Increment: 
+Test     :   Valid time: 2016-03-04T06:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
+Test     : Fld=1  Min=2700.04, Max=8372.26, RMS=6139.88
+Test     : Fld=2  Min=2700.04, Max=8372.26, RMS=6139.88
+Test     : Fld=3  Min=2700.04, Max=8372.26, RMS=6139.88
+Test     : Fld=4  Min=2700.04, Max=8372.26, RMS=6139.88
+Test     : Fld=5  Min=2700.04, Max=8372.26, RMS=6139.88
+Test     : Adjoint test: 2.29793e+08 / 2.29793e+08
+Test     : Increment: 
+Test     :   Valid time: 2016-03-04T06:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
+Test     : Fld=1  Min=-4.4193, Max=1.62351, RMS=0.153679
+Test     : Fld=2  Min=-737.537, Max=2006.28, RMS=69.1515
+Test     : Fld=3  Min=-12535.2, Max=15508.5, RMS=2470.03
+Test     : Fld=4  Min=-11793.9, Max=17707.7, RMS=2589.59
+Test     : Fld=5  Min=0, Max=5.28428e-20, RMS=1.20873e-20
+Test     : Adjoint test: 1.26448e+07 / 1.26448e+07

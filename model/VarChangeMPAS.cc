@@ -14,28 +14,46 @@
 #include "model/GeometryMPAS.h"
 #include "model/IncrementMPAS.h"
 #include "model/StateMPAS.h"
+#include "oops/util/Logger.h"
 
 namespace mpas {
 // -----------------------------------------------------------------------------
-VarChangeMPAS::VarChangeMPAS(const eckit::Configuration &) {}
-// -----------------------------------------------------------------------------
-VarChangeMPAS::~VarChangeMPAS() {}
-// -----------------------------------------------------------------------------
-void VarChangeMPAS::linearize(const StateMPAS &, const GeometryMPAS &) {}
-// -----------------------------------------------------------------------------
-void VarChangeMPAS::multiply(const IncrementMPAS & dxa, IncrementMPAS & dxm) const {
-  dxm = dxa;
+VarChangeMPAS::VarChangeMPAS(const StateMPAS & bg,
+                             const StateMPAS & fg,
+                             const GeometryMPAS & resol,
+                             const eckit::Configuration & conf) {
+    const eckit::Configuration * configc = &conf;
+    mpas_varchange_setup_f90(keyFtnConfig_, bg.fields().toFortran(),
+                             fg.fields().toFortran(), resol.toFortran(),
+                             &configc);
+    oops::Log::trace() << "VarChangeMPAS created" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void VarChangeMPAS::multiplyInverse(const IncrementMPAS & dxm, IncrementMPAS & dxa) const {
+VarChangeMPAS::~VarChangeMPAS() {
+    mpas_varchange_delete_f90(keyFtnConfig_);
+    oops::Log::trace() << "VarChangeMPAS destructed" << std::endl;
+}
+// -----------------------------------------------------------------------------
+void VarChangeMPAS::multiply(const IncrementMPAS & dxa,
+                             IncrementMPAS & dxm) const {
+  mpas_varchange_multiply_f90(keyFtnConfig_, dxa.fields().toFortran(),
+                              dxm.fields().toFortran());
+}
+// -----------------------------------------------------------------------------
+void VarChangeMPAS::multiplyInverse(const IncrementMPAS & dxm,
+                                    IncrementMPAS & dxa) const {
   dxa = dxm;
 }
 // -----------------------------------------------------------------------------
-void VarChangeMPAS::multiplyAD(const IncrementMPAS & dxm, IncrementMPAS & dxa) const {
-  dxa = dxm;
+void VarChangeMPAS::multiplyAD(const IncrementMPAS & dxm,
+                               IncrementMPAS & dxa) const {
+  mpas_varchange_multiplyadjoint_f90(keyFtnConfig_,
+                                     dxm.fields().toFortran(),
+                                     dxa.fields().toFortran());
 }
 // -----------------------------------------------------------------------------
-void VarChangeMPAS::multiplyInverseAD(const IncrementMPAS & dxa, IncrementMPAS & dxm) const {
+void VarChangeMPAS::multiplyInverseAD(const IncrementMPAS & dxa,
+                                      IncrementMPAS & dxm) const {
   dxm = dxa;
 }
 // -----------------------------------------------------------------------------

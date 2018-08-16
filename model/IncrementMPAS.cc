@@ -150,12 +150,12 @@ void IncrementMPAS::getValuesAD(const ioda::Locations & locs,
 // -----------------------------------------------------------------------------
 /// Unstructured grid
 // -----------------------------------------------------------------------------
-void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug) const {
-  fields_->ug_coord(ug);
+void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug, const int & colocated) const {
+  fields_->ug_coord(ug, colocated);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug) const {
-  fields_->field_to_ug(ug);
+void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug, const int & colocated) const {
+  fields_->field_to_ug(ug, colocated);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug) {

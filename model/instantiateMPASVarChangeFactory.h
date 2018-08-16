@@ -17,7 +17,7 @@ namespace mpas {
 void instantiateMPASVarChangeFactory() {
   static oops::LinearVariableChangeMaker<mpas::MPASTraits,
          oops::LinearVariableChange<mpas::MPASTraits, mpas::VarChangeMPAS> >
-         makerVarChangeMPAS_("VarCHangeMPAS");
+         makerVarChangeMPAS_("Control2Model");
 }
 
 }  // namespace mpas

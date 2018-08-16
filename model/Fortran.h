@@ -46,6 +46,8 @@ typedef int F90odb;
 typedef int F90lclz;
 // ObOp trajectory
 typedef int F90ootrj;
+// VarChange key
+typedef int F90vc;
 
 /// Interface to Fortran MPAS model
 /*!
@@ -128,8 +130,8 @@ extern "C" {
   void mpas_field_getvalues_ad_f90(const F90flds &, const F90locs &,
                              const eckit::Configuration * const *,
                              const F90goms &, const F90ootrj &);
-  void mpas_field_ug_coord_f90(const F90flds &, const int &);
-  void mpas_field_field_to_ug_f90(const F90flds &, const int &);
+  void mpas_field_ug_coord_f90(const F90flds &, const int &, const int &);
+  void mpas_field_field_to_ug_f90(const F90flds &, const int &, const int &);
   void mpas_field_field_from_ug_f90(const F90flds &, const int &);
 
   void mpas_field_gpnorm_f90(const F90flds &, const int &, double &);
@@ -157,6 +159,21 @@ extern "C" {
 
   void mpas_b_randomize_f90(const F90bmat &, const F90flds &);
 
+// -----------------------------------------------------------------------------
+//  Variable Change for Background error matrix
+// -----------------------------------------------------------------------------
+  void mpas_varchange_setup_f90(const F90vc &, const F90flds &,
+                                   const F90flds &, const F90geom &,
+                                   const eckit::Configuration * const *);
+  void mpas_varchange_delete_f90(F90vc &);
+  void mpas_varchange_multiply_f90(const F90vc &, const F90flds &,
+                                      const F90flds &);
+  void mpas_varchange_multiplyadjoint_f90(const F90vc &, const F90flds &,
+                                      const F90flds &);
+  void mpas_varchange_multiplyinverse_f90(const F90vc &, const F90flds &,
+                                      const F90flds &);
+  void mpas_varchange_multiplyinverseadjoint_f90(const F90vc &,
+                                              const F90flds &, const F90flds &);
 // -----------------------------------------------------------------------------
 //  Localization matrix
 // -----------------------------------------------------------------------------

@@ -12,6 +12,7 @@
   "TestDate": "2016-03-04T06:00:00Z",
   "Localization": {
     "localization": "BUMP",
+    "date": "2016-03-04T06:00:00Z",
     "variables": {
       "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
     },

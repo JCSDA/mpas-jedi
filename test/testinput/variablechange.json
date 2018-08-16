@@ -1,0 +1,46 @@
+{
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "LinearVariableChangeTests": [
+    {
+      "varchange": "StatsVariableChange",
+      "variables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      },
+      "prefix" : "bump",
+      "strategy" : "common",
+      "check_vbal" : 1,
+      "inputVariables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      },
+      "outputVariables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      }
+    },
+    {
+      "varchange": "Control2Model",
+      "variables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      },
+      "prefix" : "bump",
+      "strategy" : "common",
+      "check_vbal" : 1,
+      "inputVariables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      },
+      "outputVariables": {
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+      }
+    }
+  ],
+  "Geometry": {
+    "gridfname": "./x1.2562.init.nc"
+  },
+  "State": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "filename": "./x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "Variables": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+  }
+}

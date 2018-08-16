@@ -15,6 +15,7 @@
 
 #include "Fortran.h"
 #include "GeometryMPAS.h"
+#include "oops/base/Variables.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -56,12 +57,14 @@ class ModelMPAS: public util::Printable,
 
 /// Utilities
   const util::Duration & timeResolution() const {return tstep_;}
+  const oops::Variables & variables() const {return vars_;}
 
  private:
   void print(std::ostream &) const;
   F90model keyConfig_;
   util::Duration tstep_;
   const GeometryMPAS geom_;
+  const oops::Variables vars_;
 };
 // -----------------------------------------------------------------------------
 

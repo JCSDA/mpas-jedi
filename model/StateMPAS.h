@@ -55,7 +55,8 @@ class StateMPAS : public util::Printable,
 /// Constructor, destructor
   StateMPAS(const GeometryMPAS &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
-  StateMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  StateMPAS(const GeometryMPAS &, const oops::Variables &,
+            const eckit::Configuration &);
   StateMPAS(const GeometryMPAS &, const StateMPAS &);
   StateMPAS(const StateMPAS &);
   virtual ~StateMPAS();

@@ -1,0 +1,112 @@
+{
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "resolution": {
+    "gridfname": "./x1.2562.init.nc"
+  },
+  "variables": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+  },
+  "initial": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "filename": "./x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "Covariance": {
+    "covariance": "BUMP",
+    "date": "2016-03-04T06:00:00Z",
+    "prefix": "bump",
+    "strategy": "common",
+    "new_param": 1,
+    "check_adjoints": 1,
+    "ntry": 3,
+    "nrep": 2,
+    "lsqrt": 1,
+    "resol": 4.0,
+    "nicas_interp": "bilin",
+    "network": 0,
+    "mpicom": 2,
+    "advmode": 0,
+    "forced_radii": 1,
+    "rh" : 3000.0e3,
+    "rv" : 1.0,
+    "variable_changes": []
+  },
+  "dirac": {
+    "ndir": 2,
+    "dirLats(1)": 30.31011691,
+    "dirLats(2)": 26.56505123,
+    "dirLons(1)": 130.11182691,
+    "dirLons(2)": -102.95294521,
+    "dirLats(3)": 35.68501691,
+    "dirLats(4)": 19.01699038,
+    "dirLats(5)": 19.44244244,
+    "dirLats(6)": 31.21645245,
+    "dirLats(7)": -23.55867959,
+    "dirLats(8)": 40.74997906,
+    "dirLats(9)": 24.86999229,
+    "dirLats(10)": -34.60250161,
+    "dirLats(11)": 28.6699929,
+    "dirLats(12)": 55.75216412,
+    "dirLats(13)": 41.10499615,
+    "dirLats(14)": 23.72305971,
+    "dirLats(15)": 30.04996035,
+    "dirLats(16)": 37.5663491,
+    "dirLats(17)": 22.4949693,
+    "dirLats(18)": 39.92889223,
+    "dirLats(19)": -6.174417705,
+    "dirLats(20)": 33.98997825,
+    "dirLats(21)": 51.49999473,
+    "dirLats(22)": 35.67194277,
+    "dirLons(3)": 139.7514074,
+    "dirLons(4)": 72.8569893,
+    "dirLons(5)": -99.1309882,
+    "dirLons(6)": 121.4365047,
+    "dirLons(7)": -46.62501998,
+    "dirLons(8)": -73.98001693,
+    "dirLons(9)": 66.99000891,
+    "dirLons(10)": -58.39753137,
+    "dirLons(11)": 77.23000403,
+    "dirLons(12)": 37.61552283,
+    "dirLons(13)": 29.01000159,
+    "dirLons(14)": 90.40857947,
+    "dirLons(15)": 31.24996822,
+    "dirLons(16)": 126.999731,
+    "dirLons(17)": 88.32467566,
+    "dirLons(18)": 116.3882857,
+    "dirLons(19)": 106.8294376,
+    "dirLons(20)": -118.1799805,
+    "dirLons(21)": -0.116721844,
+    "dirLons(22)": 51.42434403,
+    "ildir": 3,
+    "dirvar": "uReconstructZonal"
+  },
+  "output_localization": {
+    "datadir": "Data",
+    "filename": "./mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "input_bump": {
+    "datadir": "Data",
+    "filename": "./mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "output_B": {
+    "datadir": "Data",
+    "filename": "./mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "output_bumpRnd": {
+    "filename": "./mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "input_bumpRnd": {
+    "filename": "./mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "output_BensRnd": {
+    "filename": "./mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
+    "date": "2016-03-04T06:00:00Z"
+  }
+}

@@ -39,6 +39,8 @@ mpas_kinds_mod.F90
 mpas_model_interface.F90
 mpas_model_mod.F90
 mpas_trajectories.F90
+mpas_varchange_interface.F90
+mpas_varchange_mod.F90
 mpas4da_mod.F90
 mpas_run_interface.F90
 mpas2ufo_vars_mod.F90

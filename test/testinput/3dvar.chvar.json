@@ -31,11 +31,16 @@
         "date": "2016-03-04T06:00:00Z",
         "balance": {
            "varchange": "StatVariableChange",
+           "variables": {
+             "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+           },
+           "prefix" : "bump",
+           "strategy" : "common",
            "inputVariables": {
-              "variables": ["x"]
+              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
            "outputVariables": {
-              "variables": ["x"]
+              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             }
         }
       }

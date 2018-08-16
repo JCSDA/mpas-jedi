@@ -24,3 +24,8 @@ ecbuild_add_executable( TARGET  mpas_variational.x
                         LIBS    mpas
                       )
 
+ecbuild_add_executable( TARGET  mpas_parameters.x
+                        SOURCES mpasEstimateParams.cc
+                        LIBS    mpas
+                      )
+

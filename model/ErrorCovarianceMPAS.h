@@ -39,7 +39,8 @@ class ErrorCovarianceMPAS : public util::Printable,
   static const std::string classname() {return "mpas::ErrorCovarianceMPAS";}
 
   ErrorCovarianceMPAS(const GeometryMPAS &, const oops::Variables &,
-                       const eckit::Configuration &, const StateMPAS &);
+                      const eckit::Configuration &, const StateMPAS &,
+                      const StateMPAS &);
   ~ErrorCovarianceMPAS();
 
   void linearize(const StateMPAS &, const GeometryMPAS &);

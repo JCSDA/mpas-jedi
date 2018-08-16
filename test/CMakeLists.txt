@@ -20,7 +20,8 @@ list( APPEND mpas_test_input
   testinput/forecast.json
   testinput/genenspert.json
   testinput/hofx.json
-  testinput/dirac.bump.json
+  testinput/dirac.bumploc.json
+  testinput/dirac.bumpcov.json
   testinput/geometry.json
   testinput/state.json
   testinput/increment.json
@@ -34,7 +35,7 @@ list( APPEND mpas_test_input
   testinput/test.json
   testinput/truth.json
   testinput/test_op_obs.json
-  testinput/varchange.json
+  testinput/variablechange.json
   compare.sh
 )
 
@@ -60,13 +61,14 @@ list( APPEND mpas_testoutput
   testoutput/forecast.test
   testoutput/genenspert.test
   testoutput/hofx.test
-  testoutput/dirac.bump.test
+  testoutput/dirac.bumploc.test
+  testoutput/dirac.bumpcov.test
   testoutput/makeobs3d.test
   testoutput/makeobs4d.test
   testoutput/makeobs4d12h.test
   testoutput/makeobsbias.test
   testoutput/truth.test
-  testoutput/varchange.test
+  testoutput/variablechange.test
 )
 
 # This line copies all files to binary dir
@@ -185,12 +187,32 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                        testoutput/hofx.test
                   DEPENDS mpas_hofx.x )
 
-ecbuild_add_test( TARGET test_mpas_dirac_bump
+ecbuild_add_test( TARGET test_mpas_dirac_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bump.json"
-                       testoutput/dirac.bump.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumploc.json"
+                       testoutput/dirac.bumploc.test
                   DEPENDS mpas_dirac.x )
+
+ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumpcov.json"
+                       testoutput/dirac.bumpcov.test
+                  DEPENDS mpas_dirac.x )
+
+#ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
+#                  TYPE SCRIPT
+#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.json"
+#                       testoutput/parametersbump.cov.test
+#                  DEPENDS mpas_parameters.x )
+#ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
+#                  TYPE SCRIPT
+#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.json"
+#                       testoutput/parametersbump.loc.test
+#                  DEPENDS mpas_parameters.x )
 
 ecbuild_add_test( TARGET test_mpas_forecast
                   TYPE SCRIPT

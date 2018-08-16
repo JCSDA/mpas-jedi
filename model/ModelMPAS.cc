@@ -7,6 +7,8 @@
 
 #include "model/ModelMPAS.h"
 
+#include <vector>
+
 #include "oops/util/Logger.h"
 #include "ModelBiasMPAS.h"
 #include "FieldsMPAS.h"
@@ -20,7 +22,9 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)
-  : keyConfig_(0), tstep_(0), geom_(resol)
+  : keyConfig_(0), tstep_(0), geom_(resol),
+    vars_(std::vector<std::string>{"temperature", "pressure", "index_qv",
+                              "uReconstructZonal", "uReconstructMeridional"})
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
   tstep_ = util::Duration(model.getString("tstep"));
