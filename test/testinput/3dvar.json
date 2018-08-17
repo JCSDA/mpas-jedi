@@ -65,6 +65,7 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
           "tstep": "PT1H",
           "trajectory": {
@@ -85,6 +86,7 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
           "tstep": "PT1H",
           "trajectory": {

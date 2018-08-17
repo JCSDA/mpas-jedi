@@ -23,26 +23,59 @@
         }]
       },
       "Covariance": {
-        "covariance": "MPASstatic",
-        "standard_deviation": "0.8",
-        "vertical_correlation": "0.2",
-        "horizontal_length_scale": "1e6",
-        "maximum_condition_number": "1.0e6",
+        "covariance": "BUMP",
         "date": "2016-03-04T06:00:00Z",
-        "balance": {
-           "varchange": "StatVariableChange",
-           "variables": {
-             "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+        "prefix" : "bump",
+        "default_seed" : 1,
+        "method" : "cor",
+        "_strategy" : "common",
+        "strategy" : "specific_univariate",
+        "new_param" : 1,
+        "ntry" : 3,
+        "nrep" : 2,
+        "lsqrt" : 1,
+        "resol" : 10.0,
+        "nicas_interp" : "bilin",
+        "network" : 0,
+        "mpicom" : 2,
+        "advmode" : 0,
+        "forced_radii" : 1,
+        "rh" : 2000.0e3,
+        "rv" : 1.0,
+        "variable_changes": [ 
+           {
+             "_varchange": "StatsVariableChange",
+             "varchange": "Identity",
+             "variables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             },
+             "prefix" : "bump",
+             "strategy" : "common",
+             "_check_vbal" : 1,
+             "inputVariables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             },
+             "outputVariables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             }
            },
-           "prefix" : "bump",
-           "strategy" : "common",
-           "inputVariables": {
-              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
-            },
-           "outputVariables": {
-              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
-            }
-        }
+           {
+             "_varchange": "Control2Model",
+             "varchange": "Identity",
+             "variables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             },
+             "prefix" : "bump",
+             "strategy" : "common",
+             "_check_vbal" : 1,
+             "inputVariables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             },
+             "outputVariables": {
+               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+             }
+           }
+        ]
       }
     },
     "Jo": {
@@ -79,10 +112,11 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT0H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT0H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }
@@ -99,10 +133,11 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT0H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT0H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }

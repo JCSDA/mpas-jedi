@@ -36,8 +36,9 @@ VarChangeMPAS::~VarChangeMPAS() {
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiply(const IncrementMPAS & dxa,
                              IncrementMPAS & dxm) const {
-  mpas_varchange_multiply_f90(keyFtnConfig_, dxa.fields().toFortran(),
-                              dxm.fields().toFortran());
+  dxm = dxa;
+//  mpas_varchange_multiply_f90(keyFtnConfig_, dxa.fields().toFortran(),
+//                              dxm.fields().toFortran());
 }
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiplyInverse(const IncrementMPAS & dxm,
@@ -47,9 +48,10 @@ void VarChangeMPAS::multiplyInverse(const IncrementMPAS & dxm,
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiplyAD(const IncrementMPAS & dxm,
                                IncrementMPAS & dxa) const {
-  mpas_varchange_multiplyadjoint_f90(keyFtnConfig_,
-                                     dxm.fields().toFortran(),
-                                     dxa.fields().toFortran());
+  dxa = dxm;
+//  mpas_varchange_multiplyadjoint_f90(keyFtnConfig_,
+//                                     dxm.fields().toFortran(),
+//                                     dxa.fields().toFortran());
 }
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiplyInverseAD(const IncrementMPAS & dxa,

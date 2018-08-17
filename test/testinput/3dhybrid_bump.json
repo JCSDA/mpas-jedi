@@ -48,28 +48,6 @@
             "variables": {
               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
-            "bump_ensemble": [
-              {
-                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
-                "date": "2016-03-04T06:00:00Z"
-              },
-              {
-                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
-                "date": "2016-03-04T06:00:00Z"
-              },
-              {
-                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
-                "date": "2016-03-04T06:00:00Z"
-              },
-              {
-                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
-                "date": "2016-03-04T06:00:00Z"
-              },
-              {
-                "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
-                "date": "2016-03-04T06:00:00Z"
-              }
-            ],
             "prefix": "mpas",
             "default_seed": 1,
             "method": "cor",
@@ -183,6 +161,7 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
           "tstep": "PT1H",
           "trajectory": {
@@ -203,6 +182,7 @@
           "gridfname": "./x1.2562.init.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
           "tstep": "PT1H",
           "trajectory": {

@@ -14,4 +14,4 @@ Test     : Fld=2  Min=195.601, Max=308.382, RMS=244.349
 Test     : Fld=3  Min=-30.7651, Max=89.6868, RMS=15.6251
 Test     : Fld=4  Min=-63.2673, Max=53.7631, RMS=7.85498
 Test     : Fld=5  Min=1325.57, Max=96595.8, RMS=49305.2
-Test     : H(x): Radiosonde nobs= 915 Min=208.686, Max=302.117, Average=254.768Radiance nobs= 12090 Min=135.383, Max=302.658, Average=227.651
+Test     : H(x): Radiosonde nobs= 915 Min=208.686, Max=302.114, Average=254.767Radiance nobs= 12090 Min=135.38, Max=302.649, Average=227.653
