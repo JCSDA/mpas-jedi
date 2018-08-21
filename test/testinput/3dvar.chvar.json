@@ -30,7 +30,7 @@
         "method" : "cor",
         "_strategy" : "common",
         "strategy" : "specific_univariate",
-        "new_param" : 1,
+        "new_nicas" : 1,
         "ntry" : 3,
         "nrep" : 2,
         "lsqrt" : 1,

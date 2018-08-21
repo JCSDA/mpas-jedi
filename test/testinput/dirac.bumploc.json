@@ -31,7 +31,7 @@
       "method": "loc_norm",
       "strategy": "common",
       "new_hdiag": 1,
-      "new_param": 1,
+      "new_nicas": 1,
       "check_adjoints": 1,
       "mask_type": "none",
       "draw_type": "random_uniform",

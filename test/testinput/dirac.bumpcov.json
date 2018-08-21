@@ -18,7 +18,7 @@
     "date": "2016-03-04T06:00:00Z",
     "prefix": "bump",
     "strategy": "common",
-    "new_param": 1,
+    "new_nicas": 1,
     "check_adjoints": 1,
     "ntry": 3,
     "nrep": 2,

@@ -1839,7 +1839,7 @@ subroutine initialize_interp(grid, locs, bump)
     !Less important namelist options (should not be changed)
     bump%nam%default_seed        = .true.
     bump%nam%new_hdiag           = .false.
-    bump%nam%new_param           = .false.
+    bump%nam%new_nicas           = .false.
     bump%nam%check_adjoints      = .false.
     bump%nam%check_pos_def       = .false.
     bump%nam%check_sqrt          = .false.

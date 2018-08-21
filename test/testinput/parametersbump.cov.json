@@ -1,0 +1,96 @@
+{
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "resolution": {
+    "gridfname": "./x1.2562.init.nc"
+  },
+  "variables": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+  },
+  "date": "2016-03-04T06:00:00Z",
+  "background": {
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+    "filename": "./x1.2562.init.nc",
+    "date": "2016-03-04T06:00:00Z"
+  },
+  "ensemble": {
+    "members": "5",
+    "variables": {
+      "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+    },
+    "state": [
+      {
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+        "date": "2016-03-04T06:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+        "date": "2016-03-04T06:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+        "date": "2016-03-04T06:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+        "date": "2016-03-04T06:00:00Z"
+      },
+      {
+        "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+        "date": "2016-03-04T06:00:00Z"
+      }
+    ]
+  },
+  "prefix": "mpas",
+  "default_seed": 1,
+  "method": "cor",
+  "strategy": "specific_univariate",
+  "new_hdiag": 1,
+  "new_nicas": 1,
+  "mask_type": "none",
+  "draw_type": "random_uniform",
+  "nc1": 1024,
+  "ntry": 3,
+  "nrep": 2,
+  "nc2":  200,
+  "nc3": 10,
+  "dc": 1000.0e3,
+  "nl0r": 1,
+  "ne": 5,
+  "var_diag" : 1,
+  "local_diag" : 1,
+  "local_rad" : 1000.0e3,
+  "minim_algo": "hooke",
+  "rvflt": 0.0,
+  "lsqrt": 1,
+  "resol": 4.0,
+  "nicas_interp": "bilin",
+  "network": 0,
+  "mpicom": 2,
+  "advmode": 0,
+  "diag_rhflt" : 3000.0e3,
+  "diag_interp": "bilin",
+  "nldwh" : 0,
+  "nldwv" : 0,
+  "output" : [
+    {
+      "parameter" : "var",
+      "datadir": "Data",
+      "exp": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "cor_rh",
+      "datadir": "Data",
+      "exp": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "cor_rv",
+      "datadir": "Data",
+      "exp": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    }
+  ]
+}

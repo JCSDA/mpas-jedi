@@ -32,6 +32,7 @@ list( APPEND mpas_test_input
   testinput/makeobs4d.json
   testinput/makeobs4d12h.json
   testinput/makeobsbias.json
+  testinput/parametersbump.cov.json
   testinput/test.json
   testinput/truth.json
   testinput/test_op_obs.json
@@ -67,6 +68,7 @@ list( APPEND mpas_testoutput
   testoutput/makeobs4d.test
   testoutput/makeobs4d12h.test
   testoutput/makeobsbias.test
+  testoutput/parametersbump.cov.test
   testoutput/truth.test
   testoutput/variablechange.test
 )
@@ -201,18 +203,21 @@ ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
                        testoutput/dirac.bumpcov.test
                   DEPENDS mpas_dirac.x )
 
-#ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
-#                  TYPE SCRIPT
-#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.json"
-#                       testoutput/parametersbump.cov.test
-#                  DEPENDS mpas_parameters.x )
+ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.json"
+                       testoutput/parametersbump.cov.test
+                  DEPENDS mpas_parameters.x )
+
 #ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
 #                  TYPE SCRIPT
 #                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
 #                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.json"
 #                       testoutput/parametersbump.loc.test
 #                  DEPENDS mpas_parameters.x )
+#ecbuild_add_test( TARGET test_mpas_parameters_bump_lct
+#ecbuild_add_test( TARGET test_mpas_parameters_bump_readloc
 
 ecbuild_add_test( TARGET test_mpas_forecast
                   TYPE SCRIPT
