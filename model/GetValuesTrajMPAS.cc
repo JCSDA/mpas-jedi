@@ -5,7 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-//#include <mpi.h>
 #include "model/GetValuesTrajMPAS.h"
 #include "oops/util/Logger.h"
 #include "Fortran.h"

@@ -18,7 +18,6 @@ use mpas_subdriver
 use atm_core
 use mpas_pool_routines
 
-!use mpi ! only MPI_COMM_WORLD
 
 implicit none
 private

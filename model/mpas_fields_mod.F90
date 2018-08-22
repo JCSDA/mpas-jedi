@@ -25,7 +25,6 @@ use mpas_subdriver
 use atm_core
 use mpas4da_mod
 use mpas2ufo_vars_mod
-!use mpi ! only MPI_COMM_WORLD
 use mpas_stream_manager
 use mpas_pool_routines
 use mpas_field_routines
