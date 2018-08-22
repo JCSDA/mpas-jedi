@@ -77,19 +77,19 @@
     {
       "parameter" : "var",
       "datadir": "Data",
-      "exp": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     },
     {
       "parameter" : "cor_rh",
       "datadir": "Data",
-      "exp": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     },
     {
       "parameter" : "cor_rv",
       "datadir": "Data",
-      "exp": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     }
   ]

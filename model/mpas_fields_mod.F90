@@ -881,6 +881,16 @@ subroutine read_file(fld, c_conf, vdate)
    if ( ierr .ne. 0  ) then
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
+   !==TODO: Speific part when reading parameterEst. for BUMP.
+   !      : They write/read a list of variables directly.
+   If (config_element_exists(c_conf,"no_transf")) Then
+      ierr = config_get_int(c_conf,"no_transf")
+      if(ierr .eq. 1) then
+        call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+        call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
+        return
+      endif
+   endif
    !--TODO: BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
    !call update_mpas_field(fld % geom % domain, fld % auxFields) !--> this will construct "pressure" from pressure_base & pressure_p
    call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs,'state',state)
