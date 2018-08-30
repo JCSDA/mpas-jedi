@@ -56,9 +56,9 @@ ecbuild_add_option( FEATURE MPI DEFAULT ON
                     REQUIRED_PACKAGES "MPI COMPONENTS CXX Fortran" )
 
 
-if ( NOT ECKIT_HAVE_MPI )
-  ecbuild_error("OOPS requested to build with MPI but eckit wasn't built with MPI: ECKIT_HAVE_MPI = ${ECKIT_HAVE_MPI}")
-endif()
+#if ( NOT ECKIT_HAVE_MPI )
+#  ecbuild_error("OOPS requested to build with MPI but eckit wasn't built with MPI: ECKIT_HAVE_MPI = ${ECKIT_HAVE_MPI}")
+#endif()
 
 #if( HAVE_MPI )
   set( OOPS_MPI_C_LIBRARIES            ${MPI_CXX_LIBRARIES} )
