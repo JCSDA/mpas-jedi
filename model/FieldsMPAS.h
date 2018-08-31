@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_FIELDSMPAS_H_
-#define MPAS_MODEL_FIELDSMPAS_H_
+#ifndef MODEL_FIELDSMPAS_H_
+#define MODEL_FIELDSMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -111,4 +111,4 @@ class FieldsMPAS : public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_FIELDSMPAS_H_
+#endif  // MODEL_FIELDSMPAS_H_

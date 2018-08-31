@@ -1,0 +1,17 @@
+Test     : Initial state: 
+Test     :   Valid time: 2016-03-04T06:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
+Test     : Fld=1  Min=0, Max=0.0203042, RMS=0.00462374
+Test     : Fld=2  Min=195.601, Max=308.382, RMS=244.349
+Test     : Fld=3  Min=-30.7651, Max=89.6868, RMS=15.6251
+Test     : Fld=4  Min=-63.2673, Max=53.7631, RMS=7.85498
+Test     : Fld=5  Min=1325.57, Max=96595.8, RMS=49305.2
+Test     : Final state: 
+Test     :   Valid time: 2016-03-04T12:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
+Test     : Fld=1  Min=1.86658e-08, Max=0.021671, RMS=0.00480242
+Test     : Fld=2  Min=195.74, Max=307.71, RMS=244.274
+Test     : Fld=3  Min=-35.9063, Max=84.8193, RMS=18.2037
+Test     : Fld=4  Min=-65.2445, Max=56.6095, RMS=9.07894
+Test     : Fld=5  Min=1399.18, Max=97741.2, RMS=49290.3
+Test     : H(x): Radiosonde nobs= 915 Min=207.789, Max=302.845, Average=255.099Radiance nobs= 12090 Min=137.553, Max=307.123, Average=228.838

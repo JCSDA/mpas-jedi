@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_FORTRAN_H_
-#define MPAS_MODEL_FORTRAN_H_
+#ifndef MODEL_FORTRAN_H_
+#define MODEL_FORTRAN_H_
 
 // Forward declarations
 namespace eckit {
@@ -61,7 +61,8 @@ extern "C" {
 // -----------------------------------------------------------------------------
   void mpas_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
   void mpas_geo_clone_f90(const F90geom &, F90geom &);
-  void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &, int &, int &, int &);
+  void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
+                         int &, int &, int &);
   void mpas_geo_delete_f90(F90geom &);
 
 // -----------------------------------------------------------------------------
@@ -193,4 +194,4 @@ extern "C" {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_FORTRAN_H_
+#endif  // MODEL_FORTRAN_H_

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPAS_MODEL_GETVALUESTRAJMPAS_H_
-#define MPAS_MODEL_GETVALUESTRAJMPAS_H_
+#ifndef MODEL_GETVALUESTRAJMPAS_H_
+#define MODEL_GETVALUESTRAJMPAS_H_
 
 #include <ostream>
 
@@ -34,4 +34,4 @@ class GetValuesTrajMPAS : public util::Printable {
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_GETVALUESTRAJMPAS_H_
+#endif  // MODEL_GETVALUESTRAJMPAS_H_

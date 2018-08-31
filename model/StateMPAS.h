@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_STATEMPAS_H_
-#define MPAS_MODEL_STATEMPAS_H_
+#ifndef MODEL_STATEMPAS_H_
+#define MODEL_STATEMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -103,4 +103,4 @@ class StateMPAS : public util::Printable,
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_STATEMPAS_H_
+#endif  // MODEL_STATEMPAS_H_

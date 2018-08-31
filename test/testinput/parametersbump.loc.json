@@ -42,10 +42,19 @@
       }
     ]
   },
+      "covariance": {
+        "covariance": "MPASstatic",
+        "standard_deviation": "0.8",
+        "vertical_correlation": "0.2",
+        "horizontal_length_scale": "1e6",
+        "maximum_condition_number": "1.0e6",
+        "date": "2016-03-04T06:00:00Z",
+        "pseudoens_size" : 10
+      },
   "prefix": "mpas",
   "default_seed": 1,
-  "method": "cor",
-  "strategy": "specific_univariate",
+  "method": "hyb-rnd",
+  "strategy": "common",
   "new_hdiag": 1,
   "new_nicas": 1,
   "mask_type": "none",
@@ -53,12 +62,11 @@
   "nc1": 1024,
   "ntry": 3,
   "nrep": 2,
-  "nc2":  512,
+  "nc2":  200,
   "nc3": 10,
   "dc": 1000.0e3,
   "nl0r": 1,
   "ne": 5,
-  "var_diag" : 1,
   "local_diag" : 1,
   "local_rad" : 1000.0e3,
   "minim_algo": "hooke",
@@ -75,21 +83,27 @@
   "nldwv" : 0,
   "output" : [
     {
-      "parameter" : "var",
+      "parameter" : "loc_coef",
       "datadir": "Data",
-      "filename": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     },
     {
-      "parameter" : "cor_rh",
+      "parameter" : "loc_rh",
       "datadir": "Data",
-      "filename": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     },
     {
-      "parameter" : "cor_rv",
+      "parameter" : "loc_rv",
       "datadir": "Data",
-      "filename": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
+      "filename": "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "hyb_coef",
+      "datadir": "Data",
+      "filename": "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc",
       "date": "2016-03-04T06:00:00Z"
     }
   ]

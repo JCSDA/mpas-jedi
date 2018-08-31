@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_TLMIDMPAS_H_
-#define MPAS_MODEL_TLMIDMPAS_H_
+#ifndef MODEL_TLMIDMPAS_H_
+#define MODEL_TLMIDMPAS_H_
 
 #include <string>
 
@@ -72,4 +72,4 @@ class TlmIdMPAS: public oops::LinearModelBase<MPASTraits>,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_TLMIDMPAS_H_
+#endif  // MODEL_TLMIDMPAS_H_

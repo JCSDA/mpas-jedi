@@ -40,10 +40,11 @@
             },
             "prefix": "mpas",
             "default_seed": 1,
-            "method": "cor",
+            "_method": "cor",
+            "method": "hyb-rnd",
             "strategy": "common",
             "_strategy": "specific_univariate",
-            "new_hdiag": 1,
+            "new_hdiag": 0,
             "new_nicas": 1,
             "_timeslot": 1,
             "mask_type": "none",
@@ -66,7 +67,33 @@
             "mpicom": 2,
             "advmode": 0,
             "diag_interp" : "bilin",
-            "grid_output": 0
+            "grid_output": 0,
+        "input" : [
+    {
+      "parameter" : "loc_coef",
+      "datadir": "Data",
+      "filename": "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "loc_rh",
+      "datadir": "Data",
+      "filename": "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "loc_rv",
+      "datadir": "Data",
+      "filename": "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    },
+    {
+      "parameter" : "hyb_coef",
+      "datadir": "Data",
+      "filename": "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc",
+      "date": "2016-03-04T06:00:00Z"
+    }
+        ]
           },
           "state": [
             {

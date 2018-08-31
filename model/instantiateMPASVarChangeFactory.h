@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPAS_MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
-#define MPAS_MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
+#ifndef MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
+#define MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
 
 #include "model/VarChangeMPAS.h"
 #include "model/MPASTraits.h"
@@ -22,4 +22,4 @@ void instantiateMPASVarChangeFactory() {
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
+#endif  // MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_

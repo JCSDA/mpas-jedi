@@ -20,6 +20,7 @@ list( APPEND mpas_test_input
   testinput/forecast.json
   testinput/genenspert.json
   testinput/hofx.json
+  testinput/hofx_4d.json
   testinput/dirac.bumploc.json
   testinput/dirac.bumpcov.json
   testinput/geometry.json
@@ -33,6 +34,7 @@ list( APPEND mpas_test_input
   testinput/makeobs4d12h.json
   testinput/makeobsbias.json
   testinput/parametersbump.cov.json
+  testinput/parametersbump.loc.json
   testinput/test.json
   testinput/truth.json
   testinput/test_op_obs.json
@@ -62,6 +64,7 @@ list( APPEND mpas_testoutput
   testoutput/forecast.test
   testoutput/genenspert.test
   testoutput/hofx.test
+  testoutput/hofx_4d.test
   testoutput/dirac.bumploc.test
   testoutput/dirac.bumpcov.test
   testoutput/makeobs3d.test
@@ -69,6 +72,7 @@ list( APPEND mpas_testoutput
   testoutput/makeobs4d12h.test
   testoutput/makeobsbias.test
   testoutput/parametersbump.cov.test
+  testoutput/parametersbump.loc.test
   testoutput/truth.test
   testoutput/variablechange.test
 )
@@ -189,6 +193,13 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                        testoutput/hofx.test
                   DEPENDS mpas_hofx.x )
 
+ecbuild_add_test( TARGET  test_mpas_hofx_4d
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx_4d.json"
+                       testoutput/hofx_4d.test
+                  DEPENDS mpas_hofx.x )
+
 ecbuild_add_test( TARGET test_mpas_dirac_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
@@ -210,12 +221,12 @@ ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
                        testoutput/parametersbump.cov.test
                   DEPENDS mpas_parameters.x )
 
-#ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
-#                  TYPE SCRIPT
-#                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.json"
-#                       testoutput/parametersbump.loc.test
-#                  DEPENDS mpas_parameters.x )
+ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
+                  TYPE SCRIPT
+                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.json"
+                       testoutput/parametersbump.loc.test
+                  DEPENDS mpas_parameters.x )
 #ecbuild_add_test( TARGET test_mpas_parameters_bump_lct
 #ecbuild_add_test( TARGET test_mpas_parameters_bump_readloc
 

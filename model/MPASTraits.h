@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_MPASTRAITS_H_
-#define MPAS_MODEL_MPASTRAITS_H_
+#ifndef MODEL_MPASTRAITS_H_
+#define MODEL_MPASTRAITS_H_
 
 #include <string>
 
@@ -68,4 +68,4 @@ struct MPASTraits {
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_MPASTRAITS_H_
+#endif  // MODEL_MPASTRAITS_H_

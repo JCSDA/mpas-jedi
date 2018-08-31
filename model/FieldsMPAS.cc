@@ -174,11 +174,13 @@ void FieldsMPAS::diff(const FieldsMPAS & x1, const FieldsMPAS & x2) {
   mpas_field_diff_incr_f90(keyFlds_, x1.keyFlds_, x2.keyFlds_);
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::ug_coord(oops::UnstructuredGrid & ug, const int & colocated) const {
+void FieldsMPAS::ug_coord(oops::UnstructuredGrid & ug,
+                          const int & colocated) const {
   mpas_field_ug_coord_f90(keyFlds_, ug.toFortran(), colocated);
 }
 // -----------------------------------------------------------------------------
-void FieldsMPAS::field_to_ug(oops::UnstructuredGrid & ug, const int & colocated) const {
+void FieldsMPAS::field_to_ug(oops::UnstructuredGrid & ug,
+                             const int & colocated) const {
   mpas_field_field_to_ug_f90(keyFlds_, ug.toFortran(), colocated);
 }
 // -----------------------------------------------------------------------------
@@ -196,7 +198,7 @@ void FieldsMPAS::analytic_init(const eckit::Configuration & config,
                                   const GeometryMPAS & geom) {
   const eckit::Configuration * conf = &config;
   util::DateTime * dtp = &time_;
-//JJG: Need to check if geometry is initialized before this!!!
+// JJG: Need to check if geometry is initialized before this!!!
   mpas_field_analytic_init_f90(keyFlds_, geom.toFortran(), &conf, &dtp);
 }
 // -----------------------------------------------------------------------------
@@ -216,7 +218,7 @@ void FieldsMPAS::print(std::ostream & os) const {
   int nc = 0;
   int nf = 0;
   mpas_field_sizes_f90(keyFlds_, nc, nf);
-  os << std::endl << "  Resolution: nCellsGlobal = " << nc << 
+  os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", Fields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_field_gpnorm_f90(keyFlds_, nf, zstat[0]);

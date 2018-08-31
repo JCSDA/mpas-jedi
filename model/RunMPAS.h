@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPAS_MODEL_RUNMPAS_H_
-#define MPAS_MODEL_RUNMPAS_H_
+#ifndef MODEL_RUNMPAS_H_
+#define MODEL_RUNMPAS_H_
 
 #include "oops/runs/Run.h"
 
@@ -27,4 +27,4 @@ class RunMPAS : public oops::Run {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_RUNMPAS_H_
+#endif  // MODEL_RUNMPAS_H_

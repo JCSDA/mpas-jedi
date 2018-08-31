@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_INCREMENTMPAS_H_
-#define MPAS_MODEL_INCREMENTMPAS_H_
+#ifndef MODEL_INCREMENTMPAS_H_
+#define MODEL_INCREMENTMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -123,4 +123,4 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_INCREMENTMPAS_H_
+#endif  // MODEL_INCREMENTMPAS_H_

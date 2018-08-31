@@ -1380,6 +1380,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -1389,6 +1390,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_wdir)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
          call uv_to_wdir(tmp_field(ii,1), tmp_field(ii,2), wdir) ! uu, vv, wind10_direction in radian
@@ -1445,6 +1447,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1460,6 +1463,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1475,6 +1479,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1518,6 +1523,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ivarl
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
        call pbump%apply_obsop(mod_field,obs_field)
@@ -1528,6 +1534,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ivari
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_a(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
@@ -1539,7 +1546,9 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        gom%geovals(ivarw)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if(allocated(gom%geovals(ivarw)%vals)) deallocate(gom%geovals(ivarw)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_b(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_GEOMETRYMPAS_H_
-#define MPAS_MODEL_GEOMETRYMPAS_H_
+#ifndef MODEL_GEOMETRYMPAS_H_
+#define MODEL_GEOMETRYMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -45,4 +45,4 @@ class GeometryMPAS : public util::Printable,
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_GEOMETRYMPAS_H_
+#endif  // MODEL_GEOMETRYMPAS_H_
