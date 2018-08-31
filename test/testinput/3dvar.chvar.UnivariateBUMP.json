@@ -23,12 +23,50 @@
         }]
       },
       "Covariance": {
-        "covariance": "MPASstatic",
-        "standard_deviation": "0.8",
-        "vertical_correlation": "0.2",
-        "horizontal_length_scale": "1e6",
-        "maximum_condition_number": "1.0e6",
-        "date": "2016-03-04T06:00:00Z"
+        "covariance": "BUMP",
+        "date": "2016-03-04T06:00:00Z",
+        "prefix" : "mpas",
+        "default_seed" : 1,
+        "method" : "cor",
+        "_strategy" : "common",
+        "strategy" : "specific_univariate",
+        "new_nicas" : 1,
+        "ntry" : 3,
+        "nrep" : 2,
+        "lsqrt" : 1,
+        "resol" : 10.0,
+        "nicas_interp" : "bilin",
+        "network" : 0,
+        "mpicom" : 2,
+        "advmode" : 0,
+        "forced_radii" : 0,
+        "rh" : 2000.0e3,
+        "rv" : 1.0,
+        "input" : [
+          {
+            "parameter" : "var",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "filename": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          },
+          {
+            "parameter" : "cor_rh",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "datadir": "Data",
+            "filename": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          },
+          {
+            "parameter" : "cor_rv",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "datadir": "Data",
+            "filename": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          }
+        ]
       }
     },
     "Jo": {
@@ -40,8 +78,7 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/obsout_3dvar.nc4",
-              "clobber": "True"
+              "obsfile": "Data/3dvar.obt"
             },
             "obsvalue": "Observation"
           },
@@ -68,9 +105,9 @@
         "linearmodel": {
           "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT0H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT0H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }
@@ -89,9 +126,9 @@
         "linearmodel": {
           "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT0H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT0H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }

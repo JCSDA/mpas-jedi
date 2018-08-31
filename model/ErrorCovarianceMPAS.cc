@@ -25,7 +25,8 @@ namespace mpas {
 ErrorCovarianceMPAS::ErrorCovarianceMPAS(const GeometryMPAS & resol,
                                          const oops::Variables &,
                                          const eckit::Configuration & conf,
-                                         const StateMPAS &) {
+                                         const StateMPAS &,
+                                         const StateMPAS & ) {
   time_ = util::DateTime(conf.getString("date"));
   const eckit::Configuration * configc = &conf;
   mpas_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());

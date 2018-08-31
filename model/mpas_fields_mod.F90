@@ -39,7 +39,7 @@ public :: mpas_field, &
         & dot_prod, add_incr, diff_incr, &
         & read_file, write_file, gpnorm, fldrms, &
         & change_resol, getvalues, getvalues_tl, getvalues_ad, &
-        & convert_to_ug, convert_from_ug, &
+        & ug_coord, field_to_ug, field_from_ug, &
         & dirac, analytic_IC
 public :: mpas_field_registry
 
@@ -880,6 +880,16 @@ subroutine read_file(fld, c_conf, vdate)
    if ( ierr .ne. 0  ) then
       call abor1_ftn('MPAS_stream_mgr_read failed ierr=',ierr)
    end if
+   !==TODO: Speific part when reading parameterEst. for BUMP.
+   !      : They write/read a list of variables directly.
+   If (config_element_exists(c_conf,"no_transf")) Then
+      ierr = config_get_int(c_conf,"no_transf")
+      if(ierr .eq. 1) then
+        call da_copy_all2sub_fields(fld % geom % domain, fld % subFields) 
+        call da_copy_all2sub_fields(fld % geom % domain, fld % auxFields) 
+        return
+      endif
+   endif
    !--TODO: BJJ test. Do I need to "re-calculate"/"update" diagnostic variables ?
    !call update_mpas_field(fld % geom % domain, fld % auxFields) !--> this will construct "pressure" from pressure_base & pressure_p
    call mpas_pool_get_subpool(fld % geom % domain % blocklist % structs,'state',state)
@@ -1242,6 +1252,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
   if (.not. pbumpa) then 
     ! Calculate interpolation weight using BUMP
     ! ------------------------------------------
+    write(*,*)'call initialize_interp(...)'
     call initialize_interp(fld%geom, locs, pbump)
     pbumpa = .true.
     write(*,*)'interp: after initialize_interp'
@@ -1368,6 +1379,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
        write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -1377,6 +1389,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_wdir)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        do ii=1,nobs
          call uv_to_wdir(tmp_field(ii,1), tmp_field(ii,2), wdir) ! uu, vv, wind10_direction in radian
@@ -1433,6 +1446,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1448,6 +1462,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1463,6 +1478,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -1506,6 +1522,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ivarl
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
        call pbump%apply_obsop(mod_field,obs_field)
@@ -1516,6 +1533,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      ivar = ivari
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_a(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
@@ -1527,7 +1545,9 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      if(ivar .ne. -1) then
        gom%geovals(ivar)%nval = 1
        gom%geovals(ivarw)%nval = 1
+       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if(allocated(gom%geovals(ivarw)%vals)) deallocate(gom%geovals(ivarw)%vals) !BJJ: for 4D H
        allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
        mod_field(:,1) = r1d_ptr_b(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
@@ -1841,7 +1861,7 @@ subroutine initialize_interp(grid, locs, bump)
     !Less important namelist options (should not be changed)
     bump%nam%default_seed        = .true.
     bump%nam%new_hdiag           = .false.
-    bump%nam%new_param           = .false.
+    bump%nam%new_nicas           = .false.
     bump%nam%check_adjoints      = .false.
     bump%nam%check_pos_def       = .false.
     bump%nam%check_sqrt          = .false.
@@ -1934,7 +1954,104 @@ end subroutine interp_checks
 
 ! ------------------------------------------------------------------------------
 
-subroutine convert_to_ug(self, ug)
+subroutine ug_size(self, ug)
+
+   use unstructured_grid_mod
+   
+   implicit none
+   type(mpas_field),        intent(in)    :: self
+   type(unstructured_grid), intent(inout) :: ug
+   integer :: igrid
+   
+   ! Set number of grids
+   if (ug%colocated==1) then
+      ! Colocatd
+      ug%ngrid = 1
+   else
+      ! Not colocatedd
+      ug%ngrid = 1
+   end if
+
+   ! Allocate grid instances
+   if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
+
+   if (ug%colocated==1) then ! colocated
+
+      ! Set local number of points
+      ug%grid(1)%nmga = self%geom%nCellsSolve
+
+      ! Set number of levels
+      ug%grid(1)%nl0 = self%geom%nVertLevels
+
+      ! Set number of variables
+      ug%grid(1)%nv = self%nf
+
+      ! Set number of timeslots
+      ug%grid(1)%nts = 1
+
+   else ! Not colocated
+
+      do igrid=1,ug%ngrid
+         ! Set local number of points
+         ug%grid(igrid)%nmga = self%geom%nCellsSolve
+
+         ! Set number of levels
+         ug%grid(igrid)%nl0 = self%geom%nVertLevels
+
+         ! Set number of variables
+         ug%grid(igrid)%nv = self%nf
+
+         ! Set number of timeslots
+         ug%grid(igrid)%nts = 1
+      enddo
+   end if
+end subroutine ug_size
+
+! ------------------------------------------------------------------------------
+
+subroutine ug_coord(self, ug, colocated)
+
+   use unstructured_grid_mod
+   
+   implicit none
+   type(mpas_field),        intent(in)    :: self
+   type(unstructured_grid), intent(inout) :: ug
+   integer,                 intent(in)    :: colocated
+   
+   integer :: jl, igrid
+   
+   ! Define size
+   call ug_size(self, ug)
+
+   ! Alocate unstructured grid coordinates
+   call allocate_unstructured_grid_coord(ug)
+
+   ! Copy coordinates
+   if (ug%colocated==1) then ! colocated
+     ug%grid(1)%lon = self%geom%lonCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
+     ug%grid(1)%lat = self%geom%latCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
+     ug%grid(1)%area = self%geom%areaCell(1:ug%grid(1)%nmga)
+     do jl=1,self%geom%nVertLevels
+       ug%grid(1)%vunit(:,jl) = real(jl,kind=kind_real)
+       ug%grid(1)%lmask(:,jl) = .true.
+     enddo
+   else ! Not colocated
+     do igrid=1,ug%ngrid
+       ug%grid(igrid)%lon = self%geom%lonCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
+       ug%grid(igrid)%lat = self%geom%latCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
+       ug%grid(igrid)%area = self%geom%areaCell(1:ug%grid(igrid)%nmga)
+       do jl=1,self%geom%nVertLevels
+         ug%grid(igrid)%vunit(:,jl) = real(jl,kind=kind_real)
+         ug%grid(igrid)%lmask(:,jl) = .true.
+       enddo
+     enddo
+   endif
+
+end subroutine ug_coord
+
+! ------------------------------------------------------------------------------
+
+subroutine field_to_ug(self, ug, colocated)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -1942,56 +2059,23 @@ subroutine convert_to_ug(self, ug)
    implicit none
    type(mpas_field),        intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
+   integer,                 intent(in)    :: colocated
    
-   integer :: nmga,jC,jl,nf
-   integer,allocatable :: imask(:,:)
-   real(kind=kind_real),allocatable :: lon(:),lat(:),area(:),vunit(:,:)
-   real(kind=kind_real) :: sigmaup,sigmadn
-   
+   integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
-   !real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-   !real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer :: idx_var
    type(ufo_vars) :: vars ! temporary to access variable "index" easily
-   
+
    ! Set list of variables
    vars % nv = self % nf
    allocate(vars % fldnames(vars % nv))
    vars % fldnames(:) = self % fldnames(:)
 
-   ! Define local number of gridpoints
-   nmga = self%geom%nCellsSolve
-   
-   ! Allocation
-   allocate(lon(nmga))
-   allocate(lat(nmga))
-   allocate(area(nmga))
-   allocate(vunit(nmga,self%geom%nVertLevels))
-   allocate(imask(nmga,self%geom%nVertLevels))
-   
-   ! Copy coordinates
-   lon(:) = self%geom%lonCell(1:nmga) / deg2rad !- to Degrees
-   lat(:) = self%geom%latCell(1:nmga) / deg2rad !- to Degrees
-   area(:) = self%geom%areaCell(1:nmga)
+   ! Define size
+   call ug_size(self, ug)
 
-   imask = 1
-   
-   ! Define vertical unit
-   do jl=1,self%geom%nVertLevels
-     !sigmaup = self%geom%ak(jl+1)/101300.0+self%geom%bk(jl+1) ! si are now sigmas
-     !sigmadn = self%geom%ak(jl  )/101300.0+self%geom%bk(jl  )
-     !vunit(jl) = 0.5*(sigmaup+sigmadn) ! 'fake' sigma coordinates
-     vunit(:,jl) = real(jl,kind=kind_real)
-   enddo
-
-   ! Should this come from self/vars?
-   nf = self%nf
-   write(0,*)'convert_to_ug: nf=',nf
-
-   ! Create unstructured grid
-   call create_unstructured_grid(ug, nmga, self%geom%nVertLevels, nf, 1, lon, lat, area, vunit, imask)
+   ! Allocate unstructured grid field
+   call allocate_unstructured_grid_field(ug)
 
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
@@ -2009,14 +2093,14 @@ subroutine convert_to_ug(self, ug)
               write(*,*)'Not implemented yet'
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-   
               idx_var = -999
               idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
-                 write(*,*) '  sub. convert_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 write(*,*) '  sub. field_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+                 write(*,*) '  sub. field_to_ug, idx_var=',idx_var
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
-                     ug%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                     ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
                    enddo
                  enddo
               endif
@@ -2030,11 +2114,11 @@ subroutine convert_to_ug(self, ug)
    ! Cleanup
    call ufo_vars_delete(vars)
 
-end subroutine convert_to_ug
+end subroutine field_to_ug
 
 ! -----------------------------------------------------------------------------
 
-subroutine convert_from_ug(self, ug)
+subroutine field_from_ug(self, ug)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -2043,14 +2127,9 @@ subroutine convert_from_ug(self, ug)
    type(mpas_field),        intent(inout) :: self
    type(unstructured_grid), intent(in)    :: ug
    
-   integer :: jC,jl
-
+   integer :: idx_var,jC,jl
    type (mpas_pool_iterator_type) :: poolItr
-   !real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-   !real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   !real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer :: idx_var
    type(ufo_vars) :: vars ! temporary to access variable "index" easily
 
    ! Set list of variables
@@ -2081,7 +2160,7 @@ subroutine convert_from_ug(self, ug)
                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
-                     r2d_ptr_a(jl,jC) = ug%fld(jC,jl,idx_var,1)
+                     r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)
                    enddo
                  enddo
               end if
@@ -2098,7 +2177,7 @@ subroutine convert_from_ug(self, ug)
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS
 
-end subroutine convert_from_ug
+end subroutine field_from_ug
 
 ! ------------------------------------------------------------------------------
 

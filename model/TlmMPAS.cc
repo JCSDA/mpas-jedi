@@ -28,7 +28,10 @@ static oops::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
 TlmMPAS::TlmMPAS(const GeometryMPAS & resol,
                  const eckit::Configuration & tlConf)
   : keyConfig_(0), tstep_(), resol_(resol), traj_(),
-    lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory"))
+    lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory")),
+    linvars_(std::vector<std::string>{"temperature", "pressure", "index_qv",
+                              "uReconstructZonal", "uReconstructMeridional"})
+
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));
 

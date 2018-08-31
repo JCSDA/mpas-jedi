@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_TLMMPAS_H_
-#define MPAS_MODEL_TLMMPAS_H_
+#ifndef MODEL_TLMMPAS_H_
+#define MODEL_TLMMPAS_H_
 
 #include <map>
 #include <ostream>
@@ -15,12 +15,14 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "oops/base/Variables.h"
 #include "oops/interface/LinearModelBase.h"
 
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+#include "model/Fortran.h"
 #include "MPASTraits.h"
 
 // Forward declarations
@@ -60,6 +62,7 @@ class TlmMPAS: public oops::LinearModelBase<MPASTraits>,
 /// Other utilities
   const util::Duration & timeResolution() const override {return tstep_;}
   const GeometryMPAS & resolution() const {return resol_;}
+  const oops::Variables & variables() const override {return linvars_;}
 
  private:
   void print(std::ostream &) const override;
@@ -72,8 +75,9 @@ class TlmMPAS: public oops::LinearModelBase<MPASTraits>,
   const GeometryMPAS resol_;
   std::map< util::DateTime, F90traj> traj_;
   const ModelMPAS lrmodel_;
+  const oops::Variables linvars_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_TLMMPAS_H_
+#endif  // MODEL_TLMMPAS_H_
