@@ -17,6 +17,7 @@
     "covariance": "BUMP",
     "date": "2016-03-04T06:00:00Z",
     "prefix": "bump",
+    "default_seed": 1,
     "strategy": "common",
     "new_nicas": 1,
     "check_adjoints": 1,

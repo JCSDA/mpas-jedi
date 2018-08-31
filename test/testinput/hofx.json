@@ -39,7 +39,8 @@
             "obsfile": "Data/amsua_n19_obs.nc4"
           },
           "ObsDataOut": {
-            "obsfile": "Data/hofx.nc4"
+            "obsfile": "Data/hofx.nc4",
+            "clobber": "True"
           }
         },
         "ObsBias": {}

@@ -31,6 +31,8 @@
         "_strategy" : "common",
         "strategy" : "specific_univariate",
         "new_nicas" : 1,
+        "_load_nicas" : 0,
+        "_load_cmat" : 0,
         "ntry" : 3,
         "nrep" : 2,
         "lsqrt" : 1,
@@ -42,7 +44,7 @@
         "forced_radii" : 1,
         "rh" : 2000.0e3,
         "rv" : 1.0,
-        "variable_changes": [ 
+        "_variable_changes": [ 
            {
              "_varchange": "StatsVariableChange",
              "varchange": "Identity",
@@ -75,6 +77,31 @@
                "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
              }
            }
+        ],
+        "_input" : [
+          {
+            "parameter" : "var",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "filename": "./mpas.var.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          },
+          {
+            "parameter" : "cor_rh",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "datadir": "Data",
+            "filename": "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          },
+          {
+            "parameter" : "cor_rv",
+            "no_transf" : 1,
+            "datadir": "Data",
+            "datadir": "Data",
+            "filename": "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc",
+            "date": "2016-03-04T06:00:00Z"
+          }
         ]
       }
     },
@@ -87,7 +114,8 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/3dvar.obt"
+              "obsfile": "Data/obsout_3dvar.chvar.nc4",
+              "clobber": "True"
             },
             "obsvalue": "Observation"
           },

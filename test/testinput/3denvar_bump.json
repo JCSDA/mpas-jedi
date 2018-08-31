@@ -68,32 +68,32 @@
             "advmode": 0,
             "diag_interp" : "bilin",
             "grid_output": 0,
-        "input" : [
-    {
-      "parameter" : "loc_coef",
-      "datadir": "Data",
-      "filename": "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc",
-      "date": "2016-03-04T06:00:00Z"
-    },
-    {
-      "parameter" : "loc_rh",
-      "datadir": "Data",
-      "filename": "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc",
-      "date": "2016-03-04T06:00:00Z"
-    },
-    {
-      "parameter" : "loc_rv",
-      "datadir": "Data",
-      "filename": "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc",
-      "date": "2016-03-04T06:00:00Z"
-    },
-    {
-      "parameter" : "hyb_coef",
-      "datadir": "Data",
-      "filename": "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc",
-      "date": "2016-03-04T06:00:00Z"
-    }
-        ]
+            "input" : [
+              {
+                "parameter" : "loc_coef",
+                "datadir": "Data",
+                "filename": "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc",
+                "date": "2016-03-04T06:00:00Z"
+              },
+              {
+                "parameter" : "loc_rh",
+                "datadir": "Data",
+                "filename": "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc",
+                "date": "2016-03-04T06:00:00Z"
+              },
+              {
+                "parameter" : "loc_rv",
+                "datadir": "Data",
+                "filename": "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc",
+                "date": "2016-03-04T06:00:00Z"
+              },
+              {
+                "parameter" : "hyb_coef",
+                "datadir": "Data",
+                "filename": "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc",
+                "date": "2016-03-04T06:00:00Z"
+              }
+            ]
           },
           "state": [
             {
@@ -130,7 +130,8 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/3denvar.obt"
+              "obsfile": "Data/obsout_3denvar.nc4",
+              "clobber": "True"
             },
             "obsvalue": "Observation"
           },

@@ -21,7 +21,7 @@
     "method": "loc_norm",
     "strategy": "common",
     "new_hdiag": 1,
-    "new_param": 1,
+    "new_nicas": 1,
     "check_adjoints": 1,
     "check_pos_def": 0,
     "check_sqrt": 0,

@@ -40,7 +40,8 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/3dvar.obt"
+              "obsfile": "Data/obsout_3dvar.nc4",
+              "clobber": "True"
             },
             "obsvalue": "Observation"
           },

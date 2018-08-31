@@ -112,7 +112,8 @@
               "obsfile": "Data/diag_t_01_wprofiles.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/3dhybrid_nicas.obt"
+              "obsfile": "Data/obsout_3dhybrid_bump.nc4",
+              "clobber": "True"
             },
             "obsvalue": "Observation"
           },
