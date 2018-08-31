@@ -17,7 +17,6 @@ use mpas_framework
 use mpas_kind_types
 use mpas_subdriver
 use atm_core
-use mpi 
 use mpas_stream_manager
 use mpas4da_mod
 use mpas_kinds, only : kind_real

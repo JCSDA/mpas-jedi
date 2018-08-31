@@ -148,42 +148,49 @@ ecbuild_add_test( TARGET  test_mpas_geometry
                   BOOST
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_state
                   BOOST
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_model
                   BOOST
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_increment
                   BOOST
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_localization
                   BOOST
                   SOURCES executables/TestLocalization.cc
                   ARGS    "testinput/localization.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_errorcovariance
                   BOOST
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/errorcov.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_variablechange
                   BOOST
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/variablechange.json"
+                  MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_hofx
@@ -191,6 +198,7 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx.json"
                        testoutput/hofx.test
+                  MPI     1
                   DEPENDS mpas_hofx.x )
 
 ecbuild_add_test( TARGET  test_mpas_hofx_4d
@@ -198,6 +206,7 @@ ecbuild_add_test( TARGET  test_mpas_hofx_4d
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx_4d.json"
                        testoutput/hofx_4d.test
+                  MPI     1
                   DEPENDS mpas_hofx.x )
 
 ecbuild_add_test( TARGET test_mpas_dirac_bumploc
@@ -205,6 +214,7 @@ ecbuild_add_test( TARGET test_mpas_dirac_bumploc
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumploc.json"
                        testoutput/dirac.bumploc.test
+                  MPI     1
                   DEPENDS mpas_dirac.x )
 
 ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
@@ -212,6 +222,7 @@ ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumpcov.json"
                        testoutput/dirac.bumpcov.test
+                  MPI     1
                   DEPENDS mpas_dirac.x )
 
 ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
@@ -219,6 +230,7 @@ ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.json"
                        testoutput/parametersbump.cov.test
+                  MPI     1
                   DEPENDS mpas_parameters.x )
 
 ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
@@ -226,6 +238,7 @@ ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.json"
                        testoutput/parametersbump.loc.test
+                  MPI     1
                   DEPENDS mpas_parameters.x )
 #ecbuild_add_test( TARGET test_mpas_parameters_bump_lct
 #ecbuild_add_test( TARGET test_mpas_parameters_bump_readloc
@@ -235,6 +248,7 @@ ecbuild_add_test( TARGET test_mpas_forecast
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.json"
                        testoutput/forecast.test
+                  MPI     1
                   DEPENDS mpas_forecast.x )
 
 ecbuild_add_test( TARGET test_mpas_3dvar
@@ -242,6 +256,7 @@ ecbuild_add_test( TARGET test_mpas_3dvar
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.json"
                        testoutput/3dvar.test
+                  MPI     1
                   DEPENDS mpas_variational.x )
 
 ecbuild_add_test( TARGET test_mpas_3dvar_chvar
@@ -249,6 +264,7 @@ ecbuild_add_test( TARGET test_mpas_3dvar_chvar
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.chvar.json"
                        testoutput/3dvar.chvar.test
+                  MPI     1
                   DEPENDS mpas_variational.x )
 
 ecbuild_add_test( TARGET test_mpas_3denvar_bump
@@ -256,6 +272,7 @@ ecbuild_add_test( TARGET test_mpas_3denvar_bump
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bump.json"
                        testoutput/3denvar_bump.test
+                  MPI     1
                   DEPENDS mpas_variational.x )
 
 ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
@@ -263,5 +280,6 @@ ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.json"
                        testoutput/3dhybrid_bump.test
+                  MPI     1
                   DEPENDS mpas_variational.x )
 

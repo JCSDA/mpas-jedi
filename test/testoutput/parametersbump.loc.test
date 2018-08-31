@@ -1,4 +1,4 @@
-Test     : Norm of loc_coef: 0.706074
-Test     : Norm of loc_rh: 2.58877e+07
+Test     : Norm of loc_coef: 0.706108
+Test     : Norm of loc_rh: 2.5798e+07
 Test     : Norm of loc_rv: 0
-Test     : Norm of hyb_coef: 2.5115e-11
+Test     : Norm of hyb_coef: 3.01497e-11
