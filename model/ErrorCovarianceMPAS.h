@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_ERRORCOVARIANCEMPAS_H_
-#define MPAS_MODEL_ERRORCOVARIANCEMPAS_H_
+#ifndef MODEL_ERRORCOVARIANCEMPAS_H_
+#define MODEL_ERRORCOVARIANCEMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -39,7 +39,8 @@ class ErrorCovarianceMPAS : public util::Printable,
   static const std::string classname() {return "mpas::ErrorCovarianceMPAS";}
 
   ErrorCovarianceMPAS(const GeometryMPAS &, const oops::Variables &,
-                       const eckit::Configuration &, const StateMPAS &);
+                      const eckit::Configuration &, const StateMPAS &,
+                      const StateMPAS &);
   ~ErrorCovarianceMPAS();
 
   void linearize(const StateMPAS &, const GeometryMPAS &);
@@ -56,4 +57,4 @@ class ErrorCovarianceMPAS : public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPAS_MODEL_ERRORCOVARIANCEMPAS_H_
+#endif  // MODEL_ERRORCOVARIANCEMPAS_H_

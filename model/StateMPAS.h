@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_STATEMPAS_H_
-#define MPAS_MODEL_STATEMPAS_H_
+#ifndef MODEL_STATEMPAS_H_
+#define MODEL_STATEMPAS_H_
 
 #include <ostream>
 #include <string>
@@ -55,7 +55,8 @@ class StateMPAS : public util::Printable,
 /// Constructor, destructor
   StateMPAS(const GeometryMPAS &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
-  StateMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  StateMPAS(const GeometryMPAS &, const oops::Variables &,
+            const eckit::Configuration &);
   StateMPAS(const GeometryMPAS &, const StateMPAS &);
   StateMPAS(const StateMPAS &);
   virtual ~StateMPAS();
@@ -81,10 +82,6 @@ class StateMPAS : public util::Printable,
   const util::DateTime & validTime() const {return fields_->time();}
   util::DateTime & validTime() {return fields_->time();}
 
-/// Convert to/from unstructured grid
-  void convert_to(oops::UnstructuredGrid &) const;
-  void convert_from(const oops::UnstructuredGrid &);
-
 /// Access to fields
   FieldsMPAS & fields() {return *fields_;}
   const FieldsMPAS & fields() const {return *fields_;}
@@ -106,4 +103,4 @@ class StateMPAS : public util::Printable,
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_STATEMPAS_H_
+#endif  // MODEL_STATEMPAS_H_

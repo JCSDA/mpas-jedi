@@ -52,8 +52,8 @@ void GeometryMPAS::print(std::ostream & os) const {
      << ", nEdgesGlobal = " << nEdgesGlobal \
      << ", nEdges = " << nEdges \
      << ", nEdgesSolve = " << nEdgesSolve \
-     << ", nVertLevels = "<<nVertLevels \
-     << ", nVertLevelsP1 = "<<nVertLevelsP1 ;
+     << ", nVertLevels = " <<nVertLevels \
+     << ", nVertLevelsP1 = " <<nVertLevelsP1;
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas

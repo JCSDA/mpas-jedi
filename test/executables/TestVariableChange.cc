@@ -6,17 +6,14 @@
  */
 
 #include "MPASTraits.h"
-#include "instantiateLocalizationFactory.h"
-#include "instantiateMPASVarChangeFactory.h"
-#include "oops/runs/Variational.h"
 #include "RunMPAS.h"
-
-int main(int argc,  char ** argv) {
+#include "test/interface/LinearVariableChange.h"
+#include "model/instantiateMPASVarChangeFactory.h"
+ int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  mpas::instantiateLocalizationFactory();
   mpas::instantiateMPASVarChangeFactory();
-  oops::Variational<mpas::MPASTraits> var;
-  run.execute(var);
+  test::LinearVariableChange<mpas::MPASTraits> tests;
+  run.execute(tests);
   return 0;
 }
 

@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPAS_MODEL_MODELBIASMPAS_H_
-#define MPAS_MODEL_MODELBIASMPAS_H_
+#ifndef MODEL_MODELBIASMPAS_H_
+#define MODEL_MODELBIASMPAS_H_
 
 #include <iostream>
 #include <string>
@@ -61,4 +61,4 @@ class ModelBiasMPAS : public util::Printable,
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_MODELBIASMPAS_H_
+#endif  // MODEL_MODELBIASMPAS_H_

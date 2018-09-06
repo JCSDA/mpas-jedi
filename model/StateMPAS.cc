@@ -38,28 +38,10 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol,
+StateMPAS::StateMPAS(const GeometryMPAS & resol, const oops::Variables & vars,
                      const eckit::Configuration & file)
-  : fields_(), stash_()
+  : fields_(new FieldsMPAS(resol, vars, util::DateTime())), stash_()
 {
-  const std::vector<std::string> *vv;
-
-  if (file.has("variables")) {
-    vv = new std::vector<std::string>(file.getStringVector("variables"));
-    oops::Log::trace()
-          << "StateMPAS::StateMPAS variables are set from config file"
-          << std::endl;
-  } else {
-    vv = new std::vector<std::string>({"temperature", "pressure", "index_qv",
-                                "uReconstructZonal", "uReconstructMeridional"});
-    oops::Log::trace() << "StateMPAS::StateMPAS variables are set by default"
-                       << std::endl;
-  }
-
-  oops::Variables vars(*vv);
-  fields_.reset(new FieldsMPAS(resol, vars, util::DateTime()));
-
-//  fields_->read(file);
   if (file.has("analytic_init"))
     fields_->analytic_init(file, resol);
   else
@@ -132,16 +114,6 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   ASSERT(fields_);
   fields_->add(dx.fields());
   return *this;
-}
-// -----------------------------------------------------------------------------
-/// Convert to/from unstructured grid
-// -----------------------------------------------------------------------------
-void StateMPAS::convert_to(oops::UnstructuredGrid & ug) const {
-  fields_->convert_to(ug);
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::convert_from(const oops::UnstructuredGrid & ug) {
-  fields_->convert_from(ug);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

@@ -6,17 +6,15 @@
  */
 
 #include "MPASTraits.h"
-#include "instantiateLocalizationFactory.h"
 #include "instantiateMPASVarChangeFactory.h"
-#include "oops/runs/Variational.h"
+#include "oops/runs/EstimateParams.h"
 #include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  mpas::instantiateLocalizationFactory();
   mpas::instantiateMPASVarChangeFactory();
-  oops::Variational<mpas::MPASTraits> var;
-  run.execute(var);
+  oops::EstimateParams<mpas::MPASTraits> dir;
+  run.execute(dir);
   return 0;
 }
 

@@ -8,8 +8,8 @@
  * does it submit to any jurisdiction.
  */
 
-#ifndef MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
-#define MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
+#ifndef MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
+#define MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 
 #include "oops/interface/LocalizationBase.h"
 #include "LocalizationMatrixMPAS.h"
@@ -24,5 +24,5 @@ void instantiateLocalizationFactory() {
 
 }  // namespace mpas
 
-#endif  // MPAS_MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
+#endif  // MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 
