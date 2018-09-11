@@ -67,23 +67,23 @@
     "grid_output": 0,
           "state": [
             {
-              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e01.nc",
+              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e01.nc",
               "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e02.nc",
+              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e02.nc",
               "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e03.nc",
+              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e03.nc",
               "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e04.nc",
+              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e04.nc",
               "date": "2016-03-04T06:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2016-03-04_06.00.00.e05.nc",
+              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e05.nc",
               "date": "2016-03-04T06:00:00Z"
             }
           ]
