@@ -4,7 +4,7 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "resolution" : {
-    "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
   },
   "model": {
     "tstep": "PT30M",
@@ -21,7 +21,7 @@
     "Jb": {
       "Background": {
         "state": [{
-          "filename": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc",
+          "filename": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc",
           "date": "2010-10-23T00:00:00Z"
         }]
       },
@@ -41,23 +41,23 @@
             },
             "hdiag_ensemble": [
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
+                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e01.nc",
                 "date": "2010-10-23T00:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
+                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e02.nc",
                 "date": "2010-10-23T00:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
+                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e03.nc",
                 "date": "2010-10-23T00:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
+                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e04.nc",
                 "date": "2010-10-23T00:00:00Z"
               },
               {
-                "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
+                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e05.nc",
                 "date": "2010-10-23T00:00:00Z"
               }
             ],
@@ -127,23 +127,23 @@
           },
           "state": [
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e01.nc",
+              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e01.nc",
               "date": "2010-10-23T00:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e02.nc",
+              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e02.nc",
               "date": "2010-10-23T00:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e03.nc",
+              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e03.nc",
               "date": "2010-10-23T00:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e04.nc",
+              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e04.nc",
               "date": "2010-10-23T00:00:00Z"
             },
             {
-              "filename": "/home/vagrant/data/restart.2010-10-23_00.00.00.e05.nc",
+              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e05.nc",
               "date": "2010-10-23T00:00:00Z"
             }
           ]
@@ -176,7 +176,7 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "/home/vagrant/build/mpas-bundle/mpas/test/mpas.4denvar.$Y-$M-$D_$h.$m.$s.nc",
+    "filename": "REL_DIR/build/mpas-bundle/mpas/test/mpas.4denvar.$Y-$M-$D_$h.$m.$s.nc",
     "date": "2010-10-23T00:00:00Z",
     "_first": "PT3H",
     "_frequency": "PT06H",
@@ -188,7 +188,7 @@
     "iteration": [
       {
         "resolution": {
-          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
           "_version": "IdTLM",
@@ -209,7 +209,7 @@
       },
       {
         "resolution": {
-          "gridfname": "/home/vagrant/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
         },
         "linearmodel": {
           "version": "MPASIdTLM",
