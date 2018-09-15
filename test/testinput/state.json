@@ -4,20 +4,20 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Geometry": {
-    "gridfname": "./x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "StateTest": {
     "StateFile": {
       "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-      "filename": "./x1.2562.init.nc",
-      "date": "2016-03-04T06:00:00Z"
+      "filename": "./restart.2018-04-15_00.00.00.nc",
+      "date": "2018-04-15T00:00:00Z"
     },
-    "date": "2016-03-04T06:00:00Z",
-    "norm-file": "22050.214248074055",
+    "date": "2018-04-15T00:00:00Z",
+    "norm-file": "22053.9914664973",
     "StateGenerate" : {
       "analytic_init": "dcmip-test-4-0",
       "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-      "date": "2016-03-04T06:00:00Z",
+      "date": "2018-04-15T00:00:00Z",
       "mean": 8.0,
       "sinus": 2.0
     },

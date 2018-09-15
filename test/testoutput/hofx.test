@@ -1,17 +1,17 @@
 Test     : Initial state: 
-Test     :   Valid time: 2016-03-04T06:00:00Z
+Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=0, Max=0.0203042, RMS=0.00462374
-Test     : Fld=2  Min=195.601, Max=308.382, RMS=244.349
-Test     : Fld=3  Min=-30.7651, Max=89.6868, RMS=15.6251
-Test     : Fld=4  Min=-63.2673, Max=53.7631, RMS=7.85498
-Test     : Fld=5  Min=1325.57, Max=96595.8, RMS=49305.2
+Test     : Fld=1  Min=0, Max=0.0193351, RMS=0.00469333
+Test     : Fld=2  Min=199.61, Max=305.248, RMS=243.965
+Test     : Fld=3  Min=-44.1611, Max=83.0029, RMS=17.6546
+Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=9.00177
+Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
 Test     : Final state: 
-Test     :   Valid time: 2016-03-04T06:00:00Z
+Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=0, Max=0.0203042, RMS=0.00462374
-Test     : Fld=2  Min=195.601, Max=308.382, RMS=244.349
-Test     : Fld=3  Min=-30.7651, Max=89.6868, RMS=15.6251
-Test     : Fld=4  Min=-63.2673, Max=53.7631, RMS=7.85498
-Test     : Fld=5  Min=1325.57, Max=96595.8, RMS=49305.2
-Test     : H(x): Radiosonde nobs= 915 Min=208.686, Max=302.114, Average=254.767Radiance nobs= 12090 Min=135.38, Max=302.649, Average=227.653
+Test     : Fld=1  Min=0, Max=0.0193351, RMS=0.00469333
+Test     : Fld=2  Min=199.61, Max=305.248, RMS=243.965
+Test     : Fld=3  Min=-44.1611, Max=83.0029, RMS=17.6546
+Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=9.00177
+Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
+Test     : H(x): Radiosonde nobs= 146 Min=206.187, Max=308.665, Average=240.787Aircraft nobs= 764 Min=221.252, Max=304.638, Average=254.935Radiance nobs= 1125 Min=145.608, Max=292.879, Average=229.941

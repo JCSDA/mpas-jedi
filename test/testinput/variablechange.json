@@ -33,12 +33,12 @@
     }
   ],
   "Geometry": {
-    "gridfname": "./x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "State": {
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-    "filename": "./x1.2562.init.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "filename": "./restart.2018-04-15_00.00.00.nc",
+    "date": "2018-04-15T00:00:00Z"
   },
   "Variables": {
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]

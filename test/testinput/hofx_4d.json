@@ -4,11 +4,11 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "Assimilation Window": {
-    "Begin": "2016-03-04T06:00:00Z",
+    "Begin": "2018-04-15T00:00:00Z",
     "Length": "PT6H"
   },
   "Geometry": {
-    "gridfname": "./x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "Model": {
     "tstep": "PT30M",
@@ -18,8 +18,8 @@
   },
   "Initial Condition": {
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-    "filename": "./x1.2562.init.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "filename": "./restart.2018-04-15_00.00.00.nc",
+    "date": "2018-04-15T00:00:00Z"
   },
   "Observations": {
     "ObsTypes": [
@@ -27,20 +27,29 @@
         "ObsType": "Radiosonde",
         "ObsData": {
           "ObsDataIn": {
-            "obsfile": "Data/diag_t_01_wprofiles.nc4"
+            "obsfile": "Data/sondes_obs_2018041500_m.nc4"
           }
         },
         "ObsBias": {}
       },
       {
+        "ObsType": "Aircraft",
+        "ObsData": {
+          "ObsDataIn": {
+            "obsfile": "Data/aircraft_obs_2018041500_m.nc4"
+          }
+        },
+        "ObsBias": {}
+      },
+      {
+        "TestInProgress":,
         "ObsType": "Radiance",
         "ObsData": {
           "ObsDataIn": {
-            "obsfile": "Data/amsua_n19_obs.nc4"
+            "obsfile": "Data/amsua_obs_n19_2018041500_m.nc4"
           },
           "ObsDataOut": {
-            "obsfile": "Data/hofx_4d.nc4",
-            "clobber": "True"
+            "obsfile": "Data/hofx_4d.nc4"
           }
         },
         "ObsBias": {}

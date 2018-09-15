@@ -4,14 +4,14 @@
   },
   "test_framework_runtime_config": "--log_level=test_suite",
   "resolution" : {
-    "gridfname": "./x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "model": {
     "tstep": "PT30M"
   },
   "cost_function": {
     "cost_type": "4D-Ens-Var",
-    "window_begin": "2016-03-04T06:00:00Z",
+    "window_begin": "2018-04-15T00:00:00Z",
     "window_length": "PT0H",
     "window_sub": "PT1H",
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
@@ -19,8 +19,8 @@
       "Background": {
         "state": [{
           "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-          "filename": "./x1.2562.init.nc",
-          "date": "2016-03-04T06:00:00Z"
+          "filename": "./restart.2018-04-15_00.00.00.nc",
+          "date": "2018-04-15T00:00:00Z"
         }]
       },
       "Covariance": {
@@ -31,10 +31,10 @@
           "variables": {
             "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
           },
-          "date": "2016-03-04T06:00:00Z",
+          "date": "2018-04-15T00:00:00Z",
           "localization": {
             "localization": "BUMP",
-            "date": "2016-03-04T06:00:00Z",
+            "date": "2018-04-15T00:00:00Z",
             "variables": {
               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
@@ -73,48 +73,48 @@
                 "parameter" : "loc_coef",
                 "datadir": "Data",
                 "filename": "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc",
-                "date": "2016-03-04T06:00:00Z"
+                "date": "2018-04-15T00:00:00Z"
               },
               {
                 "parameter" : "loc_rh",
                 "datadir": "Data",
                 "filename": "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc",
-                "date": "2016-03-04T06:00:00Z"
+                "date": "2018-04-15T00:00:00Z"
               },
               {
                 "parameter" : "loc_rv",
                 "datadir": "Data",
                 "filename": "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc",
-                "date": "2016-03-04T06:00:00Z"
+                "date": "2018-04-15T00:00:00Z"
               },
               {
                 "parameter" : "hyb_coef",
                 "datadir": "Data",
                 "filename": "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc",
-                "date": "2016-03-04T06:00:00Z"
+                "date": "2018-04-15T00:00:00Z"
               }
             ]
           },
           "state": [
             {
-              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e01.nc",
-              "date": "2016-03-04T06:00:00Z"
+              "filename": "REL_DIR/data/x1.2562.init.e01.nc",
+              "date": "2018-04-15T00:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e02.nc",
-              "date": "2016-03-04T06:00:00Z"
+              "filename": "REL_DIR/data/x1.2562.init.e02.nc",
+              "date": "2018-04-15T00:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e03.nc",
-              "date": "2016-03-04T06:00:00Z"
+              "filename": "REL_DIR/data/x1.2562.init.e03.nc",
+              "date": "2018-04-15T00:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e04.nc",
-              "date": "2016-03-04T06:00:00Z"
+              "filename": "REL_DIR/data/x1.2562.init.e04.nc",
+              "date": "2018-04-15T00:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e05.nc",
-              "date": "2016-03-04T06:00:00Z"
+              "filename": "REL_DIR/data/x1.2562.init.e05.nc",
+              "date": "2018-04-15T00:00:00Z"
             }
           ]
          }
@@ -124,20 +124,20 @@
     "Jo": {
       "ObsTypes": [
         {
+          "TestInProgress":,
           "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/diag_t_01_wprofiles.nc4"
+              "obsfile": "Data/sondes_obs_2018041500_m.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/obsout_3denvar.nc4",
-              "clobber": "True"
+              "obsfile": "Data/obsout_3denvar.nc4"
             },
-            "obsvalue": "Observation"
+            "obsvalue": "air_temperature"
           },
           "Covariance": {
             "covariance": "diagonal",
-            "obserror": "ObsErr"
+            "obserror": "air_temperature_err"
           }
         }
       ]
@@ -153,7 +153,7 @@
     "iteration": [
       {
         "resolution": {
-          "gridfname": "./x1.2562.init.nc"
+          "gridfname": "./restart.2018-04-15_00.00.00.nc"
         },
         "linearmodel": {
           "varchange": "Identity",
@@ -174,7 +174,7 @@
       },
       {
         "resolution": {
-          "gridfname": "./x1.2562.init.nc"
+          "gridfname": "./restart.2018-04-15_00.00.00.nc"
         },
         "linearmodel": {
           "varchange": "Identity",

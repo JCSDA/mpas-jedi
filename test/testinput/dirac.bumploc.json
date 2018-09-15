@@ -3,15 +3,15 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "resolution": {
-    "gridfname": "./x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "variables": {
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
   },
   "initial": {
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-    "filename": "./x1.2562.init.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "filename": "./restart.2018-04-15_00.00.00.nc",
+    "date": "2018-04-15T00:00:00Z"
   },
   "Covariance": {
     "covariance": "ensemble",
@@ -19,10 +19,10 @@
     "variables": {
       "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
     },
-    "date": "2016-03-04T06:00:00Z",
+    "date": "2018-04-15T00:00:00Z",
     "localization": {
       "localization": "BUMP",
-      "date": "2016-03-04T06:00:00Z",
+      "date": "2018-04-15T00:00:00Z",
       "variables": {
         "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
       },
@@ -56,24 +56,24 @@
     },
     "state": [
       {
-        "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e01.nc",
-        "date": "2016-03-04T06:00:00Z"
+        "filename": "REL_DIR/data/x1.2562.init.e01.nc",
+        "date": "2018-04-15T00:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e02.nc",
-        "date": "2016-03-04T06:00:00Z"
+        "filename": "REL_DIR/data/x1.2562.init.e02.nc",
+        "date": "2018-04-15T00:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e03.nc",
-        "date": "2016-03-04T06:00:00Z"
+        "filename": "REL_DIR/data/x1.2562.init.e03.nc",
+        "date": "2018-04-15T00:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e04.nc",
-        "date": "2016-03-04T06:00:00Z"
+        "filename": "REL_DIR/data/x1.2562.init.e04.nc",
+        "date": "2018-04-15T00:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/restart.2016-03-04_06.00.00.e05.nc",
-        "date": "2016-03-04T06:00:00Z"
+        "filename": "REL_DIR/data/x1.2562.init.e05.nc",
+        "date": "2018-04-15T00:00:00Z"
       }
     ]
   },
@@ -129,28 +129,28 @@
   "output_localization": {
     "datadir": "Data",
     "filename": "./mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   },
   "input_bump": {
     "datadir": "Data",
     "filename": "./mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   },
   "output_B": {
     "datadir": "Data",
     "filename": "./mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   },
   "output_bumpRnd": {
     "filename": "./mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   },
   "input_bumpRnd": {
     "filename": "./mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   },
   "output_BensRnd": {
     "filename": "./mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2016-03-04T06:00:00Z"
+    "date": "2018-04-15T00:00:00Z"
   }
 }
