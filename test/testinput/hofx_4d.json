@@ -42,7 +42,6 @@
         "ObsBias": {}
       },
       {
-        "TestInProgress":,
         "ObsType": "Radiance",
         "ObsData": {
           "ObsDataIn": {

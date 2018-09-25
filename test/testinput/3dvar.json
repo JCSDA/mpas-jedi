@@ -34,7 +34,6 @@
     "Jo": {
       "ObsTypes": [
         {
-          "TestInProgress":,
           "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
