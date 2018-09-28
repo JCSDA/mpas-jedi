@@ -17,6 +17,7 @@ use mpas_dmpar, only: mpas_dmpar_sum_int
 use mpas_subdriver
 use atm_core
 use mpas_pool_routines
+use mpas_run_mod, only : run_corelist=>corelist, run_domain=>domain
 
 
 implicit none
@@ -75,8 +76,6 @@ contains
 ! ------------------------------------------------------------------------------
 subroutine geo_setup(self, c_conf)
 
-   use fckit_mpi_module, only: fckit_mpi_comm
-
    implicit none
 
    type(mpas_geom), intent(inout) :: self
@@ -90,14 +89,10 @@ subroutine geo_setup(self, c_conf)
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
-   type(fckit_mpi_comm) :: f_comm
-
-   f_comm = fckit_mpi_comm()
-
    write(*,*)' ==> create geom'
 
-   !> MPAS subdriver
-   call mpas_init( self % corelist, self % domain, mpi_comm=f_comm%communicator() )
+   self % corelist => run_corelist
+   self % domain   => run_domain
 
    if (associated(self % domain)) then
        write(*,*)'inside geom: geom % domain associated'
@@ -197,16 +192,10 @@ end subroutine geo_setup
 
 subroutine geo_clone(self, other)
 
-   use fckit_mpi_module, only: fckit_mpi_comm
-
    implicit none
 
    type(mpas_geom), intent(in) :: self
    type(mpas_geom), intent(inout) :: other
-
-   type(fckit_mpi_comm) :: f_comm
-
-   f_comm = fckit_mpi_comm()
 
    write(*,*)'====> copy of geom array'
    if (allocated(other%latCell)) then 
@@ -261,7 +250,8 @@ subroutine geo_clone(self, other)
       write(*,*)'associated(other % corelist), associated(other % domain)'
    else
       write(*,*)'not associated(other % corelist), associated(other % domain)'
-      call mpas_init(other % corelist, other % domain, mpi_comm=f_comm%communicator())
+      other % corelist => run_corelist
+      other % domain   => run_domain
    end if
 
    write(*,*)'====> copy of geom done'
@@ -288,14 +278,13 @@ subroutine geo_delete(self)
    if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
    if (allocated(self%cellsOnCell)) deallocate(self%cellsOnCell)
 
+   !call mpas_timer_set_context( self % domain )
    if ((associated(self % corelist)).and.(associated(self % domain))) then
-      write(*,*)'==> delete geom corelist and domain'
-      call mpas_timer_set_context( self % domain )
-      call mpas_finalize(self % corelist, self % domain)
+      nullify(self % corelist)
+      nullify(self % domain)
+      write(*,*)'==> nullify geom corelist and domain'
    end if
    write(*,*)'==> delete geom done'
-   !self % corelist => null()
-   !self % domain => null()
 
 end subroutine geo_delete
 
