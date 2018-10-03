@@ -215,7 +215,6 @@
 
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
-   logical, SAVE :: l_detsfctemp = .false.
 
    !--- create new pool for geovals
    call mpas_pool_create_pool(pool_c, nfield)
@@ -415,34 +414,17 @@
 
      case ("Water_Temperature", "Land_Temperature", "Ice_Temperature", "Snow_Temperature" )
 
-        if( .not. l_detsfctemp) then
-          call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
 
-          !--- currently assign "skintemp" for all temperature, TODO: more proper variable?
-          call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
-          write(*,*) 'MIN/MAX of skintemp=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-          call mpas_duplicate_field(field1d_src, field1d)
-          field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
-          field1d % fieldName = var_sfc_wtmp
-          call mpas_pool_add_field(pool_c, var_sfc_wtmp, field1d)
-
-          call mpas_duplicate_field(field1d_src, field1d)
-          field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
-          field1d % fieldName = var_sfc_ltmp
-          call mpas_pool_add_field(pool_c, var_sfc_ltmp, field1d)
-
-          call mpas_duplicate_field(field1d_src, field1d)
-          field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
-          field1d % fieldName = var_sfc_itmp
-          call mpas_pool_add_field(pool_c, var_sfc_itmp, field1d)
-
-          call mpas_duplicate_field(field1d_src, field1d)
-          field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
-          field1d % fieldName = var_sfc_stmp
-          call mpas_pool_add_field(pool_c, var_sfc_stmp, field1d)
-
-          l_detsfctemp = .true.
-        endif
+        !-NOTE: Currently assign "skintemp" for all temperature
+        !-TODO: More proper variable for each surface temperature ?
+        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
+        write(*,*) 'MIN/MAX of skintemp=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array(:) = r1d_ptr_a(:) ! quantity and unit might change
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field1d)
+        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("Snow_Depth")
         call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
