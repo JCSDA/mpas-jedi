@@ -14,4 +14,4 @@ Test     : Fld=2  Min=199.61, Max=305.248, RMS=243.965
 Test     : Fld=3  Min=-44.1611, Max=83.0029, RMS=17.6546
 Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=9.00177
 Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
-Test     : H(x): Radiosonde nobs= 1049 Min=206.221, Max=308.895, Average=243.779Aircraft nobs= 1867 Min=217.288, Max=305.779, Average=278.255Radiance nobs= 1125 Min=147.79, Max=296.78, Average=231.706
+Test     : H(x): Radiosonde nobs= 1049 Min=206.221, Max=308.895, Average=243.779Aircraft nobs= 1867 Min=217.288, Max=305.779, Average=278.255Radiance nobs= 1125 Min=147.79, Max=296.78, Average=232.386

@@ -5,20 +5,24 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/ModelMPAS.h"
 
 #include <vector>
 
-#include "oops/util/Logger.h"
-#include "ModelBiasMPAS.h"
+#include "eckit/config/Configuration.h"
+
 #include "FieldsMPAS.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
+#include "ModelMPAS.h"
+#include "ModelBiasMPAS.h"
 #include "StateMPAS.h"
-#include "eckit/config/Configuration.h"
+
 #include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 
 namespace mpas {
+// -----------------------------------------------------------------------------
+ static oops::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)

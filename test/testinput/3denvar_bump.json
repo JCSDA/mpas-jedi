@@ -7,6 +7,7 @@
     "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "model": {
+    "name": "MPAS",
     "tstep": "PT30M"
   },
   "cost_function": {
@@ -38,7 +39,7 @@
             "variables": {
               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
-            "prefix": "mpas",
+            "prefix": "mpas_3denvar_bump",
             "default_seed": 1,
             "method": "cor",
             "_method": "hyb-rnd",
@@ -68,7 +69,7 @@
             "advmode": 0,
             "diag_interp" : "bilin",
             "grid_output": 0,
-            "input" : [
+            "_input" : [
               {
                 "parameter" : "loc_coef",
                 "datadir": "Data",

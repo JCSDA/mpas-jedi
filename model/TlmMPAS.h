@@ -15,13 +15,14 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "oops/base/LinearModelBase.h"
 #include "oops/base/Variables.h"
-#include "oops/interface/LinearModelBase.h"
 
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+#include "ModelMPAS.h"
 #include "model/Fortran.h"
 #include "MPASTraits.h"
 

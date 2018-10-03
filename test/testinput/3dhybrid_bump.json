@@ -7,6 +7,7 @@
     "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "model": {
+    "name": "MPAS",
     "tstep": "PT30M"
   },
   "cost_function": {
@@ -48,7 +49,7 @@
             "variables": {
               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
-            "prefix": "mpas",
+            "prefix": "mpas_3dhybrid_bump",
             "default_seed": 1,
             "method": "cor",
             "strategy": "common",

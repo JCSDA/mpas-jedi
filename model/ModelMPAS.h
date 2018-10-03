@@ -10,11 +10,14 @@
 
 #include <ostream>
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "Fortran.h"
 #include "GeometryMPAS.h"
+#include "MPASTraits.h"
+#include "oops/base/ModelBase.h"
 #include "oops/base/Variables.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
@@ -36,9 +39,8 @@ namespace mpas {
  *  MPAS nonlinear model definition and configuration parameters.
  */
 
-class ModelMPAS: public util::Printable,
-               private boost::noncopyable,
-               private util::ObjectCounter<ModelMPAS> {
+class ModelMPAS: public oops::ModelBase<MPASTraits>,
+                 private util::ObjectCounter<ModelMPAS> {
  public:
   static const std::string classname() {return "mpas::ModelMPAS";}
 

@@ -11,6 +11,7 @@
     "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "Model": {
+    "name": "MPAS",
     "tstep": "PT30M",
     "fclength": "PT0H",
     "finalnorm": 0.020383,
@@ -43,6 +44,15 @@
       },
       {
         "ObsType": "Radiance",
+        "ObsOptions": {
+            "n_Layers": "6",
+            "n_Absorbers": "3",
+            "n_Clouds": "2",
+            "n_Aerosols": "0",
+            "Sensor_ID": "amsua_n19",
+            "EndianType": "little_endian",
+            "CoefficientPath": "Data/"
+          },
         "ObsData": {
           "ObsDataIn": {
             "obsfile": "Data/amsua_obs_n19_2018041500_m.nc4"

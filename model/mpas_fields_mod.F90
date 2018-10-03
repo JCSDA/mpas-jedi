@@ -1237,6 +1237,9 @@ subroutine getvalues(fld, locs, vars, gom, traj)
 
        call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
 
+       call mpas_pool_empty_pool(pool_tmp)
+       call mpas_pool_destroy_pool(pool_tmp)
+
        pbumpa => traj%lalloc
 
     endif
@@ -1600,6 +1603,10 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    endif  !--- OMG: end
 
 
+   if (.not. present(traj)) then
+      call pbump%dealloc()
+   endif
+
    nullify(pbump)
 
    deallocate(mod_field)
@@ -1850,27 +1857,11 @@ subroutine initialize_interp(grid, locs, bump)
 
     !Important namelist options
     call bump%nam%init
-
-    bump%nam%prefix       = bump_nam_prefix  ! Prefix for files output
-    bump%nam%nobs         = locs%nlocs       ! Number of observations
     bump%nam%obsop_interp = 'bilin'          ! Interpolation type (bilinear)
-    bump%nam%obsdis       = 'local'          ! Observation distribution parameter ('random', 'local', or 'adjusted')
-    bump%nam%diag_interp  = 'bilin'
-    bump%nam%local_diag   = .false.
 
     !Less important namelist options (should not be changed)
-    bump%nam%default_seed        = .true.
-    bump%nam%new_hdiag           = .false.
-    bump%nam%new_nicas           = .false.
-    bump%nam%check_adjoints      = .false.
-    bump%nam%check_pos_def       = .false.
-    bump%nam%check_sqrt          = .false.
-    bump%nam%check_dirac         = .false.
-    bump%nam%check_randomization = .false.
-    bump%nam%check_consistency   = .false.
-    bump%nam%check_optimality    = .false.
-    bump%nam%new_lct             = .false.
-    bump%nam%new_obsop           = .true.
+    bump%nam%prefix       = bump_nam_prefix  ! Prefix for files output
+    bump%nam%new_obsop    = .true.
 
     !Initialize geometry
     allocate(area(mod_num))

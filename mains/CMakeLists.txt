@@ -9,6 +9,11 @@ ecbuild_add_executable( TARGET  mpas_hofx.x
                         LIBS    mpas
                       )
 
+ecbuild_add_executable( TARGET  mpas_enshofx.x
+                        SOURCES mpasEnsHofX.cc
+                        LIBS    mpas
+                      )
+
 #ecbuild_add_executable( TARGET  mpas_4dvar.x
 #                        SOURCES mpas4DVar.cc
 #                        LIBS    mpas

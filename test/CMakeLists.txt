@@ -20,6 +20,7 @@ list( APPEND mpas_test_input
   testinput/forecast.json
   testinput/genenspert.json
   testinput/hofx.json
+  testinput/enshofx.json
   testinput/hofx_4d.json
   testinput/dirac.bumploc.json
   testinput/dirac.bumpcov.json
@@ -64,6 +65,7 @@ list( APPEND mpas_testoutput
   testoutput/forecast.test
   testoutput/genenspert.test
   testoutput/hofx.test
+  testoutput/enshofx.test
   testoutput/hofx_4d.test
   testoutput/dirac.bumploc.test
   testoutput/dirac.bumpcov.test
@@ -200,6 +202,14 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                        testoutput/hofx.test
                   MPI     1
                   DEPENDS mpas_hofx.x )
+
+ecbuild_add_test( TARGET  test_mpas_enshofx
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_enshofx.x testinput/enshofx.json"
+                       testoutput/enshofx.test
+                  MPI     1
+                  DEPENDS mpas_enshofx.x )
 
 ecbuild_add_test( TARGET  test_mpas_hofx_4d
                   TYPE SCRIPT

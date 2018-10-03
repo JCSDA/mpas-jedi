@@ -10,6 +10,7 @@
   },
   "forecast_length": "PT6H",
   "model": {
+    "name": "MPAS",
     "tstep": "PT30M"
   },
   "output": {

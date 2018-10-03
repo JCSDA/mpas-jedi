@@ -1,18 +1,18 @@
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=44.5742, Max=836.679, RMS=461.189
-Test     : Fld=2  Min=44.5742, Max=836.679, RMS=461.189
-Test     : Fld=3  Min=44.5742, Max=836.679, RMS=461.189
-Test     : Fld=4  Min=44.5742, Max=836.679, RMS=461.189
-Test     : Fld=5  Min=44.5742, Max=836.679, RMS=461.189
-Test     : Adjoint test: 1.48938e+07 / 1.48938e+07
+Test     : Fld=1  Min=27.8408, Max=340.601, RMS=171.107
+Test     : Fld=2  Min=27.8408, Max=340.601, RMS=171.107
+Test     : Fld=3  Min=27.8408, Max=340.601, RMS=171.107
+Test     : Fld=4  Min=27.8408, Max=340.601, RMS=171.107
+Test     : Fld=5  Min=27.8408, Max=340.601, RMS=171.107
+Test     : Adjoint test: 5.73765e+06 / 5.73765e+06
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=-0.591338, Max=0.407876, RMS=0.029075
-Test     : Fld=2  Min=-173.333, Max=297.86, RMS=35.7322
-Test     : Fld=3  Min=-1252.38, Max=1660.5, RMS=151.461
-Test     : Fld=4  Min=-1928.61, Max=1802.72, RMS=149.249
-Test     : Fld=5  Min=-22767.1, Max=127181, RMS=12051.7
-Test     : Adjoint test: 4.75506e+07 / 4.75506e+07
+Test     : Fld=1  Min=-0.217573, Max=0.185447, RMS=0.0159237
+Test     : Fld=2  Min=-120.418, Max=177.925, RMS=20.5931
+Test     : Fld=3  Min=-717.437, Max=1143.82, RMS=80.4588
+Test     : Fld=4  Min=-1461.07, Max=907.291, RMS=80.2677
+Test     : Fld=5  Min=-12072.8, Max=89803, RMS=7384.13
+Test     : Adjoint test: 2.93107e+07 / 2.93107e+07

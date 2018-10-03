@@ -18,6 +18,7 @@
     },
   "ModelBias": null,
   "Model": {
+    "name": "MPAS",
     "tstep": "PT30M"
   }
 }
