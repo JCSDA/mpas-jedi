@@ -34,3 +34,8 @@ ecbuild_add_executable( TARGET  mpas_parameters.x
                         LIBS    mpas
                       )
 
+ecbuild_add_executable( TARGET  mpas_staticbinit.x
+                        SOURCES mpasStaticBInit.cc
+                        LIBS    mpas
+                      )
+

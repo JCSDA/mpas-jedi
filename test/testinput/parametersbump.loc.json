@@ -51,7 +51,7 @@
         "date": "2018-04-15T00:00:00Z",
         "pseudoens_size" : 10
       },
-  "prefix": "mpas",
+  "prefix": "mpas_parametersbump_loc",
   "default_seed": 1,
   "_method": "hyb-rnd",
   "method": "loc_norm",

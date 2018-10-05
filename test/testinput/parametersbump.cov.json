@@ -42,7 +42,7 @@
       }
     ]
   },
-  "prefix": "mpas",
+  "prefix": "mpas_parametersbump_cov",
   "default_seed": 1,
   "method": "cor",
   "strategy": "specific_univariate",
