@@ -39,10 +39,10 @@
           "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/sondes_obs_2018041500_m.nc4"
+              "obsfile": "Data/sondes_obs_2018041500_m.odb"
             },
             "ObsDataOut": {
-              "obsfile": "Data/obsout_3dvar.nc4"
+              "obsfile": "Data/obsout_3dvar.odb"
             },
             "obsvalue": "ObsValue"
           },
@@ -69,9 +69,9 @@
         "linearmodel": {
           "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT30M",
+          "tstep": "PT1H",
           "trajectory": {
-            "tstep": "PT30M",
+            "tstep": "PT1H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }
@@ -90,9 +90,9 @@
         "linearmodel": {
           "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT30M",
+          "tstep": "PT1H",
           "trajectory": {
-            "tstep": "PT30M",
+            "tstep": "PT1H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }

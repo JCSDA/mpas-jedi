@@ -3,27 +3,39 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "test_framework_runtime_config": "--log_level=test_suite",
+  "nml_file" : "namelist.atmosphere_2018041421",
   "resolution" : {
-    "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+    "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
   "model": {
-    "tstep": "PT30M",
-    "fclength": "PT0H",
-    "finalnorm": 0.020383,
-    "tolerance": 0.005
+    "name": "MPAS",
+    "tstep": "PT3H"
   },
   "cost_function": {
     "cost_type": "4D-Ens-Var",
-    "window_begin": "2010-10-23T00:00:00Z",
-    "window_length": "PT0H",
-    "window_sub": "PT1H",
+    "window_begin": "2018-04-14T21:00:00Z",
+    "window_length": "PT6H",
+    "window_sub": "PT3H",
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
-        "state": [{
-          "filename": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc",
-          "date": "2010-10-23T00:00:00Z"
-        }]
+        "state": [
+         {
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./restart.2018-04-14_21.00.00.nc",
+          "date": "2018-04-14T21:00:00Z"
+         },
+         {
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./restart.2018-04-15_00.00.00.nc",
+          "date": "2018-04-15T00:00:00Z"
+         },
+         {
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./restart.2018-04-15_03.00.00.nc",
+          "date": "2018-04-15T03:00:00Z"
+         }
+        ]
       },
       "Covariance": {
         "covariance_time": [
@@ -33,118 +45,205 @@
           "variables": {
             "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
           },
-          "date": "2010-10-23T00:00:00Z",
+          "date": "2018-04-14T21:00:00Z",
           "localization": {
-            "localization": "HDIAG_NICAS",
+            "localization": "BUMP",
+            "date": "2018-04-14T21:00:00Z",
             "variables": {
               "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
             },
-            "hdiag_ensemble": [
-              {
-                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e01.nc",
-                "date": "2010-10-23T00:00:00Z"
-              },
-              {
-                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e02.nc",
-                "date": "2010-10-23T00:00:00Z"
-              },
-              {
-                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e03.nc",
-                "date": "2010-10-23T00:00:00Z"
-              },
-              {
-                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e04.nc",
-                "date": "2010-10-23T00:00:00Z"
-              },
-              {
-                "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e05.nc",
-                "date": "2010-10-23T00:00:00Z"
-              }
-            ],
-            "datadir": ".",
-            "prefix": "mpas",
+            "prefix": "mpas_3denvar_bump_1",
             "default_seed": 1,
-            "method": "loc",
+            "method": "loc_norm",
+            "_method": "cor",
+            "_method": "hyb-rnd",
             "strategy": "common",
             "_strategy": "specific_univariate",
             "new_hdiag": 1,
-            "new_param": 1,
-            "check_adjoints": 1,
-            "check_pos_def": 0,
-            "check_sqrt": 0,
-            "check_dirac": 0,
-            "check_perf": 0,
-            "check_randomization": 0,
-            "check_consistency": 0,
-            "check_optimality": 0,
-            "new_lct": 0,
-            "new_obsop": 1,
-            "logpres": 0,
-            "transform": 0,
-            "timeslot": 1,
+            "new_nicas": 1,
+            "load_nicas": 0,
+            "load_cmat": 0,
+            "_timeslot": 1,
             "mask_type": "none",
-            "mask_th": 0,
-            "mask_check": 0,
+            "draw_type" : "random_uniform",
             "nc1": 1024,
             "ntry": 3,
             "nrep": 2,
             "nc3": 10,
             "dc": 1000.0e3,
-            "nl0r": 3,
-            "_nl0r": 1,
+            "_nl0r": 3,
+            "_nl0r": 15,
+            "nl0r": 1,
             "ne": 5,
-            "gau_approx": 0,
-            "full_var": 0,
-            "local_diag": 0,
-            "local_rad": 0.0,
-            "displ_diag": 0,
-            "displ_rad": 0.0,
-            "displ_explicit": 0,
-            "displ_niter": 0,
-            "displ_rhflt": 0.0,
-            "displ_tol": 0.0,
-            "fit_wgt": 1,
-            "lhomh": 0,
-            "lhomv": 0,
+            "minim_algo" : "hooke",
             "rvflt": 0.0,
-            "nldwh": 0,
-            "nldwv": 0,
-            "fit_type": "fast",
-            "flt_type": "average",
-            "diag_interp": "bilin",
-            "diag_rhflt": 0.0,
-            "lsqrt": 0,
-            "_resol": 4.0,
-            "resol": 10.0,
+            "lsqrt": 1,
+            "resol": 4.0,
             "nicas_interp": "bilin",
             "network": 0,
             "mpicom": 2,
-            "ndir": 0,
-            "nobs": 200,
-            "obsdis": 1.0,
-            "obsop_interp": "bilin",
-            "nproc": 1
+            "advmode": 0,
+            "diag_interp" : "bilin",
+            "grid_output": 0
           },
           "state": [
             {
-              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e01.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc",
+              "date": "2018-04-14T21:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e02.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc",
+              "date": "2018-04-14T21:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e03.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc",
+              "date": "2018-04-14T21:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e04.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc",
+              "date": "2018-04-14T21:00:00Z"
             },
             {
-              "filename": "REL_DIR/data/restart.2010-10-23_00.00.00.e05.nc",
-              "date": "2010-10-23T00:00:00Z"
+              "filename": "REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc",
+              "date": "2018-04-14T21:00:00Z"
+            }
+          ]
+         },
+         {
+          "covariance": "ensemble",
+          "members": "5",
+          "variables": {
+            "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+          },
+          "date": "2018-04-15T00:00:00Z",
+          "localization": {
+            "localization": "BUMP",
+            "date": "2018-04-15T00:00:00Z",
+            "variables": {
+              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+            },
+            "prefix": "mpas_3denvar_bump_2",
+            "default_seed": 1,
+            "method": "loc_norm",
+            "_method": "cor",
+            "_method": "hyb-rnd",
+            "strategy": "common",
+            "_strategy": "specific_univariate",
+            "new_hdiag": 1,
+            "new_nicas": 1,
+            "load_nicas": 0,
+            "load_cmat": 0,
+            "_timeslot": 1,
+            "mask_type": "none",
+            "draw_type" : "random_uniform",
+            "nc1": 1024,
+            "ntry": 3,
+            "nrep": 2,
+            "nc3": 10,
+            "dc": 1000.0e3,
+            "_nl0r": 3,
+            "_nl0r": 15,
+            "nl0r": 1,
+            "ne": 5,
+            "minim_algo" : "hooke",
+            "rvflt": 0.0,
+            "lsqrt": 1,
+            "resol": 4.0,
+            "nicas_interp": "bilin",
+            "network": 0,
+            "mpicom": 2,
+            "advmode": 0,
+            "diag_interp" : "bilin",
+            "grid_output": 0
+          },
+          "state": [
+            {
+              "filename": "REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc",
+              "date": "2018-04-15T00:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc",
+              "date": "2018-04-15T00:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc",
+              "date": "2018-04-15T00:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc",
+              "date": "2018-04-15T00:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc",
+              "date": "2018-04-15T00:00:00Z"
+            }
+          ]
+         },
+         {
+          "covariance": "ensemble",
+          "members": "5",
+          "variables": {
+            "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+          },
+          "date": "2018-04-15T03:00:00Z",
+          "localization": {
+            "localization": "BUMP",
+            "date": "2018-04-15T03:00:00Z",
+            "variables": {
+              "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
+            },
+            "prefix": "mpas_3denvar_bump_3",
+            "default_seed": 1,
+            "method": "loc_norm",
+            "_method": "cor",
+            "_method": "hyb-rnd",
+            "strategy": "common",
+            "_strategy": "specific_univariate",
+            "new_hdiag": 1,
+            "new_nicas": 1,
+            "_timeslot": 1,
+            "mask_type": "none",
+            "draw_type" : "random_uniform",
+            "nc1": 1024,
+            "ntry": 3,
+            "nrep": 2,
+            "nc3": 10,
+            "dc": 1000.0e3,
+            "_nl0r": 3,
+            "_nl0r": 15,
+            "nl0r": 1,
+            "ne": 5,
+            "minim_algo" : "hooke",
+            "rvflt": 0.0,
+            "lsqrt": 1,
+            "resol": 4.0,
+            "nicas_interp": "bilin",
+            "network": 0,
+            "mpicom": 2,
+            "advmode": 0,
+            "diag_interp" : "bilin",
+            "grid_output": 0
+          },
+          "state": [
+            {
+              "filename": "REL_DIR/data/ensemble/mem01/restart.2018-04-15_03.00.00.nc",
+              "date": "2018-04-15T03:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem02/restart.2018-04-15_03.00.00.nc",
+              "date": "2018-04-15T03:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem03/restart.2018-04-15_03.00.00.nc",
+              "date": "2018-04-15T03:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem04/restart.2018-04-15_03.00.00.nc",
+              "date": "2018-04-15T03:00:00Z"
+            },
+            {
+              "filename": "REL_DIR/data/ensemble/mem05/restart.2018-04-15_03.00.00.nc",
+              "date": "2018-04-15T03:00:00Z"
             }
           ]
          }
@@ -157,16 +256,18 @@
           "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/diag_t_01_wprofiles.nc4"
+              "obsfile": "Data/sondes_obs_2018041500_m.nc4",
+              "_obsfile": "Data/sondes_obs_2018041500_m_t0p01_t2p9.nc4",
+              "_obsfile": "Data/sondes_obs_2018041500_m_t0p01.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/4denvar.obt"
+              "obsfile": "Data/obsout_3denvar.nc4"
             },
-            "obsvalue": "Observation"
+            "obsvalue": "ObsValue"
           },
           "Covariance": {
             "covariance": "diagonal",
-            "obserror": "ObsErr"
+            "obserror": "ObsError"
           }
         }
       ]
@@ -176,26 +277,20 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "REL_DIR/build/mpas-bundle/mpas/test/mpas.4denvar.$Y-$M-$D_$h.$m.$s.nc",
-    "date": "2010-10-23T00:00:00Z",
-    "_first": "PT3H",
-    "_frequency": "PT06H",
-    "_datadir": "Data",
-    "_exp": "example",
-    "_type": "an"
+    "filename": "./mpas.3denvar.$Y-$M-$D_$h.$m.$s.nc"
   },
   "variational": {
     "iteration": [
       {
         "resolution": {
-          "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "./restart.2018-04-15_00.00.00.nc"
         },
         "linearmodel": {
-          "_version": "IdTLM",
+          "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT3H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT3H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }
@@ -209,13 +304,14 @@
       },
       {
         "resolution": {
-          "gridfname": "REL_DIR/build/mpas-bundle/mpas/test/x1.2562.init.nc"
+          "gridfname": "./restart.2018-04-15_00.00.00.nc"
         },
         "linearmodel": {
+          "varchange": "Identity",
           "version": "MPASIdTLM",
-          "tstep": "PT1H",
+          "tstep": "PT3H",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT3H",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }

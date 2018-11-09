@@ -130,11 +130,8 @@ void IncrementMPAS::getValuesTL(const ioda::Locations & locs,
                                 const oops::Variables & vars,
                                 ufo::GeoVaLs & cols,
                                 const GetValuesTrajMPAS & traj) const {
-  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << *fields_
-                     << std::endl;
+  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << std::endl;
   fields_->getValuesTL(locs, vars, cols, traj);
-  oops::Log::debug() << "IncrementMPAS::interpolateTL gom " << cols
-                     << std::endl;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::getValuesAD(const ioda::Locations & locs,

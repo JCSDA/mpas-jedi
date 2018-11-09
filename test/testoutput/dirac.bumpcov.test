@@ -1,9 +1,9 @@
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=47.1707, Max=94.4938, RMS=65.9362
-Test     : Fld=2  Min=47.1707, Max=94.4938, RMS=65.9362
-Test     : Fld=3  Min=47.1707, Max=94.4938, RMS=65.9362
-Test     : Fld=4  Min=47.1707, Max=94.4938, RMS=65.9362
-Test     : Fld=5  Min=47.1707, Max=94.4938, RMS=65.9362
-Test     : Adjoint test: 2.50603e+06 / 2.50603e+06
+Test     : Fld=1  Min=43.8147, Max=90.8371, RMS=65.5007
+Test     : Fld=2  Min=43.8147, Max=90.8371, RMS=65.5007
+Test     : Fld=3  Min=43.8147, Max=90.8371, RMS=65.5007
+Test     : Fld=4  Min=43.8147, Max=90.8371, RMS=65.5007
+Test     : Fld=5  Min=43.8147, Max=90.8371, RMS=65.5007
+Test     : Adjoint test: 2.51702e+06 / 2.51702e+06

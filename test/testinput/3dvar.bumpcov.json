@@ -3,6 +3,7 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "test_framework_runtime_config": "--log_level=test_suite",
+  "nml_file" : "namelist.atmosphere_2018041500",
   "resolution" : {
     "gridfname": "./restart.2018-04-15_00.00.00.nc"
   },
@@ -12,8 +13,8 @@
   },
   "cost_function": {
     "cost_type": "3D-Var",
-    "window_begin": "2018-04-15T00:00:00Z",
-    "window_length": "PT0H",
+    "window_begin": "2018-04-14T21:00:00Z",
+    "window_length": "PT6H",
     "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
@@ -117,11 +118,11 @@
             "ObsDataOut": {
               "obsfile": "Data/obsout_3dvar.bumpcov.nc4"
             },
-            "obsvalue": "air_temperature"
+            "obsvalue": "ObsValue"
           },
           "Covariance": {
             "covariance": "diagonal",
-            "obserror": "air_temperature_err"
+            "obserror": "ObsError"
           }
         }
       ]

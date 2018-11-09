@@ -62,6 +62,8 @@ contains
 
 subroutine model_setup(self, geom, c_conf)
 
+!   use fckit_mpi_module, only: fckit_mpi_comm
+
    implicit none
    type(c_ptr), intent(in) :: c_conf !< pointer to object of class Config
    !type(mpas_model), target :: model  ! should I put intent on these?
@@ -77,12 +79,25 @@ subroutine model_setup(self, geom, c_conf)
    character (len=StrKIND), pointer :: config_run_duration
    character (len=StrKIND), pointer :: config_stop_time
    character (len=StrKIND) :: startTimeStamp
+
+!   type(fckit_mpi_comm) :: f_comm
    
    write(*,*) "---- Inside of Sub. model_setup ----"
 #define ModelMPAS_setup
 #ifdef ModelMPAS_setup
    self % corelist => geom % corelist
    self % domain => geom % domain
+!   f_comm = fckit_mpi_comm()
+!   !> MPAS subdriver
+!   call mpas_init( self % corelist, self % domain, mpi_comm=f_comm%communicator() )
+!   if (associated(self % domain)) then
+!       write(*,*)'inside model: model % domain associated'
+!   end if
+!   if (associated(self % corelist)) then
+!       write(*,*)'inside model: model % corelist associated'
+!   else
+!       write(*,*)'inside model: model % corelist not associated'
+!   end if
 
    ! GD:  we need to update some parameters here regarding the json namelist file of oops.
    ! Also, we can add new DA parameters in the MPAS configs file if needed.
@@ -125,6 +140,11 @@ subroutine model_delete(self)
 
    ! For now, all the structure is hold by geom
    write(*,*)'===> model_delete'
+!   if ((associated(self % corelist)).and.(associated(self % domain))) then
+!      write(*,*)'==> delete model corelist and domain'
+!      call mpas_timer_set_context( self % domain )
+!      call mpas_finalize(self % corelist, self % domain)
+!   end if
 
 end subroutine model_delete
 
@@ -141,7 +161,7 @@ subroutine model_prepare_integration(self, flds)
    real (kind=kind_real), pointer :: dt
    type (block_type), pointer :: block
 
-   character(len=StrKIND) :: startTimeStamp, stopTimeStamp
+   character(len=StrKIND) :: startTimeStamp, stopTimeStamp, nowTimeStamp
 
    type (mpas_pool_type), pointer :: state
    type (mpas_pool_type), pointer :: mesh
@@ -150,25 +170,24 @@ subroutine model_prepare_integration(self, flds)
    type (field2DReal), pointer :: uReconstructZonal, uReconstructMeridional
    character (len=StrKIND), pointer :: xtime
    character (len=StrKIND), pointer :: config_run_duration
-   type (MPAS_Time_Type) :: startTime, stopTime
+   type (MPAS_Time_Type) :: startTime, stopTime, nowTime
    type (MPAS_Timeinterval_Type) ::  runDuration
 
    write(*,*)'===> model_prepare_integration'
 
-   !————————————————————————————————————————————---------------------------
+   !--------------------------
    ! GD: the present design relies on the hypothesis that we run
    ! the model member sequentially using the geom structure
    ! In the reverse case, we will need to create locally domain and 
    ! corelist by calling first the mpas_subdriver for example 
    ! like it is done in geom
-   !————————————————————————————————————————————---------------------------
+   !----------------------------------------------------------------
 
    ! here or where increment is computed
-    call da_copy_sub2all_fields(self % domain, flds % subFields)   
-    call da_copy_sub2all_fields(self % domain, flds % auxFields)   
+   call da_copy_sub2all_fields(self % domain, flds % subFields)   
+   call da_copy_sub2all_fields(self % domain, flds % auxFields)   
 
-!#define ModelMPAS_prepare
-#ifdef ModelMPAS_prepare
+!#ifdef odelMPAS_prepare
    !-------------------------------------------------------------------
    ! WIND processing U and V resconstruct to the edges
    ! not parallel yet, routine initially from DART
@@ -183,9 +202,9 @@ subroutine model_prepare_integration(self, flds)
    !                  & flds%geom%nCellsGlobal, flds%geom%edgeNormalVectors, &
    !                  & flds%geom%nEdgesOnCell, flds%geom%edgesOnCell, flds%geom%nVertLevels)
 
-   !——————————————————————————————————----------------------------------
+   !-------------------------------------------------------------------
    ! update domain % clock using mpas_field clock and config files
-   !——————————————————————————————————---------------------------------
+   !-------------------------------------------------------------------
    startTime = mpas_get_clock_time(flds % clock, MPAS_START_TIME, ierr)
    call mpas_set_clock_time(self % domain % clock, startTime, MPAS_START_TIME)
    call mpas_get_time(startTime, dateTimeString=startTimeStamp) ! needed by xtime later
@@ -193,29 +212,53 @@ subroutine model_prepare_integration(self, flds)
    call mpas_set_timeInterval(runDuration, timeString=config_run_duration,ierr=ierr)
    stopTime = startTime + runDuration
    call mpas_set_clock_time(self % domain % clock, stopTime, MPAS_STOP_TIME)
-   call mpas_get_time(startTime, dateTimeString=stopTimeStamp)
+   call mpas_get_time(stopTime, dateTimeString=stopTimeStamp)
    write(*,*)'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
+ !--
+   nowTime = mpas_get_clock_time(flds % clock, MPAS_NOW, ierr)
+   call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
+   write(*,*)'MPAS_NOW from flds % clock: ',trim(nowTimeStamp)
+   nowTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
+   call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
+   write(*,*)'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
+!-- set xtime as startTimeStamp
+   call mpas_pool_get_array(self % domain % blocklist % allFields, 'xtime', xtime, 1)
+   write(*,*) 'xtime_old=',xtime
+   xtime = startTimeStamp
+   write(*,*) 'xtime_new=',xtime
 
-   !——————————————————————————————————----------------------------------
+   !--------------------------------------------------------------------
    ! Computation of theta_m from theta and qv
    ! Computation of rho_zz from rho / zz from updated rho
    ! Recoupling of all the variables
-   !——————————————————————————————————----------------------------------
+   !--------------------------------------------------------------------
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_restart', config_do_restart)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_do_DAcycling', config_do_DAcycling)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', dt)
    config_do_restart = .True.
    config_do_DAcycling = .True.
 
-   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
-   !call mpas_pool_get_field(state, 'u', u_field, 1)
-   !call mpas_dmpar_exch_halo_field(u_field)
+!--- TODO: clean-up this subroutine !!
+!   call mpas_pool_get_subpool(self % domain % blocklist % structs,'state',state)
+!   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
+!   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
+!   call atm_compute_output_diagnostics(state, 1, diag, mesh)
+
+!   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
+!   call mpas_pool_get_field(state, 'u', u_field, 1)
+!   call mpas_dmpar_exch_halo_field(u_field)
+!   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
+!   call mpas_pool_get_field(diag, 'rho', u_field, 1)
+!   call mpas_dmpar_exch_halo_field(u_field)
+!   call mpas_pool_get_field(diag, 'theta', u_field, 1)
+!   call mpas_dmpar_exch_halo_field(u_field)
 
    block => self % domain % blocklist
+#define ModelMPAS_prepare
+#ifdef ModelMPAS_prepare
    do while (associated(block))
       call mpas_pool_get_subpool(block % structs, 'mesh', mesh)
       call mpas_pool_get_subpool(block % structs, 'state', state)
-write(*,*) 'step 8'
       ! GD: if we do cycling in atm_mpas_init_block we propably need to avoid recomputing wind to the 
       ! mass center. (avoiding doing twice ... adding a flag). OK for now, probably same problem with dart 
       call atm_mpas_init_block(self % domain % dminfo, self % domain % streamManager, block, mesh, self % dt)
@@ -271,10 +314,6 @@ subroutine model_propagate(self, flds)
    type (field2DReal), pointer :: field2d, field2d_b, field2d_c
    real (kind=kind_real) :: dt
    integer :: itimestep
-!--bjj clock test
-   character (len=StrKIND) :: tmpTimeStamp
-   type (MPAS_Time_Type) :: tmpTime
-   integer :: ierr = 0
 
    write(*,*)'===> model_propagate'
 
@@ -284,10 +323,6 @@ subroutine model_propagate(self, flds)
    call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(self % domain % clock)
    call mpas_advance_clock(flds % clock) !Advance flds % clock, Too
-!--bjj clock test
-   tmpTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
-   call mpas_get_time(tmpTime, dateTimeString=tmpTimeStamp) 
-   write(*,*) '== BJJ in sub model_propagate time= ',trim(tmpTimeStamp)
 
    ! TODO: GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be

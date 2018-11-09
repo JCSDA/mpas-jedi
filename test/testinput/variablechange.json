@@ -1,8 +1,11 @@
 {
   "test_framework_runtime_config": "--log_level=test_suite",
+  "nml_file" : "namelist.atmosphere_2018041500",
   "LinearVariableChangeTests": [
     {
       "varchange": "StatsVariableChange",
+      "toleranceInverse": "1.0e-8",
+      "testinverse": "0",
       "variables": {
         "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
       },
@@ -18,6 +21,8 @@
     },
     {
       "varchange": "Control2Model",
+      "toleranceInverse": "1.0e-8",
+      "testinverse": "0",
       "variables": {
         "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"]
       },

@@ -1,83 +1,55 @@
 {
-  "resolution": {
-    "nx": "40",
-    "ny": "20",
-    "bc": "1"
+  "logging": {
+    "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
+  },
+  "test_framework_runtime_config": "--log_level=test_suite",
+  "nml_file" : "namelist.atmosphere_2018041421",
+  "resolution" : {
+    "gridfname": "./restart.2018-04-14_21.00.00.nc"
   },
   "model": {
-    "tstep": "PT1H",
-    "top_layer_depth": "5500.0",
-    "bottom_layer_depth": "4500.0"
+    "name": "MPAS",
+    "tstep": "PT30M"
   },
   "cost_function": {
     "cost_type": "4D-Var",
-    "window_begin": "2010-01-01T09:00:00Z",
+    "window_begin": "2018-04-14T21:00:00Z",
     "window_length": "PT6H",
-    "variables": "ci",
+    "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
     "Jb": {
       "Background": {
         "state": [{
-          "filename": "Data/example.fc.2009-12-31T00:00:00Z.P1DT9H",
-          "date": "2010-01-01T09:00:00Z"
+          "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+          "filename": "./restart.2018-04-14_21.00.00.nc",
+          "date": "2018-04-14T21:00:00Z"
         }]
       },
       "Covariance": {
-        "covariance": "static",
+        "covariance": "MPASstatic",
         "standard_deviation": "0.8",
         "vertical_correlation": "0.2",
         "horizontal_length_scale": "1e6",
         "maximum_condition_number": "1.0e6",
-        "date": "2010-01-01T09:00:00Z"
+        "date": "2018-04-14T21:00:00Z"
       }
     },
     "Jo": {
       "ObsTypes": [
         {
-          "ObsType": "Stream",
+          "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
+              "obsfile": "Data/sondes_obs_2018041500_m.nc4",
+              "_obsfile": "Data/sondes_obs_2018041500_m_tm3p0.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/qg.3dfgat.obt"
+              "obsfile": "Data/obsout_3dfgat.nc4"
             },
-            "obsvalue": "Observation"
+            "obsvalue": "ObsValue"
           },
           "Covariance": {
             "covariance": "diagonal",
-            "obserror": "ObsErr"
-          }
-        },
-        {
-          "ObsType": "Wind",
-          "ObsData": {
-            "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
-            },
-            "ObsDataOut": {
-              "obsfile": "Data/qg.3dfgat.obt"
-            },
-            "obsvalue": "Observation"
-          },
-          "Covariance": {
-            "covariance": "diagonal",
-            "obserror": "ObsErr"
-          }
-        },
-        {
-          "ObsType": "WSpeed",
-          "ObsData": {
-            "ObsDataIn": {
-              "obsfile": "Data/qg.truth3d.obt"
-            },
-            "ObsDataOut": {
-              "obsfile": "Data/qg.3dfgat.obt"
-            },
-            "obsvalue": "Observation"
-          },
-          "Covariance": {
-            "covariance": "diagonal",
-            "obserror": "ObsErr"
+            "obserror": "ObsError"
           }
         }
       ]
@@ -87,27 +59,20 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "first": "PT3H",
-    "frequency": "PT06H",
-    "datadir": "Data",
-    "exp": "example",
-    "type": "an"
+    "filename": "./mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
   },
   "variational": {
     "iteration": [
       {
         "resolution": {
-          "nx": "40",
-          "ny": "20",
-          "bc": "1"
+          "gridfname": "./restart.2018-04-14_21.00.00.nc"
         },
         "linearmodel": {
-          "version": "QgIdTLM",
-          "tstep": "PT1H",
-          "top_layer_depth": "5500.0",
-          "bottom_layer_depth": "4500.0",
+          "varchange": "Identity",
+          "version": "MPASIdTLM",
+          "tstep": "PT30M",
           "trajectory": {
-            "tstep": "PT1H",
+            "tstep": "PT30M",
             "top_layer_depth": "5500.0",
             "bottom_layer_depth": "4500.0"
           }
@@ -118,6 +83,24 @@
         "diagnostics": {
           "departures": "ombg"
         }
+      },
+      {
+        "resolution": {
+          "gridfname": "./restart.2018-04-14_21.00.00.nc"
+        },
+        "linearmodel": {
+          "varchange": "Identity",
+          "version": "MPASIdTLM",
+          "tstep": "PT30M",
+          "trajectory": {
+            "tstep": "PT30M",
+            "top_layer_depth": "5500.0",
+            "bottom_layer_depth": "4500.0"
+          }
+        },
+        "ninner": "10",
+        "gradient_norm_reduction": "1e-10",
+        "test": "on"
       }
     ]
   },

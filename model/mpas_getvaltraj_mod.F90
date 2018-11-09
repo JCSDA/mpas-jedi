@@ -17,11 +17,14 @@ public mpas_getvaltraj_registry
 public c_mpas_getvaltraj_setup, c_mpas_getvaltraj_delete
 
 type :: mpas_getvaltraj
- integer :: nobs, ngrid
+ integer :: bumpid, ngrid
+ logical :: noobs
  type (mpas_pool_type), pointer :: pool_traj
  type(bump_type) :: bump
- integer :: nsize = 2 !< size of pool, currently for temperature, index_qv
+ integer :: nsize = 2 !< size of pool_traj, currently for temperature, index_qv
  logical :: lalloc = .false.
+ contains
+  final :: dummy_final !Work around for gcc compiler bug
 end type mpas_getvaltraj
 
 #define LISTED_TYPE mpas_getvaltraj
@@ -56,8 +59,9 @@ call mpas_getvaltraj_registry%get(c_key_self,self)
 print*, 'dh: getvaltraj_setup', c_key_self
 
 self%lalloc = .false.
-self%nobs = 0
+self%bumpid = c_key_self !Just use key for the BUMP identifier
 self%ngrid = 0
+self%noobs = .false.
 
 call mpas_pool_create_pool(self % pool_traj, self % nsize)
 
@@ -75,18 +79,21 @@ type(mpas_getvaltraj), pointer :: self
 call mpas_getvaltraj_registry%get(c_key_self, self)
 
 if (self%lalloc) then
-  self%nobs = 0
-  self%ngrid = 0
   call mpas_pool_empty_pool( self % pool_traj )
   call mpas_pool_destroy_pool( self % pool_traj )
   call self%bump%dealloc
-  self%lalloc = .false.
 endif
 
 ! Remove key
 call mpas_getvaltraj_registry%remove(c_key_self)
 
 end subroutine c_mpas_getvaltraj_delete
+
+! ------------------------------------------------------------------------------
+
+subroutine dummy_final(self)
+type(mpas_getvaltraj), intent(inout) :: self
+end subroutine dummy_final
 
 ! ------------------------------------------------------------------------------
 

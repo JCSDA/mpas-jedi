@@ -256,11 +256,11 @@ module mpas4da_mod
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_a = r1d_ptr_b
                   else if (poolItr_b % nDims == 2) then
-write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
+!                     write(0,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_a = r2d_ptr_b
-                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
                else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
@@ -276,8 +276,8 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                         call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                         call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                         field2d % array(:,:) = field3d % array(index_scalar,:,:)
-                        write(0,*)'Copy all2sub field ',trim(poolItr_a % memberName), &
-                                  minval(field2d % array), maxval(field2d % array)
+!                        write(0,*)'Copy all2sub field ',trim(poolItr_a % memberName), &
+!                                  minval(field2d % array), maxval(field2d % array)
                      else
                         write(0,*)'WARNING in Copy all2sub field; ',trim(poolItr_a % memberName), &
                                   'not available from MPAS'
@@ -355,12 +355,12 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_b = r1d_ptr_a
-                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+!                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
                   else if (poolItr_b % nDims == 2) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_b = r2d_ptr_a
-                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
                else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
@@ -375,8 +375,8 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                              call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                              call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                              field3d % array(index_scalar,:,:) = field2d % array(:,:)
-                             write(0,*)'Copy sub2all field ',trim(poolItr_a % memberName), &
-                                       minval(field2d % array), maxval(field2d % array)
+!                             write(0,*)'Copy sub2all field ',trim(poolItr_a % memberName), &
+!                                       minval(field2d % array), maxval(field2d % array)
                           else
                              write(0,*)'WARNING in Copy sub2all field; ',trim(poolItr_a % memberName), &
                                        'not available from MPAS'
@@ -444,7 +444,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
             if (poolItr % dataType == MPAS_POOL_REAL) then
               do ii=1, nsize
                   if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
+!                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
                      ! Depending on the dimensionality of the field, we need to set pointers of
                      ! the correct type
                      if (poolItr % nDims == 0) then
@@ -453,20 +453,20 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      else if (poolItr % nDims == 1) then
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
                         call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field1d)
-                        write(0,*) '1D MIN/MAX value: ', minval(field1d % array),maxval(field1d % array)
+!                        write(0,*) '1D MIN/MAX value: ', minval(field1d % array),maxval(field1d % array)
                      else if (poolItr % nDims == 2) then
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
                         call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field2d)
-                        write(0,*) '2D MIN/MAX value: ', minval(field2d % array),maxval(field2d % array)
+!                        write(0,*) '2D MIN/MAX value: ', minval(field2d % array),maxval(field2d % array)
                      else if (poolItr % nDims == 3) then
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
                         call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field3d)
-                        write(0,*) '3D MIN/MAX value: ', minval(field3d % array),maxval(field3d % array)
+!                        write(0,*) '3D MIN/MAX value: ', minval(field3d % array),maxval(field3d % array)
                      end if
                      nfields = nfields + 1
                   
                   else if ( trim(poolItr % memberName).eq.'scalars' ) then
-                     write(0,*)'Scalars pool case'
+!                     write(0,*)'Scalars pool case'
                      if ( trim(fieldname(ii)).eq.'index_qv' .or. &
                           trim(fieldname(ii)).eq.'index_qc' .or. &
                           trim(fieldname(ii)).eq.'index_qi' .or. &
@@ -479,9 +479,9 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                            call mpas_duplicate_field(field2d_src, field2d_dst)
                            field2d_dst % fieldName = trim(fieldname(ii))
                            field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
-                           write(0,*) '2D MIN/MAX value: ', minval(field2d_dst % array),minval(field2d_dst % array)
-                           write(0,*) '2D MIN/MAX value: ', minval(field3d % array(index_scalar,:,:)), &
-                                          maxval(field3d % array(index_scalar,:,:))
+!                           write(0,*) '2D MIN/MAX value: ', minval(field2d_dst % array),minval(field2d_dst % array)
+!                           write(0,*) '2D MIN/MAX value: ', minval(field3d % array(index_scalar,:,:)), &
+!                                          maxval(field3d % array(index_scalar,:,:))
                            call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d_dst)
                            nfields = nfields + 1
                         else
@@ -502,7 +502,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                      if (poolItr % nDims == 1) then
                         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), ifield1d)
                         call mpas_pool_add_field(pool_c, trim(poolItr % memberName), ifield1d)
-                        write(0,*) '1D MIN/MAX value: ', minval(ifield1d % array),maxval(ifield1d % array)
+!                        write(0,*) '1D MIN/MAX value: ', minval(ifield1d % array),maxval(ifield1d % array)
                         nfields = nfields + 1
                      end if
                   end if
@@ -512,16 +512,16 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
       end do
 
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nCellsSolve', dim0d)
-      write(0,*)'Adding dimension nCellsSolve: ',dim0d
+!      write(0,*)'Adding dimension nCellsSolve: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nCellsSolve', dim0d)
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nEdgesSolve', dim0d)
-      write(0,*)'Adding dimension nEdgesSolve: ',dim0d
+!      write(0,*)'Adding dimension nEdgesSolve: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nEdgesSolve', dim0d)
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVerticesSolve', dim0d)
-      write(0,*)'Adding dimension nVerticesSolve: ',dim0d
+!      write(0,*)'Adding dimension nVerticesSolve: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nVerticesSolve', dim0d)
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVertLevels', dim0d)
-      write(0,*)'Adding dimension nVertLevels: ',dim0d
+!      write(0,*)'Adding dimension nVertLevels: ',dim0d
       call mpas_pool_add_dimension(pool_c, 'nVertLevels', dim0d)
 
       call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nCells', dim0d)
@@ -1204,7 +1204,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
                   call mpas_dmpar_min_real(dminfo, minval(field2d % array(1:solveDim2,1:solveDim1)), globalMin)
                   call mpas_dmpar_max_real(dminfo, maxval(field2d % array(1:solveDim2,1:solveDim1)), globalMax)
-                  write(*,*)'gpnorm prodtot: ',prodtot, dimtot
+!                  write(*,*)'gpnorm prodtot: ',prodtot, dimtot
                   pstat(1,jj) = globalMin
                   pstat(2,jj) = globalMax
                   pstat(3,jj) = sqrt( globalSum / dimtot_global )
@@ -1322,8 +1322,8 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   dimtot  = dimtot + real(solveDim1*solveDim2,kind_real)
                   prodtot = prodtot + sum( field2d % array(1:solveDim2,1:solveDim1)**2 )
 
-                  write(*,*)'fldrms dims: ',solveDim1, solveDim2
-                  write(*,*)'fldrms, dimtot, prodtot: ', dimtot, prodtot
+!                  write(*,*)'fldrms dims: ',solveDim1, solveDim2
+!                  write(*,*)'fldrms, dimtot, prodtot: ', dimtot, prodtot
 
                 else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
@@ -1423,7 +1423,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field1d_b)
                   fieldSum_local = sum(field1d_a % array(1:solveDim1) * field1d_b % array(1:solveDim1))
                   zprod_local = zprod_local + fieldSum_local
-                  write(*,*)'dotprod: ',trim(field1d_a % dimNames(ndims)), zprod_local
+!                  write(*,*)'dotprod: ',trim(field1d_a % dimNames(ndims)), zprod_local
 
                else if (ndims == 2) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d_a)
@@ -1441,7 +1441,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field2d_b)
                   fieldSum_local = sum(field2d_a % array(1:solveDim2,1:solveDim1) * field2d_b % array(1:solveDim2,1:solveDim1))
                   zprod_local = zprod_local + fieldSum_local
-                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
+!                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
 
                else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
@@ -1466,7 +1466,7 @@ write(*,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
                   fieldSum_local = sum(field3d_a % array(1:solveDim3,1:solveDim2,1:solveDim1) &
                                     * field3d_b % array(1:solveDim3,1:solveDim2,1:solveDim1))
                   zprod_local = zprod_local + fieldSum_local
-                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
+!                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
 
                end if
 

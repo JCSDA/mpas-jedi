@@ -2,6 +2,7 @@ module mpas_run_mod
 
 use iso_c_binding 
 use mpas_subdriver
+use config_mod
 
 implicit none
 
@@ -22,13 +23,22 @@ contains
 !! \details **mpas_run_init()** initializes the whole MPAS framework.
 !!          "domain" and "corelist" are public variables in mpas_run_mod.
 !!
-subroutine mpas_run_init() bind(c,name='mpas_run_init_f90')
+subroutine mpas_run_init(c_conf) bind(c,name='mpas_run_init_f90')
 
    use fckit_mpi_module, only: fckit_mpi_comm
 
    implicit none
+   type(c_ptr), intent(in) :: c_conf
+   character(len=30) :: fn
    type(fckit_mpi_comm) :: f_comm
    f_comm = fckit_mpi_comm()
+
+   if(config_element_exists(c_conf,"nml_file")) then
+     fn = config_get_string(c_conf,len(fn),"nml_file")
+     call system("rm namelist.atmosphere")
+     write(*,*) " fn = "//trim(fn)
+     call system("cp "//trim(fn)//" namelist.atmosphere")
+   endif
 
    !> MPAS subdriver
    call mpas_init( corelist, domain, mpi_comm=f_comm%communicator() )

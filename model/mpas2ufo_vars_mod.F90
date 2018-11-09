@@ -684,8 +684,6 @@
         !TL:                        + traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,:)
         call mpas_pool_get_field(pool_c, var_tv, field2d)
         write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
-        r2d_ptr_a(:,:)=0.0_kind_real
-        r2d_ptr_b(:,:)=0.0_kind_real
         r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + &
                          ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * field2d % array(:,:)
         r2d_ptr_b(:,:) = r2d_ptr_b(:,:) + &

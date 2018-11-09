@@ -3,44 +3,21 @@ list( APPEND mpas_test_input
   testinput/3dvar.bumpcov.json
   testinput/3dvar.bumpcov.existingb.json
   testinput/3dfgat.json
-  testinput/3denvar_bump.json
-  testinput/3dhybrid_bump.json
   testinput/4denvar_bump.json
-  testinput/4dvar.alpha.json
-  testinput/4dforcing.json
-  testinput/4dhybrid.json
-  testinput/4dsaddlepoint.json
-  testinput/4dvar.dripcg.json
-  testinput/4dvar.drpcglmp.json
-  testinput/4dvar.drpfom.json
-  testinput/4dvar.drplanczos.json
-  testinput/4dvar.ipcg.json
-  testinput/4dvar.obsbias.json
-  testinput/4dvar.rpcg.json
-  testinput/dfi.json
+  testinput/3dhybrid_bump.json
   testinput/forecast.json
-  testinput/genenspert.json
   testinput/hofx.json
   testinput/enshofx.json
-  testinput/hofx_4d.json
   testinput/dirac.bumploc.json
   testinput/dirac.bumpcov.json
   testinput/geometry.json
   testinput/state.json
   testinput/increment.json
   testinput/model.json
-  testinput/localization.json
   testinput/errorcov.json
-  testinput/makeobs3d.json
-  testinput/makeobs4d.json
-  testinput/makeobs4d12h.json
-  testinput/makeobsbias.json
   testinput/parametersbump.cov.json
   testinput/parametersbump.loc.json
   testinput/static_binit.json
-  testinput/test.json
-  testinput/truth.json
-  testinput/test_op_obs.json
   testinput/variablechange.json
   compare.sh
 )
@@ -49,36 +26,16 @@ list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dvar.bumpcov.test
   testoutput/3dfgat.test
-  testoutput/3denvar_bump.test
-  testoutput/3dhybrid_bump.test
   testoutput/4denvar_bump.test
-  testoutput/4dvar.alpha.test
-  testoutput/4dforcing.test
-  testoutput/4dhybrid.test
-  testoutput/4dsaddlepoint.test
-  testoutput/4dvar.dripcg.test
-  testoutput/4dvar.drpcglmp.test
-  testoutput/4dvar.drpfom.test
-  testoutput/4dvar.drplanczos.test
-  testoutput/4dvar.ipcg.test
-  testoutput/4dvar.obsbias.test
-  testoutput/4dvar.rpcg.test
-  testoutput/dfi.test
+  testoutput/3dhybrid_bump.test
   testoutput/forecast.test
-  testoutput/genenspert.test
   testoutput/hofx.test
   testoutput/enshofx.test
-  testoutput/hofx_4d.test
   testoutput/dirac.bumploc.test
   testoutput/dirac.bumpcov.test
-  testoutput/makeobs3d.test
-  testoutput/makeobs4d.test
-  testoutput/makeobs4d12h.test
-  testoutput/makeobsbias.test
   testoutput/parametersbump.cov.test
   testoutput/parametersbump.loc.test
   testoutput/staticbinit.test
-  testoutput/truth.test
   testoutput/variablechange.test
 )
 
@@ -112,41 +69,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
 # Tests that create data other tests might use (should check what is really needed...)
 
-#ecbuild_add_test( TARGET test_mpas_truth
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/truth.json"
-#                       testoutput/truth.test
-#                  DEPENDS mpas_forecast.x )
-#
-#ecbuild_add_test( TARGET test_mpas_makeobs3d
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_makeobs.x testinput/makeobs3d.json"
-#                       testoutput/makeobs3d.test
-#                  DEPENDS mpas_makeobs.x )
-#
-#ecbuild_add_test( TARGET test_mpas_makeobs4d
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_makeobs.x testinput/makeobs4d.json"
-#                       testoutput/makeobs4d.test
-#                  DEPENDS mpas_makeobs.x )
-#
-#ecbuild_add_test( TARGET test_mpas_makeobs4d12h
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_makeobs.x testinput/makeobs4d12h.json"
-#                       testoutput/makeobs4d12h.test
-#                  DEPENDS mpas_makeobs.x )
-#
-#ecbuild_add_test( TARGET test_mpas_makeobsbias
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_makeobs.x testinput/makeobsbias.json"
-#                       testoutput/makeobsbias.test
-#                  DEPENDS mpas_makeobs.x )
-
 # Test interface classes with MPAS
 
 ecbuild_add_test( TARGET  test_mpas_geometry
@@ -174,13 +96,6 @@ ecbuild_add_test( TARGET  test_mpas_increment
                   BOOST
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment.json"
-                  MPI     1
-                  LIBS    mpas )
-
-ecbuild_add_test( TARGET  test_mpas_localization
-                  BOOST
-                  SOURCES executables/TestLocalization.cc
-                  ARGS    "testinput/localization.json"
                   MPI     1
                   LIBS    mpas )
 
@@ -214,14 +129,6 @@ ecbuild_add_test( TARGET  test_mpas_enshofx
                   MPI     1
                   DEPENDS mpas_enshofx.x )
 
-ecbuild_add_test( TARGET  test_mpas_hofx_4d
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx_4d.json"
-                       testoutput/hofx_4d.test
-                  MPI     1
-                  DEPENDS mpas_hofx.x )
-
 ecbuild_add_test( TARGET test_mpas_dirac_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
@@ -253,8 +160,6 @@ ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
                        testoutput/parametersbump.loc.test
                   MPI     1
                   DEPENDS mpas_parameters.x )
-#ecbuild_add_test( TARGET test_mpas_parameters_bump_lct
-#ecbuild_add_test( TARGET test_mpas_parameters_bump_readloc
 
 ecbuild_add_test( TARGET test_mpas_forecast
                   TYPE SCRIPT
@@ -280,11 +185,19 @@ ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3denvar_bump
+ecbuild_add_test( TARGET test_mpas_3dfgat
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bump.json"
-                       testoutput/3denvar_bump.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dfgat.json"
+                       testoutput/3dfgat.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_4denvar_bump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bump.json"
+                       testoutput/4denvar_bump.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 

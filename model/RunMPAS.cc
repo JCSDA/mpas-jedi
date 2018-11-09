@@ -20,7 +20,8 @@ namespace mpas {
 
 RunMPAS::RunMPAS(int argc, char ** argv) : oops::Run(argc, argv) {
   oops::Log::trace() << "Creating RunMPAS" << std::endl;
-  mpas_run_init_f90();
+  const eckit::Configuration * conf = &config();
+  mpas_run_init_f90(&conf);
   oops::Log::trace() << "RunMPAS created" << std::endl;
 }
 

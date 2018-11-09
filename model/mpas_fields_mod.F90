@@ -1173,6 +1173,7 @@ end function sphere_distance
 
 subroutine getvalues(fld, locs, vars, gom, traj)
 
+   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
    use type_bump, only: bump_type
    use mpas2ufo_vars_mod !, only: usgs_to_crtm_mw, wrf_to_crtm_soil
 
@@ -1185,12 +1186,15 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    
    character(len=*), parameter :: myname = 'getvalues'
 
+   type(fckit_mpi_comm)     :: f_comm
    type(bump_type), target  :: bump
-   type(bump_type), pointer :: pbump
-   logical,         target  :: bump_alloc
-   logical,         pointer :: pbumpa
+   type(bump_type), pointer :: pbump => null()
+   logical,         target  :: bump_alloc = .false.
+   logical,         pointer :: pbump_alloc => null()
+   integer, save, target    :: bumpid = 1000
+   integer ,        pointer :: pbumpid => null()
    
-   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
+   integer :: jj, jvar, jlev, jloc, ngrid, ivar, nlocs, nlocsg
    real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
@@ -1215,11 +1219,24 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCellsSolve
-   nobs = locs%nlocs 
-   write(*,*)'interp: ngrid, nobs = : ',ngrid, nobs
+   nlocs = locs%nlocs ! # of location for given time slot, given processor
+
+   !If no observations can early exit
+   !---------------------------------
+   f_comm = fckit_mpi_comm()
+   call f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
+   if (nlocsg == 0) then
+     if (present(traj)) then
+        traj%lalloc = .true.
+        traj%noobs = .true.
+     endif
+     return
+   endif
+
    call interp_checks("nl", fld, locs, vars, gom)
 
-   ! Allocate and set trajectory for obsop.
+   ! Initialize the interpolation trajectory
+   ! ---------------------------------------
    if (present(traj)) then
 
      pbump => traj % bump
@@ -1227,7 +1244,6 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      if (.not. traj%lalloc) then
 
        traj%ngrid = ngrid
-       traj%nobs = nobs
 
        call mpas_pool_create_pool( pool_tmp, traj % nsize )
        call mpas_pool_get_field(fld % subFields, 'temperature', field2d_src)
@@ -1240,7 +1256,8 @@ subroutine getvalues(fld, locs, vars, gom, traj)
        call mpas_pool_empty_pool(pool_tmp)
        call mpas_pool_destroy_pool(pool_tmp)
 
-       pbumpa => traj%lalloc
+       pbump_alloc => traj%lalloc
+       pbumpid => traj%bumpid
 
     endif
 
@@ -1248,17 +1265,19 @@ subroutine getvalues(fld, locs, vars, gom, traj)
 
     pbump => bump
     bump_alloc = .false.
-    pbumpa => bump_alloc
+    pbump_alloc => bump_alloc
+    bumpid = bumpid + 1
+    pbumpid => bumpid
 
   endif
   
-  if (.not. pbumpa) then 
+  if (.not. pbump_alloc) then 
     ! Calculate interpolation weight using BUMP
     ! ------------------------------------------
-    write(*,*)'call initialize_interp(...)'
-    call initialize_interp(fld%geom, locs, pbump)
-    pbumpa = .true.
-    write(*,*)'interp: after initialize_interp'
+    write(*,*)'call initialize_bump(...)'
+    call initialize_bump(fld%geom, locs, pbump, pbumpid)
+    pbump_alloc = .true.
+    write(*,*)'interp: after initialize_bump'
   endif
    
    !Make sure the return values are allocated and set
@@ -1277,13 +1296,13 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    !Create Buffer for interpolated values
    !--------------------------------------
    allocate(mod_field(ngrid,1))
-   allocate(obs_field(nobs,1))
+   allocate(obs_field(nlocs,1))
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
    write(0,*)'interp: vars%nv       : ',vars%nv
    write(0,*)'interp: vars%fldnames : ',vars%fldnames
-   
+
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
@@ -1303,14 +1322,16 @@ subroutine getvalues(fld, locs, vars, gom, traj)
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = 1
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
-              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
-              gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+              do jloc = 1, nlocs
+                gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+              enddo
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
            end if
         end if
 
@@ -1321,14 +1342,16 @@ subroutine getvalues(fld, locs, vars, gom, traj)
               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = 1
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = r1d_ptr_a(1:ngrid)
-              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
               call pbump%apply_obsop(mod_field,obs_field)
-              gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+              do jloc = 1, nlocs
+                gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+              enddo
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
@@ -1337,17 +1360,20 @@ subroutine getvalues(fld, locs, vars, gom, traj)
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = fld%geom%nVertLevels
                  if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = fld%geom%nVertLevelsP1 !BJJ: Can we do this better ??
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
                  write(*,*) ' gom%geovals(n)%vals allocated'
               endif
-              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
                  call pbump%apply_obsop(mod_field,obs_field)
-                 !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
-                 gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                 do jloc = 1, nlocs
+                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                   ! only selected obs (using locs%indx()) are filling "geovals"
+                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1, locs%indx(jloc)) = obs_field(jloc,1) 
+                 end do
               end do
-              !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
 
            else if (poolItr % nDims == 3) then
            end if
@@ -1364,41 +1390,45 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
      !- allocate
-     allocate(tmp_field(nobs,2))
+     allocate(tmp_field(nlocs,2))
 
      !- read/interp.
      call mpas_pool_get_array(fld % auxFields, "u10", r1d_ptr_a)
      mod_field(:,1) = r1d_ptr_a(1:ngrid)
-     write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
+!     write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
      call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,1)=obs_field(:,1)
      call mpas_pool_get_array(fld % auxFields, "v10", r1d_ptr_a)
      mod_field(:,1) = r1d_ptr_a(1:ngrid)
-     write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
+!     write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
      call pbump%apply_obsop(mod_field,obs_field)
      tmp_field(:,2)=obs_field(:,1)
 
      !- allocate geoval & put values for var_sfc_wspeed
      ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       gom%geovals(ivar)%vals(1,:) = sqrt( tmp_field(:,1)**2 + tmp_field(:,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
+       do jloc = 1, nlocs
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = sqrt( tmp_field(jloc,1)**2 + tmp_field(jloc,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
+       end do
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
      !- allocate geoval & put values for var_sfc_wdir
      ivar = ufo_vars_getindex(vars, var_sfc_wdir)
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       do ii=1,nobs
-         call uv_to_wdir(tmp_field(ii,1), tmp_field(ii,2), wdir) ! uu, vv, wind10_direction in radian
-         gom%geovals(ivar)%vals(1,ii) = wdir / deg2rad           ! radian -> degree
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
+       do jloc = 1, nlocs
+         call uv_to_wdir(tmp_field(jloc,1), tmp_field(jloc,2), wdir) ! uu, vv, wind10_direction in radian
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = wdir / deg2rad           ! radian -> degree
        enddo
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
      !- deallocate
@@ -1417,30 +1447,30 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
 
      call mpas_pool_get_array(fld % auxFields, "ivgtyp", i1d_ptr_a)
-     write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+!     write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
 
      call mpas_pool_get_array(fld % auxFields, "isltyp", i1d_ptr_b)
-     write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
+!     write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
 
 
      !initialize vector of nearest neighbor indices
-     allocate( index_nn(nobs) )
+     allocate( index_nn(nlocs) )
      allocate( weight_nn(pbump%obsop%h%n_s) )
 
-     do ii=1,nobs
-       !Picks index of pbump%obsop%h%S containing maxium weight for obs ii
+     do jloc = 1, nlocs
+       !Picks index of pbump%obsop%h%S containing maxium weight for obs jloc
        !Generic method for any interpolation scheme
        weight_nn = 0.0_kind_real
-       where ( pbump%obsop%h%row .eq. ii ) 
+       where ( pbump%obsop%h%row .eq. jloc ) 
           weight_nn = pbump%obsop%h%S
        end where
        jj = maxloc(weight_nn,1)
 
 !       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
-!       jj=3*(ii-1) + maxloc(pbump%obsop%h%S( 3*(ii-1)+1:3*(ii-1)+3 ),1) !nearest-interp. / maximum-weight specified.
+!       jj=3*(jloc-1) + maxloc(pbump%obsop%h%S( 3*(jloc-1)+1:3*(jloc-1)+3 ),1) !nearest-interp. / maximum-weight specified.
 
        !Store index of BUMP extended vector
-       index_nn(ii) = pbump%obsop%h%col(jj)
+       index_nn(jloc) = pbump%obsop%h%col(jj)
      enddo
 
      deallocate(weight_nn)
@@ -1448,49 +1478,52 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
-       do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = mod_field_ext( index_nn(ii), 1 )
+       do jloc = 1, nlocs
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = mod_field_ext( index_nn(jloc), 1 )
        enddo
        deallocate( mod_field_ext )
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
      !- allocate geoval & put values for var_sfc_vegtyp
      ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
-       do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = real( convert_type_veg( int(mod_field_ext( index_nn(ii), 1 )) ) , kind_real)
+       do jloc = 1, nlocs
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = real( convert_type_veg( int(mod_field_ext( index_nn(jloc), 1 )) ) , kind_real)
        enddo
        deallocate( mod_field_ext )
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
      !- allocate geoval & put values for var_sfc_soiltyp
      ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
        mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
        call pbump%obsop%com%ext(pbump%mpl,1,mod_field,mod_field_ext)
-       do ii=1,nobs
-         gom%geovals(ivar)%vals(1,ii) = real( convert_type_soil( int(mod_field_ext( index_nn(ii), 1 )) ), kind_real)
+       do jloc = 1, nlocs
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = real( convert_type_soil( int(mod_field_ext( index_nn(jloc), 1 )) ), kind_real)
        enddo
        deallocate( mod_field_ext )
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
 
      deallocate(index_nn)
@@ -1508,13 +1541,13 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
 
      call mpas_pool_get_array(fld % auxFields, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
-     write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
+!     write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
      call mpas_pool_get_array(fld % auxFields, "xice", r1d_ptr_a)     !"fractional area coverage of sea-ice"
-     write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
+!     write(*,*) 'MIN/MAX of xice=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
      call mpas_pool_get_array(fld % auxFields, "snowc", r1d_ptr_b)    !"flag for snow on ground (=0 no snow; =1,otherwise"
-     write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
-     write(*,*) 'MIN/MAX of lnad+xice+snowc=', &
-                minval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b),maxval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b)
+!     write(*,*) 'MIN/MAX of snowc=',minval(r1d_ptr_b),maxval(r1d_ptr_b)
+!     write(*,*) 'MIN/MAX of lnad+xice+snowc=', &
+!                minval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b),maxval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b)
 
      ivarw = ufo_vars_getindex(vars, var_sfc_wfrac)
      ivarl = ufo_vars_getindex(vars, var_sfc_lfrac)
@@ -1524,58 +1557,70 @@ subroutine getvalues(fld, locs, vars, gom, traj)
      !--- Land first. will be adjusted later
      ivar = ivarl
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
        mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
        call pbump%apply_obsop(mod_field,obs_field)
-       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+       do jloc = 1, nlocs
+          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+       enddo
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
      !--- determine ICE
      ivar = ivari
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
        mod_field(:,1) = r1d_ptr_a(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
-       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+       do jloc = 1, nlocs
+          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+       enddo
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
      !--- detemine/adjust SNOW & SEA
      ivar = ivars
      if(ivar .ne. -1) then
-       gom%geovals(ivar)%nval = 1
-       gom%geovals(ivarw)%nval = 1
-       if(allocated(gom%geovals(ivar)%vals)) deallocate(gom%geovals(ivar)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,nobs) )
-       if(allocated(gom%geovals(ivarw)%vals)) deallocate(gom%geovals(ivarw)%vals) !BJJ: for 4D H
-       allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,nobs) )
+       if( .not. allocated(gom%geovals(ivar)%vals) )then
+          gom%geovals(ivar)%nval = 1
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+       end if
+       if( .not. allocated(gom%geovals(ivarw)%vals) )then
+          gom%geovals(ivarw)%nval = 1
+          allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nobs) )
+       end if
        mod_field(:,1) = r1d_ptr_b(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
-       gom%geovals(ivar)%vals(1,:) = obs_field(:,1)
-       do ii=1, nobs
-         if(gom%geovals(ivari)%vals(1,ii).gt.0.0_kind_real) then
-           gom%geovals(ivar)%vals(1,ii) = min( gom%geovals(ivar)%vals(1,ii), 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) )
-           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivari)%vals(1,ii) - gom%geovals(ivar)%vals(1,ii)
+       do jloc = 1, nlocs
+          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+       enddo
+       do jloc = 1, nlocs
+         jj = locs%indx(jloc)
+         if(gom%geovals(ivari)%vals(1,jj).gt.0.0_kind_real) then
+           gom%geovals(ivar)%vals(1,jj) = min( gom%geovals(ivar)%vals(1,jj), 1.0_kind_real - gom%geovals(ivari)%vals(1,jj) )
+           gom%geovals(ivarw)%vals(1,jj)= 1.0_kind_real - gom%geovals(ivari)%vals(1,jj) - gom%geovals(ivar)%vals(1,jj)
          else
-           gom%geovals(ivarw)%vals(1,ii)= 1.0_kind_real - gom%geovals(ivarl)%vals(1,ii)
+           gom%geovals(ivarw)%vals(1,jj)= 1.0_kind_real - gom%geovals(ivarl)%vals(1,jj)
          endif
        enddo
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_wfrac),minval(gom%geovals(ivarw)%vals),maxval(gom%geovals(ivarw)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_wfrac),minval(gom%geovals(ivarw)%vals),maxval(gom%geovals(ivarw)%vals)
      endif
      !--- Final adjust LAND
      ivar = ivarl
      if(ivar .ne. -1) then
-       do ii=1, nobs
-         gom%geovals(ivar)%vals(1,ii) = max( 1.0_kind_real - gom%geovals(ivarw)%vals(1,ii) - gom%geovals(ivari)%vals(1,ii) &
-                                                          - gom%geovals(ivars)%vals(1,ii), 0.0_kind_real)
+       do jloc = 1, nlocs
+         jj = locs%indx(jloc)
+         gom%geovals(ivar)%vals(1,jj) = max( 1.0_kind_real - gom%geovals(ivarw)%vals(1,jj) - gom%geovals(ivari)%vals(1,jj) &
+                                                          - gom%geovals(ivars)%vals(1,jj), 0.0_kind_real)
        enddo
-       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+!       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
-     !do ii=17,19  !1,nobs
+     !do ii=17,19  !1,nlocs
      !write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
      !           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
      !enddo
@@ -1590,12 +1635,13 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
-     do ii=1, nobs
-       if(gom%geovals(ivarl)%vals(1,ii) .gt. 0.0_kind_real) then
-         if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,ii)) .eq. 9 .or. &
-            nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,ii)) .eq. 13 ) then
-           gom%geovals(ivari)%vals(1,ii) = min( gom%geovals(ivari)%vals(1,ii) + gom%geovals(ivarl)%vals(1,ii), 1.0_kind_real )
-           gom%geovals(ivarl)%vals(1,ii) = 0.0_kind_real
+     do jloc = 1, nlocs
+       jj = locs%indx(jloc)
+       if(gom%geovals(ivarl)%vals(1,jj) .gt. 0.0_kind_real) then
+         if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
+            nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
+           gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), 1.0_kind_real )
+           gom%geovals(ivarl)%vals(1,jj) = 0.0_kind_real
          endif
        endif
      enddo
@@ -1608,7 +1654,11 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    endif
 
    nullify(pbump)
+   nullify(pbump_alloc)
+   nullify(pbumpid)
 
+   ! Deallocate local memory
+   ! -----------------------
    deallocate(mod_field)
    deallocate(obs_field)
 
@@ -1631,7 +1681,7 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
 
    character(len=*), parameter :: myname = 'getvalues_tl'
    
-   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
+   integer :: jvar, jlev, jloc, ngrid, nlocs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    
@@ -1647,11 +1697,15 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
    if (.not.traj%lalloc) &
    call abor1_ftn(trim(myname)//" trajectory for this obs op not found")
 
+   ! If no observations can early exit
+   ! ---------------------------------
+   if (traj%noobs)  return
+
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCellsSolve !or traj%ngrid
-   nobs = locs%nlocs            !or traj%nobs
-   write(*,*)'getvalues_tl: ngrid, nobs = : ',ngrid, nobs
+   nlocs = locs%nlocs           !or traj%nobs
+   write(*,*)'getvalues_tl: ngrid, nlocs = : ',ngrid, nlocs
    call interp_checks("tl", fld, locs, vars, gom)
    
    !Make sure the return values are allocated and set
@@ -1659,17 +1713,18 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
    do jvar=1,vars%nv
       if( .not. allocated(gom%geovals(jvar)%vals) )then
          gom%geovals(jvar)%nval = fld%geom%nVertLevels
-         allocate( gom%geovals(jvar)%vals(fld%geom%nVertLevels,nobs) )
+         allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nobs) )
+         gom%geovals(jvar)%vals = 0.0_kind_real
          write(*,*) ' gom%geovals(n)%vals allocated'
+         gom%linit = .true.
       endif
    enddo
-   gom%linit = .true.
    
 
    !Create Buffer for interpolated values
    !--------------------------------------
    allocate(mod_field(ngrid,1))
-   allocate(obs_field(nobs,1))
+   allocate(obs_field(nlocs,1))
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
@@ -1696,8 +1751,11 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
                  call traj%bump%apply_obsop(mod_field,obs_field)
-                 !ORG- gom%geovals(ivar)%vals(jlev,:) = obs_field(:,1)
-                 gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) = obs_field(:,1) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                 do jloc = 1, nlocs
+                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                   ! only selected obs (using locs%indx()) are filling "geovals"
+                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc)) = obs_field(jloc,1)
+                 end do
               end do
 
            else if (poolItr % nDims == 3) then
@@ -1730,7 +1788,7 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
 
    character(len=*), parameter :: myname = 'getvalues_ad'
 
-   integer :: ii, jj, ji, jvar, jlev, ngrid, nobs, ivar
+   integer :: jvar, jlev, jloc, ngrid, nlocs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
 
@@ -1746,17 +1804,22 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
    if (.not.traj%lalloc) &
    call abor1_ftn(trim(myname)//" trajectory for this obs op not found")
 
+   ! If no observations can early exit
+   ! ---------------------------------
+   if (traj%noobs)  return
+
    ! Get grid dimensions and checks
    ! ------------------------------
    ngrid = fld%geom%nCellsSolve !or traj%ngrid
-   nobs = locs%nlocs            !or traj%nobs
+   nlocs = locs%nlocs           !or traj%nlocs
 
-   call interp_checks("ad", fld, locs, vars, gom)
+   !TODO: make this work for "ad"
+   !call interp_checks("ad", fld, locs, vars, gom)
 
    !Create Buffer for interpolated values
    !--------------------------------------
    allocate(mod_field(ngrid,1))
-   allocate(obs_field(nobs,1))
+   allocate(obs_field(nlocs,1))
 
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
@@ -1776,15 +1839,19 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-              r2d_ptr_a=0.0
+              r2d_ptr_a=0.0_kind_real
               write(*,*) "Interp. var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
               write(*,*) "ufo_vars_getindex, ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
                  !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
-                 obs_field(:,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,:) !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                 do jloc = 1, nlocs
+                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+                   ! only selected obs (using locs%indx()) are filling "geovals"
+                   obs_field(jloc,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc))
+                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc)) = 0.0_kind_real
+                 end do
                  call traj%bump%apply_obsop_ad(obs_field,mod_field)
-                 r2d_ptr_a(jlev,1:ngrid) = 0.0_kind_real
                  r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,1)
               end do
 
@@ -1808,9 +1875,8 @@ end subroutine getvalues_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine initialize_interp(grid, locs, bump)
+subroutine initialize_bump(grid, locs, bump, bumpid)
 
-   use fckit_mpi_module, only: fckit_mpi_comm
    use mpas_geom_mod, only: mpas_geom
    use type_bump, only: bump_type
    
@@ -1818,70 +1884,71 @@ subroutine initialize_interp(grid, locs, bump)
    type(mpas_geom),          intent(in)  :: grid
    type(ioda_locs),          intent(in)  :: locs
    type(bump_type), pointer, intent(out) :: bump
-   
-   type(fckit_mpi_comm) :: f_comm
-
-   logical, save :: interp_initialized = .FALSE.
+   integer,                  intent(in)  :: bumpid
    
    integer :: mod_nz,mod_num
    real(kind=kind_real), allocatable :: mod_lat(:), mod_lon(:) 
-   
    real(kind=kind_real), allocatable :: area(:),vunit(:,:)
    logical, allocatable :: lmask(:,:)
 
-   integer, save :: bumpcount = 0
-   character(len=5) :: cbumpcount
-   character(len=17) :: bump_nam_prefix
+   character(len=5)   :: cbumpcount
+   character(len=255) :: bump_nam_prefix
    
-   integer :: ii, jj, ji, jvar, jlev
- 
-   f_comm = fckit_mpi_comm()
-
    ! Each bump%nam%prefix must be distinct
    ! -------------------------------------
-   bumpcount = bumpcount + 1
-   write(cbumpcount,"(I0.2)") bumpcount
+   write(cbumpcount,"(I0.5)") bumpid
    bump_nam_prefix = 'mpas_bump_data_'//cbumpcount
 
-   !Get the Solution dimensions
-   !---------------------------
-   mod_nz  = grid%nVertLevels
+   ! Get the Solution dimensions
+   ! ---------------------------
    mod_num = grid%nCellsSolve
-   write(*,*)'initialize_interp mod_num,obs_num = ', mod_num, locs%nlocs
+   write(*,*)'initialize_bump mod_num,obs_num = ', mod_num, locs%nlocs
    
    !Calculate interpolation weight using BUMP
    !------------------------------------------
-    allocate( mod_lat(mod_num), mod_lon(mod_num) )
-    mod_lat(:) = grid%latCell( 1:mod_num ) / deg2rad !- to Degrees
-    mod_lon(:) = grid%lonCell( 1:mod_num ) / deg2rad !- to Degrees
+   allocate( mod_lat(mod_num) )
+   allocate( mod_lon(mod_num) )
+   mod_lat(:) = grid%latCell( 1:mod_num ) / deg2rad !- to Degrees
+   mod_lon(:) = grid%lonCell( 1:mod_num ) / deg2rad !- to Degrees
 
-    !Important namelist options
-    call bump%nam%init
-    bump%nam%obsop_interp = 'bilin'          ! Interpolation type (bilinear)
+   ! Namelist options
+   ! ----------------
 
-    !Less important namelist options (should not be changed)
-    bump%nam%prefix       = bump_nam_prefix  ! Prefix for files output
-    bump%nam%new_obsop    = .true.
+   !Important namelist options
+   call bump%nam%init
+   bump%nam%obsop_interp = 'bilin'                ! Interpolation type (bilinear)
 
-    !Initialize geometry
-    allocate(area(mod_num))
-    allocate(vunit(mod_num,1))
-    allocate(lmask(mod_num,1))
-    area  = 1.0          ! Dummy area, unit [m^2]
-    vunit = 1.0          ! Dummy vertical unit
-    lmask = .true.       ! Mask
+   !Less important namelist options (should not be changed)
+   bump%nam%prefix       = trim(bump_nam_prefix)  ! Prefix for files output
+   bump%nam%default_seed = .true.
+   bump%nam%new_obsop    = .true.
 
-    !Initialize BUMP
-    call bump%setup_online(f_comm%communicator(),mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
-                           nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
+   ! Initialize geometry
+   ! -------------------
+   allocate(area(mod_num))
+   allocate(vunit(mod_num,1))
+   allocate(lmask(mod_num,1))
+   area  = 1.0          ! Dummy area, unit [m^2]
+   vunit = 1.0          ! Dummy vertical unit
+   lmask = .true.       ! Mask
 
-    !Release memory
-    deallocate(area)
-    deallocate(vunit)
-    deallocate(lmask)
-    deallocate( mod_lat, mod_lon )
+   ! Initialize BUMP
+   ! ---------------
+   call bump%setup_online(mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
+                          nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
-end subroutine initialize_interp
+   ! Run BUMP drivers
+   call bump%run_drivers
+
+   ! Release memory
+   ! --------------
+   deallocate(area)
+   deallocate(vunit)
+   deallocate(lmask)
+   deallocate(mod_lat)
+   deallocate(mod_lon)
+
+end subroutine initialize_bump
 
 ! ------------------------------------------------------------------------------
 
@@ -1901,9 +1968,6 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    
    !Check things are the sizes we expect
    !------------------------------------
-   if (gom%nobs /= locs%nlocs ) then
-      call abor1_ftn(cinfo//"geovals wrong size")
-   endif
    if( gom%nvar .ne. vars%nv )then
       call abor1_ftn(cinfo//"nvar wrong size")
    endif
@@ -1918,26 +1982,11 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    if (.not.gom%linit) then
       call abor1_ftn(cinfo//"geovals not initialized")
    endif
-   do jvar=1,vars%nv
-      if (allocated(gom%geovals(jvar)%vals)) then  
-         if( gom%geovals(jvar)%nval .ne. fld%geom%nVertLevels )then
-            write(*,*) jvar, gom%geovals(jvar)%nval, fld%geom%nVertLevels
-            call abor1_ftn(cinfo//"nval wrong size")
-         endif
-         if( gom%geovals(jvar)%nobs .ne. locs%nlocs )then
-            call abor1_ftn(cinfo//"nobs wrong size")
-         endif
-         if( size(gom%geovals(jvar)%vals, 1) .ne. fld%geom%nVertLevels )then
-            call abor1_ftn(cinfo//"vals wrong size 1")
-         endif
-         if( size(gom%geovals(jvar)%vals, 2) .ne. locs%nlocs )then
-            call abor1_ftn(cinfo//"vals wrong size 2")
-         endif       
-      else
-        call abor1_ftn(cinfo//"vals not allocated")
-      endif 
-   enddo
-   endif
+   if (.not.allocated(gom%geovals(jvar)%vals)) then  
+     call abor1_ftn(cinfo//"vals not allocated")
+   endif 
+
+   endif 
    
    write(*,*)'interp_checks ',cinfo,' done'
    

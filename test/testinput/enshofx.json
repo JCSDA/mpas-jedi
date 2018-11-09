@@ -3,17 +3,17 @@
     "categories": "Info, Test, Warning, Error, Log, Trace, Stats"
   },
   "test_framework_runtime_config": "--log_level=test_suite",
+  "nml_file" : "namelist.atmosphere_2018041421",
   "Assimilation Window": {
-    "Begin": "2018-04-15T00:00:00Z",
-    "Length": "PT0H"
+    "Begin": "2018-04-14T21:00:00Z",
+    "Length": "PT6H"
   },
   "Geometry": {
-    "gridfname": "./restart.2018-04-15_00.00.00.nc"
+    "gridfname": "./restart.2018-04-14_21.00.00.nc"
   },
   "Model": {
     "name": "MPAS",
     "tstep": "PT30M",
-    "fclength": "PT0H",
     "finalnorm": 0.020383,
     "tolerance": 0.005
   },
@@ -21,24 +21,28 @@
     "state": [
       {
         "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
-        "filename": "REL_DIR/data/x1.2562.init.e01.nc",
-        "date": "2018-04-15T00:00:00Z"
+        "filename": "REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc",
+        "date": "2018-04-14T21:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/x1.2562.init.e02.nc",
-        "date": "2018-04-15T00:00:00Z"
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+        "filename": "REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc",
+        "date": "2018-04-14T21:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/x1.2562.init.e03.nc",
-        "date": "2018-04-15T00:00:00Z"
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+        "filename": "REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc",
+        "date": "2018-04-14T21:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/x1.2562.init.e04.nc",
-        "date": "2018-04-15T00:00:00Z"
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+        "filename": "REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc",
+        "date": "2018-04-14T21:00:00Z"
       },
       {
-        "filename": "REL_DIR/data/x1.2562.init.e05.nc",
-        "date": "2018-04-15T00:00:00Z"
+        "variables": ["temperature", "pressure", "index_qv", "uReconstructZonal", "uReconstructMeridional"],
+        "filename": "REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc",
+        "date": "2018-04-14T21:00:00Z"
       }
     ]
   },

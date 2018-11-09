@@ -66,9 +66,7 @@ type(mpas_field), pointer :: flds
 call mpas_field_registry%get(c_key_state,flds)
 call mpas_model_registry%get(c_key_self, self)
 
-write(*,*) '   CALL model_prepare_integration(self, flds)'
 call model_prepare_integration(self, flds)
-write(*,*) '   DONE model_prepare_integration(self, flds)'
 
 end subroutine c_mpas_model_prepare_integration
 
