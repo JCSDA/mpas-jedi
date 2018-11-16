@@ -31,6 +31,31 @@
         "horizontal_length_scale": "1e6",
         "maximum_condition_number": "1.0e6",
         "date": "2018-04-14T21:00:00Z"
+      },
+      "_Covariance": {
+        "static": {
+          "covariance": "BUMP",
+          "date": "2018-04-14T21:00:00Z",
+          "prefix" : "mpas_3dfgat_bumpcov",
+          "default_seed" : 1,
+          "method" : "cor",
+          "_strategy" : "common",
+          "strategy" : "specific_univariate",
+          "new_nicas" : 1,
+          "_load_nicas" : 0,
+          "_load_cmat" : 0,
+          "ntry" : 3,
+          "nrep" : 2,
+          "lsqrt" : 1,
+          "resol" : 10.0,
+          "nicas_interp" : "bilin",
+          "network" : 0,
+          "mpicom" : 2,
+          "advmode" : 0,
+          "forced_radii" : 1,
+          "rh" : 2000.0e3,
+          "rv" : 1.0
+        }
       }
     },
     "Jo": {
@@ -39,18 +64,49 @@
           "ObsType": "Radiosonde",
           "ObsData": {
             "ObsDataIn": {
-              "obsfile": "Data/sondes_obs_2018041500_m.nc4",
-              "_obsfile": "Data/sondes_obs_2018041500_m_tm3p0.nc4"
+              "obsfile": "Data/sondes_obs_2018041500_m.nc4"
             },
             "ObsDataOut": {
               "obsfile": "Data/obsout_3dfgat.nc4"
             },
             "obsvalue": "ObsValue"
           },
+          "variables": ["air_temperature"],
           "Covariance": {
             "covariance": "diagonal",
             "obserror": "ObsError"
-          }
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
+        },
+        {
+          "ObsType": "Aircraft",
+          "ObsData": {
+            "ObsDataIn": {
+              "obsfile": "Data/aircraft_obs_2018041500_m.nc4"
+            },
+            "_ObsDataOut": {
+              "obsfile": "Data/obsout_3dfgat.nc4"
+            },
+            "obsvalue": "ObsValue"
+          },
+          "variables": ["air_temperature"],
+          "Covariance": {
+            "covariance": "diagonal",
+            "obserror": "ObsError"
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
         }
       ]
     }

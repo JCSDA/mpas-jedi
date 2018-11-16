@@ -8,6 +8,7 @@
 #include "MPASTraits.h"
 #include "instantiateLocalizationFactory.h"
 #include "instantiateMPASVarChangeFactory.h"
+#include "instantiateObsFilterFactory.h"
 #include "oops/runs/Variational.h"
 #include "RunMPAS.h"
 
@@ -15,6 +16,7 @@ int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   mpas::instantiateLocalizationFactory();
   mpas::instantiateMPASVarChangeFactory();
+  mpas::instantiateObsFilterFactory();
   oops::Variational<mpas::MPASTraits> var;
   run.execute(var);
   return 0;

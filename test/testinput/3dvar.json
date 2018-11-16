@@ -46,10 +46,42 @@
             },
             "obsvalue": "ObsValue"
           },
+          "variables": ["air_temperature"],
           "Covariance": {
             "covariance": "diagonal",
             "obserror": "ObsError"
-          }
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
+        },
+        { 
+          "ObsType": "Aircraft",
+          "ObsData": {
+            "ObsDataIn": {
+              "obsfile": "Data/aircraft_obs_2018041500_m.nc4"
+            },
+            "_ObsDataOut": {
+              "obsfile": "Data/obsout_3dvar.nc4"
+            },
+            "obsvalue": "ObsValue"
+          },
+          "variables": ["air_temperature"],
+          "Covariance": { 
+            "covariance": "diagonal",
+            "obserror": "ObsError"
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
         }
       ]
     }

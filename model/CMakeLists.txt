@@ -46,6 +46,7 @@ mpas2ufo_vars_mod.F90
 mpas4da_mod.F90
 instantiateLocalizationFactory.h
 instantiateMPASVarChangeFactory.h
+instantiateObsFilterFactory.h
 )
 
 set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )

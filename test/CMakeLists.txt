@@ -1,8 +1,9 @@
 list( APPEND mpas_test_input
   testinput/3dvar.json
-  testinput/3dvar.bumpcov.json
-  testinput/3dvar.bumpcov.existingb.json
+  testinput/3dvar_bumpcov.json
+  testinput/3dvar_bumpcov.existingb.json
   testinput/3dfgat.json
+  testinput/3denvar_bump.json
   testinput/4denvar_bump.json
   testinput/3dhybrid_bump.json
   testinput/forecast.json
@@ -24,8 +25,9 @@ list( APPEND mpas_test_input
 
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
-  testoutput/3dvar.bumpcov.test
+  testoutput/3dvar_bumpcov.test
   testoutput/3dfgat.test
+  testoutput/3denvar_bump.test
   testoutput/4denvar_bump.test
   testoutput/3dhybrid_bump.test
   testoutput/forecast.test
@@ -180,8 +182,24 @@ ecbuild_add_test( TARGET test_mpas_3dvar
 ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.bumpcov.json"
-                       testoutput/3dvar.bumpcov.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.json"
+                       testoutput/3dvar_bumpcov.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3denvar_bump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bump.json"
+                       testoutput/3denvar_bump.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.json"
+                       testoutput/3dhybrid_bump.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
@@ -193,19 +211,19 @@ ecbuild_add_test( TARGET test_mpas_3dfgat
                   MPI     1
                   DEPENDS mpas_variational.x )
 
+#ecbuild_add_test( TARGET test_mpas_4denvar_ID
+#                  TYPE SCRIPT
+#                  COMMAND "compare.sh"
+#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_ID.json"
+#                       testoutput/4denvar_ID.test
+#                  MPI     1
+#                  DEPENDS mpas_variational.x )
+#
 ecbuild_add_test( TARGET test_mpas_4denvar_bump
                   TYPE SCRIPT
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bump.json"
                        testoutput/4denvar_bump.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.json"
-                       testoutput/3dhybrid_bump.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
@@ -219,7 +237,7 @@ ecbuild_add_test( TARGET  test_mpas_staticbinit
 ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov_existing_b
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.bumpcov.existingb.json"
-                       testoutput/3dvar.bumpcov.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.existingb.json"
+                       testoutput/3dvar_bumpcov.test
                   MPI     1
                   DEPENDS mpas_variational.x )

@@ -116,14 +116,46 @@
               "obsfile": "Data/sondes_obs_2018041500_m.nc4"
             },
             "ObsDataOut": {
-              "obsfile": "Data/obsout_3dvar.bumpcov.nc4"
+              "obsfile": "Data/obsout_3dvar_bumpcov.nc4"
             },
             "obsvalue": "ObsValue"
           },
+          "variables": ["air_temperature"],
           "Covariance": {
             "covariance": "diagonal",
             "obserror": "ObsError"
-          }
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
+        },
+        { 
+          "ObsType": "Aircraft",
+          "ObsData": {
+            "ObsDataIn": {
+              "obsfile": "Data/aircraft_obs_2018041500_m.nc4"
+            },
+            "_ObsDataOut": {
+              "obsfile": "Data/obsout_3dvar_bumpcov.nc4"
+            },
+            "obsvalue": "ObsValue"
+          },
+          "variables": ["air_temperature"],
+          "Covariance": { 
+            "covariance": "diagonal",
+            "obserror": "ObsError"
+          },
+          "ObsFilters": [
+            {
+              "Filter": "Background Check",
+              "variable": "air_temperature",
+              "threshold": 3.0
+            }
+          ]
         }
       ]
     }
@@ -132,7 +164,7 @@
     "algorithm": "DRIPCG"
   },
   "output": {
-    "filename": "./mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
+    "filename": "./mpas.3dvar_bumpcov.$Y-$M-$D_$h.$m.$s.nc"
   },
   "variational": {
     "iteration": [
