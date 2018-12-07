@@ -45,7 +45,8 @@
         "ObsBias": {}
       },
       {
-        "ObsType": "Radiance",
+        "ObsType": "AMSU-A",
+        "channels": "1-15",
         "ObsOptions": {
             "n_Layers": "6",
             "n_Absorbers": "3",
