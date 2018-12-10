@@ -14,7 +14,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
+#include "ufo/Locations.h"
 #include "ModelBiasMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
@@ -85,14 +85,14 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 // -----------------------------------------------------------------------------
 /// Get state values at observation locations
 // -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ioda::Locations & locs,
+void StateMPAS::getValues(const ufo::Locations & locs,
                           const oops::Variables & vars,
                           ufo::GeoVaLs & cols) const {
   oops::Log::trace() << "StateMPAS::getValues STANDARD ONE" << std::endl;
   fields_->getValues(locs, vars, cols);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ioda::Locations & locs,
+void StateMPAS::getValues(const ufo::Locations & locs,
                           const oops::Variables & vars,
                           ufo::GeoVaLs & cols,
                           const GetValuesTrajMPAS & traj) const {

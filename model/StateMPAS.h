@@ -24,9 +24,6 @@ namespace eckit {
 
 namespace ufo {
   class GeoVaLs;
-}
-
-namespace ioda {
   class Locations;
 }
 
@@ -63,9 +60,9 @@ class StateMPAS : public util::Printable,
   StateMPAS & operator=(const StateMPAS &);
 
 /// Get state values at observation locations
-  void getValues(const ioda::Locations &, const oops::Variables &,
+  void getValues(const ufo::Locations &, const oops::Variables &,
                  ufo::GeoVaLs &) const;
-  void getValues(const ioda::Locations &, const oops::Variables &,
+  void getValues(const ufo::Locations &, const oops::Variables &,
                  ufo::GeoVaLs &, const GetValuesTrajMPAS &) const;
 
 /// Interpolate full fields

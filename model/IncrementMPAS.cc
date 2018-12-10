@@ -13,7 +13,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "oops/util/Logger.h"
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
+#include "ufo/Locations.h"
 #include "ErrorCovarianceMPAS.h"
 #include "FieldsMPAS.h"
 #include "GeometryMPAS.h"
@@ -126,7 +126,7 @@ void IncrementMPAS::random() {
 // -----------------------------------------------------------------------------
 /// Get increment values at observation locations
 // -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesTL(const ioda::Locations & locs,
+void IncrementMPAS::getValuesTL(const ufo::Locations & locs,
                                 const oops::Variables & vars,
                                 ufo::GeoVaLs & cols,
                                 const GetValuesTrajMPAS & traj) const {
@@ -134,7 +134,7 @@ void IncrementMPAS::getValuesTL(const ioda::Locations & locs,
   fields_->getValuesTL(locs, vars, cols, traj);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesAD(const ioda::Locations & locs,
+void IncrementMPAS::getValuesAD(const ufo::Locations & locs,
                                 const oops::Variables & vars,
                                 const ufo::GeoVaLs & cols,
                                 const GetValuesTrajMPAS & traj) {

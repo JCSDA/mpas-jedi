@@ -20,7 +20,7 @@
 #include "ModelBiasCovarianceMPAS.h"
 #include "StateMPAS.h"
 #include "ufo/GeoVaLs.h"
-#include "ioda/Locations.h"
+#include "ufo/Locations.h"
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 #include "ufo/ObsBias.h"
@@ -59,7 +59,7 @@ struct MPASTraits {
   typedef ufo::ObsBiasCovariance         ObsAuxCovariance;
 
   typedef ufo::GeoVaLs                   GeoVaLs;
-  typedef ioda::Locations                Locations;
+  typedef ufo::Locations                 Locations;
 };
 
 }  // namespace mpas

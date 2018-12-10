@@ -12,7 +12,7 @@ use datetime_mod
 use mpas_geom_mod
 use ufo_vars_mod
 use mpas_kinds, only : kind_real
-use ioda_locs_mod
+use ufo_locs_mod
 use ufo_geovals_mod
 use mpas_getvaltraj_mod, only: mpas_getvaltraj
 
@@ -393,27 +393,27 @@ subroutine add_incr(self,rhs)
 
       field2d_th % array(:,:) = field2d_t % array(:,:) * &
                  ( 100000.0_kind_real / field2d_p % array(:,:) ) ** ( rgas / cp )
-      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
+!      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
       field2d_rho % array(:,:) = field2d_p % array(:,:) /  ( rgas * field2d_t % array(:,:) * &
                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * field2d_qv % array(:,:) ) )
-      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)
+!      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)
 
       !  update u     from uReconstructZonal and uReconstructMeridional "incrementally"
       call mpas_pool_get_field(self % auxFields,                      'u', field2d_u)
       call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', field2d_uRz)
       call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', field2d_uRm)
       call mpas_pool_get_field( rhs % auxFields,                      'u', field2d_u_inc)
-      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_uRz % array), maxval(field2d_uRz % array)
-      write(*,*) 'add_inc: v_inc min/max = ', minval(field2d_uRm % array), maxval(field2d_uRm % array)
+!      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_uRz % array), maxval(field2d_uRz % array)
+!      write(*,*) 'add_inc: v_inc min/max = ', minval(field2d_uRm % array), maxval(field2d_uRm % array)
 
       call uv_cell_to_edges(self % geom % domain, field2d_uRz, field2d_uRm, field2d_u_inc, &
                  self%geom%latCell, self%geom%lonCell, self%geom%nCellsSolve, &
                  self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
                  self%geom%nVertLevels)
-      write(*,*) 'add_inc: u_guess min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
-      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_u_inc % array), maxval(field2d_u_inc % array)
+!      write(*,*) 'add_inc: u_guess min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
+!      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_u_inc % array), maxval(field2d_u_inc % array)
       field2d_u % array(:,:) = field2d_u % array(:,:) + field2d_u_inc % array(:,:)
-      write(*,*) 'add_inc: u_analy min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
+!      write(*,*) 'add_inc: u_analy min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
 
       ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
 
@@ -1179,7 +1179,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
 
    implicit none
    type(mpas_field),                        intent(in)    :: fld
-   type(ioda_locs),                         intent(in)    :: locs
+   type(ufo_locs),                          intent(in)    :: locs
    type(ufo_vars),                          intent(in)    :: vars
    type(ufo_geovals),                       intent(inout) :: gom
    type(mpas_getvaltraj), optional, target, intent(inout) :: traj
@@ -1312,18 +1312,18 @@ subroutine getvalues(fld, locs, vars, gom, traj)
    call mpas_pool_begin_iteration(pool_ufo)
 
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
 
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
            if (poolItr % nDims == 1) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = 1
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-                 write(*,*) ' gom%geovals(n)%vals allocated'
+!                 write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
 !              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
@@ -1339,11 +1339,11 @@ subroutine getvalues(fld, locs, vars, gom, traj)
            if (poolItr % nDims == 1) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = 1
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-                 write(*,*) ' gom%geovals(n)%vals allocated'
+!                 write(*,*) ' gom%geovals(n)%vals allocated'
               endif
               mod_field(:,1) = r1d_ptr_a(1:ngrid)
 !              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
@@ -1356,12 +1356,12 @@ subroutine getvalues(fld, locs, vars, gom, traj)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
               if( .not. allocated(gom%geovals(ivar)%vals) )then
                  gom%geovals(ivar)%nval = fld%geom%nVertLevels
                  if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = fld%geom%nVertLevelsP1 !BJJ: Can we do this better ??
                  allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-                 write(*,*) ' gom%geovals(n)%vals allocated'
+!                 write(*,*) ' gom%geovals(n)%vals allocated'
               endif
 !              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
               do jlev = 1, gom%geovals(ivar)%nval
@@ -1444,7 +1444,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
         .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
 
-     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
+!     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
 
      call mpas_pool_get_array(fld % auxFields, "ivgtyp", i1d_ptr_a)
 !     write(*,*) 'MIN/MAX of ivgtyp=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
@@ -1538,7 +1538,7 @@ subroutine getvalues(fld, locs, vars, gom, traj)
         .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
 
-     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
+!     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
 
      call mpas_pool_get_array(fld % auxFields, "landmask", i1d_ptr_a) !"land-ocean mask (1=land ; 0=ocean)"
 !     write(*,*) 'MIN/MAX of landmask=',minval(i1d_ptr_a),maxval(i1d_ptr_a)
@@ -1674,7 +1674,7 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
 
    implicit none
    type(mpas_field),      intent(inout) :: fld
-   type(ioda_locs),       intent(in)    :: locs
+   type(ufo_locs),        intent(in)    :: locs
    type(ufo_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(in)    :: traj
@@ -1715,7 +1715,7 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
          gom%geovals(jvar)%nval = fld%geom%nVertLevels
          allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nobs) )
          gom%geovals(jvar)%vals = 0.0_kind_real
-         write(*,*) ' gom%geovals(n)%vals allocated'
+!         write(*,*) ' gom%geovals(n)%vals allocated'
          gom%linit = .true.
       endif
    enddo
@@ -1738,16 +1738,16 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
 
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-              write(*,*) "getvalues_tl: var=",trim(poolItr % memberName)
+!              write(*,*) "getvalues_tl: var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "ufo_vars_getindex: ivar=",ivar
+!              write(*,*) "ufo_vars_getindex: ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
                  mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
                  call traj%bump%apply_obsop(mod_field,obs_field)
@@ -1781,7 +1781,7 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
 
    implicit none
    type(mpas_field),      intent(inout) :: fld
-   type(ioda_locs),       intent(in)    :: locs
+   type(ufo_locs),        intent(in)    :: locs
    type(ufo_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(in)    :: traj
@@ -1832,7 +1832,7 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
 
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         if (poolItr % memberType == MPAS_POOL_FIELD) then
         if (poolItr % dataType == MPAS_POOL_REAL) then
            if (poolItr % nDims == 1) then
@@ -1840,9 +1840,9 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
            else if (poolItr % nDims == 2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               r2d_ptr_a=0.0_kind_real
-              write(*,*) "Interp. var=",trim(poolItr % memberName)
+!              write(*,*) "Interp. var=",trim(poolItr % memberName)
               ivar = ufo_vars_getindex(vars, trim(poolItr % memberName) )
-              write(*,*) "ufo_vars_getindex, ivar=",ivar
+!              write(*,*) "ufo_vars_getindex, ivar=",ivar
               do jlev = 1, gom%geovals(ivar)%nval
                  !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
                  do jloc = 1, nlocs
@@ -1882,7 +1882,7 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    
    implicit none
    type(mpas_geom),          intent(in)  :: grid
-   type(ioda_locs),          intent(in)  :: locs
+   type(ufo_locs),           intent(in)  :: locs
    type(bump_type), pointer, intent(out) :: bump
    integer,                  intent(in)  :: bumpid
    
@@ -1957,7 +1957,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    implicit none
    character(len=2),  intent(in) :: cop
    type(mpas_field),  intent(in) :: fld
-   type(ioda_locs),   intent(in) :: locs
+   type(ufo_locs),    intent(in) :: locs
    type(ufo_vars),    intent(in) :: vars
    type(ufo_geovals), intent(in) :: gom
    
@@ -2136,8 +2136,8 @@ subroutine field_to_ug(self, ug, colocated)
               idx_var = -999
               idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
-                 write(*,*) '  sub. field_to_ug, poolItr % memberName=',trim(poolItr % memberName)
-                 write(*,*) '  sub. field_to_ug, idx_var=',idx_var
+!                 write(*,*) '  sub. field_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+!                 write(*,*) '  sub. field_to_ug, idx_var=',idx_var
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
                      ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
@@ -2197,7 +2197,7 @@ subroutine field_from_ug(self, ug)
               idx_var = -999
               idx_var = ufo_vars_getindex(vars, trim(poolItr % memberName))
               if(idx_var.gt.0) then
-                 write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
+!                 write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                  do jC=1,self%geom%nCellsSolve
                    do jl=1,self%geom%nVertLevels
                      r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)

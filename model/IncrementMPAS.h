@@ -29,9 +29,6 @@ namespace eckit {
 
 namespace ufo {
   class GeoVaLs;
-}
-
-namespace ioda {
   class Locations;
 }
 
@@ -84,9 +81,9 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void dirac(const eckit::Configuration &);
 
 /// Get increment values at observation locations
-  void getValuesTL(const ioda::Locations &, const oops::Variables &,
+  void getValuesTL(const ufo::Locations &, const oops::Variables &,
                    ufo::GeoVaLs &, const GetValuesTrajMPAS &) const;
-  void getValuesAD(const ioda::Locations &, const oops::Variables &,
+  void getValuesAD(const ufo::Locations &, const oops::Variables &,
                    const ufo::GeoVaLs &, const GetValuesTrajMPAS &);
 
 /// I/O and diagnostics

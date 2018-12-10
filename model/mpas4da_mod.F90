@@ -269,7 +269,7 @@ module mpas4da_mod
                        trim(poolItr_a % memberName).eq.'index_qi' .or. &
                        trim(poolItr_a % memberName).eq.'index_qr' .or. &
                        trim(poolItr_a % memberName).eq.'index_qs' ) then
-                     write(0,*)'Copy all2sub field: Looking at SCALARS now'
+!                     write(0,*)'Copy all2sub field: Looking at SCALARS now'
 
                      call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
                      if (index_scalar .gt. 0) then
@@ -496,7 +496,7 @@ module mpas4da_mod
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
               do ii=1, nsize
                   if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
+!                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
                      ! Depending on the dimensionality of the field, we need to set pointers of
                      ! the correct type
                      if (poolItr % nDims == 1) then
@@ -578,10 +578,10 @@ module mpas4da_mod
                if (poolItr % dataType == MPAS_POOL_REAL) then
                   do ii=1, nsize
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-                        write(0,*)'Common field: '//trim(fieldname(ii))
+!                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
                      else if (( trim(fieldname(ii)).eq.'index_qv').and.(trim(poolItr % memberName).eq.'scalars')) then
-                        write(0,*)'Common field: '//trim(fieldname(ii))
+!                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1 
                      end if
                   end do
@@ -770,15 +770,15 @@ module mpas4da_mod
                      r2d_ptr_a = 0.0_kind_real
                   end if
                   if ( trim(kind_op).eq.'add' ) then
-                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
-                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b) 
+!                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
+!                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b) 
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b + r2d_ptr_c
                      else
-                        write(*,*)'regular addition'
+!                        write(*,*)'regular addition'
                         r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
                      end if
-                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
+!                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
                   else if ( trim(kind_op).eq.'schur' ) then
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b * r2d_ptr_c
@@ -1295,7 +1295,7 @@ module mpas4da_mod
             if (poolItr % memberType == MPAS_POOL_FIELD) then
             
                ndims = poolItr % nDims
-               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
+!               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
 
                if (ndims == 1) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
@@ -1327,7 +1327,7 @@ module mpas4da_mod
 
                 else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                  write(*,*)'dimNames ',trim(field3d % dimNames(ndims))
+!                  write(*,*)'dimNames ',trim(field3d % dimNames(ndims))
                   if (isDecomposed(field3d % dimNames(ndims))) then
                      call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims))//'Solve', solveDim1)
                   else
@@ -1362,7 +1362,7 @@ module mpas4da_mod
       call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
       call mpas_dmpar_sum_real(dminfo, prodtot, prodtot_global)
       fldrms = sqrt(prodtot_global / dimtot_global)
-      write(*,*)'fldrms = sqrt( prodtot_global / dimtot_global) : ', fldrms, prodtot_global, dimtot_global
+!      write(*,*)'fldrms = sqrt( prodtot_global / dimtot_global) : ', fldrms, prodtot_global, dimtot_global
       
 
   end subroutine da_fldrms
@@ -1409,7 +1409,7 @@ module mpas4da_mod
          if (poolItr % dataType == MPAS_POOL_REAL) then
             if (poolItr % memberType == MPAS_POOL_FIELD) then
 
-               write(*,*)'variable: ',trim(poolItr % memberName)
+!               write(*,*)'variable: ',trim(poolItr % memberName)
                ndims = poolItr % nDims 
 
                if (ndims == 1) then
@@ -1445,7 +1445,7 @@ module mpas4da_mod
 
                else if (ndims == 3) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
-                  write(*,*)'dimNames ',trim(field3d_a % dimNames(ndims))
+!                  write(*,*)'dimNames ',trim(field3d_a % dimNames(ndims))
                   if (isDecomposed(field3d_a % dimNames(ndims))) then
                      call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims))//'Solve', solveDim1)
                   else
@@ -1476,7 +1476,7 @@ module mpas4da_mod
       end do
 
       call mpas_dmpar_sum_real(dminfo, zprod_local, zprod)
-      write(*,*)'dotprod: Final result = ',zprod
+!      write(*,*)'dotprod: Final result = ',zprod
 
   end subroutine da_dot_product
 
