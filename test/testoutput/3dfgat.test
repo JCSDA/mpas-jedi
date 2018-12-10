@@ -1,25 +1,30 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo = 9723.27, nobs = 1049, Jo/n = 9.26908, err = 8.19424
-Test     : CostFunction: Nonlinear J = 9723.27
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.0310272
+Test     : CostJo   : Nonlinear Jo = 717.081, nobs = 651, Jo/n = 1.10151, err = 10.3537
+Test     : CostJo   : Nonlinear Jo = 75.3768, nobs = 95, Jo/n = 0.79344, err = 2.66136
+Test     : CostFunction: Nonlinear J = 792.458
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.0548331
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=-0.142718, Max=0.0338791, RMS=0.00571211
+Test     : Fld=1  Min=-0.0475826, Max=0.0347019, RMS=0.00482262
 Test     : Fld=2  Min=203.98, Max=306.479, RMS=244.052
 Test     : Fld=3  Min=-40.4961, Max=80.4605, RMS=16.645
 Test     : Fld=4  Min=-47.0223, Max=52.9303, RMS=9.08162
 Test     : Fld=5  Min=1507.23, Max=97512.7, RMS=49310.7
-Test     : CostJb   : Nonlinear Jb = 0.0882041
-Test     : CostJo   : Nonlinear Jo = 25186.9, nobs = 1049, Jo/n = 24.0104, err = 8.19424
-Test     : CostFunction: Nonlinear J = 25187
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.0287366
+Test     : CostJb   : Nonlinear Jb = 0.0159514
+Test     : CostJo   : Nonlinear Jo = 415.328, nobs = 369, Jo/n = 1.12555, err = 13.7163
+Test     : CostJo   : Nonlinear Jo = 50.5503, nobs = 44, Jo/n = 1.14887, err = 3.66476
+Test     : CostFunction: Nonlinear J = 465.894
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.0559788
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=-0.315837, Max=0.0733773, RMS=0.00918574
+Test     : Fld=1  Min=-0.0822223, Max=0.0607224, RMS=0.0051068
 Test     : Fld=2  Min=203.98, Max=306.479, RMS=244.052
 Test     : Fld=3  Min=-40.4961, Max=80.4605, RMS=16.645
 Test     : Fld=4  Min=-47.0223, Max=52.9303, RMS=9.08162
 Test     : Fld=5  Min=1507.23, Max=97512.7, RMS=49310.7
-Test     : and CostJb, CostJo, Nonlinear J after 2nd outer loop = ??
+Test     : CostJb   : Nonlinear Jb = 0.037415
+Test     : CostJo   : Nonlinear Jo = 227.215, nobs = 181, Jo/n = 1.25533, err = 19.5475
+Test     : CostJo   : Nonlinear Jo = 36.3754, nobs = 39, Jo/n = 0.932702, err = 3.86822
+Test     : CostFunction: Nonlinear J = 263.628

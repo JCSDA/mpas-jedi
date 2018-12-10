@@ -54,7 +54,7 @@
           "ObsFilters": [
             {
               "Filter": "Background Check",
-              "variable": "air_temperature",
+              "variables": ["air_temperature"],
               "threshold": 3.0
             }
           ]
@@ -78,7 +78,7 @@
           "ObsFilters": [
             {
               "Filter": "Background Check",
-              "variable": "air_temperature",
+              "variables": ["air_temperature"],
               "threshold": 3.0
             }
           ]
