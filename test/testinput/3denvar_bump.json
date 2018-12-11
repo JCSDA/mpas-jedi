@@ -108,7 +108,7 @@
             },
             "obsvalue": "ObsValue"
           },
-          "variables": ["air_temperature"],
+          "variables": ["air_temperature","eastward_wind","northward_wind"],
           "Covariance": {
             "covariance": "diagonal",
             "obserror": "ObsError"
@@ -116,7 +116,7 @@
           "ObsFilters": [
             {
               "Filter": "Background Check",
-              "variables": ["air_temperature"],
+              "variables": ["air_temperature","eastward_wind","northward_wind"],
               "threshold": 3.0
             }
           ]

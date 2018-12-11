@@ -59,7 +59,7 @@
             "obsfile": "Data/enshofx.nc4"
           }
         },
-        "variables": ["air_temperature"],
+        "variables": ["air_temperature","eastward_wind","northward_wind"],
         "ObsBias": {}
       },
       {
@@ -69,7 +69,7 @@
             "obsfile": "Data/aircraft_obs_2018041500_m.nc4"
           }
         },
-        "variables": ["air_temperature"],
+        "variables": ["air_temperature","eastward_wind","northward_wind"],
         "ObsBias": {}
       },
       { 

@@ -245,6 +245,24 @@
 
 !        write(*,*) "end-of ",var_tv
 
+     case ( "eastward_wind" ) !-var_??? eastward_wind
+
+        call mpas_pool_get_field(pool_a, 'uReconstructZonal', field2d_src) !< get zonal wind
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+!        write(*,*) 'MIN/MAX of zonal wind=',minval(field2d % array),maxval(field2d % array)
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+!        write(*,*) "end-of ",trim(fieldname(ivar))
+
+     case ( "northward_wind" ) !-var_??? northward_wind
+        call mpas_pool_get_field(pool_a, 'uReconstructMeridional', field2d_src) !< get meridional wind
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+!        write(*,*) 'MIN/MAX of meridional wind=',minval(field2d % array),maxval(field2d % array)
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+!        write(*,*) "end-of ",trim(fieldname(ivar))
+
+
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
 
         call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a) !< get pressure
@@ -522,8 +540,8 @@
         !get TL variables
         call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
         call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
-!        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of TL temperature(in)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of TL    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
         call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
@@ -538,13 +556,45 @@
         !NL: field2d % array(:,:) = r2d_ptr_a(:,:) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,:))
         field2d % array(:,:) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
                                 + traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,:)
-!        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+!        write(*,*) 'MIN/MAX of TL Tv(out)=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
 
         field2d % fieldName = var_tv
 
         call mpas_pool_add_field(pool_c, var_tv, field2d)
 
 !        write(*,*) "end-of ",var_tv
+
+     case ( "eastward_wind" ) !-var_??? eastward_wind
+
+        !get TL variable
+        call mpas_pool_get_field(pool_a, 'uReconstructZonal', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array
+!        write(*,*) 'MIN/MAX of TL zonal wind(in/out)=',minval(field2d % array),maxval(field2d % array)
+
+        !NL: field2d % array = field2d % array
+        !TL: field2d % array = field2d % array
+
+        field2d % fieldName = trim(fieldname(ivar))
+
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+
+!        write(*,*) "end-of ",trim(fieldname(ivar))
+
+     case ( "northward_wind" ) !-var_??? northward_wind
+
+        !get TL variable
+        call mpas_pool_get_field(pool_a, 'uReconstructMeridional', field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array
+!        write(*,*) 'MIN/MAX of TL meridional wind(in/out)=',minval(field2d % array),maxval(field2d % array)
+
+        !NL: field2d % array = field2d % array
+        !TL: field2d % array = field2d % array
+
+        field2d % fieldName = trim(fieldname(ivar))
+
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+
+!        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
 
@@ -669,8 +719,8 @@
         !get AD variables
         call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
         call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
-!        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of AD temperature(in)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of AD    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
         call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
@@ -683,15 +733,50 @@
         !TL: field2d % array(:,:) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * r2d_ptr_a(:,:) &
         !TL:                        + traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,:)
         call mpas_pool_get_field(pool_c, var_tv, field2d)
-!        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,:)),maxval(field2d % array(:,:))
+!        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array),maxval(field2d % array)
         r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + &
                          ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,:) ) * field2d % array(:,:)
         r2d_ptr_b(:,:) = r2d_ptr_b(:,:) + &
                          traj_r2d_a(:,:) * (rv/rgas - 1.0_kind_real) * field2d % array(:,:)
-!        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a(:,:)),maxval(r2d_ptr_a(:,:))
-!        write(*,*) 'MIN/MAX of index_qv=',minval(r2d_ptr_b(:,:)),maxval(r2d_ptr_b(:,:))
+!        write(*,*) 'MIN/MAX of AD temperature(out)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!        write(*,*) 'MIN/MAX of AD    index_qv(out)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
 !        write(*,*) "end-of ",var_tv
+
+     case ( "eastward_wind" ) !-var_??? eastward_wind
+
+        !get AD variable
+        call mpas_pool_get_array(pool_a, 'uReconstructZonal', r2d_ptr_a) !< get zonal wind
+!        write(*,*) 'MIN/MAX of AD zonal wind(in)  =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+
+        !NL: field2d % array = field2d % array
+        !TL: field2d % array = field2d % array
+        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + &
+                         field2d % array(:,:)
+
+!        write(*,*) 'MIN/MAX of AD zonal wind(out) =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+
+
+!        write(*,*) "end-of ",trim(fieldname(ivar))
+
+     case ( "northward_wind" ) !-var_??? northward_wind
+
+        !get AD variable
+        call mpas_pool_get_array(pool_a, 'uReconstructMeridional', r2d_ptr_a) !< get meridional wind
+!        write(*,*) 'MIN/MAX of AD meridional wind(in)  =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+
+        !NL: field2d % array = field2d % array
+        !TL: field2d % array = field2d % array
+        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+
+        r2d_ptr_a(:,:) = r2d_ptr_a(:,:) + &
+                         field2d % array(:,:)
+
+!        write(*,*) 'MIN/MAX of AD meridional wind(out) =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+
+!        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!

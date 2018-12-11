@@ -14,6 +14,6 @@ Test     : Fld=2  Min=194.234, Max=304.724, RMS=243.899
 Test     : Fld=3  Min=-39.7686, Max=84.9311, RMS=16.7845
 Test     : Fld=4  Min=-43.4889, Max=58.603, RMS=8.84534
 Test     : Fld=5  Min=1456.08, Max=97474.1, RMS=49317.3
-Test     : H(x): Radiosonde nobs= 2275 Min=206.177, Max=303.964, Average=238.512
+Test     : H(x): Radiosonde nobs= 6825 Min=-20.8186, Max=303.964, Average=137.912
 Test     : Aircraft nobs= 1867 Min=216.882, Max=301.222, Average=278.866
 Test     : AMSU-A nobs= 1125 Min=148.661, Max=297.076, Average=233.515
