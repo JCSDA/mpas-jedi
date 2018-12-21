@@ -99,7 +99,7 @@ subroutine model_setup(self, geom, c_conf)
 !       write(*,*)'inside model: model % corelist not associated'
 !   end if
 
-   ! GD:  we need to update some parameters here regarding the json namelist file of oops.
+   ! GD:  we need to update some parameters here regarding the yaml namelist file of oops.
    ! Also, we can add new DA parameters in the MPAS configs file if needed.
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_dt', config_dt)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_start_time', config_start_time)
@@ -117,7 +117,7 @@ subroutine model_setup(self, geom, c_conf)
 
 
 
-   ! GD: needs a converter from oops json file format to mpas if the json file drives MPAS
+   ! GD: needs a converter from oops yaml file format to mpas if the yaml file drives MPAS
    ! otherwise mpas namelist file can be used.
    ststep = config_get_string(c_conf,len(ststep),"tstep")
    dtstep = trim(ststep)

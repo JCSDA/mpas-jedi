@@ -1,0 +1,186 @@
+---
+logging:
+  categories: Info, Test, Warning, Error, Log, Trace, Stats
+test_framework_runtime_config: "--log_level=test_suite"
+nml_file: namelist.atmosphere_2018041421
+resolution:
+  gridfname: "./restart.2018-04-15_00.00.00.nc"
+model:
+  name: MPAS
+  tstep: PT3H
+cost_function:
+  cost_type: 4D-Ens-Var
+  window_begin: '2018-04-14T21:00:00Z'
+  window_length: PT6H
+  window_sub: PT3H
+  variables:
+  - temperature
+  - pressure
+  - index_qv
+  - uReconstructZonal
+  - uReconstructMeridional
+  Jb:
+    Background:
+      state:
+      - variables:
+        - temperature
+        - pressure
+        - index_qv
+        - uReconstructZonal
+        - uReconstructMeridional
+        filename: "./restart.2018-04-14_21.00.00.nc"
+        date: '2018-04-14T21:00:00Z'
+      - variables:
+        - temperature
+        - pressure
+        - index_qv
+        - uReconstructZonal
+        - uReconstructMeridional
+        filename: "./restart.2018-04-15_00.00.00.nc"
+        date: '2018-04-15T00:00:00Z'
+      - variables:
+        - temperature
+        - pressure
+        - index_qv
+        - uReconstructZonal
+        - uReconstructMeridional
+        filename: "./restart.2018-04-15_03.00.00.nc"
+        date: '2018-04-15T03:00:00Z'
+    Covariance:
+      covariance_time:
+      - covariance: ensemble
+        members: '5'
+        variables:
+          variables:
+          - temperature
+          - pressure
+          - index_qv
+          - uReconstructZonal
+          - uReconstructMeridional
+        date: '2018-04-14T21:00:00Z'
+        localization:
+          localization: ID
+          date: '2018-04-14T21:00:00Z'
+          variables:
+            variables:
+            - temperature
+            - pressure
+            - index_qv
+            - uReconstructZonal
+            - uReconstructMeridional
+      - covariance: ensemble
+        members: '5'
+        variables:
+          variables:
+          - temperature
+          - pressure
+          - index_qv
+          - uReconstructZonal
+          - uReconstructMeridional
+        date: '2018-04-15T00:00:00Z'
+        localization:
+          localization: ID
+          date: '2018-04-15T00:00:00Z'
+          variables:
+            variables:
+            - temperature
+            - pressure
+            - index_qv
+            - uReconstructZonal
+            - uReconstructMeridional
+      - covariance: ensemble
+        members: '5'
+        variables:
+          variables:
+          - temperature
+          - pressure
+          - index_qv
+          - uReconstructZonal
+          - uReconstructMeridional
+        date: '2018-04-15T03:00:00Z'
+        localization:
+          localization: ID
+          date: '2018-04-15T03:00:00Z'
+          variables:
+            variables:
+            - temperature
+            - pressure
+            - index_qv
+            - uReconstructZonal
+            - uReconstructMeridional
+  Jo:
+    ObsTypes:
+    - ObsType: Radiosonde
+      ObsData:
+        ObsDataIn:
+          obsfile: Data/sondes_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_4denvar_ID.nc4
+        obsvalue: ObsValue
+      variables:
+      - air_temperature
+      - eastward_wind
+      - northward_wind
+      Covariance:
+        covariance: diagonal
+        obserror: ObsError
+      ObsFilters:
+      - Filter: Background Check
+        variables:
+        - air_temperature
+        - eastward_wind
+        - northward_wind
+        threshold: 3
+    - ObsType: Aircraft
+      ObsData:
+        ObsDataIn:
+          obsfile: Data/aircraft_obs_2018041500_m.nc4
+        _ObsDataOut:
+          obsfile: Data/obsout_4denvar_ID.nc4
+        obsvalue: ObsValue
+      variables:
+      - air_temperature
+      Covariance:
+        covariance: diagonal
+        obserror: ObsError
+      ObsFilters:
+      - Filter: Background Check
+        variable: air_temperature
+        threshold: 3
+minimizer:
+  algorithm: DRIPCG
+output:
+  filename: "./mpas.4denvar_ID.$Y-$M-$D_$h.$m.$s.nc"
+variational:
+  iteration:
+  - resolution:
+      gridfname: "./restart.2018-04-15_00.00.00.nc"
+    linearmodel:
+      varchange: Identity
+      version: MPASIdTLM
+      tstep: PT3H
+      trajectory:
+        tstep: PT3H
+        top_layer_depth: '5500.0'
+        bottom_layer_depth: '4500.0'
+    ninner: '10'
+    gradient_norm_reduction: 1e-10
+    test: 'on'
+    diagnostics:
+      departures: ombg
+  - resolution:
+      gridfname: "./restart.2018-04-15_00.00.00.nc"
+    linearmodel:
+      varchange: Identity
+      version: MPASIdTLM
+      tstep: PT3H
+      trajectory:
+        tstep: PT3H
+        top_layer_depth: '5500.0'
+        bottom_layer_depth: '4500.0'
+    ninner: '10'
+    gradient_norm_reduction: 1e-10
+    test: 'on'
+final:
+  diagnostics:
+    departures: oman

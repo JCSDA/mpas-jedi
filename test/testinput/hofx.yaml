@@ -1,0 +1,60 @@
+---
+logging:
+  categories: Info, Test, Warning, Error, Log, Trace, Stats
+test_framework_runtime_config: "--log_level=test_suite"
+nml_file: namelist.atmosphere_2018041421
+Assimilation Window:
+  Begin: '2018-04-14T21:00:00Z'
+  Length: PT6H
+Geometry:
+  gridfname: "./restart.2018-04-14_21.00.00.nc"
+Model:
+  name: MPAS
+  tstep: PT30M
+  finalnorm: 0.020383
+  tolerance: 0.005
+Initial Condition:
+  variables:
+  - temperature
+  - pressure
+  - index_qv
+  - uReconstructZonal
+  - uReconstructMeridional
+  filename: "./restart.2018-04-14_21.00.00.nc"
+  date: '2018-04-14T21:00:00Z'
+Observations:
+  ObsTypes:
+  - ObsType: Radiosonde
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/sondes_obs_2018041500_m.nc4
+    variables:
+    - air_temperature
+    - eastward_wind
+    - northward_wind
+    ObsBias: {}
+  - ObsType: Aircraft
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/aircraft_obs_2018041500_m.nc4
+    variables:
+    - air_temperature
+    ObsBias: {}
+  - ObsType: AMSU-A
+    channels: 1-15
+    ObsOptions:
+      n_Layers: '6'
+      n_Absorbers: '3'
+      n_Clouds: '2'
+      n_Aerosols: '0'
+      Sensor_ID: amsua_n19
+      EndianType: little_endian
+      CoefficientPath: Data/
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/amsua_obs_n19_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx.nc4
+    ObsBias: {}
+Prints:
+  frequency: PT3H

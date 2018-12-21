@@ -1498,10 +1498,10 @@ module mpas4da_mod
      character (len=2) :: MM, DD, h, m, s
      character (len=21) :: outString, inString
  
-     ! 2017-08-08T00:00:00Z OOPS/JSON format
+     ! 2017-08-08T00:00:00Z OOPS/YAML format
      ! 2010-10-24_02.00.00  MPAS format
-     ! iconv=1: MPAS --> OOPS/JSON
-     ! iconv=-1: OOPS/JSON --> MPAS
+     ! iconv=1: MPAS --> OOPS/YAML
+     ! iconv=-1: OOPS/YAML --> MPAS
 
      if (iconv.eq.-1) then
         YYYY = inString2(1:4)

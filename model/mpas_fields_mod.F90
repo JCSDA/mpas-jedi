@@ -127,7 +127,7 @@ subroutine create(self, geom, vars)
        call abor1_ftn(buf)
     end  if
 
-    !--- TODO: aux test: BJJ  !- get this from json ???
+    !--- TODO: aux test: BJJ  !- get this from yaml ???
     allocate(fldnames_aux(nf_aux))
     fldnames_aux = [ character(len=22) :: "theta", "rho", "u", &
                                           "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
@@ -616,7 +616,7 @@ subroutine analytic_IC(fld, geom, c_conf, vdate)
 !!init_atms_setup_case is normally called from the following set of subroutines:
 !!mpas_run => core_run [init_atm_core_run] => init_atm_setup_case => [select from preset cases]
 !!Can we bypass the first two somehow?  
-!!Would use "config_init_case" in the json file, then check for matching with one of the ideal cases below... (not 7 or 8)
+!!Would use "config_init_case" in the yaml file, then check for matching with one of the ideal cases below... (not 7 or 8)
 !
 !!if ((config_init_case == 1) .or. (config_init_case == 2) .or. (config_init_case == 3)) then
 !!   write(0,*) ' Jablonowski and Williamson baroclinic wave test case '
@@ -863,7 +863,7 @@ subroutine read_file(fld, c_conf, vdate)
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
    ! and then can be like this ....
-   ! TODO: we can get streamID from json
+   ! TODO: we can get streamID from yaml
    !streamID = 'restart'
    !streamID = 'input'
    streamID = 'output'
@@ -955,7 +955,7 @@ use duration_mod
    end if
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
    fld % manager => fld % geom % domain % streamManager
-   ! TODO: we can get streamID from json
+   ! TODO: we can get streamID from yaml
    !streamID = 'restart'
    streamID = 'output'
    !streamID = 'da'

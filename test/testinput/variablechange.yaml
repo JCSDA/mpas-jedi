@@ -1,0 +1,76 @@
+---
+test_framework_runtime_config: "--log_level=test_suite"
+nml_file: namelist.atmosphere_2018041500
+LinearVariableChangeTests:
+- varchange: StatsVariableChange
+  toleranceInverse: '1.0e-8'
+  testinverse: '0'
+  variables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+  prefix: bump
+  strategy: common
+  check_vbal: 1
+  inputVariables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+  outputVariables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+- varchange: Control2Model
+  toleranceInverse: '1.0e-8'
+  testinverse: '0'
+  variables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+  prefix: bump
+  strategy: common
+  check_vbal: 1
+  inputVariables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+  outputVariables:
+    variables:
+    - temperature
+    - pressure
+    - index_qv
+    - uReconstructZonal
+    - uReconstructMeridional
+Geometry:
+  gridfname: "./restart.2018-04-15_00.00.00.nc"
+State:
+  variables:
+  - temperature
+  - pressure
+  - index_qv
+  - uReconstructZonal
+  - uReconstructMeridional
+  filename: "./restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+Variables:
+  variables:
+  - temperature
+  - pressure
+  - index_qv
+  - uReconstructZonal
+  - uReconstructMeridional
