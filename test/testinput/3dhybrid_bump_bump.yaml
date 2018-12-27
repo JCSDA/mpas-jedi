@@ -2,17 +2,16 @@
 logging:
   categories: Info, Test, Warning, Error, Log, Trace, Stats
 test_framework_runtime_config: "--log_level=test_suite"
-nml_file: namelist.atmosphere_2018041421
+nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 model:
   name: MPAS
-  tstep: PT3H
+  tstep: PT30M
 cost_function:
-  cost_type: 4D-Ens-Var
+  cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
   window_length: PT6H
-  window_sub: PT3H
   variables:
   - temperature
   - pressure
@@ -28,47 +27,41 @@ cost_function:
         - index_qv
         - uReconstructZonal
         - uReconstructMeridional
-        filename: "./restart.2018-04-14_21.00.00.nc"
-        date: '2018-04-14T21:00:00Z'
-      - variables:
-        - temperature
-        - pressure
-        - index_qv
-        - uReconstructZonal
-        - uReconstructMeridional
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
-      - variables:
-        - temperature
-        - pressure
-        - index_qv
-        - uReconstructZonal
-        - uReconstructMeridional
-        filename: "./restart.2018-04-15_03.00.00.nc"
-        date: '2018-04-15T03:00:00Z'
     Covariance:
-      covariance_time:
-      - covariance: ensemble
-        members: '5'
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - index_qv
-          - uReconstructZonal
-          - uReconstructMeridional
-        date: '2018-04-14T21:00:00Z'
-        localization:
-          localization: ID
-          date: '2018-04-14T21:00:00Z'
-          variables:
-            variables:
-            - temperature
-            - pressure
-            - index_qv
-            - uReconstructZonal
-            - uReconstructMeridional
-      - covariance: ensemble
+      covariance: hybrid
+      ensemble_weight: '0.5'
+#      static:
+#        covariance: MPASstatic
+#        standard_deviation: '0.8'
+#        vertical_correlation: '0.2'
+#        horizontal_length_scale: 1e6
+#        maximum_condition_number: 1.0e6
+#        date: '2018-04-15T00:00:00Z'
+      static:
+        covariance: BUMP
+        date: '2018-04-15T00:00:00Z'
+        prefix: mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
+        default_seed: 1
+        method: cor
+        _strategy: common
+        strategy: specific_univariate
+        new_nicas: 0
+        load_nicas: 1
+        load_cmat: 1
+        ntry: 3
+        nrep: 2
+        lsqrt: 1
+        resol: 10
+        nicas_interp: bilin
+        network: 0
+        mpicom: 2
+        advmode: 0
+        forced_radii: 0
+        rh: 2000000
+        rv: 1
+      ensemble:
         members: '5'
         variables:
           variables:
@@ -79,7 +72,7 @@ cost_function:
           - uReconstructMeridional
         date: '2018-04-15T00:00:00Z'
         localization:
-          localization: ID
+          localization: BUMP
           date: '2018-04-15T00:00:00Z'
           variables:
             variables:
@@ -88,26 +81,45 @@ cost_function:
             - index_qv
             - uReconstructZonal
             - uReconstructMeridional
-      - covariance: ensemble
-        members: '5'
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - index_qv
-          - uReconstructZonal
-          - uReconstructMeridional
-        date: '2018-04-15T03:00:00Z'
-        localization:
-          localization: ID
-          date: '2018-04-15T03:00:00Z'
-          variables:
-            variables:
-            - temperature
-            - pressure
-            - index_qv
-            - uReconstructZonal
-            - uReconstructMeridional
+          prefix: mpas_3dhybrid_bumploc
+          default_seed: 1
+          method: loc_norm
+          _method: cor
+          strategy: common
+          _strategy: specific_univariate
+          new_hdiag: 1
+          new_nicas: 1
+          mask_type: none
+          draw_type: random_uniform
+          nc1: 1024
+          ntry: 3
+          nrep: 2
+          nc3: 10
+          dc: 1000000
+          nl0r: 3
+          _nl0r: 1
+          ne: 5
+          minim_algo: hooke
+          rvflt: 0
+          lsqrt: 1
+          resol: 4
+          nicas_interp: bilin
+          network: 0
+          mpicom: 2
+          advmode: 0
+          diag_interp: bilin
+          grid_output: 0
+        state:
+        - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
     - ObsType: Radiosonde
@@ -115,7 +127,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_4denvar_ID.nc4
+          obsfile: Data/obsout_3dhybrid_bump.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -136,7 +148,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
         _ObsDataOut:
-          obsfile: Data/obsout_4denvar_ID.nc4
+          obsfile: Data/obsout_3dhybrid_bump.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -155,7 +167,7 @@ cost_function:
 minimizer:
   algorithm: DRIPCG
 output:
-  filename: "./mpas.4denvar_ID.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.3dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   iteration:
   - resolution:
@@ -163,9 +175,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: MPASIdTLM
-      tstep: PT3H
+      tstep: PT30M
       trajectory:
-        tstep: PT3H
+        tstep: PT30M
         top_layer_depth: '5500.0'
         bottom_layer_depth: '4500.0'
     ninner: '10'
@@ -178,9 +190,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: MPASIdTLM
-      tstep: PT3H
+      tstep: PT30M
       trajectory:
-        tstep: PT3H
+        tstep: PT30M
         top_layer_depth: '5500.0'
         bottom_layer_depth: '4500.0'
     ninner: '10'

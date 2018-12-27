@@ -39,28 +39,28 @@ cost_function:
         horizontal_length_scale: 1e6
         maximum_condition_number: 1.0e6
         date: '2018-04-15T00:00:00Z'
-      _static:
-        covariance: BUMP
-        date: '2018-04-15T00:00:00Z'
-        prefix: mpas_3dhybrid_bumpcov
-        default_seed: 1
-        method: cor
-        _strategy: common
-        strategy: specific_univariate
-        new_nicas: 1
-        _load_nicas: 0
-        _load_cmat: 0
-        ntry: 3
-        nrep: 2
-        lsqrt: 1
-        resol: 10
-        nicas_interp: bilin
-        network: 0
-        mpicom: 2
-        advmode: 0
-        forced_radii: 1
-        rh: 2000000
-        rv: 1
+#      static:
+#        covariance: BUMP
+#        date: '2018-04-15T00:00:00Z'
+#        prefix: mpas_3dhybrid_bumpcov
+#        default_seed: 1
+#        method: cor
+#        _strategy: common
+#        strategy: specific_univariate
+#        new_nicas: 1
+#        _load_nicas: 0
+#        _load_cmat: 0
+#        ntry: 3
+#        nrep: 2
+#        lsqrt: 1
+#        resol: 10
+#        nicas_interp: bilin
+#        network: 0
+#        mpicom: 2
+#        advmode: 0
+#        forced_radii: 1
+#        rh: 2000000
+#        rv: 1
       ensemble:
         members: '5'
         variables:
@@ -152,6 +152,8 @@ cost_function:
         obsvalue: ObsValue
       variables:
       - air_temperature
+      - eastward_wind
+      - northward_wind
       Covariance:
         covariance: diagonal
         obserror: ObsError
@@ -159,6 +161,8 @@ cost_function:
       - Filter: Background Check
         variables:
         - air_temperature
+        - eastward_wind
+        - northward_wind
         threshold: 3
 minimizer:
   algorithm: DRIPCG

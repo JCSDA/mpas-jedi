@@ -2,10 +2,12 @@ list( APPEND mpas_test_input
   testinput/3dvar.yaml
   testinput/3dvar_bumpcov.yaml
   testinput/3dvar_bumpcov.existingb.yaml
+  testinput/3dvar_bumpcov.parametersbump.yaml
   testinput/3dfgat.yaml
   testinput/3denvar_bump.yaml
   testinput/4denvar_bump.yaml
   testinput/3dhybrid_bump.yaml
+  testinput/3dhybrid_bump_bump.yaml
   testinput/forecast.yaml
   testinput/hofx.yaml
   testinput/enshofx.yaml
@@ -26,10 +28,12 @@ list( APPEND mpas_test_input
 list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dvar_bumpcov.test
+  testoutput/3dvar_bumpcov.parametersbump.test
   testoutput/3dfgat.test
   testoutput/3denvar_bump.test
   testoutput/4denvar_bump.test
   testoutput/3dhybrid_bump.test
+  testoutput/3dhybrid_bump_bump.test
   testoutput/forecast.test
   testoutput/hofx.test
   testoutput/enshofx.test
@@ -187,6 +191,14 @@ ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
                   MPI     1
                   DEPENDS mpas_variational.x )
 
+ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov_parametersbump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.parametersbump.yaml"
+                       testoutput/3dvar_bumpcov.parametersbump.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
 ecbuild_add_test( TARGET test_mpas_3denvar_bump
                   TYPE SCRIPT
                   COMMAND "compare.sh"
@@ -200,6 +212,14 @@ ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.yaml"
                        testoutput/3dhybrid_bump.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3dhybrid_bump_bump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump_bump.yaml"
+                       testoutput/3dhybrid_bump_bump.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 

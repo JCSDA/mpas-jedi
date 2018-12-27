@@ -91,6 +91,8 @@ cost_function:
         obsvalue: ObsValue
       variables:
       - air_temperature
+      - eastward_wind
+      - northward_wind
       Covariance:
         covariance: diagonal
         obserror: ObsError
@@ -98,6 +100,8 @@ cost_function:
       - Filter: Background Check
         variables:
         - air_temperature
+        - eastward_wind
+        - northward_wind
         threshold: 3
 minimizer:
   algorithm: DRIPCG
