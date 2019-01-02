@@ -13,15 +13,30 @@
 #include "oops/base/ObsFilterBase.h"
 #include "oops/interface/ObsFilter.h"
 #include "ufo/BackgroundCheck.h"
+#include "ufo/BlackList.h"
+#include "ufo/ObsBoundsCheck.h"
+#include "ufo/ObsDomainCheck.h"
+#include "ufo/ObsPreQC.h"
 
 namespace mpas {
 
 void instantiateObsFilterFactory() {
   oops::instantiateObsFilterFactory<MPASTraits>();
   static oops::FilterMaker<MPASTraits,
-                           oops::ObsFilter<MPASTraits, ufo::BackgroundCheck>
-                          >
-    makerBkgChk_("Background Check");
+                           oops::ObsFilter<MPASTraits, ufo::ObsPreQC>
+                          > makerChk1_("PreQC");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::ObsDomainCheck>
+                          > makerChk2_("Domain Check");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::ObsBoundsCheck>
+                          > makerChk3_("Bounds Check");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::BlackList>
+                          > makerChk4_("BlackList");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::BackgroundCheck>
+                          > makerChk5_("Background Check");
 }
 
 }  // namespace mpas
