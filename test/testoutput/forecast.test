@@ -9,8 +9,8 @@ Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T06:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=0, Max=0.0207065, RMS=0.00484925
-Test     : Fld=2  Min=187.228, Max=305.265, RMS=243.875
-Test     : Fld=3  Min=-41.6402, Max=81.5533, RMS=16.1895
-Test     : Fld=4  Min=-42.829, Max=52.6185, RMS=8.25555
-Test     : Fld=5  Min=1443.64, Max=97351.1, RMS=49317.6
+Test     : Fld=1  Min=0, Max=0.0207008, RMS=0.00484922
+Test     : Fld=2  Min=187.231, Max=305.267, RMS=243.875
+Test     : Fld=3  Min=-41.641, Max=81.5543, RMS=16.1896
+Test     : Fld=4  Min=-42.8298, Max=52.6184, RMS=8.25558
+Test     : Fld=5  Min=1443.64, Max=97351, RMS=49317.6

@@ -95,7 +95,7 @@ subroutine geo_setup(self, c_conf)
    self % domain   => run_domain
 
    if (associated(self % domain)) then
-       write(*,*)'inside geom: geom % domain associated'
+       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
    end if
    if (associated(self % corelist)) then
        write(*,*)'inside geom: geom % corelist associated'
@@ -253,6 +253,7 @@ subroutine geo_clone(self, other)
       other % corelist => run_corelist
       other % domain   => run_domain
    end if
+   write(*,*)'inside geo_clone: other % domain % domainID = ', other % domain % domainID
 
    write(*,*)'====> copy of geom done'
 

@@ -18,6 +18,7 @@ use mpas_kind_types
 use mpas_subdriver
 use atm_core
 use mpas_stream_manager
+use mpas_atmphys_manager, only: physics_run_finalize
 use mpas4da_mod
 use mpas_kinds, only : kind_real
 use mpas_constants, only : rgas, cp
@@ -259,6 +260,14 @@ subroutine model_prepare_integration(self, flds)
    do while (associated(block))
       call mpas_pool_get_subpool(block % structs, 'mesh', mesh)
       call mpas_pool_get_subpool(block % structs, 'state', state)
+
+!--- TODO: replace calls to physics_run_finalize and atm_mpas_init_block with another subroutine
+!          that only calls the required components from atm_mpas_init_block.  What are the
+!          required components?
+
+      !Finalize alarms that were previously initialized (will be reversed by atm_mpas_init_block)
+      call physics_run_finalize(block % configs, self % domain % clock, self % domain % streamManager)
+
       ! GD: if we do cycling in atm_mpas_init_block we propably need to avoid recomputing wind to the 
       ! mass center. (avoiding doing twice ... adding a flag). OK for now, probably same problem with dart 
       call atm_mpas_init_block(self % domain % dminfo, self % domain % streamManager, block, mesh, self % dt)
