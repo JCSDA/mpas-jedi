@@ -1686,7 +1686,7 @@ subroutine getvalues_tl(fld, locs, vars, gom, traj)
    type(ufo_locs),        intent(in)    :: locs
    type(ufo_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
-   type(mpas_getvaltraj), intent(in)    :: traj
+   type(mpas_getvaltraj), intent(inout) :: traj
 
    character(len=*), parameter :: myname = 'getvalues_tl'
    
@@ -1796,7 +1796,7 @@ subroutine getvalues_ad(fld, locs, vars, gom, traj)
    type(ufo_locs),        intent(in)    :: locs
    type(ufo_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
-   type(mpas_getvaltraj), intent(in)    :: traj
+   type(mpas_getvaltraj), intent(inout) :: traj
 
    character(len=*), parameter :: myname = 'getvalues_ad'
 
@@ -1938,6 +1938,9 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    bump%nam%default_seed = .true.
    bump%nam%new_obsop    = .true.
 
+   bump%nam%write_obsop  = .false.
+   bump%nam%verbosity    = "none"
+
    ! Initialize geometry
    ! -------------------
    allocate(area(mod_num))
@@ -1954,6 +1957,10 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
 
    ! Run BUMP drivers
    call bump%run_drivers
+
+
+   ! Partial deallocate option
+   call bump%partial_dealloc
 
    ! Release memory
    ! --------------

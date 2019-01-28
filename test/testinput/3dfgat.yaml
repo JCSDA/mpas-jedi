@@ -36,29 +36,29 @@ cost_function:
       horizontal_length_scale: 1e6
       maximum_condition_number: 1.0e6
       date: '2018-04-14T21:00:00Z'
-    _Covariance:
-      static:
-        covariance: BUMP
-        date: '2018-04-14T21:00:00Z'
-        prefix: mpas_3dfgat_bumpcov
-        default_seed: 1
-        method: cor
-        _strategy: common
-        strategy: specific_univariate
-        new_nicas: 1
-        _load_nicas: 0
-        _load_cmat: 0
-        ntry: 3
-        nrep: 2
-        lsqrt: 1
-        resol: 10
-        nicas_interp: bilin
-        network: 0
-        mpicom: 2
-        advmode: 0
-        forced_radii: 1
-        rh: 2000000
-        rv: 1
+#    Covariance:
+#      static:
+#        covariance: BUMP
+#        date: '2018-04-14T21:00:00Z'
+#        prefix: mpas_3dfgat_bumpcov
+#        default_seed: 1
+#        method: cor
+#        _strategy: common
+#        strategy: specific_univariate
+#        new_nicas: 1
+#        _load_nicas: 0
+#        _load_cmat: 0
+#        ntry: 3
+#        nrep: 2
+#        lsqrt: 1
+#        resol: 10
+#        nicas_interp: bilin
+#        network: 0
+#        mpicom: 2
+#        advmode: 0
+#        forced_radii: 1
+#        rh: 2000000
+#        rv: 1
   Jo:
     ObsTypes:
     - ObsType: Radiosonde
@@ -66,7 +66,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dfgat.nc4
+          obsfile: Data/obsout_3dfgat_sonde.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -74,7 +74,6 @@ cost_function:
       - northward_wind
       Covariance:
         covariance: diagonal
-        obserror: ObsError
       ObsFilters:
       - Filter: Background Check
         variables:
@@ -86,8 +85,8 @@ cost_function:
       ObsData:
         ObsDataIn:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
-        _ObsDataOut:
-          obsfile: Data/obsout_3dfgat.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dfgat_aircraft.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -95,7 +94,6 @@ cost_function:
       - northward_wind
       Covariance:
         covariance: diagonal
-        obserror: ObsError
       ObsFilters:
       - Filter: Background Check
         variables:

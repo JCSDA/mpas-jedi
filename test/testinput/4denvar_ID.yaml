@@ -115,7 +115,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_4denvar_ID.nc4
+          obsfile: Data/obsout_4denvar_ID_sonde.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -123,7 +123,6 @@ cost_function:
       - northward_wind
       Covariance:
         covariance: diagonal
-        obserror: ObsError
       ObsFilters:
       - Filter: Background Check
         variables:
@@ -135,8 +134,8 @@ cost_function:
       ObsData:
         ObsDataIn:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
-        _ObsDataOut:
-          obsfile: Data/obsout_4denvar_ID.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_4denvar_ID_aircraft.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -144,7 +143,6 @@ cost_function:
       - northward_wind
       Covariance:
         covariance: diagonal
-        obserror: ObsError
       ObsFilters:
       - Filter: Background Check
         variables:

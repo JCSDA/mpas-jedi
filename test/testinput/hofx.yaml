@@ -28,6 +28,8 @@ Observations:
     ObsData:
       ObsDataIn:
         obsfile: Data/sondes_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_sonde.nc4
     variables:
     - air_temperature
     - eastward_wind
@@ -37,13 +39,14 @@ Observations:
     ObsData:
       ObsDataIn:
         obsfile: Data/aircraft_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_aircraft.nc4
     variables:
     - air_temperature
     ObsBias: {}
   - ObsType: AMSU-A
     channels: 1-15
     ObsOptions:
-      n_Layers: '6'
       n_Absorbers: '3'
       n_Clouds: '2'
       n_Aerosols: '0'
@@ -54,7 +57,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/amsua_obs_n19_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx.nc4
+        obsfile: Data/hofx_amsua.nc4
     ObsBias: {}
 Prints:
   frequency: PT3H

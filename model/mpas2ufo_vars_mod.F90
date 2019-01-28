@@ -245,6 +245,12 @@
 
 !        write(*,*) "end-of ",var_tv
 
+     case ( "air_temperature" ) !-var_ts
+        call mpas_pool_get_field(pool_a, 'temperature', field2d_src) !< get temperature
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
         call mpas_pool_get_field(pool_a, 'uReconstructZonal', field2d_src) !< get zonal wind
@@ -284,7 +290,7 @@
         call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
         call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+        field2d % array(:,1:ngrid) = max(0.0_kind_real,r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real) ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
         call mpas_pool_add_field(pool_c, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
@@ -565,6 +571,12 @@
 
 !        write(*,*) "end-of ",var_tv
 
+     case ( "air_temperature" ) !-var_ts
+        call mpas_pool_get_field(pool_a, 'temperature', field2d_src) !< get temperature
+        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
         !get TL variable
@@ -744,6 +756,12 @@
 !        write(*,*) 'MIN/MAX of AD    index_qv(out)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
 !        write(*,*) "end-of ",var_tv
+
+     case ( "air_temperature" ) !-var_ts
+        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a) !< get temperature
+        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+        r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
+                         field2d % array(:,1:ngrid)
 
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
