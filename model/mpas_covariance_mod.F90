@@ -60,12 +60,12 @@ end subroutine mpas_covar_delete
 !> Multiply streamfunction by inverse(sqrt(C)), where C is 3d covariance matrix
 
 subroutine mpas_covar_sqrt_inv_mult(self, xctl, xincr)
-use mpas_fields_mod
+use mpas_increment_utils_mod, only: mpas_increment
 
 implicit none
 type(mpas_covar), intent(in)    :: self
 real, intent(inout) :: xctl
-type(mpas_field), intent(in)    :: xincr
+type(mpas_increment), intent(in)    :: xincr
 
 end subroutine mpas_covar_sqrt_inv_mult
 
@@ -74,11 +74,11 @@ end subroutine mpas_covar_sqrt_inv_mult
 !> Multiply streamfunction by inverse(sqrt(C)) - Adjoint
 
 subroutine mpas_covar_sqrt_inv_mult_ad(self, xctl, xincr)
-use mpas_fields_mod
+use mpas_increment_utils_mod, only: mpas_increment
 
 implicit none
 type(mpas_covar), intent(in)    :: self
-type(mpas_field), intent(inout) :: xincr
+type(mpas_increment), intent(inout) :: xincr
 real, intent(in) :: xctl
 
 end subroutine mpas_covar_sqrt_inv_mult_ad
@@ -88,11 +88,11 @@ end subroutine mpas_covar_sqrt_inv_mult_ad
 !> Multiply streamfunction by sqrt(C), where C is a 3d covariance matrix
 
 subroutine mpas_covar_sqrt_mult(self, xincr, xctl)
-use mpas_fields_mod
+use mpas_increment_utils_mod, only: mpas_increment
 
 implicit none
 type(mpas_covar), intent(in)    :: self
-type(mpas_field), intent(inout) :: xincr
+type(mpas_increment), intent(inout) :: xincr
 real, intent(in) :: xctl
 
 end subroutine mpas_covar_sqrt_mult
@@ -102,12 +102,12 @@ end subroutine mpas_covar_sqrt_mult
 !> Multiply streamfunction by sqrt(C) - Adjoint
 
 subroutine mpas_covar_sqrt_mult_ad(self, xincr, xctl)
-use mpas_fields_mod
+use mpas_increment_utils_mod, only: mpas_increment
 
 implicit none
 type(mpas_covar), intent(in)    :: self
 real, intent(inout) :: xctl
-type(mpas_field), intent(in)    :: xincr
+type(mpas_increment), intent(in)    :: xincr
 
 end subroutine mpas_covar_sqrt_mult_ad
 

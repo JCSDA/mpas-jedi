@@ -32,6 +32,8 @@ namespace eckit {
 }
 
 namespace mpas {
+  class StateMPAS;
+  class IncrementMPAS;
 
 // -----------------------------------------------------------------------------
 /// LFRic linear model definition.

@@ -10,7 +10,6 @@
 #include <cmath>
 
 #include "oops/util/Logger.h"
-#include "FieldsMPAS.h"
 #include "Fortran.h"
 #include "GeometryMPAS.h"
 #include "IncrementMPAS.h"
@@ -51,22 +50,22 @@ void ErrorCovarianceMPAS::linearize(const StateMPAS &,
 
 void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin,
                                    IncrementMPAS & dxout) const {
-  mpas_b_mult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                  dxout.fields().toFortran());
+  mpas_b_mult_f90(keyFtnConfig_, dxin.toFortran(),
+                  dxout.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
 void ErrorCovarianceMPAS::inverseMultiply(const IncrementMPAS & dxin,
                                            IncrementMPAS & dxout) const {
-  mpas_b_invmult_f90(keyFtnConfig_, dxin.fields().toFortran(),
-                               dxout.fields().toFortran());
+  mpas_b_invmult_f90(keyFtnConfig_, dxin.toFortran(),
+                               dxout.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
 void ErrorCovarianceMPAS::randomize(IncrementMPAS & dx) const {
-  mpas_b_randomize_f90(keyFtnConfig_, dx.fields().toFortran());
+  mpas_b_randomize_f90(keyFtnConfig_, dx.toFortran());
 }
 
 // -----------------------------------------------------------------------------

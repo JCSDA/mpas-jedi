@@ -17,13 +17,21 @@ module mpas4da_mod
    !
    !-----------------------------------------------------------------------
 
-   use mpas_constants
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_dmpar
-   use mpas_abort, only : mpas_dmpar_global_abort
-   use mpas_kinds, only : kind_real
-   !use random_vectors_mod
+!oops
+use kinds, only : kind_real
+
+!MPAS-Model
+use mpas_abort, only : mpas_dmpar_global_abort
+use mpas_constants
+use mpas_derived_types
+use mpas_dmpar
+use mpas_kind_types, only: ShortStrKIND
+use mpas_pool_routines
+
+!mpas-jedi
+use mpas_constants_mod
+
+!use random_vectors_mod
  
 
    contains
@@ -420,29 +428,49 @@ module mpas4da_mod
       type (field1DInteger), pointer :: ifield1d
       integer, pointer :: index_scalar, dim0d
       integer :: ii
+      integer, parameter :: ndims=10
+      character(len=ShortStrKIND) :: dimnames(ndims)
 
       nfields = 0
       call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
       pool_a => domain % blocklist % allFields
  
-      write(0,*)'--Create a sub Pool from list of variable: ',nsize
-      call mpas_pool_create_pool(pool_b, nsize)
-      call mpas_pool_create_pool(pool_c, nsize)
+      write(0,*)'--Create a sub Pool from list of variables: ',nsize
+      write(0,*)'--and of dimensions: ',ndims
+      call mpas_pool_create_pool(pool_b)
+      call mpas_pool_create_pool(pool_c)
+
+      dimnames ( 1) = 'nCellsSolve'
+      dimnames ( 2) = 'nEdgesSolve'
+      dimnames ( 3) = 'nVerticesSolve'
+      dimnames ( 4) = 'nVertLevels'
+      dimnames ( 5) = 'nVertLevelsP1'
+      dimnames ( 6) = 'nSoilLevels'
+      dimnames ( 7) = 'nCells'
+      dimnames ( 8) = 'nEdges'
+      dimnames ( 9) = 'nVertices'
+      dimnames (10) = 'vertexDegree'
+
+      do ii = 1, ndims
+         call mpas_pool_get_dimension(domain % blocklist % dimensions, trim(dimnames(ii)), dim0d)
+!         write(0,*)'Adding dimension ',trim(dimnames(ii)),': ',dim0d
+         call mpas_pool_add_dimension(pool_c, trim(dimnames(ii)), dim0d)
+      end do
+
       !write(0,*)'Fieldname: ',nsize,fieldname(:)
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
       call mpas_pool_begin_iteration(pool_a)
       write(0,*)'Before iterating'
-         
- 
+
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
          if (poolItr % memberType == MPAS_POOL_FIELD) then
             ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
             if (poolItr % dataType == MPAS_POOL_REAL) then
-              do ii=1, nsize
+               do ii=1, nsize
                   if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
 !                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
                      ! Depending on the dimensionality of the field, we need to set pointers of
@@ -511,33 +539,9 @@ module mpas4da_mod
           end if
       end do
 
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nCellsSolve', dim0d)
-!      write(0,*)'Adding dimension nCellsSolve: ',dim0d
-      call mpas_pool_add_dimension(pool_c, 'nCellsSolve', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nEdgesSolve', dim0d)
-!      write(0,*)'Adding dimension nEdgesSolve: ',dim0d
-      call mpas_pool_add_dimension(pool_c, 'nEdgesSolve', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVerticesSolve', dim0d)
-!      write(0,*)'Adding dimension nVerticesSolve: ',dim0d
-      call mpas_pool_add_dimension(pool_c, 'nVerticesSolve', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVertLevels', dim0d)
-!      write(0,*)'Adding dimension nVertLevels: ',dim0d
-      call mpas_pool_add_dimension(pool_c, 'nVertLevels', dim0d)
-
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nCells', dim0d)
-      call mpas_pool_add_dimension(pool_c, 'nCells', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nEdges', dim0d)
-      call mpas_pool_add_dimension(pool_c, 'nEdges', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'nVertices', dim0d)
-      call mpas_pool_add_dimension(pool_c, 'nVertices', dim0d)
-      call mpas_pool_get_dimension(domain % blocklist % dimensions, 'vertexDegree', dim0d)
-      call mpas_pool_add_dimension(pool_c, 'vertexDegree', dim0d)
-
-
       if ( nsize.ne.nfields ) then
         write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,nfields
       end if
-
 
       write(0,*)'da_make_subpool new Pool size ',Pool_c % size
       call mpas_pool_clone_pool(pool_c, pool_b)
@@ -605,11 +609,12 @@ module mpas4da_mod
    !> \details
    !
    !-----------------------------------------------------------------------
-   subroutine da_random(pool_a)
+   subroutine da_random(pool_a, fldnames)
 
       implicit none
 
-      type (mpas_pool_type), intent(inout),pointer :: pool_a
+      type (mpas_pool_type), pointer, intent(inout) :: pool_a
+      character (len=*), optional,    intent(in)    :: fldnames(:)
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a
@@ -624,6 +629,10 @@ module mpas4da_mod
       call mpas_pool_begin_iteration(pool_a)
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -672,20 +681,20 @@ module mpas4da_mod
    !>  \modified by Gael DESCOMBES to apply diffferent operator
    !
    !-----------------------------------------------------------------------
-   subroutine da_operator(kind_op, pool_a, pool_b, pool_c)
+   subroutine da_operator(kind_op, pool_a, pool_b, pool_c, fldnames)
 
       implicit none
 
       type (mpas_pool_type), pointer :: pool_a, pool_b
       type (mpas_pool_type), pointer, optional :: pool_c
       character (len=*) :: kind_op
+      character (len=*), optional :: fldnames(:)
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b, r0d_ptr_c
       real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b, r1d_ptr_c
       real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
       real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b, r3d_ptr_c
-
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
@@ -697,6 +706,10 @@ module mpas4da_mod
       !write(0,*)'-------------------------------------------------'
 
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -898,11 +911,12 @@ module mpas4da_mod
    !> \details
    !
    !-----------------------------------------------------------------------
-   subroutine da_zeros(pool_a)
+   subroutine da_zeros(pool_a, fldnames)
 
       implicit none
 
-      type (mpas_pool_type), pointer :: pool_a
+      type (mpas_pool_type), pointer, intent(inout) :: pool_a
+      character (len=*), optional,    intent(in)    :: fldnames(:)
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a
@@ -917,6 +931,10 @@ module mpas4da_mod
       call mpas_pool_begin_iteration(pool_a)
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -1025,12 +1043,15 @@ module mpas4da_mod
    !>  is equivalent to A = A + B.
    !
    !-----------------------------------------------------------------------
-   subroutine da_axpy(pool_a, pool_b, zz)
+   subroutine da_axpy(pool_a, pool_b, zz, fldnames)
 
       implicit none
+      type (mpas_pool_type), pointer, intent(inout) :: pool_a
+      type (mpas_pool_type), pointer, intent(in)    :: pool_b
+      real (kind=kind_real), intent(in) :: zz
+      character (len=*), optional, intent(in) :: fldnames(:)
 
-      type (mpas_pool_type), pointer :: pool_a, pool_b
-      real (kind=kind_real) :: zz
+
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
@@ -1045,6 +1066,10 @@ module mpas4da_mod
       call mpas_pool_begin_iteration(pool_b)
 
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
+
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -1126,13 +1151,14 @@ module mpas4da_mod
    !
    !-----------------------------------------------------------------------
    
-   subroutine da_gpnorm(pool_a, dminfo, nf, pstat)
+   subroutine da_gpnorm(pool_a, dminfo, nf, pstat, fldnames)
 
    implicit none
-   type (mpas_pool_type), intent(in),  pointer :: pool_a
-   type (dm_info), intent(in),  pointer :: dminfo
-   integer,              intent(in) :: nf
-   real(kind=kind_real), intent(inout)  :: pstat(3, nf)
+   type (mpas_pool_type), pointer, intent(in)  :: pool_a
+   type (dm_info), pointer,        intent(in)  :: dminfo
+   integer,                        intent(in)  :: nf
+   real(kind=kind_real),           intent(out) :: pstat(3, nf)
+   character (len=*), optional,    intent(in)  :: fldnames(:)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d
@@ -1154,6 +1180,9 @@ module mpas4da_mod
    jj = 1
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -1263,12 +1292,13 @@ module mpas4da_mod
    !
    !-----------------------------------------------------------------------
 
-   subroutine da_fldrms(pool_a, dminfo, fldrms)
+   subroutine da_fldrms(pool_a, dminfo, fldrms, fldnames)
 
    implicit none
-   type (mpas_pool_type), intent(in),  pointer :: pool_a
-   type (dm_info), intent(in),  pointer :: dminfo
-   real(kind=kind_real), intent(out) :: fldrms
+   type (mpas_pool_type), pointer, intent(in)  :: pool_a
+   type (dm_info), pointer,        intent(in)  :: dminfo
+   real(kind=kind_real),           intent(out) :: fldrms
+   character (len=*), optional,    intent(in)  :: fldnames(:)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d
@@ -1290,12 +1320,15 @@ module mpas4da_mod
    jj = 1
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+         if (present(fldnames)) then
+            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         end if
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
             if (poolItr % memberType == MPAS_POOL_FIELD) then
             
                ndims = poolItr % nDims
-!               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
+               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
 
                if (ndims == 1) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
@@ -1347,12 +1380,6 @@ module mpas4da_mod
                   prodtot = prodtot + sum( field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)**2 )
 
                end if
-
-               ! JJG: This output is useful for checks across multiple processors, really only need to do this comm once though (below)
-!               call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
-!               call mpas_dmpar_sum_real(dminfo, prodtot, prodtot_global)
-!               write(*,*)'fldrms, dimtot_global, prodtot_global: ', dimtot_global, prodtot_global
-
             end if
          end if
          jj = jj + 1
@@ -1383,9 +1410,9 @@ module mpas4da_mod
    subroutine da_dot_product(pool_a, pool_b, dminfo, zprod)
 
    implicit none
-   type (mpas_pool_type), intent(in),  pointer :: pool_a, pool_b
-   type (dm_info), intent(in),  pointer :: dminfo
-   real(kind=kind_real), intent(out) :: zprod
+   type (mpas_pool_type), pointer, intent(in)  :: pool_a, pool_b
+   type (dm_info), pointer,        intent(in)  :: dminfo
+   real(kind=kind_real),           intent(out) :: zprod
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d_a, field1d_b
@@ -1598,7 +1625,6 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    real(kind_real), dimension(:,:), allocatable :: east, north
    real(kind_real), dimension(:), allocatable :: lonCell_rad, latCell_rad
    integer  :: iCell, iEdge, jEdge, k
-   real(kind=kind_real), parameter :: deg2rad = pii/180. !-BJJ To-be-removed, when MPAS-release updated from Gael.
 
    ! allocation
    allocate(east(R3,nCells))
@@ -1670,7 +1696,24 @@ end subroutine r3_normalize
 
 !-----------------------------------------------------------------------
 
+function any_match(fieldname, fieldnames)
+   character (len=*) :: fieldname
+   character (len=*) :: fieldnames(:)
+   logical :: any_match
 
+   integer :: i
+
+   any_match = .false.
+   do i = 1, size(fieldnames)
+      if (trim(fieldname) .eq. trim(fieldnames(i))) then
+         any_match = .true.
+         return
+      end if
+   end do
+
+   return
+
+end function any_match
 
 !===============================================================================================================
 

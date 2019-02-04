@@ -53,7 +53,8 @@ subroutine c_mpas_b_inv_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_fields_mod
+use mpas_increment_utils_mod
+use mpas_field_utils_mod, only: copy_pool
 use kinds
 use mpas_framework !BJJ
 
@@ -62,33 +63,24 @@ integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_increment), pointer :: xin
+type(mpas_increment), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_increment_registry%get(c_key_in,xin)
+call mpas_increment_registry%get(c_key_out,xout)
 !TODO BJJ
 !Implement this
 !xout = xin
 !xout => xin
-   call mpas_pool_empty_pool(xout % subFields)
-   call mpas_pool_destroy_pool(xout % subFields)
    xout % nf = xin % nf
-   call mpas_pool_create_pool(xout % subFields, xout % nf)
-   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
-
-
+   call copy_pool(xin % subFields, xout % subFields)
 !TODO BJJ
 !Implement this
 !xout = xin
 !xout => xin
-   call mpas_pool_empty_pool(xout % subFields)
-   call mpas_pool_destroy_pool(xout % subFields)
    xout % nf = xin % nf
-   call mpas_pool_create_pool(xout % subFields, xout % nf)
-   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
-
+   call copy_pool(xin % subFields, xout % subFields)
 !call mpas_covar_sqrt_inv_mult(self%nx,self%ny,xctl,xin,self)
 !call zeros(xout)
 !call mpas_covar_sqrt_inv_mult_ad(self%nx,self%ny,xctl,xout,self)
@@ -103,7 +95,8 @@ subroutine c_mpas_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_b_mu
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_fields_mod
+use mpas_increment_utils_mod
+use mpas_field_utils_mod, only: copy_pool
 use kinds
 use mpas_framework !BJJ
 
@@ -112,24 +105,20 @@ integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_increment), pointer :: xin
+type(mpas_increment), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_increment_registry%get(c_key_in,xin)
+call mpas_increment_registry%get(c_key_out,xout)
 
    write(*,*) '---- inside sub c_mpas_b_mult ----'
 !TODO BJJ
 !Implement this
 !xout = xin
 !xout => xin
-   call mpas_pool_empty_pool(xout % subFields)
-   call mpas_pool_destroy_pool(xout % subFields)
    xout % nf = xin % nf
-   call mpas_pool_create_pool(xout % subFields, xout % nf)
-   call mpas_pool_clone_pool(xin % subFields, xout % subFields)
-
+   call copy_pool(xin % subFields, xout % subFields)
 !call mpas_covar_sqrt_mult_ad(self%nx,self%ny,xin,xctl,self)
 !call zeros(xout)
 !call mpas_covar_sqrt_mult(self%nx,self%ny,xout,xctl,self)
@@ -144,19 +133,19 @@ subroutine c_mpas_b_randomize(c_key_self, c_key_out) bind(c,name='mpas_b_randomi
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_fields_mod
+use mpas_increment_utils_mod
 use kinds
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xout
+type(mpas_increment), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_increment_registry%get(c_key_out,xout)
 
-call random(xout)
+call xout%random()
 
 end subroutine c_mpas_b_randomize
 

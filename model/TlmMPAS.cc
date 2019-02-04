@@ -69,8 +69,8 @@ void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr,
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::initializeTL(IncrementMPAS & dx) const {
-  mpas_model_prepare_integration_tl_f90(keyConfig_, dx.fields().toFortran());
-  oops::Log::debug() << "TlmMPAS::initializeTL" << dx.fields() << std::endl;
+  mpas_model_prepare_integration_tl_f90(keyConfig_, dx.toFortran());
+  oops::Log::debug() << "TlmMPAS::initializeTL" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
@@ -80,20 +80,19 @@ void TlmMPAS::stepTL(IncrementMPAS & dx, const ModelBiasIncrementMPAS &) const {
                        << dx.validTime() << std::endl;
     ABORT("TlmMPAS: trajectory not available");
   }
-  oops::Log::debug() << "TlmMPAS::stepTL fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_tl_f90(keyConfig_, dx.fields().toFortran(),
+  oops::Log::debug() << "TlmMPAS::stepTL increment in" << dx << std::endl;
+  mpas_model_propagate_tl_f90(keyConfig_, dx.toFortran(),
                               itra->second);
-  oops::Log::debug() << "TlmMPAS::stepTL fields out" << dx.fields()
-                     << std::endl;
+  oops::Log::debug() << "TlmMPAS::stepTL increment out"<< dx << std::endl;
   dx.validTime() += tstep_;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::finalizeTL(IncrementMPAS & dx) const {
-  oops::Log::debug() << "TlmMPAS::finalizeTL" << dx.fields() << std::endl;
+  oops::Log::debug() << "TlmMPAS::finalizeTL" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::initializeAD(IncrementMPAS & dx) const {
-  oops::Log::debug() << "TlmMPAS::initializeAD" << dx.fields() << std::endl;
+  oops::Log::debug() << "TlmMPAS::initializeAD" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
@@ -104,16 +103,16 @@ void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
                        << dx.validTime() << std::endl;
     ABORT("TlmMPAS: trajectory not available");
   }
-  oops::Log::debug() << "TlmMPAS::stepAD fields in" << dx.fields() << std::endl;
-  mpas_model_propagate_ad_f90(keyConfig_, dx.fields().toFortran(),
+  oops::Log::debug() << "TlmMPAS::stepAD increment in" << dx << std::endl;
+  mpas_model_propagate_ad_f90(keyConfig_, dx.toFortran(),
                               itra->second);
-  oops::Log::debug() << "TlmMPAS::stepAD fields out" << dx.fields()
-                     << std::endl;
+  oops::Log::debug() << "TlmMPAS::stepAD increment out" << dx << std::endl;
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::finalizeAD(IncrementMPAS & dx) const {
-  mpas_model_prepare_integration_ad_f90(keyConfig_, dx.fields().toFortran());
-  oops::Log::debug() << "TlmMPAS::finalizeAD" << dx.fields() << std::endl;
+  mpas_model_prepare_integration_ad_f90(keyConfig_, dx.toFortran());
+  oops::Log::debug() << "TlmMPAS::finalizeAD" << dx << std::endl;
+
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::print(std::ostream & os) const {

@@ -14,14 +14,19 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "FieldsMPAS.h"
-#include "GeometryMPAS.h"
+#include "model/IncrementMPASFortran.h"
+
 #include "oops/base/GeneralizedDepartures.h"
+#include "oops/base/Variables.h"
+#include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "oops/util/dot_product.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 namespace eckit {
   class Configuration;
@@ -33,15 +38,14 @@ namespace ufo {
 }
 
 namespace oops {
-  class Variables;
   class UnstructuredGrid;
+  class Variables;
 }
 
 namespace mpas {
-  class ModelBiasIncrementMPAS;
-  class ErrorCovarianceMPAS;
-  class StateMPAS;
+  class GeometryMPAS;
   class GetValuesTrajMPAS;
+  class StateMPAS;
 
 /// Increment Class: Difference between two states
 /*!
@@ -75,6 +79,7 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   IncrementMPAS & operator-=(const IncrementMPAS &);
   IncrementMPAS & operator*=(const double &);
   void axpy(const double &, const IncrementMPAS &, const bool check = true);
+  void axpy(const double &, const StateMPAS &, const bool check = true);
   double dot_product_with(const IncrementMPAS &) const;
   void schur_product_with(const IncrementMPAS &);
   void random();
@@ -86,35 +91,38 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void getValuesAD(const ufo::Locations &, const oops::Variables &,
                    const ufo::GeoVaLs &, const GetValuesTrajMPAS &);
 
-/// I/O and diagnostics
-  void read(const eckit::Configuration &);
-  void write(const eckit::Configuration &) const;
-  double norm() const {return fields_->norm();}
-  const util::DateTime & validTime() const {return fields_->time();}
-  util::DateTime & validTime() {return fields_->time();}
-  void updateTime(const util::Duration & dt) {fields_->time() += dt;}
-
 /// Unstructured grid
   void ug_coord(oops::UnstructuredGrid &, const int &) const;
   void field_to_ug(oops::UnstructuredGrid &, const int &) const;
   void field_from_ug(const oops::UnstructuredGrid &);
 
-/// Access to fields
-  FieldsMPAS & fields() {return *fields_;}
-  const FieldsMPAS & fields() const {return *fields_;}
+/// I/O and diagnostics
+  void read(const eckit::Configuration &);
+  void write(const eckit::Configuration &) const;
+  double norm() const;
 
-  boost::shared_ptr<const GeometryMPAS> geometry() const {
-    return fields_->geometry();
-  }
+  void updateTime(const util::Duration & dt) {time_ += dt;}
 
 /// Other
   void accumul(const double &, const StateMPAS &);
 
+  boost::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
+
+  const util::DateTime & time() const {return time_;}
+  util::DateTime & time() {return time_;}
+  const util::DateTime & validTime() const {return time_;}
+  util::DateTime & validTime() {return time_;}
+
+  int & toFortran() {return keyInc_;}
+  const int & toFortran() const {return keyInc_;}
+
 /// Data
  private:
   void print(std::ostream &) const;
-  boost::scoped_ptr<FieldsMPAS> fields_;
-  boost::scoped_ptr<FieldsMPAS> stash_;
+  F90inc keyInc_;
+  boost::shared_ptr<const GeometryMPAS> geom_;
+  oops::Variables vars_;
+  util::DateTime time_;
 };
 // -----------------------------------------------------------------------------
 

@@ -5,7 +5,8 @@
 
 module mpas_varchange_mod
 
-use mpas_fields_mod, only: mpas_field
+use mpas_state_utils_mod, only: mpas_state
+use mpas_increment_utils_mod, only: mpas_increment
 use mpas_geom_mod,   only: mpas_geom
 use iso_c_binding
 use config_mod
@@ -38,8 +39,8 @@ subroutine mpas_varchange_setup(self, bg, fg, geom, c_conf)
 
 implicit none
 type(mpas_varchange),  intent(inout) :: self    !< Change variable structure
-type(mpas_field), target, intent(in) :: bg
-type(mpas_field), target, intent(in) :: fg
+type(mpas_state), target, intent(in) :: bg
+type(mpas_state), target, intent(in) :: fg
 type(mpas_geom),          intent(in) :: geom
 type(c_ptr),              intent(in) :: c_conf  !< Configuration
 
@@ -60,8 +61,8 @@ subroutine mpas_varchange_multiply(self,xctl,xmod)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_field), intent(inout) :: xctl
-type(mpas_field), intent(inout) :: xmod
+type(mpas_increment), intent(inout) :: xctl
+type(mpas_increment), intent(inout) :: xmod
 
 end subroutine mpas_varchange_multiply
 
@@ -71,8 +72,8 @@ subroutine mpas_varchange_multiplyadjoint(self,xmod,xctl)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_field), intent(inout) :: xmod
-type(mpas_field), intent(inout) :: xctl
+type(mpas_increment), intent(inout) :: xmod
+type(mpas_increment), intent(inout) :: xctl
 
 !Adjoint of analysis (control) to model variables
 
@@ -84,8 +85,8 @@ subroutine mpas_varchange_multiplyinverse(self,xinc,xctr)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_field), intent(inout) :: xinc
-type(mpas_field), intent(inout) :: xctr
+type(mpas_increment), intent(inout) :: xinc
+type(mpas_increment), intent(inout) :: xctr
 
 !> Not implemented
 
@@ -97,8 +98,8 @@ subroutine mpas_varchange_multiplyinverseadjoint(self,xinc,xctr)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_field), intent(inout) :: xinc
-type(mpas_field), intent(inout) :: xctr
+type(mpas_increment), intent(inout) :: xinc
+type(mpas_increment), intent(inout) :: xctr
 
 !> Not implemented
 

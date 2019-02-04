@@ -11,53 +11,70 @@
 #include <string>
 
 #include "eckit/config/LocalConfiguration.h"
-#include "oops/util/Logger.h"
-#include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
-#include "ErrorCovarianceMPAS.h"
-#include "FieldsMPAS.h"
-#include "GeometryMPAS.h"
-#include "GetValuesTrajMPAS.h"
-#include "StateMPAS.h"
+
+#include "model/GeometryMPAS.h"
+#include "model/GetValuesTrajMPAS.h"
+#include "model/StateMPAS.h"
+
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
+#include "oops/util/Logger.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom, 
                              const oops::Variables & vars,
-                             const util::DateTime & vt)
-  : fields_(new FieldsMPAS(resol, vars, vt)), stash_()
+                             const util::DateTime & time):
+  geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
 {
-  fields_->zero();
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_zero_f90(keyInc_);
   oops::Log::trace() << "IncrementMPAS constructed." << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
                              const IncrementMPAS & other)
-  : fields_(new FieldsMPAS(*other.fields_, resol)), stash_()
+  : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
 {
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "IncrementMPAS constructed from other." << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
-  : fields_(new FieldsMPAS(*other.fields_, copy)), stash_()
+  : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  if (copy) {
+    mpas_increment_copy_f90(keyInc_, other.keyInc_);
+  } else {
+    mpas_increment_zero_f90(keyInc_);
+  }
   oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
-  : fields_(new FieldsMPAS(*other.fields_)), stash_()
+  : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
+  const eckit::Configuration * conf = &vars_.toFortran();
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_copy_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::~IncrementMPAS() {
+  mpas_increment_delete_f90(keyInc_);
   oops::Log::trace() << "IncrementMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -66,118 +83,151 @@ IncrementMPAS::~IncrementMPAS() {
 void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {
   ASSERT(this->validTime() == x1.validTime());
   ASSERT(this->validTime() == x2.validTime());
-  oops::Log::debug() << "IncrementMPAS:diff incr " << *fields_ << std::endl;
-  oops::Log::debug() << "IncrementMPAS:diff x1 " << x1.fields() << std::endl;
-  oops::Log::debug() << "IncrementMPAS:diff x2 " << x2.fields() << std::endl;
-  fields_->diff(x1.fields(), x2.fields());
+  oops::Log::debug() << "IncrementMPAS:diff x1 " << x1.toFortran() << std::endl;
+  oops::Log::debug() << "IncrementMPAS:diff x2 " << x2.toFortran() << std::endl;
+  mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS & IncrementMPAS::operator=(const IncrementMPAS & rhs) {
-  *fields_ = *rhs.fields_;
+  mpas_increment_copy_f90(keyInc_, rhs.keyInc_);
+  time_ = rhs.time_;
   return *this;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS & IncrementMPAS::operator+=(const IncrementMPAS & dx) {
   ASSERT(this->validTime() == dx.validTime());
-  *fields_ += *dx.fields_;
+  mpas_increment_self_add_f90(keyInc_, dx.keyInc_);
   return *this;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS & IncrementMPAS::operator-=(const IncrementMPAS & dx) {
   ASSERT(this->validTime() == dx.validTime());
-  *fields_ -= *dx.fields_;
+  mpas_increment_self_sub_f90(keyInc_, dx.keyInc_);
   return *this;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS & IncrementMPAS::operator*=(const double & zz) {
-  *fields_ *= zz;
+  mpas_increment_self_mul_f90(keyInc_, zz);
   return *this;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::zero() {
-  fields_->zero();
+  mpas_increment_zero_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::zero(const util::DateTime & vt) {
-  fields_->zero(vt);
+  mpas_increment_zero_f90(keyInc_);
+  time_ = vt;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::axpy(const double & zz, const IncrementMPAS & dx,
                        const bool check) {
   ASSERT(!check || this->validTime() == dx.validTime());
-  fields_->axpy(zz, *dx.fields_);
+  mpas_increment_axpy_inc_f90(keyInc_, zz, dx.keyInc_);
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::axpy(const double & zz, const StateMPAS & xx,
+                       const bool check) {
+  ASSERT(!check || this->validTime() == xx.validTime());
+  mpas_increment_axpy_inc_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::accumul(const double & zz, const StateMPAS & xx) {
-  fields_->axpy(zz, xx.fields());
+  mpas_increment_axpy_state_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::schur_product_with(const IncrementMPAS & dx) {
-  fields_->schur_product_with(*dx.fields_);
+  mpas_increment_self_schur_f90(keyInc_, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
 double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
-  return dot_product(*fields_, *other.fields_);
+  double zz;
+  mpas_increment_dot_prod_f90(keyInc_, other.keyInc_, zz);
+  return zz;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::random() {
-  fields_->random();
+  mpas_increment_random_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
 /// Get increment values at observation locations
 // -----------------------------------------------------------------------------
 void IncrementMPAS::getValuesTL(const ufo::Locations & locs,
                                 const oops::Variables & vars,
-                                ufo::GeoVaLs & cols,
+                                ufo::GeoVaLs & gom,
                                 const GetValuesTrajMPAS & traj) const {
-  oops::Log::debug() << "IncrementMPAS::interpolateTL fields in" << std::endl;
-  fields_->getValuesTL(locs, vars, cols, traj);
+  oops::Log::trace() << "IncrementMPAS::getValuesTL starting" << std::endl;
+  const eckit::Configuration * conf = &vars.toFortran();
+  mpas_increment_getvalues_tl_f90(keyInc_, locs.toFortran(), &conf,
+                              gom.toFortran(), traj.toFortran());
+  oops::Log::trace() << "IncrementMPAS::getValuesTL done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::getValuesAD(const ufo::Locations & locs,
                                 const oops::Variables & vars,
-                                const ufo::GeoVaLs & cols,
+                                const ufo::GeoVaLs & gom,
                                 const GetValuesTrajMPAS & traj) {
-  oops::Log::debug() << "IncrementMPAS::interpolateAD gom " << cols
-                     << std::endl;
-  oops::Log::debug() << "IncrementMPAS::interpolateAD fields in" << *fields_
-                     << std::endl;
-  fields_->getValuesAD(locs, vars, cols, traj);
+  const eckit::Configuration * conf = &vars.toFortran();
+  oops::Log::trace() << "IncrementMPAS::getValuesAD starting" << std::endl;
+  mpas_increment_getvalues_ad_f90(keyInc_, locs.toFortran(), &conf,
+                                  gom.toFortran(), traj.toFortran());
+  oops::Log::trace() << "IncrementMPAS::getValuesAD done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Unstructured grid
 // -----------------------------------------------------------------------------
 void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug,
                              const int & colocated) const {
-  fields_->ug_coord(ug, colocated);
+  mpas_increment_ug_coord_f90(keyInc_, ug.toFortran(), colocated);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug,
                                 const int & colocated) const {
-  fields_->field_to_ug(ug, colocated);
+  mpas_increment_increment_to_ug_f90(keyInc_, ug.toFortran(), colocated);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug) {
-  fields_->field_from_ug(ug);
+  mpas_increment_increment_from_ug_f90(keyInc_, ug.toFortran());
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void IncrementMPAS::read(const eckit::Configuration & files) {
-  fields_->read(files);
+void IncrementMPAS::read(const eckit::Configuration & config) {
+  const eckit::Configuration * conf = &config;
+  util::DateTime * dtp = &time_;
+  mpas_increment_read_file_f90(keyInc_, &conf, &dtp);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::write(const eckit::Configuration & files) const {
-  fields_->write(files);
+void IncrementMPAS::write(const eckit::Configuration & config) const {
+  const eckit::Configuration * conf = &config;
+  const util::DateTime * dtp = &time_;
+  mpas_increment_write_file_f90(keyInc_, &conf, &dtp);
+}
+// -----------------------------------------------------------------------------
+double IncrementMPAS::norm() const {
+  double zz = 0.0;
+  mpas_increment_rms_f90(keyInc_, zz);
+  return zz;
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::print(std::ostream & os) const {
-  os << std::endl << "  Valid time: " << validTime();
-  os << *fields_;
+  int nc = 0;
+  int nf = 0;
+  os << std::endl << "  Valid time: " << validTime() << std::endl;
+  mpas_increment_sizes_f90(keyInc_, nc, nf);
+  os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
+     ", Fields = " << nf;
+  std::vector<double> zstat(3*nf);
+  mpas_increment_gpnorm_f90(keyInc_, nf, zstat[0]);
+  for (int jj = 0; jj < nf; ++jj) {
+    os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
+       << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2];
+  }
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::dirac(const eckit::Configuration & config) {
-  fields_->dirac(config);
+  const eckit::Configuration * conf = &config;
+  mpas_increment_dirac_f90(keyInc_, &conf);
 }
 // -----------------------------------------------------------------------------
 

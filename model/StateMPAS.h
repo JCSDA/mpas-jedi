@@ -13,10 +13,15 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "FieldsMPAS.h"
+#include "model/StateMPASFortran.h"
+
+#include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 namespace eckit {
   class Configuration;
@@ -28,7 +33,6 @@ namespace ufo {
 }
 
 namespace oops {
-  class UnstructuredGrid;
   class Variables;
 }
 
@@ -56,8 +60,12 @@ class StateMPAS : public util::Printable,
             const eckit::Configuration &);
   StateMPAS(const GeometryMPAS &, const StateMPAS &);
   StateMPAS(const StateMPAS &);
-  virtual ~StateMPAS();
+  ~StateMPAS();
+//  virtual ~StateMPAS();
+
   StateMPAS & operator=(const StateMPAS &);
+  void zero();
+  void accumul(const double &, const StateMPAS &);
 
 /// Get state values at observation locations
   void getValues(const ufo::Locations &, const oops::Variables &,
@@ -75,26 +83,24 @@ class StateMPAS : public util::Printable,
   void read(const eckit::Configuration &);
   void analytic_init(const eckit::Configuration &, const GeometryMPAS &);
   void write(const eckit::Configuration &) const;
-  double norm() const {return fields_->norm();}
-  const util::DateTime & validTime() const {return fields_->time();}
-  util::DateTime & validTime() {return fields_->time();}
+  double norm() const;
 
-/// Access to fields
-  FieldsMPAS & fields() {return *fields_;}
-  const FieldsMPAS & fields() const {return *fields_;}
+  boost::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
 
-  boost::shared_ptr<const GeometryMPAS> geometry() const {
-    return fields_->geometry();
-  }
+  const util::DateTime & time() const {return time_;}
+  util::DateTime & time() {return time_;}
+  const util::DateTime & validTime() const {return time_;}
+  util::DateTime & validTime() {return time_;}
 
-/// Other
-  void zero();
-  void accumul(const double &, const StateMPAS &);
+  int & toFortran() {return keyState_;}
+  const int & toFortran() const {return keyState_;}
 
  private:
   void print(std::ostream &) const;
-  boost::scoped_ptr<FieldsMPAS> fields_;
-  boost::scoped_ptr<FieldsMPAS> stash_;
+  F90state keyState_;
+  boost::shared_ptr<const GeometryMPAS> geom_;
+  oops::Variables vars_;
+  util::DateTime time_;
 };
 // -----------------------------------------------------------------------------
 

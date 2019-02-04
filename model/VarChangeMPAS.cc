@@ -23,8 +23,8 @@ VarChangeMPAS::VarChangeMPAS(const StateMPAS & bg,
                              const GeometryMPAS & resol,
                              const eckit::Configuration & conf) {
     const eckit::Configuration * configc = &conf;
-    mpas_varchange_setup_f90(keyFtnConfig_, bg.fields().toFortran(),
-                             fg.fields().toFortran(), resol.toFortran(),
+    mpas_varchange_setup_f90(keyFtnConfig_, bg.toFortran(),
+                             fg.toFortran(), resol.toFortran(),
                              &configc);
     oops::Log::trace() << "VarChangeMPAS created" << std::endl;
 }
@@ -37,8 +37,8 @@ VarChangeMPAS::~VarChangeMPAS() {
 void VarChangeMPAS::multiply(const IncrementMPAS & dxa,
                              IncrementMPAS & dxm) const {
   dxm = dxa;
-//  mpas_varchange_multiply_f90(keyFtnConfig_, dxa.fields().toFortran(),
-//                              dxm.fields().toFortran());
+//  mpas_varchange_multiply_f90(keyFtnConfig_, dxa.toFortran(),
+//                              dxm.toFortran());
 }
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiplyInverse(const IncrementMPAS & dxm,
@@ -50,8 +50,8 @@ void VarChangeMPAS::multiplyAD(const IncrementMPAS & dxm,
                                IncrementMPAS & dxa) const {
   dxa = dxm;
 //  mpas_varchange_multiplyadjoint_f90(keyFtnConfig_,
-//                                     dxm.fields().toFortran(),
-//                                     dxa.fields().toFortran());
+//                                     dxm.toFortran(),
+//                                     dxa.toFortran());
 }
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiplyInverseAD(const IncrementMPAS & dxa,

@@ -6,19 +6,23 @@
 module mpas_geom_mod
 
 use iso_c_binding
-use config_mod
-!use type_mpl, only: mpl
 
+!oops
+use config_mod
+
+!MPAS-Model
 use mpas_derived_types
 use mpas_kind_types
 use mpas_constants
-use mpas_kinds, only : kind_real
+use kinds, only : kind_real
 use mpas_dmpar, only: mpas_dmpar_sum_int
 use mpas_subdriver
 use atm_core
 use mpas_pool_routines
 use mpas_run_mod, only : run_corelist=>corelist, run_domain=>domain
 
+!mpas_jedi
+use mpas_constants_mod
 
 implicit none
 private
@@ -81,7 +85,6 @@ subroutine geo_setup(self, c_conf)
    type(mpas_geom), intent(inout) :: self
    type(c_ptr), intent(in) :: c_conf
    character(len=StrKIND) :: string1
-   real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
 
    type (mpas_pool_type), pointer :: meshPool, fg
    type (block_type), pointer :: block_ptr

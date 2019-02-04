@@ -14,9 +14,9 @@
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "Fortran.h"
-#include "GeometryMPAS.h"
-#include "MPASTraits.h"
+#include "model/GeometryMPAS.h"
+#include "model/MPASTraits.h"
+
 #include "oops/base/ModelBase.h"
 #include "oops/base/Variables.h"
 #include "oops/util/Duration.h"
@@ -28,9 +28,12 @@ namespace eckit {
   class Configuration;
 }
 
+namespace oops {
+  class Variables;
+}
+
 namespace mpas {
   class ModelBiasMPAS;
-  class FieldsMPAS;
   class StateMPAS;
 
 // -----------------------------------------------------------------------------

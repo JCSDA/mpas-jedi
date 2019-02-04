@@ -27,6 +27,8 @@ namespace eckit {
 }
 
 namespace mpas {
+  class StateMPAS;
+  class IncrementMPAS;
 
 // -----------------------------------------------------------------------------
 /// MPAS linear identity model definition.

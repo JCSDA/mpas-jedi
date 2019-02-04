@@ -9,7 +9,8 @@ use iso_c_binding
 use config_mod
 use duration_mod
 use mpas_geom_mod
-use mpas_fields_mod
+use mpas_state_utils_mod
+use mpas_increment_utils_mod
 use mpas_trajectories
 
 use mpas_derived_types
@@ -20,8 +21,9 @@ use atm_core
 use mpas_stream_manager
 use mpas_atmphys_manager, only: physics_run_finalize
 use mpas4da_mod
-use mpas_kinds, only : kind_real
 use mpas_constants, only : rgas, cp
+
+use kinds, only : kind_real
 
 implicit none
 private
@@ -38,7 +40,7 @@ public :: mpas_model, &
 type :: mpas_model
    ! GD: for now, model is just using the full geom structure
    ! we update the fields for time integration using subfield
-   ! from mpas_field
+   ! from mpas_state
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
    real (kind=kind_real) :: dt
@@ -151,12 +153,12 @@ end subroutine model_delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_prepare_integration(self, flds)
+subroutine model_prepare_integration(self, jedi_state)
 
    implicit none
 
    type(mpas_model) :: self
-   type(mpas_field) :: flds
+   type(mpas_state) :: jedi_state
    logical, pointer :: config_do_restart, config_do_DAcycling, config_dt
    integer :: ierr = 0
    real (kind=kind_real), pointer :: dt
@@ -185,8 +187,7 @@ subroutine model_prepare_integration(self, flds)
    !----------------------------------------------------------------
 
    ! here or where increment is computed
-   call da_copy_sub2all_fields(self % domain, flds % subFields)   
-   call da_copy_sub2all_fields(self % domain, flds % auxFields)   
+   call da_copy_sub2all_fields(self % domain, jedi_state % subFields)   
 
 !#ifdef odelMPAS_prepare
    !-------------------------------------------------------------------
@@ -195,18 +196,18 @@ subroutine model_prepare_integration(self, flds)
    !-------------------------------------------------------------------
 
    ! here or where increment is computed
-   !call mpas_pool_get_field(flds % subfields, 'uReconstructZonal', uReconstructZonal)
-   !call mpas_pool_get_field(flds % subfields, 'uReconstructMeridional', uReconstructMeridional)
+   !call mpas_pool_get_field(jedi_state % subfields, 'uReconstructZonal', uReconstructZonal)
+   !call mpas_pool_get_field(jedi_state % subfields, 'uReconstructMeridional', uReconstructMeridional)
    !call mpas_pool_get_field(state, 'u', u_field, 1)
    !call uv_cell_to_edges(self%domain, uReconstructZonal, uReconstructMeridional, u_field, & 
-   !                  & flds%geom%lonCell, flds%geom%latCell, &
-   !                  & flds%geom%nCellsGlobal, flds%geom%edgeNormalVectors, &
-   !                  & flds%geom%nEdgesOnCell, flds%geom%edgesOnCell, flds%geom%nVertLevels)
+   !                  & jedi_state%geom%lonCell, jedi_state%geom%latCell, &
+   !                  & jedi_state%geom%nCellsGlobal, jedi_state%geom%edgeNormalVectors, &
+   !                  & jedi_state%geom%nEdgesOnCell, jedi_state%geom%edgesOnCell, jedi_state%geom%nVertLevels)
 
    !-------------------------------------------------------------------
-   ! update domain % clock using mpas_field clock and config files
+   ! update domain % clock using mpas_state clock and config files
    !-------------------------------------------------------------------
-   startTime = mpas_get_clock_time(flds % clock, MPAS_START_TIME, ierr)
+   startTime = mpas_get_clock_time(jedi_state % clock, MPAS_START_TIME, ierr)
    call mpas_set_clock_time(self % domain % clock, startTime, MPAS_START_TIME)
    call mpas_get_time(startTime, dateTimeString=startTimeStamp) ! needed by xtime later
    call mpas_pool_get_config(self % domain % blocklist % configs,'config_run_duration',config_run_duration)
@@ -216,9 +217,9 @@ subroutine model_prepare_integration(self, flds)
    call mpas_get_time(stopTime, dateTimeString=stopTimeStamp)
    write(*,*)'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
  !--
-   nowTime = mpas_get_clock_time(flds % clock, MPAS_NOW, ierr)
+   nowTime = mpas_get_clock_time(jedi_state % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
-   write(*,*)'MPAS_NOW from flds % clock: ',trim(nowTimeStamp)
+   write(*,*)'MPAS_NOW from jedi_state % clock: ',trim(nowTimeStamp)
    nowTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
    write(*,*)'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
@@ -289,11 +290,11 @@ end subroutine model_prepare_integration
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_prepare_integration_ad(self, flds)
+subroutine model_prepare_integration_ad(self, inc)
 
    implicit none
-   type(mpas_model) :: self
-   type(mpas_field) :: flds
+   type(mpas_model)     :: self
+   type(mpas_increment) :: inc
 
    write(*,*)'===> model_prepare_integration_ad'
 
@@ -301,11 +302,11 @@ end subroutine model_prepare_integration_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_prepare_integration_tl(self, flds)
+subroutine model_prepare_integration_tl(self, inc)
 
    implicit none
-   type(mpas_model) :: self
-   type(mpas_field) :: flds
+   type(mpas_model)     :: self
+   type(mpas_increment) :: inc
 
    write(*,*)'===> model_prepare_integration_tl'
 
@@ -313,57 +314,46 @@ end subroutine model_prepare_integration_tl
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_propagate(self, flds)
+subroutine model_propagate(self, jedi_state)
+
+   use mpas_field_utils_mod
 
    implicit none
    type(mpas_model) :: self
-   type(mpas_field) :: flds
+   type(mpas_state) :: jedi_state
 
-   type (mpas_pool_type), pointer :: state, diag, mesh
-   type (field2DReal), pointer :: field2d, field2d_b, field2d_c
+   type (mpas_pool_type), pointer :: state
    real (kind=kind_real) :: dt
    integer :: itimestep
 
    write(*,*)'===> model_propagate'
 
    itimestep = 1
+   ! Perform single time step, including
+   !  update of mpas wind from the edges to center
    call atm_do_timestep(self % domain, self % dt, itimestep)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
    call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(self % domain % clock)
-   call mpas_advance_clock(flds % clock) !Advance flds % clock, Too
+   call mpas_advance_clock(jedi_state % clock) !Advance jedi_state % clock, Too
 
    ! TODO: GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be
    ! interfaced with fortran.
    !if ( mpas_is_clock_time(self % domain % clock) ) then 
-      !call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
-      call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
-      call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
-      !call atm_compute_restart_diagnostics(state, 1, diag, mesh)
-      call atm_compute_output_diagnostics(state, 1, diag, mesh) !--> diagnose theta, rho, pressure
-      ! update mpas wind from the edges to center
-      ! copy from allfields to subfields
-      call da_copy_all2sub_fields(self % domain, flds % subFields) 
-      call da_copy_all2sub_fields(self % domain, flds % auxFields) 
-      !TODO- special case: read theta, pressure and convert to temperature
-      call mpas_pool_get_field(flds % auxFields, 'theta', field2d_b)
-      call mpas_pool_get_field(flds % subFields, 'pressure', field2d_c)
-      call mpas_pool_get_field(flds % subFields, 'temperature', field2d)
-      field2d % array(:,:) = field2d_b % array(:,:) / &
-                ( 100000.0_kind_real / field2d_c % array(:,:) ) ** ( rgas / cp )
+      call update_diagnostic_fields(self % domain, jedi_state % subFields, jedi_state % geom % nCellsSolve)
    !end if
 
 end subroutine model_propagate
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_propagate_ad(self, flds, traj)
+subroutine model_propagate_ad(self, inc, traj)
 
    implicit none
 
    type(mpas_model)      :: self
-   type(mpas_field)      :: flds
+   type(mpas_increment)  :: inc
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_prepare_integration_ad'
@@ -372,11 +362,11 @@ end subroutine model_propagate_ad
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_propagate_tl(self, flds, traj)
+subroutine model_propagate_tl(self, inc, traj)
 
    implicit none
    type(mpas_model)      :: self
-   type(mpas_field)      :: flds
+   type(mpas_increment)  :: inc
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_propagate_tl'
@@ -385,15 +375,15 @@ end subroutine model_propagate_tl
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_prop_traj(self, flds, traj)
+subroutine model_prop_traj(self, jedi_state, traj)
 
    implicit none
    type(mpas_model)      :: self
-   type(mpas_field)      :: flds
+   type(mpas_state)      :: jedi_state
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_prop_traj in mpas_model_mod.F90'
-   call set_traj(traj,flds)
+   call set_traj(traj,jedi_state)
 
 end subroutine model_prop_traj
 

@@ -30,7 +30,7 @@ StateTest:
     sinus: 2
   InterpTest:
     variables:
-    - virtual_temperature
+    - air_temperature
     - atmosphere_ln_pressure_coordinate
   norm-gen: '21598.849125951634'
   tolerance:

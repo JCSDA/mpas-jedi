@@ -16,7 +16,7 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 LocalizationMatrixMPAS::LocalizationMatrixMPAS(const GeometryMPAS & resol,
                                           const eckit::Configuration & config) {
-  const eckit::Configuration * configc = &config;
+//  const eckit::Configuration * configc = &config;
 }
 // -----------------------------------------------------------------------------
 LocalizationMatrixMPAS::~LocalizationMatrixMPAS() {

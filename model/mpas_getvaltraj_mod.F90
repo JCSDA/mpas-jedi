@@ -21,7 +21,7 @@ type :: mpas_getvaltraj
  logical :: noobs
  type (mpas_pool_type), pointer :: pool_traj
  type(bump_type) :: bump
- integer :: nsize = 2 !< size of pool_traj, currently for temperature, index_qv
+! integer :: nsize = 2 !< size of pool_traj, currently for temperature, index_qv
  logical :: lalloc = .false.
  contains
   final :: dummy_final !Work around for gcc compiler bug
@@ -63,7 +63,7 @@ self%bumpid = c_key_self !Just use key for the BUMP identifier
 self%ngrid = 0
 self%noobs = .false.
 
-call mpas_pool_create_pool(self % pool_traj, self % nsize)
+call mpas_pool_create_pool(self % pool_traj)
 
 end subroutine c_mpas_getvaltraj_setup
 

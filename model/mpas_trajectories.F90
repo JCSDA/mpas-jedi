@@ -20,10 +20,7 @@ type :: mpas_trajectory
   !integer :: nothing
   integer :: nf                                  ! Number of variables in fld
   character(len=22), allocatable  :: fldnames(:) ! Variable identifiers
-  !type (mpas_pool_type)  :: subFields   !---> state variables (to be analyzed)
-  !type (mpas_pool_type)  :: auxFields   !---> auxiliary variables, such as pressure, t2m, u10, v10, Tsfc
   type (mpas_pool_type), pointer  :: subFields   !---> state variables (to be analyzed)
-  type (mpas_pool_type), pointer  :: auxFields   !---> auxiliary variables, such as pressure, t2m, u10, v10, Tsfc
 end type mpas_trajectory
 
 #define LISTED_TYPE mpas_trajectory
@@ -42,31 +39,21 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine set_traj(self,flds)
-use mpas_fields_mod
+subroutine set_traj(self,state)
+use mpas_state_utils_mod
+use mpas_field_utils_mod, only: copy_pool
 use mpas_pool_routines
 implicit none
 type(mpas_trajectory), intent(inout) :: self
-type(mpas_field)     , intent(in   ) :: flds
+type(mpas_state)     , intent(in   ) :: state
 
  write(*,*) '===> set_traj(self) in mpas_trajectories.F90'
 
- self%nf = flds%nf
+ self%nf = state%nf
  allocate(self%fldnames( self%nf ))
- self%fldnames = flds%fldnames
+ self%fldnames = state%fldnames
 
- write(*,*) ' associated(self%subFields) = ', associated(self%subFields) 
- if( associated(self%subFields) ) then
-   call mpas_pool_empty_pool(self % subFields)
-   call mpas_pool_destroy_pool(self % subFields)
-   call mpas_pool_empty_pool(self % auxFields)
-   call mpas_pool_destroy_pool(self % auxFields)
- endif
-
- call mpas_pool_create_pool(self % subFields,self % nf)
- call mpas_pool_clone_pool(flds % subFields, self % subFields)
- call mpas_pool_create_pool(self % auxFields) !???,self % nf)
- call mpas_pool_clone_pool(flds % subFields, self % auxFields)
+ call copy_pool(state % subFields, self % subFields)
 
  write(*,*) '===> DONE set_traj(self) in mpas_trajectories.F90'
 

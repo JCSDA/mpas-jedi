@@ -18,31 +18,36 @@
    !
    !-----------------------------------------------------------------------
 
-   use mpas_derived_types
-   use mpas_pool_routines
-   use mpas_dmpar
-   use mpas_abort, only : mpas_dmpar_global_abort
-   use atm_core
-   use mpas_constants, only : gravity, rgas, rv, pii
-   use mpas_kinds, only : kind_real
+!oops
+use kinds, only : kind_real
 
-   use ufo_vars_mod 
+!ufo
+use ufo_vars_mod 
 
-   private
+!MPAS-Model
+use atm_core
+use mpas_abort, only : mpas_dmpar_global_abort
+use mpas_constants, only : gravity, rgas, rv, pii
+use mpas_dmpar
+use mpas_derived_types
+use mpas_field_routines
+use mpas_pool_routines
 
-   public :: update_mpas_field
-   public :: convert_mpas_field2ufo,   &
-             convert_mpas_field2ufoTL, &
-             convert_mpas_field2ufoAD
+private
 
-   public :: convert_type_soil, convert_type_veg
-   public :: uv_to_wdir
+public :: convert_type_soil, convert_type_veg
+public :: uv_to_wdir
 
-   contains
+public :: update_mpas_field
+public :: convert_mpas_field2ufo,   &
+          convert_mpas_field2ufoTL, &
+          convert_mpas_field2ufoAD
+
+contains
 
 !-------------------------------------------------------------------------------------------
 
-   subroutine update_mpas_field(domain, pool_a)
+subroutine update_mpas_field(domain, pool_a)
 
    implicit none
 
@@ -98,7 +103,7 @@
 
    end do
 
-   end subroutine update_mpas_field
+end subroutine update_mpas_field
 
 !-------------------------------------------------------------------------------------------
 
@@ -147,8 +152,8 @@
 
 !-------------------------------------------------------------------------------------------
 
-   !-from subroutine call_crtm in GSI/crtm_interface.f90
-   subroutine uv_to_wdir(uu5, vv5, wind10_direction)
+!-from subroutine call_crtm in GSI/crtm_interface.f90
+subroutine uv_to_wdir(uu5, vv5, wind10_direction)
 
    implicit none
 
@@ -177,21 +182,20 @@
    windangle        = atan(abs(windratio))   ! wind azimuth is in radians
    wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) )
 
-   end subroutine uv_to_wdir
+end subroutine uv_to_wdir
 
 !-------------------------------------------------------------------------------------------
 
-   !--- variables can be found in subFields or auxFields
-   subroutine convert_mpas_field2ufo(geom, pool_a, pool_b, pool_c, fieldname, nfield, ngrid)
+   !--- variables can be found in subFields
+subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield, ngrid)
 
    use mpas_geom_mod
 
    implicit none
 
    type(mpas_geom),                intent(in)  :: geom         !< geometry
-   type (mpas_pool_type), pointer, intent(in ) :: pool_a       !< self % subFields
-   type (mpas_pool_type), pointer, intent(in ) :: pool_b       !< self % auxFields
-   type (mpas_pool_type), pointer, intent(out) :: pool_c       !< pool with geovals variable
+   type (mpas_pool_type), pointer, intent(in ) :: subFields    !< self % subFields
+   type (mpas_pool_type), pointer, intent(out) :: convFields   !< pool with geovals variable
    character (len=*),              intent(in ) :: fieldname(:) !< list of variables for geovals
    integer,                        intent(in ) :: nfield       !< number of variables
    integer,                        intent(in ) :: ngrid        !< number of grid cells
@@ -217,7 +221,7 @@
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    !--- create new pool for geovals
-   call mpas_pool_create_pool(pool_c, nfield)
+   call mpas_pool_create_pool(convFields)
 
    do ivar=1, nfield
 !     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
@@ -225,88 +229,82 @@
      select case (trim(fieldname(ivar)))
 
      case ( "virtual_temperature" ) !-var_tv 
-
-        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a) !< get temperature
-        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b) !< get index_qv
-!        write(*,*) 'MIN/MAX of temperature=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        call mpas_pool_get_field(subFields, 'temperature', field2d_src) !< get temperature
+        call mpas_pool_get_array(subFields,    'index_qv', r2d_ptr_b) !< get index_qv
+!        write(*,*) 'MIN/MAX of temperature=',minval(field2d_src%array),maxval(field2d_src%array)
 !        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
 
 !%%%  NL: Calculate Tv from T and qv. TODO: use clean formula
-        field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
+        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
              !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
 !        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
         field2d % fieldName = var_tv
 
-        call mpas_pool_add_field(pool_c, var_tv, field2d)
+        call mpas_pool_add_field(convFields, var_tv, field2d)
 
 !        write(*,*) "end-of ",var_tv
 
      case ( "air_temperature" ) !-var_ts
-        call mpas_pool_get_field(pool_a, 'temperature', field2d_src) !< get temperature
+        call mpas_pool_get_field(subFields, 'temperature', field2d_src) !< get temperature
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
         field2d % fieldName = trim(fieldname(ivar))
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
-        call mpas_pool_get_field(pool_a, 'uReconstructZonal', field2d_src) !< get zonal wind
+        call mpas_pool_get_field(subFields, 'uReconstructZonal', field2d_src) !< get zonal wind
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
 !        write(*,*) 'MIN/MAX of zonal wind=',minval(field2d % array),maxval(field2d % array)
         field2d % fieldName = trim(fieldname(ivar))
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ( "northward_wind" ) !-var_??? northward_wind
-        call mpas_pool_get_field(pool_a, 'uReconstructMeridional', field2d_src) !< get meridional wind
+        call mpas_pool_get_field(subFields, 'uReconstructMeridional', field2d_src) !< get meridional wind
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
 !        write(*,*) 'MIN/MAX of meridional wind=',minval(field2d % array),maxval(field2d % array)
         field2d % fieldName = trim(fieldname(ivar))
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
 
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
 
-        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a) !< get pressure
-!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+        call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
         call mpas_duplicate_field(field2d_src, field2d)
 
-        field2d % array(:,1:ngrid) = log( r2d_ptr_a(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !< unit: Pa -> hPa ->cb
+        field2d % array(:,1:ngrid) = log( field2d_src%array(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !< unit: Pa -> hPa ->cb
 !        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
         field2d % fieldName = var_prsl
 
-        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+        call mpas_pool_add_field(convFields, var_prsl, field2d)
 
 !        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'index_qv', field2d_src) !< get qv
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = max(0.0_kind_real,r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real) ! [kg/kg] -> [g/kg]
+        field2d % array(:,1:ngrid) = max(0.0_kind_real,&
+           field2d_src%array(:,1:ngrid) * 1000.0_kind_real) ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
-        call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        call mpas_pool_add_field(convFields, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) / 100.0_kind_real ! [Pa] -> [hPa]
+        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) / 100.0_kind_real ! [Pa] -> [hPa]
         field2d % fieldName = var_prs
-        call mpas_pool_add_field(pool_c, var_prs, field2d)
+        call mpas_pool_add_field(convFields, var_prs, field2d)
 !        write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels") !-var_prsi
-        call mpas_pool_get_array(pool_a, "pressure", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'w', field2d_src) ! as a dummy array
+        call mpas_pool_get_array(subFields, "pressure", r2d_ptr_a)
+        call mpas_pool_get_field(subFields, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
 
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
@@ -354,38 +352,36 @@
 !        write(*,*) 'test prsi      =',field2d % array(:,1)
 
         field2d % fieldName = var_prsi
-        call mpas_pool_add_field(pool_c, var_prsi, field2d)
+        call mpas_pool_add_field(convFields, var_prsi, field2d)
 !        write(*,*) "end-of ",var_prsi
 
      case ("mass_concentration_of_ozone_in_air") !-var_oz :TODO: not directly available from MPAS
-        call mpas_pool_get_array(pool_b, "theta", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+!        call mpas_pool_get_array(subFields, "o3", r2d_ptr_a)
+        call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,1:ngrid) = 0.0_kind_real !r2d_ptr_a(:,1:ngrid) ! convert ??
         field2d % fieldName = var_oz
-        call mpas_pool_add_field(pool_c, var_oz, field2d)
+        call mpas_pool_add_field(convFields, var_oz, field2d)
 !        write(*,*) "end-of ",var_oz
 
      case ("mass_concentration_of_carbon_dioxide_in_air") !-var_co2 :TODO: not directly available from MPAS
-        call mpas_pool_get_array(pool_b, "theta", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+!        call mpas_pool_get_array(subFields, "co2", r2d_ptr_a)
+        call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
         field2d % array(:,1:ngrid) = 0.0_kind_real !r2d_ptr_a(:,1:ngrid) ! convert ??
         field2d % fieldName = var_co2
-        call mpas_pool_add_field(pool_c, var_co2, field2d)
+        call mpas_pool_add_field(convFields, var_co2, field2d)
 !        write(*,*) "end-of ",var_co2
 
      case ("atmosphere_mass_content_of_cloud_liquid_water") !-var_clw 
-        call mpas_pool_get_array(pool_b, "index_qc", r2d_ptr_a) !- [kg/kg] 
-!        write(*,*) 'MIN/MAX of index_qc=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'index_qc', field2d_src) !- [kg/kg]
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
-        call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+        call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
         do i=1,geom % nCells
         do k=1,geom % nVertLevels
           kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
-          field2d % array(k,i) = r2d_ptr_a(k,i) * kgkg_kgm2 
+          field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
         enddo
         enddo
 !        write(*,*) 'MIN/MAX of index_qc.converted=',minval(field2d % array),maxval(field2d % array)
@@ -393,111 +389,105 @@
                                               ! multiply kgkg_kgm2=(atmosphere(1)%level_pressure(k)-atmosphere(1)%level_pressure(k-1))*r100/grav
                                               ! see gsi/crtm_interface.f90 or wrfda/da_get_innov_vector_crtm.inc
         field2d % fieldName = var_clw
-        call mpas_pool_add_field(pool_c, var_clw, field2d)
+        call mpas_pool_add_field(convFields, var_clw, field2d)
 !        write(*,*) "end-of ",var_clw
 
      case ("atmosphere_mass_content_of_cloud_ice") !-var_cli 
-        call mpas_pool_get_array(pool_b, "index_qi", r2d_ptr_a) !- [kg/kg] 
-!        write(*,*) 'MIN/MAX of index_qi=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'index_qi', field2d_src) !- [kg/kg]
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
-        call mpas_pool_get_array(pool_c, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+        call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
         do i=1,geom % nCells
         do k=1,geom % nVertLevels
           kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
-          field2d % array(k,i) = r2d_ptr_a(k,i) * kgkg_kgm2 
+          field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
         enddo
         enddo
 !        write(*,*) 'MIN/MAX of index_qi.converted=',minval(field2d % array),maxval(field2d % array)
         !field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) ! TODO: [kg/kg] -> [kg/m2]
         !                                      ! same as var_clw
         field2d % fieldName = var_cli
-        call mpas_pool_add_field(pool_c, var_cli, field2d)
+        call mpas_pool_add_field(convFields, var_cli, field2d)
 !        write(*,*) "end-of ",var_cli
 
      case ("effective_radius_of_cloud_liquid_water_particle") !-var_clwefr :TODO: currently filled w/ default value
-        call mpas_pool_get_array(pool_b, "re_cloud", r2d_ptr_a) !- [m]
-!        write(*,*) 'MIN/MAX of re_cloud=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 're_cloud', field2d_src) !- [m]
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 10.0_kind_real !r2d_ptr_a(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+        field2d % array(:,1:ngrid) = 10.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_clwefr
-        call mpas_pool_add_field(pool_c, var_clwefr, field2d)
+        call mpas_pool_add_field(convFields, var_clwefr, field2d)
 !        write(*,*) "end-of ",var_clwefr
 
      case ("effective_radius_of_cloud_ice_particle") !-var_cliefr :TODO: currently filled w/ default value
-        call mpas_pool_get_array(pool_b, "re_ice", r2d_ptr_a) !- [m]
-!        write(*,*) 'MIN/MAX of re_ice=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 're_ice', field2d_src) !- [m]
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 30.0_kind_real !r2d_ptr_a(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+        field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
         field2d % fieldName = var_cliefr
-        call mpas_pool_add_field(pool_c, var_cliefr, field2d)
+        call mpas_pool_add_field(convFields, var_cliefr, field2d)
 !        write(*,*) "end-of ",var_cliefr
 
      case ("Water_Temperature", "Land_Temperature", "Ice_Temperature", "Snow_Temperature" )
 
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
 
         !-NOTE: Currently assign "skintemp" for all temperature
         !-TODO: More proper variable for each surface temperature ?
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
+        call mpas_pool_get_array(subFields, "skintemp", r1d_ptr_a) !"ground or water surface temperature"
 !        write(*,*) 'MIN/MAX of skintemp=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) ! quantity and unit might change
         field1d % fieldName = trim(fieldname(ivar))
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field1d)
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
+        call mpas_pool_get_array(subFields, "snowh", r1d_ptr_a)
 !        write(*,*) 'MIN/MAX of snowh=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) * 1000.0_kind_real ! [m] -> [mm]
         field1d % fieldName = var_sfc_sdepth
-        call mpas_pool_add_field(pool_c, var_sfc_sdepth, field1d)
+        call mpas_pool_add_field(convFields, var_sfc_sdepth, field1d)
 !        write(*,*) "end-of ",var_sfc_sdepth
 
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
+        call mpas_pool_get_array(subFields, "vegfra", r1d_ptr_a)
 !        write(*,*) 'MIN/MAX of vegfra=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) / 100.0_kind_real ! [unitless, 0~100] = [%, 0~1]
         field1d % fieldName = var_sfc_vegfrac
-        call mpas_pool_add_field(pool_c, var_sfc_vegfrac, field1d)
+        call mpas_pool_add_field(convFields, var_sfc_vegfrac, field1d)
 !        write(*,*) "end-of ",var_sfc_vegfrac
 
      case ("Lai") !-var_sfc_lai :TODO, has a value for restart file, not for init file
-        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
+        call mpas_pool_get_array(subFields, "lai", r1d_ptr_a)
 !        write(*,*) 'MIN/MAX of lai=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = 3.5_kind_real !r1d_ptr_a(:) ! convert ?
         field1d % fieldName = var_sfc_lai
-        call mpas_pool_add_field(pool_c, var_sfc_lai, field1d)
+        call mpas_pool_add_field(convFields, var_sfc_lai, field1d)
 !        write(*,*) "end-of ",var_sfc_lai
 
      case ("Soil_Moisture") !-var_sfc_soilm : NOTE: use 1st level
-        call mpas_pool_get_array(pool_b, "smois", r2d_ptr_a)
+        call mpas_pool_get_array(subFields, "smois", r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of smois=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = 0.05_kind_real !r2d_ptr_a(1,:) ! [m3/m3] -> [g/cm3] :TODO ~ Good enough ?? range [0,1]
         field1d % fieldName = var_sfc_soilm
-        call mpas_pool_add_field(pool_c, var_sfc_soilm, field1d)
+        call mpas_pool_add_field(convFields, var_sfc_soilm, field1d)
 !        write(*,*) "end-of ",var_sfc_soilm
 
      case ("Soil_Temperature") !-var_sfc_soilt : NOTE: use 1st level
-        call mpas_pool_get_array(pool_b, "tslb", r2d_ptr_a)
+        call mpas_pool_get_array(subFields, "tslb", r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of tslb=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
-        call mpas_pool_get_field(pool_b, 'u10', field1d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array(1:ngrid) = r2d_ptr_a(1,1:ngrid) ! [K] -> [K]
         field1d % fieldName = var_sfc_soilt
-        call mpas_pool_add_field(pool_c, var_sfc_soilt, field1d)
+        call mpas_pool_add_field(convFields, var_sfc_soilt, field1d)
 !        write(*,*) "end-of ",var_sfc_soilt
 
      case default
@@ -507,21 +497,20 @@
 
    end do !ivar
   
-   end subroutine convert_mpas_field2ufo
+end subroutine convert_mpas_field2ufo
 
 !-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoTL(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield, ngrid)
+subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fieldname, nfield, ngrid)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(in ) :: pool_traj    !< linearization state for conversion
-   type (mpas_pool_type), pointer, intent(in ) :: pool_a       !< self % subFields
-   type (mpas_pool_type), pointer, intent(in ) :: pool_b       !< self % auxFields
-   type (mpas_pool_type), pointer, intent(out) :: pool_c       !< pool with geovals variable
-   character (len=*),              intent(in ) :: fieldname(:) !< list of variables for geovals
-   integer,                        intent(in ) :: nfield       !< number of variables
-   integer,                        intent(in ) :: ngrid        !< number of grid cells
+   type (mpas_pool_type), pointer, intent(in ) :: trajFields    !< linearization state for conversion
+   type (mpas_pool_type), pointer, intent(in ) :: subFields_tl  !< self % subFields
+   type (mpas_pool_type), pointer, intent(out) :: convFields_tl !< pool with geovals variable
+   character (len=*),              intent(in ) :: fieldname(:)  !< list of variables for geovals
+   integer,                        intent(in ) :: nfield        !< number of variables
+   integer,                        intent(in ) :: ngrid         !< number of grid cells
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields
@@ -535,7 +524,8 @@
    integer :: ii, ivar
 
    !--- create new pull for ufo_vars
-   call mpas_pool_create_pool(pool_c, nfield)
+   call mpas_pool_create_pool(convFields_tl)
+
 
    do ivar=1, nfield
 !     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
@@ -545,42 +535,43 @@
      case ( "virtual_temperature" ) !-var_tv 
 
         !get TL variables
-        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
-        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
-!        write(*,*) 'MIN/MAX of TL temperature(in)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+        call mpas_pool_get_field(subFields_tl, 'temperature', field2d_src)
+        call mpas_pool_get_array(subFields_tl,    'index_qv', r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of TL temperature(in)=',minval(field2d_src%array),maxval(field2d_src%array)
 !        write(*,*) 'MIN/MAX of TL    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
-        call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
-        call mpas_pool_get_array(pool_traj,    'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(trajFields, 'temperature', traj_r2d_a)
+        call mpas_pool_get_array(trajFields,    'index_qv', traj_r2d_b)
 !        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
 !        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)
 
 !%%%  TL: Calculate Tv from T and qv. TODO: use clean formula
-        !NL: field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
-        field2d % array(:,1:ngrid) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,1:ngrid) ) * r2d_ptr_a(:,1:ngrid) &
-                                + traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,1:ngrid)
+        !NL: field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
+        field2d % array(:,1:ngrid) = &
+           ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * traj_r2d_b(:,1:ngrid) ) &
+           * field2d_src%array(:,1:ngrid) &
+           + traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,1:ngrid)
 !        write(*,*) 'MIN/MAX of TL Tv(out)=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
         field2d % fieldName = var_tv
 
-        call mpas_pool_add_field(pool_c, var_tv, field2d)
+        call mpas_pool_add_field(convFields_tl, var_tv, field2d)
 
 !        write(*,*) "end-of ",var_tv
 
      case ( "air_temperature" ) !-var_ts
-        call mpas_pool_get_field(pool_a, 'temperature', field2d_src) !< get temperature
+        call mpas_pool_get_field(subFields_tl, 'temperature', field2d_src) !< get temperature
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
         field2d % fieldName = trim(fieldname(ivar))
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields_tl, trim(fieldname(ivar)), field2d)
 
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
         !get TL variable
-        call mpas_pool_get_field(pool_a, 'uReconstructZonal', field2d_src)
+        call mpas_pool_get_field(subFields_tl, 'uReconstructZonal', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array
 !        write(*,*) 'MIN/MAX of TL zonal wind(in/out)=',minval(field2d % array),maxval(field2d % array)
 
@@ -589,14 +580,14 @@
 
         field2d % fieldName = trim(fieldname(ivar))
 
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields_tl, trim(fieldname(ivar)), field2d)
 
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ( "northward_wind" ) !-var_??? northward_wind
 
         !get TL variable
-        call mpas_pool_get_field(pool_a, 'uReconstructMeridional', field2d_src)
+        call mpas_pool_get_field(subFields_tl, 'uReconstructMeridional', field2d_src)
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array
 !        write(*,*) 'MIN/MAX of TL meridional wind(in/out)=',minval(field2d % array),maxval(field2d % array)
 
@@ -605,7 +596,7 @@
 
         field2d % fieldName = trim(fieldname(ivar))
 
-        call mpas_pool_add_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_add_field(convFields_tl, trim(fieldname(ivar)), field2d)
 
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
@@ -613,37 +604,32 @@
 
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to tl of var_prsl. but for general purpose ?!?!
         !BJ: Without this array, 3DVAR gives the same results.
-
-!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!
-!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_pool_get_field(subFields_tl, 'pressure', field2d_src)
+!        write(*,*) 'MIN/MAX of pressure=',minval(field2d_src%array),maxval(field2d_src%array)
 !        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
 !
-!NL        field2d % array(:,1:ngrid) = 0.0_kind_real !log( r2d_ptr_a(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
+!NL        field2d % array(:,1:ngrid) = 0.0_kind_real !log( field2d_src%array(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
 !        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 !
 !        field2d % fieldName = var_prsl
 !
-!        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+!        call mpas_pool_add_field(convFields_tl, var_prsl, field2d)
 !
 !        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
-        call mpas_pool_get_field(pool_b, 'theta', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields_tl, 'index_qv', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
-        call mpas_pool_add_field(pool_c, var_mixr, field2d)
+        call mpas_pool_add_field(convFields_tl, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
-        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
-        !field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid)
+        !call mpas_pool_get_field(subFields_tl, 'pressure', field2d)
+        !field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid)
         !field2d % fieldName = var_prs
-        !call mpas_pool_add_field(pool_c, var_prs, field2d)
+        !call mpas_pool_add_field(convFields_tl, var_prs, field2d)
         !write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
@@ -655,65 +641,66 @@
      case ("effective_radius_of_cloud_ice_particle")
 
      case ("Water_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!JJG: All non-TL trajectory model variables should be provided in trajFields
+!JJG: All TL model variables should be provided in subFields_tl
+!        call mpas_pool_get_array(subFields_tl, "", r1d_ptr_a)
      case ("Land_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "", r1d_ptr_a)
      case ("Ice_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "", r1d_ptr_a)
      case ("Snow_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "", r1d_ptr_a)
      case ("Water_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "skintemp", r1d_ptr_a)
      case ("Land_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "skintemp", r1d_ptr_a)
      case ("Ice_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "skintemp", r1d_ptr_a)
      case ("Snow_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "skintemp", r1d_ptr_a)
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "snowh", r1d_ptr_a)
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "vegfra", r1d_ptr_a)
      case ("Sfc_Wind_Speed", "Sfc_Wind_Direction")
-        call mpas_pool_get_array(pool_a, "u10", r1d_ptr_a)
-        call mpas_pool_get_array(pool_a, "v10", r1d_ptr_b)
+!        call mpas_pool_get_array(subFields_tl, "u10", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "v10", r1d_ptr_b)
      case ("Lai")
-        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "lai", r1d_ptr_a)
      case ("Soil_Moisture")
-        call mpas_pool_get_array(pool_b, "smois", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "smois", r1d_ptr_a)
      case ("Soil_Temperature")
-        call mpas_pool_get_array(pool_b, "tslb", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "tslb", r1d_ptr_a)
      case ("Land_Type_Index")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "", r1d_ptr_a)
      case ("Vegetation_Type")
-        call mpas_pool_get_array(pool_b, "ivgtyp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "ivgtyp", r1d_ptr_a)
      case ("Soil_Type")
-        call mpas_pool_get_array(pool_b, "isltyp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_tl, "isltyp", r1d_ptr_a)
 
      end select
 
    end do !ivar
 
   
-   end subroutine convert_mpas_field2ufoTL
+end subroutine convert_mpas_field2ufoTL
 
 !-------------------------------------------------------------------------------------------
 
-   subroutine convert_mpas_field2ufoAD(pool_traj, pool_a, pool_b, pool_c, fieldname, nfield, ngrid)
+subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fieldname, nfield, ngrid)
 
    implicit none
 
-   type (mpas_pool_type), pointer, intent(in   ) :: pool_traj    !< linearization state for conversion
-   type (mpas_pool_type), pointer, intent(inout) :: pool_a       !< self % subFields
-   type (mpas_pool_type), pointer, intent(inout) :: pool_b       !< self % auxFields
-   type (mpas_pool_type), pointer, intent(inout) :: pool_c       !< pool with geovals variable
-   character (len=*),              intent(in   ) :: fieldname(:) !< list of variables for geovals
-   integer,                        intent(in   ) :: nfield       !< number of variables
-   integer,                        intent(in   ) :: ngrid        !< number of grid cells
+   type (mpas_pool_type), pointer, intent(in   ) :: trajFields    !< linearization state for conversion
+   type (mpas_pool_type), pointer, intent(inout) :: subFields_ad  !< self % subFields
+   type (mpas_pool_type), pointer, intent(in   ) :: convFields_ad !< pool with geovals variable
+   character (len=*),              intent(in   ) :: fieldname(:)  !< list of variables for geovals
+   integer,                        intent(in   ) :: nfield        !< number of variables
+   integer,                        intent(in   ) :: ngrid         !< number of grid cells
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (mpas_pool_type), pointer :: allFields, clone_pool_a
+   type (mpas_pool_type), pointer :: allFields, clone_subFields_ad
    real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
@@ -731,14 +718,14 @@
      case ( "virtual_temperature" ) !-var_tv 
 
         !get AD variables
-        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a)
-        call mpas_pool_get_array(pool_a,    'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(subFields_ad, 'temperature', r2d_ptr_a)
+        call mpas_pool_get_array(subFields_ad,    'index_qv', r2d_ptr_b)
 !        write(*,*) 'MIN/MAX of AD temperature(in)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of AD    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
-        call mpas_pool_get_array(pool_traj, 'temperature', traj_r2d_a)
-        call mpas_pool_get_array(pool_traj,    'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(trajFields, 'temperature', traj_r2d_a)
+        call mpas_pool_get_array(trajFields,    'index_qv', traj_r2d_b)
 !        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
 !        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
@@ -746,7 +733,7 @@
         !NL: field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
         !TL: field2d % array(:,1:ngrid) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,1:ngrid) ) * r2d_ptr_a(:,1:ngrid) &
         !TL:                        + traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,1:ngrid)
-        call mpas_pool_get_field(pool_c, var_tv, field2d)
+        call mpas_pool_get_field(convFields_ad, var_tv, field2d)
 !        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array),maxval(field2d % array)
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
                          ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,1:ngrid) ) * field2d % array(:,1:ngrid)
@@ -758,20 +745,20 @@
 !        write(*,*) "end-of ",var_tv
 
      case ( "air_temperature" ) !-var_ts
-        call mpas_pool_get_array(pool_a, 'temperature', r2d_ptr_a) !< get temperature
-        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_get_array(subFields_ad, 'temperature', r2d_ptr_a) !< get temperature
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d)
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
                          field2d % array(:,1:ngrid)
 
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
         !get AD variable
-        call mpas_pool_get_array(pool_a, 'uReconstructZonal', r2d_ptr_a) !< get zonal wind
+        call mpas_pool_get_array(subFields_ad, 'uReconstructZonal', r2d_ptr_a) !< get zonal wind
 !        write(*,*) 'MIN/MAX of AD zonal wind(in)  =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
         !NL: field2d % array = field2d % array
         !TL: field2d % array = field2d % array
-        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d)
 
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
                          field2d % array(:,1:ngrid)
@@ -784,12 +771,12 @@
      case ( "northward_wind" ) !-var_??? northward_wind
 
         !get AD variable
-        call mpas_pool_get_array(pool_a, 'uReconstructMeridional', r2d_ptr_a) !< get meridional wind
+        call mpas_pool_get_array(subFields_ad, 'uReconstructMeridional', r2d_ptr_a) !< get meridional wind
 !        write(*,*) 'MIN/MAX of AD meridional wind(in)  =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
         !NL: field2d % array = field2d % array
         !TL: field2d % array = field2d % array
-        call mpas_pool_get_field(pool_c, trim(fieldname(ivar)), field2d)
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d)
 
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
                          field2d % array(:,1:ngrid)
@@ -802,10 +789,10 @@
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!
         !BJ: Without this array, 3DVAR gives the same results.
 
-!        call mpas_pool_get_array(pool_a, 'pressure', r2d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, 'pressure', r2d_ptr_a)
 !        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 !
-!        call mpas_pool_get_field(pool_b, 'theta', field2d_src)
+!        call mpas_pool_get_field(subFields_ad, 'pressure', field2d_src)
 !        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
 !
 !NL        field2d % array(:,1:ngrid) = 0.0_kind_real !log( r2d_ptr_a(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
@@ -813,15 +800,15 @@
 !
 !        field2d % fieldName = var_prsl
 !
-!        call mpas_pool_add_field(pool_c, var_prsl, field2d)
+!        call mpas_pool_add_field(convFields_ad, var_prsl, field2d)
 !
 !        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(pool_a, "index_qv", r2d_ptr_a)
+        call mpas_pool_get_array(subFields_ad, "index_qv", r2d_ptr_a)
 
         !TL: field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
-        call mpas_pool_get_field(pool_c, var_mixr, field2d)
+        call mpas_pool_get_field(convFields_ad, var_mixr, field2d)
 !        write(*,*) 'MIN/MAX of var_mixr =',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
         r2d_ptr_a(:,1:ngrid)=0.0_kind_real
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + 1000.0_kind_real * field2d % array(:,1:ngrid)
@@ -830,11 +817,11 @@
 !        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        !call mpas_pool_get_array(pool_b, "pressure", r2d_ptr_a)
-        !call mpas_pool_get_field(clone_pool_a, 'pressure', field2d) ! as a dummy array
+        !call mpas_pool_get_array(subFields_ad, "pressure", r2d_ptr_a)
+        !call mpas_pool_get_field(clone_subFields_ad, 'pressure', field2d) ! as a dummy array
         !field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid)
         !field2d % fieldName = var_prs
-        !call mpas_pool_add_field(pool_c, var_prs, field2d)
+        !call mpas_pool_add_field(convFields_ad, var_prs, field2d)
         !write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
@@ -846,51 +833,53 @@
      case ("effective_radius_of_cloud_ice_particle")
 
      case ("Water_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!JJG: All non-AD trajectory model variables should be provided in trajFields
+!JJG: All AD model variables should be provided in subFields_ad
+!        call mpas_pool_get_array(subFields_ad, "", r1d_ptr_a)
      case ("Land_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "", r1d_ptr_a)
      case ("Ice_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "", r1d_ptr_a)
      case ("Snow_Fraction")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "", r1d_ptr_a)
      case ("Water_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "skintemp", r1d_ptr_a)
      case ("Land_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "skintemp", r1d_ptr_a)
      case ("Ice_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "skintemp", r1d_ptr_a)
      case ("Snow_Temperature")
-        call mpas_pool_get_array(pool_b, "skintemp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "skintemp", r1d_ptr_a)
 
      case ("Snow_Depth")
-        call mpas_pool_get_array(pool_b, "snowh", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "snowh", r1d_ptr_a)
      case ("Vegetation_Fraction")
-        call mpas_pool_get_array(pool_b, "vegfra", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "vegfra", r1d_ptr_a)
      case ("Sfc_Wind_Speed", "Sfc_Wind_Direction")
-        call mpas_pool_get_array(pool_a, "u10", r1d_ptr_a)
-        call mpas_pool_get_array(pool_a, "v10", r1d_ptr_b)
+!        call mpas_pool_get_array(subFields_ad, "u10", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "v10", r1d_ptr_b)
      case ("Lai")
-        call mpas_pool_get_array(pool_b, "lai", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "lai", r1d_ptr_a)
      case ("Soil_Moisture")
-        call mpas_pool_get_array(pool_b, "smois", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "smois", r1d_ptr_a)
      case ("Soil_Temperature")
-        call mpas_pool_get_array(pool_b, "tslb", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "tslb", r1d_ptr_a)
      case ("Land_Type_Index")
-        call mpas_pool_get_array(pool_b, "", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "", r1d_ptr_a)
      case ("Vegetation_Type")
-        call mpas_pool_get_array(pool_b, "ivgtyp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "ivgtyp", r1d_ptr_a)
      case ("Soil_Type")
-        call mpas_pool_get_array(pool_b, "isltyp", r1d_ptr_a)
+!        call mpas_pool_get_array(subFields_ad, "isltyp", r1d_ptr_a)
 
      end select
 
    end do !ivar
 
 
-   !call mpas_pool_empty_pool(clone_pool_a)
-   !call mpas_pool_destroy_pool(clone_pool_a)
+   !call mpas_pool_empty_pool(clone_subFields_ad)
+   !call mpas_pool_destroy_pool(clone_subFields_ad)
   
-   end subroutine convert_mpas_field2ufoAD
+end subroutine convert_mpas_field2ufoAD
 
 !-----------------------------------------------------------------------------------
 
