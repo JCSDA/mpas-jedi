@@ -408,7 +408,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
      call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
 
-   write(*,*)'==> end mpas_state:analytic_init'
+!   write(*,*)'==> end mpas_state:analytic_init'
 
 end subroutine analytic_IC
 
@@ -522,7 +522,6 @@ subroutine getvalues(self, locs, vars, gom, traj)
    integer, allocatable  :: index_nn(:)
    real (kind=kind_real), allocatable :: weight_nn(:)
    type (mpas_pool_type), pointer :: pool_tmp  !< temporary pool for setting trajectory
-   type (field2DReal), pointer :: field2d => null()     !< for setting trajectory
    type (field2DReal), pointer :: field2d_src => null() !< for setting trajectory
 
    real(kind=kind_real) :: wdir           !< for wind direction
@@ -589,10 +588,10 @@ subroutine getvalues(self, locs, vars, gom, traj)
   if (.not. pbump_alloc) then 
     ! Calculate interpolation weight using BUMP
     ! ------------------------------------------
-    write(*,*)'call initialize_bump(...)'
+!    write(*,*)'call initialize_bump(...)'
     call initialize_bump(self%geom, locs, pbump, pbumpid)
     pbump_alloc = .true.
-    write(*,*)'interp: after initialize_bump'
+!    write(*,*)'interp: after initialize_bump'
   endif
    
    !Make sure the return values are allocated and set
@@ -615,8 +614,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'interp: vars%nv       : ',vars%nv
-   write(0,*)'interp: vars%fldnames : ',vars%fldnames
+!   write(0,*)'interp: vars%nv       : ',vars%nv
+!   write(0,*)'interp: vars%fldnames : ',vars%fldnames
 
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
@@ -696,12 +695,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
         end if
    end do !- end of pool iteration
 
-
    !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
         .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
 
-     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
+!     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
      !- allocate
      allocate(tmp_field(nlocs,2))
@@ -976,10 +974,9 @@ subroutine getvalues(self, locs, vars, gom, traj)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-   write(*,*) '---- Leaving getvalues ---'
+!   write(*,*) '---- Leaving getvalues ---'
 end subroutine getvalues
 
 ! ------------------------------------------------------------------------------
@@ -1011,7 +1008,7 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    ! Get the Solution dimensions
    ! ---------------------------
    mod_num = grid%nCellsSolve
-   write(*,*)'initialize_bump mod_num,obs_num = ', mod_num, locs%nlocs
+!   write(*,*)'initialize_bump mod_num,obs_num = ', mod_num, locs%nlocs
    
    !Calculate interpolation weight using BUMP
    !------------------------------------------

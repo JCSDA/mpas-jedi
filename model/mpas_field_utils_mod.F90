@@ -127,8 +127,8 @@ subroutine create_field(self, geom, vars)
     self % nf = vars % nv
     allocate(self % fldnames(self % nf))
     self % fldnames(:) = vars % fldnames(:)
-    write(*,*)'self % nf =',self % nf
-    write(*,*)'allocate ::',self % fldnames(:)
+!    write(*,*)'--> create_field: self % nf =',self % nf
+!    write(*,*)'--> create_field: allocate ::',self % fldnames(:)
 
     self % nf_ci = vars % nv
     allocate(self % fldnames_ci(self % nf_ci))
@@ -138,18 +138,18 @@ subroutine create_field(self, geom, vars)
     if (associated(geom)) then
       self % geom => geom
     else
-      write(*,*)'create_field: geom not associated'
-      call abor1_ftn("create_field: geom not associated")
+      write(*,*)'--> create_field: geom not associated'
+      call abor1_ftn("--> create_field: geom not associated")
     end if
 
     ! clock creation
     allocate(self % clock)
     call atm_simulation_clock_init(self % clock, self % geom % domain % blocklist % configs, ierr)
     if ( ierr .ne. 0 ) then
-       call abor1_ftn("create_field: atm_simulation_clock_init problem")
+       call abor1_ftn("--> create_field: atm_simulation_clock_init problem")
     end if
 
-    write(0,*)'-- create_field: sub Pool from list of variable ',self % nf
+!    write(*,*)'--> create_field: sub Pool from list of variable ',self % nf
     call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
 
     call self%zeros() !-- set zero for self % subFields
@@ -167,8 +167,8 @@ subroutine create_field(self, geom, vars)
 
 !--------------------------------------------------------------------------------------- 
 
-!   write(0,*)''
-!   write(0,*)'=========== MPAS WRITE A RESTART ===================='
+!   write(*,*)''
+!   write(*,*)'=========== MPAS WRITE A RESTART ===================='
 
 !   call mpas_pool_get_subpool(block_ptr % structs, 'state', state)
 !   call mpas_pool_get_subpool(block_ptr % structs, 'diag', diag)
@@ -196,7 +196,7 @@ subroutine create_pool(domain, nf_in, fldnames, pool)
     call da_make_subpool(domain, pool, nf_in, fldnames, nfields)
 
     if ( nf_in .ne. nfields  ) then
-       write(buf,*) "create_pool: dimension mismatch ", nf_in, nfields
+       write(buf,*) "--> create_pool: dimension mismatch ", nf_in, nfields
        call abor1_ftn(buf)
     end  if
 
@@ -217,14 +217,14 @@ subroutine delete_field(self)
    write(*,fmt='(A,I5,A)')'--> delete_field: ', &
       count(labelsInUse(0:state_min-1)), ' fields remaining'
 
-   write(*,*)'--> delete_field: deallocate subFields Pool'
+!   write(*,*)'--> delete_field: deallocate subFields Pool'
    call delete_pool(self % subFields)
 
    call mpas_destroy_clock(self % clock, ierr)
    if ( ierr .ne. 0  ) then
-      write(*,*)'delete_field deallocate clock failed'
+      write(*,*) '--> delete_field deallocate clock failed'
    end if
-   write(*,*)'--> delete_field done'
+!   write(*,*)'--> delete_field done'
 
    return
 
@@ -238,7 +238,6 @@ subroutine delete_pool(pool)
    type(mpas_pool_type), pointer, intent(inout) :: pool
   
    if (associated(pool)) then
-      call mpas_pool_empty_pool(pool)
       call mpas_pool_destroy_pool(pool)
    end if
 
@@ -252,7 +251,7 @@ subroutine copy_field(self,rhs)
    class(mpas_field), intent(inout) :: self
    class(mpas_field), intent(in)    :: rhs
 
-   write(*,*)'--> copy_field: copy subFields Pool'
+!   write(*,*)'--> copy_field: copy subFields Pool'
 
    self % nf = rhs % nf
    if (allocated(self % fldnames)) deallocate(self % fldnames)
@@ -266,7 +265,7 @@ subroutine copy_field(self,rhs)
 
    call copy_pool(rhs % subFields, self % subFields)
 
-   write(*,*)'====> copy_field done'
+!   write(*,*)'--> copy_field done'
   
 end subroutine copy_field
 
@@ -302,13 +301,13 @@ subroutine read_field(self, c_conf, vdate)
    type (mpas_pool_type), pointer :: state, diag, mesh
    character(len=1024) :: buf
 
-   write(*,*)'==> read fields'
+!   write(*,*)'--> read_field'
    sdate = config_get_string(c_conf,len(sdate),"date")
    call datetime_set(sdate, vdate)
 
    temp_filename = config_get_string(c_conf,len(temp_filename),&
                       "filename")
-   write(*,*)'Reading ',trim(temp_filename)
+!   write(*,*)'--> read_field: Reading ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -322,18 +321,18 @@ subroutine read_field(self, c_conf, vdate)
    self % manager => self % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
-   write(*,*)'dateTimeString: ',trim(dateTimeString)
+!   write(*,*)'--> read_field: dateTimeString: ',trim(dateTimeString)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
    !call mpas_set_clock_time(self % clock, local_time, MPAS_START_TIME)
    call mpas_set_clock_time(self % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   write(*,*)'Reading ',trim(filename)
+   write(*,*)'--> read_field: Reading ',trim(filename)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
       call abor1_ftn(buf)
-      write(buf,*) 'MPAS_stream_mgr_read failed ierr=',ierr
+      write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
    end if
 
    !==TODO: Speific part when reading parameterEst. for BUMP.
@@ -400,10 +399,10 @@ subroutine write_field(self, c_conf, vdate)
    call da_copy_sub2all_fields(self % geom % domain, self % subFields)
 
    call datetime_to_string(vdate, validitydate)
-   write(*,*)'==> write fields at ',trim(validitydate)
+!   write(*,*)'--> write_field: ',trim(validitydate)
    temp_filename = config_get_string(c_conf,len(temp_filename)&
                       ,"filename")
-   write(*,*)'==> writing ',trim(temp_filename)
+!   write(*,*)'--> write_field: ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -415,7 +414,7 @@ subroutine write_field(self, c_conf, vdate)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
    if ( fld_time .NE. write_time ) then
-      write(*,*)'write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+      write(*,*)'--> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
       call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
    end if
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
@@ -427,10 +426,10 @@ subroutine write_field(self, c_conf, vdate)
    !streamID = 'da'
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
-   write(*,*)'writing ',trim(filename)
+   write(*,*)'--> write_field: writing ',trim(filename)
    call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
    if ( ierr .ne. 0  ) then
-     write(buf,*) 'MPAS_stream_mgr_write failed ierr=',ierr
+     write(buf,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr
      call abor1_ftn(buf)
    end if
 
@@ -448,7 +447,7 @@ subroutine change_resol_field(self,rhs)
    if (self%geom%nCells == rhs%geom%nCells .and.  self%geom%nVertLevels == rhs%geom%nVertLevels) then
      call self%copy(rhs)
    else
-     write(0,*) self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
+     write(*,*) '--> write_field: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
      call abor1_ftn("change_resol_field: dimension mismatch")
    endif
 
@@ -619,7 +618,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
 
    endif
 
-   write(*,*)'interp_checks ',cinfo,' done'
+!   write(*,*)'--> interp_checks: ',cinfo,' done'
 
 end subroutine interp_checks
 

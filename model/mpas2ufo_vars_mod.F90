@@ -224,7 +224,8 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
    call mpas_pool_create_pool(convFields)
 
    do ivar=1, nfield
-!     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, &
+               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -270,9 +271,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
-
      case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-
         call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
         call mpas_duplicate_field(field2d_src, field2d)
 
@@ -528,7 +527,8 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 
 
    do ivar=1, nfield
-!     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, &
+               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -626,11 +626,11 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 !        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        !call mpas_pool_get_field(subFields_tl, 'pressure', field2d)
-        !field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid)
-        !field2d % fieldName = var_prs
-        !call mpas_pool_add_field(convFields_tl, var_prs, field2d)
-        !write(*,*) "end-of ",var_prs
+!        call mpas_pool_get_field(subFields_tl, 'pressure', field2d)
+!        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid)
+!        field2d % fieldName = var_prs
+!        call mpas_pool_add_field(convFields_tl, var_prs, field2d)
+!        write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
@@ -711,7 +711,8 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
    integer :: ii, ivar
 
    do ivar=1, nfield
-!     write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+     write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, &
+               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -817,12 +818,12 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 !        write(*,*) "end-of ",var_mixr
 
      case ("air_pressure") !-var_prs
-        !call mpas_pool_get_array(subFields_ad, "pressure", r2d_ptr_a)
-        !call mpas_pool_get_field(clone_subFields_ad, 'pressure', field2d) ! as a dummy array
-        !field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid)
-        !field2d % fieldName = var_prs
-        !call mpas_pool_add_field(convFields_ad, var_prs, field2d)
-        !write(*,*) "end-of ",var_prs
+!        call mpas_pool_get_array(subFields_ad, "pressure", r2d_ptr_a)
+!        call mpas_pool_get_field(clone_subFields_ad, 'pressure', field2d) ! as a dummy array
+!        field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid)
+!        field2d % fieldName = var_prs
+!        call mpas_pool_add_field(convFields_ad, var_prs, field2d)
+!        write(*,*) "end-of ",var_prs
 
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
@@ -875,8 +876,6 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 
    end do !ivar
 
-
-   !call mpas_pool_empty_pool(clone_subFields_ad)
    !call mpas_pool_destroy_pool(clone_subFields_ad)
   
 end subroutine convert_mpas_field2ufoAD

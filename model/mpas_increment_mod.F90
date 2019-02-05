@@ -156,7 +156,7 @@ subroutine dirac(self, c_conf)
    call mpas_pool_begin_iteration(self % subFields)
 
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
         ! so we select only those members of the pool that are fields
         if (poolItr % memberType == MPAS_POOL_FIELD) then
@@ -292,7 +292,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    ! ------------------------------
    ngrid = inc%geom%nCellsSolve !or traj%ngrid
    nlocs = locs%nlocs           !or traj%nobs
-   write(*,*)'getvalues_tl: ngrid, nlocs = : ',ngrid, nlocs
+!   write(*,*)'getvalues_tl: ngrid, nlocs = : ',ngrid, nlocs
    call interp_checks("tl", inc, locs, vars, gom)
    
    !Make sure the return values are allocated and set
@@ -315,8 +315,8 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
-   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
+!   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
+!   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
    
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
@@ -358,10 +358,9 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-   write(*,*) '---- Leaving getvalues_tl ---'
+!   write(*,*) '---- Leaving getvalues_tl ---'
 end subroutine getvalues_tl
 
 ! ------------------------------------------------------------------------------
@@ -413,8 +412,8 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
-   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
+!   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
+!   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
 
    !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
    !    : Actually their values are initialized as "zero" in following "do while" loop.
@@ -459,10 +458,9 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call mpas_pool_empty_pool(pool_ufo)
    call mpas_pool_destroy_pool(pool_ufo)
 
-   write(*,*) '---- Leaving getvalues_ad ---' 
+!   write(*,*) '---- Leaving getvalues_ad ---' 
 end subroutine getvalues_ad
 
 ! ------------------------------------------------------------------------------
@@ -595,7 +593,7 @@ subroutine increment_to_ug(self, ug, colocated)
    call mpas_pool_begin_iteration(self % subFields)
    
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
         ! so we select only those members of the pool that are fields
         if (poolItr % memberType == MPAS_POOL_FIELD) then
@@ -658,7 +656,7 @@ subroutine increment_from_ug(self, ug)
    call mpas_pool_begin_iteration(self % subFields)
    
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
         ! so we select only those members of the pool that are fields
         if (poolItr % memberType == MPAS_POOL_FIELD) then

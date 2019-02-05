@@ -79,7 +79,6 @@ type(mpas_getvaltraj), pointer :: self
 call mpas_getvaltraj_registry%get(c_key_self, self)
 
 if (self%lalloc) then
-  call mpas_pool_empty_pool( self % pool_traj )
   call mpas_pool_destroy_pool( self % pool_traj )
   call self%bump%dealloc
 endif

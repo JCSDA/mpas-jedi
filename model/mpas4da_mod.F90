@@ -25,6 +25,7 @@ use mpas_abort, only : mpas_dmpar_global_abort
 use mpas_constants
 use mpas_derived_types
 use mpas_dmpar
+use mpas_field_routines
 use mpas_kind_types, only: ShortStrKIND
 use mpas_pool_routines
 
@@ -407,23 +408,24 @@ use mpas_constants_mod
    !>  Given pool A, create pool B as a subset of the fields in A
    !
    !-----------------------------------------------------------------------
-   subroutine da_make_subpool(domain, pool_b, nsize, fieldname, nfields)
+   subroutine da_make_subpool(domain, subFields, nsize, fieldname, nfields)
 
       implicit none
 
       type (domain_type), pointer, intent(in) :: domain
-      type (mpas_pool_type), pointer, intent(out) :: pool_b
+      type (mpas_pool_type), pointer, intent(out) :: subFields
       character (len=*), intent(in) :: fieldname(:)
       integer, intent(out) :: nfields
       integer, intent(in) :: nsize
-      type (mpas_pool_type), pointer :: pool_a, pool_c, state
+      type (mpas_pool_type), pointer :: allFields, state
 
       type (mpas_pool_iterator_type) :: poolItr
-      type (field0DReal), pointer :: field0d
-      type (field1DReal), pointer :: field1d
-      type (field2DReal), pointer :: field2d, field2d_src, field2d_dst
-      type (field3DReal), pointer :: field3d
-      type (field1DInteger), pointer :: ifield1d
+      type (field0DReal), pointer :: field0d_src, field0d_dst
+      type (field1DReal), pointer :: field1d_src, field1d_dst
+      type (field2DReal), pointer :: field2d_src, field2d_dst
+      type (field3DReal), pointer :: field3d_src, field3d_dst, field3d
+      type (field1DInteger), pointer :: ifield1d_src, ifield1d_dst
+
       integer, pointer :: index_scalar, dim0d
       integer :: ii
       integer, parameter :: ndims=10
@@ -431,12 +433,9 @@ use mpas_constants_mod
 
       nfields = 0
       call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
-      pool_a => domain % blocklist % allFields
+      allFields => domain % blocklist % allFields
  
-      write(0,*)'--Create a sub Pool from list of variables: ',nsize
-      write(0,*)'--and of dimensions: ',ndims
-      call mpas_pool_create_pool(pool_b)
-      call mpas_pool_create_pool(pool_c)
+      call mpas_pool_create_pool(subFields)
 
       dimnames ( 1) = 'nCellsSolve'
       dimnames ( 2) = 'nEdgesSolve'
@@ -452,17 +451,17 @@ use mpas_constants_mod
       do ii = 1, ndims
          call mpas_pool_get_dimension(domain % blocklist % dimensions, trim(dimnames(ii)), dim0d)
 !         write(0,*)'Adding dimension ',trim(dimnames(ii)),': ',dim0d
-         call mpas_pool_add_dimension(pool_c, trim(dimnames(ii)), dim0d)
+         call mpas_pool_add_dimension(subFields, trim(dimnames(ii)), dim0d)
       end do
 
       !write(0,*)'Fieldname: ',nsize,fieldname(:)
       !
-      ! Iterate over all fields in pool_b, adding them to fields of the same
-      ! name in pool_a
-      call mpas_pool_begin_iteration(pool_a)
+      ! Iterate over allFields and copy those with names matching fieldname into subFields
+      !
+      call mpas_pool_begin_iteration(allFields)
       write(0,*)'Before iterating'
 
-      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+      do while ( mpas_pool_get_next_member(allFields, poolItr) )
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
          if (poolItr % memberType == MPAS_POOL_FIELD) then
@@ -474,20 +473,21 @@ use mpas_constants_mod
                      ! Depending on the dimensionality of the field, we need to set pointers of
                      ! the correct type
                      if (poolItr % nDims == 0) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field0d)
-                        call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field0d)
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field0d_src)
+                        call mpas_duplicate_field(field0d_src, field0d_dst)
+                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field0d_dst)
                      else if (poolItr % nDims == 1) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
-                        call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field1d)
-!                        write(0,*) '1D MIN/MAX value: ', minval(field1d % array),maxval(field1d % array)
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field1d_src)
+                        call mpas_duplicate_field(field1d_src, field1d_dst)
+                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field1d_dst)
                      else if (poolItr % nDims == 2) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
-                        call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field2d)
-!                        write(0,*) '2D MIN/MAX value: ', minval(field2d % array),maxval(field2d % array)
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field2d_src)
+                        call mpas_duplicate_field(field2d_src, field2d_dst)
+                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field2d_dst)
                      else if (poolItr % nDims == 3) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                        call mpas_pool_add_field(pool_c, trim(poolItr % memberName), field3d)
-!                        write(0,*) '3D MIN/MAX value: ', minval(field3d % array),maxval(field3d % array)
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d_src)
+                        call mpas_duplicate_field(field3d_src, field3d_dst)
+                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field3d_dst)
                      end if
                      nfields = nfields + 1
                   
@@ -500,15 +500,13 @@ use mpas_constants_mod
                           trim(fieldname(ii)).eq.'index_qs' ) then
                         call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
                         if (index_scalar .gt. 0) then
-                           call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                           call mpas_pool_get_field(pool_a, 'theta_m', field2d_src)
+                           call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d)
+                           call mpas_pool_get_field(allFields, 'theta_m', field2d_src)
                            call mpas_duplicate_field(field2d_src, field2d_dst)
                            field2d_dst % fieldName = trim(fieldname(ii))
                            field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
-!                           write(0,*) '2D MIN/MAX value: ', minval(field2d_dst % array),minval(field2d_dst % array)
-!                           write(0,*) '2D MIN/MAX value: ', minval(field3d % array(index_scalar,:,:)), &
-!                                          maxval(field3d % array(index_scalar,:,:))
-                           call mpas_pool_add_field(pool_c, trim(fieldname(ii)), field2d_dst)
+                           call mpas_pool_add_field(subFields, trim(fieldname(ii)), field2d_dst)
+
                            nfields = nfields + 1
                         else
                            write(0,*)'WARNING in da_make_subpool; ',trim(fieldname(ii)), &
@@ -526,9 +524,11 @@ use mpas_constants_mod
                      ! Depending on the dimensionality of the field, we need to set pointers of
                      ! the correct type
                      if (poolItr % nDims == 1) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr % memberName), ifield1d)
-                        call mpas_pool_add_field(pool_c, trim(poolItr % memberName), ifield1d)
-!                        write(0,*) '1D MIN/MAX value: ', minval(ifield1d % array),maxval(ifield1d % array)
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), ifield1d_src)
+                        call mpas_duplicate_field(ifield1d_src, ifield1d_dst)
+                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), ifield1d_dst)
+
+!                        write(0,*) '1D MIN/MAX value: ', minval(ifield1d_dst % array),maxval(ifield1d_dst % array)
                         nfields = nfields + 1
                      end if
                   end if
@@ -541,10 +541,7 @@ use mpas_constants_mod
         write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,nfields
       end if
 
-      write(0,*)'da_make_subpool new Pool size ',Pool_c % size
-      call mpas_pool_clone_pool(pool_c, pool_b)
-      call mpas_pool_empty_pool(pool_c)
-      call mpas_pool_destroy_pool(pool_c)
+!      write(0,*)'da_make_subpool new Pool size ',subFields % size
 
    end subroutine da_make_subpool
 
