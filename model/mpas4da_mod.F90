@@ -31,8 +31,6 @@ use mpas_pool_routines
 !mpas-jedi
 use mpas_constants_mod
 
-!use random_vectors_mod
- 
 
    contains
 
@@ -611,11 +609,14 @@ use mpas_constants_mod
    !-----------------------------------------------------------------------
    subroutine da_random(pool_a, fldnames)
 
+   use random_mod, only: normal_distribution
+
       implicit none
 
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
       character (len=*), optional,    intent(in)    :: fldnames(:)
 
+      integer, parameter :: rseed = 7
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a
       real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
@@ -645,20 +646,16 @@ use mpas_constants_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  !call random_vector(r0d_ptr_a)
-                  call random_number(r0d_ptr_a)
+                  !call normal_distribution(r0d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  !call random_vector(r1d_ptr_a)
-                  call random_number(r1d_ptr_a)
+                  call normal_distribution(r1d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  !call random_vector(r2d_ptr_a)
-                  call random_number(r2d_ptr_a)
+                  call normal_distribution(r2d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  !call random_vector(r3d_ptr_a)
-                  call random_number(r3d_ptr_a)
+                  call normal_distribution(r3d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
                end if
 
             end if
