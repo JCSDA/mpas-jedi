@@ -47,7 +47,7 @@ list( APPEND mpas_testoutput
   testoutput/variablechange.test
 )
 
-list( APPEND mpas_testgraphics
+list( APPEND mpas_graphics
   graphics/plot_obs_nc_loc.py
   graphics/plot_diag_omaomb_profile.py
   graphics/plot_diag_omaomb_timeserial.py
@@ -74,7 +74,7 @@ endforeach(FILENAME)
 
 # Create directory for graphics and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
-foreach(FILNAME ${mpas_testgraphics})
+foreach(FILENAME ${mpas_graphics})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
