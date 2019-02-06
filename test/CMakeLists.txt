@@ -47,6 +47,12 @@ list( APPEND mpas_testoutput
   testoutput/variablechange.test
 )
 
+list( APPEND mpas_testgraphics
+  graphics/plot_obs_nc_loc.py
+  graphics/plot_diag_omaomb_profile.py
+  graphics/plot_diag_omaomb_timeserial.py
+)
+
 # This line copies all files to binary dir
 #file( COPY ${mpas_test_files} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
@@ -61,6 +67,14 @@ endforeach(FILENAME)
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 foreach(FILENAME ${mpas_testoutput})
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
+endforeach(FILENAME)
+
+# Create directory for graphics and symlink all files
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
+foreach(FILNAME ${mpas_testgraphics})
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
