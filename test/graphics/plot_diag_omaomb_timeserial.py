@@ -9,10 +9,10 @@ import matplotlib.axes as maxes
 import datetime as dt
 
 #file path and file name example for cycling run (on cheyenne): 
-#filenc = '/gpfs/fs1/scratch/user/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4'
+#filenc = '/gpfs/fs1/scratch/jban/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4'
 #                EXP_DIR                   EXP_NAME      EXP_TIME             DA_METHOD OBS_TYPE tile
 
-EXP_DIR = os.getenv('EXP_DIR','/gpfs/fs1/scratch/user/pandac/')
+EXP_DIR = os.getenv('EXP_DIR','/gpfs/fs1/scratch/jban/pandac/')
 
 SDATE = dt.datetime(2018,4,15,0,0,0)
 EDATE = dt.datetime(2018,4,15,18,0,0)
@@ -55,7 +55,7 @@ def readdata():
         qcncs  = []
 
         for tile in range(tiles):
-#           filenc = '/gpfs/fs1/scratch/user/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4' 
+#           filenc = '/gpfs/fs1/scratch/jban/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4' 
             filenc = EXP_DIR + EXP_NAME +'/'+ yyyymmddhh +'/Data/'+ 'obsout_'+DA_METHOD+'_'+OBS_TYPE+'_'+'{0:04}'.format(tile)+'.nc4'
 #            print(filenc)
             nc = Dataset(filenc, 'r')

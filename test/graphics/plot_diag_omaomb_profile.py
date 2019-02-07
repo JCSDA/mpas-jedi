@@ -8,10 +8,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
 
 #for plot cycling run results (on cheyenne):file path and file name example 
-#filenc = '/gpfs/fs1/scratch/user/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4'
+#filenc = '/gpfs/fs1/scratch/jban/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4'
 #             EXP_DIR                   EXP_NAME  EXP_TIME             DA_METHOD OBS_TYPE tile
  
-#EXP_DIR = os.getenv('EXP_DIR','/gpfs/fs1/scratch/user/pandac/')
+#EXP_DIR = os.getenv('EXP_DIR','/gpfs/fs1/scratch/jban/pandac/')
 
 EXP_NAME=os.getenv('EXP_NAME','DA_ctest')
 #EXP_NAME=os.getenv('EXP_NAME','DA_3dvar')
@@ -45,7 +45,7 @@ def readdata():
     for tile in range(tiles):
 
 #       for plot cycling run results (on cheyenne):
-#       filenc = '/gpfs/fs1/scratch/user/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4' 
+#       filenc = '/gpfs/fs1/scratch/jban/pandac/DA_3dvar/2018041500/Data/obsout_3dvar_sonde_0000.nc4' 
 #       filenc = EXP_DIR + EXP_NAME +'/'+ EXP_TIME +'/Data/'+ 'obsout_'+DA_METHOD+'_'+OBS_TYPE+'_'+'{0:04}'.format(tile)+'.nc4' 
 
 #       for plot ctest results:
