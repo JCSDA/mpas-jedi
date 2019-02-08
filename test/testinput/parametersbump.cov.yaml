@@ -43,7 +43,7 @@ ensemble:
     date: '2018-04-15T00:00:00Z'
 prefix: mpas_parametersbump_cov
 default_seed: 1
-method: cor
+method: cov
 strategy: specific_univariate
 new_hdiag: 1
 new_nicas: 1
@@ -57,7 +57,6 @@ nc3: 10
 dc: 1000000
 nl0r: 1
 ne: 5
-var_diag: 1
 local_diag: 1
 local_rad: 1000000
 minim_algo: hooke
@@ -72,6 +71,7 @@ diag_rhflt: 3000000
 diag_interp: bilin
 nldwh: 0
 nldwv: 0
+write_grids: 1
 output:
 - parameter: var
   datadir: Data

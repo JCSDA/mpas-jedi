@@ -44,9 +44,8 @@ cost_function:
         date: '2018-04-15T00:00:00Z'
         prefix: mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
         default_seed: 1
-        method: cor
-        _strategy: common
-        strategy: specific_univariate
+        method: cov
+        strategy: specific_univariate  #common
         new_nicas: 0
         load_nicas: 1
         load_cmat: 1
@@ -83,10 +82,8 @@ cost_function:
             - uReconstructMeridional
           prefix: mpas_3dhybrid_bumploc
           default_seed: 1
-          method: loc_norm
-          _method: cor
-          strategy: common
-          _strategy: specific_univariate
+          method: loc_norm  #cor
+          strategy: common  #specific_univariate
           new_hdiag: 1
           new_nicas: 1
           mask_type: none
@@ -96,8 +93,7 @@ cost_function:
           nrep: 2
           nc3: 10
           dc: 1000000
-          nl0r: 3
-          _nl0r: 1
+          nl0r: 3  #1
           ne: 5
           minim_algo: hooke
           rvflt: 0
@@ -109,6 +105,7 @@ cost_function:
           advmode: 0
           diag_interp: bilin
           grid_output: 0
+          write_grids: 1
         state:
         - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
           date: '2018-04-15T00:00:00Z'

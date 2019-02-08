@@ -34,12 +34,11 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
       prefix: mpas_3dvar_bumpcov
       default_seed: 1
-      method: cor
-      _strategy: common
-      strategy: specific_univariate
+      method: cov
+      strategy: specific_univariate  #common
       new_nicas: 1
-      _load_nicas: 0
-      _load_cmat: 0
+      load_nicas: 0
+      load_cmat: 0
       ntry: 3
       nrep: 2
       lsqrt: 1
@@ -51,6 +50,7 @@ cost_function:
       forced_radii: 1
       rh: 2000000
       rv: 1
+      write_grids: 1
       _variable_changes:
       - _varchange: StatsVariableChange
         varchange: Identity

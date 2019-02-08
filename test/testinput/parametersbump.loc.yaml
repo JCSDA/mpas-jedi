@@ -51,8 +51,7 @@ covariance:
   pseudoens_size: 10
 prefix: mpas_parametersbump_loc
 default_seed: 1
-_method: hyb-rnd
-method: loc_norm
+method: loc_norm  #hyb-rnd
 strategy: common
 new_hdiag: 1
 new_nicas: 1
@@ -80,6 +79,7 @@ diag_rhflt: 3000000
 diag_interp: bilin
 nldwh: 0
 nldwv: 0
+write_grids: 1
 output:
 - parameter: loc_coef
   datadir: Data

@@ -34,9 +34,8 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
       prefix: mpas_parametersbump_cov
       default_seed: 1
-      method: cor
-      _strategy: common
-      strategy: specific_univariate
+      method: cov
+      strategy: specific_univariate  #common
 #      new_nicas: 1
       load_nicas: 1
       load_cmat: 1
