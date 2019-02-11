@@ -77,7 +77,7 @@ Observations:
     - eastward_wind
     - northward_wind
     ObsBias: {}
-  - ObsType: AMSU-A
+  - ObsType: CRTM
     channels: 1-15
     ObsOptions:
       n_Layers: '6'

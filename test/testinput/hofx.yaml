@@ -44,7 +44,7 @@ Observations:
     variables:
     - air_temperature
     ObsBias: {}
-  - ObsType: AMSU-A
+  - ObsType: CRTM
     channels: 1-15
     ObsOptions:
       n_Absorbers: '3'
