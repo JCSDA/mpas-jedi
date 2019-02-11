@@ -156,33 +156,34 @@ subroutine dirac(self, c_conf)
    call mpas_pool_begin_iteration(self % subFields)
 
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
-        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-        ! so we select only those members of the pool that are fields
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           ! Depending on the dimensionality of the field, we need to set pointers of
-           ! the correct type
-           if (poolItr % nDims == 1) then
-              write(*,*)'Not implemented yet'
-          else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-              if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
-                ndirlocal = 0
-                do idir=1, ndir
-                   if ( dirOwned(idir).eq.1 ) then
-                      r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
-                      ndirlocal = ndirlocal + 1
-                   end if
-                end do
-                write(*,*) ' Dirac is set in ',ndirlocal,'locations for',trim(poolItr % memberName)
-              end if
-           else if (poolItr % nDims == 3) then
-              write(*,*)'Not implemented yet'
-           end if
-        end if
-        end if
+      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+      ! so we select only those members of the pool that are fields
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+
+         if (poolItr % dataType == MPAS_POOL_REAL) then
+            ! Depending on the dimensionality of the field, we need to set pointers of
+            ! the correct type
+            if (poolItr % nDims == 1) then
+               write(*,*)'Not implemented yet'
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+               if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
+                 ndirlocal = 0
+                 do idir=1, ndir
+                    if ( dirOwned(idir).eq.1 ) then
+                       r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
+                       ndirlocal = ndirlocal + 1
+                    end if
+                 end do
+                 write(*,*) ' Dirac is set in ',ndirlocal,'locations for',trim(poolItr % memberName)
+               end if
+            else if (poolItr % nDims == 3) then
+               write(*,*)'Not implemented yet'
+            end if
+         end if
+      end if
    end do
 
    deallocate( dirOwned )
@@ -267,7 +268,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
 
    character(len=*), parameter :: myname = 'getvalues_tl'
    
-   integer :: jvar, jlev, jloc, ngrid, nlocs, ivar
+   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    
@@ -306,57 +307,78 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
          gom%linit = .true.
       endif
    enddo
-   
-
-   !Create Buffer for interpolated values
-   !--------------------------------------
-   allocate(mod_field(ngrid,1))
-   allocate(obs_field(nlocs,1))
-   
+     
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-!   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
-!   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
-   
+   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
+   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues_tl: nlocs         : ',nlocs
+
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    call convert_mpas_field2ufoTL(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
+   maxlevels = inc%geom%nVertLevelsP1
+   allocate(mod_field(ngrid,maxlevels))
+   allocate(obs_field(nlocs,maxlevels))
+
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-           ufo_var_name = trim(poolItr % memberName)
-           ivar = ufo_vars_getindex(vars, ufo_var_name )
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         ufo_var_name = trim(poolItr % memberName)
+         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         if ( ivar == -1 ) cycle
 
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           if (poolItr % nDims == 1) then
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
-           else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+         nlevels = gom%geovals(ivar)%nval
+         if (poolItr % nDims == 1) then
+
+         else if (poolItr % nDims == 2) then
+
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
 !              write(*,*) "getvalues_tl: var=",trim(poolItr % memberName)
 !              write(*,*) "ufo_vars_getindex: ivar=",ivar
-              do jlev = 1, gom%geovals(ivar)%nval
-                 mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
-                 call traj%bump%apply_obsop(mod_field,obs_field)
-                 do jloc = 1, nlocs
-                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-                   ! only selected obs (using locs%indx()) are filling "geovals"
-                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc)) = obs_field(jloc,1)
-                 end do
-              end do
 
-           else if (poolItr % nDims == 3) then
+               do jlev = 1, nlevels
+                  mod_field(:,jlev) = r2d_ptr_a(jlev,1:ngrid)
+               end do
+            end if
+!         else if (poolItr % nDims == 3) then
 
-           end if
-        end if
-        end if
+         end if
+
+         !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
+         ! + apply_obsop takes ~99.9% of wall-time of getvalues_tl on cheyenne and
+         !   scales with node count. Seems to have MPI-related issue.
+         !
+         traj%bump%geom%nl0 = nlevels
+         call traj%bump%apply_obsop(mod_field(:,1:nlevels),obs_field(:,1:nlevels))
+
+         do jlev = 1, nlevels
+            ilev = nlevels - jlev + 1
+            do jloc = 1, nlocs
+               !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+               ! only selected obs (using locs%indx()) are filling "geovals"
+               gom%geovals(ivar)%vals(ilev,locs%indx(jloc)) = obs_field(jloc,jlev)
+            end do
+         end do
+
+      end if
    end do
-
-
    deallocate(mod_field)
    deallocate(obs_field)
+
+   traj%bump%geom%nl0 = 1
+!   allocate(mod_field(ngrid,1))
+!   allocate(obs_field(nlocs,1))
+
+!    ! Special cases go here
+
+!   deallocate(mod_field)
+!   deallocate(obs_field)
 
    call mpas_pool_destroy_pool(pool_ufo)
 
@@ -376,7 +398,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    character(len=*), parameter :: myname = 'getvalues_ad'
 
-   integer :: jvar, jlev, jloc, ngrid, nlocs, ivar
+   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, ivar
    real(kind=kind_real), allocatable :: mod_field(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
 
@@ -405,58 +427,80 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    !TODO: make this work for "ad"
    !call interp_checks("ad", inc, locs, vars, gom)
 
-   !Create Buffer for interpolated values
-   !--------------------------------------
-   allocate(mod_field(ngrid,1))
-   allocate(obs_field(nlocs,1))
-
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-!   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
-!   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
+   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues_ad: nlocs         : ',nlocs
 
    !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
    !    : Actually their values are initialized as "zero" in following "do while" loop.
    call convert_mpas_field2ufoTL(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
+   maxlevels = inc%geom%nVertLevelsP1
+   allocate(mod_field(ngrid,maxlevels))
+   allocate(obs_field(nlocs,maxlevels))
+
    call mpas_pool_begin_iteration(pool_ufo)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-           ufo_var_name = trim(poolItr % memberName)
-           ivar = ufo_vars_getindex(vars, ufo_var_name )
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         ufo_var_name = trim(poolItr % memberName)
+         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         if ( ivar == -1 ) cycle
 
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           if (poolItr % nDims == 1) then
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+         nlevels = gom%geovals(ivar)%nval
+         do jlev = 1, nlevels
+            !ORG- obs_field(:,jlev) = gom%geovals(ivar)%vals(jlev,:)
+            !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+            ! only selected obs (using locs%indx()) are filling "geovals"
+            ilev = nlevels - jlev + 1
+            do jloc = 1, nlocs
+               obs_field(jloc,jlev) = gom%geovals(ivar)%vals(ilev, locs%indx(jloc))
+               gom%geovals(ivar)%vals(ilev, locs%indx(jloc)) = 0.0_kind_real
+            end do
+         end do
 
-           else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-              r2d_ptr_a=0.0_kind_real
-!              write(*,*) "Interp. var=",trim(poolItr % memberName)
-!              write(*,*) "ufo_vars_getindex, ivar=",ivar
-              do jlev = 1, gom%geovals(ivar)%nval
-                 !ORG- obs_field(:,1) = gom%geovals(ivar)%vals(jlev,:)
-                 do jloc = 1, nlocs
-                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-                   ! only selected obs (using locs%indx()) are filling "geovals"
-                   obs_field(jloc,1) = gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc))
-                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1,locs%indx(jloc)) = 0.0_kind_real
-                 end do
-                 call traj%bump%apply_obsop_ad(obs_field,mod_field)
-                 r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,1)
-              end do
+         !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
+         ! + apply_obsop takes ~99.9% of wall-time of getvalues_ad on cheyenne and
+         !   scales with node count. Seems to have MPI-related issue.
+         !
+         traj%bump%geom%nl0 = nlevels
+         call traj%bump%apply_obsop_ad(obs_field(:,1:nlevels),mod_field(:,1:nlevels))
 
-           else if (poolItr % nDims == 3) then
+         if (poolItr % nDims == 1) then
 
-           end if
-        end if
-        end if
+         else if (poolItr % nDims == 2) then
+
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+               r2d_ptr_a=0.0_kind_real
+!               write(*,*) "Interp. var=",trim(poolItr % memberName)
+!               write(*,*) "ufo_vars_getindex, ivar=",ivar
+               do jlev = 1, nlevels
+                  r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,jlev)
+               end do
+            end if
+
+!         else if (poolItr % nDims == 3) then
+
+         end if
+
+      end if
    end do
+   deallocate(mod_field)
+   deallocate(obs_field)
 
    call convert_mpas_field2ufoAD(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
-   deallocate(mod_field)
-   deallocate(obs_field)
+   traj%bump%geom%nl0 = 1
+!   allocate(mod_field(ngrid,1))
+!   allocate(obs_field(nlocs,1))
+
+!    ! Special cases go here
+
+!   deallocate(mod_field)
+!   deallocate(obs_field)
 
    call mpas_pool_destroy_pool(pool_ufo)
 
@@ -593,36 +637,36 @@ subroutine increment_to_ug(self, ug, colocated)
    call mpas_pool_begin_iteration(self % subFields)
    
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-        ! so we select only those members of the pool that are fields
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-           idx_var = -999
-           ufo_var_name = trim(poolItr % memberName)
-           idx_var = ufo_vars_getindex(vars, ufo_var_name )
+      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+      ! so we select only those members of the pool that are fields
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         idx_var = -999
+         ufo_var_name = trim(poolItr % memberName)
+         idx_var = ufo_vars_getindex(vars, ufo_var_name )
+         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
-        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           ! Depending on the dimensionality of the field, we need to set pointers of
-           ! the correct type
-           if (poolItr % nDims == 1) then
-              write(*,*)'Not implemented yet'
-           else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-              if(idx_var.gt.0) then
-!                 write(*,*) '  sub. increment_to_ug, poolItr % memberName=',trim(poolItr % memberName)
-!                 write(*,*) '  sub. increment_to_ug, idx_var=',idx_var
-                 do jC=1,self%geom%nCellsSolve
-                   do jl=1,self%geom%nVertLevels
-                     ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
-                   enddo
-                 enddo
-              endif
-           else if (poolItr % nDims == 3) then
-              write(*,*)'Not implemented yet'
-           end if
-        end if
-        end if
+         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+         if (poolItr % dataType == MPAS_POOL_REAL) then
+            ! Depending on the dimensionality of the field, we need to set pointers of
+            ! the correct type
+            if (poolItr % nDims == 1) then
+               write(*,*)'Not implemented yet'
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+               if(idx_var.gt.0) then
+!                  write(*,*) '  sub. increment_to_ug, poolItr % memberName=',trim(poolItr % memberName)
+!                  write(*,*) '  sub. increment_to_ug, idx_var=',idx_var
+                  do jC=1,self%geom%nCellsSolve
+                    do jl=1,self%geom%nVertLevels
+                      ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                    enddo
+                  enddo
+               endif
+            else if (poolItr % nDims == 3) then
+               write(*,*)'Not implemented yet'
+            end if
+         end if
+      end if
    end do
 
    ! Cleanup
@@ -656,36 +700,37 @@ subroutine increment_from_ug(self, ug)
    call mpas_pool_begin_iteration(self % subFields)
    
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-        ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-        ! so we select only those members of the pool that are fields
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-        ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           ! Depending on the dimensionality of the field, we need to set pointers of
-           ! the correct type
-           idx_var = -999
-           ufo_var_name = trim(poolItr % memberName)
-           idx_var = ufo_vars_getindex(vars, ufo_var_name )
+      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+      ! so we select only those members of the pool that are fields
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
-           if(idx_var.gt.0) then
-              if (poolItr % nDims == 1) then
-                 write(*,*)'Not implemented yet'
-              else if (poolItr % nDims == 2) then
-                 call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+         if (poolItr % dataType == MPAS_POOL_REAL) then
+            ! Depending on the dimensionality of the field, we need to set pointers of
+            ! the correct type
+            idx_var = -999
+            ufo_var_name = trim(poolItr % memberName)
+            idx_var = ufo_vars_getindex(vars, ufo_var_name )
 
-!                 write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
-                 do jC=1,self%geom%nCellsSolve
-                   do jl=1,self%geom%nVertLevels
-                     r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)
-                   enddo
-                 enddo
-              else if (poolItr % nDims == 3) then
-                 write(*,*)'Not implemented yet'
-              end if
-           end if
-        end if
-        end if
+            if(idx_var.gt.0) then
+               if (poolItr % nDims == 1) then
+                  write(*,*)'Not implemented yet'
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+
+!                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
+                  do jC=1,self%geom%nCellsSolve
+                     do jl=1,self%geom%nVertLevels
+                        r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)
+                     enddo
+                  enddo
+               else if (poolItr % nDims == 3) then
+                  write(*,*)'Not implemented yet'
+               end if
+            end if
+         end if
+      end if
    end do
 
    ! Cleanup

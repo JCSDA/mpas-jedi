@@ -34,14 +34,12 @@ private
 public :: mpas_field, interp_checks, &
           create_field, delete_field, &
           copy_field, copy_pool, &
-          update_diagnostic_fields, &
-          get_new_label, release_label
+          update_diagnostic_fields
 
 integer, parameter :: maxLabels = 1000
 logical, dimension(0:maxLabels), save :: labelsInUse
 integer, parameter :: state_min = maxLabels-100+1
 integer, parameter :: state_max = maxLabels
-integer :: field_count = 0
 
 ! ------------------------------------------------------------------------------
 
@@ -56,7 +54,6 @@ integer :: field_count = 0
      type (mpas_pool_type), pointer, public        :: subFields => null() !---> state variables (to be analyzed)
      integer, public :: nf_ci                                             ! Number of variables in CI
      character(len=MAXVARLEN), allocatable, public :: fldnames_ci(:)      ! Control increment identifiers
-     integer, public :: field_number
      contains
 
      procedure :: zeros     => zeros_
@@ -116,12 +113,6 @@ subroutine create_field(self, geom, vars)
     character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename
     character (len=StrKIND) :: dateTimeString_oops
     character(len=1024) :: buf
-
-    call get_new_label(self % field_number)
-    field_count = field_count + 1
-
-    write(*,fmt='(3(A,I5))')'--> create_field: field number ',self % field_number, &
-              ' of ', count(labelsInUse(0:state_min-1)), '; total = ', field_count
 
     ! from the namelist
     self % nf = vars % nv
@@ -212,10 +203,6 @@ subroutine delete_field(self)
  
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
-
-   call release_label(self % field_number)
-   write(*,fmt='(A,I5,A)')'--> delete_field: ', &
-      count(labelsInUse(0:state_min-1)), ' fields remaining'
 
 !   write(*,*)'--> delete_field: deallocate subFields Pool'
    call delete_pool(self % subFields)
@@ -624,53 +611,4 @@ end subroutine interp_checks
 
 ! ------------------------------------------------------------------------------
 
-!***********************************************************************
-!
-!  copied from mpas_new_unit (mpas_io_units.F)
-!
-!-----------------------------------------------------------------------
-    subroutine get_new_label(newLabel, state)!{{{
-        integer, intent(inout) :: newLabel
-        logical, optional, intent(in) :: state
-
-        integer :: i, minsearch, maxsearch, limit_type
-
-        logical :: opened
-
-        newLabel = -1
-
-        limit_type = 1
-        if ( present(state) ) then
-           if ( state ) limit_type = 2
-        end if
-        if ( limit_type == 2 ) then
-           minsearch = state_min
-           maxsearch = state_max
-        else
-           minsearch = 1
-           maxsearch = state_min - 1
-        end if
-
-        do i = minsearch, maxsearch
-            if (.not. labelsInUse(i)) then
-                newLabel = i
-                labelsInUse(newLabel) = .true.
-                return
-            end if
-        end do
-
-    end subroutine get_new_label!}}}
-
-!***********************************************************************
-!
-!  copied from mpas_release_unit (mpas_io_units.F)
-!
-!-----------------------------------------------------------------------
-    subroutine release_label(releasedLabel)!{{{
-        integer, intent(in) :: releasedLabel
-
-        if ( 0 <= releasedLabel .and. releasedLabel <= maxLabels) &
-           labelsInUse(releasedLabel) = .false.
-
-    end subroutine release_label!}}}
 end module mpas_field_utils_mod

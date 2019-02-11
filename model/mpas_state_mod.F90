@@ -507,7 +507,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
    integer, save, target    :: bumpid = 1000
    integer ,        pointer :: pbumpid => null()
    
-   integer :: jj, jvar, jlev, jloc, ngrid, ivar, nlocs, nlocsg
+   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
    real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
    real(kind=kind_real), allocatable :: obs_field(:,:)
    real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
@@ -518,7 +518,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
+   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b!, i2d_ptr_a
    integer, allocatable  :: index_nn(:)
    real (kind=kind_real), allocatable :: weight_nn(:)
    type (mpas_pool_type), pointer :: pool_tmp  !< temporary pool for setting trajectory
@@ -584,7 +584,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
     pbumpid => bumpid
 
   endif
-  
+
   if (.not. pbump_alloc) then 
     ! Calculate interpolation weight using BUMP
     ! ------------------------------------------
@@ -593,107 +593,105 @@ subroutine getvalues(self, locs, vars, gom, traj)
     pbump_alloc = .true.
 !    write(*,*)'interp: after initialize_bump'
   endif
-   
-   !Make sure the return values are allocated and set
-   !-------------------------------------------------
-! BJJ: move allocation inside mpas_pool iteration
-!   do jvar=1,vars%nv
-!      if( .not. allocated(gom%geovals(jvar)%vals) )then
-!         gom%geovals(jvar)%nval = self%geom%nVertLevels
-!         allocate( gom%geovals(jvar)%vals(self%geom%nVertLevels,nobs) )
-!         write(*,*) ' gom%geovals(n)%vals allocated'
-!      endif
-!   enddo
-   gom%linit = .true.
-   
 
-   !Create Buffer for interpolated values
-   !--------------------------------------
-   allocate(mod_field(ngrid,1))
-   allocate(obs_field(nlocs,1))
-   
+   !Make sure the return values are allocated and set below
+   !-------------------------------------------------------
+   gom%linit = .true.
+      
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-!   write(0,*)'interp: vars%nv       : ',vars%nv
-!   write(0,*)'interp: vars%fldnames : ',vars%fldnames
-
+   write(0,*)'getvalues   : vars%nv       : ',vars%nv
+   write(0,*)'getvalues   : vars%fldnames : ',vars%fldnames
+   write(0,*)'getvalues   : nlocs, nlocsg : ',nlocs, ',',  nlocsg
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
    call convert_mpas_field2ufo(self % geom, self % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
+   maxlevels = self%geom%nVertLevelsP1
+   allocate(mod_field(ngrid,maxlevels))
+   allocate(obs_field(nlocs,maxlevels))
+
    call mpas_pool_begin_iteration(pool_ufo)
-
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
-!        write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-        if (poolItr % memberType == MPAS_POOL_FIELD) then
-           ufo_var_name = trim(poolItr % memberName)
-           ivar = ufo_vars_getindex(vars, ufo_var_name )
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
+         ufo_var_name = trim(poolItr % memberName)
+         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         if ( ivar == -1 ) cycle
 
-        if (poolItr % dataType == MPAS_POOL_INTEGER) then
-           if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
-!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
-              if( .not. allocated(gom%geovals(ivar)%vals) )then
-                 gom%geovals(ivar)%nval = 1
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-!                 write(*,*) ' gom%geovals(n)%vals allocated'
-              endif
-              mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
-              call pbump%apply_obsop(mod_field,obs_field)
-              do jloc = 1, nlocs
-                gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
-              enddo
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-           end if
-        end if
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+         if (poolItr % nDims == 1) then
+            if( .not. allocated(gom%geovals(ivar)%vals) )then
+               gom%geovals(ivar)%nval = 1
+               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+!               write(*,*) ' gom%geovals(n)%vals allocated'
+            endif
+            nlevels = gom%geovals(ivar)%nval
 
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-           if (poolItr % nDims == 1) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
-              if( .not. allocated(gom%geovals(ivar)%vals) )then
-                 gom%geovals(ivar)%nval = 1
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-!                 write(*,*) ' gom%geovals(n)%vals allocated'
-              endif
-              mod_field(:,1) = r1d_ptr_a(1:ngrid)
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
-              call pbump%apply_obsop(mod_field,obs_field)
-              do jloc = 1, nlocs
-                gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
-              enddo
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+            if (poolItr % dataType == MPAS_POOL_INTEGER) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
+!               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i1d_ptr_a),maxval(i1d_ptr_a)
+               mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
+            else if (poolItr % dataType == MPAS_POOL_REAL) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+!               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+               mod_field(:,1) = r1d_ptr_a(1:ngrid)
+            end if
 
-           else if (poolItr % nDims == 2) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-!              write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
-              if( .not. allocated(gom%geovals(ivar)%vals) )then
-                 gom%geovals(ivar)%nval = self%geom%nVertLevels
-                 if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = self%geom%nVertLevelsP1 !BJJ: Can we do this better ??
-                 allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
-!                 write(*,*) ' gom%geovals(n)%vals allocated'
-              endif
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
-              do jlev = 1, gom%geovals(ivar)%nval
-                 mod_field(:,1) = r2d_ptr_a(jlev,1:ngrid)
-                 call pbump%apply_obsop(mod_field,obs_field)
-                 do jloc = 1, nlocs
-                   !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-                   ! only selected obs (using locs%indx()) are filling "geovals"
-                   gom%geovals(ivar)%vals(gom%geovals(ivar)%nval - jlev + 1, locs%indx(jloc)) = obs_field(jloc,1) 
-                 end do
-              end do
-!              write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+         else if (poolItr % nDims == 2) then
+            if( .not. allocated(gom%geovals(ivar)%vals) )then
+               gom%geovals(ivar)%nval = self%geom%nVertLevels
+               if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = self%geom%nVertLevelsP1 !BJJ: Can we do this better ??
+               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+!               write(*,*) ' gom%geovals(n)%vals allocated'
+            endif
+            nlevels = gom%geovals(ivar)%nval
 
-           else if (poolItr % nDims == 3) then
-           end if
-        end if
+            if (poolItr % dataType == MPAS_POOL_INTEGER) then
+!               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
+!!               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!!               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(i2d_ptr_a),maxval(i2d_ptr_a)
+!               mod_field(:,1:nlevels) = real( transpose(r2d_ptr_a(:,1:ngrid)), kind_real )
 
-        end if
+            else if (poolItr % dataType == MPAS_POOL_REAL) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+!               write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
+!               write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+               mod_field(:,1:nlevels) = transpose(r2d_ptr_a(:,1:ngrid))
+            end if
+
+!         else if (poolItr % nDims == 3) then
+
+         end if
+
+         !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
+         ! + apply_obsop takes ~50% of wall-time of getvalues on cheyenne and
+         !   scales with node count. Seems to have MPI-related issue.
+         !
+         ! + initialize_bump takes other ~50% on cheyennne
+         !
+         pbump%geom%nl0 = nlevels
+         call pbump%apply_obsop(mod_field(:,1:nlevels),obs_field(:,1:nlevels))
+
+         do jlev = 1, nlevels
+            !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
+            ! only selected obs (using locs%indx()) are filling "geovals"
+            ilev = nlevels - jlev + 1
+            gom%geovals(ivar)%vals(ilev, locs%indx(1:nlocs)) = obs_field(:,jlev)
+         end do
+!         write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+
+      end if
    end do !- end of pool iteration
+   deallocate(mod_field)
+   deallocate(obs_field)
+
+   pbump%geom%nl0 = 1
+   allocate(mod_field(ngrid,1))
+   allocate(obs_field(nlocs,1))
 
    !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
    if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
@@ -1036,6 +1034,7 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    allocate(area(mod_num))
    allocate(vunit(mod_num,1))
    allocate(lmask(mod_num,1))
+
    area  = 1.0          ! Dummy area, unit [m^2]
    vunit = 1.0          ! Dummy vertical unit
    lmask = .true.       ! Mask

@@ -98,10 +98,6 @@ subroutine create_state(self, geom, vars)
     allocate(self % fldnames_ci(self % nf_ci))
     self % fldnames_ci(:) = vars % fldnames(:)
 
-    call release_label(self % field_number)
-    call get_new_label(self % field_number, .true.)
-    write(*,*)'--> create_state: state number ',self % field_number
-
 end subroutine create_state
 
 ! ------------------------------------------------------------------------------
