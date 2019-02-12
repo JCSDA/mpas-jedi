@@ -286,6 +286,7 @@ subroutine read_field(self, c_conf, vdate)
    integer                 :: ierr = 0, ngrid
 
    type (mpas_pool_type), pointer :: state, diag, mesh
+   type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
    character(len=1024) :: buf
 
 !   write(*,*)'--> read_field'
@@ -332,6 +333,15 @@ subroutine read_field(self, c_conf, vdate)
       endif
    endif
 
+   !(1) diagnose pressure
+   call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)
+   call mpas_pool_get_field(diag, 'pressure_p', pressure_p)
+   call mpas_pool_get_field(diag, 'pressure_base', pressure_base)
+   call mpas_pool_get_field(diag, 'pressure', pressure)
+   ngrid = self % geom % nCellsSolve
+   pressure%array(:,1:ngrid) = pressure_base%array(:,1:ngrid) + pressure_p%array(:,1:ngrid)
+
+   !(2) copy all to subFields & diagnose temperature
    call update_diagnostic_fields(self % geom % domain, self % subFields, self % geom % nCellsSolve)
 
 end subroutine read_field
@@ -343,19 +353,12 @@ subroutine update_diagnostic_fields(domain, subFields, ngrid)
    type (domain_type), pointer,    intent(inout) :: domain
    type (mpas_pool_type), pointer, intent(inout) :: subFields
    integer,                        intent(in)    :: ngrid
-   type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: theta, pressure, temperature
 
-   !(1) diagnose theta, rho, pressure
-   call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
-   call mpas_pool_get_subpool(domain % blocklist % structs, 'diag', diag)
-   call mpas_pool_get_subpool(domain % blocklist % structs, 'mesh', mesh)
-   call atm_compute_output_diagnostics(state, 1, diag, mesh)
-
-   !(2) copy all to subFields
+   !(1) copy all to subFields
    call da_copy_all2sub_fields(domain, subFields) 
 
-   !(3) diagnose temperature
+   !(2) diagnose temperature
    !Special case: Convert theta and pressure to temperature
    !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner") 
    !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics,

@@ -322,17 +322,21 @@ subroutine model_propagate(self, jedi_state)
    type(mpas_model) :: self
    type(mpas_state) :: jedi_state
 
-   type (mpas_pool_type), pointer :: state
+   type (mpas_pool_type), pointer :: state, diag, mesh
    real (kind=kind_real) :: dt
    integer :: itimestep
 
    write(*,*)'===> model_propagate'
 
+   ! Get state, diag, and mesh from domain
+   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
+   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
+   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
+
    itimestep = 1
    ! Perform single time step, including
    !  update of mpas wind from the edges to center
    call atm_do_timestep(self % domain, self % dt, itimestep)
-   call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
    call mpas_pool_shift_time_levels(state)
    call mpas_advance_clock(self % domain % clock)
    call mpas_advance_clock(jedi_state % clock) !Advance jedi_state % clock, Too
@@ -341,6 +345,10 @@ subroutine model_propagate(self, jedi_state)
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be
    ! interfaced with fortran.
    !if ( mpas_is_clock_time(self % domain % clock) ) then 
+      !(1) diagnose theta, rho, pressure
+      call atm_compute_output_diagnostics(state, 1, diag, mesh)
+
+      !(2) copy all to subFields & diagnose temperature
       call update_diagnostic_fields(self % domain, jedi_state % subFields, jedi_state % geom % nCellsSolve)
    !end if
 
