@@ -16,4 +16,5 @@ Test     : Fld=4  Min=-43.4896, Max=58.6028, RMS=8.84544
 Test     : Fld=5  Min=1456.08, Max=97474.1, RMS=49317.3
 Test     : H(x): Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
 Test     : Aircraft nobs= 1828 Min=-29.7489, Max=294.482, RMS=127.933
+Test     : Satwind nobs= 200 Min=-17.2277, Max=14.036, RMS=7.89614
 Test     : CRTM nobs= 1125 Min=148.704, Max=296.977, RMS=233.457
