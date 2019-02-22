@@ -16,7 +16,7 @@ cost_function:
   variables:
   - temperature
   - pressure
-  - index_qv
+  - spechum
   - uReconstructZonal
   - uReconstructMeridional
   Jb:
@@ -25,7 +25,7 @@ cost_function:
       - variables:
         - temperature
         - pressure
-        - index_qv
+        - spechum
         - uReconstructZonal
         - uReconstructMeridional
         filename: "./restart.2018-04-14_21.00.00.nc"
@@ -33,7 +33,7 @@ cost_function:
       - variables:
         - temperature
         - pressure
-        - index_qv
+        - spechum
         - uReconstructZonal
         - uReconstructMeridional
         filename: "./restart.2018-04-15_00.00.00.nc"
@@ -41,7 +41,7 @@ cost_function:
       - variables:
         - temperature
         - pressure
-        - index_qv
+        - spechum
         - uReconstructZonal
         - uReconstructMeridional
         filename: "./restart.2018-04-15_03.00.00.nc"
@@ -54,7 +54,7 @@ cost_function:
           variables:
           - temperature
           - pressure
-          - index_qv
+          - spechum
           - uReconstructZonal
           - uReconstructMeridional
         date: '2018-04-14T21:00:00Z'
@@ -65,7 +65,7 @@ cost_function:
             variables:
             - temperature
             - pressure
-            - index_qv
+            - spechum
             - uReconstructZonal
             - uReconstructMeridional
       - covariance: ensemble
@@ -74,7 +74,7 @@ cost_function:
           variables:
           - temperature
           - pressure
-          - index_qv
+          - spechum
           - uReconstructZonal
           - uReconstructMeridional
         date: '2018-04-15T00:00:00Z'
@@ -85,7 +85,7 @@ cost_function:
             variables:
             - temperature
             - pressure
-            - index_qv
+            - spechum
             - uReconstructZonal
             - uReconstructMeridional
       - covariance: ensemble
@@ -94,7 +94,7 @@ cost_function:
           variables:
           - temperature
           - pressure
-          - index_qv
+          - spechum
           - uReconstructZonal
           - uReconstructMeridional
         date: '2018-04-15T03:00:00Z'
@@ -105,7 +105,7 @@ cost_function:
             variables:
             - temperature
             - pressure
-            - index_qv
+            - spechum
             - uReconstructZonal
             - uReconstructMeridional
   Jo:
@@ -121,6 +121,7 @@ cost_function:
       - air_temperature
       - eastward_wind
       - northward_wind
+      - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -129,6 +130,7 @@ cost_function:
         - air_temperature
         - eastward_wind
         - northward_wind
+        - specific_humidity
         threshold: 3
     - ObsType: Aircraft
       ObsData:
@@ -141,6 +143,7 @@ cost_function:
       - air_temperature
       - eastward_wind
       - northward_wind
+      - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -149,6 +152,7 @@ cost_function:
         - air_temperature
         - eastward_wind
         - northward_wind
+        - specific_humidity
         threshold: 3
 minimizer:
   algorithm: DRIPCG

@@ -37,7 +37,7 @@ public :: mpas_state, mpas_state_registry, nf_aux
 !> Global registry
 type(registry_t) :: mpas_state_registry
 
-integer, parameter :: nf_aux = 21
+integer, parameter :: nf_aux = 22
 character(len=MAXVARLEN) :: fldnames_aux(nf_aux)
 
 ! ------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ subroutine create_state(self, geom, vars)
        !--- TODO: all other aux variables should come from "VariableChange" 
        !          variables in YAML (not enabled yet in OOPS)
        fldnames_aux = [ character(len=MAXVARLEN) :: &
-          "theta", "rho", "u", &
+          "theta", "rho", "u", "index_qv", &
           "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
           "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w", &
           "index_qc", "index_qi", "re_cloud", "re_ice" ]

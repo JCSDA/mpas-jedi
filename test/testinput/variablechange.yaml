@@ -9,7 +9,7 @@ LinearVariableChangeTests:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
   prefix: bump
@@ -19,14 +19,14 @@ LinearVariableChangeTests:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
   outputVariables:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
 - varchange: Control2Model
@@ -36,7 +36,7 @@ LinearVariableChangeTests:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
   prefix: bump
@@ -46,14 +46,14 @@ LinearVariableChangeTests:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
   outputVariables:
     variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
 Geometry:
@@ -62,7 +62,7 @@ State:
   variables:
   - temperature
   - pressure
-  - index_qv
+  - spechum
   - uReconstructZonal
   - uReconstructMeridional
   filename: "./restart.2018-04-15_00.00.00.nc"
@@ -71,6 +71,6 @@ Variables:
   variables:
   - temperature
   - pressure
-  - index_qv
+  - spechum
   - uReconstructZonal
   - uReconstructMeridional

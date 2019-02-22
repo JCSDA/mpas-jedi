@@ -21,7 +21,7 @@ type :: mpas_getvaltraj
  logical :: noobs
  type (mpas_pool_type), pointer :: pool_traj
  type(bump_type) :: bump
-! integer :: nsize = 2 !< size of pool_traj, currently for temperature, index_qv
+! integer :: nsize = 2 !< size of pool_traj, currently for temperature, spechum
  logical :: lalloc = .false.
  contains
   final :: dummy_final !Work around for gcc compiler bug

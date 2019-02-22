@@ -26,7 +26,7 @@ namespace mpas {
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)
   : keyConfig_(0), tstep_(0), geom_(resol),
-    vars_(std::vector<std::string>{"temperature", "pressure", "index_qv",
+    vars_(std::vector<std::string>{"temperature", "pressure", "spechum",
                               "uReconstructZonal", "uReconstructMeridional"})
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;

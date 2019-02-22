@@ -7,7 +7,7 @@ initial:
   variables:
   - temperature
   - pressure
-  - index_qv
+  - spechum
   - uReconstructZonal
   - uReconstructMeridional
   filename: "./restart.2018-04-15_00.00.00.nc"

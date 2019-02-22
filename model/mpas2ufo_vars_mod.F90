@@ -27,7 +27,7 @@ use ufo_vars_mod
 !MPAS-Model
 use atm_core
 use mpas_abort, only : mpas_dmpar_global_abort
-use mpas_constants, only : gravity, rgas, rv, pii
+use mpas_constants, only : gravity, rgas, rv, cp, pii
 use mpas_dmpar
 use mpas_derived_types
 use mpas_field_routines
@@ -37,6 +37,9 @@ private
 
 public :: convert_type_soil, convert_type_veg
 public :: uv_to_wdir
+public :: w_to_q, q_to_w
+public :: theta_to_temp, temp_to_theta
+public :: twp_to_rho
 
 public :: update_mpas_field
 public :: convert_mpas_field2ufo,   &
@@ -185,6 +188,160 @@ subroutine uv_to_wdir(uu5, vv5, wind10_direction)
 end subroutine uv_to_wdir
 
 !-------------------------------------------------------------------------------------------
+elemental subroutine w_to_q(mixing_ratio, specific_humidity)
+   implicit none
+   real (kind=kind_real), intent(in)  :: mixing_ratio
+   real (kind=kind_real), intent(out) :: specific_humidity
+
+   specific_humidity = mixing_ratio / (1.0_kind_real + mixing_ratio)
+end subroutine w_to_q
+!-------------------------------------------------------------------------------------------
+elemental subroutine q_to_w(specific_humidity, mixing_ratio)
+   implicit none
+   real (kind=kind_real), intent(in)  :: specific_humidity
+   real (kind=kind_real), intent(out) :: mixing_ratio
+
+   mixing_ratio = specific_humidity / (1.0_kind_real - specific_humidity)
+end subroutine q_to_w
+!-------------------------------------------------------------------------------------------
+elemental subroutine q_to_w_tl(specific_humidity_tl, sh_traj, mixing_ratio_tl)
+   implicit none
+   real (kind=kind_real), intent(in)  :: specific_humidity_tl
+   real (kind=kind_real), intent(in)  :: sh_traj
+   real (kind=kind_real), intent(out) :: mixing_ratio_tl
+
+   mixing_ratio_tl = specific_humidity_tl / (1.0_kind_real - sh_traj)**2
+end subroutine q_to_w_tl
+!-------------------------------------------------------------------------------------------
+elemental subroutine q_to_w_ad(specific_humidity_ad, sh_traj, mixing_ratio_ad)
+   implicit none
+   real (kind=kind_real), intent(inout) :: specific_humidity_ad
+   real (kind=kind_real), intent(in)    :: sh_traj
+   real (kind=kind_real), intent(in)    :: mixing_ratio_ad
+
+   specific_humidity_ad = specific_humidity_ad + &
+                 1.0_kind_real / ( 1.0_kind_real - sh_traj)**2 * mixing_ratio_ad
+end subroutine q_to_w_ad
+!-------------------------------------------------------------------------------------------
+elemental subroutine tw_to_tv(temperature,mixing_ratio,virtual_temperature)
+   implicit none
+   real (kind=kind_real), intent(in)  :: temperature
+   real (kind=kind_real), intent(in)  :: mixing_ratio
+   real (kind=kind_real), intent(out) :: virtual_temperature
+
+   virtual_temperature = temperature * &
+                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*mixing_ratio )
+end subroutine tw_to_tv
+!-------------------------------------------------------------------------------------------
+elemental subroutine tw_to_tv_tl(temperature_tl,mixing_ratio_tl,t_traj,m_traj,virtual_temperature_tl)
+   implicit none
+   real (kind=kind_real), intent(in)  :: temperature_tl
+   real (kind=kind_real), intent(in)  :: mixing_ratio_tl
+   real (kind=kind_real), intent(in)  :: t_traj
+   real (kind=kind_real), intent(in)  :: m_traj
+   real (kind=kind_real), intent(out) :: virtual_temperature_tl
+
+   virtual_temperature_tl = temperature_tl * &
+                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*m_traj )  + &
+                  t_traj * (rv/rgas - 1.0_kind_real)*mixing_ratio_tl
+end subroutine tw_to_tv_tl
+!-------------------------------------------------------------------------------------------
+elemental subroutine tw_to_tv_ad(temperature_ad,mixing_ratio_ad,t_traj,m_traj,virtual_temperature_ad)
+   implicit none
+   real (kind=kind_real), intent(inout) :: temperature_ad
+   real (kind=kind_real), intent(inout) :: mixing_ratio_ad
+   real (kind=kind_real), intent(in)    :: t_traj
+   real (kind=kind_real), intent(in)    :: m_traj
+   real (kind=kind_real), intent(in)    :: virtual_temperature_ad
+
+   temperature_ad = temperature_ad + virtual_temperature_ad * &
+                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*m_traj )
+   mixing_ratio_ad = mixing_ratio_ad + virtual_temperature_ad * &
+                  t_traj * (rv/rgas - 1.0_kind_real)
+end subroutine tw_to_tv_ad
+!-------------------------------------------------------------------------------------------
+elemental subroutine theta_to_temp(theta,pressure,temperature)
+   implicit none
+   real (kind=kind_real), intent(in)  :: theta
+   real (kind=kind_real), intent(in)  :: pressure
+   real (kind=kind_real), intent(out) :: temperature
+   temperature = theta / &
+             ( 100000.0_kind_real / pressure ) ** ( rgas / cp )
+   !TODO: Following formula would give the same result with the formular above,
+   !      but gives a slightly different precision. Need to check.
+   !temperature = theta * &
+   !          ( pressure / 100000.0_kind_real ) ** ( rgas / cp )
+end subroutine theta_to_temp
+!-------------------------------------------------------------------------------------------
+elemental subroutine temp_to_theta(temperature,pressure,theta)
+   implicit none
+   real (kind=kind_real), intent(in)  :: temperature
+   real (kind=kind_real), intent(in)  :: pressure
+   real (kind=kind_real), intent(out) :: theta
+   theta = temperature * &
+             ( 100000.0_kind_real / pressure ) ** ( rgas / cp )
+end subroutine temp_to_theta
+!-------------------------------------------------------------------------------------------
+elemental subroutine twp_to_rho(temperature,mixing_ratio,pressure,rho)
+   implicit none
+   real (kind=kind_real), intent(in)  :: temperature
+   real (kind=kind_real), intent(in)  :: mixing_ratio
+   real (kind=kind_real), intent(in)  :: pressure
+   real (kind=kind_real), intent(out) :: rho
+   rho = pressure / ( rgas * temperature * &
+                                ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * mixing_ratio ) )
+end subroutine twp_to_rho
+!-------------------------------------------------------------------------------------------
+subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
+   implicit none
+   real (kind=kind_real), dimension(nV,nC), intent(in) :: pressure
+   real (kind=kind_real), dimension(nV+1,nC), intent(in) :: zgrid
+   integer, intent(in) :: nC, nV
+   real (kind=kind_real), dimension(nV+1,nC), intent(out) :: pressure_f
+
+   real (kind=kind_real), dimension(nC,nV) :: fzm_p, fzp_p 
+   real (kind=kind_real) :: tem1, z0, z1, z2, w1, w2
+   integer :: i, k, its, ite, kts, kte
+
+        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
+        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F >> formula   Line 365.
+        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F      >> declarations
+        ! This routine needs to access GEOM (dimension, zgrid )
+        ! TODO: Check: ite = nCells??  nCellsSolve???  MPI consideration ???
+        !              Seems to be nCellsSolve
+        its=1 ; ite = nC
+        kts=1 ; kte = nV
+
+        do k = kts+1,kte
+        do i = its,ite
+          tem1 = 1.0_kind_real/(zgrid(k+1,i)- zgrid(k-1,i))
+          fzm_p(i,k) = ( zgrid(k,i)- zgrid(k-1,i)) * tem1
+          fzp_p(i,k) = ( zgrid(k+1,i)- zgrid(k,i)) * tem1
+          pressure_f(k,i) = fzm_p(i,k)*pressure(k,i) + fzp_p(i,k)*pressure(k-1,i)
+        enddo
+        enddo
+        k = kte+1
+        do i = its,ite
+          z0 = zgrid(k,i)
+          z1 = 0.5_kind_real*(zgrid(k,i)+zgrid(k-1,i))
+          z2 = 0.5_kind_real*(zgrid(k-1,i)+zgrid(k-2,i))
+          w1 = (z0-z2)/(z1-z2)
+          w2 = 1.0_kind_real-w1
+          !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
+          pressure_f(k,i) = exp( w1*log(pressure(k-1,i)) + w2*log(pressure(k-1,i)) )
+        enddo
+        k = kts
+        do i = its,ite
+          z0 = zgrid(k,i)
+          z1 = 0.5_kind_real*(zgrid(k,i)+zgrid(k+1,i))
+          z2 = 0.5_kind_real*(zgrid(k+1,i)+zgrid(k+2,i))
+          w1 = (z0-z2)/(z1-z2)
+          w2 = 1.0_kind_real-w1
+          pressure_f(k,i) = w1*pressure(k,i) + w2*pressure(k+1,i)
+        enddo
+
+end subroutine pressure_half_to_full
+!-------------------------------------------------------------------------------------------
 
    !--- variables can be found in subFields
 subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield, ngrid)
@@ -210,13 +367,8 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
    type (field1DInteger), pointer :: field1di, field1di_src
    type (field1DReal), pointer :: field1d, field1d_src
-   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c, field2d_src
-   integer :: ii, ivar
-
-   !-- for var_prsi
-   integer :: i, k, its, ite, kts, kte
-   real (kind=kind_real) :: tem1, z0, z1, z2, w1, w2
-   real (kind=kind_real), dimension(:,:), allocatable :: fzm_p, fzp_p
+   type (field2DReal), pointer :: field2d, field2d_a, field2d_src
+   integer :: ivar, i, k
 
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
@@ -231,15 +383,16 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
      case ( "virtual_temperature" ) !-var_tv 
         call mpas_pool_get_field(subFields, 'temperature', field2d_src) !< get temperature
-        call mpas_pool_get_array(subFields,    'index_qv', r2d_ptr_b) !< get index_qv
+        call mpas_pool_get_array(subFields,     'spechum', r2d_ptr_b)   !< get specific_humidity
 !        write(*,*) 'MIN/MAX of temperature=',minval(field2d_src%array),maxval(field2d_src%array)
-!        write(*,*) 'MIN/MAX of    index_qv=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of     spechum=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
-        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        call mpas_duplicate_field(field2d_src, field2d)   ! for virtual_temperature
+        call mpas_duplicate_field(field2d_src, field2d_a) ! for mixing_ratio, intermediate variable
 
-!%%%  NL: Calculate Tv from T and qv. TODO: use clean formula
-        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
-             !Tv = T * ( 1.0 + (rv/rd – 1)*qv), rv=461.50 , rd=287.05
+        call q_to_w( r2d_ptr_b(:,1:ngrid) , field2d_a % array(:,1:ngrid) )
+        call tw_to_tv( field2d_src%array(:,1:ngrid), field2d_a % array(:,1:ngrid), field2d % array(:,1:ngrid) )
+        call mpas_deallocate_field(field2d_a) ! not used
 !        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
         field2d % fieldName = var_tv
@@ -250,14 +403,14 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
      case ( "air_temperature" ) !-var_ts
         call mpas_pool_get_field(subFields, 'temperature', field2d_src) !< get temperature
-        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        call mpas_duplicate_field(field2d_src, field2d)! for air_temperature
         field2d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 
      case ( "eastward_wind" ) !-var_??? eastward_wind
 
         call mpas_pool_get_field(subFields, 'uReconstructZonal', field2d_src) !< get zonal wind
-        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        call mpas_duplicate_field(field2d_src, field2d)!  for eastward_wind
 !        write(*,*) 'MIN/MAX of zonal wind=',minval(field2d % array),maxval(field2d % array)
         field2d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
@@ -265,7 +418,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
      case ( "northward_wind" ) !-var_??? northward_wind
         call mpas_pool_get_field(subFields, 'uReconstructMeridional', field2d_src) !< get meridional wind
-        call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
+        call mpas_duplicate_field(field2d_src, field2d)!  for northward_wind
 !        write(*,*) 'MIN/MAX of meridional wind=',minval(field2d % array),maxval(field2d % array)
         field2d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
@@ -285,13 +438,20 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_field(subFields, 'index_qv', field2d_src) !< get qv
-        call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = max(0.0_kind_real,&
-           field2d_src%array(:,1:ngrid) * 1000.0_kind_real) ! [kg/kg] -> [g/kg]
+        call mpas_pool_get_field(subFields, 'spechum', field2d_src) !< get specific_humidity
+        call mpas_duplicate_field(field2d_src, field2d)! for humidity_mixing_ratio
+        call q_to_w(field2d_src % array(:,1:ngrid) , field2d % array(:,1:ngrid))
+        field2d % array(:,1:ngrid) = max(0.0_kind_real, field2d % array(:,1:ngrid)) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
         call mpas_pool_add_field(convFields, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
+
+     case("specific_humidity")
+        call mpas_pool_get_field(subFields, "spechum", field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
+!        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("air_pressure") !-var_prs
         call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
@@ -306,45 +466,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_get_field(subFields, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
 
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F >> formula   Line 365.
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F      >> declarations
-        ! This routine needs to access GEOM (dimension, zgrid )
-        ! TODO: Check: ite = nCells??  nCellsSolve???  MPI consideration ??? 
-        its=1 ; ite = geom % nCells
-        kts=1 ; kte = geom % nVertLevels
-        allocate( fzm_p(its:ite,kts:kte), fzp_p(its:ite,kts:kte) )
-
-        do k = kts+1,kte
-        do i = its,ite
-          tem1 = 1.0_kind_real/(geom % zgrid(k+1,i)-geom % zgrid(k-1,i))
-          fzm_p(i,k) = (geom % zgrid(k,i)-geom % zgrid(k-1,i)) * tem1
-          fzp_p(i,k) = (geom % zgrid(k+1,i)-geom % zgrid(k,i)) * tem1
-          field2d % array(k,i) = fzm_p(i,k)*r2d_ptr_a(k,i) + fzp_p(i,k)*r2d_ptr_a(k-1,i)
-        enddo
-        enddo
-        k = kte+1
-        do i = its,ite
-          z0 = geom % zgrid(k,i)
-          z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k-1,i))
-          z2 = 0.5_kind_real*(geom % zgrid(k-1,i)+geom % zgrid(k-2,i))
-          w1 = (z0-z2)/(z1-z2)
-          w2 = 1.0_kind_real-w1
-          !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
-          field2d % array(k,i) = exp( w1*log(r2d_ptr_a(k-1,i)) + w2*log(r2d_ptr_a(k-1,i)) )
-        enddo
-        k = kts
-        do i = its,ite
-          z0 = geom % zgrid(k,i)
-          z1 = 0.5_kind_real*(geom % zgrid(k,i)+geom % zgrid(k+1,i))
-          z2 = 0.5_kind_real*(geom % zgrid(k+1,i)+geom % zgrid(k+2,i))
-          w1 = (z0-z2)/(z1-z2)
-          w2 = 1.0_kind_real-w1
-          field2d % array(k,i) = w1*r2d_ptr_a(k,i) + w2*r2d_ptr_a(k+1,i)
-        enddo
-
-        deallocate( fzm_p, fzp_p )
-
+        call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom % nVertLevels, field2d%array(:,1:ngrid))
         field2d % array = field2d % array / 100.0_kind_real ! [Pa] -> [hPa]
 !        write(*,*) 'MIN/MAX of prsi=',minval(field2d % array),maxval(field2d % array)
 !        write(*,*) 'test prs       =',r2d_ptr_a(:,1)
@@ -377,7 +499,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
-        do i=1,geom % nCells
+        do i=1,ngrid
         do k=1,geom % nVertLevels
           kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
           field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
@@ -396,7 +518,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_duplicate_field(field2d_src, field2d)
         !--TODO: Trial: Should already have "var_prsi"
         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
-        do i=1,geom % nCells
+        do i=1,ngrid
         do k=1,geom % nVertLevels
           kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
           field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
@@ -519,8 +641,8 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
-   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c, field2d_src
-   integer :: ii, ivar
+   type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
+   integer :: ivar
 
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(convFields_tl)
@@ -536,24 +658,27 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 
         !get TL variables
         call mpas_pool_get_field(subFields_tl, 'temperature', field2d_src)
-        call mpas_pool_get_array(subFields_tl,    'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(subFields_tl,     'spechum', r2d_ptr_b)
 !        write(*,*) 'MIN/MAX of TL temperature(in)=',minval(field2d_src%array),maxval(field2d_src%array)
-!        write(*,*) 'MIN/MAX of TL    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of TL     spechum(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
         call mpas_pool_get_array(trajFields, 'temperature', traj_r2d_a)
-        call mpas_pool_get_array(trajFields,    'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(trajFields,     'spechum', traj_r2d_b)
 !        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
-!        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
+!        write(*,*) 'MIN/MAX of TRAJ     spechum=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
-        call mpas_duplicate_field(field2d_src, field2d)
+        call mpas_duplicate_field(field2d_src, field2d)        ! for TL of virtual_temperature
+        call mpas_duplicate_field(field2d_src, field2d_a)      ! for TL of mixing_ratio, intermediate variable
+        call mpas_duplicate_field(field2d_src, traj_field2d_a) ! for NL of mixing_ratio, intermediate variable
 
-!%%%  TL: Calculate Tv from T and qv. TODO: use clean formula
-        !NL: field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
-        field2d % array(:,1:ngrid) = &
-           ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * traj_r2d_b(:,1:ngrid) ) &
-           * field2d_src%array(:,1:ngrid) &
-           + traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,1:ngrid)
+        call q_to_w_tl( r2d_ptr_b(:,1:ngrid), traj_r2d_b(:,1:ngrid), field2d_a % array(:,1:ngrid) )
+        call q_to_w( traj_r2d_b(:,1:ngrid) , traj_field2d_a % array(:,1:ngrid) ) !NL coeff.
+        call tw_to_tv_tl( field2d_src % array(:,1:ngrid), field2d_a % array(:,1:ngrid), &
+                          traj_r2d_a(:,1:ngrid), traj_field2d_a % array(:,1:ngrid), &
+                          field2d % array(:,1:ngrid) )
+        call mpas_deallocate_field(field2d_a)      ! not used
+        call mpas_deallocate_field(traj_field2d_a) ! not used 
 !        write(*,*) 'MIN/MAX of TL Tv(out)=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
         field2d % fieldName = var_tv
@@ -604,26 +729,27 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to tl of var_prsl. but for general purpose ?!?!
         !BJ: Without this array, 3DVAR gives the same results.
-!        call mpas_pool_get_field(subFields_tl, 'pressure', field2d_src)
-!        write(*,*) 'MIN/MAX of pressure=',minval(field2d_src%array),maxval(field2d_src%array)
-!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
-!
-!NL        field2d % array(:,1:ngrid) = 0.0_kind_real !log( field2d_src%array(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
-!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
-!
-!        field2d % fieldName = var_prsl
-!
-!        call mpas_pool_add_field(convFields_tl, var_prsl, field2d)
-!
-!        write(*,*) "end-of ",var_prsl
 
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_field(subFields_tl, 'index_qv', field2d_src) ! as a dummy array
+        call mpas_pool_get_field(subFields_tl, 'spechum', field2d_src) !< get TL of specific_huuumidity
+        call mpas_pool_get_array(trajFields,   'spechum', traj_r2d_a)  !< get linearization state
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+
+        call q_to_w_tl(field2d_src % array(:,1:ngrid), traj_r2d_a(:,1:ngrid), field2d % array(:,1:ngrid)) 
+        where (traj_r2d_a(:,1:ngrid) <= 0.0_kind_real)
+          field2d % array(:,1:ngrid) = 0.0_kind_real
+        end where
+        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * 1000.0_kind_real
         field2d % fieldName = var_mixr
         call mpas_pool_add_field(convFields_tl, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
+
+     case("specific_humidity")
+        call mpas_pool_get_field(subFields_tl, "spechum", field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)
+        field2d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields_tl, trim(fieldname(ivar)), field2d)
+!        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("air_pressure") !-var_prs
 !        call mpas_pool_get_field(subFields_tl, 'pressure', field2d)
@@ -707,8 +833,8 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
-   type (field2DReal), pointer :: field2d, field2d_a, field2d_b, field2d_c
-   integer :: ii, ivar
+   type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
+   integer :: ivar
 
    do ivar=1, nfield
      write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, &
@@ -720,28 +846,32 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 
         !get AD variables
         call mpas_pool_get_array(subFields_ad, 'temperature', r2d_ptr_a)
-        call mpas_pool_get_array(subFields_ad,    'index_qv', r2d_ptr_b)
+        call mpas_pool_get_array(subFields_ad,     'spechum', r2d_ptr_b)
 !        write(*,*) 'MIN/MAX of AD temperature(in)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of AD    index_qv(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of AD     spechum(in)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
         !get linearization state
         call mpas_pool_get_array(trajFields, 'temperature', traj_r2d_a)
-        call mpas_pool_get_array(trajFields,    'index_qv', traj_r2d_b)
+        call mpas_pool_get_array(trajFields,     'spechum', traj_r2d_b)
 !        write(*,*) 'MIN/MAX of TRAJ temperature=',minval(traj_r2d_a),maxval(traj_r2d_a)
-!        write(*,*) 'MIN/MAX of TRAJ    index_qv=',minval(traj_r2d_b),maxval(traj_r2d_b)
+!        write(*,*) 'MIN/MAX of TRAJ     spechum=',minval(traj_r2d_b),maxval(traj_r2d_b)
 
-!%%%  AD: get T and qv from Tv. TODO: use clean formula
-        !NL: field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * (1.0_kind_real + (rv/rgas - 1.0_kind_real)*r2d_ptr_b(:,1:ngrid))
-        !TL: field2d % array(:,1:ngrid) = ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,1:ngrid) ) * r2d_ptr_a(:,1:ngrid) &
-        !TL:                        + traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * r2d_ptr_b(:,1:ngrid)
         call mpas_pool_get_field(convFields_ad, var_tv, field2d)
-!        write(*,*) 'MIN/MAX of Tv=',minval(field2d % array),maxval(field2d % array)
-        r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
-                         ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*traj_r2d_b(:,1:ngrid) ) * field2d % array(:,1:ngrid)
-        r2d_ptr_b(:,1:ngrid) = r2d_ptr_b(:,1:ngrid) + &
-                         traj_r2d_a(:,1:ngrid) * (rv/rgas - 1.0_kind_real) * field2d % array(:,1:ngrid)
+!        write(*,*) 'MIN/MAX of AD Tv(in)=',minval(field2d % array),maxval(field2d % array)
+
+        call mpas_duplicate_field(field2d, field2d_a)      ! for AD of mixing_ratio, intermediate variable
+        call mpas_duplicate_field(field2d, traj_field2d_a) ! for NL of mixing_ratio, intermediate variable
+
+        call q_to_w( traj_r2d_b(:,1:ngrid) , traj_field2d_a % array(:,1:ngrid) ) !NL coeff.
+        field2d_a % array(:,1:ngrid) = 0.0_kind_real !initialize local var.
+        call tw_to_tv_ad(r2d_ptr_a(:,1:ngrid), field2d_a % array(:,1:ngrid), &
+                         traj_r2d_a(:,1:ngrid), traj_field2d_a % array(:,1:ngrid), &
+                         field2d % array(:,1:ngrid) )
+        call q_to_w_ad( r2d_ptr_b(:,1:ngrid), traj_r2d_b(:,1:ngrid), field2d_a % array(:,1:ngrid) )
+        call mpas_deallocate_field(field2d_a) ! not used
+        call mpas_deallocate_field(traj_field2d_a) ! not used
 !        write(*,*) 'MIN/MAX of AD temperature(out)=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of AD    index_qv(out)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+!        write(*,*) 'MIN/MAX of AD     spechum(out)=',minval(r2d_ptr_b),maxval(r2d_ptr_b)
 
 !        write(*,*) "end-of ",var_tv
 
@@ -766,7 +896,6 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 
 !        write(*,*) 'MIN/MAX of AD zonal wind(out) =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
-
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ( "northward_wind" ) !-var_??? northward_wind
@@ -790,32 +919,28 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
         !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!
         !BJ: Without this array, 3DVAR gives the same results.
 
-!        call mpas_pool_get_array(subFields_ad, 'pressure', r2d_ptr_a)
-!        write(*,*) 'MIN/MAX of pressure=',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!
-!        call mpas_pool_get_field(subFields_ad, 'pressure', field2d_src)
-!        call mpas_duplicate_field(field2d_src, field2d)  ! as a dummy array
-!
-!NL        field2d % array(:,1:ngrid) = 0.0_kind_real !log( r2d_ptr_a(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !- Pa -> hPa ->cb
-!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
-!
-!        field2d % fieldName = var_prsl
-!
-!        call mpas_pool_add_field(convFields_ad, var_prsl, field2d)
-!
-!        write(*,*) "end-of ",var_prsl
-
      case ("humidity_mixing_ratio") !-var_mixr
-        call mpas_pool_get_array(subFields_ad, "index_qv", r2d_ptr_a)
+        call mpas_pool_get_array(subFields_ad, "spechum", r2d_ptr_a) !< get sphechum_ad
+        call mpas_pool_get_array(trajFields,   'spechum', traj_r2d_a)  !< get linearization state
+!        write(*,*) 'MIN/MAX of AD spechum(in) =',minval(r2d_ptr_a(:,1:ngrid)),maxval(r2d_ptr_a(:,1:ngrid))
 
-        !TL: field2d % array(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
         call mpas_pool_get_field(convFields_ad, var_mixr, field2d)
-!        write(*,*) 'MIN/MAX of var_mixr =',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
-        r2d_ptr_a(:,1:ngrid)=0.0_kind_real
-        r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + 1000.0_kind_real * field2d % array(:,1:ngrid)
-!        write(*,*) 'MIN/MAX of index_qv =',minval(r2d_ptr_a(:,1:ngrid)),maxval(r2d_ptr_a(:,1:ngrid))
+!        write(*,*) 'MIN/MAX of AD var_mixr =',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
+
+        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * 1000.0_kind_real
+        call q_to_w_ad(r2d_ptr_a(:,1:ngrid), traj_r2d_a(:,1:ngrid), field2d % array(:,1:ngrid))
+        where (traj_r2d_a(:,1:ngrid) <= 0.0_kind_real)
+          r2d_ptr_a(:,1:ngrid) = 0.0_kind_real
+        end where
+!        write(*,*) 'MIN/MAX of AD spechum(out) =',minval(r2d_ptr_a(:,1:ngrid)),maxval(r2d_ptr_a(:,1:ngrid))
 
 !        write(*,*) "end-of ",var_mixr
+
+     case("specific_humidity")
+        call mpas_pool_get_array(subFields_ad, "spechum", r2d_ptr_a)
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d)
+        r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + field2d % array(:,1:ngrid)
+!        write(*,*) "end-of ",trim(fieldname(ivar))
 
      case ("air_pressure") !-var_prs
 !        call mpas_pool_get_array(subFields_ad, "pressure", r2d_ptr_a)

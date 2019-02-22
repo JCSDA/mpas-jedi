@@ -18,7 +18,7 @@ Initial Condition:
   - variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
     filename: REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc
@@ -26,7 +26,7 @@ Initial Condition:
   - variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
     filename: REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc
@@ -34,7 +34,7 @@ Initial Condition:
   - variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
     filename: REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc
@@ -42,7 +42,7 @@ Initial Condition:
   - variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
     filename: REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc
@@ -50,7 +50,7 @@ Initial Condition:
   - variables:
     - temperature
     - pressure
-    - index_qv
+    - spechum
     - uReconstructZonal
     - uReconstructMeridional
     filename: REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc
@@ -67,6 +67,7 @@ Observations:
     - air_temperature
     - eastward_wind
     - northward_wind
+    - specific_humidity
     ObsBias: {}
   - ObsType: Aircraft
     ObsData:
@@ -76,6 +77,7 @@ Observations:
     - air_temperature
     - eastward_wind
     - northward_wind
+    - specific_humidity
     ObsBias: {}
   - ObsType: CRTM
     channels: 1-15

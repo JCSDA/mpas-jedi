@@ -28,7 +28,7 @@ static oops::LinearModelMaker<MPASTraits, TlmIdMPAS>
 TlmIdMPAS::TlmIdMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & tlConf)
   : keyConfig_(0), tstep_(), resol_(resol),
-    linvars_(std::vector<std::string>{"temperature", "pressure", "index_qv",
+    linvars_(std::vector<std::string>{"temperature", "pressure", "spechum",
                               "uReconstructZonal", "uReconstructMeridional"})
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));

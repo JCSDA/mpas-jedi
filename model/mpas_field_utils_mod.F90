@@ -349,17 +349,23 @@ end subroutine read_field
 
 subroutine update_diagnostic_fields(domain, subFields, ngrid)
 
+   use mpas2ufo_vars_mod, only: w_to_q, theta_to_temp
+
    implicit none
    type (domain_type), pointer,    intent(inout) :: domain
    type (mpas_pool_type), pointer, intent(inout) :: subFields
    integer,                        intent(in)    :: ngrid
-   type (field2DReal), pointer    :: theta, pressure, temperature
+   type (field2DReal), pointer    :: theta, pressure, temperature, specific_humidity
+   type (field3DReal), pointer    :: scalars
+   type (mpas_pool_type), pointer :: state
+   integer, pointer :: index_qv
 
    !(1) copy all to subFields
    call da_copy_all2sub_fields(domain, subFields) 
 
    !(2) diagnose temperature
    !Special case: Convert theta and pressure to temperature
+   !              Convert water vapor mixing ratio to specific humidity [ q = w / (1 + w) ]
    !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner") 
    !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics,
    !    : we need to include "exner" in stream_list.for.reading
@@ -367,8 +373,14 @@ subroutine update_diagnostic_fields(domain, subFields, ngrid)
    call mpas_pool_get_field(domain % blocklist % allFields, 'theta', theta)
    call mpas_pool_get_field(subFields, 'pressure', pressure)
    call mpas_pool_get_field(subFields, 'temperature', temperature)
-   temperature % array(:,1:ngrid) = theta % array(:,1:ngrid) / &
-             ( 100000.0_kind_real / pressure % array(:,1:ngrid) ) ** ( rgas / cp )
+   call mpas_pool_get_field(domain % blocklist % allFields, 'scalars', scalars)
+   call mpas_pool_get_field(subFields, 'spechum', specific_humidity)
+
+   call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
+   call mpas_pool_get_dimension(state, 'index_qv', index_qv)
+
+   call theta_to_temp(theta % array(:,1:ngrid), pressure % array(:,1:ngrid), temperature % array(:,1:ngrid))
+   call w_to_q( scalars % array(index_qv,:,1:ngrid) , specific_humidity % array(:,1:ngrid) )
 
 end subroutine update_diagnostic_fields
 

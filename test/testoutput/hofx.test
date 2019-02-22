@@ -1,19 +1,19 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=0, Max=0.0187232, RMS=0.00458755
-Test     : Fld=2  Min=203.98, Max=306.479, RMS=244.052
+Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052
+Test     : Fld=2  Min=0, Max=0.0183791, RMS=0.00452795
 Test     : Fld=3  Min=-40.4961, Max=80.4605, RMS=16.645
 Test     : Fld=4  Min=-47.0223, Max=52.9303, RMS=9.08162
 Test     : Fld=5  Min=1507.23, Max=97512.7, RMS=49310.7
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=0, Max=0.0204072, RMS=0.00477963
-Test     : Fld=2  Min=194.234, Max=304.724, RMS=243.899
+Test     : Fld=1  Min=194.234, Max=304.724, RMS=243.899
+Test     : Fld=2  Min=0, Max=0.0199991, RMS=0.0047139
 Test     : Fld=3  Min=-39.7662, Max=84.9282, RMS=16.7846
 Test     : Fld=4  Min=-43.4896, Max=58.6028, RMS=8.84544
 Test     : Fld=5  Min=1456.08, Max=97474.1, RMS=49317.3
-Test     : H(x): Radiosonde nobs= 393 Min=-19.6488, Max=230.09, RMS=128.267
-Test     : Aircraft nobs= 457 Min=217.309, Max=294.482, RMS=254.54
+Test     : H(x): Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
+Test     : Aircraft nobs= 1828 Min=-29.7489, Max=294.482, RMS=127.933
 Test     : CRTM nobs= 1125 Min=148.704, Max=296.977, RMS=233.457

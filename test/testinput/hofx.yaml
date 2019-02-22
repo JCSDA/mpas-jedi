@@ -17,7 +17,7 @@ Initial Condition:
   variables:
   - temperature
   - pressure
-  - index_qv
+  - spechum
   - uReconstructZonal
   - uReconstructMeridional
   filename: "./restart.2018-04-14_21.00.00.nc"
@@ -34,6 +34,7 @@ Observations:
     - air_temperature
     - eastward_wind
     - northward_wind
+    - specific_humidity
     ObsBias: {}
   - ObsType: Aircraft
     ObsData:
@@ -43,6 +44,9 @@ Observations:
         obsfile: Data/hofx_aircraft.nc4
     variables:
     - air_temperature
+    - eastward_wind
+    - northward_wind
+    - specific_humidity
     ObsBias: {}
   - ObsType: CRTM
     channels: 1-15

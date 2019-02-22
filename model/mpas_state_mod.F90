@@ -60,14 +60,16 @@ contains
 !!
 subroutine add_incr(self,rhs)
 
+   use mpas2ufo_vars_mod, only: q_to_w, temp_to_theta, twp_to_rho
+
    implicit none
    class(mpas_state),     intent(inout) :: self !< state
    class(mpas_increment), intent(in)    :: rhs  !< increment
    character(len=StrKIND) :: kind_op
 
    type (mpas_pool_type), pointer :: state, diag, mesh
-   type (field2DReal), pointer :: field2d_t, field2d_p, field2d_qv, field2d_uRz, field2d_uRm, &
-                                  field2d_th, field2d_rho, field2d_u, field2d_u_inc
+   type (field2DReal), pointer :: field2d_t, field2d_p, field2d_sh, field2d_uRz, field2d_uRm, &
+                                  field2d_th, field2d_qv, field2d_rho, field2d_u, field2d_u_inc
 
    ! GD: I don''t see any difference than for self_add other than subFields can contain
    ! different variables than mpas_state and the resolution of incr can be different. 
@@ -78,21 +80,24 @@ subroutine add_incr(self,rhs)
       call da_operator(trim(kind_op), self % subFields, rhs % subFields, fldnames = rhs % fldnames_ci)
 
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
+      !  update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       !  update theta from temperature and pressure
       !  update rho   from temperature, pressure, and index_qv
       call mpas_pool_get_field(self % subFields,            'temperature', field2d_t)
       call mpas_pool_get_field(self % subFields,               'pressure', field2d_p)
-      call mpas_pool_get_field(self % subFields,               'index_qv', field2d_qv)
+      call mpas_pool_get_field(self % subFields,                'spechum', field2d_sh)
       call mpas_pool_get_field(self % subFields,      'uReconstructZonal', field2d_uRz)
       call mpas_pool_get_field(self % subFields, 'uReconstructMeridional', field2d_uRm)
       call mpas_pool_get_field(self % subFields,                  'theta', field2d_th)
+      call mpas_pool_get_field(self % subFields,               'index_qv', field2d_qv)
       call mpas_pool_get_field(self % subFields,                    'rho', field2d_rho)
 
-      field2d_th % array(:,:) = field2d_t % array(:,:) * &
-                 ( 100000.0_kind_real / field2d_p % array(:,:) ) ** ( rgas / cp )
+      call temp_to_theta( field2d_t % array(:,:), field2d_p % array(:,:), field2d_th % array(:,:))
 !      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
-      field2d_rho % array(:,:) = field2d_p % array(:,:) /  ( rgas * field2d_t % array(:,:) * &
-                 ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * field2d_qv % array(:,:) ) )
+      call q_to_w( field2d_sh % array(:,:), field2d_qv % array(:,:) )
+!      write(*,*) 'add_inc: index_qv min/max = ', minval(field2d_sh % array), maxval(field2d_sh % array)
+      call twp_to_rho( field2d_t % array(:,:), field2d_qv % array(:,:), field2d_p % array(:,:), &
+                       field2d_rho % array(:,:) )
 !      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)
 
       !  update u     from uReconstructZonal and uReconstructMeridional "incrementally"
@@ -562,8 +567,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
        call mpas_pool_get_field(self % subFields, 'temperature', field2d_src)
        call mpas_pool_add_field(pool_tmp, 'temperature', field2d_src)
-       call mpas_pool_get_field(self % subFields, 'index_qv', field2d_src)
-       call mpas_pool_add_field(pool_tmp, 'index_qv', field2d_src)
+       call mpas_pool_get_field(self % subFields, 'spechum', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'spechum', field2d_src)
 
        call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
 
