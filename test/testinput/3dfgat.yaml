@@ -105,6 +105,24 @@ cost_function:
         - northward_wind
         - specific_humidity
         threshold: 3
+    - ObsType: Satwind
+      ObsData:
+        ObsDataIn:
+          obsfile: Data/satwind_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dfgat_satwind.nc4
+        obsvalue: ObsValue
+      variables:
+      - eastward_wind
+      - northward_wind
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        variables:
+        - eastward_wind
+        - northward_wind
+        threshold: 3
 minimizer:
   algorithm: DRIPCG
 output:
