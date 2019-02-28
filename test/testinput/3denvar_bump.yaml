@@ -18,6 +18,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  varchange: Identity
   Jb:
     Background:
       state:

@@ -19,6 +19,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  varchange: Identity
   Jb:
     Background:
       state:
@@ -294,6 +295,7 @@ minimizer:
   algorithm: DRIPCG
 output:
   filename: "./mpas.4denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
+  SkipMPASTimeCheck: 1
 variational:
   iteration:
   - resolution:

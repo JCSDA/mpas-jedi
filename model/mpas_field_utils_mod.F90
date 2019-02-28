@@ -393,7 +393,7 @@ subroutine write_field(self, c_conf, vdate)
    type(c_ptr),       intent(in)    :: c_conf !< Configuration
    type(datetime),    intent(in)    :: vdate  !< DateTime
    character(len=20)       :: validitydate
-   integer                 :: ierr
+   integer                 :: ierr, iskip
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
    character(len=1024)     :: buf
@@ -415,9 +415,15 @@ subroutine write_field(self, c_conf, vdate)
    call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
-   if ( fld_time .NE. write_time ) then
-      write(*,*)'--> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
-      call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
+   iskip = 0
+   if (config_element_exists(c_conf,"SkipMPASTimeCheck")) then
+     iskip = config_get_int(c_conf,"SkipMPASTimeCheck")
+   end if
+   if(iskip.ne.1) then
+     if ( fld_time .NE. write_time ) then
+        write(*,*)'--> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+        call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
+     end if
    end if
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
    self % manager => self % geom % domain % streamManager

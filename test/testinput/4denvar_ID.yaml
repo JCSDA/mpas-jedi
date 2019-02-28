@@ -19,6 +19,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  varchange: Identity
   Jb:
     Background:
       state:
@@ -68,6 +69,17 @@ cost_function:
             - spechum
             - uReconstructZonal
             - uReconstructMeridional
+        state:
+        - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
       - covariance: ensemble
         members: '5'
         variables:
@@ -88,6 +100,17 @@ cost_function:
             - spechum
             - uReconstructZonal
             - uReconstructMeridional
+        state:
+        - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
       - covariance: ensemble
         members: '5'
         variables:
@@ -108,6 +131,17 @@ cost_function:
             - spechum
             - uReconstructZonal
             - uReconstructMeridional
+        state:
+        - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_03.00.00.nc
+          date: '2018-04-15T03:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_03.00.00.nc
+          date: '2018-04-15T03:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_03.00.00.nc
+          date: '2018-04-15T03:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_03.00.00.nc
+          date: '2018-04-15T03:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_03.00.00.nc
+          date: '2018-04-15T03:00:00Z'
   Jo:
     ObsTypes:
     - ObsType: Radiosonde
@@ -176,6 +210,7 @@ minimizer:
   algorithm: DRIPCG
 output:
   filename: "./mpas.4denvar_ID.$Y-$M-$D_$h.$m.$s.nc"
+  SkipMPASTimeCheck: 1
 variational:
   iteration:
   - resolution:

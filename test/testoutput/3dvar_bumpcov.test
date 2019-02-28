@@ -12,7 +12,7 @@ Test     : Fld=2  Min=-7.02324e-05, Max=0.0189684, RMS=0.00463051
 Test     : Fld=3  Min=-44.1611, Max=83.0029, RMS=17.6546
 Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=9.00177
 Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
-Test     : CostJb   : Nonlinear Jb = 0
+Test     : CostJb   : Nonlinear Jb = 2.09617e-08
 Test     : CostJo   : Nonlinear Jo = 194.652, nobs = 209, Jo/n = 0.931351, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 920.719, nobs = 871, Jo/n = 1.05708, err = 2.30416
 Test     : CostJo   : Nonlinear Jo = 212.729, nobs = 196, Jo/n = 1.08535, err = 5.91994
@@ -26,7 +26,7 @@ Test     : Fld=2  Min=-7.25666e-05, Max=0.0189684, RMS=0.00463051
 Test     : Fld=3  Min=-44.1611, Max=83.0029, RMS=17.6546
 Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=9.00177
 Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.6
-Test     : CostJb   : Nonlinear Jb = 0
+Test     : CostJb   : Nonlinear Jb = 2.31546e-08
 Test     : CostJo   : Nonlinear Jo = 194.604, nobs = 209, Jo/n = 0.93112, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 920.718, nobs = 871, Jo/n = 1.05708, err = 2.30416
 Test     : CostJo   : Nonlinear Jo = 212.729, nobs = 196, Jo/n = 1.08535, err = 5.91994

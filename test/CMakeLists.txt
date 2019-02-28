@@ -7,6 +7,7 @@ list( APPEND mpas_test_input
   testinput/3dfgat.yaml
   testinput/3denvar_bump.yaml
   testinput/4denvar_bump.yaml
+  testinput/4denvar_ID.yaml
   testinput/3dhybrid_bump.yaml
   testinput/3dhybrid_bump_bump.yaml
   testinput/forecast.yaml
@@ -34,6 +35,7 @@ list( APPEND mpas_testoutput
   testoutput/3dfgat.test
   testoutput/3denvar_bump.test
   testoutput/4denvar_bump.test
+  testoutput/4denvar_ID.test
   testoutput/3dhybrid_bump.test
   testoutput/3dhybrid_bump_bump.test
   testoutput/forecast.test
@@ -255,21 +257,21 @@ ecbuild_add_test( TARGET test_mpas_3dfgat
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-#ecbuild_add_test( TARGET test_mpas_4denvar_ID
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_ID.yaml"
-#                       testoutput/4denvar_ID.test
-#                  MPI     1
-#                  DEPENDS mpas_variational.x )
-#
-#ecbuild_add_test( TARGET test_mpas_4denvar_bump
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bump.yaml"
-#                       testoutput/4denvar_bump.test
-#                  MPI     1
-#                  DEPENDS mpas_variational.x )
+ecbuild_add_test( TARGET test_mpas_4denvar_ID
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_ID.yaml"
+                       testoutput/4denvar_ID.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_4denvar_bump
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bump.yaml"
+                       testoutput/4denvar_bump.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
 
 ecbuild_add_test( TARGET  test_mpas_staticbinit
                   TYPE    EXE
