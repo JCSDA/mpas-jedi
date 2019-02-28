@@ -48,6 +48,16 @@ Observations:
     - northward_wind
     - specific_humidity
     ObsBias: {}
+  - ObsType: Satwind
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/satwind_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_satwind.nc4
+    variables:
+    - eastward_wind
+    - northward_wind
+    ObsBias: {}
   - ObsType: CRTM
     channels: 1-15
     ObsOptions:
