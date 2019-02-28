@@ -175,6 +175,7 @@ subroutine model_prepare_integration(self, jedi_state)
    character (len=StrKIND), pointer :: config_run_duration
    type (MPAS_Time_Type) :: startTime, stopTime, nowTime
    type (MPAS_Timeinterval_Type) ::  runDuration
+   type (MPAS_Alarm_type), pointer :: alarmPtr
 
    write(*,*)'===> model_prepare_integration'
 
@@ -258,16 +259,22 @@ subroutine model_prepare_integration(self, jedi_state)
    block => self % domain % blocklist
 #define ModelMPAS_prepare
 #ifdef ModelMPAS_prepare
+   !! Below: "clock" pointer comes from atm_core
+   !! "clock" needs to be associated with self % domain % clock in order to initialize alarms correctly
+   !! in atm_mpas_init_block
+   clock => self % domain % clock 
+
+   !Destroy alarms that were previously initialized (will be re-initialized in atm_mpas_init_block)
+   alarmPtr => clock % alarmListHead
+   do while (associated(alarmPtr))
+      clock % alarmListHead => alarmPtr % next
+      deallocate(alarmPtr)
+      alarmPtr => clock % alarmListHead
+   end do
+
    do while (associated(block))
       call mpas_pool_get_subpool(block % structs, 'mesh', mesh)
       call mpas_pool_get_subpool(block % structs, 'state', state)
-
-!--- TODO: replace calls to physics_run_finalize and atm_mpas_init_block with another subroutine
-!          that only calls the required components from atm_mpas_init_block.  What are the
-!          required components?
-
-      !Finalize alarms that were previously initialized (will be reversed by atm_mpas_init_block)
-      call physics_run_finalize(block % configs, self % domain % clock, self % domain % streamManager)
 
       ! GD: if we do cycling in atm_mpas_init_block we propably need to avoid recomputing wind to the 
       ! mass center. (avoiding doing twice ... adding a flag). OK for now, probably same problem with dart 
