@@ -196,8 +196,6 @@ variational:
       tstep: PT30M
       trajectory:
         tstep: PT30M
-        top_layer_depth: '5500.0'
-        bottom_layer_depth: '4500.0'
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -211,8 +209,6 @@ variational:
       tstep: PT30M
       trajectory:
         tstep: PT30M
-        top_layer_depth: '5500.0'
-        bottom_layer_depth: '4500.0'
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
