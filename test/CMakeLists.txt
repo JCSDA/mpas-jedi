@@ -53,6 +53,7 @@ list( APPEND mpas_graphics
   graphics/plot_obs_nc_loc.py
   graphics/plot_diag_omaomb_profile.py
   graphics/plot_diag_omaomb_timeserial.py
+  graphics/plot_cost_grad.py
 )
 
 # This line copies all files to binary dir
