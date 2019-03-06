@@ -46,8 +46,8 @@ def readdata():
         cost = numpy.asarray(alist[1::3])
         grad = numpy.asarray(alist[2::3])
         forx=integers(1,len(iters)) 
-        plot(forx,cost,iters,VAR1,dalogfile)
-        plot(forx,grad,iters,VAR2,dalogfile)
+        plot(forx,cost,iters,VAR1,dalogfile[14:])
+        plot(forx,grad,iters,VAR2,dalogfile[14:])
 
 def plot(forx,value,iters,VAR,expname): 
     fig, ax1 = plt.subplots()
@@ -60,7 +60,7 @@ def plot(forx,value,iters,VAR,expname):
     plt.plot(forx,value,'r.-')
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,4))
     plt.grid(True)
-    plt.savefig('%s_%s.png'%(VAR[:4],expname[14:]),dpi=200,bbox_inches='tight')
+    plt.savefig('%s_%s.png'%(VAR[:4],expname[:-13]),dpi=200,bbox_inches='tight')
     plt.close()
    
 def main():
