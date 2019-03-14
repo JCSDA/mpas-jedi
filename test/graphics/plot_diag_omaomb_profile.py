@@ -39,7 +39,7 @@ def readdata():
         #print(obstype)
         #print(expt_obs)
         if obstype == 'none':
-           print('obstype = '+obstype+' not selected, skipping file')
+           print('obstype not selected, skipping file')
            continue
         if ''.join(obstype) in profile_group:
              prenc = nc.variables['air_pressure@MetaData']
