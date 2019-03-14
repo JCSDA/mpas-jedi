@@ -10,6 +10,12 @@ import fnmatch
 import math
 
 def readdata():
+    profile_group = ['sonde','aircraft','satwind']
+    radiance_group = ['amsua_n19']
+
+    all_groups = []
+    all_groups.append(profile_group)
+    all_groups.append(radiance_group)
 
     obsoutfiles = []
     for files in os.listdir('../Data/'):
@@ -21,24 +27,35 @@ def readdata():
     for file_name in obsoutfiles:
         print(file_name)
         nc = Dataset(file_name, 'r')
-        obstype = file_name.split("_")[-2:][:-1]
+        expt_parts = file_name.split("_")[1:][:-1]
+        nstr = len(expt_parts)
+        obstype = 'none'
+        for i in range(0,nstr):
+            obstype_ = '_'.join(expt_parts[i:nstr])
+            for group in all_groups:
+                if ''.join(obstype_) in group:
+                    obstype = obstype_
+        expt_obs = '_'.join(expt_parts)
         #print(obstype)
-        expt_obs = ''.join(file_name[15:][:-9])
         #print(expt_obs)
-        if ''.join(obstype) in ('sonde','aircraft','satwind'):
+        if obstype == 'none':
+           print('obstype = '+obstype+' not selected, skipping file')
+           continue
+        if ''.join(obstype) in profile_group:
              prenc = nc.variables['air_pressure@MetaData']
              prenc = numpy.asarray(prenc)
         varlist = nc.variables.keys()
-        #select variables with the suffix 'ObsValue'
-        obslist = [obs for obs in varlist if (obs[-8:] == 'ObsValue')]
-        #print(obslist)
-        for var in obslist:
-            varname = ''.join(var.split("@")[:-1])
-            omb=''.join(var.split("@")[:-1])+'@ombg'
-            oma=''.join(var.split("@")[:-1])+'@oman'
-            qc = ''.join(var.split("@")[:-1])+'@EffectiveQC'
-            #print("var=",var,"omb=",omb,"oma=",oma)
-            obsnc = nc.variables[var]
+
+        #select variables with the suffix 'ombg' (required for OMB)
+        bglist = [var for var in varlist if (var[-4:] == 'ombg')]
+        #print(bglist)
+        for omb in bglist:
+            varname = ''.join(omb.split("@")[:-1])
+            obs=''.join(omb.split("@")[:-1])+'@ObsValue'
+            oma=''.join(omb.split("@")[:-1])+'@oman'
+            qc = ''.join(omb.split("@")[:-1])+'@EffectiveQC'
+            #print("obs=",obs,"omb=",omb,"oma=",oma)
+            obsnc = nc.variables[obs]
             ombnc = nc.variables[omb]
             omanc = nc.variables[oma]
             qcnc  = nc.variables[qc]
@@ -53,9 +70,9 @@ def readdata():
             ombnc[numpy.logical_or(qcnc == 1, qcnc == 10)] = numpy.NaN
             omanc[numpy.logical_or(qcnc == 1, qcnc == 10)] = numpy.NaN
 
-            if ''.join(obstype) in ('amsua'):
+            if ''.join(obstype) in radiance_group:
                 print('Radiances: Scatter plots will be added soon.')
-            elif ''.join(obstype) in ('sonde','aircraft','satwind'):
+            elif ''.join(obstype) in profile_group:
                 #assign bins and calculate rmse:
                 RMSEombs = []
                 RMSEomas = []
@@ -82,6 +99,9 @@ def readdata():
                     RMSEomas = np.append(RMSEomas,RMSEoma)
 
                 plotrmsepro(RMSEombs,RMSEomas,binsfory,obsnums,expt_obs,varname)
+            else:
+                print('obstype = '+obstype+' not supported yet')
+
 
 def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME):
     fig, ax1 = plt.subplots()
@@ -110,7 +130,9 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME):
 
     ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
 
-    plt.savefig('RMSE_%s_%s.png'%(EXP_NAME,VAR_NAME),dpi=200,bbox_inches='tight')
+    fname = 'RMSE_%s_%s.png'%(EXP_NAME,VAR_NAME)
+    print('Saving figure to '+fname)
+    plt.savefig(fname,dpi=200,bbox_inches='tight')
     plt.close()
    
 def main():
