@@ -91,7 +91,7 @@ Observations:
       CoefficientPath: Data/
     ObsData:
       ObsDataIn:
-        obsfile: Data/amsua_obs_n19_2018041500_m.nc4
+        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
     ObsBias: {}
 Prints:
   frequency: PT3H

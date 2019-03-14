@@ -40,7 +40,7 @@ cost_function:
   Jo:
     ObsTypes:
     - ObsType: CRTM
-      channels: 1-15 #5
+      channels: 1-6,8-15 #1-15
 #      SkipChannels: ??
       ObsOptions:
         n_Absorbers: '3'
@@ -49,19 +49,20 @@ cost_function:
         Sensor_ID: amsua_n19
         EndianType: little_endian
         CoefficientPath: Data/
+#        InspectProfileNumber: 1
       ObsData:
         ObsDataIn:
-          obsfile: Data/amsua_obs_n19_2018041500_m.nc4
+          obsfile: Data/amsua_n19_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_amsua.nc4
+          obsfile: Data/obsout_3dvar_amsua_n19.nc4
       ObsBias: {}
       Covariance:
         covariance: diagonal
 #      ObsFilters:
 #      - Filter: Background Check
 #        variables:
-#        - brightness_temperature_5_
-#        - brightness_temperature_6_
+#        - brightness_temperature_5
+#        - brightness_temperature_6
 #        threshold: 10
 minimizer:
   algorithm: DRIPCG
