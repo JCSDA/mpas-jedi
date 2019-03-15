@@ -66,9 +66,9 @@ def readdata():
             qcnc  = numpy.asarray(qcnc)
             #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
             #keep data @EffectiveQC=0
-            obsncs[numpy.logical_not(qcncs == 0)] = numpy.NaN
-            bgncs[numpy.logical_not(qcncs == 0)] = numpy.NaN
-            anncs[numpy.logical_not(qcncs == 0)] = numpy.NaN
+            obsnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
+            ombnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
+            omanc[numpy.logical_not(qcnc == 0)] = numpy.NaN
 
             if ''.join(obstype) in radiance_group:
                 print('Radiances: Scatter plots will be added soon.')
