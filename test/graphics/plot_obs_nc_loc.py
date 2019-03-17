@@ -11,23 +11,31 @@ import matplotlib.axes as maxes
 import fnmatch
 
 def readdata():
-
-    # Observation file name format:
-    #                *_obs_*_m.nc4
-    #         aircraft_obs_2018041500_m.nc4
-    #         amsua_obs_n19_2018041500_m.nc4
-    #         aod_obs_2018041500_m.nc4
-    #         satwind_obs_2018041500_m.nc4
-    #         sondes_obs_2018041500_m.nc4
+    '''
+    Observation file name:
+             aircraft_obs_2018041500_m.nc4
+             amsua_n19_obs_2018041500_m.nc4
+             aod_obs_2018041500_m.nc4
+             satwind_obs_2018041500_m.nc4
+             sondes_obs_2018041500_m.nc4
+             gnssro_obs_2018041500_s.nc4
+    '''
     obsfiles = []
     for files in os.listdir('../Data/'):
         if fnmatch.fnmatch(files, '*_obs_*_m.nc4'):
             obsfiles.append('../Data/'+files)
+    obsfiles.append('../Data/gnssro_obs_2018041500_s.nc4')
+    print 'File name list=', obsfiles
     for file_name in obsfiles:
         nc = Dataset(file_name, 'r')
-        print 'file_name', file_name
-        latnc = nc.variables['latitude@MetaData']
-        lonnc = nc.variables['longitude@MetaData']
+        print 'Plotting:', file_name
+        obstype = str(file_name[8:].split("_")[:1])
+        if obstype == "['gnssro']":
+            latnc = nc.variables['latitude']
+            lonnc = nc.variables['longitude']
+        else:
+            latnc = nc.variables['latitude@MetaData']
+            lonnc = nc.variables['longitude@MetaData']
 
         lonnc = numpy.asarray(lonnc)
         for i in range(len(lonnc)):
@@ -44,10 +52,7 @@ def readdata():
             obsnc = numpy.asarray(obsnc)
             obsnc [obsnc== 9.96920997e+36] = numpy.NaN
  
-            if (file_name[8:][:5] == 'amsua'):
-                plot(latnc,lonnc,obsnc,file_name[8:][:-25],var[:-10])
-            else:
-                plot(latnc,lonnc,obsnc,file_name[8:][:-21],var[:-9])
+            plot(latnc,lonnc,obsnc,file_name[8:][:-21],var[:-9])
 
 def plot(lats,lons,values,OBS_TYPE,VAR_NAME):
 #set map=======================================================================
