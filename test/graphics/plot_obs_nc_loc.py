@@ -8,38 +8,51 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
-
-
-file_name = 'sondes_obs_2018041500_m.nc4'
-#file_name = 'aircraft_obs_2018041500_m.nc4'
-
-OBS_TYPE=os.getenv('OBS_TYPE','Radiosonde')
-#OBS_TYPE=os.getenv('OBS_TYPE','Aircraft')
-
-VAR_NAME=os.getenv('VAR_NAME','air_temperature')
-#VAR_NAME=os.getenv('VAR_NAME','specific_humidity')
-#VAR_NAME=os.getenv('VAR_NAME','eastward_wind')
-#VAR_NAME=os.getenv('VAR_NAME','northward_wind')
+import fnmatch
 
 def readdata():
+    '''
+    Observation file name:
+             aircraft_obs_2018041500_m.nc4
+             amsua_n19_obs_2018041500_m.nc4
+             aod_obs_2018041500_m.nc4
+             satwind_obs_2018041500_m.nc4
+             sondes_obs_2018041500_m.nc4
+             gnssro_obs_2018041500_s.nc4
+    '''
+    obsfiles = []
+    for files in os.listdir('../Data/'):
+        if fnmatch.fnmatch(files, '*_obs_*_m.nc4'):
+            obsfiles.append('../Data/'+files)
+    obsfiles.append('../Data/gnssro_obs_2018041500_s.nc4')
+    print 'File name list=', obsfiles
+    for file_name in obsfiles:
+        nc = Dataset(file_name, 'r')
+        print 'Plotting:', file_name
+        obstype = str(file_name[8:].split("_")[:1])
+        if obstype == "['gnssro']":
+            latnc = nc.variables['latitude']
+            lonnc = nc.variables['longitude']
+        else:
+            latnc = nc.variables['latitude@MetaData']
+            lonnc = nc.variables['longitude@MetaData']
 
-    nc = Dataset(file_name, 'r')
-    print 'file_name', file_name
-    latnc = nc.variables['latitude@MetaData']
-    lonnc = nc.variables['longitude@MetaData']
-    prenc = nc.variables['air_pressure@MetaData']
-#   statid= nc.variables['station_id@MetaData']
-    obsnc = nc.variables['%s@ObsValue'%VAR_NAME]
-#   qcnc  = nc.variables['%s@PreQC'%VAR_NAME]
+        lonnc = numpy.asarray(lonnc)
+        for i in range(len(lonnc)):
+            if lonnc[i] > 180:
+                lonnc[i] = lonnc[i]-360
 
-    obsnc = numpy.asarray(obsnc)
-    obsnc [obsnc== 9.96920997e+36] = numpy.NaN
-    lonnc = numpy.asarray(lonnc)
-    for i in range(len(lonnc)):
-        if lonnc[i] > 180:
-            lonnc[i] = lonnc[i]-360
-
-    plot(latnc,lonnc,obsnc,OBS_TYPE,VAR_NAME)
+        varlist = nc.variables.keys()
+        #select variables with the suffix 'ObsValue'
+        obslist = [obs for obs in varlist if (obs[-8:] == 'ObsValue')]
+        #print(obsvalue)
+        for var in obslist:
+            print(var)
+            obsnc = nc.variables[var]
+            obsnc = numpy.asarray(obsnc)
+            obsnc [obsnc== 9.96920997e+36] = numpy.NaN
+ 
+            plot(latnc,lonnc,obsnc,file_name[8:][:-21],var[:-9])
 
 def plot(lats,lons,values,OBS_TYPE,VAR_NAME):
 #set map=======================================================================
