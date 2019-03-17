@@ -124,6 +124,33 @@ cost_function:
         - eastward_wind
         - northward_wind
         threshold: 3
+    - ObsType: GnssroRef
+      ObsOptions:
+        use_compress: 0
+      ObsData:
+        ObsDataIn:
+          obsfile: Data/gnssro_obs_2018041500_s.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dfgat_gnssro.nc4
+        obsvalue: refractivity
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Domain Check
+        where:
+        - variable: altitude
+          minvalue: 0
+          maxvalue: 30000
+        - variable: earth_radius_of_curvature
+          minvalue: 6250000
+          maxvalue: 6450000
+        - variable: geoid_height_above_reference_ellipsoid
+          minvalue: -200
+          maxvalue: 200
+      - Filter: Background Check
+        variables:
+        - refractivity
+        threshold: 3
 minimizer:
   algorithm: DRIPCG
 output:

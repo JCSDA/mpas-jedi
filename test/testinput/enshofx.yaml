@@ -79,6 +79,20 @@ Observations:
     - northward_wind
     - specific_humidity
     ObsBias: {}
+  - ObsType: GnssroRef
+    ObsOptions:
+      ro_top_meter: 30000
+      obserr_method: RefGSI
+      use_compress: 0
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/gnssro_obs_2018041500_s.nc4
+      ObsDataOut:
+        obsfile: Data/enshofx_gnssro.nc4
+      obsvalue: refractivity
+    variables:
+    - refractivity
+    ObsBias: {}
   - ObsType: CRTM
     channels: 1-15
     ObsOptions:

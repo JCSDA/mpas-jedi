@@ -58,6 +58,18 @@ Observations:
     - eastward_wind
     - northward_wind
     ObsBias: {}
+  - ObsType: GnssroRef
+    ObsOptions:
+      ro_top_meter: 30000
+      obserr_method: RefGSI
+      use_compress: 0
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/gnssro_obs_2018041500_s.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_gnssro.nc4
+      obsvalue: refractivity
+    ObsBias: {}
   - ObsType: CRTM
     channels: 1-15
     ObsOptions:
