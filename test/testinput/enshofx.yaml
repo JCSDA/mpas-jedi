@@ -90,8 +90,6 @@ Observations:
       ObsDataOut:
         obsfile: Data/enshofx_gnssro.nc4
       obsvalue: refractivity
-    variables:
-    - refractivity
     ObsBias: {}
   - ObsType: CRTM
     channels: 1-15
