@@ -51,7 +51,7 @@ list( APPEND mpas_testoutput
 
 list( APPEND mpas_graphics
   graphics/plot_obs_nc_loc.py
-  graphics/plot_diag_omaomb_profile.py
+  graphics/plot_diag_omaomb.py
   graphics/plot_diag_omaomb_timeserial.py
   graphics/plot_cost_grad.py
   graphics/plot_BUMP_diag.py
