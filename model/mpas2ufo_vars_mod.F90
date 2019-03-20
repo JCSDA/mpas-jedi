@@ -651,6 +651,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
         field2d % fieldName = var_z
         call mpas_pool_add_field(convFields, var_z, field2d)
+        deallocate(lat)
 
      case default
         write(*,*) 'Not processed in sub. convert_mpas_field2ufo: ',trim(fieldname(ivar))
