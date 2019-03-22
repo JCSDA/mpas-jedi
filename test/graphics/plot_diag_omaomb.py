@@ -10,6 +10,10 @@ import fnmatch
 import math
 
 def readdata():
+
+    print_fmt = 'png' #lower fidelity, faster
+    #print_fmt = 'pdf' #higher fidelity, slower
+
     profile_group  = ['sonde','aircraft','satwind']
     radiance_group = ['amsua_n19']
     #dummy_group   = ['dummy_obstype1']
@@ -21,18 +25,51 @@ def readdata():
     #all_groups.append(['dummy_obstype2'])
 
     fileprefix = 'obsout_'
-    filesuffix = '_0000.nc4'
+    filesuffix = '_*.nc4'
+    # * in filesuffix is 4-digit processor rank [0000 to XXXX]
+    #npedigits = 4
+
+    # Suffixes for nc variables
+    omb_suf = 'ombg'
+    oma_suf = 'oman'
+    obs_suf = 'ObsValue'
+    qc_suf  = 'EffectiveQC'
+
     obsoutfiles = []
     for files in os.listdir('../Data/'):
         #print(files)
         if fnmatch.fnmatch(files, fileprefix+'*'+filesuffix):   # 1tile
             obsoutfiles.append('../Data/'+files)
-    print(obsoutfiles)
+    #print(obsoutfiles)
 
-    for file_name in obsoutfiles:
-        print(file_name)
-        nc = Dataset(file_name, 'r')
-        expt_parts = file_name.split("_")[1:][:-1]
+    #Group files by experiment_obstype (e.g., 3dvar_aircraft),
+    # where each group contains files from all PE's
+    file_groups = [[]]
+    for j, file_name in enumerate(obsoutfiles):
+        # file_group_name excludes everything outside the first/final '_'
+        file_group_name =  '_'.join(file_name.split("_")[1:][:-1])
+        for i, file_group in enumerate(file_groups):
+            if file_group_name in file_group:
+                # If file_group with file_group_name exists, add new file to it
+                update_group = file_group
+                update_group.append(file_name)
+                file_groups[i][:] = update_group
+                break
+            elif i == len(file_groups)-1:
+                # If group with file_group_name does not exist, add one
+                new_group = [file_group_name]
+                new_group.append(file_name)
+                file_groups.append(new_group)
+                break
+    file_groups = file_groups[1:][:]
+
+    # Loop over unique experiment-obstype combinations
+    for file_group in file_groups:
+        expt_obs = file_group[0]
+        print(expt_obs)
+
+        # Determine obstype from expt_obstype string
+        expt_parts = expt_obs.split("_")
         nstr = len(expt_parts)
         obstype = 'none'
         for i in range(0,nstr):
@@ -40,21 +77,17 @@ def readdata():
             for group in all_groups:
                 if ''.join(obstype_) in group:
                     obstype = obstype_
-        expt_obs = '_'.join(expt_parts)
-        #print(obstype)
-        #print(expt_obs)
+
         if obstype == 'none':
-           print('obstype not selected, skipping file')
+           print('obstype not selected, skipping data: '+expt_obs)
            continue
-        if ''.join(obstype) in profile_group:
-             prenc = nc.variables['air_pressure@MetaData']
-             prenc = numpy.asarray(prenc)
+
+        # Select variables with the suffix omb_suf (required for OMB)
+        nc = Dataset(file_group[1], 'r')
         varlist = nc.variables.keys()
+        bglist = [var for var in varlist if (var[-4:] == omb_suf)]
 
-        #select variables with the suffix 'ombg' (required for OMB)
-        bglist = [var for var in varlist if (var[-4:] == 'ombg')]
-        #print(bglist)
-
+        # Define a channel list for radiance_group
         if ''.join(obstype) in radiance_group:
             chlist = []
             for bgname in bglist:
@@ -62,22 +95,36 @@ def readdata():
                 chlist.append(int(''.join(var.split("_")[-1:])))
             chlist.sort()
 
+        # Loop over variables with omb suffix
         nvars = len(bglist)
-        for ivar,omb in enumerate(bglist):
+        for ivar, omb in enumerate(bglist):
             varname = ''.join(omb.split("@")[:-1])
-            obs=''.join(omb.split("@")[:-1])+'@ObsValue'
-            oma=''.join(omb.split("@")[:-1])+'@oman'
-            qc = ''.join(omb.split("@")[:-1])+'@EffectiveQC'
+            print(varname)
+            obs=''.join(omb.split("@")[:-1])+'@'+obs_suf
+            oma=''.join(omb.split("@")[:-1])+'@'+oma_suf
+            qc = ''.join(omb.split("@")[:-1])+'@'+qc_suf
             #print("obs=",obs,"omb=",omb,"oma=",oma)
-            obsnc = nc.variables[obs]
-            ombnc = nc.variables[omb]
-            omanc = nc.variables[oma]
-            qcnc  = nc.variables[qc]
 
-            obsnc = numpy.asarray(obsnc)
-            ombnc = numpy.asarray(ombnc)
-            omanc = numpy.asarray(omanc)
-            qcnc  = numpy.asarray(qcnc)
+            obsnc = np.asarray([])
+            ombnc = np.asarray([])
+            omanc = np.asarray([])
+            qcnc  = np.asarray([])
+            prenc = np.asarray([])
+
+            # Build up arrays in loop over file_group, 
+            # excluding category in file_group[0]
+            for file_name in file_group[1:]:
+                nc = Dataset(file_name, 'r')
+                #file_rank = file_name[-(4+npedigits):-4]
+
+                if ''.join(obstype) in profile_group:
+                    prenc = np.append(prenc, nc.variables['air_pressure@MetaData'])
+
+                obsnc = np.append( obsnc, nc.variables[obs] )
+                ombnc = np.append( ombnc, nc.variables[omb] )
+                omanc = np.append( omanc, nc.variables[oma] )
+                qcnc  = np.append( qcnc,  nc.variables[qc]  )
+
             #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
             #keep data @EffectiveQC=0
             obsnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
@@ -111,7 +158,7 @@ def readdata():
                     RMSEombs = np.append(RMSEombs,RMSEomb)
                     RMSEomas = np.append(RMSEomas,RMSEoma)
 
-                plotrmsepro(RMSEombs,RMSEomas,binsfory,obsnums,expt_obs,varname)
+                plotrmsepro(RMSEombs,RMSEomas,binsfory,obsnums,expt_obs,varname,print_fmt)
             else:
                 # Maximum number of variables/channels per figure
                 maxsubplts = 12
@@ -142,7 +189,7 @@ def readdata():
                                      maxsubplts, subplt_cnt, \
                                      obsnc, ombnc, omanc, \
                                      nx_subplt, ny_subplt, \
-                                     nfigtypes, figs, expt_obs)
+                                     nfigtypes, figs, expt_obs,print_fmt)
 
                 if ivar == nvars-1:
                     # Close figs in reverse order to avoid seg fault
@@ -150,7 +197,7 @@ def readdata():
                         plt.close(fig)
 
 
-def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME):
+def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
     fig, ax1 = plt.subplots()
 #   reverse left y-axis
     plt.gca().invert_yaxis()
@@ -177,7 +224,7 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME):
 
     ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
 
-    fname = 'RMSE_%s_%s.png'%(EXP_NAME,VAR_NAME)
+    fname = 'RMSE_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
     print('Saving figure to '+fname)
     plt.savefig(fname,dpi=200,bbox_inches='tight')
     plt.close()
@@ -208,9 +255,8 @@ def init_subplts(subpltlist, nfigtypes, maxsubplts):
 
     nx = np.ceil(np.sqrt(nsubplts))
     ny = np.ceil(np.true_divide(nsubplts,nx))
-
-    ny_subplt.append(nx)
-    nx_subplt.append(ny)
+    nx_subplt.append(nx)
+    ny_subplt.append(ny)
 
     figs = []
     for ifig in range(0,nnfigs*nfigtypes):
@@ -226,7 +272,7 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
                          maxsubplts, subplt_cnt, \
                          obs, omb, oma, \
                          nx_subplt, ny_subplt, \
-                         nfigtypes, figs, EXP_NAME):
+                         nfigtypes, figs, EXP_NAME, fmt):
 #================================================================
 #INPUTS: 
 # ifig       - subplot number
@@ -274,24 +320,27 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
             print('WARNING: scatter_verification has no definitions for nfigtypes == ',nfigtypes)
             continue
 
-        #Comment these 2 lines to put x/y labels on all subplts
-        if kfig <= min(nvars,numsubplts) - nx_subplt[0] : xlab = ''
-        if np.mod(kfig,nx_subplt[0]) != 1 : ylab = ''
+        # Uncomment these 2 lines to put x/y labels only on peripheral subplts
+        #if kfig <= min(nvars,numsubplts) - nx_subplt[0] : xlab = ''
+        #if np.mod(kfig,nx_subplt[0]) != 1 : ylab = ''
 
-        ax = figs[offset+jfig].add_subplot(nx_subplt[0],ny_subplt[0],kfig)
+        ax = figs[offset+jfig].add_subplot(ny_subplt[0],nx_subplt[0],kfig)
 
         if iifig == 0:
             #Add scatter plot for h(x) vs. y
-            fname = 'XB_XA_%s_%d.png'%(EXP_NAME,jfig)
+            fname = 'XB_XA_%s'%(EXP_NAME)
             scatter_one2ones(obs, [obs-omb , obs-oma],
-                             ['x_b' , 'x_a'], xlab, ylab,
+                             ['x_b' , 'x_a'], True, xlab, ylab,
                              varname, varunits, ax)
         if iifig == 1:
             #Add scatter plot for OMA vs. OMB
-            fname = 'OMB_OMA_%s_%d.png'%(EXP_NAME,jfig)
+            fname = 'OMB_OMA_%s'%(EXP_NAME)
             scatter_one2ones(omb , [oma],
-                             [], xlab, ylab,
+                             [], False, xlab, ylab,
                              varname, varunits, ax)
+
+        if nnfigs > 1: fname=fname+'_%d-of-%d'%(jfig,nnfig)
+        fname=fname+'.'+fmt
 
         if (ivar == nvars-1 or subplt_cnt[jfig] == numsubplts):
             #Save the figure to file
@@ -303,19 +352,20 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
 
     return subplt_cnt
 
-def scatter_one2ones(XVAL,YVALS,LEG,XLAB,YLAB,VAR_NAME,UNITS,ax):
+def scatter_one2ones(XVAL,YVALS,LEG,show_stats,XLAB,YLAB,VAR_NAME,UNITS,ax):
 #================================================================
 #INPUTS:
-# XVAL     - single list of x-coordinates
-# YVALS    - list of lists of y-coordinates
-# LEG      - list of legend entries
-# XLAB     - xlabel string
-# YLAB     - ylabel string
-# VAR_NAME - variable name for text label
-# UNITS    - variable units
-# ax       - matplotlib.pyplot axes object
+# XVAL       - single list of x-coordinates
+# YVALS      - list of lists of y-coordinates
+# LEG        - list of legend entries
+# show_stats - boolean, show slope and RMSE for each line
+# XLAB       - xlabel string
+# YLAB       - ylabel string
+# VAR_NAME   - variable name for text label
+# UNITS      - variable units
+# ax         - matplotlib.pyplot axes object
 #
-#OUTPUTS: none
+#OUTPUTS: none, modifies ax object to include one-to-one plots
 #
 #PURPOSE: Create a one-to-one scatter plot on ax using XVAL and 
 #         YVALS, including:
@@ -324,36 +374,81 @@ def scatter_one2ones(XVAL,YVALS,LEG,XLAB,YLAB,VAR_NAME,UNITS,ax):
 #         + a one-to-one line
 #================================================================
 
-    colors = ['g','r','b','c','m','y','k']
-    markers = ['*','+','.','o']
-    for i,y in enumerate(YVALS):
-        if len(XVAL) != len(y):
+    colors = [ \
+              [0.0000, 0.4470, 0.7410], \
+              [0.8500, 0.3250, 0.0980], \
+              [0.9290, 0.6940, 0.1250], \
+              [0.4940, 0.1840, 0.5560], \
+              [0.4660, 0.6740, 0.1880], \
+              [0.3010, 0.7450, 0.9330], \
+              [0.6350, 0.0780, 0.1840], \
+             ]
+    markers = ['*','+','o','.']
+    msizes  = [0.5,0.5,0.5, 3 ]
+    for i,YVAL in enumerate(YVALS):
+        if len(XVAL) != len(YVAL):
             print('ERROR: Incorrect usage of scatter_one2ones, YVALS must be list of arrays.')
             os._exit()
-        ax.plot(XVAL,y,colors[np.mod(i,len(colors))]+markers[i/len(colors)],markersize=2)
-        #It would be nice to add a linear regression here as well.
+        col = colors[np.mod(i,len(colors))]
+        mind = np.mod(i,len(markers))
+        ax.plot( XVAL, YVAL, markers[mind], color = col, \
+                 markersize = msizes[mind], alpha=0.5 )
 
     if XLAB != '':
-        ax.set_xlabel(XLAB+' ('+UNITS+')',fontsize=6)
+        label = XLAB
+        if UNITS != '': label = label+' ('+UNITS+')'
+        ax.set_xlabel(label,fontsize=6)
     if YLAB != '':
-        ax.set_ylabel(YLAB+' ('+UNITS+')',fontsize=6)
-    ax.text(0.97, 0.03, VAR_NAME,
-        {'color': 'k', 'fontsize': 8}, 
-        ha='right', va='bottom', transform=ax.transAxes)
-
+        label = YLAB
+        if UNITS != '': label = label+' ('+UNITS+')'
+        ax.set_ylabel(label,fontsize=6)
     if len(LEG) > 0:
        ax.legend(LEG, loc='upper left',fontsize=5)
+
+    fsize1 = 6.0
+    fsize2 = 4.0
+    ax.text(0.03, 0.75, VAR_NAME,
+        {'color': 'k', 'fontsize': fsize1}, 
+        ha='left', va='top', transform=ax.transAxes)
+
 
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
     xymin=min(xmin,ymin)
     xymax=max(xmax,ymax)
 
+    # Add linear regression and statistics
     predictor = np.arange(xymin, xymax, (xymax - xymin) / 10.0)
-    for i,y in enumerate(YVALS):
-        p = np.polyfit(XVAL,y,1)
-        predicted = p[1] + p[0] * predictor
-        ax.plot(predictor,predicted,colors[np.mod(i,len(colors))]+'-',lw=0.5)
+    tx = 0.98
+    ty = 0.02
+    nline = ''
+    for j,YVAL in enumerate(reversed(YVALS)):
+        i = len(YVALS) - j - 1
+        p = np.polyfit(XVAL,YVAL,1)
+        predicted = p[0] * predictor + p[1]
+        col0 = colors[np.mod(i,len(colors))]
+#        bright = 0.5
+#        col = bright * np.asarray([1.,1.,1.]) + (1. - bright) * np.asarray(col0)
+        dimmer = 0.35
+        col = (1. - dimmer) * np.asarray(col0)
+
+        ax.plot( predictor, predicted, '-', color = col, lw=1.2 )
+        stat = 'slope: %0.2f  '%(p[0])
+
+        if show_stats:
+            RMSE = np.sqrt( np.sum( np.square(YVAL - XVAL) ) / len(XVAL) )
+            BIAS = np.sum( YVAL - XVAL ) / len(XVAL)
+            stat = stat+'\nRMSE: %0.2f \nBIAS: %0.2f'%(RMSE,BIAS)
+        ax.text(tx, ty, stat+nline, \
+            {'color': col, 'fontsize': fsize2}, 
+            ha='right', va='bottom', backgroundcolor=[1,1,1,0.2], \
+            clip_on=True, transform=ax.transAxes)
+        nline = nline + ''.join('\n' * stat.count('\n')) + '\n'
+
+    ax.text(tx, ty, 'N = %d'%(len(XVAL))+nline,
+        {'color': 'k', 'fontsize': fsize2}, 
+        ha='right', va='bottom', transform=ax.transAxes)
+
 
     #Could try to adjust limits/ticks for better aesthetics
     #round_nmbr = 5
