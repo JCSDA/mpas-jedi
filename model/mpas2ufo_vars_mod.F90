@@ -23,6 +23,7 @@ use kinds, only : kind_real
 
 !ufo
 use ufo_vars_mod 
+use gnssro_mod_transform, only: geometric2geop
 
 !MPAS-Model
 use atm_core
@@ -342,6 +343,21 @@ subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
 
 end subroutine pressure_half_to_full
 !-------------------------------------------------------------------------------------------
+subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
+   implicit none
+   real (kind=kind_real), dimension(nV+1,nC), intent(in) :: zgrid_f
+   integer, intent(in) :: nC, nV
+   real (kind=kind_real), dimension(nV,nC), intent(out) :: zgrid
+   integer :: i, k
+
+!  calculate midpoint geometricZ:
+   do i=1,nC
+      do k=1,nV
+         zgrid(k,i) = ( zgrid_f(k,i) + zgrid_f(k+1,i) ) * 0.5_kind_real
+      enddo
+   enddo
+end subroutine geometricZ_full_to_half
+!-------------------------------------------------------------------------------------------
 
    !--- variables can be found in subFields
 subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield, ngrid)
@@ -372,6 +388,9 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
+   real (kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
+   real (kind=kind_real), dimension(:), allocatable :: lat
+
    !--- create new pool for geovals
    call mpas_pool_create_pool(convFields)
 
@@ -401,7 +420,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
 !        write(*,*) "end-of ",var_tv
 
-     case ( "air_temperature" ) !-var_ts
+     case ( "air_temperature", "temperature" ) !-var_ts
         call mpas_pool_get_field(subFields, 'temperature', field2d_src) !< get temperature
         call mpas_duplicate_field(field2d_src, field2d)! for air_temperature
         field2d % fieldName = trim(fieldname(ivar))
@@ -610,6 +629,29 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         field1d % fieldName = var_sfc_soilt
         call mpas_pool_add_field(convFields, var_sfc_soilt, field1d)
 !        write(*,*) "end-of ",var_sfc_soilt
+
+     case ("geopotential_height")  !-var_z  geopotential heights at midpoint
+
+        call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
+        call mpas_duplicate_field(field2d_src, field2d)
+        call mpas_duplicate_field(field2d_src, field2d_a)
+
+!       calculate midpoint geometricZ (unit: m):
+        call geometricZ_full_to_half(geom%zgrid(:,1:ngrid), ngrid, &
+                                     geom % nVertLevels,field2d_a%array(:,1:ngrid))
+
+        allocate(lat(1:ngrid))
+        lat = 0.
+        do i=1,ngrid
+           lat(i) = geom%latCell(i) / deg2rad !- to Degrees
+           do k=1,geom % nVertLevels
+              call geometric2geop(lat(i),field2d_a%array(k,i), field2d%array(k,i))
+           enddo
+        enddo
+
+        field2d % fieldName = var_z
+        call mpas_pool_add_field(convFields, var_z, field2d)
+        deallocate(lat)
 
      case default
         write(*,*) 'Not processed in sub. convert_mpas_field2ufo: ',trim(fieldname(ivar))
