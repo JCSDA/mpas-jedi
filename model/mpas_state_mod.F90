@@ -77,7 +77,7 @@ subroutine add_incr(self,rhs)
    if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
       !NOTE: first, get full state of "subFields" variables
       kind_op = 'add'
-      call da_operator(trim(kind_op), self % subFields, rhs % subFields, fldnames = rhs % fldnames_ci)
+      call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = rhs % fldnames_ci)
 
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
       !  update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]

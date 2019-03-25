@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <boost/algorithm/string.hpp>
 
 #include "eckit/config/LocalConfiguration.h"
 
@@ -216,12 +217,13 @@ void IncrementMPAS::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime() << std::endl;
   mpas_increment_sizes_f90(keyInc_, nc, nf);
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
-     ", Fields = " << nf;
+     ", nFields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_increment_gpnorm_f90(keyInc_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
-       << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2];
+       << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2]
+       << " : " << vars_[jj];
   }
 }
 // -----------------------------------------------------------------------------

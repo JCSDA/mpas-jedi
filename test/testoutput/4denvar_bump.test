@@ -7,26 +7,26 @@ Test     : CostFunction: Nonlinear J = 1605.62
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0278601
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=203.97, Max=306.477, RMS=244.046
-Test     : Fld=2  Min=-1.83664e-05, Max=0.0183789, RMS=0.0045273
-Test     : Fld=3  Min=-40.4961, Max=80.462, RMS=16.6542
-Test     : Fld=4  Min=-46.8802, Max=52.9303, RMS=9.08906
-Test     : Fld=5  Min=1507.23, Max=97558.2, RMS=49312.1
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=203.97, Max=306.477, RMS=244.046 : temperature
+Test     : Fld=2  Min=1507.23, Max=97558.2, RMS=49312.1 : pressure
+Test     : Fld=3  Min=-1.83664e-05, Max=0.0183789, RMS=0.0045273 : spechum
+Test     : Fld=4  Min=-40.4961, Max=80.462, RMS=16.6542 : uReconstructZonal
+Test     : Fld=5  Min=-46.8802, Max=52.9303, RMS=9.08906 : uReconstructMeridional
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=189.243, Max=305.247, RMS=243.959
-Test     : Fld=2  Min=-7.02022e-05, Max=0.0189689, RMS=0.00462976
-Test     : Fld=3  Min=-43.9693, Max=83.9293, RMS=17.6598
-Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=8.99766
-Test     : Fld=5  Min=1472.27, Max=98112.2, RMS=49314.2
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=189.243, Max=305.247, RMS=243.959 : temperature
+Test     : Fld=2  Min=1472.27, Max=98112.2, RMS=49314.2 : pressure
+Test     : Fld=3  Min=-7.02022e-05, Max=0.0189689, RMS=0.00462976 : spechum
+Test     : Fld=4  Min=-43.9693, Max=83.9293, RMS=17.6598 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=8.99766 : uReconstructMeridional
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=150.599, Max=316.656, RMS=243.9
-Test     : Fld=2  Min=-0.000547186, Max=0.0199426, RMS=0.00471328
-Test     : Fld=3  Min=-39.7687, Max=90.7181, RMS=16.7615
-Test     : Fld=4  Min=-43.4809, Max=58.6026, RMS=8.87205
-Test     : Fld=5  Min=1456.08, Max=97519.2, RMS=49317
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=150.599, Max=316.656, RMS=243.9 : temperature
+Test     : Fld=2  Min=1456.08, Max=97519.2, RMS=49317 : pressure
+Test     : Fld=3  Min=-0.000547186, Max=0.0199426, RMS=0.00471328 : spechum
+Test     : Fld=4  Min=-39.7687, Max=90.7181, RMS=16.7615 : uReconstructZonal
+Test     : Fld=5  Min=-43.4809, Max=58.6026, RMS=8.87205 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 226.591
 Test     : CostJo   : Nonlinear Jo = 141.307, nobs = 209, Jo/n = 0.676108, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 650.814, nobs = 891, Jo/n = 0.730431, err = 2.30451
@@ -36,26 +36,26 @@ Test     : CostFunction: Nonlinear J = 1306.73
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0105527
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=203.971, Max=306.477, RMS=244.046
-Test     : Fld=2  Min=-1.68777e-05, Max=0.0183789, RMS=0.00452728
-Test     : Fld=3  Min=-40.4961, Max=80.4615, RMS=16.6539
-Test     : Fld=4  Min=-46.8891, Max=52.9303, RMS=9.08906
-Test     : Fld=5  Min=1507.23, Max=97558.8, RMS=49312.1
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=203.971, Max=306.477, RMS=244.046 : temperature
+Test     : Fld=2  Min=1507.23, Max=97558.8, RMS=49312.1 : pressure
+Test     : Fld=3  Min=-1.68777e-05, Max=0.0183789, RMS=0.00452728 : spechum
+Test     : Fld=4  Min=-40.4961, Max=80.4615, RMS=16.6539 : uReconstructZonal
+Test     : Fld=5  Min=-46.8891, Max=52.9303, RMS=9.08906 : uReconstructMeridional
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=189.543, Max=305.247, RMS=243.959
-Test     : Fld=2  Min=-7.35361e-05, Max=0.018969, RMS=0.00462974
-Test     : Fld=3  Min=-43.9616, Max=83.8211, RMS=17.6605
-Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=8.99757
-Test     : Fld=5  Min=1472.27, Max=98111.8, RMS=49314.2
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=189.543, Max=305.247, RMS=243.959 : temperature
+Test     : Fld=2  Min=1472.27, Max=98111.8, RMS=49314.2 : pressure
+Test     : Fld=3  Min=-7.35361e-05, Max=0.018969, RMS=0.00462974 : spechum
+Test     : Fld=4  Min=-43.9616, Max=83.8211, RMS=17.6605 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=8.99757 : uReconstructMeridional
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=151.411, Max=316.134, RMS=243.898
-Test     : Fld=2  Min=-0.000594372, Max=0.0199348, RMS=0.00471326
-Test     : Fld=3  Min=-39.7687, Max=90.3746, RMS=16.761
-Test     : Fld=4  Min=-43.4762, Max=58.6026, RMS=8.87392
-Test     : Fld=5  Min=1456.08, Max=97519.1, RMS=49317
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=151.411, Max=316.134, RMS=243.898 : temperature
+Test     : Fld=2  Min=1456.08, Max=97519.1, RMS=49317 : pressure
+Test     : Fld=3  Min=-0.000594372, Max=0.0199348, RMS=0.00471326 : spechum
+Test     : Fld=4  Min=-39.7687, Max=90.3746, RMS=16.761 : uReconstructZonal
+Test     : Fld=5  Min=-43.4762, Max=58.6026, RMS=8.87392 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 225.7
 Test     : CostJo   : Nonlinear Jo = 140.187, nobs = 209, Jo/n = 0.670752, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 651.468, nobs = 891, Jo/n = 0.731165, err = 2.30451

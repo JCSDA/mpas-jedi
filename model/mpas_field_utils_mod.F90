@@ -468,7 +468,7 @@ subroutine zeros_(self)
    implicit none
    class(mpas_field), intent(inout) :: self
 
-   call da_zeros(self % subFields, fldnames = self % fldnames_ci)
+   call da_zeros(self % subFields, fld_select = self % fldnames_ci)
 
 end subroutine zeros_
 
@@ -479,7 +479,7 @@ subroutine random_(self)
    implicit none
    class(mpas_field), intent(inout) :: self
    
-   call da_random(self % subFields, fldnames = self % fldnames_ci)
+   call da_random(self % subFields, fld_select = self % fldnames_ci)
 
 end subroutine random_
 
@@ -492,7 +492,7 @@ subroutine gpnorm_(self, nf, pstat)
    integer,              intent(in)  :: nf
    real(kind=kind_real), intent(out) :: pstat(3, nf)
 
-   call da_gpnorm(self % subFields, self % geom % domain % dminfo, nf, pstat, fldnames = self % fldnames_ci)
+   call da_gpnorm(self % subFields, self % geom % domain % dminfo, nf, pstat, fld_select = self % fldnames_ci(1:nf))
 
 end subroutine gpnorm_
 
@@ -504,7 +504,7 @@ subroutine rms_(self, prms)
    class(mpas_field),    intent(in)  :: self
    real(kind=kind_real), intent(out) :: prms
 
-   call da_fldrms(self % subFields, self % geom % domain % dminfo, prms, fldnames = self % fldnames_ci)
+   call da_fldrms(self % subFields, self % geom % domain % dminfo, prms, fld_select = self % fldnames_ci)
 
 end subroutine rms_
 
@@ -518,7 +518,7 @@ subroutine add_(self,rhs)
    character(len=StrKIND) :: kind_op
 
    kind_op = 'add'
-   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fldnames = self % fldnames_ci)
+   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
 end subroutine add_
 
@@ -532,7 +532,7 @@ subroutine schur_(self,rhs)
    character(len=StrKIND) :: kind_op
 
    kind_op = 'schur'
-   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fldnames = self % fldnames_ci)
+   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
 end subroutine schur_
 
@@ -546,7 +546,7 @@ subroutine sub_(self,rhs)
    character(len=StrKIND) :: kind_op
 
    kind_op = 'sub'
-   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fldnames = self % fldnames_ci)
+   call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
 end subroutine sub_
 
@@ -571,7 +571,7 @@ subroutine axpy_(self,zz,rhs)
    real(kind=kind_real), intent(in)    :: zz
    class(mpas_field),    intent(in)    :: rhs
 
-   call da_axpy(self % subFields, rhs % subFields, zz, fldnames = self % fldnames_ci)
+   call da_axpy(self % subFields, rhs % subFields, zz, fld_select = self % fldnames_ci)
 
 end subroutine axpy_
 

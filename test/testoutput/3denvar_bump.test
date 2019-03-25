@@ -7,12 +7,12 @@ Test     : CostFunction: Nonlinear J = 1574.05
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0405332
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=195.506, Max=305.248, RMS=243.961
-Test     : Fld=2  Min=-1.27609e-05, Max=0.0189684, RMS=0.00463029
-Test     : Fld=3  Min=-43.974, Max=82.0184, RMS=17.6479
-Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=8.99825
-Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.4
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=195.506, Max=305.248, RMS=243.961 : temperature
+Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.4 : pressure
+Test     : Fld=3  Min=-1.27609e-05, Max=0.0189684, RMS=0.00463029 : spechum
+Test     : Fld=4  Min=-43.974, Max=82.0184, RMS=17.6479 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=8.99825 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 52.8727
 Test     : CostJo   : Nonlinear Jo = 140.632, nobs = 209, Jo/n = 0.672879, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 609.217, nobs = 867, Jo/n = 0.702673, err = 2.30636
@@ -22,12 +22,12 @@ Test     : CostFunction: Nonlinear J = 1050.07
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0165214
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, Fields = 5
-Test     : Fld=1  Min=195.221, Max=305.248, RMS=243.961
-Test     : Fld=2  Min=-1.28033e-05, Max=0.0189684, RMS=0.00463024
-Test     : Fld=3  Min=-43.966, Max=82.0184, RMS=17.6474
-Test     : Fld=4  Min=-45.5359, Max=58.6079, RMS=8.99846
-Test     : Fld=5  Min=1472.27, Max=98066.9, RMS=49313.4
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=195.221, Max=305.248, RMS=243.961 : temperature
+Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.4 : pressure
+Test     : Fld=3  Min=-1.28033e-05, Max=0.0189684, RMS=0.00463024 : spechum
+Test     : Fld=4  Min=-43.966, Max=82.0184, RMS=17.6474 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=8.99846 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 53.619
 Test     : CostJo   : Nonlinear Jo = 140.529, nobs = 209, Jo/n = 0.672389, err = 1.84979
 Test     : CostJo   : Nonlinear Jo = 606.366, nobs = 867, Jo/n = 0.699384, err = 2.30636

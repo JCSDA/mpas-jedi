@@ -45,8 +45,8 @@ list( APPEND mpas_testoutput
   testoutput/dirac.bumpcov.test
   testoutput/parametersbump.cov.test
   testoutput/parametersbump.loc.test
-  testoutput/staticbinit.test
-  testoutput/variablechange.test
+#  testoutput/staticbinit.test
+#  testoutput/variablechange.test
 )
 
 list( APPEND mpas_graphics

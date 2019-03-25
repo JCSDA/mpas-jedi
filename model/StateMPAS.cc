@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
 #include "eckit/config/LocalConfiguration.h"
 
@@ -169,12 +170,13 @@ void StateMPAS::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime() << std::endl;
   mpas_state_sizes_f90(keyState_, nc, nf);
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
-     ", Fields = " << nf;
+     ", nFields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_state_gpnorm_f90(keyState_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
-       << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2];
+       << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2]
+       << " : " << vars_[jj];
   }
 }
 // -----------------------------------------------------------------------------

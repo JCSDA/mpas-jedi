@@ -60,7 +60,7 @@ subroutine diff_incr(lhs,x1,x2)
    if (x1%geom%nCells==x2%geom%nCells .and. x1%geom%nVertLevels==x2%geom%nVertLevels) then
      if (lhs%geom%nCells==x1%geom%nCells .and. lhs%geom%nVertLevels==x1%geom%nVertLevels) then
         kind_op = 'sub'
-        call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields, fldnames = lhs % fldnames_ci)
+        call da_operator(trim(kind_op), lhs % subFields, x1 % subFields, x2 % subFields, fld_select = lhs % fldnames_ci)
      else
        call abor1_ftn("mpas_increment:diff_incr: dimension mismatch between the two variables.")
      endif

@@ -604,14 +604,14 @@ use mpas_constants_mod
    !> \details
    !
    !-----------------------------------------------------------------------
-   subroutine da_random(pool_a, fldnames)
+   subroutine da_random(pool_a, fld_select)
 
    use random_mod, only: normal_distribution
 
       implicit none
 
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
-      character (len=*), optional,    intent(in)    :: fldnames(:)
+      character (len=*), optional,    intent(in)    :: fld_select(:)
 
       integer, parameter :: rseed = 7
       type (mpas_pool_iterator_type) :: poolItr
@@ -628,8 +628,8 @@ use mpas_constants_mod
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -675,14 +675,14 @@ use mpas_constants_mod
    !>  \modified by Gael DESCOMBES to apply diffferent operator
    !
    !-----------------------------------------------------------------------
-   subroutine da_operator(kind_op, pool_a, pool_b, pool_c, fldnames)
+   subroutine da_operator(kind_op, pool_a, pool_b, pool_c, fld_select)
 
       implicit none
 
       type (mpas_pool_type), pointer :: pool_a, pool_b
       type (mpas_pool_type), pointer, optional :: pool_c
       character (len=*) :: kind_op
-      character (len=*), optional :: fldnames(:)
+      character (len=*), optional :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b, r0d_ptr_c
@@ -701,8 +701,8 @@ use mpas_constants_mod
 
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -905,12 +905,12 @@ use mpas_constants_mod
    !> \details
    !
    !-----------------------------------------------------------------------
-   subroutine da_zeros(pool_a, fldnames)
+   subroutine da_zeros(pool_a, fld_select)
 
       implicit none
 
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
-      character (len=*), optional,    intent(in)    :: fldnames(:)
+      character (len=*), optional,    intent(in)    :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
       real (kind=kind_real), pointer :: r0d_ptr_a
@@ -926,8 +926,8 @@ use mpas_constants_mod
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1037,13 +1037,13 @@ use mpas_constants_mod
    !>  is equivalent to A = A + B.
    !
    !-----------------------------------------------------------------------
-   subroutine da_axpy(pool_a, pool_b, zz, fldnames)
+   subroutine da_axpy(pool_a, pool_b, zz, fld_select)
 
       implicit none
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
       type (mpas_pool_type), pointer, intent(in)    :: pool_b
       real (kind=kind_real), intent(in) :: zz
-      character (len=*), optional, intent(in) :: fldnames(:)
+      character (len=*), optional, intent(in) :: fld_select(:)
 
 
 
@@ -1061,8 +1061,8 @@ use mpas_constants_mod
 
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1145,14 +1145,14 @@ use mpas_constants_mod
    !
    !-----------------------------------------------------------------------
    
-   subroutine da_gpnorm(pool_a, dminfo, nf, pstat, fldnames)
+   subroutine da_gpnorm(pool_a, dminfo, nf, pstat, fld_select)
 
    implicit none
    type (mpas_pool_type), pointer, intent(in)  :: pool_a
    type (dm_info), pointer,        intent(in)  :: dminfo
    integer,                        intent(in)  :: nf
+   character (len=*),              intent(in)  :: fld_select(nf)
    real(kind=kind_real),           intent(out) :: pstat(3, nf)
-   character (len=*), optional,    intent(in)  :: fldnames(:)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d
@@ -1171,12 +1171,10 @@ use mpas_constants_mod
    ! name in pool_a
    !
    call mpas_pool_begin_iteration(pool_a)
-   jj = 1
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
-         end if
+         jj = str_match(trim(poolItr % memberName),fld_select)
+         if ( jj < 0 .or. jj > nf ) cycle
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
          ! so we select only those members of the pool that are fields
@@ -1189,7 +1187,7 @@ use mpas_constants_mod
                ! the correct type
                ndims = poolItr % nDims
 
-               write(*,*)'gpnorm variable: ',trim(poolItr % memberName), ndims
+               !write(*,*)'gpnorm variable: ',trim(poolItr % memberName), ndims
 
                if (ndims == 1) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
@@ -1267,7 +1265,6 @@ use mpas_constants_mod
 
             end if
          end if
-         jj = jj + 1
 
       end do
 
@@ -1286,13 +1283,13 @@ use mpas_constants_mod
    !
    !-----------------------------------------------------------------------
 
-   subroutine da_fldrms(pool_a, dminfo, fldrms, fldnames)
+   subroutine da_fldrms(pool_a, dminfo, fldrms, fld_select)
 
    implicit none
    type (mpas_pool_type), pointer, intent(in)  :: pool_a
    type (dm_info), pointer,        intent(in)  :: dminfo
    real(kind=kind_real),           intent(out) :: fldrms
-   character (len=*), optional,    intent(in)  :: fldnames(:)
+   character (len=*), optional,    intent(in)  :: fld_select(:)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d
@@ -1314,8 +1311,8 @@ use mpas_constants_mod
    jj = 1
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-         if (present(fldnames)) then
-            if (.not. any_match(trim(poolItr % memberName), fldnames)) cycle
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
          end if
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -1690,24 +1687,25 @@ end subroutine r3_normalize
 
 !-----------------------------------------------------------------------
 
-function any_match(fieldname, fieldnames)
+function str_match(fieldname, fieldnames)
    character (len=*) :: fieldname
    character (len=*) :: fieldnames(:)
-   logical :: any_match
+   integer :: str_match
+
 
    integer :: i
 
-   any_match = .false.
+   str_match = -1
    do i = 1, size(fieldnames)
       if (trim(fieldname) .eq. trim(fieldnames(i))) then
-         any_match = .true.
+         str_match = i
          return
       end if
    end do
 
    return
 
-end function any_match
+end function str_match
 
 !===============================================================================================================
 
