@@ -1,0 +1,84 @@
+---
+logging:
+  categories: Info, Test, Warning, Error, Log, Trace, Stats
+test_framework_runtime_config: "--log_level=test_suite"
+nml_file: namelist.atmosphere_2018041421
+Assimilation Window:
+  Begin: '2018-04-14T21:00:00Z'
+  Length: PT6H
+Geometry:
+  gridfname: "./restart.2018-04-14_21.00.00.nc"
+Initial Condition:
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  filename: "./restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+Observations:
+  ObsTypes:
+  - ObsType: Radiosonde
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/sondes_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_sonde.nc4
+    variables:
+    - air_temperature
+    - eastward_wind
+    - northward_wind
+    - specific_humidity
+    ObsBias: {}
+  - ObsType: Aircraft
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/aircraft_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_aircraft.nc4
+    variables:
+    - air_temperature
+    - eastward_wind
+    - northward_wind
+    - specific_humidity
+    ObsBias: {}
+  - ObsType: Satwind
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/satwind_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_satwind.nc4
+    variables:
+    - eastward_wind
+    - northward_wind
+    ObsBias: {}
+  - ObsType: GnssroRef
+    ObsOptions:
+      ro_top_meter: 30000
+      obserr_method: RefGSI
+      use_compress: 0
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/gnssro_obs_2018041500_s.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_gnssro.nc4
+      obsvalue: refractivity
+    ObsBias: {}
+  - ObsType: CRTM
+    channels: 1-15
+    ObsOptions:
+      n_Absorbers: '3'
+      n_Clouds: '2'
+      n_Aerosols: '0'
+      Sensor_ID: amsua_n19
+      EndianType: little_endian
+      CoefficientPath: Data/
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_amsua.nc4
+    ObsBias: {}
+Prints:
+  frequency: PT3H

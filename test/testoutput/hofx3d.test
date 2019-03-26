@@ -1,0 +1,13 @@
+Test     : Initial state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=199.61, Max=305.248, RMS=243.965 : temperature
+Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
+Test     : Fld=3  Min=0, Max=0.0189684, RMS=0.00463052 : spechum
+Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
+Test     : H(x): Radiosonde nobs= 524 Min=-19.6486, Max=228.714, RMS=111.04
+Test     : Aircraft nobs= 1828 Min=-29.749, Max=294.411, RMS=127.951
+Test     : Satwind nobs= 200 Min=-16.1639, Max=13.1386, RMS=7.21688
+Test     : GnssroRef nobs= 1200 Min=0.19787, Max=319.598, RMS=108.692
+Test     : CRTM nobs= 1500 Min=145.324, Max=292.654, RMS=231.677

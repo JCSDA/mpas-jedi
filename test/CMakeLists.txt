@@ -12,6 +12,7 @@ list( APPEND mpas_test_input
   testinput/3dhybrid_bump_bump.yaml
   testinput/forecast.yaml
   testinput/hofx.yaml
+  testinput/hofx3d.yaml
   testinput/enshofx.yaml
   testinput/dirac.bumploc.yaml
   testinput/dirac.bumpcov.yaml
@@ -40,6 +41,7 @@ list( APPEND mpas_testoutput
   testoutput/3dhybrid_bump_bump.test
   testoutput/forecast.test
   testoutput/hofx.test
+  testoutput/hofx3d.test
   testoutput/enshofx.test
   testoutput/dirac.bumploc.test
   testoutput/dirac.bumpcov.test
@@ -146,6 +148,14 @@ ecbuild_add_test( TARGET  test_mpas_hofx
                        testoutput/hofx.test
                   MPI     1
                   DEPENDS mpas_hofx.x )
+
+ecbuild_add_test( TARGET  test_mpas_hofx3d
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx3d.x testinput/hofx3d.yaml"
+                       testoutput/hofx3d.test
+                  MPI     1
+                  DEPENDS mpas_hofx3d.x )
 
 ecbuild_add_test( TARGET  test_mpas_enshofx
                   TYPE SCRIPT
