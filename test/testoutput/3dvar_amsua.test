@@ -1,5 +1,5 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo = 96573.6, nobs = 1400, Jo/n = 68.9811, err = 1.65044
+Test     : CostJo   : Nonlinear Jo(CRTM) = 96573.6, nobs = 1400, Jo/n = 68.9811, err = 1.65044
 Test     : CostFunction: Nonlinear J = 96573.6
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.00213806
 Test     : CostFunction::addIncrement: Analysis: 
@@ -11,7 +11,7 @@ Test     : Fld=3  Min=0, Max=0.0189684, RMS=0.00463052 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 11281
-Test     : CostJo   : Nonlinear Jo = 13101.4, nobs = 1400, Jo/n = 9.35815, err = 1.65044
+Test     : CostJo   : Nonlinear Jo(CRTM) = 13101.4, nobs = 1400, Jo/n = 9.35815, err = 1.65044
 Test     : CostFunction: Nonlinear J = 24382.4
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.00531678
 Test     : CostFunction::addIncrement: Analysis: 
@@ -23,5 +23,5 @@ Test     : Fld=3  Min=0, Max=0.0189684, RMS=0.00463052 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
 Test     : CostJb   : Nonlinear Jb = 9182.66
-Test     : CostJo   : Nonlinear Jo = 16119.3, nobs = 1400, Jo/n = 11.5138, err = 1.65044
+Test     : CostJo   : Nonlinear Jo(CRTM) = 16119.3, nobs = 1400, Jo/n = 11.5138, err = 1.65044
 Test     : CostFunction: Nonlinear J = 25302
