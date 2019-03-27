@@ -100,42 +100,36 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 # Test interface classes with MPAS
 
 ecbuild_add_test( TARGET  test_mpas_geometry
-                  BOOST
                   SOURCES executables/TestGeometry.cc
                   ARGS    "testinput/geometry.yaml"
                   MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_state
-                  BOOST
                   SOURCES executables/TestState.cc
                   ARGS    "testinput/state.yaml"
                   MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_model
-                  BOOST
                   SOURCES executables/TestModel.cc
                   ARGS    "testinput/model.yaml"
                   MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_increment
-                  BOOST
                   SOURCES executables/TestIncrement.cc
                   ARGS    "testinput/increment.yaml"
                   MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_errorcovariance
-                  BOOST
                   SOURCES executables/TestErrorCovariance.cc
                   ARGS    "testinput/errorcov.yaml"
                   MPI     1
                   LIBS    mpas )
 
 ecbuild_add_test( TARGET  test_mpas_variablechange
-                  BOOST
                   SOURCES executables/TestVariableChange.cc
                   ARGS    "testinput/variablechange.yaml"
                   MPI     1
