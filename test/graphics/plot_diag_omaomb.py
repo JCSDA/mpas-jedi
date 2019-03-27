@@ -9,12 +9,21 @@ import matplotlib.axes as maxes
 import fnmatch
 import math
 
+# columns:    var_name    unit_used  abbr.
+vardict = {'air_temperature': ['(K)','T'],
+    'eastward_wind': ['(m/s)','U'],
+    'northward_wind': ['(m/s)','V'],
+    'specific_humidity': ['(kg/kg)','Q'],
+    'refractivity': ['(%)','Ref'],    #plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
+    'bending_angle': ['(%)','Bnd'],   #plot RMSE of OMB/O and OMA/O; bending_angle unit: rad
+    'brightness_temperature': ['(K)','BT'] }
+
 def readdata():
 
     print_fmt = 'png' #lower fidelity, faster
     #print_fmt = 'pdf' #higher fidelity, slower
 
-    profile_group  = ['sonde','aircraft','satwind']
+    profile_group  = ['sonde','aircraft','satwind','gnssro']
     radiance_group = ['amsua_n19']
     #dummy_group   = ['dummy_obstype1']
 
@@ -118,7 +127,10 @@ def readdata():
                 #file_rank = file_name[-(4+npedigits):-4]
 
                 if ''.join(obstype) in profile_group:
-                    prenc = np.append(prenc, nc.variables['air_pressure@MetaData'])
+                    if ''.join(obstype) == 'gnssro':
+                        prenc = np.append(prenc, nc.variables['altitude@GroupUndefined'])
+                    else:
+                        prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
                 ombnc = np.append( ombnc, nc.variables[omb] )
@@ -130,6 +142,11 @@ def readdata():
             obsnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
             ombnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
             omanc[numpy.logical_not(qcnc == 0)] = numpy.NaN
+            ombnc[ombnc == -3.36879526214505e+38 ] = numpy.NaN
+
+            if ''.join(obstype) == 'gnssro':
+                ombnc = (ombnc/obsnc)*100
+                omanc = (omanc/obsnc)*100
 
             if ''.join(obstype) in profile_group:
                 #PROFILE OBS
@@ -137,8 +154,13 @@ def readdata():
                 RMSEombs = []
                 RMSEomas = []
                 obsnums  = []
-                bins =   [1050.,950.,850.,750.,650.,550.,450.,350.,250.,150.,50.,0.]
-                binsfory=  [1000.,900.,800.,700.,600.,500.,400.,300.,200.,100.,0]
+
+                if ''.join(obstype) == 'gnssro':
+                    bins = list(np.arange(50000.0, -1000, -2000.))
+                    binsfory= list(np.arange(49500.0,-500.0,-2000.))
+                else:
+                    bins =   [1050.,950.,850.,750.,650.,550.,450.,350.,250.,150.,50.,0.]
+                    binsfory=  [1000.,900.,800.,700.,600.,500.,400.,300.,200.,100.,0]
                 bins = numpy.asarray(bins)
 
                 for j in range(0, len(bins)-1):
@@ -204,31 +226,35 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
     plt.grid(True)
     ax1.plot(var1,binsfory,'g-*',markersize=5)
     ax1.plot(var2,binsfory,'r-*',markersize=5)
-    ax1.set_xlabel('RMSE',fontsize=15)
 
     if VAR_NAME in 'specific_humidity':
         ax1.set_xlim([0,np.nanmax(var1)])
     else:
         ax1.set_xlim([0,math.ceil(np.nanmax(var1))])
-    ax1.set_ylim([1000,0])
-    major_ticks = np.arange(0, 1000, 100)
-    ax1.set_yticks(major_ticks)
-    ax1.set_ylabel('Pressure (hPa)',fontsize=15)
 
-#   set right y-axis and reverse it
     ax2 = ax1.twinx()
     ax2.set_yticks(binsfory)
-#   reverse right y-axis
-    ax2.set_yticklabels(reversed(obsnums.astype(np.int)))
-    ax2.set_ylabel('Observation Number(EffectiveQC=0)',fontsize=15) 
+    ax2.set_ylabel('Observation Number(EffectiveQC=0)',fontsize=15)
 
-    ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
+    if EXP_NAME[-6:] == 'gnssro':
+        ax1.set_ylim([0,49500])
+        ax1.set_ylabel('Altitude (m)',fontsize=15)
+        ax1.set_xlabel(VAR_NAME+'  RMSE of OMB/O & OMA/O '+ vardict[VAR_NAME][0],fontsize=15)
+        ax1.legend(('OMB/O','OMA/O'), loc='upper right',fontsize=15)
+        ax2.set_yticklabels(obsnums.astype(np.int))
+    else:
+        ax1.set_ylim([1000,0])
+        major_ticks = np.arange(0, 1000, 100)
+        ax1.set_yticks(major_ticks)
+        ax1.set_ylabel('Pressure (hPa)',fontsize=15)
+        ax1.set_xlabel(VAR_NAME+'  RMSE  '+ vardict[VAR_NAME][0],fontsize=15)
+        ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
+        ax2.set_yticklabels(reversed(obsnums.astype(np.int)))
 
     fname = 'RMSE_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
     print('Saving figure to '+fname)
     plt.savefig(fname,dpi=200,bbox_inches='tight')
     plt.close()
-
 
 def init_subplts(subpltlist, nfigtypes, maxsubplts):
 #================================================================
