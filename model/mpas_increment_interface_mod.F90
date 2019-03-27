@@ -302,61 +302,61 @@ end subroutine mpas_increment_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_ug_coord_c(c_key_inc, c_key_ug, c_colocated) &
+subroutine mpas_increment_ug_coord_c(c_key_inc, c_key_ug) &
       bind (c,name='mpas_increment_ug_coord_f90')
 use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
-integer(c_int), intent(in) :: c_colocated
 type(mpas_increment), pointer :: inc
 type(unstructured_grid), pointer :: ug
-integer :: colocated
 
 call mpas_increment_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
-colocated = c_colocated
 
-call ug_coord(inc, ug, colocated)
+call ug_coord(inc, ug)
 
 end subroutine mpas_increment_ug_coord_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_increment_to_ug_c(c_key_inc, c_key_ug, c_colocated) &
+subroutine mpas_increment_increment_to_ug_c(c_key_inc, c_key_ug, c_its) &
       bind (c,name='mpas_increment_increment_to_ug_f90')
 use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
-integer(c_int), intent(in) :: c_colocated
+integer(c_int), intent(in) :: c_its
 type(mpas_increment), pointer :: inc
 type(unstructured_grid), pointer :: ug
-integer :: colocated
+integer :: its
 
 call mpas_increment_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
-colocated = c_colocated
+its = c_its+1
 
-call increment_to_ug(inc, ug, colocated)
+call increment_to_ug(inc, ug, its)
 
 end subroutine mpas_increment_increment_to_ug_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_increment_from_ug_c(c_key_inc, c_key_ug) &
+subroutine mpas_increment_increment_from_ug_c(c_key_inc, c_key_ug, c_its) &
       bind (c,name='mpas_increment_increment_from_ug_f90')
 use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
+integer(c_int), intent(in) :: c_its
 type(mpas_increment), pointer :: inc
 type(unstructured_grid), pointer :: ug
+integer :: its
 
 call mpas_increment_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
+its = c_its+1
 
-call increment_from_ug(inc, ug)
+call increment_from_ug(inc, ug, its)
 
 end subroutine mpas_increment_increment_from_ug_c
 

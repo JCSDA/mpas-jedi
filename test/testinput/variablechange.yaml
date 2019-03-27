@@ -12,9 +12,24 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-  prefix: bump
-  strategy: common
-  check_vbal: 1
+  bump:
+    check_vbal: 0
+    nc1: 1000
+    nc2: 100
+    new_vbal: 0
+    nrep: 2
+    ntry: 3
+    prefix: 'statsvarialbechange'
+    sam_read: 1
+    strategy: common
+    vbal_block:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    vbal_rad: 3000.0e3
+    verbosity: 'none'
   inputVariables:
     variables:
     - temperature
@@ -32,16 +47,6 @@ LinearVariableChangeTests:
 - varchange: Control2Model
   toleranceInverse: '1.0e-8'
   testinverse: '0'
-  variables:
-    variables:
-    - temperature
-    - pressure
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-  prefix: bump
-  strategy: common
-  check_vbal: 1
   inputVariables:
     variables:
     - temperature

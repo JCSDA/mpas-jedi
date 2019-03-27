@@ -19,8 +19,4 @@ State:
   date: '2018-04-15T00:00:00Z'
 Covariance:
   covariance: MPASstatic
-  standard_deviation: '0.8'
-  vertical_correlation: '0.2'
-  horizontal_length_scale: 1e6
-  maximum_condition_number: 1.0e6
   date: '2018-04-15T00:00:00Z'

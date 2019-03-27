@@ -5,12 +5,11 @@ nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 variables:
-  variables:
-  - temperature
-  - pressure
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
+- temperature
+- pressure
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
 initial:
   variables:
   - temperature
@@ -24,52 +23,52 @@ Covariance:
   covariance: ensemble
   members: '5'
   variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  date: '2018-04-15T00:00:00Z'
+  localization:
+    localization: BUMP
+    timeslots:
+    - '2018-04-15T00:00:00Z'
     variables:
     - temperature
     - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-  date: '2018-04-15T00:00:00Z'
-  localization:
-    localization: BUMP
-    date: '2018-04-15T00:00:00Z'
-    variables:
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-    prefix: mpas_dirac.bumploc
-    default_seed: 1
-    method: loc_norm
-    strategy: common
-    new_hdiag: 1
-    new_nicas: 1
-    check_adjoints: 1
-    mask_type: none
-    draw_type: random_uniform
-    nc1: 1024
-    ntry: 3
-    nrep: 2
-    nc3: 10
-    dc: 1000000
-    nl0r: 3
-    ne: 5
-    minim_algo: hooke
-    rvflt: 0
-    lsqrt: 1
-    resol: 4
-    nicas_interp: bilin
-    network: 0
-    mpicom: 2
-    advmode: 0
-    diag_interp: bilin
-    nldwh: 0
-    nldwv: 0
-    write_grids: 1
-  state:
+    bump:
+      prefix: mpas_dirac.bumploc
+      default_seed: 1
+      method: loc
+      strategy: common
+      new_hdiag: 1
+      new_nicas: 1
+      check_adjoints: 1
+      mask_type: none
+      draw_type: random_uniform
+      nc1: 1024
+      ntry: 3
+      nrep: 2
+      nc3: 10
+      dc: 1000000
+      nl0r: 3
+      ne: 5
+      minim_algo: hooke
+      rvflt: 0
+      lsqrt: 1
+      resol: 4
+      nicas_interp: bilin
+      network: 0
+      mpicom: 2
+      advmode: 0
+      diag_interp: bilin
+      nldwh: 0
+      nldwv: 0
+      write_grids: 1
+  members:
   - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
     date: '2018-04-15T00:00:00Z'
   - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
@@ -130,22 +129,9 @@ dirac:
   dirvar: uReconstructZonal
 output_localization:
   datadir: Data
-  filename: "./mpas.dirac_p_loc.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
-input_bump:
-  datadir: Data
-  filename: "./mpas.dirac_input.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.Dirac_bumploc.$Y-$M-$D_$h.$m.$s.nc"
   date: '2018-04-15T00:00:00Z'
 output_B:
   datadir: Data
-  filename: "./mpas.Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
-output_bumpRnd:
-  filename: "./mpas.Rnd_p_loc.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
-input_bumpRnd:
-  filename: "./mpas.Rnd_input.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
-output_BensRnd:
-  filename: "./mpas.Rnd_Bend_p_loc.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.Dirac_B_bumploc.$Y-$M-$D_$h.$m.$s.nc"
   date: '2018-04-15T00:00:00Z'

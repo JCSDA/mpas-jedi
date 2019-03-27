@@ -177,18 +177,18 @@ void IncrementMPAS::getValuesAD(const ufo::Locations & locs,
 // -----------------------------------------------------------------------------
 /// Unstructured grid
 // -----------------------------------------------------------------------------
-void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug,
-                             const int & colocated) const {
-  mpas_increment_ug_coord_f90(keyInc_, ug.toFortran(), colocated);
+void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug) const {
+  mpas_increment_ug_coord_f90(keyInc_, ug.toFortran());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug,
-                                const int & colocated) const {
-  mpas_increment_increment_to_ug_f90(keyInc_, ug.toFortran(), colocated);
+                                const int & its) const {
+  mpas_increment_increment_to_ug_f90(keyInc_, ug.toFortran(), its);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug) {
-  mpas_increment_increment_from_ug_f90(keyInc_, ug.toFortran());
+void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug,
+                                const int & its) {
+  mpas_increment_increment_from_ug_f90(keyInc_, ug.toFortran(), its);
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

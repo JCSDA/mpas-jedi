@@ -33,94 +33,26 @@ cost_function:
     Covariance:
       covariance: BUMP
       date: '2018-04-15T00:00:00Z'
-      prefix: mpas_3dvar_bumpcov
-      default_seed: 1
-      method: cov
-      strategy: specific_univariate  #common
-      new_nicas: 1
-      load_nicas: 0
-      load_cmat: 0
-      ntry: 3
-      nrep: 2
-      lsqrt: 1
-      resol: 10
-      nicas_interp: bilin
-      network: 0
-      mpicom: 2
-      advmode: 0
-      forced_radii: 1
-      rh: 2000000
-      rv: 1
-      write_grids: 1
-      _variable_changes:
-      - _varchange: StatsVariableChange
-        varchange: Identity
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        prefix: bump
-        strategy: common
-        _check_vbal: 1
-        inputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        outputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-      - _varchange: Control2Model
-        varchange: Identity
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        prefix: bump
-        strategy: common
-        _check_vbal: 1
-        inputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        outputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-      _input:
-      - parameter: var
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.var.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
-      - parameter: cor_rh
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
-      - parameter: cor_rv
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
+      bump:
+        prefix: mpas_parametersbump_cov
+        default_seed: 1
+        method: cor
+        nonunit_diag: 1 #effectively "cov"
+        strategy: specific_univariate  #common
+        new_nicas: 0
+        load_nicas: 1
+        load_cmat: 1
+        ntry: 3
+        nrep: 2
+        lsqrt: 1
+        resol: 10
+        nicas_interp: bilin
+        network: 0
+        mpicom: 2
+        advmode: 0
+        forced_radii: 0
+        rh: 2000000
+        rv: 1
   Jo:
     ObsTypes:
     - ObsType: Radiosonde

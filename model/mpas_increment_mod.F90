@@ -542,7 +542,7 @@ subroutine ug_size(self, ug)
       ug%grid(1)%nv = self%nf
 
       ! Set number of timeslots
-      ug%grid(1)%nts = 1
+      ug%grid(1)%nts = ug%nts
 
    else ! Not colocated
 
@@ -557,21 +557,20 @@ subroutine ug_size(self, ug)
          ug%grid(igrid)%nv = self%nf
 
          ! Set number of timeslots
-         ug%grid(igrid)%nts = 1
+         ug%grid(igrid)%nts = ug%nts
       enddo
    end if
 end subroutine ug_size
 
 ! ------------------------------------------------------------------------------
 
-subroutine ug_coord(self, ug, colocated)
+subroutine ug_coord(self, ug)
 
    use unstructured_grid_mod
    
    implicit none
    class(mpas_increment),   intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
-   integer,                 intent(in)    :: colocated
    
    integer :: jl, igrid
    
@@ -606,7 +605,7 @@ end subroutine ug_coord
 
 ! ------------------------------------------------------------------------------
 
-subroutine increment_to_ug(self, ug, colocated)
+subroutine increment_to_ug(self, ug, its)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -614,7 +613,7 @@ subroutine increment_to_ug(self, ug, colocated)
    implicit none
    class(mpas_increment),   intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
-   integer,                 intent(in)    :: colocated
+   integer,                 intent(in)    :: its
    
    integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
@@ -658,7 +657,7 @@ subroutine increment_to_ug(self, ug, colocated)
 !                  write(*,*) '  sub. increment_to_ug, idx_var=',idx_var
                   do jC=1,self%geom%nCellsSolve
                     do jl=1,self%geom%nVertLevels
-                      ug%grid(1)%fld(jC,jl,idx_var,1) = r2d_ptr_a(jl,jC)
+                      ug%grid(1)%fld(jC,jl,idx_var,its) = r2d_ptr_a(jl,jC)
                     enddo
                   enddo
                endif
@@ -676,7 +675,7 @@ end subroutine increment_to_ug
 
 ! -----------------------------------------------------------------------------
 
-subroutine increment_from_ug(self, ug)
+subroutine increment_from_ug(self, ug, its)
 
    use mpas_pool_routines
    use unstructured_grid_mod
@@ -684,7 +683,8 @@ subroutine increment_from_ug(self, ug)
    implicit none
    class(mpas_increment),   intent(inout) :: self
    type(unstructured_grid), intent(in)    :: ug
-   
+   integer,                 intent(in)    :: its
+
    integer :: idx_var,jC,jl
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
@@ -722,7 +722,7 @@ subroutine increment_from_ug(self, ug)
 !                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
                   do jC=1,self%geom%nCellsSolve
                      do jl=1,self%geom%nVertLevels
-                        r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,1)
+                        r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,its)
                      enddo
                   enddo
                else if (poolItr % nDims == 3) then

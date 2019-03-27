@@ -2,20 +2,19 @@ list( APPEND mpas_test_input
   testinput/3dvar.yaml
   testinput/3dvar_amsua.yaml
   testinput/3dvar_bumpcov.yaml
-  testinput/3dvar_bumpcov.existingb.yaml
-  testinput/3dvar_bumpcov.parametersbump.yaml
   testinput/3dfgat.yaml
-  testinput/3denvar_bump.yaml
-  testinput/4denvar_bump.yaml
+  testinput/3denvar_bumploc.yaml
+  testinput/3denvar_bumploc_specified.yaml
+  testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
-  testinput/3dhybrid_bump.yaml
-  testinput/3dhybrid_bump_bump.yaml
+  testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/forecast.yaml
   testinput/hofx.yaml
   testinput/hofx3d.yaml
   testinput/enshofx.yaml
-  testinput/dirac.bumploc.yaml
   testinput/dirac.bumpcov.yaml
+  testinput/dirac.bumploc.yaml
+  testinput/dirac.noloc.yaml
   testinput/geometry.yaml
   testinput/state.yaml
   testinput/increment.yaml
@@ -32,19 +31,19 @@ list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dvar_amsua.test
   testoutput/3dvar_bumpcov.test
-  testoutput/3dvar_bumpcov.parametersbump.test
   testoutput/3dfgat.test
-  testoutput/3denvar_bump.test
-  testoutput/4denvar_bump.test
+  testoutput/3denvar_bumploc.test
+  testoutput/3denvar_bumploc_specified.test
+  testoutput/4denvar_bumploc.test
   testoutput/4denvar_ID.test
-  testoutput/3dhybrid_bump.test
-  testoutput/3dhybrid_bump_bump.test
+  testoutput/3dhybrid_bumpcov_bumploc.test
   testoutput/forecast.test
   testoutput/hofx.test
   testoutput/hofx3d.test
   testoutput/enshofx.test
-  testoutput/dirac.bumploc.test
   testoutput/dirac.bumpcov.test
+  testoutput/dirac.bumploc.test
+  testoutput/dirac.noloc.test
   testoutput/parametersbump.cov.test
   testoutput/parametersbump.loc.test
 #  testoutput/staticbinit.test
@@ -159,14 +158,6 @@ ecbuild_add_test( TARGET  test_mpas_enshofx
                   MPI     1
                   DEPENDS mpas_enshofx.x )
 
-ecbuild_add_test( TARGET test_mpas_dirac_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumploc.yaml"
-                       testoutput/dirac.bumploc.test
-                  MPI     1
-                  DEPENDS mpas_dirac.x )
-
 ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
                   TYPE SCRIPT
                   COMMAND "compare.sh"
@@ -175,7 +166,23 @@ ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
                   MPI     1
                   DEPENDS mpas_dirac.x )
 
-ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
+ecbuild_add_test( TARGET test_mpas_dirac_bumploc
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumploc.yaml"
+                       testoutput/dirac.bumploc.test
+                  MPI     1
+                  DEPENDS mpas_dirac.x )
+
+ecbuild_add_test( TARGET test_mpas_dirac_noloc
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.noloc.yaml"
+                       testoutput/dirac.noloc.test
+                  MPI     1
+                  DEPENDS mpas_dirac.x )
+
+ecbuild_add_test( TARGET test_mpas_parameters_bumpcov
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.yaml"
@@ -183,7 +190,7 @@ ecbuild_add_test( TARGET test_mpas_parameters_bump_cov
                   MPI     1
                   DEPENDS mpas_parameters.x )
 
-ecbuild_add_test( TARGET test_mpas_parameters_bump_loc
+ecbuild_add_test( TARGET test_mpas_parameters_bumploc
                   TYPE SCRIPT
                   COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.yaml"
@@ -223,35 +230,27 @@ ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov_parametersbump
+ecbuild_add_test( TARGET test_mpas_3denvar_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.parametersbump.yaml"
-                       testoutput/3dvar_bumpcov.parametersbump.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bumploc.yaml"
+                       testoutput/3denvar_bumploc.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3denvar_bump
+ecbuild_add_test( TARGET test_mpas_3denvar_bumploc_specified
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bump.yaml"
-                       testoutput/3denvar_bump.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bumploc_specified.yaml"
+                       testoutput/3denvar_bumploc_specified.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_3dhybrid_bump
+ecbuild_add_test( TARGET test_mpas_3dhybrid_bumpcov_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump.yaml"
-                       testoutput/3dhybrid_bump.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dhybrid_bump_bump
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bump_bump.yaml"
-                       testoutput/3dhybrid_bump_bump.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bumpcov_bumploc.yaml"
+                       testoutput/3dhybrid_bumpcov_bumploc.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
@@ -271,25 +270,10 @@ ecbuild_add_test( TARGET test_mpas_4denvar_ID
                   MPI     1
                   DEPENDS mpas_variational.x )
 
-ecbuild_add_test( TARGET test_mpas_4denvar_bump
+ecbuild_add_test( TARGET test_mpas_4denvar_bumploc
                   TYPE SCRIPT
                   COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bump.yaml"
-                       testoutput/4denvar_bump.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET  test_mpas_staticbinit
-                  TYPE    EXE
-                  SOURCES ../mains/mpasStaticBInit.cc
-                  ARGS    "testinput/static_binit.yaml"
-                  MPI     1
-                  LIBS    mpas )
-
-ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov_existing_b
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.existingb.yaml"
-                       testoutput/3dvar_bumpcov.test
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bumploc.yaml"
+                       testoutput/4denvar_bumploc.test
                   MPI     1
                   DEPENDS mpas_variational.x )

@@ -14,8 +14,10 @@ Test     : Fld=2  Min=1456.08, Max=97474.1, RMS=49317.3 : pressure
 Test     : Fld=3  Min=0, Max=0.0199991, RMS=0.0047139 : spechum
 Test     : Fld=4  Min=-39.7662, Max=84.9282, RMS=16.7846 : uReconstructZonal
 Test     : Fld=5  Min=-43.4896, Max=58.6028, RMS=8.84544 : uReconstructMeridional
-Test     : H(x): Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
+Test     : H(x): 
+Test     : Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
 Test     : Aircraft nobs= 1828 Min=-29.7489, Max=294.482, RMS=127.933
 Test     : Satwind nobs= 200 Min=-17.2277, Max=14.036, RMS=7.89614
 Test     : GnssroRef nobs= 1200 Min=0.189084, Max=316.421, RMS=108.207
 Test     : CRTM nobs= 1500 Min=144.834, Max=292.343, RMS=231.523
+Test     : End H(x)

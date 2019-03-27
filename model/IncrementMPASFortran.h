@@ -58,9 +58,9 @@ extern "C" {
   void mpas_increment_getvalues_ad_f90(const F90inc &, const F90locs &,
                              const eckit::Configuration * const *,
                              const F90goms &, const F90ootrj &);
-  void mpas_increment_ug_coord_f90(const F90inc &, const int &, const int &);
+  void mpas_increment_ug_coord_f90(const F90inc &, const int &);
   void mpas_increment_increment_to_ug_f90(const F90inc &, const int &, const int &);
-  void mpas_increment_increment_from_ug_f90(const F90inc &, const int &);
+  void mpas_increment_increment_from_ug_f90(const F90inc &, const int &, const int &);
 
 
   void mpas_increment_dirac_f90(const F90inc &,

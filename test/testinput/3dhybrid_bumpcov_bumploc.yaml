@@ -7,7 +7,7 @@ resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 model:
   name: MPAS
-  tstep: PT6H
+  tstep: PT30M
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -31,95 +31,90 @@ cost_function:
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
     Covariance:
-      covariance: BUMP
-      date: '2018-04-15T00:00:00Z'
-      prefix: mpas_static_binit
-      default_seed: 1
-      method: cov
-      strategy: specific_univariate  #common
-      new_nicas: 0
-      load_nicas: 1
-      load_cmat: 1
-      ntry: 3
-      nrep: 2
-      lsqrt: 1
-      resol: 10
-      nicas_interp: bilin
-      network: 0
-      mpicom: 2
-      advmode: 0
-      forced_radii: 1
-      rh: 2000000
-      rv: 1
-      _variable_changes:
-      - _varchange: StatsVariableChange
-        varchange: Identity
+      covariance: hybrid
+      static_weight: '0.5'
+      ensemble_weight: '0.5'
+      static:
+        covariance: BUMP
+        date: '2018-04-15T00:00:00Z'
+        bump:
+          prefix: mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
+          default_seed: 1
+          method: cor
+          nonunit_diag: 1 # effectively "cov"
+          strategy: specific_univariate  #common
+          new_nicas: 0
+          load_nicas: 1
+          load_cmat: 1
+          ntry: 3
+          nrep: 2
+          lsqrt: 1
+          resol: 10
+          nicas_interp: bilin
+          network: 0
+          mpicom: 2
+          advmode: 0
+          forced_radii: 0
+          rh: 2000000
+          rv: 1
+      ensemble:
+        date: '2018-04-15T00:00:00Z'
+        localization:
+          localization: BUMP
+          timeslots: 
+          - '2018-04-15T00:00:00Z'
+          variables:
+          - temperature
+          - pressure
+          - spechum
+          - uReconstructZonal
+          - uReconstructMeridional
+          bump:
+            prefix: mpas_parametersbump_loc
+            default_seed: 1
+            method: loc 
+            strategy: common  #specific_univariate
+            new_hdiag: 0
+            new_nicas: 0
+            load_nicas: 1
+            load_cmat: 1
+            mask_type: none
+            draw_type: random_uniform
+            nc1: 1024
+            ntry: 3
+            nrep: 2
+            nc3: 10
+            dc: 1000000
+            nl0r: 1  #1
+            ne: 5
+            minim_algo: hooke
+            rvflt: 0
+            lsqrt: 1
+            resol: 4
+            nicas_interp: bilin
+            network: 0
+            mpicom: 2
+            advmode: 0
+            diag_interp: bilin
+            grid_output: 0
+            write_grids: 1
+        members:
+        - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
         variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        prefix: bump
-        strategy: common
-        _check_vbal: 1
-        inputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        outputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-      - _varchange: Control2Model
-        varchange: Identity
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        prefix: bump
-        strategy: common
-        _check_vbal: 1
-        inputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        outputVariables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-      _input:
-      - parameter: var
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.var.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
-      - parameter: cor_rh
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
-      - parameter: cor_rv
-        no_transf: 1
-        datadir: Data
-        filename: "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc"
-        date: '2018-04-15T00:00:00Z'
+        - temperature
+        - pressure
+        - spechum
+        - uReconstructZonal
+        - uReconstructMeridional
   Jo:
     ObsTypes:
     - ObsType: Radiosonde
@@ -127,7 +122,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_bumpcov_sonde.nc4
+          obsfile: Data/obsout_3dhybrid_bump_sonde.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -149,7 +144,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_bumpcov_aircraft.nc4
+          obsfile: Data/obsout_3dhybrid_bump_aircraft.nc4
         obsvalue: ObsValue
       variables:
       - air_temperature
@@ -171,7 +166,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/satwind_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_bumpcov_satwind.nc4
+          obsfile: Data/obsout_3dhybrid_bump_satwind.nc4
         obsvalue: ObsValue
       variables:
       - eastward_wind
@@ -191,7 +186,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_bumpcov_gnssro.nc4
+          obsfile: Data/obsout_3dhybrid_bump_gnssro.nc4
         obsvalue: refractivity
       Covariance:
         covariance: diagonal
@@ -214,7 +209,7 @@ cost_function:
 minimizer:
   algorithm: DRIPCG
 output:
-  filename: "./mpas.3dvar_bumpcov.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.3dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   iteration:
   - resolution:
@@ -222,9 +217,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: MPASIdTLM
-      tstep: PT0H
+      tstep: PT30M
       trajectory:
-        tstep: PT0H
+        tstep: PT30M
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -235,9 +230,9 @@ variational:
     linearmodel:
       varchange: Identity
       version: MPASIdTLM
-      tstep: PT0H
+      tstep: PT30M
       trajectory:
-        tstep: PT0H
+        tstep: PT30M
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'

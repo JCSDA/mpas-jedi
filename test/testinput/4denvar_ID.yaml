@@ -48,100 +48,51 @@ cost_function:
         filename: "./restart.2018-04-15_03.00.00.nc"
         date: '2018-04-15T03:00:00Z'
     Covariance:
-      covariance_time:
-      - covariance: ensemble
-        members: '5'
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        date: '2018-04-14T21:00:00Z'
-        localization:
-          localization: ID
-          date: '2018-04-14T21:00:00Z'
-          variables:
-            variables:
-            - temperature
-            - pressure
-            - spechum
-            - uReconstructZonal
-            - uReconstructMeridional
-        state:
+      covariance: ensemble
+      localization:
+        localization: ID
+      members:
+      - state:
         - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc
           date: '2018-04-14T21:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc
-          date: '2018-04-14T21:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc
-          date: '2018-04-14T21:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc
-          date: '2018-04-14T21:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc
-          date: '2018-04-14T21:00:00Z'
-      - covariance: ensemble
-        members: '5'
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        date: '2018-04-15T00:00:00Z'
-        localization:
-          localization: ID
-          date: '2018-04-15T00:00:00Z'
-          variables:
-            variables:
-            - temperature
-            - pressure
-            - spechum
-            - uReconstructZonal
-            - uReconstructMeridional
-        state:
         - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_00.00.00.nc
           date: '2018-04-15T00:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
-        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
-      - covariance: ensemble
-        members: '5'
-        variables:
-          variables:
-          - temperature
-          - pressure
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-        date: '2018-04-15T03:00:00Z'
-        localization:
-          localization: ID
-          date: '2018-04-15T03:00:00Z'
-          variables:
-            variables:
-            - temperature
-            - pressure
-            - spechum
-            - uReconstructZonal
-            - uReconstructMeridional
-        state:
         - filename: REL_DIR/data/ensemble/mem01/restart.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
+      - state:
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
         - filename: REL_DIR/data/ensemble/mem02/restart.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
+      - state:
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
         - filename: REL_DIR/data/ensemble/mem03/restart.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
+      - state:
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
         - filename: REL_DIR/data/ensemble/mem04/restart.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
+      - state:
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc
+          date: '2018-04-14T21:00:00Z'
+        - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_00.00.00.nc
+          date: '2018-04-15T00:00:00Z'
         - filename: REL_DIR/data/ensemble/mem05/restart.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
+      variables:
+      - temperature
+      - pressure
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
   Jo:
     ObsTypes:
     - ObsType: Radiosonde
