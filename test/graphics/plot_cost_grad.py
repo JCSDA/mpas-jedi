@@ -20,13 +20,18 @@ def readdata():
 
     dalogfiles = []
     for files in os.listdir('../testoutput/'):
-        if fnmatch.fnmatch(files, '3d*.test.log.out'):
+        if fnmatch.fnmatch(files, '?d*.test.log.out'):
             dalogfiles.append('../testoutput/'+files)
             #print(dalogfiles)
 
     for dalogfile in dalogfiles:
         print(dalogfile)
-        os.system('rm '+ file_name)
+        file_name = 'costgrad_'+dalogfile[14:][:-13]+'.txt'
+
+        exists = os.path.isfile(file_name)
+        if exists:
+            os.system('rm '+ file_name)
+
         #grep iterations and cost function.
         cmd = 'grep "Quadratic cost function: J " '+ dalogfile +' \
             | grep -o -P "(\(\K[^\)]+)|(=\K.+)"  |paste -d " " - - > cost.txt'
