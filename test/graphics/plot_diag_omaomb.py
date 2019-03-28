@@ -142,7 +142,7 @@ def readdata():
             obsnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
             ombnc[numpy.logical_not(qcnc == 0)] = numpy.NaN
             omanc[numpy.logical_not(qcnc == 0)] = numpy.NaN
-            ombnc[ombnc == -3.36879526214505e+38 ] = numpy.NaN
+            ombnc[ombnc < -1.0e+15 ] = numpy.NaN
 
             if ''.join(obstype) == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
