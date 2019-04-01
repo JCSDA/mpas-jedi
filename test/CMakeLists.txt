@@ -22,7 +22,6 @@ list( APPEND mpas_test_input
   testinput/errorcov.yaml
   testinput/parametersbump.cov.yaml
   testinput/parametersbump.loc.yaml
-  testinput/static_binit.yaml
   testinput/variablechange.yaml
   compare.sh
 )
