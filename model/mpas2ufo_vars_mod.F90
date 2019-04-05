@@ -389,7 +389,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    real (kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
-   real (kind=kind_real), dimension(:), allocatable :: lat
+   real (kind=kind_real) :: lat
 
    !--- create new pool for geovals
    call mpas_pool_create_pool(convFields)
@@ -640,18 +640,27 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call geometricZ_full_to_half(geom%zgrid(:,1:ngrid), ngrid, &
                                      geom % nVertLevels,field2d_a%array(:,1:ngrid))
 
-        allocate(lat(1:ngrid))
-        lat = 0.
         do i=1,ngrid
-           lat(i) = geom%latCell(i) / deg2rad !- to Degrees
+           lat = geom%latCell(i) / deg2rad !- to Degrees
            do k=1,geom % nVertLevels
-              call geometric2geop(lat(i),field2d_a%array(k,i), field2d%array(k,i))
+              call geometric2geop(lat,field2d_a%array(k,i), field2d%array(k,i))
            enddo
         enddo
 
         field2d % fieldName = var_z
         call mpas_pool_add_field(convFields, var_z, field2d)
-        deallocate(lat)
+        call mpas_deallocate_field(field2d_a) ! not used
+
+     case ("sfc_geopotential_height")  !-var_sfc_z
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
+        call mpas_duplicate_field(field1d_src, field1d)
+
+        do i=1,ngrid
+           lat = geom%latCell(i) / deg2rad !- to Degrees
+           call geometric2geop(lat,geom%zgrid(1,i), field1d%array(i))
+        enddo
+        field1d % fieldName = var_sfc_z
+        call mpas_pool_add_field(convFields, var_sfc_z, field1d)
 
      case default
         write(*,*) 'Not processed in sub. convert_mpas_field2ufo: ',trim(fieldname(ivar))
@@ -729,7 +738,7 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 
 !        write(*,*) "end-of ",var_tv
 
-     case ( "air_temperature" ) !-var_ts
+     case ( "air_temperature", "temperature" ) !-var_ts
         call mpas_pool_get_field(subFields_tl, 'temperature', field2d_src) !< get temperature
         call mpas_duplicate_field(field2d_src, field2d)!  as a dummy array 
         field2d % fieldName = trim(fieldname(ivar))
@@ -917,7 +926,7 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 
 !        write(*,*) "end-of ",var_tv
 
-     case ( "air_temperature" ) !-var_ts
+     case ( "air_temperature", "temperature" ) !-var_ts
         call mpas_pool_get_array(subFields_ad, 'temperature', r2d_ptr_a) !< get temperature
         call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d)
         r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &

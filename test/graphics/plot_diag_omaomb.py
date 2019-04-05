@@ -26,7 +26,7 @@ def readdata():
     print_fmt = 'png' #lower fidelity, faster
     #print_fmt = 'pdf' #higher fidelity, slower
 
-    profile_group  = ['sonde','aircraft','satwind','gnssro']
+    profile_group  = ['sonde','aircraft','satwind','gnssroref','gnssrobndropp1d']
     radiance_group = ['amsua_n18','amsua_n19','amsua_metop-a','amsua_metop-b']
     #dummy_group   = ['dummy_obstype1']
 
@@ -133,7 +133,7 @@ def readdata():
                 #file_rank = file_name[-(4+npedigits):-4]
 
                 if ''.join(obstype) in profile_group:
-                    if ''.join(obstype) == 'gnssro':
+                    if ''.join(obstype)[:6] == 'gnssro':
                         prenc = np.append(prenc, nc.variables['altitude@GroupUndefined'])
                     else:
                         prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
@@ -150,7 +150,7 @@ def readdata():
             ombnc[np.logical_not(qcnc == 0)] = np.NaN
             omanc[np.logical_not(qcnc == 0)] = np.NaN
 
-            if ''.join(obstype) == 'gnssro':
+            if ''.join(obstype)[:6] == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
                 omanc = (omanc/obsnc)*100
 
@@ -161,7 +161,7 @@ def readdata():
                 RMSEomas = []
                 obsnums  = []
 
-                if ''.join(obstype) == 'gnssro':
+                if ''.join(obstype)[:6] == 'gnssro':
                     bins = list(np.arange(50000.0, -1000, -2000.))
                     binsfory= list(np.arange(49500.0,-500.0,-2000.))
                 else:
@@ -246,11 +246,11 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
     ax2.set_yticks(binsfory)
     ax2.set_ylabel('Observation Number(EffectiveQC=0)',fontsize=15)
 
-    if EXP_NAME[-6:] == 'gnssro':
+    if ''.join(EXP_NAME.split("_")[-1:])[:6] == 'gnssro':
         ax1.set_ylim([0,49500])
         ax1.set_ylabel('Altitude (m)',fontsize=15)
         ax1.set_xlabel(VAR_NAME+'  RMSE of OMB/O & OMA/O '+ vardict[VAR_NAME][0],fontsize=15)
-        ax1.legend(('OMB/O','OMA/O'), loc='upper right',fontsize=15)
+        ax1.legend(('(OMB/O)*100%','(OMA/O)*100%'), loc='upper right',fontsize=15)
         ax2.set_yticklabels(obsnums.astype(np.int))
     else:
         ax1.set_ylim([1000,0])

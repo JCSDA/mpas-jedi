@@ -62,8 +62,18 @@ Observations:
       ObsDataIn:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
-        obsfile: Data/hofx_gnssro.nc4
+        obsfile: Data/hofx_gnssroref.nc4
       obsvalue: refractivity
+    ObsBias: {}
+  - ObsType: GnssroBndROPP1D
+    ObsOptions:
+      use_compress: 0
+    ObsData:
+      ObsDataIn:
+        obsfile: Data/gnssro_obs_2018041500_s.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_gnssrobndropp1d.nc4
+      obsvalue: bending_angle
     ObsBias: {}
   - ObsType: CRTM
     channels: 1-15
