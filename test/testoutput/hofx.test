@@ -18,7 +18,7 @@ Test     : H(x):
 Test     : Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
 Test     : Aircraft nobs= 1828 Min=-29.7489, Max=294.482, RMS=127.933
 Test     : Satwind nobs= 200 Min=-17.2277, Max=14.036, RMS=7.89614
-Test     : GnssroRef nobs= 1200 Min=0.189084, Max=316.421, RMS=108.207
-Test     : GnssroBndROPP1D nobs= 799 Min=0.000532185, Max=0.0234226, RMS=0.00949862
+Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.337, RMS=132.935
+Test     : GnssroBndROPP1D nobs= 12 Min=0.000561625, Max=0.0131557, RMS=0.00762702
 Test     : CRTM nobs= 1500 Min=144.834, Max=292.343, RMS=231.523
 Test     : End H(x)
