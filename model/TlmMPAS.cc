@@ -112,7 +112,6 @@ void TlmMPAS::stepAD(IncrementMPAS & dx, ModelBiasIncrementMPAS &) const {
 void TlmMPAS::finalizeAD(IncrementMPAS & dx) const {
   mpas_model_prepare_integration_ad_f90(keyConfig_, dx.toFortran());
   oops::Log::debug() << "TlmMPAS::finalizeAD" << dx << std::endl;
-
 }
 // -----------------------------------------------------------------------------
 void TlmMPAS::print(std::ostream & os) const {

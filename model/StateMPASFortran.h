@@ -55,7 +55,7 @@ extern "C" {
   void mpas_state_sizes_f90(const F90state &, int &, int &);
 
 
-}; // extern "C"
+};  // extern "C"
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas

@@ -31,7 +31,7 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & geom, 
+StateMPAS::StateMPAS(const GeometryMPAS & geom,
                      const oops::Variables & vars,
                      const util::DateTime & time)
   : geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
@@ -42,7 +42,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol, 
+StateMPAS::StateMPAS(const GeometryMPAS & resol,
                      const oops::Variables & vars,
                      const eckit::Configuration & file)
   : geom_(new GeometryMPAS(resol)), vars_(vars), time_(util::DateTime())
@@ -65,7 +65,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol, 
+StateMPAS::StateMPAS(const GeometryMPAS & resol,
                      const StateMPAS & other)
   : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
 {

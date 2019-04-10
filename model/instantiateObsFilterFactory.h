@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef SRC_INSTANTIATEOBSFILTERFACTORY_H_
-#define SRC_INSTANTIATEOBSFILTERFACTORY_H_
+#ifndef MODEL_INSTANTIATEOBSFILTERFACTORY_H_
+#define MODEL_INSTANTIATEOBSFILTERFACTORY_H_
 
 #include "MPASTraits.h"
 #include "oops/base/instantiateObsFilterFactory.h"
@@ -41,4 +41,4 @@ void instantiateObsFilterFactory() {
 
 }  // namespace mpas
 
-#endif  // SRC_INSTANTIATEOBSFILTERFACTORY_H_
+#endif  // MODEL_INSTANTIATEOBSFILTERFACTORY_H_

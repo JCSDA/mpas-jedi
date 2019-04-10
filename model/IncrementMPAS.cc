@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 #include <boost/algorithm/string.hpp>
 
 #include "eckit/config/LocalConfiguration.h"
@@ -31,7 +32,7 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom, 
+IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom,
                              const oops::Variables & vars,
                              const util::DateTime & time):
   geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)

@@ -32,8 +32,10 @@ extern "C" {
   void mpas_increment_delete_f90(F90inc &);
   void mpas_increment_copy_f90(const F90inc &, const F90inc &);
   void mpas_increment_zero_f90(const F90inc &);
-  void mpas_increment_axpy_inc_f90(const F90inc &, const double &, const F90inc &);
-  void mpas_increment_axpy_state_f90(const F90inc &, const double &, const F90state &);
+  void mpas_increment_axpy_inc_f90(const F90inc &, const double &,
+                                   const F90inc &);
+  void mpas_increment_axpy_state_f90(const F90inc &, const double &,
+                                     const F90state &);
 
   void mpas_increment_change_resol_f90(const F90inc &, const F90inc &);
   void mpas_increment_read_file_f90(const F90inc &,
@@ -45,7 +47,7 @@ extern "C" {
   void mpas_increment_gpnorm_f90(const F90inc &, const int &, double &);
   void mpas_increment_rms_f90(const F90inc &, double &);
   void mpas_increment_diff_incr_f90(const F90inc &, const F90state &,
-                                const F90state &);
+                                    const F90state &);
   void mpas_increment_self_add_f90(const F90inc &, const F90inc &);
   void mpas_increment_self_sub_f90(const F90inc &, const F90inc &);
   void mpas_increment_self_mul_f90(const F90inc &, const double &);
@@ -59,12 +61,14 @@ extern "C" {
                              const eckit::Configuration * const *,
                              const F90goms &, const F90ootrj &);
   void mpas_increment_ug_coord_f90(const F90inc &, const int &);
-  void mpas_increment_increment_to_ug_f90(const F90inc &, const int &, const int &);
-  void mpas_increment_increment_from_ug_f90(const F90inc &, const int &, const int &);
+  void mpas_increment_increment_to_ug_f90(const F90inc &, const int &,
+                                          const int &);
+  void mpas_increment_increment_from_ug_f90(const F90inc &, const int &,
+                                            const int &);
 
 
   void mpas_increment_dirac_f90(const F90inc &,
-                            const eckit::Configuration * const *);
+                                const eckit::Configuration * const *);
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);
 
 };  // extern "C"

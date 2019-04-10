@@ -21,7 +21,7 @@
 
 namespace mpas {
 // -----------------------------------------------------------------------------
- static oops::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
+static oops::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)
@@ -63,7 +63,7 @@ int ModelMPAS::saveTrajectory(StateMPAS & xx, const ModelBiasMPAS &) const {
   oops::Log::debug() << "ModelMPAS::saveTrajectory state in" << xx << std::endl;
   mpas_model_prop_traj_f90(keyConfig_, xx.toFortran(), ftraj);
   ASSERT(ftraj != 0);
-  oops::Log::debug() << "ModelMPAS::saveTrajectory state out" << xx << std::endl;
+  oops::Log::debug() << "ModelMPAS::saveTrajectory state out" << xx <<std::endl;
   return ftraj;
 }
 // -----------------------------------------------------------------------------
