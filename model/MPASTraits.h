@@ -21,6 +21,7 @@
 #include "StateMPAS.h"
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
+#include "ioda/ObsDataVector.h"
 #include "ioda/ObsSpace.h"
 #include "ioda/ObsVector.h"
 #include "ufo/ObsBias.h"
@@ -54,6 +55,7 @@ struct MPASTraits {
   typedef ufo::LinearObsOperator         LinearObsOperator;
   typedef ioda::ObsSpace                 ObsSpace;
   typedef ioda::ObsVector                ObsVector;
+  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 
   typedef ufo::ObsBias                   ObsAuxControl;
   typedef ufo::ObsBiasIncrement          ObsAuxIncrement;
