@@ -14,6 +14,7 @@
 #include "oops/interface/ObsFilter.h"
 #include "ufo/BackgroundCheck.h"
 #include "ufo/BlackList.h"
+#include "ufo/gnssro/QC/ROobserror.h"
 #include "ufo/ObsBoundsCheck.h"
 #include "ufo/ObsDomainCheck.h"
 #include "ufo/ObsPreQC.h"
@@ -37,6 +38,9 @@ void instantiateObsFilterFactory() {
   static oops::FilterMaker<MPASTraits,
                  oops::ObsFilter<MPASTraits, ufo::BackgroundCheck>
                           > makerChk5_("Background Check");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::ROobserror>
+                          > makerChk6_("ROobserror");
 }
 
 }  // namespace mpas

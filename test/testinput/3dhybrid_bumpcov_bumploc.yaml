@@ -206,6 +206,9 @@ cost_function:
         variables:
         - refractivity
         threshold: 3
+      - Filter: ROobserror
+        variable: refractivity
+        errmodel: GSI
     - ObsType: GnssroBndROPP1D
       ObsOptions:
         use_compress: 0
@@ -233,6 +236,9 @@ cost_function:
         variables:
         - bending_angle
         threshold: 3
+      - Filter: ROobserror
+        variable: bending_angle
+        errmodel: ROPP
 minimizer:
   algorithm: DRIPCG
 output:
