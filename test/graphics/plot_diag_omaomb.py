@@ -134,7 +134,7 @@ def readdata():
 
                 if ''.join(obstype) in profile_group:
                     if ''.join(obstype)[:6] == 'gnssro':
-                        prenc = np.append(prenc, nc.variables['altitude@GroupUndefined'])
+                        prenc = np.append(prenc, nc.variables['altitude'])
                     else:
                         prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
 
