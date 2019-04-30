@@ -8,6 +8,12 @@ resolution:
 model:
   name: MPAS
   tstep: PT30M
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
 cost_function:
   cost_type: 4D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -193,6 +199,12 @@ variational:
       tstep: PT30M
       trajectory:
         tstep: PT30M
+      variables:
+      - temperature
+      - pressure
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -206,6 +218,12 @@ variational:
       tstep: PT30M
       trajectory:
         tstep: PT30M
+      variables:
+      - temperature
+      - pressure
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'

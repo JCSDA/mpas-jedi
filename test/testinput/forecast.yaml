@@ -16,6 +16,12 @@ forecast_length: PT6H
 model:
   name: MPAS
   tstep: PT30M
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
 output:
   frequency: PT1H
   filename: "./mpas_forecast.$Y-$M-$D_$h.$m.$s.nc"
