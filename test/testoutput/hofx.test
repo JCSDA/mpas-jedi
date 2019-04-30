@@ -20,5 +20,5 @@ Test     : Aircraft nobs= 1828 Min=-29.7489, Max=294.482, RMS=127.933
 Test     : Satwind nobs= 200 Min=-17.2277, Max=14.036, RMS=7.89614
 Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.337, RMS=132.935
 Test     : GnssroBndROPP1D nobs= 12 Min=0.000561625, Max=0.0131557, RMS=0.00762702
-Test     : CRTM nobs= 1500 Min=144.834, Max=292.343, RMS=231.523
+Test     : CRTM nobs= 1500 Min=142.574, Max=295.741, RMS=233.614
 Test     : End H(x)
