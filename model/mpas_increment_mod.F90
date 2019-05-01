@@ -11,6 +11,7 @@ use iso_c_binding
 use config_mod
 use datetime_mod
 use kinds, only: kind_real
+use variables_mod
 
 !ufo
 use ufo_locs_mod
@@ -262,7 +263,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    implicit none
    class(mpas_increment), intent(inout) :: inc
    type(ufo_locs),        intent(in)    :: locs
-   type(ufo_vars),        intent(in)    :: vars
+   type(oops_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(inout) :: traj
 
@@ -301,7 +302,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    do jvar=1,vars%nv
       if( .not. allocated(gom%geovals(jvar)%vals) )then
          gom%geovals(jvar)%nval = inc%geom%nVertLevels
-         allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nobs) )
+         allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nlocs) )
          gom%geovals(jvar)%vals = 0.0_kind_real
 !         write(*,*) ' gom%geovals(n)%vals allocated'
          gom%linit = .true.
@@ -327,7 +328,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ufo_var_name = trim(poolItr % memberName)
-         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         ivar = str_match(ufo_var_name, vars%fldnames)
          if ( ivar == -1 ) cycle
 
 !         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
@@ -392,7 +393,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    implicit none
    class(mpas_increment), intent(inout) :: inc
    type(ufo_locs),        intent(in)    :: locs
-   type(ufo_vars),        intent(in)    :: vars
+   type(oops_vars),        intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(inout) :: traj
 
@@ -445,7 +446,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ufo_var_name = trim(poolItr % memberName)
-         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         ivar = str_match(ufo_var_name, vars%fldnames)
          if ( ivar == -1 ) cycle
 
 !         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
@@ -618,7 +619,7 @@ subroutine increment_to_ug(self, ug, its)
    integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   type(ufo_vars) :: vars ! temporary to access variable "index" easily
+   type(oops_vars) :: vars ! temporary to access variable "index" easily
    character(len=MAXVARLEN) :: ufo_var_name
 
    ! Set list of variables
@@ -641,7 +642,7 @@ subroutine increment_to_ug(self, ug, its)
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          idx_var = -999
          ufo_var_name = trim(poolItr % memberName)
-         idx_var = ufo_vars_getindex(vars, ufo_var_name )
+         idx_var = str_match(ufo_var_name, vars%fldnames)
          write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
@@ -669,7 +670,7 @@ subroutine increment_to_ug(self, ug, its)
    end do
 
    ! Cleanup
-   call ufo_vars_delete(vars)
+   call oops_vars_delete(vars)
 
 end subroutine increment_to_ug
 
@@ -688,7 +689,7 @@ subroutine increment_from_ug(self, ug, its)
    integer :: idx_var,jC,jl
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   type(ufo_vars) :: vars ! temporary to access variable "index" easily
+   type(oops_vars) :: vars ! temporary to access variable "index" easily
    character(len=MAXVARLEN) :: ufo_var_name
 
    ! Set list of variables
@@ -711,7 +712,7 @@ subroutine increment_from_ug(self, ug, its)
             ! the correct type
             idx_var = -999
             ufo_var_name = trim(poolItr % memberName)
-            idx_var = ufo_vars_getindex(vars, ufo_var_name )
+            idx_var = str_match(ufo_var_name, vars%fldnames)
 
             if(idx_var.gt.0) then
                if (poolItr % nDims == 1) then
@@ -734,7 +735,7 @@ subroutine increment_from_ug(self, ug, its)
    end do
 
    ! Cleanup
-   call ufo_vars_delete(vars)
+   call oops_vars_delete(vars)
 
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS

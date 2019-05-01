@@ -8,14 +8,13 @@
 module mpas_state_interface_mod
 
 use iso_c_binding
+use kinds, only: kind_real
+use variables_mod
+
+use mpas_geom_mod
 use mpas_state_mod
 use mpas_state_utils_mod
 use mpas_increment_utils_mod
-
-use mpas_geom_mod
-use ufo_vars_mod
-
-use kinds, only: kind_real
 
 !State read/write/init
 use datetime_mod
@@ -49,16 +48,16 @@ type(c_ptr), intent(in) :: c_vars !< List of variables
 
 type(mpas_state), pointer :: self
 type(mpas_geom),  pointer :: geom
-type(ufo_vars) :: vars
+type(oops_vars)           :: vars
 
-call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_state_registry%init()
 call mpas_state_registry%add(c_key_self)
 call mpas_state_registry%get(c_key_self,self)
+call mpas_geom_registry%get(c_key_geom, geom)
 
-call ufo_vars_setup(vars, c_vars)
-
+call oops_vars_create(c_vars, vars)
 call self%create(geom, vars)
+call oops_vars_delete(vars)
 
 end subroutine mpas_state_create_c
 
@@ -271,19 +270,21 @@ subroutine mpas_state_getvalues_notraj_c(c_key_state,c_key_loc,c_vars,c_key_gom)
 implicit none
 integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
-type(mpas_state), pointer :: state
-type(ufo_locs),  pointer :: locs
-type(ufo_vars)  :: vars
+
+type(mpas_state),   pointer :: state
+type(ufo_locs),     pointer :: locs
+type(oops_vars)             :: vars
 type(ufo_geovals),  pointer :: gom
 
 call mpas_state_registry%get(c_key_state, state)
 call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
+call oops_vars_create(c_vars, vars)
 call getvalues(state, locs, vars, gom)
+call oops_vars_delete(vars)
 
 end subroutine mpas_state_getvalues_notraj_c
 
@@ -294,22 +295,24 @@ subroutine mpas_state_getvalues_c(c_key_state,c_key_loc,c_vars,c_key_gom,c_key_t
 implicit none
 integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in), optional :: c_key_traj !< Trajectory for interpolation/transforms
-type(mpas_state), pointer :: state
-type(ufo_locs),  pointer :: locs
-type(ufo_vars)  :: vars
-type(ufo_geovals),  pointer :: gom
+
+type(mpas_state),      pointer :: state
+type(ufo_locs),        pointer :: locs
+type(oops_vars)                :: vars
+type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
 
 call mpas_state_registry%get(c_key_state, state)
 call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
+call oops_vars_create(c_vars, vars)
 call getvalues(state, locs, vars, gom, traj)
+call oops_vars_delete(vars)
 
 end subroutine mpas_state_getvalues_c
 

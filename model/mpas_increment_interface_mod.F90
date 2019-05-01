@@ -8,14 +8,13 @@
 module mpas_increment_interface_mod
 
 use iso_c_binding
+use kinds, only: kind_real
+use variables_mod
+
+use mpas_geom_mod
 use mpas_increment_mod
 use mpas_state_utils_mod
 use mpas_increment_utils_mod
-
-use mpas_geom_mod
-use ufo_vars_mod
-
-use kinds, only: kind_real
 
 !Increment read/write
 use datetime_mod
@@ -43,22 +42,22 @@ subroutine mpas_increment_create_c(c_key_self, c_key_geom, c_vars) &
       bind(c,name='mpas_increment_create_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom !< Geometry
-!integer(c_int), intent(in) :: c_key_vars !< List of variables
-type(c_ptr), intent(in) :: c_vars !< List of variables
+integer(c_int), intent(in)    :: c_key_geom !< Geometry
+!integer(c_int), intent(in)    :: c_key_vars !< List of variables
+type(c_ptr),    intent(in)    :: c_vars !< List of variables
 
 type(mpas_increment), pointer :: self
-type(mpas_geom),  pointer :: geom
-type(ufo_vars) :: vars
+type(mpas_geom),      pointer :: geom
+type(oops_vars)               :: vars
 
 call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_increment_registry%init()
 call mpas_increment_registry%add(c_key_self)
 call mpas_increment_registry%get(c_key_self,self)
 
-call ufo_vars_setup(vars, c_vars)
-
+call oops_vars_create(c_vars, vars)
 call self%create(geom, vars)
+call oops_vars_delete(vars)
 
 end subroutine mpas_increment_create_c
 
@@ -462,22 +461,24 @@ subroutine mpas_increment_getvalues_tl_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-type(mpas_increment), pointer :: inc
-type(ufo_locs),  pointer :: locs
-type(ufo_vars)  :: vars
-type(ufo_geovals),  pointer :: gom
+
+type(mpas_increment),  pointer :: inc
+type(ufo_locs),        pointer :: locs
+type(oops_vars)                :: vars
+type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
 
 call mpas_increment_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_vars_setup(vars, c_vars)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
+call oops_vars_create(c_vars, vars)
 call getvalues_tl(inc, locs, vars, gom, traj)
+call oops_vars_delete(vars)
 
 end subroutine mpas_increment_getvalues_tl_c
 
@@ -488,22 +489,24 @@ subroutine mpas_increment_getvalues_ad_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), intent(in) :: c_vars  !< List of requested variables
+type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-type(mpas_increment), pointer :: inc
-type(ufo_locs),  pointer :: locs
-type(ufo_vars)  :: vars
-type(ufo_geovals),  pointer :: gom
+
+type(mpas_increment),  pointer :: inc
+type(ufo_locs),        pointer :: locs
+type(oops_vars)                :: vars
+type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
 
 call mpas_increment_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
-call ufo_vars_setup(vars, c_vars)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
+call oops_vars_create(c_vars, vars)
 call getvalues_ad(inc, locs, vars, gom, traj)
+call oops_vars_delete(vars)
 
 end subroutine mpas_increment_getvalues_ad_c
 

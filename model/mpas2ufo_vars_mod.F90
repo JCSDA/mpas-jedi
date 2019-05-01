@@ -22,8 +22,8 @@
 use kinds, only : kind_real
 
 !ufo
-use ufo_vars_mod 
 use gnssro_mod_transform, only: geometric2geop
+use ufo_vars_mod
 
 !MPAS-Model
 use atm_core

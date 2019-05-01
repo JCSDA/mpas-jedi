@@ -11,6 +11,7 @@ use iso_c_binding
 use config_mod
 use datetime_mod
 use kinds, only: kind_real
+use variables_mod
 
 !ufo
 use ufo_locs_mod
@@ -498,7 +499,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
    implicit none
    class(mpas_state),                       intent(in)    :: self
    type(ufo_locs),                          intent(in)    :: locs
-   type(ufo_vars),                          intent(in)    :: vars
+   type(oops_vars),                         intent(in)    :: vars
    type(ufo_geovals),                       intent(inout) :: gom
    type(mpas_getvaltraj), optional, target, intent(inout) :: traj
    
@@ -622,14 +623,14 @@ subroutine getvalues(self, locs, vars, gom, traj)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ufo_var_name = trim(poolItr % memberName)
-         ivar = ufo_vars_getindex(vars, ufo_var_name )
+         ivar = str_match(ufo_var_name, vars%fldnames)
          if ( ivar == -1 ) cycle
 
 !         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
          if (poolItr % nDims == 1) then
             if( .not. allocated(gom%geovals(ivar)%vals) )then
                gom%geovals(ivar)%nval = 1
-               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
 !               write(*,*) ' gom%geovals(n)%vals allocated'
             endif
             nlevels = gom%geovals(ivar)%nval
@@ -650,7 +651,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
             if( .not. allocated(gom%geovals(ivar)%vals) )then
                gom%geovals(ivar)%nval = self%geom%nVertLevels
                if(trim(poolItr % memberName).eq.var_prsi) gom%geovals(ivar)%nval = self%geom%nVertLevelsP1 !BJJ: Can we do this better ??
-               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
 !               write(*,*) ' gom%geovals(n)%vals allocated'
             endif
             nlevels = gom%geovals(ivar)%nval
@@ -699,8 +700,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
    allocate(obs_field(nlocs,1))
 
    !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
-   if ( (ufo_vars_getindex(vars,var_sfc_wspeed)    .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_wdir) .ne. -1) ) then
+   if ( (str_match(var_sfc_wspeed,vars%fldnames)    .ne. -1) &
+        .or. (str_match(var_sfc_wdir,vars%fldnames) .ne. -1) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
@@ -720,11 +721,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      tmp_field(:,2)=obs_field(:,1)
 
      !- allocate geoval & put values for var_sfc_wspeed
-     ivar = ufo_vars_getindex(vars, var_sfc_wspeed)
+     ivar = str_match(var_sfc_wspeed,vars%fldnames)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        do jloc = 1, nlocs
          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = sqrt( tmp_field(jloc,1)**2 + tmp_field(jloc,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
@@ -733,11 +734,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
 
      !- allocate geoval & put values for var_sfc_wdir
-     ivar = ufo_vars_getindex(vars, var_sfc_wdir)
+     ivar = str_match(var_sfc_wdir,vars%fldnames)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        do jloc = 1, nlocs
          call uv_to_wdir(tmp_field(jloc,1), tmp_field(jloc,2), wdir) ! uu, vv, wind10_direction in radian
@@ -755,9 +756,9 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
 
    !---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
-   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+   if ( (str_match(var_sfc_landtyp,vars%fldnames)      .ne. -1) &
+        .or. (str_match(var_sfc_vegtyp,vars%fldnames)  .ne. -1) &
+        .or. (str_match(var_sfc_soiltyp,vars%fldnames) .ne. -1) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
 
@@ -791,11 +792,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      deallocate(weight_nn)
 
      !- allocate geoval & put values for var_sfc_landtyp
-     ivar = ufo_vars_getindex(vars, var_sfc_landtyp)
+     ivar = str_match(var_sfc_landtyp,vars%fldnames)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -808,11 +809,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
 
      !- allocate geoval & put values for var_sfc_vegtyp
-     ivar = ufo_vars_getindex(vars, var_sfc_vegtyp)
+     ivar = str_match(var_sfc_vegtyp,vars%fldnames)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -825,11 +826,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
 
      !- allocate geoval & put values for var_sfc_soiltyp
-     ivar = ufo_vars_getindex(vars, var_sfc_soiltyp)
+     ivar = str_match(var_sfc_soiltyp,vars%fldnames)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
        allocate( mod_field_ext(pbump%obsop%nc0b,1) )
@@ -848,10 +849,10 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
    !---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
    !---    simple interpolation now, but can be more complex: Consider FOV ??
-   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
+   if ( (str_match(var_sfc_wfrac,vars%fldnames)      .ne. -1) &
+        .or. (str_match(var_sfc_lfrac,vars%fldnames) .ne. -1) &
+        .or. (str_match(var_sfc_ifrac,vars%fldnames) .ne. -1) &
+        .or. (str_match(var_sfc_sfrac,vars%fldnames) .ne. -1) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
 
@@ -864,17 +865,17 @@ subroutine getvalues(self, locs, vars, gom, traj)
 !     write(*,*) 'MIN/MAX of lnad+xice+snowc=', &
 !                minval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b),maxval(real(i1d_ptr_a)+r1d_ptr_a+r1d_ptr_b)
 
-     ivarw = ufo_vars_getindex(vars, var_sfc_wfrac)
-     ivarl = ufo_vars_getindex(vars, var_sfc_lfrac)
-     ivari = ufo_vars_getindex(vars, var_sfc_ifrac)
-     ivars = ufo_vars_getindex(vars, var_sfc_sfrac)
+     ivarw = str_match(var_sfc_wfrac,vars%fldnames)
+     ivarl = str_match(var_sfc_lfrac,vars%fldnames)
+     ivari = str_match(var_sfc_ifrac,vars%fldnames)
+     ivars = str_match(var_sfc_sfrac,vars%fldnames)
 
      !--- Land first. will be adjusted later
      ivar = ivarl
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
        call pbump%apply_obsop(mod_field,obs_field)
@@ -888,7 +889,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        mod_field(:,1) = r1d_ptr_a(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
@@ -902,11 +903,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
      if(ivar .ne. -1) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
-          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nobs) )
+          allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
        end if
        if( .not. allocated(gom%geovals(ivarw)%vals) )then
           gom%geovals(ivarw)%nval = 1
-          allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nobs) )
+          allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nlocs) )
        end if
        mod_field(:,1) = r1d_ptr_b(1:ngrid)
        call pbump%apply_obsop(mod_field,obs_field)
@@ -943,18 +944,18 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
    !--- OMG: adjust between sfc coverage & sfc type
    !         see wrfda/da_get_innov_vector_crtm.inc#L521
-   if ( (ufo_vars_getindex(vars,var_sfc_wfrac)      .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_lfrac) .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_ifrac) .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_sfrac) .ne. -1) ) then
-   if ( (ufo_vars_getindex(vars,var_sfc_landtyp)      .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_vegtyp)  .ne. -1) &
-        .or. (ufo_vars_getindex(vars,var_sfc_soiltyp) .ne. -1) ) then
+   if ( (str_match(var_sfc_wfrac,vars%fldnames)      .ne. -1) &
+        .or. (str_match(var_sfc_lfrac,vars%fldnames) .ne. -1) &
+        .or. (str_match(var_sfc_ifrac,vars%fldnames) .ne. -1) &
+        .or. (str_match(var_sfc_sfrac,vars%fldnames) .ne. -1) ) then
+   if ( (str_match(var_sfc_landtyp,vars%fldnames)      .ne. -1) &
+        .or. (str_match(var_sfc_vegtyp,vars%fldnames)  .ne. -1) &
+        .or. (str_match(var_sfc_soiltyp,vars%fldnames) .ne. -1) ) then
      do jloc = 1, nlocs
        jj = locs%indx(jloc)
        if(gom%geovals(ivarl)%vals(1,jj) .gt. 0.0_kind_real) then
-         if(nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
-            nint(gom%geovals(ufo_vars_getindex(vars,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
+         if(nint(gom%geovals(str_match(var_sfc_soiltyp,vars%fldnames))%vals(1,jj)) .eq. 9 .or. &
+            nint(gom%geovals(str_match(var_sfc_vegtyp,vars%fldnames))%vals(1,jj)) .eq. 13 ) then
            gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), 1.0_kind_real )
            gom%geovals(ivarl)%vals(1,jj) = 0.0_kind_real
          endif

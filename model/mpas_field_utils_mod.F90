@@ -11,9 +11,10 @@ use iso_c_binding
 use config_mod
 use datetime_mod
 use kinds, only: kind_real
+use variables_mod, only: oops_vars
 
 !ufo
-use ufo_vars_mod
+use ufo_vars_mod, only: MAXVARLEN
 
 !MPAS-Model
 use atm_core, only: atm_simulation_clock_init, atm_compute_output_diagnostics
@@ -101,7 +102,7 @@ subroutine create_field(self, geom, vars)
 
     class(mpas_field), intent(inout)       :: self
     type(mpas_geom),   intent(in), pointer :: geom
-    type(ufo_vars),    intent(in)          :: vars
+    type(oops_vars),   intent(in)          :: vars
 
     integer :: nsize, nfields
     integer :: ierr
@@ -597,7 +598,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    character(len=2),  intent(in) :: cop
    class(mpas_field), intent(in) :: fld
    type(ufo_locs),    intent(in) :: locs
-   type(ufo_vars),    intent(in) :: vars
+   type(oops_vars),   intent(in) :: vars
    type(ufo_geovals), intent(in) :: gom
    integer :: jvar
    character(len=26) :: cinfo

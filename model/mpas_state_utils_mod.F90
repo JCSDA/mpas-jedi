@@ -6,9 +6,10 @@
 module mpas_state_utils_mod
 
 use iso_c_binding
+use variables_mod
 
 !UFO
-use ufo_vars_mod
+use ufo_vars_mod, only: MAXVARLEN
 
 !MPAS-JEDI
 use mpas_field_utils_mod
@@ -56,9 +57,9 @@ subroutine create_state(self, geom, vars)
 
     class(mpas_state), intent(inout) :: self
     type(mpas_geom),   intent(in), pointer :: geom
-    type(ufo_vars),    intent(in)          :: vars
+    type(oops_vars),    intent(in)          :: vars
 
-    type(ufo_vars) :: state_vars
+    type(oops_vars) :: state_vars
 
     integer :: nfields
     character(len=1024) :: buf
