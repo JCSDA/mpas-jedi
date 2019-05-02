@@ -22,3 +22,9 @@ ModelBias:
 Model:
   name: MPAS
   tstep: PT30M
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional

@@ -29,8 +29,7 @@ TlmMPAS::TlmMPAS(const GeometryMPAS & resol,
                  const eckit::Configuration & tlConf)
   : keyConfig_(0), tstep_(), resol_(resol), traj_(),
     lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory")),
-    linvars_(std::vector<std::string>{"temperature", "pressure", "spechum",
-                              "uReconstructZonal", "uReconstructMeridional"})
+    linvars_(tlConf)
 
 {
   tstep_ = util::Duration(tlConf.getString("tstep"));
