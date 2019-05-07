@@ -78,6 +78,9 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
       - Filter: Background Check
         variables:
         - air_temperature
@@ -100,6 +103,9 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
       - Filter: Background Check
         variables:
         - air_temperature
@@ -120,6 +126,9 @@ cost_function:
       Covariance:
         covariance: diagonal
       ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
       - Filter: Background Check
         variables:
         - eastward_wind

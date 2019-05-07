@@ -17,14 +17,18 @@
 #include "ufo/gnssro/QC/ROobserror.h"
 #include "ufo/ObsBoundsCheck.h"
 #include "ufo/ObsDomainCheck.h"
-#include "ufo/ObsPreQC.h"
+#include "ufo/PreQC.h"
+#include "ufo/QCmanager.h"
 
 namespace mpas {
 
 void instantiateObsFilterFactory() {
   oops::instantiateObsFilterFactory<MPASTraits>();
   static oops::FilterMaker<MPASTraits,
-                           oops::ObsFilter<MPASTraits, ufo::ObsPreQC>
+                  oops::ObsFilter<MPASTraits, ufo::QCmanager>
+                          > makerChk0_("QCmanager");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::PreQC>
                           > makerChk1_("PreQC");
   static oops::FilterMaker<MPASTraits,
                  oops::ObsFilter<MPASTraits, ufo::ObsDomainCheck>
