@@ -10,6 +10,38 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
 import fnmatch
 
+# columns: obs_type,       plot or not,    select channels for radiance
+plotdict = { \
+    'sondes':                 ['T',        '0'   ] \
+  , 'aircraft':               ['T',        '0'   ] \
+  , 'satwind':                ['T',        '0'   ] \
+  , 'gnssro':                 ['T',        '0'   ] \
+  , 'airs_aqua':              ['T',        [1,6,7]]\
+  , 'amsua_n19':              ['T',        [4,5,6,7,9,10,11,12,13,14]] \
+  , 'cris-fsr_npp':           ['T',        [24,26,28,32,37,39]]        \
+  , 'hirs4_metop-a':          ['T',        range(1,16)] \
+  , 'iasi_metop-a':           ['T',        [16,29,32,35,38,41,44]]     \
+  , 'mhs_n19':                ['T',        range(1,6)]  \
+  , 'seviri_m08':             ['T',        [5]]         \
+  , 'sndrd1_g15':             ['T',        range(1,16)] \
+  , 'sndrd2_g15':             ['F',        range(1,16)] \
+  , 'sndrd3_g15':             ['F',        range(1,16)] \
+  , 'sndrd4_g15':             ['F',        range(1,16)] \
+    }
+
+# columns: var_name            unit_used   abbr.
+vardict = { \
+    'air_temperature':        [ '(K)',     'T'   ] \
+  , 'virtual_temperature':    [ '(K)',     'T'   ] \
+  , 'eastward_wind':          [ '(m/s)',   'U'   ] \
+  , 'northward_wind':         [ '(m/s)',   'V'   ] \
+  , 'specific_humidity':      [ '(kg/kg)', 'Q'   ] \
+  , 'refractivity':           [ '(N-unit)','Ref' ] \
+  , 'bending_angle':          [ '(rad)',   'Bnd' ] \
+  , 'brightness_temperature': [ '(K)',     'BT'  ] \
+  , 'aerosol_optical_depth_4':[ '   ',     'AOD' ] \
+    }
+
 def readdata():
     '''
     Observation file name:
@@ -21,15 +53,27 @@ def readdata():
              gnssro_obs_2018041500_s.nc4
     '''
     obsfiles = []
-    for files in os.listdir('../Data/'):
-        if fnmatch.fnmatch(files, '*_obs_*_m.nc4'):
-            obsfiles.append('../Data/'+files)
-    obsfiles.append('../Data/gnssro_obs_2018041500_s.nc4')
-    print 'File name list=', obsfiles
-    for file_name in obsfiles:
-        nc = Dataset(file_name, 'r')
+    string = '_obs_2018041500_m.nc4'
+
+#   newdict: filter out 'F' lists.
+    newplotdict = dict(filter(lambda x: x[1][0] == 'T', plotdict.items()))
+    obsfiles = [x + string for x in newplotdict.keys()]
+    obsfiles = [obsfiles.replace('gnssro_obs_2018041500_m.nc4', 'gnssro_obs_2018041500_s.nc4') for obsfiles in obsfiles]
+    print(obsfiles)
+
+    for index, file_name in enumerate(obsfiles):
+        nc = Dataset("../Data/"+file_name, 'r')
         print 'Plotting:', file_name
-        obstype = str(file_name[8:].split("_")[:1])
+
+        varlist = nc.variables.keys()
+        if 'station_id@MetaData' in varlist:
+            stationidnc =[ ''.join(i)  for i in nc.variables['station_id@MetaData'] ]
+            nstation = len(set(stationidnc))
+        else:
+            nstation = 0
+
+        obstype = str(file_name.split("_")[:1])
+        #print(obstype)
         if obstype == "['gnssro']":
             latnc = nc.variables['latitude']
             lonnc = nc.variables['longitude']
@@ -42,19 +86,29 @@ def readdata():
             if lonnc[i] > 180:
                 lonnc[i] = lonnc[i]-360
 
-        varlist = nc.variables.keys()
         #select variables with the suffix 'ObsValue'
         obslist = [obs for obs in varlist if (obs[-8:] == 'ObsValue')]
-        #print(obsvalue)
+
+        if type(plotdict[newplotdict.keys()[index]][1]) is not str:
+            obslist=(['brightness_temperature_{0}@ObsValue'.format(i) for i in plotdict[newplotdict.keys()[index]][1]])
+        #print 'check obslist=', obslist
         for var in obslist:
             print(var)
             obsnc = nc.variables[var]
             obsnc = numpy.asarray(obsnc)
-            obsnc [obsnc== 9.96920997e+36] = numpy.NaN
- 
-            plot(latnc,lonnc,obsnc,file_name[8:][:-21],var[:-9])
+            obsnc[np.greater(obsnc,1.0e+8)] = np.NaN
 
-def plot(lats,lons,values,OBS_TYPE,VAR_NAME):
+            obs_type = file_name[:-21]
+            var_name = var[:-9]
+            out_name = file_name[:-4]
+            if '_'.join(var_name.split("_")[:-1]) == 'brightness_temperature':
+                var_unit = vardict['brightness_temperature'][0]
+            else:
+                var_unit = vardict[var_name][0]
+
+            plot(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation)
+
+def plot(lats,lons,values,OBS_TYPE,VAR_NAME,var_unit,out_name,nstation):
 #set map=======================================================================
     fig,ax=plt.subplots(figsize=(8,8))
     m=Basemap(projection='cyl',     #map projection
@@ -74,10 +128,16 @@ def plot(lats,lons,values,OBS_TYPE,VAR_NAME):
         labels=[True,True,True,True])
 
 #set title  ===================================================================
-    plt.text(0.5, 1.25, '%s   variable: %s'%(OBS_TYPE,VAR_NAME) ,
-        horizontalalignment='center',
-        fontsize=12,
-        transform = ax.transAxes)
+    if nstation == 0:
+        plt.text(0.5, 1.25, '%s   variable: %s %s nlocs:%s' \
+            %(OBS_TYPE,VAR_NAME,var_unit,len(values)),    \
+            horizontalalignment='center', \
+            fontsize=12, transform = ax.transAxes)
+    else:
+        plt.text(0.5, 1.25, '%s   variable: %s %s nlocs:%s nstation:%s' \
+            %(OBS_TYPE,VAR_NAME,var_unit,len(values),nstation),    \
+            horizontalalignment='center', \
+            fontsize=12, transform = ax.transAxes)
 
 #draw points onto map =========================================================
     cm=plt.cm.get_cmap('rainbow')
@@ -93,7 +153,7 @@ def plot(lats,lons,values,OBS_TYPE,VAR_NAME):
     plt.colorbar(sc,cax=cax,ax=ax,orientation='horizontal')
     cax.xaxis.set_ticks_position('top')  #set the orientation of the ticks of the colorbar
 
-    plt.savefig('distri_%s_%s.png'%(OBS_TYPE,VAR_NAME),dpi=200,bbox_inches='tight')
+    plt.savefig('distri_%s_%s.png'%(VAR_NAME,out_name),dpi=200,bbox_inches='tight')
     plt.close()
 
 def main():
