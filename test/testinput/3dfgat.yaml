@@ -63,18 +63,20 @@ cost_function:
 #        rv: 1
   Jo:
     ObsTypes:
-    - ObsType: Radiosonde
-      ObsData:
+    - ObsSpace:
+        name: Radiosonde
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3dfgat_sonde.nc4
         obsvalue: ObsValue
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
+      ObsOperator:
+        name: Radiosonde
+        variables:
+        - air_temperature
+        - eastward_wind
+        - northward_wind
+        - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -88,18 +90,20 @@ cost_function:
         - northward_wind
         - specific_humidity
         threshold: 3
-    - ObsType: Aircraft
-      ObsData:
+    - ObsSpace:
+        name: Aircraft
         ObsDataIn:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3dfgat_aircraft.nc4
-        obsvalue: ObsValue
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
+          obsvalue: ObsValue
+      ObsOperator:
+        name: Aircraft
+        variables:
+        - air_temperature
+        - eastward_wind
+        - northward_wind
+        - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -113,16 +117,18 @@ cost_function:
         - northward_wind
         - specific_humidity
         threshold: 3
-    - ObsType: Satwind
-      ObsData:
+    - ObsSpace:
+        name: Satwind
         ObsDataIn:
           obsfile: Data/satwind_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3dfgat_satwind.nc4
         obsvalue: ObsValue
-      variables:
-      - eastward_wind
-      - northward_wind
+      ObsOperator:
+        name: Satwind
+        variables:
+        - eastward_wind
+        - northward_wind
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -134,15 +140,17 @@ cost_function:
         - eastward_wind
         - northward_wind
         threshold: 3
-    - ObsType: GnssroRef
-      ObsOptions:
-        use_compress: 0
-      ObsData:
+    - ObsSpace:
+        name: GnssroRef
         ObsDataIn:
           obsfile: Data/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_3dfgat_gnssroref.nc4
         obsvalue: refractivity
+      ObsOperator:
+        name: GnssroRef
+        ObsOptions:
+          use_compress: 0
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -164,15 +172,17 @@ cost_function:
       - Filter: ROobserror
         variable: refractivity
         errmodel: GSI
-    - ObsType: GnssroBndROPP1D
-      ObsOptions:
-        use_compress: 0
-      ObsData:
+    - ObsSpace:
+        name: GnssroBndROPP1D
         ObsDataIn:
           obsfile: Data/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_3dfgat_gnssrobndropp1d.nc4
         obsvalue: bending_angle
+      ObsOperator:
+        name: GnssroBndROPP1D
+        ObsOptions:
+          use_compress: 0
       Covariance:
         covariance: diagonal
       ObsFilters:

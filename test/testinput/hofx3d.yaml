@@ -19,72 +19,85 @@ Initial Condition:
   date: '2018-04-15T00:00:00Z'
 Observations:
   ObsTypes:
-  - ObsType: Radiosonde
-    ObsData:
+  - ObsSpace:
+      name: Radiosonde
       ObsDataIn:
         obsfile: Data/sondes_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_sonde.nc4
-    variables:
-    - air_temperature
-    - eastward_wind
-    - northward_wind
-    - specific_humidity
+    ObsOperator:
+      name: Radiosonde
+      variables:
+      - air_temperature
+      - eastward_wind
+      - northward_wind
+      - specific_humidity
     ObsBias: {}
-  - ObsType: Aircraft
-    ObsData:
+  - ObsSpace:
+      name: Aircraft
       ObsDataIn:
         obsfile: Data/aircraft_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_aircraft.nc4
-    variables:
-    - air_temperature
-    - eastward_wind
-    - northward_wind
-    - specific_humidity
+        obsvalue: ObsValue
+    ObsOperator:
+      name: Aircraft
+      variables:
+      - air_temperature
+      - eastward_wind
+      - northward_wind
+      - specific_humidity
     ObsBias: {}
-  - ObsType: Satwind
-    ObsData:
+  - ObsSpace:
+      name: Satwind
       ObsDataIn:
         obsfile: Data/satwind_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_satwind.nc4
-    variables:
-    - eastward_wind
-    - northward_wind
+      obsvalue: ObsValue
+    ObsOperator:
+      name: Satwind
+      variables:
+      - eastward_wind
+      - northward_wind
     ObsBias: {}
-  - ObsType: GnssroRef
-    ObsOptions:
-      ro_top_meter: 30000
-      obserr_method: RefGSI
-      use_compress: 0
-    ObsData:
+  - ObsSpace:
+      name: GnssroRef
       ObsDataIn:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssroref.nc4
       obsvalue: refractivity
+    ObsOperator:
+      name: GnssroRef
+      ObsOptions:
+        ro_top_meter: 30000
+        obserr_method: RefGSI
+        use_compress: 0
     ObsBias: {}
-  - ObsType: GnssroBndROPP1D
-    ObsOptions:
-      use_compress: 0
-    ObsData:
+  - ObsSpace:
+      name: GnssroBndROPP1D
       ObsDataIn:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssrobndropp1d.nc4
       obsvalue: bending_angle
+    ObsOperator:
+      name: GnssroBndROPP1D
+      ObsOptions:
+        use_compress: 0
     ObsBias: {}
-  - ObsType: CRTM
-    channels: 1-15
-    ObsOptions:
+  - ObsOperator:
+      name: CRTM
+      channels: 1-15
       n_Absorbers: '3'
       n_Clouds: '2'
       n_Aerosols: '0'
       Sensor_ID: amsua_n19
       EndianType: little_endian
       CoefficientPath: Data/
-    ObsData:
+    ObsSpace:
+      name: CRTM
       ObsDataIn:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
