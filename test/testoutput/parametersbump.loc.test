@@ -1,4 +1,4 @@
-Test     : Norm of loc_coef at 2018-04-15T00:00:00Z: 0.67292
-Test     : Norm of loc_rh at 2018-04-15T00:00:00Z: 8.56054e+06
-Test     : Norm of loc_rv at 2018-04-15T00:00:00Z: 0
-Test     : Norm of hyb_coef at 2018-04-15T00:00:00Z: 0
+Test     : Norm of loc_coef at 2018-04-15T00:00:00Z: 6.729e-01
+Test     : Norm of loc_rh at 2018-04-15T00:00:00Z: 8.561e+06
+Test     : Norm of loc_rv at 2018-04-15T00:00:00Z: 0.000e+00
+Test     : Norm of hyb_coef at 2018-04-15T00:00:00Z: 0.000e+00
