@@ -19,7 +19,7 @@ Test     : Radiosonde nobs= 524 Min=-19.6488, Max=230.09, RMS=111.083
 Test     : Aircraft nobs= 2156 Min=-29.1297, Max=294.215, RMS=128.515
 Test     : Satwind nobs= 200 Min=-17.2277, Max=14.036, RMS=7.89614
 Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.337, RMS=132.935
-Test     : GnssroBndROPP1D nobs= 12 Min=0.000561625, Max=0.0131557, RMS=0.00762702
+Test     : GnssroBndROPP1D nobs= 12 Min=0.000561713, Max=0.0131566, RMS=0.00762748
 Test     : AMSUA-NOAA19 nobs= 1500 Min=142.574, Max=295.741, RMS=233.614
 Test     : AIRS-AQUA nobs= 300 Min=211.139, Max=231.405, RMS=222.749
 Test     : CRIS-NPP nobs= 9900 Min=203.139, Max=296.85, RMS=244.175
