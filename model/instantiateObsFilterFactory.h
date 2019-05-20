@@ -19,6 +19,7 @@
 #include "ufo/filters/ObsDomainCheck.h"
 #include "ufo/filters/PreQC.h"
 #include "ufo/filters/QCmanager.h"
+#include "ufo/filters/Thinning.h"
 
 namespace mpas {
 
@@ -45,6 +46,9 @@ void instantiateObsFilterFactory() {
   static oops::FilterMaker<MPASTraits,
                  oops::ObsFilter<MPASTraits, ufo::ROobserror>
                           > makerChk6_("ROobserror");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::Thinning>
+                          > makerChk7_("Thinning");
 }
 
 }  // namespace mpas
