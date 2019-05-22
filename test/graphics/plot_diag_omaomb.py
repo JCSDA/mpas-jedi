@@ -47,7 +47,8 @@ def readdata():
     omb_var = 'ombg'
     oma_var = 'oman'
     obs_var = 'ObsValue'
-    qc_var  = 'EffectiveQC' #Only for final outer iteration currently
+    qc0_var  = 'EffectiveQC0'
+    qc2_var  = 'EffectiveQC2'
 
     obsoutfiles = []
     for files in os.listdir(diagdir):
@@ -117,38 +118,42 @@ def readdata():
             print(varname)
             obs=''.join(omb.split("@")[:-1])+'@'+obs_var
             oma=''.join(omb.split("@")[:-1])+'@'+oma_var
-            qc = ''.join(omb.split("@")[:-1])+'@'+qc_var
+            qc0 = ''.join(omb.split("@")[:-1])+'@'+qc0_var
+            qc2 = ''.join(omb.split("@")[:-1])+'@'+qc2_var
             #print("obs=",obs,"omb=",omb,"oma=",oma)
 
             obsnc = np.asarray([])
             ombnc = np.asarray([])
             omanc = np.asarray([])
-            qcnc  = np.asarray([])
+            qc0nc = np.asarray([])
+            qc2nc = np.asarray([])
             prenc = np.asarray([])
 
             # Build up arrays in loop over exob_group, 
             # excluding category in exob_group[0]
             for file_name in exob_group[1:]:
                 nc = Dataset(file_name, 'r')
+                nc.set_auto_mask(False)
                 #file_rank = file_name[-(4+npedigits):-4]
 
                 if ''.join(obstype) in profile_group:
                     if ''.join(obstype)[:6] == 'gnssro':
-                        prenc = np.append(prenc, nc.variables['altitude'])
+                        prenc = np.append(prenc, nc.variables['altitude@MetaData'])
                     else:
                         prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
                 ombnc = np.append( ombnc, nc.variables[omb] )
                 omanc = np.append( omanc, nc.variables[oma] )
-                qcnc  = np.append( qcnc,  nc.variables[qc]  )
+                qc0nc  = np.append( qc0nc,  nc.variables[qc0]  )
+                qc2nc  = np.append( qc2nc,  nc.variables[qc2]  )
 
             #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
             #keep data @EffectiveQC=0
-            obsnc[np.logical_not(qcnc == 0)] = np.NaN
+            obsnc[np.logical_not(qc0nc == 0)] = np.NaN
             ombnc[np.less(ombnc,-1.0e+15)] = np.NaN
-            ombnc[np.logical_not(qcnc == 0)] = np.NaN
-            omanc[np.logical_not(qcnc == 0)] = np.NaN
+            ombnc[np.logical_not(qc0nc == 0)] = np.NaN
+            omanc[np.logical_not(qc2nc == 0)] = np.NaN
 
             if ''.join(obstype)[:6] == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
@@ -160,6 +165,8 @@ def readdata():
                 RMSEombs = []
                 RMSEomas = []
                 obsnums  = []
+                ombnums  = []
+                omanums  = []
 
                 if ''.join(obstype)[:6] == 'gnssro':
                     bins = list(np.arange(50000.0, -1000, -2000.))
@@ -180,13 +187,19 @@ def readdata():
 
                     RMSEomb = np.sqrt(np.nanmean(ombncbin**2))
                     RMSEoma = np.sqrt(np.nanmean(omancbin**2))
-        
+
                     obsnum = len(obsncbin)-np.isnan(obsncbin).sum()
                     obsnums = np.append(obsnums,obsnum)
+
+                    ombnum = len(ombncbin)-np.isnan(ombncbin).sum()
+                    ombnums = np.append(ombnums,ombnum)
+
+                    omanum = len(omancbin)-np.isnan(omancbin).sum()
+                    omanums = np.append(omanums,omanum)
                     RMSEombs = np.append(RMSEombs,RMSEomb)
                     RMSEomas = np.append(RMSEomas,RMSEoma)
 
-                plotrmsepro(RMSEombs,RMSEomas,binsfory,obsnums,expt_obs,varname,print_fmt)
+                plotrmsepro(RMSEombs,RMSEomas,binsfory,ombnums,omanums,expt_obs,varname,print_fmt)
             else:
                 #Default: generate scatter plots
 
@@ -229,7 +242,7 @@ def readdata():
                         plt.close(fig)
 
 
-def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
+def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):
     fig, ax1 = plt.subplots()
 #   reverse left y-axis
     plt.gca().invert_yaxis()
@@ -243,15 +256,22 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
         ax1.set_xlim([0,math.ceil(np.nanmax(var1))])
 
     ax2 = ax1.twinx()
+    ax2.spines['right'].set_position(('axes', 1.0))
     ax2.set_yticks(binsfory)
-    ax2.set_ylabel('Observation Number(EffectiveQC=0)',fontsize=15)
+    ax2.set_ylabel('Observation Number(EffectiveQC0=0)',fontsize=15)
+
+    ax3 = ax1.twinx()
+    ax3.set_yticks(binsfory)
+    ax3.spines['right'].set_position(('axes', 1.2))
+    ax3.set_ylabel('Observation Number(EffectiveQC2=0)',fontsize=15)
 
     if ''.join(EXP_NAME.split("_")[-1:])[:6] == 'gnssro':
         ax1.set_ylim([0,49500])
         ax1.set_ylabel('Altitude (m)',fontsize=15)
         ax1.set_xlabel(VAR_NAME+'  RMSE of OMB/O & OMA/O '+ vardict[VAR_NAME][0],fontsize=15)
         ax1.legend(('(OMB/O)*100%','(OMA/O)*100%'), loc='upper right',fontsize=15)
-        ax2.set_yticklabels(obsnums.astype(np.int))
+        ax2.set_yticklabels(ombnums.astype(np.int))
+        ax3.set_yticklabels(omanums.astype(np.int))
     else:
         ax1.set_ylim([1000,0])
         major_ticks = np.arange(0, 1000, 100)
@@ -259,7 +279,8 @@ def plotrmsepro(var1,var2,binsfory,obsnums,EXP_NAME,VAR_NAME,fmt):
         ax1.set_ylabel('Pressure (hPa)',fontsize=15)
         ax1.set_xlabel(VAR_NAME+'  RMSE  '+ vardict[VAR_NAME][0],fontsize=15)
         ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
-        ax2.set_yticklabels(reversed(obsnums.astype(np.int)))
+        ax2.set_yticklabels(reversed(ombnums.astype(np.int)))
+        ax3.set_yticklabels(reversed(omanums.astype(np.int)))
 
     fname = 'RMSE_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
     print('Saving figure to '+fname)

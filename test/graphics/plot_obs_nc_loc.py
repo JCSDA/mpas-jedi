@@ -74,12 +74,8 @@ def readdata():
 
         obstype = str(file_name.split("_")[:1])
         #print(obstype)
-        if obstype == "['gnssro']":
-            latnc = nc.variables['latitude']
-            lonnc = nc.variables['longitude']
-        else:
-            latnc = nc.variables['latitude@MetaData']
-            lonnc = nc.variables['longitude@MetaData']
+        latnc = nc.variables['latitude@MetaData']
+        lonnc = nc.variables['longitude@MetaData']
 
         lonnc = numpy.asarray(lonnc)
         for i in range(len(lonnc)):
