@@ -410,7 +410,7 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
                 {'color': 'k', 'fontsize': 12}, 
                 ha='center', va='center', transform=ax.transAxes)
 
-        if nnfigs > 1: fname=fname+'_%d-of-%d'%(jfig,nnfig)
+        if nnfigs > 1: fname=fname+'_%d-of-%d'%(jfig,nnfigs)
         fname=fname+'.'+fmt
 
         if (ivar == nvars-1 or subplt_cnt[jfig] == numsubplts):
