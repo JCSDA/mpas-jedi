@@ -44,11 +44,16 @@ def readdata():
     #npedigits = 4
 
     # Suffixes to required nc variables
-    omb_var = 'ombg'
-    oma_var = 'oman'
+    #observations
     obs_var = 'ObsValue'
-    qc0_var  = 'EffectiveQC0'
-    qc2_var  = 'EffectiveQC2'
+
+    #departures
+    depbg_var = 'depbg'
+    depan_var = 'depan'
+
+    #quality control
+    qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for depbg_var
+    qcan_var  = 'EffectiveQC2' #EffectiveQCi, where i is the iteration for depan_var
 
     obsoutfiles = []
     for files in os.listdir(diagdir):
@@ -98,10 +103,10 @@ def readdata():
            print('obstype not selected, skipping data: '+expt_obs)
            continue
 
-        # Select variables with the suffix omb_var (required for OMB)
+        # Select variables with the suffix depbg_var (required for OMB)
         nc = Dataset(exob_group[1], 'r')
         varlist = nc.variables.keys()
-        bglist = [var for var in varlist if (var[-4:] == omb_var)]
+        bglist = [var for var in varlist if (var[-len(depbg_var):] == depbg_var)]
 
         # Define a channel list for radiance_group
         if ''.join(obstype) in radiance_group:
@@ -113,20 +118,20 @@ def readdata():
 
         # Loop over variables with omb suffix
         nvars = len(bglist)
-        for ivar, omb in enumerate(bglist):
-            varname = ''.join(omb.split("@")[:-1])
+        for ivar, depbg in enumerate(bglist):
+            varname = ''.join(depbg.split("@")[:-1])
             print(varname)
-            obs=''.join(omb.split("@")[:-1])+'@'+obs_var
-            oma=''.join(omb.split("@")[:-1])+'@'+oma_var
-            qc0 = ''.join(omb.split("@")[:-1])+'@'+qc0_var
-            qc2 = ''.join(omb.split("@")[:-1])+'@'+qc2_var
-            #print("obs=",obs,"omb=",omb,"oma=",oma)
+            obs=''.join(depbg.split("@")[:-1])+'@'+obs_var
+            depan=''.join(depbg.split("@")[:-1])+'@'+depan_var
+            qcb = ''.join(depbg.split("@")[:-1])+'@'+qcbg_var
+            qca = ''.join(depbg.split("@")[:-1])+'@'+qcan_var
+            #print("obs=",obs,"depbg=",depbg,"depan=",depan)
 
             obsnc = np.asarray([])
             ombnc = np.asarray([])
             omanc = np.asarray([])
-            qc0nc = np.asarray([])
-            qc2nc = np.asarray([])
+            qcbnc = np.asarray([])
+            qcanc = np.asarray([])
             prenc = np.asarray([])
 
             # Build up arrays in loop over exob_group, 
@@ -143,17 +148,17 @@ def readdata():
                         prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
-                ombnc = np.append( ombnc, nc.variables[omb] )
-                omanc = np.append( omanc, nc.variables[oma] )
-                qc0nc  = np.append( qc0nc,  nc.variables[qc0]  )
-                qc2nc  = np.append( qc2nc,  nc.variables[qc2]  )
+                ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
+                omanc = np.append( omanc, np.negative( nc.variables[depan] ) ) # oma = (-) depan
+                qcbnc  = np.append( qcbnc,  nc.variables[qcb]  )
+                qcanc  = np.append( qcanc,  nc.variables[qca]  )
 
             #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
             #keep data @EffectiveQC=0
-            obsnc[np.logical_not(qc0nc == 0)] = np.NaN
+            obsnc[qcbnc != 0] = np.NaN
             ombnc[np.less(ombnc,-1.0e+15)] = np.NaN
-            ombnc[np.logical_not(qc0nc == 0)] = np.NaN
-            omanc[np.logical_not(qc2nc == 0)] = np.NaN
+            ombnc[qcbnc != 0] = np.NaN
+            omanc[qcanc != 0] = np.NaN
 
             if ''.join(obstype)[:6] == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
@@ -258,12 +263,12 @@ def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):
     ax2 = ax1.twinx()
     ax2.spines['right'].set_position(('axes', 1.0))
     ax2.set_yticks(binsfory)
-    ax2.set_ylabel('Observation Number(EffectiveQC0=0)',fontsize=15)
+    ax2.set_ylabel('Observation Number(EffectiveQCbg=0)',fontsize=15)
 
     ax3 = ax1.twinx()
     ax3.set_yticks(binsfory)
     ax3.spines['right'].set_position(('axes', 1.2))
-    ax3.set_ylabel('Observation Number(EffectiveQC2=0)',fontsize=15)
+    ax3.set_ylabel('Observation Number(EffectiveQCan=0)',fontsize=15)
 
     if ''.join(EXP_NAME.split("_")[-1:])[:6] == 'gnssro':
         ax1.set_ylim([0,49500])
@@ -439,11 +444,11 @@ def scatter_one2ones(XVAL,YVALS,LEG,show_stats,XLAB,YLAB,VAR_NAME,UNITS,ax):
 #         + linear regressions for each list contained in YVALS
 #         + a one-to-one line
 #================================================================
-    fsize1 = 6.0
-    fsize2 = 4.0
+    fsize_leg = 6.0
+    fsize_lab = 4.5
 
     ax.text(0.03, 0.97 - len(LEG) * 0.125, VAR_NAME,
-        {'color': 'k', 'fontsize': fsize1}, 
+        {'color': 'k', 'fontsize': fsize_leg}, 
         ha='left', va='top', transform=ax.transAxes)
 
     if len(XVAL) == 0: 
@@ -528,7 +533,7 @@ def scatter_one2ones(XVAL,YVALS,LEG,show_stats,XLAB,YLAB,VAR_NAME,UNITS,ax):
             BIAS = np.sum( YVAL[not_nan] - XVAL[not_nan] ) / NVALS[j]
             stat = stat+'\nRMSE: %0.2f \nBIAS: %0.2f'%(RMSE,BIAS)
         ax.text(tx, ty, stat+nline, \
-            {'color': col, 'fontsize': fsize2}, 
+            {'color': col, 'fontsize': fsize_lab}, 
             ha='right', va='bottom', backgroundcolor=[1,1,1,0.2], \
             clip_on=True, transform=ax.transAxes)
         nline = nline + ''.join('\n' * stat.count('\n')) + '\n'

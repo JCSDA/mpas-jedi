@@ -265,7 +265,7 @@ variational:
     gradient_norm_reduction: 1e-10
     test: 'on'
     diagnostics:
-      departures: ombg
+      departures: depbg
   - resolution:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
     linearmodel:
@@ -285,4 +285,4 @@ variational:
     test: 'on'
 final:
   diagnostics:
-    departures: oman
+    departures: depan

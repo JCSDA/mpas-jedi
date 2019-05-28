@@ -62,8 +62,8 @@ def readdata():
         
             prenc = nc.variables['air_pressure@MetaData']
             obsnc = nc.variables['%s@ObsValue'%VAR_NAME]
-            ombnc = nc.variables['%s@ombg'%VAR_NAME]
-            omanc = nc.variables['%s@oman'%VAR_NAME]
+            ombnc = np.negative( nc.variables['%s@depbg'%VAR_NAME] )
+            omanc = np.negative( nc.variables['%s@depan'%VAR_NAME] )
             qcnc  = nc.variables['%s@EffectiveQC'%VAR_NAME]
 
             prencs = np.append(prencs,prenc) 
