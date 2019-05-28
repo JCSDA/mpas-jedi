@@ -31,7 +31,7 @@ StateTest:
   InterpTest:
     variables:
     - air_temperature
-    - atmosphere_ln_pressure_coordinate
+    - air_pressure
   norm-gen: '21598.849125951634'
   tolerance:
   - 1.0e-08

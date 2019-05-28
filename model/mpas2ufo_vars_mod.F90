@@ -443,19 +443,6 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field2d)
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
-     case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
-        call mpas_duplicate_field(field2d_src, field2d)
-
-        field2d % array(:,1:ngrid) = log( field2d_src%array(:,1:ngrid) / 100.0_kind_real / 10.0_kind_real ) !< unit: Pa -> hPa ->cb
-!        write(*,*) 'MIN/MAX of ln_p=',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
-
-        field2d % fieldName = var_prsl
-
-        call mpas_pool_add_field(convFields, var_prsl, field2d)
-
-!        write(*,*) "end-of ",var_prsl
-
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_field(subFields, 'spechum', field2d_src) !< get specific_humidity
         call mpas_duplicate_field(field2d_src, field2d)! for humidity_mixing_ratio
@@ -475,7 +462,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
      case ("air_pressure") !-var_prs
         call mpas_pool_get_field(subFields, 'pressure', field2d_src) !< get pressure
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) / 100.0_kind_real ! [Pa] -> [hPa]
+        field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid)
         field2d % fieldName = var_prs
         call mpas_pool_add_field(convFields, var_prs, field2d)
 !        write(*,*) "end-of ",var_prs
@@ -486,7 +473,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_duplicate_field(field2d_src, field2d)
 
         call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom % nVertLevels, field2d%array(:,1:ngrid))
-        field2d % array = field2d % array / 100.0_kind_real ! [Pa] -> [hPa]
+        field2d % array = field2d % array
 !        write(*,*) 'MIN/MAX of prsi=',minval(field2d % array),maxval(field2d % array)
 !        write(*,*) 'test prs       =',r2d_ptr_a(:,1)
 !        write(*,*) 'test prsi      =',field2d % array(:,1)
@@ -520,7 +507,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
         do i=1,ngrid
         do k=1,geom % nVertLevels
-          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
+          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) / gravity !- Still bottom-to-top
           field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
         enddo
         enddo
@@ -539,7 +526,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
         do i=1,ngrid
         do k=1,geom % nVertLevels
-          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) * 100.0_kind_real / gravity !- Still bottom-to-top
+          kgkg_kgm2=( r2d_ptr_b(k,i)-r2d_ptr_b(k+1,i) ) / gravity !- Still bottom-to-top
           field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
         enddo
         enddo
@@ -776,11 +763,6 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
 
 !        write(*,*) "end-of ",trim(fieldname(ivar))
 
-     case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-
-        !BJ: DO WE NEED THIS? "Currently" UFO do not access to tl of var_prsl. but for general purpose ?!?!
-        !BJ: Without this array, 3DVAR gives the same results.
-
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_field(subFields_tl, 'spechum', field2d_src) !< get TL of specific_huuumidity
         call mpas_pool_get_array(trajFields,   'spechum', traj_r2d_a)  !< get linearization state
@@ -965,10 +947,6 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
 !        write(*,*) 'MIN/MAX of AD meridional wind(out) =',minval(r2d_ptr_a),maxval(r2d_ptr_a)
 
 !        write(*,*) "end-of ",trim(fieldname(ivar))
-
-     case ("atmosphere_ln_pressure_coordinate") !-var_prsl
-        !BJ: DO WE NEED THIS? "Currently" UFO do not access to ad of var_prsl. but for general purpose ?!?!
-        !BJ: Without this array, 3DVAR gives the same results.
 
      case ("humidity_mixing_ratio") !-var_mixr
         call mpas_pool_get_array(subFields_ad, "spechum", r2d_ptr_a) !< get sphechum_ad

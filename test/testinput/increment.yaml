@@ -27,7 +27,7 @@ _InterpTest:
   GeoVaLs:
     variables:
     - air_temperature
-    - atmosphere_ln_pressure_coordinate
+    - air_pressure
   Locations:
     lats:
     - '50.0'
