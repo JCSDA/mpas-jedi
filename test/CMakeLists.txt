@@ -91,6 +91,90 @@ ecbuild_add_resources( TARGET   mpas_test_scripts
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
+# Add ioda obs test data
+list (APPEND ioda_obs_test_data
+  atmosphere/aircraft_obs_2018041500_m.nc4
+  atmosphere/aircraft_obs_2018041500_s.nc4
+  atmosphere/airs_aqua_obs_2018041500_m.nc4
+  atmosphere/amsua_n19_obs_2018041500_m.nc4
+  atmosphere/amsua_n19_obs_2018041500_s.nc4
+#  atmosphere/aod_obs_2018041500_m.nc4
+#  atmosphere/aod_obs_2018041500_s.nc4
+  atmosphere/cris-fsr_npp_obs_2018041500_m.nc4
+#  atmosphere/gmi_gpm_obs_2018041500_m.nc4
+  atmosphere/gnssro_obs_2018041500_s.nc4
+  atmosphere/gnssro_obs_2018041500_m.nc4
+#  atmosphere/hirs4_metop-a_obs_2018041500_m.nc4
+  atmosphere/iasi_metop-a_obs_2018041500_m.nc4
+#  atmosphere/mhs_n19_obs_2018041500_m.nc4
+  atmosphere/satwind_obs_2018041500_m.nc4
+  atmosphere/satwind_obs_2018041500_s.nc4
+#  atmosphere/seviri_m08_obs_2018041500_m.nc4
+  atmosphere/sfc_obs_2018041500_m.nc4
+  atmosphere/sfc_obs_2018041500_s.nc4
+#  atmosphere/sndrd1_g15_obs_2018041500_m.nc4
+#  atmosphere/sndrd2_g15_obs_2018041500_m.nc4
+#  atmosphere/sndrd3_g15_obs_2018041500_m.nc4
+#  atmosphere/sndrd4_g15_obs_2018041500_m.nc4
+  atmosphere/sondes_obs_2018041500_m.nc4
+  atmosphere/sondes_obs_2018041500_s.nc4
+  )
+
+CREATE_SYMLINK_FILENAME( ${ioda_SOURCE_DIR}/test/testinput
+                         ${CMAKE_CURRENT_BINARY_DIR}/Data
+                         ${ioda_obs_test_data} )
+
+#####################################################################
+# Files for CRTM tests
+#####################################################################
+
+list( APPEND crtm_test_input
+  AerosolCoeff/Little_Endian/AerosolCoeff.bin
+  CloudCoeff/Little_Endian/CloudCoeff.bin
+  EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+  EmisCoeff/IR_Ice/SEcategory/Little_Endian/NPOESS.IRice.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/NPOESS.IRland.EmisCoeff.bin
+  EmisCoeff/IR_Snow/SEcategory/Little_Endian/NPOESS.IRsnow.EmisCoeff.bin
+  EmisCoeff/VIS_Ice/SEcategory/Little_Endian/NPOESS.VISice.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/NPOESS.VISland.EmisCoeff.bin
+  EmisCoeff/VIS_Snow/SEcategory/Little_Endian/NPOESS.VISsnow.EmisCoeff.bin
+  EmisCoeff/VIS_Water/SEcategory/Little_Endian/NPOESS.VISwater.EmisCoeff.bin
+  EmisCoeff/IR_Water/Little_Endian/Nalli.IRwater.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/USGS.IRland.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
+  SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n19.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n19.TauCoeff.bin
+  SpcCoeff/Little_Endian/cris-fsr_npp.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/cris-fsr_npp.TauCoeff.bin
+#  SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
+#  SpcCoeff/Little_Endian/hirs4_metop-a.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/hirs4_metop-a.TauCoeff.bin
+  SpcCoeff/Little_Endian/iasi_metop-a.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
+#  SpcCoeff/Little_Endian/mhs_n19.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/mhs_n19.TauCoeff.bin
+#  SpcCoeff/Little_Endian/seviri_m08.SpcCoeff.bin
+#  TauCoeff/ODAS/Little_Endian/seviri_m08.TauCoeff.bin
+#  SpcCoeff/Little_Endian/sndrD1_g15.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/sndrD1_g15.TauCoeff.bin
+#  SpcCoeff/Little_Endian/sndrD2_g15.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/sndrD2_g15.TauCoeff.bin
+#  SpcCoeff/Little_Endian/sndrD3_g15.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/sndrD3_g15.TauCoeff.bin
+#  SpcCoeff/Little_Endian/sndrD4_g15.SpcCoeff.bin
+#  TauCoeff/ODPS/Little_Endian/sndrD4_g15.TauCoeff.bin
+#  SpcCoeff/Little_Endian/v.viirs-m_npp.SpcCoeff.bin
+#  TauCoeff/ODAS/Little_Endian/v.viirs-m_npp.TauCoeff.bin
+)
+
+# Symlink all CRTM files
+CREATE_SYMLINK_FILENAME( ${crtm_SOURCE_DIR}/fix
+                         ${CMAKE_CURRENT_BINARY_DIR}/Data
+                         ${crtm_test_input} )
+
 #####################################################################
 
 # Tests that create data other tests might use (should check what is really needed...)
