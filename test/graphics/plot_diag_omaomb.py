@@ -146,6 +146,7 @@ def readdata():
                         prenc = np.append(prenc, nc.variables['altitude@MetaData'])
                     else:
                         prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
+                        prenc =  np.divide(prenc,100.0)
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
                 ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
