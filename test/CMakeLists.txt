@@ -268,7 +268,7 @@ ecbuild_add_test( TARGET test_mpas_dirac_noloc
 
 ecbuild_add_test( TARGET test_mpas_parameters_bumpcov
                   TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.yaml"
                        testoutput/parametersbump.cov.test
                   MPI     1
@@ -276,7 +276,7 @@ ecbuild_add_test( TARGET test_mpas_parameters_bumpcov
 
 ecbuild_add_test( TARGET test_mpas_parameters_bumploc
                   TYPE SCRIPT
-                  COMMAND ${CMAKE_BINARY_DIR}/bin/compare.sh
+                  COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.yaml"
                        testoutput/parametersbump.loc.test
                   MPI     1
