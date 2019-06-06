@@ -36,13 +36,10 @@ Observations:
         obsfile: Data/sondes_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_sonde.nc4
+      simulate:
+        variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: Radiosonde
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
     ObsBias: {}
   - ObsSpace:
       name: Aircraft
@@ -50,14 +47,10 @@ Observations:
         obsfile: Data/aircraft_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_aircraft.nc4
-        obsvalue: ObsValue
+      simulate:
+        variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: Aircraft
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
     ObsBias: {}
   - ObsSpace:
       name: Satwind
@@ -65,12 +58,10 @@ Observations:
         obsfile: Data/satwind_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_satwind.nc4
-      obsvalue: ObsValue
+      simulate:
+        variables: [eastward_wind, northward_wind]
     ObsOperator:
       name: Satwind
-      variables:
-      - eastward_wind
-      - northward_wind
     ObsBias: {}
   - ObsSpace:
       name: GnssroRef
@@ -78,7 +69,8 @@ Observations:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssroref.nc4
-      obsvalue: refractivity
+      simulate:
+        variables: [refractivity]
     ObsOperator:
       name: GnssroRef
       ObsOptions:
@@ -92,7 +84,8 @@ Observations:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssrobndropp1d.nc4
-      obsvalue: bending_angle
+      simulate:
+        variables: [bending_angle]
     ObsOperator:
       name: GnssroBndROPP1D
       ObsOptions:
@@ -104,9 +97,11 @@ Observations:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_amsua_n19.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 1-15
     ObsOperator:
       name: CRTM
-      channels: 1-15
       n_Absorbers: 3
       n_Clouds: 2
       n_Aerosols: 0
@@ -120,9 +115,11 @@ Observations:
         obsfile: Data/airs_aqua_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_airs_aqua.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 1,6-7
     ObsOperator:
       name: CRTM
-      channels: 1,6-7
       n_Absorbers: 3
       n_Clouds: 2
       n_Aerosols: 0
@@ -137,15 +134,17 @@ Observations:
         obsfile: Data/cris-fsr_npp_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_cris-fsr_npp.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 24,26,28,32,37,39,42,44,47,49,51,53,55,57,59,61,63,
+                  65,67,69,71,73,75,77,79,81,83,85,87,89,91,93,95,97,
+                  99,103,105,107,109,111,113,115,117,119,121,123,125,
+                  127,129,131,133,135,137,139,141,143,145,147,149,151,
+                  153,155,157,159,163,167,171,175,179,183,187,190,194,
+                  197,200,211,224,275,279,291,311,332,342,389,410,427,
+                  464,501,529,710,713,742,882,890,937,995,1008,1022,1058
     ObsOperator:
       name: CRTM
-      channels: 24,26,28,32,37,39,42,44,47,49,51,53,55,57,59,61,63,
-                65,67,69,71,73,75,77,79,81,83,85,87,89,91,93,95,97,
-                99,103,105,107,109,111,113,115,117,119,121,123,125,
-                127,129,131,133,135,137,139,141,143,145,147,149,151,
-                153,155,157,159,163,167,171,175,179,183,187,190,194,
-                197,200,211,224,275,279,291,311,332,342,389,410,427,
-                464,501,529,710,713,742,882,890,937,995,1008,1022,1058
       n_Absorbers: 3
       n_Clouds: 2
       n_Aerosols: 0
@@ -160,9 +159,11 @@ Observations:
         obsfile: Data/iasi_metop-a_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_iasi_metop-a.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 16,29,32,35,38,41,44 
     ObsOperator:
       name: CRTM
-      channels: 16,29,32,35,38,41,44
       n_Absorbers: 3
       n_Clouds: 2
       n_Aerosols: 0

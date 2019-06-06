@@ -69,13 +69,10 @@ Observations:
         obsfile: Data/sondes_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_sonde.nc4
+      simulate:
+        variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: Radiosonde
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
     ObsBias: {}
   - ObsSpace:
       name: Aircraft
@@ -83,14 +80,10 @@ Observations:
         obsfile: Data/aircraft_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_aircraft.nc4
-        obsvalue: ObsValue
+      simulate:
+        variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: Aircraft
-      variables:
-      - air_temperature
-      - eastward_wind
-      - northward_wind
-      - specific_humidity
     ObsBias: {}
   - ObsSpace:
       name: Satwind
@@ -98,12 +91,10 @@ Observations:
         obsfile: Data/satwind_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_satwind.nc4
-      obsvalue: ObsValue
+      simulate:
+        variables: [eastward_wind, northward_wind]
     ObsOperator:
       name: Satwind
-      variables:
-      - eastward_wind
-      - northward_wind
     ObsBias: {}
   - ObsSpace:
       name: GnssroRef
@@ -111,7 +102,8 @@ Observations:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/enshofx_gnssroref.nc4
-      obsvalue: refractivity
+      simulate:
+        variables: [refractivity]
     ObsOperator:
       name: GnssroRef
       ObsOptions:
@@ -125,7 +117,8 @@ Observations:
         obsfile: Data/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/enshofx_gnssrobndropp1d.nc4
-      obsvalue: bending_angle
+      simulate:
+        variables: [bending_angle]
     ObsOperator:
       name: GnssroBndROPP1D
       ObsOptions:
@@ -133,7 +126,6 @@ Observations:
     ObsBias: {}
   - ObsOperator:
       name: CRTM
-      channels: 1-15
       n_Absorbers: '3'
       n_Clouds: '2'
       n_Aerosols: '0'
@@ -146,6 +138,9 @@ Observations:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_amsua.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 1-15
     ObsBias: {}
 Prints:
   frequency: PT3H

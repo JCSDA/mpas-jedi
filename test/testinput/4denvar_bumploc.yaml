@@ -146,14 +146,10 @@ cost_function:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_4denvar_bump_sonde.nc4
-        obsvalue: ObsValue
+        simulate:
+          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
         name: Radiosonde
-        variables:
-        - air_temperature
-        - eastward_wind
-        - northward_wind
-        - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -173,14 +169,10 @@ cost_function:
           obsfile: Data/aircraft_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_4denvar_bump_aircraft.nc4
-          obsvalue: ObsValue
+        simulate:
+          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
         name: Aircraft
-        variables:
-        - air_temperature
-        - eastward_wind
-        - northward_wind
-        - specific_humidity
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -200,12 +192,10 @@ cost_function:
           obsfile: Data/satwind_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_4denvar_bump_satwind.nc4
-        obsvalue: ObsValue
+        simulate:
+          variables: [eastward_wind, northward_wind]
       ObsOperator:
         name: Satwind
-        variables:
-        - eastward_wind
-        - northward_wind
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -223,7 +213,8 @@ cost_function:
           obsfile: Data/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_4denvar_bump_gnssroref.nc4
-        obsvalue: refractivity
+        simulate:
+          variables: [refractivity]
       ObsOperator:
         name: GnssroRef
         ObsOptions:
@@ -255,7 +246,8 @@ cost_function:
           obsfile: Data/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_4denvar_bump_gnssrobndropp1d.nc4
-        obsvalue: bending_angle
+        simulate:
+          variables: [bending_angle]
       ObsOperator:
         name: GnssroBndROPP1D
         ObsOptions:
