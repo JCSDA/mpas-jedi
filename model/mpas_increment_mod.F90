@@ -318,7 +318,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufoTL(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
    maxlevels = inc%geom%nVertLevelsP1
    allocate(mod_field(ngrid,maxlevels))
@@ -436,7 +436,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
    !    : Actually their values are initialized as "zero" in following "do while" loop.
-   call convert_mpas_field2ufoTL(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
    maxlevels = inc%geom%nVertLevelsP1
    allocate(mod_field(ngrid,maxlevels))
@@ -492,7 +492,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call convert_mpas_field2ufoAD(traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoAD(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
 
    traj%bump%geom%nl0 = 1
 !   allocate(mod_field(ngrid,1))

@@ -570,6 +570,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
        call mpas_pool_add_field(pool_tmp, 'temperature', field2d_src)
        call mpas_pool_get_field(self % subFields, 'spechum', field2d_src)
        call mpas_pool_add_field(pool_tmp, 'spechum', field2d_src)
+       call mpas_pool_get_field(self % subFields, 'pressure', field2d_src)
+       call mpas_pool_add_field(pool_tmp, 'pressure', field2d_src)
 
        call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
 

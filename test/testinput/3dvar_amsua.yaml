@@ -1,7 +1,6 @@
 ---
 logging:
   categories: Info, Test, Warning, Error, Log, Trace, Stats
-test_framework_runtime_config: "--log_level=test_suite"
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
@@ -14,6 +13,7 @@ model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - index_qc
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -24,6 +24,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - index_qc
   varchange: Identity
   Jb:
     Background:
@@ -34,6 +35,7 @@ cost_function:
         - spechum
         - uReconstructZonal
         - uReconstructMeridional
+        - index_qc
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
     Covariance:
@@ -93,6 +95,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - index_qc
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -112,6 +115,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - index_qc
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'

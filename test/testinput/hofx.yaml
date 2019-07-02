@@ -1,7 +1,6 @@
 ---
 logging:
   categories: Info, Test, Warning, Error, Log, Trace, Stats
-test_framework_runtime_config: "--log_level=test_suite"
 nml_file: namelist.atmosphere_2018041421
 Assimilation Window:
   Begin: '2018-04-14T21:00:00Z'
@@ -19,6 +18,7 @@ Model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - index_qc
 Initial Condition:
   variables:
   - temperature
@@ -26,6 +26,7 @@ Initial Condition:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - index_qc
   filename: "./restart.2018-04-14_21.00.00.nc"
   date: '2018-04-14T21:00:00Z'
 Observations:

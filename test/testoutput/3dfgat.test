@@ -8,12 +8,13 @@ Test     : CostFunction: Nonlinear J = 2494.61
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0675789
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
 Test     : Fld=2  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
 Test     : Fld=3  Min=-0.000942288, Max=0.0183791, RMS=0.00452774 : spechum
 Test     : Fld=4  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
 Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
+Test     : Fld=6  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
 Test     : CostJb   : Nonlinear Jb = 2.20898e-05
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 835.74, nobs = 953, Jo/n = 0.876957, err = 1.98677
 Test     : CostJo   : Nonlinear Jo(Aircraft) = 1130.58, nobs = 1589, Jo/n = 0.711506, err = 2.29543
@@ -24,12 +25,13 @@ Test     : CostFunction: Nonlinear J = 1992.57
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0550903
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
 Test     : Fld=2  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
 Test     : Fld=3  Min=-0.00239806, Max=0.0183791, RMS=0.00452843 : spechum
 Test     : Fld=4  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
 Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
+Test     : Fld=6  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
 Test     : CostJb   : Nonlinear Jb = 4.97906e-05
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 793.422, nobs = 948, Jo/n = 0.836943, err = 1.98816
 Test     : CostJo   : Nonlinear Jo(Aircraft) = 1122.75, nobs = 1588, Jo/n = 0.707023, err = 2.29615

@@ -33,6 +33,7 @@ use mpas_dmpar
 use mpas_derived_types
 use mpas_field_routines
 use mpas_pool_routines
+use mpas_geom_mod
 
 private
 
@@ -472,8 +473,8 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_get_field(subFields, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
 
-        call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom % nVertLevels, field2d%array(:,1:ngrid))
-        field2d % array = field2d % array
+        call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom % nVertLevels, &
+                                   field2d%array(:,1:ngrid))
 !        write(*,*) 'MIN/MAX of prsi=',minval(field2d % array),maxval(field2d % array)
 !        write(*,*) 'test prs       =',r2d_ptr_a(:,1)
 !        write(*,*) 'test prsi      =',field2d % array(:,1)
@@ -660,10 +661,11 @@ end subroutine convert_mpas_field2ufo
 
 !-------------------------------------------------------------------------------------------
 
-subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fieldname, nfield, ngrid)
+subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_tl, fieldname, nfield, ngrid)
 
    implicit none
 
+   type (mpas_geom),               intent(in)  :: geom          !< geometry
    type (mpas_pool_type), pointer, intent(in ) :: trajFields    !< linearization state for conversion
    type (mpas_pool_type), pointer, intent(in ) :: subFields_tl  !< self % subFields
    type (mpas_pool_type), pointer, intent(out) :: convFields_tl !< pool with geovals variable
@@ -680,7 +682,9 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
-   integer :: ivar
+   integer :: ivar, i, k
+   real (kind=kind_real), dimension (:,:), allocatable :: pressure_f
+   real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    !--- create new pull for ufo_vars
    call mpas_pool_create_pool(convFields_tl)
@@ -794,8 +798,28 @@ subroutine convert_mpas_field2ufoTL(trajFields, subFields_tl, convFields_tl, fie
      case ("air_pressure_levels")
      case ("mass_concentration_of_ozone_in_air")
      case ("mass_concentration_of_carbon_dioxide_in_air")
+
      case ("atmosphere_mass_content_of_cloud_liquid_water")
-     case ("atmosphere_mass_content_of_cloud_ice")
+        call mpas_pool_get_field(subFields_tl, 'index_qc', field2d_src) !- [kg/kg]
+        call mpas_duplicate_field(field2d_src, field2d)
+        ! Calcluate air_pressure_levels
+        call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+        allocate (pressure_f(geom%nVertLevels+1,ngrid))
+
+        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
+                                   pressure_f)
+
+        do i=1,ngrid
+        do k=1,geom % nVertLevels
+           kgkg_kgm2=( pressure_f(k,i)-pressure_f(k+1,i) ) / gravity !- Still bottom-to-top
+           field2d % array(k,i) = field2d_src%array(k,i) * kgkg_kgm2 
+        enddo
+        enddo
+        field2d % fieldName = var_clw
+        call mpas_pool_add_field(convFields_tl, var_clw, field2d)
+        deallocate (pressure_f)
+
+   case ("atmosphere_mass_content_of_cloud_ice")
      case ("effective_radius_of_cloud_liquid_water_particle")
      case ("effective_radius_of_cloud_ice_particle")
 
@@ -847,10 +871,11 @@ end subroutine convert_mpas_field2ufoTL
 
 !-------------------------------------------------------------------------------------------
 
-subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fieldname, nfield, ngrid)
+subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_ad, fieldname, nfield, ngrid)
 
    implicit none
 
+   type (mpas_geom),               intent(in)    :: geom          !< geometry
    type (mpas_pool_type), pointer, intent(in   ) :: trajFields    !< linearization state for conversion
    type (mpas_pool_type), pointer, intent(inout) :: subFields_ad  !< self % subFields
    type (mpas_pool_type), pointer, intent(in   ) :: convFields_ad !< pool with geovals variable
@@ -867,7 +892,9 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
-   integer :: ivar
+   integer :: ivar, i, k
+   real (kind=kind_real), dimension (:,:), allocatable :: pressure_f
+   real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    do ivar=1, nfield
      write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, &
@@ -983,6 +1010,27 @@ subroutine convert_mpas_field2ufoAD(trajFields, subFields_ad, convFields_ad, fie
      case ("mass_concentration_of_ozone_in_air")
      case ("mass_concentration_of_carbon_dioxide_in_air")
      case ("atmosphere_mass_content_of_cloud_liquid_water")
+        call mpas_pool_get_array(subFields_ad, 'index_qc', r2d_ptr_a) !- [kg/kg]
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field2d_src)
+        call mpas_duplicate_field(field2d_src, field2d)
+        ! Calcluate air_pressure_levels
+        call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+        allocate (pressure_f(geom%nVertLevels+1,ngrid))
+ 
+        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
+                                   pressure_f)
+
+        do i=1,ngrid
+        do k=1,geom % nVertLevels
+          kgkg_kgm2=( pressure_f(k,i)-pressure_f(k+1,i) ) / gravity !- Still bottom-to-top
+          field2d % array(k,i) = field2d_src%array(k,i) / kgkg_kgm2 
+        enddo
+        enddo
+        r2d_ptr_a(:,1:ngrid) = r2d_ptr_a(:,1:ngrid) + &
+                  field2d % array(:,1:ngrid)
+        deallocate (pressure_f)
+        call mpas_deallocate_field(field2d) ! not used
+
      case ("atmosphere_mass_content_of_cloud_ice")
      case ("effective_radius_of_cloud_liquid_water_particle")
      case ("effective_radius_of_cloud_ice_particle")
