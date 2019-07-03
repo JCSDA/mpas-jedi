@@ -291,7 +291,7 @@ elemental subroutine twp_to_rho(temperature,mixing_ratio,pressure,rho)
    real (kind=kind_real), intent(in)  :: pressure
    real (kind=kind_real), intent(out) :: rho
    rho = pressure / ( rgas * temperature * &
-                                ( 1.0_kind_real + (rv/rgas - 1.0_kind_real) * mixing_ratio ) )
+                                ( 1.0_kind_real + (rv/rgas) * mixing_ratio ) )
 end subroutine twp_to_rho
 !-------------------------------------------------------------------------------------------
 subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
