@@ -38,7 +38,7 @@ public :: mpas_state, mpas_state_registry, nf_aux
 !> Global registry
 type(registry_t) :: mpas_state_registry
 
-integer, parameter :: nf_aux = 21
+integer, parameter :: nf_aux = 20
 character(len=MAXVARLEN) :: fldnames_aux(nf_aux)
 
 ! ------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ subroutine create_state(self, geom, vars)
           "theta", "rho", "u", "index_qv", &
           "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp", &
           "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w", &
-          "index_qi", "re_cloud", "re_ice" ]
+          "re_cloud", "re_ice" ]
     end if
 
     instances = instances + 1

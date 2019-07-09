@@ -1,21 +1,23 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
 Test     : Fld=2  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
 Test     : Fld=3  Min=0, Max=0.0183791, RMS=0.00452795 : spechum
 Test     : Fld=4  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
 Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
 Test     : Fld=6  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
+Test     : Fld=7  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
 Test     : Fld=1  Min=194.234, Max=304.724, RMS=243.899 : temperature
 Test     : Fld=2  Min=1456.08, Max=97474.1, RMS=49317.3 : pressure
 Test     : Fld=3  Min=0, Max=0.0199991, RMS=0.0047139 : spechum
 Test     : Fld=4  Min=-39.7662, Max=84.9282, RMS=16.7846 : uReconstructZonal
 Test     : Fld=5  Min=-43.4896, Max=58.6028, RMS=8.84544 : uReconstructMeridional
 Test     : Fld=6  Min=0, Max=0.000495064, RMS=5.06778e-05 : index_qc
+Test     : Fld=7  Min=0, Max=0.000149932, RMS=8.00297e-06 : index_qi
 Test     : H(x): 
 Test     : Radiosonde nobs= 3892 Min=-30.0923, Max=299.139, RMS=122.058
 Test     : Aircraft nobs= 8392 Min=-32.2852, Max=296.637, RMS=127.999

@@ -14,6 +14,7 @@ model:
   - uReconstructZonal
   - uReconstructMeridional
   - index_qc
+  - index_qi
 cost_function:
   cost_type: 4D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -25,6 +26,7 @@ cost_function:
   - uReconstructZonal
   - uReconstructMeridional
   - index_qc
+  - index_qi
   varchange: Identity
   Jb:
     Background:
@@ -36,6 +38,7 @@ cost_function:
         - uReconstructZonal
         - uReconstructMeridional
         - index_qc
+        - index_qi
         filename: "./restart.2018-04-14_21.00.00.nc"
         date: '2018-04-14T21:00:00Z'
     Covariance:
@@ -219,6 +222,7 @@ variational:
       - uReconstructZonal
       - uReconstructMeridional
       - index_qc
+      - index_qi
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -239,6 +243,7 @@ variational:
       - uReconstructZonal
       - uReconstructMeridional
       - index_qc
+      - index_qi
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
