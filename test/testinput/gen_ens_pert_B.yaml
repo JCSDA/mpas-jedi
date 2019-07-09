@@ -1,0 +1,52 @@
+nml_file: namelist.atmosphere_2018041500
+Covariance:
+  covariance: BUMP
+#  covariance: MPASstatic
+  date: '2018-04-15T00:00:00Z'
+  bump:
+    prefix: mpas_parametersbump_cov
+    default_seed: 1
+    method: cor
+    nonunit_diag: 1 #effectively "cov"
+    strategy: specific_univariate  #common
+    load_nicas: 1
+    load_cmat: 1
+    ntry: 3
+    nrep: 2
+    lsqrt: 1
+    resol: 4
+    nicas_interp: bilin
+    network: 0
+    mpicom: 2
+    advmode: 0
+forecast_length: PT6H
+initial:
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  filename: "./restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+members: 5
+model:
+  name: MPAS
+  tstep: PT30M
+  variables:
+  - temperature
+  - pressure
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+output:
+  frequency: PT1H
+  filename: "./mpas_ens_forecast.$Y-$M-$D_$h.$m.$s.nc"
+resolution:
+  gridfname: "./restart.2018-04-15_00.00.00.nc"
+variables:
+- temperature
+- pressure
+- spechum
+- uReconstructZonal
+- uReconstructMeridional

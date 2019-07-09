@@ -5,13 +5,13 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "model/LfricTraits.h"
+#include "MPASTraits.h"
 #include "oops/runs/GenEnsPertB.h"
-#include "oops/runs/Run.h"
+#include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  oops::Run run(argc, argv);
-  oops::GenEnsPertB<lfric::LfricTraits> ensgen;
+  mpas::RunMPAS run(argc, argv);
+  oops::GenEnsPertB<mpas::MPASTraits> ensgen;
   run.execute(ensgen);
   return 0;
 }

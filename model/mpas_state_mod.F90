@@ -93,10 +93,16 @@ subroutine add_incr(self,rhs)
       call mpas_pool_get_field(self % subFields,               'index_qv', field2d_qv)
       call mpas_pool_get_field(self % subFields,                    'rho', field2d_rho)
 
+      ! Ensure positive sh
+      field2d_sh % array(:,:) = max( 0.0_kind_real, field2d_sh % array(:,:) )
+
       call temp_to_theta( field2d_t % array(:,:), field2d_p % array(:,:), field2d_th % array(:,:))
 !      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
       call q_to_w( field2d_sh % array(:,:), field2d_qv % array(:,:) )
 !      write(*,*) 'add_inc: index_qv min/max = ', minval(field2d_sh % array), maxval(field2d_sh % array)
+      ! Ensure positive qv : BJJ Do we need this? just in case ? or positive sh would be enough ?
+      field2d_qv % array(:,:) = max( 0.0_kind_real, field2d_qv % array(:,:) )
+
       call twp_to_rho( field2d_t % array(:,:), field2d_qv % array(:,:), field2d_p % array(:,:), &
                        field2d_rho % array(:,:) )
 !      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)

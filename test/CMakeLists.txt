@@ -16,6 +16,7 @@ list( APPEND mpas_test_input
   testinput/dirac.bumploc.yaml
   testinput/dirac.noloc.yaml
   testinput/geometry.yaml
+  testinput/gen_ens_pert_B.yaml
   testinput/state.yaml
   testinput/increment.yaml
   testinput/model.yaml
@@ -37,6 +38,7 @@ list( APPEND mpas_testoutput
   testoutput/4denvar_ID.test
   testoutput/3dhybrid_bumpcov_bumploc.test
   testoutput/forecast.test
+  testoutput/gen_ens_pert_B.test
   testoutput/hofx.test
   testoutput/hofx3d.test
   testoutput/enshofx.test
@@ -289,6 +291,14 @@ ecbuild_add_test( TARGET test_mpas_forecast
                        testoutput/forecast.test
                   MPI     1
                   DEPENDS mpas_forecast.x )
+
+ecbuild_add_test( TARGET test_mpas_gen_ens_pert_B
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_gen_ens_pert_B.x testinput/gen_ens_pert_B.yaml"
+                       testoutput/gen_ens_pert_B.test
+                  MPI     1
+                  DEPENDS mpas_gen_ens_pert_B.x )
 
 ecbuild_add_test( TARGET test_mpas_3dvar
                   TYPE SCRIPT

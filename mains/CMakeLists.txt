@@ -44,3 +44,8 @@ ecbuild_add_executable( TARGET  mpas_staticbinit.x
                         LIBS    mpas
                       )
 
+ecbuild_add_executable( TARGET  mpas_gen_ens_pert_B.x
+                        SOURCES mpasGenEnsPertB.cc
+                        LIBS    mpas
+                      )
+

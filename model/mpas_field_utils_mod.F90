@@ -427,6 +427,11 @@ subroutine write_field(self, c_conf, vdate)
      end if
    end if
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
+   ! Filename for writing out ensembles
+   if (config_element_exists(c_conf,"member")) then
+     temp_filename = config_get_string(c_conf,len(temp_filename),'member')
+     filename=trim(filename) // '.' // trim(temp_filename)
+   endif
    self % manager => self % geom % domain % streamManager
    ! TODO: we can get streamID from yaml
    ! TODO: should we pick different stream lists for mpas_state and mpas_increment?
