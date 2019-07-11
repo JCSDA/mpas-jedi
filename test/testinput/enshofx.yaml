@@ -1,7 +1,6 @@
 ---
 logging:
   categories: Info, Test, Warning, Error, Log, Trace, Stats
-test_framework_runtime_config: "--log_level=test_suite"
 nml_file: namelist.atmosphere_2018041421
 Assimilation Window:
   Begin: '2018-04-14T21:00:00Z'
@@ -27,7 +26,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem01/restart.2018-04-14_21.00.00.nc
+    filename: REL_DIR/data/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -35,7 +34,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem02/restart.2018-04-14_21.00.00.nc
+    filename: REL_DIR/data/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -43,7 +42,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem03/restart.2018-04-14_21.00.00.nc
+    filename: REL_DIR/data/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -51,7 +50,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem04/restart.2018-04-14_21.00.00.nc
+    filename: REL_DIR/data/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -59,7 +58,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem05/restart.2018-04-14_21.00.00.nc
+    filename: REL_DIR/data/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
 Observations:
   ObsTypes:
