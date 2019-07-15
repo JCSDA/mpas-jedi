@@ -32,8 +32,41 @@ use mpas_pool_routines
 !mpas-jedi
 use mpas_constants_mod
 
-
    contains
+
+   !***********************************************************************
+   !
+   !  function match_scalar_and_index_q
+   !
+   !> \brief   Test for a form of water vapor or hydrometeor of interest
+   !> \author  Steven Vahl
+   !> \date    11 July 2019
+   !> \details
+   !>  At various places in this module we wish to test for the case where
+   !>  one string is 'scalars' and another string is one of several
+   !>  'index_q?' values. Rather than repeat that logic many times, it
+   !>  is encapsulated here.
+   !
+   !-----------------------------------------------------------------------
+   pure function match_scalar_and_index_q(scalarName, indexName)
+
+      implicit none
+
+      character (len=*), intent(in) :: scalarName
+      character (len=*), intent(in) :: indexName
+      logical :: match_scalar_and_index_q
+
+      match_scalar_and_index_q = scalarName.eq.'scalars' .and. &
+                     (indexName.eq.'index_qv' .or. & ! water vapor
+                      indexName.eq.'index_qc' .or. & ! cloud
+                      indexName.eq.'index_qi' .or. & ! ice
+                      indexName.eq.'index_qr' .or. & ! rain
+                      indexName.eq.'index_qs' .or. & ! snow
+                      indexName.eq.'index_qg' .or. & ! graupel
+                      indexName.eq.'index_qh'      & ! hail
+                     )
+
+   end function
 
    !***********************************************************************
    !
@@ -270,25 +303,18 @@ use mpas_constants_mod
 !                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
-                  if ( trim(poolItr_a % memberName).eq.'index_qv' .or. &
-                       trim(poolItr_a % memberName).eq.'index_qc' .or. &
-                       trim(poolItr_a % memberName).eq.'index_qi' .or. &
-                       trim(poolItr_a % memberName).eq.'index_qr' .or. &
-                       trim(poolItr_a % memberName).eq.'index_qs' ) then
-!                     write(0,*)'Copy all2sub field: Looking at SCALARS now'
-
-                     call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
-                     if (index_scalar .gt. 0) then
-                        call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
-                        call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
-                        field2d % array(:,:) = field3d % array(index_scalar,:,:)
+               else if ( match_scalar_and_index_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+!                 write(0,*)'Copy all2sub field: Looking at SCALARS now'
+                  call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
+                  if (index_scalar .gt. 0) then
+                     call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
+                     call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
+                     field2d % array(:,:) = field3d % array(index_scalar,:,:)
 !                        write(0,*)'Copy all2sub field ',trim(poolItr_a % memberName), &
 !                                  minval(field2d % array), maxval(field2d % array)
-                     else
-                        write(0,*)'WARNING in Copy all2sub field; ',trim(poolItr_a % memberName), &
-                                  'not available from MPAS'
-                     end if
+                  else
+                     write(0,*)'WARNING in Copy all2sub field; ',trim(poolItr_a % memberName), &
+                                 'not available from MPAS'
                   end if
                end if
             end do
@@ -370,25 +396,20 @@ use mpas_constants_mod
 !                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( trim(poolItr_b % memberName).eq.'scalars' ) then
-                       !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
-                       if ( trim(poolItr_a % memberName).eq.'index_qv' .or. &
-                            trim(poolItr_a % memberName).eq.'index_qc' .or. &
-                            trim(poolItr_a % memberName).eq.'index_qi' .or. &
-                            trim(poolItr_a % memberName).eq.'index_qr' .or. &
-                            trim(poolItr_a % memberName).eq.'index_qs' ) then
-                          call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
-                          if (index_scalar .gt. 0) then
-                             call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
-                             call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
-                             field3d % array(index_scalar,:,:) = field2d % array(:,:)
+               else if ( match_scalar_and_index_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+                  !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
+                  call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
+                  if (index_scalar .gt. 0) then
+                     call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
+                     call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
+                     field3d % array(index_scalar,:,:) = field2d % array(:,:)
 !                             write(0,*)'Copy sub2all field ',trim(poolItr_a % memberName), &
 !                                       minval(field2d % array), maxval(field2d % array)
-                          else
-                             write(0,*)'WARNING in Copy sub2all field; ',trim(poolItr_a % memberName), &
-                                       'not available from MPAS'
-                          end if
-                       end if
+                  else
+                     write(0,*)'WARNING in Copy sub2all field; ',trim(poolItr_a % memberName), &
+                              'not available from MPAS'
+                  end if
+!                       end if
                end if
             end do
            end if
@@ -491,29 +512,21 @@ use mpas_constants_mod
                      end if
                      nfields = nfields + 1
                   
-                  else if ( trim(poolItr % memberName).eq.'scalars' ) then
-!                     write(0,*)'Scalars pool case'
-                     if ( trim(fieldname(ii)).eq.'index_qv' .or. &
-                          trim(fieldname(ii)).eq.'index_qc' .or. &
-                          trim(fieldname(ii)).eq.'index_qi' .or. &
-                          trim(fieldname(ii)).eq.'index_qr' .or. &
-                          trim(fieldname(ii)).eq.'index_qs' ) then
-                        call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
-                        if (index_scalar .gt. 0) then
-                           call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d)
-                           call mpas_pool_get_field(allFields, 'theta_m', field2d_src)
-                           call mpas_duplicate_field(field2d_src, field2d_dst)
-                           field2d_dst % fieldName = trim(fieldname(ii))
-                           field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
-                           call mpas_pool_add_field(subFields, trim(fieldname(ii)), field2d_dst)
+                  else if (match_scalar_and_index_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
+                     call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
+                     if (index_scalar .gt. 0) then
+                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d)
+                        call mpas_pool_get_field(allFields, 'theta_m', field2d_src)
+                        call mpas_duplicate_field(field2d_src, field2d_dst)
+                        field2d_dst % fieldName = trim(fieldname(ii))
+                        field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
+                        call mpas_pool_add_field(subFields, trim(fieldname(ii)), field2d_dst)
 
-                           nfields = nfields + 1
-                        else
-                           write(0,*)'WARNING in da_make_subpool; ',trim(fieldname(ii)), &
-                                     'not available from MPAS'
-                        end if
+                        nfields = nfields + 1
+                     else
+                        write(0,*)'WARNING in da_make_subpool; ',trim(fieldname(ii)), &
+                                    'not available from MPAS'
                      end if
-
                   end if
               end do
             end if
@@ -579,7 +592,7 @@ use mpas_constants_mod
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
-                     else if (( trim(fieldname(ii)).eq.'index_qv').and.(trim(poolItr % memberName).eq.'scalars')) then
+                     else if (match_scalar_and_index_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1 
                      end if
