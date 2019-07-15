@@ -95,18 +95,33 @@ Observations:
         use_compress: 0
     ObsBias: {}
   - ObsSpace:
-      name: AMSUA-NOAA19
+      name: AMSUA-NOAA19--ch4-14
       ObsDataIn:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_amsua_n19.nc4
+        obsfile: Data/hofx_amsua_n19--ch4-14.nc4
       simulate:
         variables: [brightness_temperature]
-        channels: 1-15
+        channels: 4-14
     ObsOperator:
       name: CRTM
-      n_Absorbers: 3
-      n_Clouds: 2
+      n_Aerosols: 0
+      Sensor_ID: amsua_n19
+      EndianType: little_endian
+      CoefficientPath: Data/
+    ObsBias: {}
+  - ObsSpace:
+      name: AMSUA-NOAA19--ch1-3,15
+      ObsDataIn:
+        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_amsua_n19--ch1-3,15.nc4
+      simulate:
+        variables: [brightness_temperature]
+        channels: 1-3,15
+    ObsOperator:
+      name: CRTM
+      Clouds: [cloud_liquid_water, cloud_ice]
       n_Aerosols: 0
       Sensor_ID: amsua_n19
       EndianType: little_endian
@@ -123,8 +138,7 @@ Observations:
         channels: 1,6-7
     ObsOperator:
       name: CRTM
-      n_Absorbers: 3
-      n_Clouds: 2
+#      Extra_Absorbers: [carbon_dioxide]
       n_Aerosols: 0
       Sensor_ID: airs_aqua
       EndianType: little_endian
@@ -148,8 +162,7 @@ Observations:
                   464,501,529,710,713,742,882,890,937,995,1008,1022,1058
     ObsOperator:
       name: CRTM
-      n_Absorbers: 3
-      n_Clouds: 2
+#      Extra_Absorbers: [carbon_dioxide]
       n_Aerosols: 0
       Sensor_ID: cris-fsr_npp
       EndianType: little_endian
@@ -164,11 +177,10 @@ Observations:
         obsfile: Data/hofx_iasi_metop-a.nc4
       simulate:
         variables: [brightness_temperature]
-        channels: 16,29,32,35,38,41,44 
+        channels: 16,29,32,35,38,41,44
     ObsOperator:
       name: CRTM
-      n_Absorbers: 3
-      n_Clouds: 2
+#      Extra_Absorbers: [carbon_dioxide]
       n_Aerosols: 0
       Sensor_ID: iasi_metop-a
       EndianType: little_endian
@@ -176,17 +188,33 @@ Observations:
       IRVISlandCoeff: USGS
     ObsBias: {}
 #  - ObsSpace:
-#      name: ATMS-NPP
+#      name: ATMS-NPP--ch5-15
 #      ObsDataIn:
 #        obsfile: Data/atms_npp_obs_2018041500_m.nc4
 #      ObsDataOut:
-#        obsfile: Data/hofx_atms_npp.nc4
+#        obsfile: Data/hofx_atms_npp--ch5-15.nc4
+#      simulate:
+#        variables: [brightness_temperature]
+#        channels: 5-15
 #    ObsOperator:
 #      name: CRTM
-#      channels: 1-22
-##      channels: 5-15 #T sensitive channels
-#      n_Absorbers: 3
-#      n_Clouds: 2
+#      n_Aerosols: 0
+#      Sensor_ID: atms_npp
+#      EndianType: little_endian
+#      CoefficientPath: Data/
+#    ObsBias: {}
+#  - ObsSpace:
+#      name: ATMS-NPP--ch1-4,16-22
+#      ObsDataIn:
+#        obsfile: Data/atms_npp_obs_2018041500_m.nc4
+#      ObsDataOut:
+#        obsfile: Data/hofx_atms_npp--ch1-4,16-22.nc4
+#      simulate:
+#        variables: [brightness_temperature]
+#        channels: 1-4,16-22
+#    ObsOperator:
+#      name: CRTM
+#      Clouds: [cloud_liquid_water, cloud_ice]
 #      n_Aerosols: 0
 #      Sensor_ID: atms_npp
 #      EndianType: little_endian

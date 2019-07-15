@@ -35,7 +35,8 @@ private
 public :: mpas_field, interp_checks, &
           create_field, delete_field, &
           copy_field, copy_pool, &
-          update_diagnostic_fields
+          update_diagnostic_fields, &
+          mpas_hydrometeor_fields
 
 integer, parameter :: maxLabels = 1000
 logical, dimension(0:maxLabels), save :: labelsInUse
@@ -92,6 +93,11 @@ integer, parameter :: state_max = maxLabels
 
    end interface
 
+   character(len=MAXVARLEN) :: mpas_hydrometeor_fields(6) = &
+      [ character(len=MAXVARLEN) :: &
+      "index_qc", "index_qi", "index_qr", "index_qs", "index_qg", "index_qh" ]
+
+! ------------------------------------------------------------------------------
 contains
 
 ! ------------------------------------------------------------------------------

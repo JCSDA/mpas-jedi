@@ -961,6 +961,70 @@ use mpas_constants_mod
 
    !***********************************************************************
    !
+   !  subroutine da_posdef
+   !
+   !> \brief   Performs A = max(0.,A) for pool A
+   !> \author  JJ Guerrette
+   !> \date    12 July 2019
+   !> \details
+   !
+   !-----------------------------------------------------------------------
+   subroutine da_posdef(pool_a, fld_select)
+
+      implicit none
+
+      type (mpas_pool_type), pointer, intent(inout) :: pool_a
+      character (len=*), optional,    intent(in)    :: fld_select(:)
+
+      type (mpas_pool_iterator_type) :: poolItr
+      real (kind=kind_real), pointer :: r0d_ptr_a
+      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
+      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+
+      !
+      ! Iterate over all fields in pool_b, adding them to fields of the same
+      ! name in pool_a
+      !
+      call mpas_pool_begin_iteration(pool_a)
+
+      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+
+         if (present(fld_select)) then
+            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+         end if
+
+         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+         ! so we select only those members of the pool that are fields
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+
+            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+
+               ! Depending on the dimensionality of the field, we need to set pointers of
+               ! the correct type
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
+                  r0d_ptr_a = max(0.0_kind_real, r0d_ptr_a)
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
+                  r1d_ptr_a = max(0.0_kind_real, r1d_ptr_a)
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
+                  r2d_ptr_a = max(0.0_kind_real, r2d_ptr_a)
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
+                  r3d_ptr_a = max(0.0_kind_real, r3d_ptr_a)
+               end if
+
+            end if
+         end if
+      end do
+
+   end subroutine da_posdef
+
+   !***********************************************************************
+   !
    !  subroutine da_setval
    !
    !> \brief   Performs A = Val_R. for pool A

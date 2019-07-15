@@ -80,6 +80,9 @@ subroutine add_incr(self,rhs)
       kind_op = 'add'
       call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = rhs % fldnames_ci)
 
+      ! Impose positive-definite limits on hydrometeors
+      call da_posdef( self % subFields, mpas_hydrometeor_fields)
+
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
       !  update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       !  update theta from temperature and pressure
@@ -94,14 +97,14 @@ subroutine add_incr(self,rhs)
       call mpas_pool_get_field(self % subFields,                    'rho', field2d_rho)
 
       ! Ensure positive sh
-      field2d_sh % array(:,:) = max( 0.0_kind_real, field2d_sh % array(:,:) )
+      call da_posdef( self % subFields, (/'spechum'/))
 
       call temp_to_theta( field2d_t % array(:,:), field2d_p % array(:,:), field2d_th % array(:,:))
 !      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
       call q_to_w( field2d_sh % array(:,:), field2d_qv % array(:,:) )
 !      write(*,*) 'add_inc: index_qv min/max = ', minval(field2d_sh % array), maxval(field2d_sh % array)
       ! Ensure positive qv : BJJ Do we need this? just in case ? or positive sh would be enough ?
-      field2d_qv % array(:,:) = max( 0.0_kind_real, field2d_qv % array(:,:) )
+      call da_posdef( self % subFields, (/'index_qv'/))
 
       call twp_to_rho( field2d_t % array(:,:), field2d_qv % array(:,:), field2d_p % array(:,:), &
                        field2d_rho % array(:,:) )

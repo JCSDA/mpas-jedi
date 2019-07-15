@@ -24,8 +24,9 @@ Test     : Aircraft nobs= 8392 Min=-32.2852, Max=296.637, RMS=127.999
 Test     : Satwind nobs= 198 Min=-29.4644, Max=49.824, RMS=11.0547
 Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.337, RMS=132.935
 Test     : GnssroBndROPP1D nobs= 12 Min=0.000561713, Max=0.0131566, RMS=0.00762748
-Test     : AMSUA-NOAA19 nobs= 1500 Min=145.729, Max=290.372, RMS=233.589
-Test     : AIRS-AQUA nobs= 300 Min=210.873, Max=231.199, RMS=222.079
-Test     : CRIS-NPP nobs= 9900 Min=209.276, Max=298.675, RMS=242.442
-Test     : IASI-METOPA nobs= 700 Min=211.145, Max=243.406, RMS=226.839
+Test     : AMSUA-NOAA19--ch4-14 nobs= 1100 Min=207.764, Max=272.71, RMS=234.979
+Test     : AMSUA-NOAA19--ch1-3,15 nobs= 400 Min=145.729, Max=290.372, RMS=229.444
+Test     : AIRS-AQUA nobs= 300 Min=210.839, Max=231.218, RMS=222.132
+Test     : CRIS-NPP nobs= 9900 Min=211.134, Max=298.672, RMS=247.481
+Test     : IASI-METOPA nobs= 700 Min=211.085, Max=243.526, RMS=226.917
 Test     : End H(x)

@@ -46,27 +46,17 @@ cost_function:
       date: '2018-04-15T00:00:00Z'
   Jo:
     ObsTypes:
-    - ObsOperator:
-        name: CRTM
-        #NOTES for amsua channels:
-        # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
-        # + vertical peak senstivity increases from 1 to 14 w/ 12-14 exclusive to strat.
-        # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
-        # + 8 is noisy/degraded on n19
-  #      SkipChannels: ??
-        n_Absorbers: '3'
-        n_Clouds: '2'
-        n_Aerosols: '0'
-        Sensor_ID: amsua_n19
-        EndianType: little_endian
-        CoefficientPath: Data/
-#        InspectProfileNumber: 1
-      ObsSpace:
-        name: Radiance
+    #NOTES for amsua channels:
+    # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
+    # + vertical peak senstivity increases from 1 to 14 w/ 12-14 exclusive to strat.
+    # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
+    # + 8 is noisy/degraded on n19
+    - ObsSpace:
+        name: AMSUA-NOAA19--ch4-7,9-14
         ObsDataIn:
           obsfile: Data/amsua_n19_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_amsua_n19.nc4
+          obsfile: Data/obsout_3dvar_amsua_n19--ch4-7,9-14.nc4
         simulate:
           variables: [brightness_temperature]
           channels: 4-7,9-14
@@ -76,8 +66,40 @@ cost_function:
       ObsFilters:
       - Filter: Background Check
         variables: [brightness_temperature]
-        channels: 4-7,9-14 
+        channels: 4-7,9-14
         threshold: 10
+      ObsOperator:
+        name: CRTM
+        n_Aerosols: 0
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
+#        InspectProfileNumber: 1
+    - ObsSpace:
+        name: AMSUA-NOAA19--ch1-3,15
+        ObsDataIn:
+          obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dvar_amsua_n19--ch1-3,15.nc4
+        simulate:
+          variables: [brightness_temperature]
+          channels: 1-3,15
+      ObsBias: {}
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        variables: [brightness_temperature]
+        channels: 1-3,15
+        threshold: 10
+      ObsOperator:
+        name: CRTM
+        Clouds: [cloud_liquid_water, cloud_ice]
+        n_Aerosols: 0
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
+#        InspectProfileNumber: 1
 minimizer:
   algorithm: DRIPCG
 output:
