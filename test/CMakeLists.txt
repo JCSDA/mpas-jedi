@@ -2,6 +2,7 @@ list( APPEND mpas_test_input
   testinput/3dvar.yaml
   testinput/3dvar_amsua.yaml
   testinput/3dvar_bumpcov.yaml
+  testinput/3dvar_amsua_bumpcov.yaml
   testinput/3dfgat.yaml
   testinput/3denvar_bumploc.yaml
   testinput/3denvar_bumploc_specified.yaml
@@ -31,6 +32,7 @@ list( APPEND mpas_testoutput
   testoutput/3dvar.test
   testoutput/3dvar_amsua.test
   testoutput/3dvar_bumpcov.test
+  testoutput/3dvar_amsua_bumpcov.test
   testoutput/3dfgat.test
   testoutput/3denvar_bumploc.test
   testoutput/3denvar_bumploc_specified.test
@@ -322,6 +324,14 @@ ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
                   COMMAND "compare.sh"
                   ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.yaml"
                        testoutput/3dvar_bumpcov.test
+                  MPI     1
+                  DEPENDS mpas_variational.x )
+
+ecbuild_add_test( TARGET test_mpas_3dvar_amsua_bumpcov
+                  TYPE SCRIPT
+                  COMMAND "compare.sh"
+                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_amsua_bumpcov.yaml"
+                       testoutput/3dvar_amsua_bumpcov.test
                   MPI     1
                   DEPENDS mpas_variational.x )
 
