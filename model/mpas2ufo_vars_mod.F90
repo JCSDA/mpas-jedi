@@ -639,7 +639,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_add_field(convFields, var_z, field2d)
         call mpas_deallocate_field(field2d_a) ! not used
 
-     case ("sfc_geopotential_height")  !-var_sfc_z
+     case ("surface_geopotential_height")  !-var_sfc_z
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
 
