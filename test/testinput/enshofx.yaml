@@ -71,7 +71,7 @@ Observations:
       simulate:
         variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
-      name: Radiosonde
+      name: VertInterp
     ObsBias: {}
   - ObsSpace:
       name: Aircraft
@@ -82,7 +82,7 @@ Observations:
       simulate:
         variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
-      name: Aircraft
+      name: VertInterp
     ObsBias: {}
   - ObsSpace:
       name: Satwind
@@ -93,7 +93,7 @@ Observations:
       simulate:
         variables: [eastward_wind, northward_wind]
     ObsOperator:
-      name: Satwind
+      name: VertInterp
     ObsBias: {}
   - ObsSpace:
       name: GnssroRef
