@@ -125,12 +125,12 @@ Observations:
     ObsBias: {}
   - ObsOperator:
       name: CRTM
-      n_Absorbers: '3'
-      n_Clouds: '2'
-      n_Aerosols: '0'
-      Sensor_ID: amsua_n19
-      EndianType: little_endian
-      CoefficientPath: Data/
+      Absorbers: [H2O,O3]
+      Clouds: [Water, Ice]
+      ObsOptions:
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
     ObsSpace:
       name: CRTM
       ObsDataIn:
