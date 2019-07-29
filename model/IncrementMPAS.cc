@@ -10,13 +10,11 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+
 #include <boost/algorithm/string.hpp>
 
 #include "eckit/config/LocalConfiguration.h"
-
-#include "model/GeometryMPAS.h"
-#include "model/GetValuesTrajMPAS.h"
-#include "model/StateMPAS.h"
+#include "eckit/exception/Exceptions.h"
 
 #include "oops/base/Variables.h"
 #include "oops/generic/UnstructuredGrid.h"
@@ -26,6 +24,10 @@
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
+
+#include "model/GeometryMPAS.h"
+#include "model/GetValuesTrajMPAS.h"
+#include "model/StateMPAS.h"
 
 namespace mpas {
 

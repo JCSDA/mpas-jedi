@@ -9,15 +9,16 @@
 #include <vector>
 
 #include "eckit/config/Configuration.h"
+#include "eckit/exception/Exceptions.h"
+
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 
 #include "model/Fortran.h"
 #include "model/GeometryMPAS.h"
 #include "model/ModelMPAS.h"
 #include "model/ModelBiasMPAS.h"
 #include "model/StateMPAS.h"
-
-#include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 
 namespace mpas {
 // -----------------------------------------------------------------------------
