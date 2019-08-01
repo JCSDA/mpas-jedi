@@ -8,7 +8,7 @@ Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
 Test     : Fld=6  Min=0, Max=0.000476202, RMS=3.59299e-05 : index_qc
 Test     : Fld=7  Min=0, Max=0.000143053, RMS=7.33263e-06 : index_qi
-Test     : H(x): Radiosonde nobs= 3892 Min=-30.5236, Max=298.988, RMS=122.069
+Test     : H(x): Radiosonde nobs= 3896 Min=-30.5236, Max=298.988, RMS=122.06
 Test     : Aircraft nobs= 8392 Min=-35.3525, Max=296.633, RMS=127.999
 Test     : Satwind nobs= 198 Min=-28.8641, Max=49.8238, RMS=11.2324
 Test     : GnssroRef nobs= 20 Min=0.206527, Max=357.672, RMS=133.91
