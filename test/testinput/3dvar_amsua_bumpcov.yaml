@@ -117,10 +117,10 @@ cost_function:
 #      ObsOperator:
 #        name: CRTM
 #        Absorbers: [H2O,O3]
-#        Clouds: [Water, Ice]
+#        Clouds: [Water, Ice, Rain, Snow, Graupel]
 #        LinearObsOperator:
 #          Absorbers: [H2O]
-#          Clouds: [Water, Ice]
+#          Clouds: [Water, Ice, Rain, Snow, Graupel]
 #        ObsOptions:
 #          Sensor_ID: amsua_n19
 #          EndianType: little_endian

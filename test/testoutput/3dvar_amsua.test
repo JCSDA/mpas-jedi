@@ -1,34 +1,40 @@
 Test     : CostJb   : Nonlinear Jb = 0
 Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7594.93, nobs = 579, Jo/n = 13.1173, err = 1.32875
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 2001.05, nobs = 379, Jo/n = 5.27981, err = 2.62545
-Test     : CostFunction: Nonlinear J = 9595.98
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.204388
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1996.59, nobs = 379, Jo/n = 5.26806, err = 2.62545
+Test     : CostFunction: Nonlinear J = 9591.52
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.207937
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=199.61, Max=305.248, RMS=243.965 : temperature
 Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
-Test     : Fld=3  Min=0, Max=0.0345833, RMS=0.00490445 : spechum
+Test     : Fld=3  Min=0, Max=0.0346357, RMS=0.00490147 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
-Test     : Fld=6  Min=0, Max=0.000476202, RMS=3.59241e-05 : index_qc
+Test     : Fld=6  Min=0, Max=0.000476202, RMS=3.59239e-05 : index_qc
 Test     : Fld=7  Min=0, Max=0.000143053, RMS=7.33264e-06 : index_qi
-Test     : CostJb   : Nonlinear Jb = 0.0155393
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7059.64, nobs = 579, Jo/n = 12.1928, err = 1.32875
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1798.48, nobs = 378, Jo/n = 4.75788, err = 2.62577
-Test     : CostFunction: Nonlinear J = 8858.13
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.162809
+Test     : Fld=8  Min=0, Max=0.00022368, RMS=6.2823e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
+Test     : CostJb   : Nonlinear Jb = 0.015482
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7060.9, nobs = 579, Jo/n = 12.195, err = 1.32875
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1834.05, nobs = 378, Jo/n = 4.85199, err = 2.62577
+Test     : CostFunction: Nonlinear J = 8894.97
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.157186
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=199.61, Max=305.248, RMS=243.965 : temperature
 Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
-Test     : Fld=3  Min=0, Max=0.0647042, RMS=0.00527793 : spechum
+Test     : Fld=3  Min=0, Max=0.0651471, RMS=0.00527556 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
-Test     : Fld=6  Min=0, Max=0.000476202, RMS=3.59147e-05 : index_qc
+Test     : Fld=6  Min=0, Max=0.000476202, RMS=3.5914e-05 : index_qc
 Test     : Fld=7  Min=0, Max=0.000143053, RMS=7.33264e-06 : index_qi
-Test     : CostJb   : Nonlinear Jb = 0.0415859
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6844.74, nobs = 578, Jo/n = 11.8421, err = 1.32986
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1752.75, nobs = 376, Jo/n = 4.66157, err = 2.62339
-Test     : CostFunction: Nonlinear J = 8597.54
+Test     : Fld=8  Min=0, Max=0.00022368, RMS=6.27649e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
+Test     : CostJb   : Nonlinear Jb = 0.0416145
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6844.31, nobs = 578, Jo/n = 11.8414, err = 1.32986
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1776.43, nobs = 376, Jo/n = 4.72455, err = 2.62339
+Test     : CostFunction: Nonlinear J = 8620.78

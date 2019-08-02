@@ -20,6 +20,9 @@ Model:
   - uReconstructMeridional
   - index_qc
   - index_qi
+  - index_qr
+  - index_qs
+  - index_qg
 Initial Condition:
   variables:
   - temperature
@@ -29,6 +32,9 @@ Initial Condition:
   - uReconstructMeridional
   - index_qc
   - index_qi
+  - index_qr
+  - index_qs
+  - index_qg
   filename: "./restart.2018-04-14_21.00.00.nc"
   date: '2018-04-14T21:00:00Z'
 Observations:
@@ -122,7 +128,7 @@ Observations:
         channels: 1-3,15
     ObsOperator:
       <<: *crtmobsoper
-      Clouds: [Water, Ice]
+      Clouds: [Water, Ice, Rain, Snow, Graupel]
       ObsOptions:
         <<: *crtmobsopts
     ObsBias: {}
@@ -206,7 +212,7 @@ Observations:
 #        channels: 1-4,16-22
 #    ObsOperator:
 #      <<: *crtmobsoper
-#      Clouds: [Water, Ice]
+#      Clouds: [Water, Ice, Rain, Snow, Graupel]
 #      ObsOptions:
 #        <<: *crtmobsopts
 #        Sensor_ID: atms_npp

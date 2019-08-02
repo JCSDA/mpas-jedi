@@ -1,6 +1,6 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
 Test     : Fld=2  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
 Test     : Fld=3  Min=0, Max=0.0183791, RMS=0.00452795 : spechum
@@ -8,9 +8,12 @@ Test     : Fld=4  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
 Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
 Test     : Fld=6  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
 Test     : Fld=7  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
+Test     : Fld=8  Min=0, Max=0.000217494, RMS=4.42344e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.000826256, RMS=1.62665e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000209845, RMS=3.58075e-06 : index_qg
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 7
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=194.234, Max=304.724, RMS=243.899 : temperature
 Test     : Fld=2  Min=1456.08, Max=97474.1, RMS=49317.3 : pressure
 Test     : Fld=3  Min=0, Max=0.0199991, RMS=0.0047139 : spechum
@@ -18,6 +21,9 @@ Test     : Fld=4  Min=-39.7662, Max=84.9282, RMS=16.7846 : uReconstructZonal
 Test     : Fld=5  Min=-43.4896, Max=58.6028, RMS=8.84544 : uReconstructMeridional
 Test     : Fld=6  Min=0, Max=0.000495064, RMS=5.06778e-05 : index_qc
 Test     : Fld=7  Min=0, Max=0.000149932, RMS=8.00297e-06 : index_qi
+Test     : Fld=8  Min=0, Max=0.000409157, RMS=7.79657e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.000851626, RMS=1.98777e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000498209, RMS=9.84138e-06 : index_qg
 Test     : H(x): 
 Test     : Radiosonde nobs= 3896 Min=-30.0923, Max=299.139, RMS=122.049
 Test     : Aircraft nobs= 8392 Min=-32.2852, Max=296.637, RMS=127.999
@@ -25,7 +31,7 @@ Test     : Satwind nobs= 198 Min=-29.4644, Max=49.824, RMS=11.0547
 Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.337, RMS=132.935
 Test     : GnssroBndROPP1D nobs= 12 Min=0.000561713, Max=0.0131566, RMS=0.00762748
 Test     : AMSUA-NOAA19--ch4-14 nobs= 1100 Min=207.764, Max=272.71, RMS=234.979
-Test     : AMSUA-NOAA19--ch1-3,15 nobs= 400 Min=145.729, Max=290.372, RMS=229.444
+Test     : AMSUA-NOAA19--ch1-3,15 nobs= 400 Min=145.729, Max=290.372, RMS=229.6
 Test     : AIRS-AQUA nobs= 300 Min=210.839, Max=231.218, RMS=222.132
 Test     : CRIS-NPP nobs= 9900 Min=211.134, Max=298.672, RMS=247.481
 Test     : IASI-METOPA nobs= 700 Min=211.085, Max=243.526, RMS=226.917
