@@ -95,6 +95,72 @@ ecbuild_add_resources( TARGET   mpas_test_scripts
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
+list( APPEND mpas_test_config_base
+  Data/stream_list.atmosphere.output
+  Data/stream_list.atmosphere.surface
+  Data/stream_list.atmosphere.diagnostics
+)
+CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
+                         ${CMAKE_CURRENT_BINARY_DIR}
+                         ${mpas_test_config_base} )
+
+list( APPEND mpas_test_config_480
+  Data/480km/namelist.atmosphere_2018041421
+  Data/480km/namelist.atmosphere_2018041500
+  Data/480km/streams.atmosphere
+  Data/480km/x1.2562.graph.info
+#  Data/480km/x1.2562.graph.info.part.2
+#  Data/480km/x1.2562.graph.info.part.4
+#  Data/480km/x1.2562.graph.info.part.6
+#  Data/480km/x1.2562.graph.info.part.8
+#  Data/480km/x1.2562.graph.info.part.12
+#  Data/480km/x1.2562.graph.info.part.16
+)
+
+list( APPEND mpas_test_bg_480
+  Data/480km/bg/restart.2018-04-14_21.00.00.nc
+  Data/480km/bg/restart.2018-04-15_00.00.00.nc
+  Data/480km/bg/restart.2018-04-15_03.00.00.nc
+)
+
+list( APPEND mpas_test_ensemble_480
+  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
+  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_03.00.00.nc
+  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
+  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_03.00.00.nc
+  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
+  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_03.00.00.nc
+  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
+  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_03.00.00.nc
+  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
+  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
+)
+
+# Setup links in test directory for 480km ctests
+CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
+                         ${CMAKE_CURRENT_BINARY_DIR}
+                         ${mpas_test_config_480} )
+
+CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
+                         ${CMAKE_CURRENT_BINARY_DIR}
+                         ${mpas_test_bg_480} )
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem01)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem02)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem03)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem04)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem05)
+foreach(FILENAME ${mpas_test_ensemble_480})
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
+endforeach(FILENAME)
+
 # Add ioda obs test data
 list (APPEND ioda_obs_test_data
   atmosphere/aircraft_obs_2018041500_m.nc4

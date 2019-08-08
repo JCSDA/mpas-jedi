@@ -26,7 +26,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
+    filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -34,7 +34,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
+    filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -42,7 +42,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
+    filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -50,7 +50,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
+    filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
@@ -58,7 +58,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
-    filename: REL_DIR/data/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
+    filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
 Observations:
   ObsTypes:
