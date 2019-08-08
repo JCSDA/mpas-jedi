@@ -27,6 +27,7 @@ initial:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 members: 5
@@ -39,6 +40,7 @@ model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 output:
   frequency: PT1H
   filename: "./mpas_ens_forecast.$Y-$M-$D_$h.$m.$s.nc"
@@ -50,3 +52,4 @@ variables:
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
+- surface_pressure

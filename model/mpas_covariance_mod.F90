@@ -10,6 +10,8 @@ implicit none
 !> Fortran derived type to hold configuration data for the background/model covariance
 type :: mpas_covar
   integer :: nothing_yet
+  character(len=20) :: var_scaling_variable
+  real    :: var_scaling_magnitude
 end type mpas_covar
 
 #define LISTED_TYPE mpas_covar

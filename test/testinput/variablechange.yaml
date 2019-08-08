@@ -11,6 +11,7 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
   bump:
     check_vbal: 0
     nc1: 1000
@@ -36,6 +37,7 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
   outputVariables:
     variables:
     - temperature
@@ -43,6 +45,7 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
 - varchange: Control2Model
   toleranceInverse: '1.0e-8'
   testinverse: '0'
@@ -53,6 +56,7 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
   outputVariables:
     variables:
     - temperature
@@ -60,6 +64,7 @@ LinearVariableChangeTests:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
 Geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 State:
@@ -69,6 +74,7 @@ State:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 Variables:
@@ -78,3 +84,4 @@ Variables:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure

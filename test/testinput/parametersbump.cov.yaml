@@ -10,6 +10,7 @@ variables:
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
+- surface_pressure
 date: '2018-04-15T00:00:00Z'
 background:
   variables:
@@ -18,6 +19,7 @@ background:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 ensemble:
@@ -38,6 +40,7 @@ ensemble:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 bump:
   prefix: mpas_parametersbump_cov
   default_seed: 1

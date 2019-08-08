@@ -542,6 +542,13 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_add_field(convFields, var_prs, field2d)
 !        write(*,*) "end-of ",var_prs
 
+     case ( var_ps ) !-surface_pressure
+        call mpas_pool_get_field(subFields, 'surface_pressure', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
      case ( var_prsi ) !-air_pressure_levels
         call mpas_pool_get_array(subFields, "pressure", r2d_ptr_a)
         call mpas_pool_get_field(subFields, 'w', field2d_src) ! as a dummy array
@@ -747,6 +754,26 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         field1d % fieldName = var_sfc_z
         call mpas_pool_add_field(convFields, var_sfc_z, field1d)
 
+     case ( var_geomz )  !-height
+        call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
+        call mpas_duplicate_field(field2d_src, field2d)
+
+!       calculate midpoint geometricZ (unit: m):
+        call geometricZ_full_to_half(geom%zgrid(:,1:ngrid), ngrid, &
+                                     geom % nVertLevels,field2d%array(:,1:ngrid))
+
+        field2d % fieldName = var_geomz
+        call mpas_pool_add_field(convFields, var_geomz, field2d)
+
+     case ( var_sfc_geomz )  !-surface_altitude
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
+        call mpas_duplicate_field(field1d_src, field1d)
+
+        field1d % fieldName = var_sfc_geomz
+        field1d % array (1:ngrid) = geom%zgrid(1,:)
+
+        call mpas_pool_add_field(convFields, var_sfc_geomz, field1d)
+
      case default
         write(*,*) 'Not processed in sub. convert_mpas_field2ufo: ',trim(fieldname(ivar))
         !- TODO: Abort processing when we get here. (Breaks hofx ctests)
@@ -781,6 +808,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
+   type (field1DReal), pointer :: field1d, field1d_src
    integer :: ivar, i, k
    real (kind=kind_real), dimension (:,:), allocatable :: pressure_f
 
@@ -889,6 +917,11 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
 !        call mpas_pool_add_field(convFields_tl, var_prs, field2d)
 !        write(*,*) "end-of ",var_prs
 
+     case ( var_ps ) !-surface_pressure
+        call mpas_pool_get_field(subFields_tl, 'surface_pressure', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)!  as a dummy array
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields_tl, trim(fieldname(ivar)), field1d)
      case ( var_prsi ) !-air_pressure_levels
      case ( var_oz )   !-mole_fraction_of_ozone_in_air
      case ( var_co2 )  !-mole_fraction_of_carbon_dioxide_in_air
@@ -1019,6 +1052,7 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
+   type (field1DReal), pointer :: field1d, field1d_src
    integer :: ivar, i, k
    real (kind=kind_real), dimension (:,:), allocatable :: pressure_f
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
@@ -1129,6 +1163,12 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
 !        field2d % fieldName = var_prs
 !        call mpas_pool_add_field(convFields_ad, var_prs, field2d)
 !        write(*,*) "end-of ",var_prs
+
+     case ( var_ps ) !-surface_pressure
+        call mpas_pool_get_array(subFields_ad, 'surface_pressure', r1d_ptr_a) !< get psfc
+        call mpas_pool_get_field(convFields_ad, trim(fieldname(ivar)), field1d)
+        r1d_ptr_a(1:ngrid) = r1d_ptr_a(1:ngrid) + &
+                         field1d % array(1:ngrid)
 
      case ( var_prsi ) !-air_pressure_levels
      case ( var_oz )   !-mole_fraction_of_ozone_in_air

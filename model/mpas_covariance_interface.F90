@@ -11,6 +11,7 @@ subroutine c_mpas_b_setup(c_key_self, c_conf, c_key_geom) &
 use iso_c_binding
 use mpas_covariance_mod
 use mpas_geom_mod
+use config_mod
 
 implicit none
 integer(c_int), intent(inout) :: c_key_self  !< Background error covariance structure
@@ -26,6 +27,13 @@ call mpas_covar_registry%get(c_key_self, self)
 
 call mpas_covar_setup(self, geom, c_conf)
 
+if (config_element_exists(c_conf,"var_scaling_variable") .and. config_element_exists(c_conf,"var_scaling_magnitude")) then
+   self % var_scaling_variable  = config_get_string(c_conf,len(self % var_scaling_variable),"var_scaling_variable")
+   self % var_scaling_magnitude = config_get_real(c_conf,"var_scaling_magnitude")
+else
+   self % var_scaling_variable = ""
+end if
+! This factor can be used for chaning variances of 2D variables. For 3D variables,need a minor change for 'type (field1DReal), pointer :: field1d_src'.
 end subroutine c_mpas_b_setup
 
 ! ------------------------------------------------------------------------------
@@ -107,6 +115,7 @@ integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
 type(mpas_increment), pointer :: xin
 type(mpas_increment), pointer :: xout
+type (field1DReal), pointer   :: field1d_src
 
 call mpas_covar_registry%get(c_key_self,self)
 call mpas_increment_registry%get(c_key_in,xin)
@@ -119,6 +128,12 @@ call mpas_increment_registry%get(c_key_out,xout)
 !xout => xin
    xout % nf = xin % nf
    call copy_pool(xin % subFields, xout % subFields)
+
+   if (self % var_scaling_variable /= "") then
+      call mpas_pool_get_field(xout % subFields, self % var_scaling_variable, field1d_src)
+      field1d_src % array=field1d_src % array * self % var_scaling_magnitude   !variance
+   end if
+
 !call mpas_covar_sqrt_mult_ad(self%nx,self%ny,xin,xctl,self)
 !call zeros(xout)
 !call mpas_covar_sqrt_mult(self%nx,self%ny,xout,xctl,self)

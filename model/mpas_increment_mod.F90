@@ -85,6 +85,7 @@ subroutine dirac(self, c_conf)
    character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
    integer :: nearestCell
    integer, allocatable, dimension(:) :: dirOwned, dirOwnedGlobal
    real (kind=kind_real), allocatable, dimension(:) :: dirLats
@@ -166,22 +167,22 @@ subroutine dirac(self, c_conf)
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
             ! the correct type
-            if (poolItr % nDims == 1) then
-               write(*,*)'Not implemented yet'
-            else if (poolItr % nDims == 2) then
-               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-               if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
-                 ndirlocal = 0
-                 do idir=1, ndir
-                    if ( dirOwned(idir).eq.1 ) then
-                       r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
-                       ndirlocal = ndirlocal + 1
-                    end if
-                 end do
-                 write(*,*) ' Dirac is set in ',ndirlocal,'locations for',trim(poolItr % memberName)
-               end if
-            else if (poolItr % nDims == 3) then
-               write(*,*)'Not implemented yet'
+            if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
+               ndirlocal = 0
+               do idir=1, ndir
+                  if ( dirOwned(idir).eq.1 ) then
+                     if (poolItr % nDims == 1) then
+                        call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
+                        r1d_ptr_a( dirCells(idir) ) = 1.0_kind_real
+                     else if (poolItr % nDims == 2) then
+                        call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+                        r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
+                     else if (poolItr % nDims == 3) then
+                        write(*,*)'Not implemented yet'
+                     end if
+                     ndirlocal = ndirlocal + 1
+                  end if
+               end do
             end if
          end if
       end if
@@ -301,7 +302,20 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    !-------------------------------------------------
    do jvar=1,vars%nv
       if( .not. allocated(gom%geovals(jvar)%vals) )then
+         ! air_pressure is required for GNSSRO, but mpas-jedi does not have corresponding TL/AD
+         ! code in mpas2ufo_vars_mod.  Temporarily perform allocation here for all "vars".
+         ! TODO: move this allocation for 2D variables into loop over mpas_pool members after
+         !       either
+         !   (1) adding TL/AD for air_pressure when added as analysis variable and move
+         !       this allocation for 2D variables into loop over mpas_pool members
+         !    OR
+         !   (2) implementing increment variable change for mpas-jedi, including
+         !       dependencies on non-analyzed variables
+         !if ( inc%geom%nVertLevels > 1) then
          gom%geovals(jvar)%nval = inc%geom%nVertLevels
+         !else
+         !   gom%geovals(jvar)%nval = 1
+         !end if
          allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nlocs) )
          gom%geovals(jvar)%vals = 0.0_kind_real
 !         write(*,*) ' gom%geovals(n)%vals allocated'
@@ -335,7 +349,20 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
 
          nlevels = gom%geovals(ivar)%nval
          if (poolItr % nDims == 1) then
-
+            ! Temporarily treated for 2D surface_pressure: we use ps as a control variable now, hofx is identity. In the future, if we use 3D P as the
+            ! control variable, this part will be modified, together with 'air_pressure' in convert_mpas_field2ufoTL.
+            if ( allocated(gom%geovals(ivar)%vals)) then
+               deallocate(gom%geovals(ivar)%vals)
+               gom%geovals(ivar)%nval = 1
+               allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
+               gom%geovals(ivar)%vals = 0.0_kind_real
+               gom%linit = .true.
+            endif
+            nlevels = gom%geovals(ivar)%nval
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+               mod_field(:,1) = r1d_ptr_a(1:ngrid)
+            endif
          else if (poolItr % nDims == 2) then
 
             if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -470,7 +497,9 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
          call traj%bump%apply_obsop_ad(obs_field(:,1:nlevels),mod_field(:,1:nlevels))
 
          if (poolItr % nDims == 1) then
-
+            call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+            r1d_ptr_a=0.0_kind_real
+            r1d_ptr_a(1:ngrid) = r1d_ptr_a(1:ngrid) + mod_field(:,1)
          else if (poolItr % nDims == 2) then
 
             if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -619,6 +648,7 @@ subroutine increment_to_ug(self, ug, its)
    integer :: idx_var,jC,jl  
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
    type(oops_vars) :: vars ! temporary to access variable "index" easily
    character(len=MAXVARLEN) :: ufo_var_name
 
@@ -636,6 +666,7 @@ subroutine increment_to_ug(self, ug, its)
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
    
+   ug%grid(1)%fld = 0.0_kind_real
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
       ! Pools may in general contain dimensions, namelist options, fields, or other pools,
       ! so we select only those members of the pool that are fields
@@ -649,21 +680,22 @@ subroutine increment_to_ug(self, ug, its)
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
             ! the correct type
-            if (poolItr % nDims == 1) then
-               write(*,*)'Not implemented yet'
-            else if (poolItr % nDims == 2) then
-               call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-               if(idx_var.gt.0) then
-!                  write(*,*) '  sub. increment_to_ug, poolItr % memberName=',trim(poolItr % memberName)
-!                  write(*,*) '  sub. increment_to_ug, idx_var=',idx_var
+            if(idx_var.gt.0) then
+               if (poolItr % nDims == 1) then
+                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
                   do jC=1,self%geom%nCellsSolve
-                    do jl=1,self%geom%nVertLevels
-                      ug%grid(1)%fld(jC,jl,idx_var,its) = r2d_ptr_a(jl,jC)
-                    enddo
+                     ug%grid(1)%fld(jC,1,idx_var,its) = r1d_ptr_a(jC)
                   enddo
-               endif
-            else if (poolItr % nDims == 3) then
-               write(*,*)'Not implemented yet'
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
+                  do jC=1,self%geom%nCellsSolve
+                     do jl=1,self%geom%nVertLevels
+                        ug%grid(1)%fld(jC,jl,idx_var,its) = r2d_ptr_a(jl,jC)
+                     enddo
+                  enddo
+               else if (poolItr % nDims == 3) then
+                  write(*,*)'Not implemented yet'
+               end if
             end if
          end if
       end if
@@ -689,6 +721,7 @@ subroutine increment_from_ug(self, ug, its)
    integer :: idx_var,jC,jl
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
    type(oops_vars) :: vars ! temporary to access variable "index" easily
    character(len=MAXVARLEN) :: ufo_var_name
 
@@ -716,7 +749,12 @@ subroutine increment_from_ug(self, ug, its)
 
             if(idx_var.gt.0) then
                if (poolItr % nDims == 1) then
-                  write(*,*)'Not implemented yet'
+                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
+
+!                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
+                  do jC=1,self%geom%nCellsSolve
+                     r1d_ptr_a(jC) = ug%grid(1)%fld(jC,1,idx_var,its)
+                  enddo
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
 

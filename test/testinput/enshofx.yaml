@@ -18,6 +18,7 @@ Model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 Initial Condition:
   state:
   - variables:
@@ -26,6 +27,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
@@ -34,6 +36,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
@@ -42,6 +45,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
@@ -50,6 +54,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
   - variables:
@@ -58,6 +63,7 @@ Initial Condition:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
     date: '2018-04-14T21:00:00Z'
 Observations:
@@ -141,5 +147,28 @@ Observations:
         variables: [brightness_temperature]
         channels: 1-15
     ObsBias: {}
+  - ObsSpace:
+        name: Surface
+        ObsDataIn:
+          obsfile: Data/sfc_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/enshofx_sfc.nc4
+        simulate:
+          variables: [surface_pressure]
+      ObsOperator:
+        name: Identity
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
+      - Filter: HCorrection
+        da_psfc_scheme: UKMO   # or WRFDA
+        max_hdiff: 500
+      - Filter: Background Check
+        variables:
+        - surface_pressure
+        threshold: 10
 Prints:
   frequency: PT3H

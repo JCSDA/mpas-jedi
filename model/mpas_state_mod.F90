@@ -197,6 +197,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
               u_ptr, v_ptr, temperature_ptr, p_ptr, &
               qv_ptr, qc_ptr, qr_ptr, qi_ptr, qs_ptr, &
               ln_p_ptr
+  real(kind=kind_real), dimension(:),pointer :: ps_ptr
   integer, pointer :: index_qv, index_qc, index_qr, index_qi, index_qs
   type (field3DReal), pointer :: field3d
   type (mpas_pool_type), pointer :: pool_a, pool_b, state
@@ -238,6 +239,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
    call mpas_pool_get_array(pool_a, "uReconstructZonal", u_ptr)
    call mpas_pool_get_array(pool_a, "uReconstructMeridional", v_ptr)
    call mpas_pool_get_array(pool_a, "temperature", temperature_ptr)
+   call mpas_pool_get_array(pool_a, "surface_pressure", ps_ptr)
 
 
    !Scalars (state pool)
@@ -327,6 +329,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
               temperature_ptr(jlev,ii) = t0
            enddo
+           ps_ptr(ii) = ps0
         enddo
 
      Case ("dcmip-test-1-2")
@@ -355,6 +358,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
               temperature_ptr(jlev,ii) = t0
            enddo
+           ps_ptr(ii) = ps0
         enddo
 
      Case ("dcmip-test-3-1")
@@ -383,6 +387,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
               temperature_ptr(jlev,ii) = t0
            enddo
+           ps_ptr(ii) = ps0
         enddo
 
      Case ("dcmip-test-4-0")
@@ -413,6 +418,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
               temperature_ptr(jlev,ii) = t0
            enddo
+           ps_ptr(ii) = ps0
         enddo
 
      Case Default
@@ -436,6 +442,7 @@ subroutine invent_state(self,config)
    class(mpas_state), intent(inout) :: self    !< Model fields
    type(c_ptr),       intent(in)    :: config  !< Configuration structure
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    integer :: jlev,ii
    type (mpas_pool_type), pointer :: pool_a, state
    type (field3DReal), pointer :: field3d
@@ -480,6 +487,11 @@ subroutine invent_state(self,config)
       enddo
    enddo
 
+   !surface_pressure
+   call mpas_pool_get_array(pool_a, "surface_pressure", r1d_ptr_a)
+   do ii = 1, self % geom % nCellsSolve
+      r1d_ptr_a(ii) = 1.0_kind_real
+   enddo
    !Scalars (state pool)
    !qv
    call mpas_pool_get_field(pool_a, 'scalars', field3d)

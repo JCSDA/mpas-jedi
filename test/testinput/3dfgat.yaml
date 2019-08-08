@@ -13,6 +13,7 @@ model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   - index_qc
   - index_qi
 cost_function:
@@ -25,6 +26,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   - index_qc
   - index_qi
   varchange: Identity
@@ -37,6 +39,7 @@ cost_function:
         - spechum
         - uReconstructZonal
         - uReconstructMeridional
+        - surface_pressure
         - index_qc
         - index_qi
         filename: "./restart.2018-04-14_21.00.00.nc"
@@ -201,6 +204,29 @@ cost_function:
       - Filter: ROobserror
         variable: bending_angle
         errmodel: ROPP
+    - ObsSpace:
+        name: Surface
+        ObsDataIn:
+          obsfile: Data/sfc_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dfgat_sfc.nc4
+        simulate:
+          variables: [surface_pressure]
+      ObsOperator:
+        name: Identity
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
+      - Filter: HCorrection
+        da_psfc_scheme: UKMO   # or WRFDA
+        max_hdiff: 500
+      - Filter: Background Check
+        variables:
+        - surface_pressure
+        threshold: 10
 minimizer:
   algorithm: DRIPCG
 output:
@@ -221,6 +247,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - surface_pressure
       - index_qc
       - index_qi
     ninner: '10'
@@ -242,6 +269,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - surface_pressure
       - index_qc
       - index_qi
     ninner: '10'

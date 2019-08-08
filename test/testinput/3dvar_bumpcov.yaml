@@ -13,6 +13,7 @@ model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -23,6 +24,7 @@ cost_function:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   varchange: Identity
   Jb:
     Background:
@@ -33,6 +35,7 @@ cost_function:
         - spechum
         - uReconstructZonal
         - uReconstructMeridional
+        - surface_pressure
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
     Covariance:
@@ -193,6 +196,29 @@ cost_function:
       - Filter: ROobserror
         variable: bending_angle
         errmodel: ROPP
+    - ObsSpace:
+        name: Surface
+        ObsDataIn:
+          obsfile: Data/sfc_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dvar_bumpcov_sfc.nc4
+        simulate:
+          variables: [surface_pressure]
+      ObsOperator:
+        name: Identity
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: PreQC
+        threshold: 3
+        apply_at_iterations: 0
+      - Filter: HCorrection
+        da_psfc_scheme: UKMO
+        max_hdiff: 500
+      - Filter: Background Check
+        variables:
+        - surface_pressure
+        threshold: 10
 minimizer:
   algorithm: DRIPCG
 output:
@@ -213,6 +239,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - surface_pressure
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -232,6 +259,7 @@ variational:
       - spechum
       - uReconstructZonal
       - uReconstructMeridional
+      - surface_pressure
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'

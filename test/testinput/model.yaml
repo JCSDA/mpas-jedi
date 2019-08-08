@@ -11,11 +11,12 @@ State:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 ModelTest:
   fclength: PT2H
-  finalnorm: 22055.291044149828
+  finalnorm: 28015.994917730037
   tolerance: 0.005
 ModelBias: 
 Model:
@@ -27,3 +28,4 @@ Model:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure

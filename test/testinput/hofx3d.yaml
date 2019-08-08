@@ -14,6 +14,7 @@ Initial Condition:
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
   - index_qc
   - index_qi
   - index_qr
@@ -201,5 +202,15 @@ Observations:
 #        <<: *crtmobsopts
 #        Sensor_ID: atms_npp
 #    ObsBias: {}
+  - ObsSpace:
+      name: Surface
+      ObsDataIn:
+        obsfile: Data/sfc_obs_2018041500_m.nc4
+      ObsDataOut:
+        obsfile: Data/hofx_sfc.nc4
+      simulate:
+        variables: [surface_pressure]
+    ObsOperator:
+      name: Identity
 Prints:
   frequency: PT3H

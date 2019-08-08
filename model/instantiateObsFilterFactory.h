@@ -20,6 +20,7 @@
 #include "ufo/filters/PreQC.h"
 #include "ufo/filters/QCmanager.h"
 #include "ufo/filters/Thinning.h"
+#include "ufo/surface/Correction/HCorrection.h"
 
 namespace mpas {
 
@@ -49,6 +50,9 @@ void instantiateObsFilterFactory() {
   static oops::FilterMaker<MPASTraits,
                  oops::ObsFilter<MPASTraits, ufo::Thinning>
                           > makerChk7_("Thinning");
+  static oops::FilterMaker<MPASTraits,
+                 oops::ObsFilter<MPASTraits, ufo::HCorrection>
+                          > makerChk8_("HCorrection");
 }
 
 }  // namespace mpas

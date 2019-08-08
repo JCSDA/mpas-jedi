@@ -12,10 +12,11 @@ StateTest:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     filename: "./restart.2018-04-15_00.00.00.nc"
     date: '2018-04-15T00:00:00Z'
   date: '2018-04-15T00:00:00Z'
-  norm-file: '22053.9914664973'
+  norm-file: '28013.829836879424'
   StateGenerate:
     analytic_init: dcmip-test-4-0
     variables:
@@ -24,6 +25,7 @@ StateTest:
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
+    - surface_pressure
     date: '2018-04-15T00:00:00Z'
     mean: 8
     sinus: 2
@@ -31,7 +33,7 @@ StateTest:
     variables:
     - air_temperature
     - air_pressure
-  norm-gen: '21598.849125951634'
+  norm-gen: '27821.614077946924'
   tolerance:
   - 1.0e-08
   interp_tolerance:
