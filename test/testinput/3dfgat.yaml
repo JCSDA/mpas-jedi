@@ -154,6 +154,7 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Domain Check
+        variables: [refractivity]
         where:
         - variable: altitude
           minvalue: 0
@@ -187,6 +188,7 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Domain Check
+        variables: [bending_angle]
         where:
         - variable: altitude
           minvalue: 0
