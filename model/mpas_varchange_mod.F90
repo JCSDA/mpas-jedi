@@ -5,12 +5,13 @@
 
 module mpas_varchange_mod
 
+use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding
+use kinds
+
 use mpas_state_utils_mod, only: mpas_state
 use mpas_increment_utils_mod, only: mpas_increment
 use mpas_geom_mod,   only: mpas_geom
-use iso_c_binding
-use config_mod
-use kinds
 
 implicit none
 
@@ -35,14 +36,14 @@ contains
 #include "linkedList_c.f"
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_varchange_setup(self, bg, fg, geom, c_conf)
+subroutine mpas_varchange_setup(self, bg, fg, geom, f_conf)
 
 implicit none
-type(mpas_varchange),  intent(inout) :: self    !< Change variable structure
-type(mpas_state), target, intent(in) :: bg
-type(mpas_state), target, intent(in) :: fg
-type(mpas_geom),          intent(in) :: geom
-type(c_ptr),              intent(in) :: c_conf  !< Configuration
+type(mpas_varchange),      intent(inout) :: self    !< Change variable structure
+type(mpas_state), target,  intent(in)    :: bg
+type(mpas_state), target,  intent(in)    :: fg
+type(mpas_geom),           intent(in)    :: geom
+type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
 
 end subroutine mpas_varchange_setup
 

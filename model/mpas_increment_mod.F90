@@ -5,10 +5,9 @@
 
 module mpas_increment_mod
 
-use iso_c_binding 
+use fckit_configuration_module, only: fckit_configuration
 
 !oops
-use config_mod
 use datetime_mod
 use kinds, only: kind_real
 use variables_mod
@@ -75,11 +74,12 @@ end subroutine diff_incr
 
 ! ------------------------------------------------------------------------------
 
-subroutine dirac(self, c_conf)
+subroutine dirac(self, f_conf)
 
    implicit none
-   class(mpas_increment), intent(inout) :: self
-   type(c_ptr),           intent(in)    :: c_conf   !< Configuration
+   class(mpas_increment),     intent(inout) :: self
+   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
+   character(len=:), allocatable :: str
    integer                :: ndir, idir, ildir, ndirlocal
    character(len=3)       :: idirchar
    character(len=StrKIND) :: dirvar
@@ -93,20 +93,17 @@ subroutine dirac(self, c_conf)
    integer, allocatable, dimension(:) :: dirCells
 
    ! Get number and positions of Diracs
-   ndir = config_get_int(c_conf,"ndir")
+   call f_conf%get_or_die("ndir",ndir)
 
    allocate( dirOwned(ndir) )
-   allocate( dirLats(ndir) )
-   allocate( dirLons(ndir) )
    allocate( dirCells(ndir) )
 
-   do idir=1,ndir
-      write(idirchar,'(i3)') idir
-      dirLats(idir) = config_get_real(c_conf,"dirLats("//trim(adjustl(idirchar))//")")
-      dirLons(idir) = config_get_real(c_conf,"dirLons("//trim(adjustl(idirchar))//")")
-   end do
-   ildir = config_get_int(c_conf,"ildir")
-   dirvar = config_get_string(c_conf,len(dirvar),"dirvar")
+   call f_conf%get_or_die("dirLats",dirLats)
+   call f_conf%get_or_die("dirLons",dirLons)
+
+   call f_conf%get_or_die("ildir",ildir)
+   call f_conf%get_or_die("dirvar",str)
+   dirvar = str
 
    !Test if dir is owned and find the nearest local cell
    ! (repurposed from MPAS-Release/src/core_atmosphere/diagnostics/soundings.F)

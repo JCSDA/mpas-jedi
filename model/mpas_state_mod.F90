@@ -5,10 +5,9 @@
 
 module mpas_state_mod
 
-use iso_c_binding 
+use fckit_configuration_module, only: fckit_configuration
 
 !oops
-use config_mod
 use datetime_mod
 use kinds, only: kind_real
 use variables_mod
@@ -163,7 +162,7 @@ end subroutine add_incr
 !! \author J. Guerrette (adapted from fv3jedi code by M. Miesch)
 !! \date July, 2018: Created
 !!
-subroutine analytic_IC(self, geom, c_conf, vdate)
+subroutine analytic_IC(self, geom, f_conf, vdate)
 
   use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
        test1_advection_hadley, test3_gravity_wave
@@ -176,11 +175,12 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
   implicit none
 
-  class(mpas_state),       intent(inout) :: self   !< State
-  type(mpas_geom), target, intent(in)    :: geom   !< Geometry 
-  type(c_ptr),             intent(in)    :: c_conf !< Configuration
-  type(datetime),          intent(inout) :: vdate  !< DateTime
+  class(mpas_state),         intent(inout) :: self   !< State
+  type(mpas_geom), target,   intent(in)    :: geom   !< Geometry 
+  type(fckit_configuration), intent(in)    :: f_conf !< Configuration
+  type(datetime),            intent(inout) :: vdate  !< DateTime
 
+  character(len=:), allocatable :: str
   character(len=30) :: IC
   character(len=20) :: sdate
   character(len=1024) :: buf
@@ -206,8 +206,9 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
   ! Pointer to geometry component of field object
   self%geom => geom
 
-  If (config_element_exists(c_conf,"analytic_init")) Then
-     IC = Trim(config_get_string(c_conf,len(IC),"analytic_init"))
+  If (f_conf%has("analytic_init")) Then
+     call f_conf%get_or_die("analytic_init",str)
+     IC = str
   Else
      ! This default value is for backward compatibility
      IC = "invent-state"
@@ -217,7 +218,8 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
 ! Conflicts with natural log below
 !  call log%warning("mpas_state:analytic_init: "//IC)
-  sdate = config_get_string(c_conf,len(sdate),"date")
+  call f_conf%get_or_die("date",str)
+  sdate = str
   WRITE(buf,*) 'validity date is: '//sdate
   WRITE(*,*) buf
 !  call log%info(buf)
@@ -269,7 +271,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
      Case("invent-state")
 
-        call invent_state(self,c_conf)
+        call invent_state(self,f_conf)
 
 
 !     !TODO: This case requires the init_atmospher_core core_type to be 
@@ -423,7 +425,7 @@ subroutine analytic_IC(self, geom, c_conf, vdate)
 
      Case Default
 
-        call invent_state(self,c_conf)
+        call invent_state(self,f_conf)
 
      End Select int_option
 
@@ -435,12 +437,12 @@ end subroutine analytic_IC
 
 ! ------------------------------------------------------------------------------
 
-subroutine invent_state(self,config)
+subroutine invent_state(self,f_conf)
 
    implicit none
 
-   class(mpas_state), intent(inout) :: self    !< Model fields
-   type(c_ptr),       intent(in)    :: config  !< Configuration structure
+   class(mpas_state),         intent(inout) :: self    !< Model fields
+   type(fckit_configuration), intent(in)    :: f_conf  !< Configuration structure
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    integer :: jlev,ii

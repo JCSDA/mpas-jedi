@@ -5,13 +5,19 @@
 
 module mpas_covariance_mod
 
+!oops
+use kinds, only: kind_real
+
+!ufo
+use ufo_vars_mod, only: MAXVARLEN
+
 implicit none
 
 !> Fortran derived type to hold configuration data for the background/model covariance
 type :: mpas_covar
   integer :: nothing_yet
-  character(len=20) :: var_scaling_variable
-  real    :: var_scaling_magnitude
+  character(len=MAXVARLEN), allocatable :: var_scaling_variables(:)
+  real (kind=kind_real), allocatable :: var_scaling_magnitudes(:)
 end type mpas_covar
 
 #define LISTED_TYPE mpas_covar
@@ -37,15 +43,35 @@ contains
 !! covariance matrix, and stores the relevant values in the
 !! error covariance structure.
 
-subroutine mpas_covar_setup(self, geom, c_conf)
-use iso_c_binding
+subroutine mpas_covar_setup(self, geom, f_conf)
+use fckit_configuration_module, only: fckit_configuration
 use mpas_geom_mod
-use config_mod
+use iso_c_binding
 
 implicit none
-type(mpas_covar), intent(inout) :: self    !< Covariance structure
-type(c_ptr), intent(in)       :: c_conf  !< Configuration
-type(mpas_geom), intent(in)     :: geom    !< Geometry
+type(mpas_covar),          intent(inout) :: self    !< Covariance structure
+type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
+type(mpas_geom),           intent(in)    :: geom    !< Geometry
+
+character(kind=c_char,len=MAXVARLEN), allocatable :: char_array(:)
+integer(c_size_t),parameter :: csize = MAXVARLEN
+real(kind=c_float), allocatable :: real_array(:)
+
+if (f_conf%has("var_scaling_variables") .and. f_conf%has("var_scaling_magnitudes")) then
+   call f_conf%get_or_die("var_scaling_variables",csize,char_array)
+   call f_conf%get_or_die("var_scaling_magnitudes",real_array)
+   if(size(real_array) /= size(char_array)) then
+      call abor1_ftn("--> mpas_b_setup_f90: var_scaling_variables and var_scaling_magnitudes have different sizes")
+   end if
+
+   allocate(self % var_scaling_variables(size(char_array)))
+   self % var_scaling_variables = char_array
+   allocate(self % var_scaling_magnitudes(size(real_array)))
+   self % var_scaling_magnitudes = real(real_array,kind=kind_real)
+else
+   allocate(self % var_scaling_variables(0))
+   allocate(self % var_scaling_magnitudes(0))
+end if
 
 end subroutine mpas_covar_setup
 
@@ -54,6 +80,9 @@ end subroutine mpas_covar_setup
 subroutine mpas_covar_delete(self)
 implicit none
 type(mpas_covar), intent(inout) :: self  !< Covariance structure
+
+deallocate(self % var_scaling_variables)
+deallocate(self % var_scaling_magnitudes)
 
 end subroutine mpas_covar_delete
 

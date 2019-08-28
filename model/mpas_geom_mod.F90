@@ -5,10 +5,8 @@
 
 module mpas_geom_mod
 
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
-
-!oops
-use config_mod
 
 !MPAS-Model
 use mpas_derived_types
@@ -78,14 +76,14 @@ contains
 #include "linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
-subroutine geo_setup(self, c_conf)
+subroutine geo_setup(self, f_conf)
 
    implicit none
 
-   type(mpas_geom), intent(inout) :: self
-   type(c_ptr), intent(in) :: c_conf
-   character(len=StrKIND) :: string1
+   type(mpas_geom),           intent(inout) :: self
+   type(fckit_configuration), intent(in)    :: f_conf
 
+   character(len=StrKIND) :: string1
    type (mpas_pool_type), pointer :: meshPool, fg
    type (block_type), pointer :: block_ptr
 

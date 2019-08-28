@@ -5,10 +5,9 @@
 
 module mpas_field_utils_mod
 
-use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 
 !oops
-use config_mod
 use datetime_mod
 use kinds, only: kind_real
 use variables_mod, only: oops_vars
@@ -81,12 +80,12 @@ integer, parameter :: state_max = maxLabels
 
    ! ------------------------------------------------------------------------------
 
-      subroutine read_file_(self, c_conf, vdate)
-         import mpas_field, c_ptr, datetime
+      subroutine read_file_(self, f_conf, vdate)
+         import mpas_field, fckit_configuration, datetime
          implicit none
-         class(mpas_field), intent(inout) :: self
-         type(c_ptr),       intent(in)    :: c_conf
-         type(datetime),    intent(inout) :: vdate
+         class(mpas_field),         intent(inout) :: self
+         type(fckit_configuration), intent(in)    :: f_conf
+         type(datetime),            intent(inout) :: vdate
       end subroutine read_file_
 
    ! ------------------------------------------------------------------------------
@@ -281,27 +280,28 @@ end subroutine copy_pool
 
 ! ------------------------------------------------------------------------------
 
-subroutine read_field(self, c_conf, vdate)
+subroutine read_field(self, f_conf, vdate)
 
    implicit none
-   class(mpas_field), intent(inout) :: self     !< Field
-   type(c_ptr),       intent(in)    :: c_conf   !< Configuration
-   type(datetime),    intent(inout) :: vdate    !< DateTime
+   class(mpas_field),         intent(inout) :: self     !< Field
+   type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
+   type(datetime),            intent(inout) :: vdate    !< DateTime
+   character(len=:), allocatable :: str
    character(len=20)       :: sdate
    type (MPAS_Time_type)   :: local_time
    character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
    integer                 :: ierr = 0, ngrid
-
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
    character(len=1024) :: buf
 
 !   write(*,*)'--> read_field'
-   sdate = config_get_string(c_conf,len(sdate),"date")
+   call f_conf%get_or_die("date",str)
+   sdate = str
    call datetime_set(sdate, vdate)
 
-   temp_filename = config_get_string(c_conf,len(temp_filename),&
-                      "filename")
+   call f_conf%get_or_die("filename",str)
+   temp_filename = str
 !   write(*,*)'--> read_field: Reading ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
@@ -332,8 +332,8 @@ subroutine read_field(self, c_conf, vdate)
 
    !==TODO: Speific part when reading parameterEst. for BUMP.
    !      : They write/read a list of variables directly.
-   If (config_element_exists(c_conf,"no_transf")) Then
-      ierr = config_get_int(c_conf,"no_transf")
+   if (f_conf%has("no_transf")) then
+      call f_conf%get_or_die("no_transf",ierr)
       if(ierr .eq. 1) then
          call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
         return
@@ -393,12 +393,13 @@ end subroutine update_diagnostic_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine write_field(self, c_conf, vdate)
+subroutine write_field(self, f_conf, vdate)
 
    implicit none
-   class(mpas_field), intent(inout) :: self   !< Field
-   type(c_ptr),       intent(in)    :: c_conf !< Configuration
-   type(datetime),    intent(in)    :: vdate  !< DateTime
+   class(mpas_field),         intent(inout) :: self   !< Field
+   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
+   type(datetime),            intent(in)    :: vdate  !< DateTime
+   character(len=:), allocatable :: str
    character(len=20)       :: validitydate
    integer                 :: ierr, iskip
    type (MPAS_Time_type)   :: fld_time, write_time
@@ -409,8 +410,8 @@ subroutine write_field(self, c_conf, vdate)
 
    call datetime_to_string(vdate, validitydate)
 !   write(*,*)'--> write_field: ',trim(validitydate)
-   temp_filename = config_get_string(c_conf,len(temp_filename)&
-                      ,"filename")
+   call f_conf%get_or_die("filename",str)
+   temp_filename = str
 !   write(*,*)'--> write_field: ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
@@ -423,8 +424,8 @@ subroutine write_field(self, c_conf, vdate)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
    iskip = 0
-   if (config_element_exists(c_conf,"SkipMPASTimeCheck")) then
-     iskip = config_get_int(c_conf,"SkipMPASTimeCheck")
+   if (f_conf%has("SkipMPASTimeCheck")) then
+     call f_conf%get_or_die("SkipMPASTimeCheck",iskip)
    end if
    if(iskip.ne.1) then
      if ( fld_time .NE. write_time ) then
@@ -434,8 +435,9 @@ subroutine write_field(self, c_conf, vdate)
    end if
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
    ! Filename for writing out ensembles
-   if (config_element_exists(c_conf,"member")) then
-     temp_filename = config_get_string(c_conf,len(temp_filename),'member')
+   if (f_conf%has("member")) then
+     call f_conf%get_or_die("member",str)
+     temp_filename = str
      filename=trim(filename) // '.' // trim(temp_filename)
    endif
    self % manager => self % geom % domain % streamManager

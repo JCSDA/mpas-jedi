@@ -5,8 +5,8 @@
 
 module mpas_model_mod
 
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
-use config_mod
 use duration_mod
 use mpas_geom_mod
 use mpas_state_utils_mod
@@ -63,16 +63,17 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine model_setup(self, geom, c_conf)
+subroutine model_setup(self, geom, f_conf)
 
 !   use fckit_mpi_module, only: fckit_mpi_comm
 
    implicit none
-   type(c_ptr), intent(in) :: c_conf !< pointer to object of class Config
-   !type(mpas_model), target :: model  ! should I put intent on these?
-   type(mpas_model), intent(inout) :: self  ! should I put intent on these?
+   type(fckit_configuration), intent(in)    :: f_conf !< fckit config
+   type(mpas_model),          intent(inout) :: self  ! should I put intent on these?
+!   type(mpas_model), target                 :: model  ! should I put intent on these?
    type(mpas_geom)        :: geom
 
+   character(len=:), allocatable :: str
    character(len=20) :: ststep
    type(duration) :: dtstep
 
@@ -122,11 +123,13 @@ subroutine model_setup(self, geom, c_conf)
 
    ! GD: needs a converter from oops yaml file format to mpas if the yaml file drives MPAS
    ! otherwise mpas namelist file can be used.
-   ststep = config_get_string(c_conf,len(ststep),"tstep")
+   call f_conf%get_or_die("tstep",str)
+   ststep = str
    dtstep = trim(ststep)
    write(0,*)'ststep: ', ststep
    self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
-   ! dstep = config_get_string(c_conf,len(dtstep),"dstep")
+   ! call f_conf%get_or_die("dstep",str)
+   ! dstep = str
    ! set clock here MPAS_STARTING, MPAS_NOW, MPAS_STOP_TIME
    ! config_start_time = '2010-10-23_00:00:00'
    ! config_run_duration = '0_02:00:00'

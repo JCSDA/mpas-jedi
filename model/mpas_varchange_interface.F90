@@ -8,7 +8,7 @@
 subroutine c_mpas_varchange_setup(c_key_self, c_key_state_bg, c_key_state_fg, &
            c_key_geom, c_conf) bind (c,name='mpas_varchange_setup_f90')
 
-use iso_c_binding
+use fckit_configuration_module, only: fckit_configuration
 use mpas_varchange_mod
 use mpas_state_utils_mod
 use mpas_geom_mod
@@ -24,6 +24,7 @@ type(mpas_varchange), pointer :: self
 type(mpas_state), pointer :: bg
 type(mpas_state), pointer :: fg
 type(mpas_geom), pointer :: geom
+type(fckit_configuration) :: f_conf
 
 call mpas_varchange_registry%init()
 call mpas_varchange_registry%add(c_key_self)
@@ -34,7 +35,8 @@ call mpas_state_registry%get(c_key_state_fg,fg)
 
 call mpas_geom_registry%get(c_key_geom,geom)
 
-call mpas_varchange_setup(self, bg, fg, geom, c_conf)
+f_conf = fckit_configuration(c_conf)
+call mpas_varchange_setup(self, bg, fg, geom, f_conf)
 
 end subroutine c_mpas_varchange_setup
 

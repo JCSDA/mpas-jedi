@@ -7,6 +7,7 @@
 
 module mpas_increment_interface_mod
 
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds, only: kind_real
 use variables_mod
@@ -49,13 +50,15 @@ type(c_ptr),    intent(in)    :: c_vars !< List of variables
 type(mpas_increment), pointer :: self
 type(mpas_geom),      pointer :: geom
 type(oops_vars)               :: vars
+type(fckit_configuration)     :: f_vars
 
 call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_increment_registry%init()
 call mpas_increment_registry%add(c_key_self)
 call mpas_increment_registry%get(c_key_self,self)
 
-call oops_vars_create(c_vars, vars)
+f_vars = fckit_configuration(c_vars)
+call oops_vars_create(f_vars, vars)
 call self%create(geom, vars)
 call oops_vars_delete(vars)
 
@@ -97,10 +100,13 @@ subroutine mpas_increment_dirac_c(c_key_self,c_conf) &
 implicit none
 integer(c_int), intent(in) :: c_key_self
 type(c_ptr), intent(in)    :: c_conf !< Configuration
+
 type(mpas_increment), pointer :: self
+type(fckit_configuration) :: f_conf
 
 call mpas_increment_registry%get(c_key_self,self)
-call dirac(self,c_conf)
+f_conf = fckit_configuration(c_conf)
+call dirac(self,f_conf)
 
 end subroutine mpas_increment_dirac_c
 
@@ -370,10 +376,12 @@ type(c_ptr), intent(inout) :: c_dt   !< DateTime
 
 type(mpas_increment), pointer :: self
 type(datetime) :: fdate
+type(fckit_configuration) :: f_conf
 
 call mpas_increment_registry%get(c_key_inc,self)
 call c_f_datetime(c_dt, fdate)
-call self%read_file(c_conf, fdate)
+f_conf = fckit_configuration(c_conf)
+call self%read_file(f_conf, fdate)
 
 end subroutine mpas_increment_read_file_c
 
@@ -388,10 +396,12 @@ type(c_ptr), intent(in) :: c_dt   !< DateTime
 
 type(mpas_increment), pointer :: self
 type(datetime) :: fdate
+type(fckit_configuration) :: f_conf
 
 call mpas_increment_registry%get(c_key_inc,self)
 call c_f_datetime(c_dt, fdate)
-call self%write_file(c_conf, fdate)
+f_conf = fckit_configuration(c_conf)
+call self%write_file(f_conf, fdate)
 
 end subroutine mpas_increment_write_file_c
 
@@ -470,13 +480,15 @@ type(ufo_locs),        pointer :: locs
 type(oops_vars)                :: vars
 type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
+type(fckit_configuration)      :: f_vars
 
 call mpas_increment_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-call oops_vars_create(c_vars, vars)
+f_vars = fckit_configuration(c_vars)
+call oops_vars_create(f_vars, vars)
 call getvalues_tl(inc, locs, vars, gom, traj)
 call oops_vars_delete(vars)
 
@@ -498,13 +510,15 @@ type(ufo_locs),        pointer :: locs
 type(oops_vars)                :: vars
 type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
+type(fckit_configuration)      :: f_vars
 
 call mpas_increment_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-call oops_vars_create(c_vars, vars)
+f_vars = fckit_configuration(c_vars)
+call oops_vars_create(f_vars, vars)
 call getvalues_ad(inc, locs, vars, gom, traj)
 call oops_vars_delete(vars)
 

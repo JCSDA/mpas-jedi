@@ -1,8 +1,7 @@
 module mpas_run_mod
 
-use iso_c_binding 
+use fckit_configuration_module, only: fckit_configuration
 use mpas_subdriver
-use config_mod
 
 implicit none
 
@@ -26,15 +25,21 @@ contains
 subroutine mpas_run_init(c_conf) bind(c,name='mpas_run_init_f90')
 
    use fckit_mpi_module, only: fckit_mpi_comm
+   use, intrinsic :: iso_c_binding, only: c_ptr
 
    implicit none
    type(c_ptr), intent(in) :: c_conf
    character(len=30) :: fn
    type(fckit_mpi_comm) :: f_comm
+   type(fckit_configuration) :: f_conf
+   character(len=:), allocatable :: str
+
    f_comm = fckit_mpi_comm()
 
-   if(config_element_exists(c_conf,"nml_file")) then
-     fn = config_get_string(c_conf,len(fn),"nml_file")
+   f_conf = fckit_configuration(c_conf)
+   if(f_conf%has("nml_file")) then
+     call f_conf%get_or_die("nml_file",str)
+     fn = str
      call system("rm namelist.atmosphere")
      write(*,*) " fn = "//trim(fn)
      call system("cp "//trim(fn)//" namelist.atmosphere")

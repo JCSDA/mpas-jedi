@@ -7,8 +7,8 @@
 
 subroutine c_mpas_model_setup(c_conf, c_key_geom, c_key_self) bind (c,name='mpas_model_setup_f90')
 
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
-use config_mod
 use duration_mod
 use mpas_model_mod
 use mpas_geom_mod
@@ -20,13 +20,15 @@ type(c_ptr), intent(in)       :: c_conf      !< pointer to object of class Confi
 
 type(mpas_model), pointer :: model
 type(mpas_geom), pointer :: geom
+type(fckit_configuration) :: f_conf
 
 call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_model_registry%init()
 call mpas_model_registry%add(c_key_self)
 call mpas_model_registry%get(c_key_self, model)
 
-call model_setup(model, geom, c_conf)
+f_conf = fckit_configuration(c_conf)
+call model_setup(model, geom, f_conf)
 
 end subroutine c_mpas_model_setup
 

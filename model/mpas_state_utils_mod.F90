@@ -5,7 +5,6 @@
 
 module mpas_state_utils_mod
 
-use iso_c_binding
 use variables_mod
 
 !UFO

@@ -8,10 +8,10 @@
 subroutine c_mpas_b_setup(c_key_self, c_conf, c_key_geom) &
           & bind (c,name='mpas_b_setup_f90')
 
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use mpas_covariance_mod
 use mpas_geom_mod
-use config_mod
 
 implicit none
 integer(c_int), intent(inout) :: c_key_self  !< Background error covariance structure
@@ -19,21 +19,16 @@ type(c_ptr), intent(in)    :: c_conf         !< Configuration
 integer(c_int), intent(in) :: c_key_geom     !< Geometry
 type(mpas_covar), pointer :: self
 type(mpas_geom),  pointer :: geom
+type(fckit_configuration) :: f_conf
 
 call mpas_geom_registry%get(c_key_geom, geom)
 call mpas_covar_registry%init()
 call mpas_covar_registry%add(c_key_self)
 call mpas_covar_registry%get(c_key_self, self)
 
-call mpas_covar_setup(self, geom, c_conf)
+f_conf = fckit_configuration(c_conf)
+call mpas_covar_setup(self, geom, f_conf)
 
-if (config_element_exists(c_conf,"var_scaling_variable") .and. config_element_exists(c_conf,"var_scaling_magnitude")) then
-   self % var_scaling_variable  = config_get_string(c_conf,len(self % var_scaling_variable),"var_scaling_variable")
-   self % var_scaling_magnitude = config_get_real(c_conf,"var_scaling_magnitude")
-else
-   self % var_scaling_variable = ""
-end if
-! This factor can be used for chaning variances of 2D variables. For 3D variables,need a minor change for 'type (field1DReal), pointer :: field1d_src'.
 end subroutine c_mpas_b_setup
 
 ! ------------------------------------------------------------------------------
@@ -107,6 +102,7 @@ use mpas_increment_utils_mod
 use mpas_field_utils_mod, only: copy_pool
 use kinds
 use mpas_framework !BJJ
+use mpas4da_mod, only: str_match
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
@@ -115,7 +111,11 @@ integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
 type(mpas_increment), pointer :: xin
 type(mpas_increment), pointer :: xout
+type (mpas_pool_iterator_type) :: poolItr
 type (field1DReal), pointer   :: field1d_src
+type (field2DReal), pointer   :: field2d_src
+
+integer :: ivar
 
 call mpas_covar_registry%get(c_key_self,self)
 call mpas_increment_registry%get(c_key_in,xin)
@@ -129,10 +129,20 @@ call mpas_increment_registry%get(c_key_out,xout)
    xout % nf = xin % nf
    call copy_pool(xin % subFields, xout % subFields)
 
-   if (self % var_scaling_variable /= "") then
-      call mpas_pool_get_field(xout % subFields, self % var_scaling_variable, field1d_src)
-      field1d_src % array=field1d_src % array * self % var_scaling_magnitude   !variance
-   end if
+   call mpas_pool_begin_iteration(xout % subFields)
+   do while ( mpas_pool_get_next_member(xout % subFields, poolItr) )
+      if (poolItr % memberType == MPAS_POOL_FIELD .AND. poolItr % dataType == MPAS_POOL_REAL) then
+         ivar = str_match(trim(poolItr % memberName), self % var_scaling_variables)
+         if ( ivar < 1 ) cycle
+         if (poolItr % nDims == 1) then
+            call mpas_pool_get_field(xout % subFields, poolItr % memberName, field1d_src)
+            field1d_src % array = field1d_src % array * self % var_scaling_magnitudes(ivar)   !variance
+         else if (poolItr % nDims == 2) then
+            call mpas_pool_get_field(xout % subFields, poolItr % memberName, field2d_src)
+            field2d_src % array = field2d_src % array * self % var_scaling_magnitudes(ivar)   !variance
+         end if
+      end if
+   end do
 
 !call mpas_covar_sqrt_mult_ad(self%nx,self%ny,xin,xctl,self)
 !call zeros(xout)

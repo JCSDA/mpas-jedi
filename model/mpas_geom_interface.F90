@@ -5,6 +5,7 @@
 
 ! ------------------------------------------------------------------------------
 subroutine c_mpas_geo_setup(c_key_self, c_conf) bind(c,name='mpas_geo_setup_f90')
+use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use mpas_geom_mod
 implicit none
@@ -12,12 +13,14 @@ integer(c_int), intent(inout) :: c_key_self
 type(c_ptr), intent(in) :: c_conf
 
 type(mpas_geom), pointer :: self
+type(fckit_configuration) :: f_conf
 
 call mpas_geom_registry%init()
 call mpas_geom_registry%add(c_key_self)
 call mpas_geom_registry%get(c_key_self, self)
 
-call geo_setup(self, c_conf)
+f_conf = fckit_configuration(c_conf)
+call geo_setup(self, f_conf)
 
 end subroutine c_mpas_geo_setup
 
