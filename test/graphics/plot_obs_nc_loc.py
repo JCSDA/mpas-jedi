@@ -10,6 +10,18 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
 import fnmatch
 
+'''
+Directory Structure:
+test/
+ ├── Data/
+ │   ├── sondes_obs_2018041500_m.nc4
+ │   ├── satwind_obs_2018041500_m.nc4
+ │   ├── ...
+ ├── graphics/
+ │   ├── plot_obs_nc_loc.py
+ │   ├── ...
+'''
+
 # columns: obs_type,       plot or not,    select channels for radiance
 plotdict = { \
     'sondes':                 ['T',        '0'   ] \
@@ -40,6 +52,7 @@ vardict = { \
   , 'bending_angle':          [ '(rad)',   'Bnd' ] \
   , 'brightness_temperature': [ '(K)',     'BT'  ] \
   , 'aerosol_optical_depth_4':[ '   ',     'AOD' ] \
+  , 'surface_pressure':       [ '(Pa)',    'Ps'  ] \
     }
 
 def readdata():
@@ -63,11 +76,11 @@ def readdata():
 
     for index, file_name in enumerate(obsfiles):
         nc = Dataset("../Data/"+file_name, 'r')
-        print 'Plotting:', file_name
+        print('Plotting:', file_name)
 
         varlist = nc.variables.keys()
         if 'station_id@MetaData' in varlist:
-            stationidnc =[ ''.join(i)  for i in nc.variables['station_id@MetaData'] ]
+            stationidnc =[ b''.join(i.compressed().tolist()) for i in nc.variables['station_id@MetaData'][:] ]
             nstation = len(set(stationidnc))
         else:
             nstation = 0
@@ -85,8 +98,8 @@ def readdata():
         #select variables with the suffix 'ObsValue'
         obslist = [obs for obs in varlist if (obs[-8:] == 'ObsValue')]
 
-        if type(plotdict[newplotdict.keys()[index]][1]) is not str:
-            obslist=(['brightness_temperature_{0}@ObsValue'.format(i) for i in plotdict[newplotdict.keys()[index]][1]])
+        if type(plotdict[list(newplotdict.keys())[0]][1]) is not str:
+            obslist=(['brightness_temperature_{0}@ObsValue'.format(i) for i in plotdict[list(newplotdict.keys())[1]]])
         #print 'check obslist=', obslist
         for var in obslist:
             print(var)
@@ -137,7 +150,7 @@ def plot(lats,lons,values,OBS_TYPE,VAR_NAME,var_unit,out_name,nstation):
 
 #draw points onto map =========================================================
     cm=plt.cm.get_cmap('rainbow')
-    sc=m.scatter(lons,lats,c=values,s=6,cmap=cm,
+    sc=m.scatter(lons[:],lats[:],c=values[:],s=6,cmap=cm,
         zorder=10) #10 ; zorder determines the order of the layer. If not set,
                         #the point on continent will be blocked
 

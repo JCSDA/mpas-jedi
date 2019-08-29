@@ -9,6 +9,18 @@ import numpy as np
 import os
 import fnmatch
 
+'''
+Directory Structure:
+test/
+ ├── testoutput/
+ │   ├── 3dvar_bumpcov.test.log.out
+ │   ├── 3dvar.test.log.out
+ │   ├── ...
+ ├── graphics/
+ │   ├── plot_cost_grad.py
+ │   ├── ...
+'''
+
 VAR1=os.getenv('VAR1','Cost Function')
 VAR2=os.getenv('VAR2','Gradient Norm Reduction')
 file_name = 'costgrad.txt'  # output from grep and paste command
@@ -48,8 +60,8 @@ def readdata():
 
         alist = open(file_name).read().split()
         iters  = numpy.asarray(alist[0::3])  
-        cost = numpy.asarray(alist[1::3])
-        grad = numpy.asarray(alist[2::3])
+        cost = numpy.asarray(alist[1::3]).astype(np.float)
+        grad = numpy.asarray(alist[2::3]).astype(np.float)
         forx=integers(1,len(iters)) 
         plot(forx,cost,iters,VAR1,dalogfile[14:])
         plot(forx,grad,iters,VAR2,dalogfile[14:])

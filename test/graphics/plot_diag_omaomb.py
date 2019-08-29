@@ -27,7 +27,7 @@ def readdata():
     #print_fmt = 'pdf' #higher fidelity, slower
 
     profile_group  = ['sonde','aircraft','satwind','gnssroref','gnssrobndropp1d']
-    radiance_group = ['amsua_n18','amsua_n19','amsua_metop-a','amsua_metop-b']
+    radiance_group = ['amsua_n19--ch1-3,15','amsua_bumpcov_n19--ch4-7,9-14','amsua_n19--ch1-3,15','amsua_n19--ch4-7,9-14']
     #dummy_group   = ['dummy_obstype1']
 
     all_groups = []
@@ -308,8 +308,7 @@ def init_subplts(subpltlist, nfigtypes, maxsubplts):
 #
 #PURPOSE: Initialize multiple figure objects and descriptors
 #================================================================
-
-    nnfigs = (len(subpltlist) / maxsubplts + 1)
+    nnfigs = (int(len(subpltlist) / maxsubplts) + 1)
     nsubplts = len(subpltlist)
     if nsubplts > maxsubplts : nsubplts = maxsubplts
 
@@ -361,7 +360,7 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
 #================================================================
 
     nnfigs = len(figs) / nfigtypes
-    jfig = (ifig-1)/maxsubplts
+    jfig = int((ifig-1)/maxsubplts)
     kfig = np.mod(ifig-1,maxsubplts)+1
     subplt_cnt[jfig] += 1
 
@@ -387,7 +386,7 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
         #if kfig <= min(nvars,numsubplts) - nx_subplt[0] : xlab = ''
         #if np.mod(kfig,nx_subplt[0]) != 1 : ylab = ''
 
-        ax = figs[offset+jfig].add_subplot(ny_subplt[0],nx_subplt[0],kfig)
+        ax = figs[int(offset+jfig)].add_subplot(ny_subplt[0],nx_subplt[0],kfig)
 
         if iifig == 0:
             #Add scatter plot for h(x) vs. y
@@ -417,8 +416,8 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
         if (ivar == nvars-1 or subplt_cnt[jfig] == numsubplts):
             #Save the figure to file
             print('Saving figure to '+fname)
-            figs[offset+jfig].subplots_adjust(wspace=0.35,hspace=0.35)
-            figs[offset+jfig].savefig(fname,dpi=200,bbox_inches='tight')
+            figs[int(offset+jfig)].subplots_adjust(wspace=0.35,hspace=0.35)
+            figs[int(offset+jfig)].savefig(fname,dpi=200,bbox_inches='tight')
 
         offset += nnfigs
 
