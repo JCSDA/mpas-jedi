@@ -27,6 +27,7 @@
 #include "ufo/ObsBias.h"
 #include "ufo/ObsBiasIncrement.h"
 #include "ufo/ObsBiasCovariance.h"
+#include "ufo/ObsDiagnostics.h"
 #include "ufo/ObsOperator.h"
 #include "ufo/LinearObsOperator.h"
 
@@ -51,18 +52,18 @@ struct MPASTraits {
 
   typedef mpas::GetValuesTrajMPAS        InterpolatorTraj;
 
-  typedef ufo::ObsOperator               ObsOperator;
+  typedef ufo::GeoVaLs                   GeoVaLs;
   typedef ufo::LinearObsOperator         LinearObsOperator;
-  typedef ioda::ObsSpace                 ObsSpace;
-  typedef ioda::ObsVector                ObsVector;
-  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
-
+  typedef ufo::Locations                 Locations;
   typedef ufo::ObsBias                   ObsAuxControl;
   typedef ufo::ObsBiasIncrement          ObsAuxIncrement;
   typedef ufo::ObsBiasCovariance         ObsAuxCovariance;
+  typedef ufo::ObsDiagnostics            ObsDiagnostics;
+  typedef ufo::ObsOperator               ObsOperator;
 
-  typedef ufo::GeoVaLs                   GeoVaLs;
-  typedef ufo::Locations                 Locations;
+  typedef ioda::ObsSpace                 ObsSpace;
+  typedef ioda::ObsVector                ObsVector;
+  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
 }  // namespace mpas
