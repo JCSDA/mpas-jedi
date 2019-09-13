@@ -663,7 +663,7 @@ subroutine increment_to_ug(self, ug, its)
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
    
-   ug%grid(1)%fld = 0.0_kind_real
+   ug%grid(1)%fld(:,:,:,its) = 0.0_kind_real
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
       ! Pools may in general contain dimensions, namelist options, fields, or other pools,
       ! so we select only those members of the pool that are fields
