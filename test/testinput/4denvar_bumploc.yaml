@@ -100,7 +100,6 @@ cost_function:
           advmode: 0
           diag_interp: bilin
           grid_output: 0
-          write_grids: 1
       members:
       - state:
         - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc

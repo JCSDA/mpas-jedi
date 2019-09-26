@@ -1,27 +1,27 @@
 Test     : CostJb   : Nonlinear Jb = 0
 Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7594.93, nobs = 579, Jo/n = 13.1173, err = 1.32875
 Test     : CostFunction: Nonlinear J = 7594.93
-Test     : DRIPCGMinimizer: reduction in residual norm = 1.32365e-05
+Test     : DRIPCGMinimizer: reduction in residual norm = 1.28899e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=199.599, Max=305.23, RMS=243.946 : temperature
+Test     : Fld=1  Min=199.599, Max=305.232, RMS=243.946 : temperature
 Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
-Test     : Fld=3  Min=0, Max=0.0194317, RMS=0.00464497 : spechum
+Test     : Fld=3  Min=0, Max=0.019475, RMS=0.00464439 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
-Test     : CostJb   : Nonlinear Jb = 364.247
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6319.28, nobs = 579, Jo/n = 10.9141, err = 1.32875
-Test     : CostFunction: Nonlinear J = 6683.53
-Test     : DRIPCGMinimizer: reduction in residual norm = 8.16426e-06
+Test     : CostJb   : Nonlinear Jb = 361.847
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6331.39, nobs = 579, Jo/n = 10.935, err = 1.32875
+Test     : CostFunction: Nonlinear J = 6693.24
+Test     : DRIPCGMinimizer: reduction in residual norm = 7.52159e-06
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=199.599, Max=305.23, RMS=243.946 : temperature
+Test     : Fld=1  Min=199.599, Max=305.232, RMS=243.947 : temperature
 Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
-Test     : Fld=3  Min=0, Max=0.0194947, RMS=0.00464542 : spechum
+Test     : Fld=3  Min=0, Max=0.0195404, RMS=0.00464481 : spechum
 Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
 Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
-Test     : CostJb   : Nonlinear Jb = 354.34
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6341.77, nobs = 579, Jo/n = 10.953, err = 1.32875
-Test     : CostFunction: Nonlinear J = 6696.11
+Test     : CostJb   : Nonlinear Jb = 352.217
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6353.08, nobs = 579, Jo/n = 10.9725, err = 1.32875
+Test     : CostFunction: Nonlinear J = 6705.29

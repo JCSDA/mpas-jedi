@@ -41,6 +41,7 @@ Covariance:
     forced_radii: 1
     rh: 3000000
     rv: 1
+    write_grids: 1
   variable_changes: []
 dirac:
   ndir: 2
