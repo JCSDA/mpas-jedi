@@ -30,10 +30,17 @@ _InterpTest:
     - air_temperature
     - air_pressure
   Locations:
-    lats:
-    - '50.0'
-    lons:
-    - '50.0'
-    Rdist: '1'
-    Nrandom: '30'
-    random_seed: '560921'
+    window_begin: 2018-04-14T21:00:00Z
+    window_end: 2018-04-15T03:00:00Z
+    ObsSpace:
+      name: Random Locations
+      simulate:
+        variables: []
+      Generate:
+        nobs: 10
+        lat1: -90
+        lat2: 90
+        lon1: 0
+        lon2: 360
+        obs_errors: []
+        random_seed: 560921
