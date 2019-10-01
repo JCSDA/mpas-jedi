@@ -205,7 +205,7 @@ cost_function:
         threshold: 3
       - Filter: ROobserror
         variable: bending_angle
-        errmodel: ROPP
+        errmodel: ECMWF
     - ObsSpace:
         name: Surface
         ObsDataIn:
