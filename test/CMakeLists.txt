@@ -59,6 +59,9 @@ list( APPEND mpas_graphics
   graphics/plot_diag_omaomb_timeserial.py
   graphics/plot_cost_grad.py
   graphics/plot_BUMP_diag.py
+  graphics/write_diagnostic_stats.py
+  graphics/plot_utils.py
+  graphics/plot_stats_timeseries.py
 )
 
 # This line copies all files to binary dir
@@ -215,8 +218,18 @@ list( APPEND crtm_test_input
   EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
   SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
   TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n15.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n15.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n18.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n18.TauCoeff.bin
   SpcCoeff/Little_Endian/amsua_n19.SpcCoeff.bin
   TauCoeff/ODPS/Little_Endian/amsua_n19.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_aqua.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_aqua.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_metop-a.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_metop-a.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_metop-b.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_metop-b.TauCoeff.bin
   SpcCoeff/Little_Endian/cris-fsr_npp.SpcCoeff.bin
   TauCoeff/ODPS/Little_Endian/cris-fsr_npp.TauCoeff.bin
 #  SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin

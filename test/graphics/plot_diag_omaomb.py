@@ -27,7 +27,7 @@ def readdata():
     #print_fmt = 'pdf' #higher fidelity, slower
 
     profile_group  = ['sonde','aircraft','satwind','gnssroref','gnssrobndropp1d']
-    radiance_group = ['amsua_n19--ch1-3,15','amsua_bumpcov_n19--ch4-7,9-14','amsua_n19--ch1-3,15','amsua_n19--ch4-7,9-14']
+    radiance_group = ['amsua_n19--ch1-3,15','amsua_n19--ch4-7,9-14']
     #dummy_group   = ['dummy_obstype1']
 
     all_groups = []
@@ -145,8 +145,10 @@ def readdata():
                     if ''.join(obstype)[:6] == 'gnssro':
                         prenc = np.append(prenc, nc.variables['altitude@MetaData'])
                     else:
-                        prenc =  np.append(prenc, nc.variables['air_pressure@MetaData'])
-                        prenc =  np.divide(prenc,100.0)
+                        tmp = nc.variables['air_pressure@MetaData']
+                        if np.max(tmp) > 10000.0:
+                            tmp = np.divide(tmp,100.0)
+                        prenc = np.append( prenc, tmp )
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
                 ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
@@ -159,6 +161,7 @@ def readdata():
             obsnc[qcbnc != 0] = np.NaN
             ombnc[np.less(ombnc,-1.0e+15)] = np.NaN
             ombnc[qcbnc != 0] = np.NaN
+            omanc[np.less(omanc,-1.0e+15)] = np.NaN
             omanc[qcanc != 0] = np.NaN
 
             if ''.join(obstype)[:6] == 'gnssro':
