@@ -6,6 +6,7 @@
 module mpas_state_mod
 
 use fckit_configuration_module, only: fckit_configuration
+use fckit_mpi_module, only: fckit_mpi_comm
 
 !oops
 use datetime_mod
@@ -1029,6 +1030,8 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    character(len=5)   :: cbumpcount
    character(len=255) :: bump_nam_prefix
    
+   type(fckit_mpi_comm) :: f_comm
+
    ! Each bump%nam%prefix must be distinct
    ! -------------------------------------
    write(cbumpcount,"(I0.5)") bumpid
@@ -1071,7 +1074,8 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
 
    ! Initialize BUMP
    ! ---------------
-   call bump%setup_online(mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
+   f_comm = fckit_mpi_comm()
+   call bump%setup_online(f_comm,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
                           nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
    ! Run BUMP drivers
