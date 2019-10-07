@@ -1,19 +1,19 @@
-from netCDF4 import Dataset
-import os, sys
-#import getopt
-import numpy as np
 from copy import deepcopy
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.axes as maxes
 import fnmatch
-import math
+#import math
+import matplotlib.pyplot as plt
+import matplotlib.axes as maxes
+from netCDF4 import Dataset
+import numpy as np
+import os
 import plot_utils as pu
+import re
+import sys
 
 # This script can be executed normally OR with optional arguments -n and -i
 # in order to run with GNU parallel. See plot_utils.par_args for more information.
 
-diagNames = ['omb','oma','obs','bak','ana']
+diagNames = pu.allDiags
 
 # Diagnostic oma/omb files located in diagdir
 diagdir    = '../Data/'
@@ -31,6 +31,10 @@ depbg_var = 'depbg'
 depan_var = 'depan'
 
 #quality control
+qcIterBG='0'
+NOUTER=os.getenv('NOUTER',1) #set equal to number of outer iterations
+qcIterAN=str(NOUTER)
+
 qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for depbg_var
 qcan_var  = 'EffectiveQC2' #EffectiveQCi, where i is the iteration for depan_var
 
@@ -58,20 +62,20 @@ def write_diag_stats(nproc, myproc):
     #  (e.g., 3dvar_aircraft), where each group 
     #  contains files from all PE's
     exob_groups = [[]]
-    for j, file_name in enumerate(obsoutfiles):
+    for j, fileName in enumerate(obsoutfiles):
         # exob_group_name excludes everything outside the first/final '_'
-        exob_group_name =  '_'.join(file_name.split("_")[1:][:-1])
+        exob_group_name =  '_'.join(fileName.split("_")[1:][:-1])
         for i, exob_group in enumerate(exob_groups):
             if exob_group_name in exob_group:
                 # If exob_group with exob_group_name exists, add new file to it
                 update_group = exob_group
-                update_group.append(file_name)
+                update_group.append(fileName)
                 exob_groups[i][:] = update_group
                 break
             elif i == len(exob_groups)-1:
                 # If group with exob_group_name does not exist, add one
                 new_group = [exob_group_name]
-                new_group.append(file_name)
+                new_group.append(fileName)
                 exob_groups.append(new_group)
                 break
     exob_groups = exob_groups[1:][:]
@@ -79,58 +83,58 @@ def write_diag_stats(nproc, myproc):
     # Loop over unique experiment-ObsSpace groups
     for exob_group in exob_groups:
         expt_obs = exob_group[0]
+        ObsSpaceFiles = exob_group[1:]
         # Determine ObsSpace from expt_ObsSpace string
         expt_parts = expt_obs.split("_")
         nstr = len(expt_parts)
-        ObsSpaceName = pu.miss_s
+        ObsSpaceInfo = pu.nullObsSpaceInfo
         for i in range(0,nstr):
             ObsSpaceName_ = '_'.join(expt_parts[i:nstr])
-            ObsSpaceInfo_ = ObsSpaceDict.get( ObsSpaceName_,[pu.miss_s, 0, pu.nullBinKeys])
-            if ObsSpaceInfo_[0] != pu.miss_s and ObsSpaceInfo_[1] > 0:
+            ObsSpaceInfo_ = ObsSpaceDict.get( ObsSpaceName_,pu.nullObsSpaceInfo)
+            if ObsSpaceInfo_['process']:
                 ObsSpaceName = ObsSpaceName_
                 ObsSpaceInfo = ObsSpaceInfo_
 
-        if ObsSpaceName == pu.miss_s:
-           continue
+        if not ObsSpaceInfo['process']: continue
 
         pu.proc_print(nproc,myproc,"write_diag_stats: EXPERIMENT_OBSSPACE =  "+expt_obs)
 
-        ObsSpaceGrp = ObsSpaceInfo[0]
-        binGrps = ObsSpaceInfo[2]
+        ObsSpaceGrp = ObsSpaceInfo['ObsSpaceGrp']
+        binGrps = ObsSpaceInfo['binGrps']
 
         # compile list of unique variables needed for binning
-        uniqBinVars = []
+        uniqBinVarGrps = []
         for binGrp in binGrps:
             binGrpKey = binGrp[0]
             if binGrpKey == pu.miss_s: continue
             grpDict = pu.binGrpDict.get(binGrpKey,{'variables': [pu.miss_s]})
-            binVars = grpDict['variables']
-            if binVars[0] == pu.miss_s: continue
-            for binVar in binVars:
-                uniqBinVars.append(binVar)
-        uniqBinVars = pu.uniqueMembers(uniqBinVars)
+            binVarGrps = grpDict['variables']
+            for binVarGrp in binVarGrps:
+                if binVarGrp == pu.miss_s: continue
+                uniqBinVarGrps.append(binVarGrp)
+        uniqBinVarGrps = pu.uniqueMembers(uniqBinVarGrps)
 
-        #Extract binning variables (e.g., vertical coordinate, latitude)
-        # in loop over exob_group, 
-        # excluding category in exob_group[0]
-        fileBinVarsVals = [np.asarray([])]*len(uniqBinVars)
-        for file_name in exob_group[1:]:
-            nc = Dataset(file_name, 'r')
-            nc.set_auto_mask(False)
+        #Add appropriate QC interation numbers
+        for ivar, varGrp in enumerate(uniqBinVarGrps):
+            if varGrp==pu.varQC:
+                uniqBinVarGrps[ivar] = varGrp+qcIterBG
+                uniqBinVarGrps.append(varGrp+qcIterAN)
 
-            for ivar, binVarGrp in enumerate(uniqBinVars):
-                if binVarGrp != pu.miss_s and binVarGrp != '':
-                    binVar = ''.join(binVarGrp.split("@")[:-1])
+        uniqBinVars = []
+        uniqBinGrps = []
+        for varGrp in uniqBinVarGrps:
+            uniqBinVars.append(''.join(varGrp.split("@")[:-1]))
+            uniqBinGrps.append(''.join(varGrp.split("@")[-1]))
 
-                    tmp = nc.variables[binVarGrp]
-                    #Convert air_pressure from Pa to hPa if needed
-                    if binVar == 'air_pressure' and np.max(tmp) > 10000.0:
-                        tmp = np.divide(tmp,100.0)
-                    fileBinVarsVals[ivar] = np.append( fileBinVarsVals[ivar], tmp )
+        #Extract binning variables (e.g., vertical coordinate, latitude) 
+        fileBinVarsVals = accumulateVarNC(uniqBinVarGrps,ObsSpaceFiles)
+        #Convert air_pressure from Pa to hPa if needed
+        for ivar, varName in enumerate(uniqBinVars):
+            if varName == 'air_pressure' and np.max(fileBinVarsVals[ivar]) > 10000.0:
+                fileBinVarsVals[ivar] = np.divide(fileBinVarsVals[ivar],100.0)
 
-
-        # Select variables with the suffix depbg_var (required for OMB)
-        nc = Dataset(exob_group[1], 'r')
+        # Select variables with the suffix depbg_var from the first file
+        nc = Dataset(ObsSpaceFiles[0], 'r')
         varlist = nc.variables.keys()
         bglist = [var for var in varlist if (var[-len(depbg_var):] == depbg_var)]
 
@@ -151,48 +155,24 @@ def write_diag_stats(nproc, myproc):
         newFile = True
 
         # Loop over variables with omb suffix
-        for ivar, depbg in enumerate(bglist):
-            varName = ''.join(depbg.split("@")[:-1])
+        for ivar, depbgName in enumerate(bglist):
+            varName = ''.join(depbgName.split("@")[:-1])
             pu.proc_print(nproc,myproc,"write_diag_stats: VARIABLE = "+varName)
-            obs=''.join(depbg.split("@")[:-1])+'@'+obs_var
-            depan=''.join(depbg.split("@")[:-1])+'@'+depan_var
-            qcb = ''.join(depbg.split("@")[:-1])+'@'+qcbg_var
-            qca = ''.join(depbg.split("@")[:-1])+'@'+qcan_var
-            #print(nproc,myproc,"obs="+obs+"depbg="+depbg+"depan="+depan)
+            obsName=''.join(depbgName.split("@")[:-1])+'@'+obs_var
+            depanName=''.join(depbgName.split("@")[:-1])+'@'+depan_var
+            #print(nproc,myproc,"obs="+obsName+"depbgName="+depbgName+"depan="+depanName)
 
-            obsnc = np.asarray([])
-            ombnc = np.asarray([])
-            omanc = np.asarray([])
-            qcbnc = np.asarray([])
-            qcanc = np.asarray([])
+            tmp = accumulateVarNC([obsName, depbgName, depanName],ObsSpaceFiles)
+            obsVals = tmp[0]
+            ombVals = np.negative(tmp[1]) # omb = (-) depbg
+            omaVals = np.negative(tmp[2]) # oma = (-) depan
 
-            # Build up arrays in loop over exob_group, 
-            # excluding category in exob_group[0]
-            for file_name in exob_group[1:]:
-                nc = Dataset(file_name, 'r')
-                nc.set_auto_mask(False)
-                #file_rank = file_name[-(4+npedigits):-4]
-
-                obsnc = np.append( obsnc, nc.variables[obs] )
-                ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
-                qcbnc = np.append( qcbnc, nc.variables[qcb]  )
-                if depan in nc.variables:
-                    omanc = np.append( omanc, np.negative( nc.variables[depan] ) ) # oma = (-) depan
-                if qca in nc.variables:
-                    qcanc  = np.append( qcanc,  nc.variables[qca]  )
-
-            #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
-            #keep data @EffectiveQC=0
-            obsnc[np.less(obsnc,-1.0e+15)] = np.NaN
-            obsnc[qcbnc != 0]              = np.NaN
-
-            ombnc[np.less(ombnc,-1.0e+15)] = np.NaN
-            ombnc[np.isnan(obsnc)]         = np.NaN
-            ombnc[qcbnc != 0]              = np.NaN
-
-            omanc[np.less(omanc,-1.0e+15)] = np.NaN
-            omanc[np.isnan(obsnc)]         = np.NaN
-            omanc[qcanc != 0]              = np.NaN
+            #gather non-QC varNam@* binning variables for this varName
+            for ivar, varGrp in enumerate(uniqBinVarGrps):
+                if uniqBinVars[ivar]==pu.vNameStr:
+                    varGrpSub = re.sub(pu.vNameStr,varName,varGrp)
+                    tmp = accumulateVarNC([varGrpSub],ObsSpaceFiles)
+                    fileBinVarsVals[ivar] = tmp[0]
 
             if ObsSpaceGrp == pu.radiance_s:
                 ch = ''.join(varName.split("_")[-1:])
@@ -206,72 +186,104 @@ def write_diag_stats(nproc, myproc):
 
             # Collect and write stats for all diagNames
             for diagName in diagNames:
+                pu.proc_print(nproc,myproc,"write_diag_stats: DIAG = "+diagName)
                 if diagName == 'omb':
-                    Diagnostic = deepcopy(ombnc)
+                    Diagnostic = deepcopy(ombVals)
                 elif diagName == 'oma':
-                    Diagnostic = deepcopy(omanc)
+                    Diagnostic = deepcopy(omaVals)
                 elif diagName == 'obs':
-                    Diagnostic = deepcopy(obsnc)
+                    Diagnostic = deepcopy(obsVals)
                 elif diagName == 'bak':
-                    Diagnostic = np.subtract(obsnc, ombnc)
+                    Diagnostic = np.subtract(obsVals, ombVals)
                 elif diagName == 'ana':
-                    Diagnostic = np.subtract(obsnc, omanc)
+                    Diagnostic = np.subtract(obsVals, omaVals)
                 else:
                     pu.proc_print(nproc,myproc,'\n\nERROR: diagName is undefined: '+diagName)
                     os._exit(1)
 
                 if (diagName == 'omb' or diagName == 'oma') \
                    and  ObsSpaceName[:6] == 'gnssro':
-                    Diagnostic = (Diagnostic / obsnc) * 100.
+                    Diagnostic = (Diagnostic / obsVals) * 100.
 
-                # Write un-binned Diagnostic
-                newFile = write_stats(expt_obs, ObsSpaceGrp, varShortName, varUnits, diagName, \
-                                      pu.miss_s, pu.allBins, pu.miss_s, Diagnostic, newFile)
-
-                # Write binned Diagnostic
+                # Filter and write Diagnostic statistics for each binGrp
                 for binGrp in binGrps:
                     binGrpKey = binGrp[0]
                     if binGrpKey == pu.miss_s: continue
                     grpDict = pu.binGrpDict.get(binGrpKey,{'variables': [pu.miss_s]})
                     binVars = grpDict['variables']
                     if binVars[0] == pu.miss_s: continue
+                    nonQCBinVars = [var for var in binVars if var!=pu.varQC]
+                    binKeys = binGrp[1]
 
-                    selectKeys = binGrp[1]
-                    binVarsVals = [fileBinVarsVals[uniqBinVars.index(binVar)] for binVar in binVars]
+                    # collect only the variables associated with this binGrp and diagName
+                    iterBinVars = deepcopy(binVars)
+                    if (diagName == 'oma' or diagName == 'ana'):
+                        #use AN iteration for varNam@EffectiveQC
+                        for ivar, varGrp in enumerate(binVars):
+                            if varGrp==pu.varQC:
+                                iterBinVars[ivar] = varGrp+qcIterAN
+                    else:
+                        #use BG iteration for varNam@EffectiveQC
+                        for ivar, varGrp in enumerate(binVars):
+                            if varGrp==pu.varQC:
+                                iterBinVars[ivar] = varGrp+qcIterBG
+                    binVarsVals = [fileBinVarsVals[uniqBinVarGrps.index(binVar)] for binVar in iterBinVars]
 
                     nlocs = len(binVarsVals[0])
-                    for ikey, selectKey in enumerate(selectKeys):
-                        keyDesc = grpDict.get(selectKey,pu.nullBinDesc)
-                        binVals = keyDesc['values']
+                    for ikey, binKey in enumerate(binKeys):
+                        keyDesc = grpDict.get(binKey,pu.nullBinDesc)
+                        binVals = keyDesc['labels']
                         if binVals[0] == pu.miss_s: continue
 
                         binFilters = keyDesc['filters']
+                        if len(nonQCBinVars) == 1 and pu.isfloat(binVals[0]):
+                            binVar = ''.join(nonQCBinVars[0].split("@")[:-1])
+                            binVarDict = pu.varDict.get(binVar,['null',binVar])
+                            binVar = binVarDict[1]
+                            binUnits = binVarDict[0]
+                        elif len(binVars) == 1 and binVars[0]==pu.varQC:
+                            binVar = 'QCFlag'
+                            binUnits = pu.miss_s
+                        else:
+                            binVar = pu.miss_s
+                            binUnits = pu.miss_s
+
                         for ibin, binVal in enumerate(binVals):
-
-                            if len(binVars) == 1 and pu.isfloat(binVal):
-                                binVar = ''.join(binVars[0].split("@")[:-1])
-                                binVarDict = pu.varDict.get(binVar,['null',binVar])
-                                binVar = binVarDict[1]
-                                binUnits = binVarDict[0]
-                            else:
-                                binVar = pu.miss_s
-                                binUnits = pu.miss_s
-
-                            # filter/remove data that is outside this bin
-                            blackList = np.full((nlocs),False)
-                            for binFilter in binFilters:
-                                binFunc = binFilter['where']
-                                binArgs = binFilter['args']
-                                binBound = (binFilter['bounds'])[ibin]
-                                binArgsVals = [binVarsVals[i] for i in binArgs]
-                                blackList = np.logical_or(blackList, binFunc(binArgsVals,binBound))
-
+                            # filter data that meets bin criteria
                             binnedDiagnostic = deepcopy(Diagnostic)
-                            binnedDiagnostic[blackList] = np.NaN
-                            
+                            for binFilter in binFilters:
+                                applyToDiags = binFilter.get('apply_to',pu.allDiags)
+                                if not (diagName in applyToDiags): continue
+                                binFunc  = binFilter['where']
+                                binArgs  = binFilter['args']
+                                binBound = (binFilter['bounds'])[ibin]
+                                binArgsVals = [binVarsVals[binVars.index(arg)] for arg in binArgs]
+                                mask = binFunc(binArgsVals,binBound)
+                                maskValue = binFilter.get('mask_value',np.NaN)
+                                if len(mask) == len(binnedDiagnostic):
+                                    binnedDiagnostic[mask] = maskValue
+                                else:
+                                    pu.proc_print(nproc,myproc,'\n\nERROR: mask is incorrectly defined for '\
+                                                  +diagName+" "+binGrpKey+" "+binKey+" "+binVal)
+                                    os._exit(1)
+
                             newFile = write_stats(expt_obs, ObsSpaceGrp, varShortName, varUnits, diagName, \
                                                   binVar, binVal, binUnits, binnedDiagnostic, newFile)
 
+def accumulateVarNC(varNames,ncFiles):
+# varNames (string) - list of variables desired from the ncFiles
+# ncFiles (string)  - list of netcdf files to be read (e.g., from multiple processor/experiment outputs)
+
+    varsVals = [np.asarray([])]*len(varNames)
+
+    # Build up array in loop over ncFiles
+    for fileName in ncFiles:
+        nc = Dataset(fileName, 'r')
+        nc.set_auto_mask(False)
+        for ivar, varName in enumerate(varNames):
+            if varName in nc.variables:
+                varsVals[ivar] = np.append( varsVals[ivar], nc.variables[varName] )
+    return varsVals
 
 def write_stats(ObsSpace, ObsSpaceGrp, varName, varUnits, diagName, \
                 binVar, binVal, binUnits, array_f, newFile):

@@ -1,16 +1,24 @@
-import os, sys, getopt
+import datetime as dt
+import getopt
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, AutoDateLocator
-#                             HOURLY, rrulewrapper, RRuleLocator
-import datetime as dt
 import numpy as np
+import os
 import pandas as pd
+import sys
 
 miss_f = -88888.8
 miss_i = -88888
 miss_s = 'null'
 csvSEP = ";"
+
+#=======================
+# diagnostic definitions
+#=======================
+
+allDiags = ['omb','oma','obs','bak','ana']
+nonObsDiags = [diag for diag in allDiags if diag!='obs']
 
 #=====================
 # variable definitions
@@ -32,32 +40,56 @@ varDict = { \
   , 'longitude':              [ 'deg',   'lon' ] \
     }
 
-profile_s = 'profile'
-radiance_s = 'radiance'
+#Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
+#Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == 'altitude':
 
 #===================
 # binning functions
 #===================
 
-def belowBound(xVecs, bound):
+def equalBound(xVecs, bound):
+    mask = np.full((len(xVecs[0])),False)
+    for x in xVecs:
+        mask = np.logical_or(mask, np.equal(x,bound))
+    return mask
+
+def notEqualBound(xVecs, bound):
+    mask = np.full((len(xVecs[0])),False)
+    for x in xVecs:
+        mask = np.logical_or(mask, np.not_equal(x,bound))
+    return mask
+
+#def lessEqualBound(xVecs, bound):
+#    mask = np.full((len(xVecs[0])),False)
+#    for x in xVecs:
+#        mask = np.logical_or(mask, np.less_equal(x,bound))
+#    return mask
+
+def lessBound(xVecs, bound):
     mask = np.full((len(xVecs[0])),False)
     for x in xVecs:
         mask = np.logical_or(mask, np.less(x,bound))
     return mask
 
-def aboveBound(xVecs, bound):
+def greatEqualBound(xVecs, bound):
     mask = np.full((len(xVecs[0])),False)
     for x in xVecs:
         mask = np.logical_or(mask, np.greater_equal(x,bound))
     return mask
 
+def greatBound(xVecs, bound):
+    mask = np.full((len(xVecs[0])),False)
+    for x in xVecs:
+        mask = np.logical_or(mask, np.greater(x,bound))
+    return mask
+
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
-#def outsideRegion(LONLAT,REGION_NAME): 
+#def outsideRegion(xVecs,REGION_NAME): 
 #    Note: depending on shape file definitions, LON may need to be -180 to 180 instead of 0 to 360
 #
 #    shp = READ_SHAPEFILE(REGION_NAME)
-#    lons = x[0]
-#    lats = x[1]
+#    lons = xVecs[0]
+#    lats = xVecs[1]
 #    nlocs = len(lons)
 ##    mask = np.full((nlocs),False)
 ##    for ii in list(range(nlocs)):
@@ -118,47 +150,104 @@ for ibin in list(range(len(latitudeBinBounds)-1)):
     latitudeBinStrVals.append("{:.0f}".format(binVal))
 
 # general bin definitions
-nullBinDesc = { 'filters': [], 'values': [miss_s] }
-allBins = 'ALL'
+nullBinDesc = { 'filters': [], 'labels': [miss_s] }
+
+#@EffectiveQC* values:
+# pass    = 0;   // we like that one!
+# missing = 1;   // missing values prevent use of observation
+# preQC   = 2;   // observation rejected by pre-processing
+# bounds  = 3;   // observation value out of bounds
+# domain  = 4;   // observation not within domain of use
+# black   = 5;   // observation black listed
+# Hfailed = 6;   // H(x) computation failed
+# thinned = 7;   // observation removed due to thinning
+# diffref = 8;   // metadata too far from reference
+# clw     = 9;   // observation removed due to cloud field
+# fguess  = 10;  // observation too far from guess
+# seaice  = 11;  // observation based sea ice detection, also flags land points
+#
+# Static list above copied on 3 Oct 2019
+# see ufo/src/ufo/filters/QCflags.h for up-to-date list
+
+goodFlags = [0]
+goodFlagNames = ['pass']
+
+badFlags     = [1,         2,         3,         4, \
+                5,         6,         7,         8, \
+                9,         10,        11]
+badFlagNames = ['missing', 'preQC',   'bounds',  'domain', \
+                'black',   'Hfailed', 'thinned', 'diffref', \
+                'clw',     'fguess',  'seaice']
 
 #========================================
 # bin dictionary used for all bin groups
 #========================================
 
+vNameStr = 'varName'
+varQC = vNameStr+'@EffectiveQC'
+prsMeta = 'air_pressure@MetaData'
+altMeta = 'altitude@MetaData'
+lonMeta = 'longitude@MetaData'
+latMeta = 'latitude@MetaData'
+
+goodBinNames = goodFlagNames
+
 binGrpDict = { \
 #    #name            binVars ... followed by dictionary defitions of each binDesc
-    'pressure':  { 'variables': ['air_pressure@MetaData'] \
-                 , 'default': { 'filters': [\
-                                  {'where': belowBound, 'args': [0], 'bounds': pressureMinBounds} \
-                                , {'where': aboveBound, 'args': [0], 'bounds': pressureMaxBounds} ] \
-                              , 'values': pressureBinStrVals } \
+    'qc':      { 'variables': [varQC] \
+                 , 'good':      { 'filters': [\
+                                    {'where': notEqualBound, 'args': [varQC], 'bounds': goodFlags, \
+                                     'apply_to': nonObsDiags}], \
+                                  'labels': goodBinNames } \
+                 , 'bad':       { 'filters': [\
+                                    {'where': notEqualBound, 'args': [varQC], 'bounds': badFlags, \
+                                     'apply_to': nonObsDiags} \
+                                  , {'where': equalBound,    'args': [varQC], 'bounds': badFlags, \
+                                     'mask_value': 0.0, 'apply_to': nonObsDiags}] \
+                              , 'labels': badFlagNames } \
                  } \
-  , 'altitude':  { 'variables': ['altitude@MetaData'] \
-                 , 'default': { 'filters': [\
-                                  {'where': belowBound, 'args': [0], 'bounds': altitudeMinBounds} \
-                                , {'where': aboveBound, 'args': [0], 'bounds': altitudeMaxBounds} ] \
-                              , 'values': altitudeBinStrVals } \
+  , 'pressure':  { 'variables': [varQC,prsMeta] \
+                 , 'default':   { 'filters': [\
+                                    {'where': lessBound,       'args': [prsMeta], 'bounds': pressureMinBounds} \
+                                  , {'where': greatEqualBound, 'args': [prsMeta], 'bounds': pressureMaxBounds} \
+                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(pressureBinStrVals), \
+                                     'apply_to': nonObsDiags} ] \
+                                , 'labels': pressureBinStrVals } \
                  } \
-  , 'latband':   { 'variables': ['latitude@MetaData'] \
+  , 'altitude':  { 'variables': [varQC,altMeta] \
+                 , 'default':   { 'filters': [\
+                                    {'where': lessBound,       'args': [altMeta], 'bounds': altitudeMinBounds} \
+                                  , {'where': greatEqualBound, 'args': [altMeta], 'bounds': altitudeMaxBounds} \
+                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(altitudeBinStrVals), \
+                                     'apply_to': nonObsDiags} ] \
+                                , 'labels': altitudeBinStrVals } \
+                 } \
+  , 'latband':   { 'variables': [varQC,latMeta] \
                  , 'NAMED':     { 'filters': [\
-                                  {'where': belowBound, 'args': [0], 'bounds': namedLatBandsMinBounds} \
-                                , {'where': aboveBound, 'args': [0], 'bounds': namedLatBandsMaxBounds} ] \
-                              , 'values': namedLatBandsStrVals } \
+                                    {'where': lessBound,       'args': [latMeta], 'bounds': namedLatBandsMinBounds} \
+                                  , {'where': greatEqualBound, 'args': [latMeta], 'bounds': namedLatBandsMaxBounds} \
+                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(namedLatBandsStrVals), \
+                                     'apply_to': nonObsDiags} ] \
+                                , 'labels': namedLatBandsStrVals } \
                  , 'NUMERICAL': { 'filters': [\
-                                  {'where': belowBound, 'args': [0], 'bounds': latitudeMinBounds} \
-                                , {'where': aboveBound, 'args': [0], 'bounds': latitudeMaxBounds} ] \
-                              , 'values': latitudeBinStrVals } \
+                                    {'where': lessBound,       'args': [latMeta], 'bounds': latitudeMinBounds} \
+                                  , {'where': greatEqualBound, 'args': [latMeta], 'bounds': latitudeMaxBounds} \
+                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(latitudeBinStrVals), \
+                                     'apply_to': nonObsDiags} ] \
+                                , 'labels': latitudeBinStrVals } \
                  } \
-  , 'box':       { 'variables': ['longitude@MetaData','latitude@MetaData'] \
+  , 'box':       { 'variables': [varQC,lonMeta,latMeta] \
                  , 'AFRICA':    nullBinDesc \
                  , 'ATLANTIC':  nullBinDesc \
                  , 'AUSTRALIA': nullBinDesc \
-                 , 'CONUS':    { 'filters': [\
-                                   {'where': belowBound, 'args': [0], 'bounds': [234.0]} \
-                                 , {'where': aboveBound, 'args': [0], 'bounds': [294.0]} \
-                                 , {'where': belowBound, 'args': [1], 'bounds': [ 25.0]} \
-                                 , {'where': aboveBound, 'args': [1], 'bounds': [ 50.0]} ] \
-                               , 'values': ['CONUS'] } \
+                 , 'CONUS':     { 'filters': [\
+                                    {'where': lessBound,     'args': [lonMeta], 'bounds': [234.0]} \
+                                  , {'where': greatBound,    'args': [lonMeta], 'bounds': [294.0]} \
+                                  , {'where': lessBound,     'args': [latMeta], 'bounds': [ 25.0]} \
+                                  , {'where': greatBound,    'args': [latMeta], 'bounds': [ 50.0]} \
+                                  , {'where': notEqualBound, 'args': [varQC],   'bounds': goodFlags, \
+                                     'apply_to': nonObsDiags} ] \
+                               , 'labels': ['CONUS'] } \
                  , 'EUROPE':    nullBinDesc \
                  , 'E_EUROPE':  nullBinDesc \
                  , 'NAMERICA':  nullBinDesc \
@@ -168,13 +257,13 @@ binGrpDict = { \
                  , 'S_ASIA':    nullBinDesc \
                   } \
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g., 
-#  , 'polygon':   { 'variables': ['longitude@MetaData','latitude@MetaData'] \
-#                 , 'CONUS':  {'filters': [ \
-#                                {'where': outsideRegion, 'args': [0,1], 'bounds': ['CONUS']}], \
-#                              'values': ['CONUS'] } \
-#                 , 'EUROPE': {'filters': [ \
-#                                {'where': outsideRegion, 'args': [0,1], 'bounds': ['EUROPE']}], \
-#                              'values': ['EUROPE'] } \
+#  , 'polygon':   { 'variables': [varQC,lonMeta,latMeta] \
+#                 , 'CONUS':    { 'filters': [ \
+#                                  {'where': outsideRegion, 'args': [lonMeta,latMeta], 'bounds': ['CONUS']}], \
+#                               , 'labels': ['CONUS'] } \
+#                 , 'EUROPE':   { 'filters': [ \
+#                                 {'where': outsideRegion, 'args': [lonMeta,latMeta], 'bounds': ['EUROPE']}], \
+#                               , 'labels': ['EUROPE'] } \
 #                  } \
 }
 
@@ -183,30 +272,43 @@ binGrpDict = { \
 # ObsSpace definitions
 #=====================
 
-nullBinKeys = [[miss_s,[]]]
-profPressBinKeys = [ ['pressure',['default']], ['latband',['NAMED','NUMERICAL']], ['box',['CONUS']] ]
-profAltBinKeys =   [ ['altitude',['default']], ['latband',['NAMED','NUMERICAL']], ['box',['CONUS']] ]
-radianceBinKeys =  [ ['latband',['NAMED','NUMERICAL']], ['box',['CONUS']] ]
+nullBinGrps = [[miss_s,[]]]
+profPressBinGrps = [ ['qc',['good','bad']], \
+                     ['latband',['NAMED','NUMERICAL']], \
+                     ['box',['CONUS']], \
+                     ['pressure',['default']] \
+                   ]
+profAltBinGrps   = [ ['qc',['good','bad']], \
+                     ['latband',['NAMED','NUMERICAL']], \
+                     ['box',['CONUS']], \
+                     ['altitude',['default']] \
+                   ]
+radianceBinGrps  = [ ['qc',['good','bad']], \
+                     ['latband',['NAMED','NUMERICAL']], \
+                     ['box',['CONUS']] \
+                   ]
 
-# columns: ObsSpace name       ObsSpaceGrp    binGrp         process?
+nullObsSpaceInfo = {'ObsSpaceGrp': miss_s,    'process': 0, 'binGrps': nullBinGrps }
+
+profile_s = 'profile'
+radiance_s = 'radiance'
+
+# columns: ObsSpace name (YAML)    ObsSpaceGrp              process?                  binGrps
 ObsSpaceDict_base = { \
-    'sonde':                 [ profile_s,    1, profPressBinKeys ] \
-  , 'aircraft':              [ profile_s,    1, profPressBinKeys ] \
-  , 'satwind':               [ profile_s,    1, profPressBinKeys ] \
-  , 'gnssroref':             [ profile_s,    1, profAltBinKeys   ] \
-  , 'gnssrobndropp1d':       [ profile_s,    1, profAltBinKeys   ] \
-  , 'amsua_n15':             [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_n18':             [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_n19':             [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_metop-a':         [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_metop-b':         [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_aqua':            [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_n19--ch1-3,15':   [ radiance_s,   1, radianceBinKeys  ] \
-  , 'amsua_n19--ch4-7,9-14': [ radiance_s,   1, radianceBinKeys  ] \
+    'sonde':                 {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'aircraft':              {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'satwind':               {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'gnssroref':             {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'gnssrobndropp1d':       {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'amsua_n15':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_n18':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_n19':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_metop-b':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_aqua':            {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_n19--ch1-3,15':   {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'amsua_n19--ch4-7,9-14': {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
     }
-    #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
-    #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == 'altitude':
-
 
 
 #============================
@@ -243,7 +345,7 @@ def finalize_fig(fig, filename, filetype, ybuffer):
 # ybuffer - whether to give extra y space for labeling
 
     if ybuffer:
-        fig.subplots_adjust(wspace=0.35,hspace=0.65)
+        fig.subplots_adjust(wspace=0.35,hspace=0.70)
     else:
         fig.subplots_adjust(wspace=0.35,hspace=0.40)
 
@@ -287,6 +389,7 @@ def timeTicks(x, pos):
 DTimeLocator = AutoDateLocator(interval_multiples=True)
 DTimeFormatter = DateFormatter('%m-%d_%HZ')
 TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
+
 
 #===========================
 # general purpose functions

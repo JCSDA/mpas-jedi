@@ -1,19 +1,18 @@
-import os, sys
-from netCDF4 import Dataset
-#import numpy
+from copy import deepcopy
+import datetime as dt
+import glob
 import numpy as np
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-from copy import deepcopy
+#import math
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
-import datetime as dt
-import glob
-import re
 import plot_utils as pu
-import math
+import re
+import os
+import sys
 
 # This script can be executed normally OR with optional arguments -n and -i
 # in order to run with GNU parallel. See plot_utils.par_args for more information.
@@ -23,34 +22,46 @@ import math
 # SNAPSHOTCY - creates a timeseries figure between firstCycleDTime and lastCycleDTime
 #               for each forecast length between fcTDeltaFirst and fcTDeltaLast
 #             - x-axis: cycle initial time
-#             -    line: separate experiment
-#             - subplot: different observed variable
+#             -    line: per experiment
+#             - subplot: per obs. variable
 #             -    file: combination of FC lead time, statistic, and bin (if applicable)
 # AGGREGATEFC - creates a timeseries figure between fcTDeltaFirst and fcTDeltaLast containing 
 #               aggregated statistics for the period between firstCycleDTime and lastCycleDTime
 #             - x-axis: forecast duration
-#             -    line: separate experiment
-#             - subplot: different observed variable
-#             -    file: combination of FC lead time, statistic, and bin
+#             -    line: per experiment
+#             - subplot: per obs. variable
+#             -    file: combination of statistic and bin
 # SNAPSHOTCY2D/AGGREGATEFC2D creates contour maps similar to above with vertical info on y-axis
-#             - subplot: combination of experiment and observed variable
-#             -    file: combination of FC lead time, statistic, and bin
 #             - only applicable to binned observations (e.g., vertical dimension, latitude)
-# SNAPSHOTFC  - similar to SNAPSHOTCY, except
-#             -    line: different FC lead time
-#             - subplot: different observed variable
+#             - subplot: column by experiment, row by obs. variable
+#             SNAPSHOTCY2D
+#             -    file: combination of FC lead time and statistic
+#             AGGREGATEFC2D
+#             -    file: per statistic
+# SNAPSHOTFC  similar to SNAPSHOTCY, except
+#             -    line: per FC lead time, up to 6
+#             - subplot: per obs. variable
 #             -    file: combination of experiment, statistic, and bin
-# SNAPSHOTCY_LAT1 - similar to SNAPSHOTCY, except
-#                 -    line: named latitude bins
-#                 - subplot: combination of experiment and observed variable
-#                 -    file: combination of statistic and forecast length
-#                 - by default, skipped for radiances due to large # figures (slow)
-# SNAPSHOTCY_LAT2 - similar to SNAPSHOTCY, except
-#                 -    line: different experiments
-#                 - subplot: combination of named latitude bins and observed variable
-#                 -    file: combination of statistic and forecast length
-#                 - by default, skipped for radiances due to large # figures (slow)
+# SNAPSHOTCY_LAT1 similar to SNAPSHOTCY, except
+#             -    line: named latitude bins
+#             - subplot: column by experiment, row by obs. variable
+#             -    file: combination of statistic and forecast length
+#             - by default, skipped for radiances due to large # figures (slow)
+# SNAPSHOTCY_LAT2 similar to SNAPSHOTCY, except
+#             -    line: per experiment
+#             - subplot: column by LAT bin, row by obs. variable
+#             -    file: combination of statistic and forecast length
+#             - by default, skipped for radiances due to large # figures (slow)
+# SNAPSHOTCY_QC similar to SNAPSHOTCY, except
+#             - only plots 'Count' statistic
+#             -    line: named QC bins
+#             - subplot: column by experiment, row by obs. variable
+#             -    file: forecast length
 #TODO: AGGREGATEFC_LAT1/2
+#TODO: AGGREGATEBIN
+#      Vertical/latitude profiles with 1 line per FC lead time
+#      similar to SNAPSHOTFC with    x=statistic; y=binVariable
+#      column by experiment, row by obs. variable
 
 # NOTE: all *FC* figures require non-zero forecast length
 
@@ -62,7 +73,7 @@ plotTypes = ['SNAPSHOTCY','SNAPSHOTCY2D']
 # options: 'omb','oma','obs','bak','ana'
 diagNames = ['omb']
 
-#Eventually would like this capability... 
+#TODO (maybe): multiple diagNames on same subplot 
 #diagGroups_to_plot = [['omb'],['omb','oma'],['obs','bak','ana']]
 
 #Select the stats for plotting
@@ -88,20 +99,19 @@ example = "SNAP"
 if example == "SNAP":
     ## Example settings for SNAP (best when considering single forecast length)
     ## ------------------------------------------------------------------------
-    plotTypes = ['SNAPSHOTCY','SNAPSHOTCY2D','SNAPSHOTCY_LAT2']
+    plotTypes = ['SNAPSHOTCY','SNAPSHOTCY2D','SNAPSHOTCY_LAT2','SNAPSHOTCY_QC']
 
     user = 'guerrett'
+
+    #First and Last CYCLE dates
     firstCycleDTime = dt.datetime(2018,4,15,0,0,0)
     lastCycleDTime = dt.datetime(2018,4,30,0,0,0)
-
-    #FIRST FORECAST TIME TO INCLUDE
-    fcTDeltaFirst = dt.timedelta(days=0)
-
-    #LAST FORECAST TIME TO INCLUDE
-    fcTDeltaLast  = dt.timedelta(days=0)
-
-    fcTimeInc  = dt.timedelta(hours=24)
     cyTimeInc  = dt.timedelta(hours=6)
+
+    #First and Last FORECAST durations 
+    fcTDeltaFirst = dt.timedelta(days=0)
+    fcTDeltaLast  = dt.timedelta(days=0)
+    fcTimeInc  = dt.timedelta(hours=24)
 
     expLongNames = [ \
                  'VFC0day_gfsana_amsua_no-bias-correction', \
@@ -124,17 +134,18 @@ if example == "AGG":
     plotTypes = ['AGGREGATEFC','AGGREGATEFC2D','SNAPSHOTFC']
 
     user = 'jban'
+
+    #First and Last CYCLE dates
     firstCycleDTime = dt.datetime(2018,4,15,0,0,0)
     lastCycleDTime = dt.datetime(2018,4,20,0,0,0)
-
-    #FIRST FORECAST TIME TO INCLUDE
-    fcTDeltaFirst = dt.timedelta(days=0)
-
-    #LAST FORECAST TIME TO INCLUDE
-    fcTDeltaLast  = dt.timedelta(days=10)
-
-    fcTimeInc  = dt.timedelta(hours=24)
     cyTimeInc  = dt.timedelta(hours=24)
+
+    #First and Last FORECAST durations 
+    fcTDeltaFirst = dt.timedelta(days=0)
+    fcTDeltaLast  = dt.timedelta(days=10)
+    fcTimeInc  = dt.timedelta(hours=24)
+    #TODO: define FC directory names with in terms of seconds or d_hh-mm-ss
+    #      in order to allow for increments < 1 day --> modify workflow scripts
 
     expLongNames = [ \
                  'VFC10day_test20_3denvar_sst_top30km_rho', \
@@ -158,7 +169,7 @@ expDirectory = os.getenv('EXP_DIR','/glade/scratch/'+user+'/pandac/')
 statsFilePrefix = 'diagnostic_stats/stats_'
 
 #plot settings
-INTERIOR_AXES_LABELS = True
+FULL_SUBPLOT_LABELS = True
 
 sciticks = []
 for statName in statNames:
@@ -216,8 +227,8 @@ def plot_stats_timeseries(nproc, myproc):
     ObsSpaceNames = []
     for File in glob.glob(FILEPREFIX0+'*.txt'):
        ObsSpaceName = re.sub(".txt","",re.sub(FILEPREFIX0,"",File))
-       ObsSpaceInfo_ = ObsSpaceDict.get(ObsSpaceName,[pu.miss_s, 0, pu.nullBinKeys])
-       if ObsSpaceInfo_[0] != pu.miss_s and ObsSpaceInfo_[1] > 0:
+       ObsSpaceInfo_ = ObsSpaceDict.get(ObsSpaceName,pu.nullObsSpaceInfo)
+       if ObsSpaceInfo_['process']:
            ObsSpaceNames.append(ObsSpaceName)
     ObsSpaceNames.sort()
 
@@ -355,7 +366,7 @@ def plot_stats_timeseries(nproc, myproc):
                or "SNAPSHOTFC" in plotTypes:
 
                 ## make one figure for unbinned data
-                selectBinVals1D = [pu.allBins]
+                selectBinVals1D = pu.goodBinNames
 
                 ## make one figure for each non-float and non-int bin
                 #selectBinVals1D = []
@@ -366,7 +377,7 @@ def plot_stats_timeseries(nproc, myproc):
                 ## make one figure for each bin
                 #selectBinVals1D = []
                 #for binVal in binVals:
-                #    if binVal != pu.allBins:
+                #    if not (binVal in pu.goodBinNames):
                 #        selectBinVals1D.append(binVal)
 
                 ## make one figure for unbinned data and one for each bin
@@ -376,6 +387,7 @@ def plot_stats_timeseries(nproc, myproc):
                 nsubplots = nVars
                 nx = np.int(np.ceil(np.sqrt(nsubplots)))
                 ny = np.int(np.ceil(np.true_divide(nsubplots,nx)))
+
 
             if "SNAPSHOTCY" in plotTypes \
                 and len(selectBinVals1D) > 0:
@@ -389,7 +401,7 @@ def plot_stats_timeseries(nproc, myproc):
                         ibin = binVals.index(binVal)
                         titlebin = " @ "+binVars[ibin]+"="+binVal+" "+binUnitss[ibin]
                         filebin = "_"+binVal+binUnitss[ibin]
-                    elif binVal == pu.allBins:
+                    elif binVal in pu.goodBinNames:
                         titlebin = ""
                         filebin = ""
                     else:
@@ -401,7 +413,7 @@ def plot_stats_timeseries(nproc, myproc):
                         #file loop 3
                         for istat, statName in enumerate(statNames):
                             # establish a new figure
-                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                             #subplot loop
                             for ivar, varName in enumerate(varNames):
@@ -434,11 +446,12 @@ def plot_stats_timeseries(nproc, myproc):
                                        fcTDeltas_dir[ifc],ObsSpaceName, \
                                        diagName,statName)+filebin
 
-                            pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                            pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                 # end binName loop
 
             # end SNAPSHOTCY
+
 
             if "AGGREGATEFC" in plotTypes \
                 and len(selectBinVals1D) > 0 \
@@ -457,7 +470,7 @@ def plot_stats_timeseries(nproc, myproc):
                         ibin = binVals.index(binVal)
                         titlebin = " @ "+binVars[ibin]+"="+binVal+" "+binUnitss[ibin]
                         filebin = "_"+binVal+binUnitss[ibin]
-                    elif binVal == pu.allBins:
+                    elif binVal in pu.goodBinNames:
                         titlebin = ""
                         filebin = ""
                     else:
@@ -467,7 +480,7 @@ def plot_stats_timeseries(nproc, myproc):
                     #file loop 2
                     for istat, statName in enumerate(statNames):
                         # establish a new figure
-                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                         #subplot loop
                         for ivar, varName in enumerate(varNames):
@@ -501,13 +514,14 @@ def plot_stats_timeseries(nproc, myproc):
                                    fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
                                    diagName,statName)+filebin
 
-                        pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                        pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                     # end statName loop
 
                 # end binName loop
 
             # end AGGREGATEFC
+
 
             if "SNAPSHOTFC" in plotTypes \
                 and len(selectBinVals1D) > 0 \
@@ -522,7 +536,7 @@ def plot_stats_timeseries(nproc, myproc):
                         ibin = binVals.index(binVal)
                         titlebin = " @ "+binVars[ibin]+"="+binVal+" "+binUnitss[ibin]
                         filebin = "_"+binVal+binUnitss[ibin]
-                    elif binVal == pu.allBins:
+                    elif binVal in pu.goodBinNames:
                         titlebin = ""
                         filebin = ""
                     else:
@@ -534,7 +548,7 @@ def plot_stats_timeseries(nproc, myproc):
                         #file loop 3
                         for istat, statName in enumerate(statNames):
                             # establish a new figure
-                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                             #subplot loop
                             for ivar, varName in enumerate(varNames):
@@ -575,18 +589,19 @@ def plot_stats_timeseries(nproc, myproc):
                                        expName_file,ObsSpaceName, \
                                        diagName,statName)+filebin
 
-                            pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                            pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                 # end binName loop
 
             # end SNAPSHOTFC
 
+
+            selectBinVals1D = pu.namedLatBandsStrVals
             if "SNAPSHOTCY_LAT1" in plotTypes \
-                and len(pu.namedLatBandsStrVals) > 0 \
+                and len(selectBinVals1D) > 0 \
                 and ObsSpaceGrp[0] != pu.radiance_s:
 
                 print("\nGenerating SNAPSHOTCY_LAT1 figures...")
-                selectBinVals1D = pu.namedLatBandsStrVals
                 subplot_size = 1.9
                 aspect = 0.75
 
@@ -599,15 +614,15 @@ def plot_stats_timeseries(nproc, myproc):
                     #file loop 2
                     for istat, statName in enumerate(statNames):
                         # establish a new figure
-                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                         iplot = 0
 
                         #subplot loop 1
-                        for expName in expNames:
-
+                        for ivar, varName in enumerate(varNames):
                             #subplot loop 2
-                            for ivar, varName in enumerate(varNames):
+                            for expName in expNames:
+
                                 # use specific y-axis limits for each varName
                                 varLoc = (slice(None),slice(None),slice(None),varName,selectBinVals1D)
                                 ymin = diagDF.loc[varLoc,statName].min()
@@ -627,7 +642,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                                 # perform subplot agnostic plotting (all expNames)
                                 plotTimeSeries( fig, ny, nx, nsubplots, iplot, \
-                                                cyDTimes, linesVals, pu.namedLatBandsStrVals, \
+                                                cyDTimes, linesVals, selectBinVals1D, \
                                                 title, data_labels[istat], \
                                                 sciticks[istat], posdef[istat], \
                                                 ymin = ymin, ymax = ymax )
@@ -637,17 +652,18 @@ def plot_stats_timeseries(nproc, myproc):
                                    fcTDeltas_dir[ifc],ObsSpaceName, \
                                    diagName,statName)
 
-                        pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                        pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                 # end binName loop
 
             # end SNAPSHOTCY_LAT1
 
+
+            selectBinVals1D = pu.namedLatBandsStrVals
             if "SNAPSHOTCY_LAT2" in plotTypes \
-                and len(pu.namedLatBandsStrVals) > 0 \
+                and len(selectBinVals1D) > 0 \
                 and ObsSpaceGrp[0] != pu.radiance_s:
                 print("\nGenerating SNAPSHOTCY_LAT2 figures...")
-                selectBinVals1D = pu.namedLatBandsStrVals
                 nsubplots = len(selectBinVals1D)*nVars
                 nx = len(selectBinVals1D)
                 ny = nVars
@@ -660,7 +676,7 @@ def plot_stats_timeseries(nproc, myproc):
                     #file loop 2
                     for istat, statName in enumerate(statNames):
                         # establish a new figure
-                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                         iplot = 0
                         #subplot loop 1
@@ -701,12 +717,74 @@ def plot_stats_timeseries(nproc, myproc):
                                    fcTDeltas_dir[ifc],ObsSpaceName, \
                                    diagName,statName)
 
-                        pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                        pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                 # end binName loop
 
             # end SNAPSHOTCY_LAT2
 
+
+            selectBinVals1D = pu.goodFlagNames + pu.badFlagNames
+            if "SNAPSHOTCY_QC" in plotTypes \
+                and len(selectBinVals1D) > 0:
+                print("\nGenerating SNAPSHOTCY_QC figures...")
+                subplot_size = 1.9
+                aspect = 0.75
+
+                nsubplots = nExp * nVars
+                nx = nExp
+                ny = nVars
+
+                #file loop 1
+                for ifc, fcTDelta in enumerate(fcTDeltas):
+                    statName = 'Count'
+                    istat = statNames.index(statName)
+
+                    # establish a new figure
+                    fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
+
+                    iplot = 0
+
+                    #subplot loop 1
+                    for ivar, varName in enumerate(varNames):
+                        #subplot loop 2
+                        for expName in expNames:
+
+                            # use specific y-axis limits for each varName
+                            varLoc = (slice(None),slice(None),slice(None),varName,selectBinVals1D)
+                            ymin = diagDF.loc[varLoc,statName].min()
+                            ymax = diagDF.loc[varLoc,statName].max()
+
+                            # collect statName for all lines on this subplot, letting cyDTime vary
+                            linesVals = []
+                            for binVal in selectBinVals1D:
+                                #                           cyDTime
+                                expLoc = (expName,fcTDelta,slice(None),varName,binVal)
+                                linesVals.append(diagDF.loc[expLoc,statName].to_numpy())
+
+                            # define subplot title
+                            title = expName+"\n"+varName
+                            if varUnitss[ivar] != pu.miss_s:
+                                title = title+" ("+varUnitss[ivar]+")"
+
+                            # perform subplot agnostic plotting (all expNames)
+                            plotTimeSeries( fig, ny, nx, nsubplots, iplot, \
+                                            cyDTimes, linesVals, selectBinVals1D, \
+                                            title, data_labels[istat], \
+                                            sciticks[istat], posdef[istat], \
+                                            ymin = ymin, ymax = ymax, \
+                                            legend_inside = False )
+                            iplot = iplot + 1
+
+                    filename = OSFigPath+'/SNAPSHOTCY_QC_TSeries_%sday_%s_%s_%s'%( \
+                               fcTDeltas_dir[ifc],ObsSpaceName, \
+                               diagName,statName)
+
+                    pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
+
+                # end binName loop
+
+            # end SNAPSHOTCY_QC
 
 
             #=============
@@ -753,9 +831,10 @@ def plot_stats_timeseries(nproc, myproc):
                     selectBinNumVals = list(map(selectBinNumVals.__getitem__, indices))
                     selectBinVals2D = list(map(selectBinVals2D.__getitem__, indices))
 
+
                 if "SNAPSHOTCY2D" in plotTypes \
                     and len(selectBinVals2D) > 0:
-                    print("Generating SNAPSHOTCY2D figures across "+binVar2D+"...")
+                    print("\nGenerating SNAPSHOTCY2D figures across "+binVar2D+"...")
                     subplot_size = 2.4
                     aspect = 0.65
 
@@ -766,7 +845,7 @@ def plot_stats_timeseries(nproc, myproc):
                         #file loop 2
                         for istat, statName in enumerate(statNames):
                             # establish a new figure
-                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                            fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                             iplot = 0
 
@@ -804,7 +883,7 @@ def plot_stats_timeseries(nproc, myproc):
                                        binVar2D,fcTDeltas_dir[ifc],ObsSpaceName, \
                                         diagName,statName)
 
-                            pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                            pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                         # end statName loop
 
@@ -812,10 +891,11 @@ def plot_stats_timeseries(nproc, myproc):
 
                 # end SNAPSHOTCY2D
 
+
                 if "AGGREGATEFC2D" in plotTypes \
                     and len(selectBinVals2D) > 0 \
                     and len(fcTDeltas) > 1:
-                    print("Generating AGGREGATEFC2D figures across "+binVar2D+"...")
+                    print("\nGenerating AGGREGATEFC2D figures across "+binVar2D+"...")
                     subplot_size = 2.4
                     aspect = 0.55
 
@@ -826,7 +906,7 @@ def plot_stats_timeseries(nproc, myproc):
                     #file loop 1
                     for istat, statName in enumerate(statNames):
                         # establish a new figure
-                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, INTERIOR_AXES_LABELS)
+                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                         iplot = 0
 
@@ -865,7 +945,7 @@ def plot_stats_timeseries(nproc, myproc):
                                    binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
                                    diagName,statName)
 
-                        pu.finalize_fig(fig, filename, 'png', INTERIOR_AXES_LABELS)
+                        pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
 
                     # end statName loop
 
@@ -927,9 +1007,6 @@ def plotTimeSeries(fig, ny, nx, nplots, iplot, \
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    #legend
-    ax.legend(lineLabels, loc='upper right',fontsize=3,frameon=False)
-
     #axes settings
     pu.format_x_for_dates(ax, xDates)
     ax.xaxis.set_tick_params(labelsize=3)
@@ -976,11 +1053,27 @@ def plotTimeSeries(fig, ny, nx, nplots, iplot, \
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
     iy = int(iplot)/int(nx)
-    if not INTERIOR_AXES_LABELS \
+    if not FULL_SUBPLOT_LABELS \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if INTERIOR_AXES_LABELS or ix == 0:
+    if FULL_SUBPLOT_LABELS or ix == 0:
         ax.set_ylabel(ylabel,fontsize=4)
+
+    #legend
+    leginside_ = kwargs.get('legend_inside', True)
+    #if FULL_SUBPLOT_LABELS or ix==nx-1 or iplot==nplots-1:
+    if leginside_ or ix==nx-1 or iplot==nplots-1:
+        if leginside_:
+            #INSIDE AXES
+            nlcol = np.int(np.ceil(np.sqrt(len(lineLabels))))
+            lh = ax.legend(lineLabels, loc='best',fontsize=3,frameon=True,\
+                           framealpha=0.4,ncol=nlcol)
+            lh.get_frame().set_linewidth(0.0)
+        else:
+            #OUTSIDE AXES
+            ax.legend(lineLabels, loc='upper left',fontsize=3,frameon=False, \
+                      bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
 
     return
 
@@ -1055,12 +1148,12 @@ def plotTimeSeries2D(fig, ny, nx, nplots, iplot, \
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
     iy = int(iplot)/int(nx)
-    if not INTERIOR_AXES_LABELS \
+    if not FULL_SUBPLOT_LABELS \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if INTERIOR_AXES_LABELS or ix == 0:
+    if FULL_SUBPLOT_LABELS or ix == 0:
         ax.set_ylabel(ylabel,fontsize=4)
-    if INTERIOR_AXES_LABELS or ix == nx-1:
+    if FULL_SUBPLOT_LABELS or ix == nx-1:
         #colorbar
         m = plt.cm.ScalarMappable(cmap=cmap)
         m.set_array(contourVals)
