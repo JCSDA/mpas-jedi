@@ -1,8 +1,8 @@
 /*
  * (C) Copyright 2017 UCAR
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
 #include "oops/util/Logger.h"
@@ -13,7 +13,8 @@
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf) {
+GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf,
+                           const eckit::mpi::Comm & comm) : comm_(comm) {
   const eckit::Configuration * configc = &conf;
   oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 1 =========="
                      << std::endl;
@@ -22,7 +23,7 @@ GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf) {
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) {
+GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) : comm_(other.comm_) {
   const int key_geo = other.keyGeom_;
   oops::Log::trace() << "========= GeometryMPAS mpas_geo_clone_f90   =========="
                      << std::endl;
@@ -53,7 +54,8 @@ void GeometryMPAS::print(std::ostream & os) const {
      << ", nEdges = " << nEdges \
      << ", nEdgesSolve = " << nEdgesSolve \
      << ", nVertLevels = " <<nVertLevels \
-     << ", nVertLevelsP1 = " <<nVertLevelsP1;
+     << ", nVertLevelsP1 = " <<nVertLevelsP1
+     << ", communicator = " << this->getComm().name();
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas

@@ -1,8 +1,8 @@
 /*
  * (C) Copyright 2017 UCAR
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
 #ifndef MODEL_GEOMETRYMPAS_H_
@@ -10,6 +10,8 @@
 
 #include <ostream>
 #include <string>
+
+#include "eckit/mpi/Comm.h"
 
 #include "Fortran.h"
 #include "oops/util/ObjectCounter.h"
@@ -29,17 +31,19 @@ class GeometryMPAS : public util::Printable,
  public:
   static const std::string classname() {return "mpas::GeometryMPAS";}
 
-  explicit GeometryMPAS(const eckit::Configuration &);
+  GeometryMPAS(const eckit::Configuration &, const eckit::mpi::Comm &);
   GeometryMPAS(const GeometryMPAS &);
   ~GeometryMPAS();
 
   F90geom & toFortran() {return keyGeom_;}
   const F90geom & toFortran() const {return keyGeom_;}
+  const eckit::mpi::Comm & getComm() const {return comm_;}
 
  private:
   GeometryMPAS & operator=(const GeometryMPAS &);
   void print(std::ostream &) const;
   F90geom keyGeom_;
+  const eckit::mpi::Comm & comm_;
 };
 // -----------------------------------------------------------------------------
 
