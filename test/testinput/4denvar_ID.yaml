@@ -257,9 +257,12 @@ cost_function:
       - Filter: PreQC
         threshold: 3
         apply_at_iterations: 0
+      - Filter: Difference Check
+        reference: station_elevation@MetaData
+        value: surface_altitude@GeoVaLs
+        threshold: 500
       - Filter: HCorrection
         da_psfc_scheme: UKMO   # or WRFDA
-        max_hdiff: 500
       - Filter: Background Check
         variables:
         - surface_pressure
