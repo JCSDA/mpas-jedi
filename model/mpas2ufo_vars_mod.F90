@@ -770,7 +770,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_duplicate_field(field1d_src, field1d)
 
         field1d % fieldName = var_sfc_geomz
-        field1d % array (1:ngrid) = geom%zgrid(1,:)
+        field1d % array (1:ngrid) = geom%zgrid(1,1:ngrid)
 
         call mpas_pool_add_field(convFields, var_sfc_geomz, field1d)
 
