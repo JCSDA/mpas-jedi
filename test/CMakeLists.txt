@@ -1,56 +1,56 @@
 list( APPEND mpas_test_input
+  extract_ref.sh
+  testinput/3denvar_bumploc.yaml
+  testinput/3denvar_bumploc_specified.yaml
+  testinput/3dfgat.yaml
+  testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
   testinput/3dvar_amsua.yaml
   testinput/3dvar_bumpcov.yaml
   testinput/3dvar_amsua_bumpcov.yaml
-  testinput/3dfgat.yaml
-  testinput/3denvar_bumploc.yaml
-  testinput/3denvar_bumploc_specified.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
-  testinput/3dhybrid_bumpcov_bumploc.yaml
+  testinput/dirac_bumpcov.yaml
+  testinput/dirac_bumploc.yaml
+  testinput/dirac_noloc.yaml
+  testinput/enshofx.yaml
+  testinput/errorcovariance.yaml
   testinput/forecast.yaml
+  testinput/gen_ens_pert_B.yaml
+  testinput/geometry.yaml
   testinput/hofx.yaml
   testinput/hofx3d.yaml
-  testinput/enshofx.yaml
-  testinput/dirac.bumpcov.yaml
-  testinput/dirac.bumploc.yaml
-  testinput/dirac.noloc.yaml
-  testinput/geometry.yaml
-  testinput/gen_ens_pert_B.yaml
-  testinput/state.yaml
   testinput/increment.yaml
   testinput/model.yaml
-  testinput/errorcov.yaml
-  testinput/parametersbump.cov.yaml
-  testinput/parametersbump.loc.yaml
+  testinput/parameters_bumpcov.yaml
+  testinput/parameters_bumploc.yaml
+  testinput/state.yaml
   testinput/variablechange.yaml
-  compare.sh
 )
 
 list( APPEND mpas_testoutput
-  testoutput/3dvar.test
-  testoutput/3dvar_amsua.test
-  testoutput/3dvar_bumpcov.test
-  testoutput/3dvar_amsua_bumpcov.test
-  testoutput/3dfgat.test
-  testoutput/3denvar_bumploc.test
-  testoutput/3denvar_bumploc_specified.test
-  testoutput/4denvar_bumploc.test
-  testoutput/4denvar_ID.test
-  testoutput/3dhybrid_bumpcov_bumploc.test
-  testoutput/forecast.test
-  testoutput/gen_ens_pert_B.test
-  testoutput/hofx.test
-  testoutput/hofx3d.test
-  testoutput/enshofx.test
-  testoutput/dirac.bumpcov.test
-  testoutput/dirac.bumploc.test
-  testoutput/dirac.noloc.test
-  testoutput/parametersbump.cov.test
-  testoutput/parametersbump.loc.test
-#  testoutput/staticbinit.test
-#  testoutput/variablechange.test
+  testoutput/3denvar_bumploc.ref
+  testoutput/3denvar_bumploc_specified.ref
+  testoutput/3dfgat.ref
+  testoutput/3dhybrid_bumpcov_bumploc.ref
+  testoutput/3dvar.ref
+  testoutput/3dvar_amsua.ref
+  testoutput/3dvar_amsua_bumpcov.ref
+  testoutput/3dvar_bumpcov.ref
+  testoutput/4denvar_bumploc.ref
+  testoutput/4denvar_ID.ref
+  testoutput/dirac_bumpcov.ref
+  testoutput/dirac_bumploc.ref
+  testoutput/dirac_noloc.ref
+#  testoutput/enshofx.ref
+  testoutput/forecast.ref
+  testoutput/gen_ens_pert_B.ref
+  testoutput/hofx.ref
+  testoutput/hofx3d.ref
+  testoutput/parameters_bumpcov.ref
+  testoutput/parameters_bumploc.ref
+#  testoutput/staticbinit.ref
+#  testoutput/variablechange.ref
 )
 
 list( APPEND mpas_graphics
@@ -107,18 +107,24 @@ CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
                          ${CMAKE_CURRENT_BINARY_DIR}
                          ${mpas_test_config_base} )
 
+# Add or remove values from multi_pe_480 to select multi-PE tests
+# 480km options: 2, 4, 6, 8, 12, 16
+list(APPEND multi_pe_480 2 )
+
 list( APPEND mpas_test_config_480
   Data/480km/namelist.atmosphere_2018041421
   Data/480km/namelist.atmosphere_2018041500
   Data/480km/streams.atmosphere
   Data/480km/x1.2562.graph.info
-#  Data/480km/x1.2562.graph.info.part.2
-#  Data/480km/x1.2562.graph.info.part.4
-#  Data/480km/x1.2562.graph.info.part.6
-#  Data/480km/x1.2562.graph.info.part.8
-#  Data/480km/x1.2562.graph.info.part.12
-#  Data/480km/x1.2562.graph.info.part.16
 )
+foreach(THIS_NPE ${multi_pe_480})
+    if( THIS_NPE GREATER 1 )
+        list( APPEND mpas_test_config_480
+          Data/480km/x1.2562.graph.info.part.${THIS_NPE}
+        )
+    endif()
+endforeach(THIS_NPE)
+
 
 list( APPEND mpas_test_bg_480
   Data/480km/bg/restart.2018-04-14_21.00.00.nc
@@ -261,203 +267,285 @@ CREATE_SYMLINK_FILENAME( ${crtm_SOURCE_DIR}/fix
 
 #####################################################################
 
-# Tests that create data other tests might use (should check what is really needed...)
+# Make some output directories for test data
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/hofx)
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/analysis)
 
-# Test interface classes with MPAS
+######################################################################
+#
+# jedi_unit_test
+# ==============
+#
+# Wrapper to test a JEDI c++ CLASS
+#   jedi_unit_test( [ CLASS <name> ]
+#                   [ YAMLFILE <filename.yaml> ]
+#                   [ ID <id> ]
+#                   [ NPE <number-of-processor-elements> ] )
+#
+# Options
+# -------
+#
+# CLASS:
+#   Name of the C++ class to be tested
+#
+# YAMLFILE:
+#   Name of YAML configuration file (without extension)
+#
+# ID: optional
+#   A unique test id to use, defaults to be equal to YAMLFILE
+#
+# NPE: optional
+#   Number of processor elements to use in this test
+#
+######################################################################
+function(jedi_unit_test)
+    set(options )
+    set(oneValueArgs CLASS YAMLFILE ID NPE)
+    set(multiValueArgs )
+    cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
-ecbuild_add_test( TARGET  test_mpas_geometry
-                  SOURCES executables/TestGeometry.cc
-                  ARGS    "testinput/geometry.yaml"
-                  MPI     1
-                  LIBS    mpas )
+    if( NOT DEFINED TEST_ID )
+        set( TEST_ID "${TEST_YAMLFILE}" )
+    endif() 
 
-ecbuild_add_test( TARGET  test_mpas_state
-                  SOURCES executables/TestState.cc
-                  ARGS    "testinput/state.yaml"
-                  MPI     1
-                  LIBS    mpas )
+    set( MPI_SUFFIX "" )
+    if( DEFINED TEST_NPE )
+        if( TEST_NPE GREATER 1 )
+            set( MPI_SUFFIX "_${TEST_NPE}pe" )
+        endif()
+    else()
+        set( TEST_NPE 1 )
+    endif()
+    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_ID}${MPI_SUFFIX}" ) 
 
-ecbuild_add_test( TARGET  test_mpas_model
-                  SOURCES executables/TestModel.cc
-                  ARGS    "testinput/model.yaml"
-                  MPI     1
-                  LIBS    mpas )
 
-ecbuild_add_test( TARGET  test_mpas_increment
-                  SOURCES executables/TestIncrement.cc
-                  ARGS    "testinput/increment.yaml"
-                  MPI     1
-                  LIBS    mpas )
+    ecbuild_add_test( TARGET  test_${TARGET_NAME}
+                      SOURCES executables/Test${TEST_CLASS}.cc
+                      ARGS    "testinput/${TEST_YAMLFILE}.yaml"
+                      MPI     ${TEST_NPE}
+                      LIBS    ${PROJECT_NAME_LOWCASE} )
+endfunction()
 
-ecbuild_add_test( TARGET  test_mpas_errorcovariance
-                  SOURCES executables/TestErrorCovariance.cc
-                  ARGS    "testinput/errorcov.yaml"
-                  MPI     1
-                  LIBS    mpas )
+####################################################################################
+#
+# jedi_app_ref_test_compare
+# ==============
+#
+# Wrapper for JEDI application to
+#  (1) run a test
+#  (2) then optionally...
+#    (a) do nothing (default)
+#      OR
+#    (b) create a reference output file
+#      OR
+#    (c) compare new output to a previous reference output
+#
+#   jedi_app_ref_test_compare( [ APP <name> ]
+#                              [ ID <id> ]
+#                              [ REFERENCE ]
+#                              [ COMPARE ]
+#                              [ TOL <float> ]
+#                              [ DIF <int> ]
+#                              [ NPE <number-of-processor-elements> ] )
+#                              [ DEPENDS <previous-test1> [<previous-test2> ...]
+#
+# Options
+# -------
+#
+# APP:
+#   Name of the JEDI application to be tested
+#
+# ID: optional
+#   A unique test id. Not needed when APP will be used for only one
+#   test (e.g., forecast). The YAML configuration file must match
+#   either the ID or APP if ID is not specified.
+#
+# REFERENCE: optional
+#   Include REFERENCE in order to generate new reference output
+#   for future COMPARE tests. Overrides COMPARE.
+#
+# COMPARE: optional
+#   Add comparison test in addition to the initial application test.
+#   COMPARE enables the comparison of the application output to a
+#   reference output.
+#
+# TOL: optional
+#   The tolerance for floating-point comparison when executing compare.py
+#
+# DIF: optional
+#   The tolerance for integer comparison when executing compare.py
+#   If either TOL or DIF is not defined, compare.sh will be used instead.
+#
+# NPE: optional
+#   Number of processor elements to use in this test.
+#   Additionally will be used to generate the TARGET_NAME of this test.
+#
+# DEPENDS: optional
+#   List of previous application test ID's on which this test depends.
+#   These ID's and NPE will be used to generate the list of prior
+#   TARGET_NAME's (TEST_DEPENDS).
+#
+####################################################################################
+function(jedi_app_ref_test_compare)
+    set(options COMPARE REFERENCE)
+    set(oneValueArgs APP ID TOL DIF NPE)
+    set(multiValueArgs DEPENDS)
+    cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
-ecbuild_add_test( TARGET  test_mpas_variablechange
-                  SOURCES executables/TestVariableChange.cc
-                  ARGS    "testinput/variablechange.yaml"
-                  MPI     1
-                  LIBS    mpas )
+    set( TEST_NAME "${TEST_APP}" )
+    if( DEFINED TEST_ID )
+        set( TEST_NAME "${TEST_ID}" )
+    endif() 
 
-ecbuild_add_test( TARGET  test_mpas_hofx
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx.x testinput/hofx.yaml"
-                       testoutput/hofx.test
-                  MPI     1
-                  DEPENDS mpas_hofx.x )
+    set( MPI_SUFFIX "" )
+    if( DEFINED TEST_NPE )
+        if( TEST_NPE GREATER 1 )
+            set( MPI_SUFFIX "_${TEST_NPE}pe" )
+        endif()
+    else()
+        set( TEST_NPE 1 )
+    endif()
+    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}" ) 
 
-ecbuild_add_test( TARGET  test_mpas_hofx3d
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_hofx3d.x testinput/hofx3d.yaml"
-                       testoutput/hofx3d.test
-                  MPI     1
-                  DEPENDS mpas_hofx3d.x )
+    set( TARGET_PREFIX "test" )
+    set( TEST_TYPE "run" )
+    if( TEST_REFERENCE )
+        set( TARGET_PREFIX "setup_ref" )
+        set( TEST_TYPE "ref" )
+        set( TEST_COMPARE False )
+    endif()
+    if( DEFINED TEST_DEPENDS )
+        set(templist "")
+        foreach(previous_test_ID ${TEST_DEPENDS})
+           list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME_LOWCASE}_${previous_test_ID}${MPI_SUFFIX}")
+        endforeach(previous_test_ID)
+        set(TEST_DEPENDS "${templist}")
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+                          TYPE    EXE
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
+                          ARGS    testinput/${TEST_NAME}.yaml
+                                  testoutput/${TEST_NAME}${MPI_SUFFIX}.${TEST_TYPE}
+                          MPI     ${TEST_NPE} 
+                          TEST_DEPENDS "${TEST_DEPENDS}" )
+    else()
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+                          TYPE    EXE
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
+                          ARGS    testinput/${TEST_NAME}.yaml
+                                  testoutput/${TEST_NAME}${MPI_SUFFIX}.${TEST_TYPE}
+                          MPI     ${TEST_NPE} )
+    endif()
+    if( TEST_COMPARE )
+        if( DEFINED TEST_TOL AND DEFINED TEST_DIF )
+            ecbuild_add_test( TARGET       compare_${TARGET_NAME}
+                              TYPE         SCRIPT
+                              COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.py
+                              ARGS         testoutput/${TEST_NAME}${MPI_SUFFIX}.run
+                                           testoutput/${TEST_NAME}.ref
+                                           ${TEST_TOL} ${TEST_DIF}
+                              TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+        else()
+            ecbuild_add_test( TARGET       compare_${TARGET_NAME}
+                              TYPE         SCRIPT
+                              COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.sh
+                              ARGS         testoutput/${TEST_NAME}${MPI_SUFFIX}.run
+                                           testoutput/${TEST_NAME}.ref
+                              TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+        endif()
+    endif()
+    if( TEST_REFERENCE )
+        ecbuild_add_test( TARGET  extract_ref_${TARGET_NAME}
+                          TYPE    SCRIPT
+                          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/extract_ref.sh
+                          ARGS    testoutput/${TEST_NAME}.ref
+                          TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+    endif()
+endfunction()
 
-# TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
-#ecbuild_add_test( TARGET  test_mpas_enshofx
-#                  TYPE SCRIPT
-#                  COMMAND "compare.sh"
-#                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_enshofx.x testinput/enshofx.yaml"
-#                       testoutput/enshofx.test
-#                  MPI     1
-#                  DEPENDS mpas_enshofx.x )
+## Settings for comparison to reference output
+# tolernaces for compare.py:
+set (ctol 0.0) #Max relative difference
+set (idif 0)   #Max difference
 
-ecbuild_add_test( TARGET test_mpas_dirac_bumpcov
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumpcov.yaml"
-                       testoutput/dirac.bumpcov.test
-                  MPI     1
-                  DEPENDS mpas_dirac.x )
+# use compare.py:
+set(COMPARESTR COMPARE TOL ${ctol} DIF ${idif})
+# use compare.sh:
+#set(COMPARESTR COMPARE)
 
-ecbuild_add_test( TARGET test_mpas_dirac_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.bumploc.yaml"
-                       testoutput/dirac.bumploc.test
-                  MPI     1
-                  DEPENDS mpas_dirac.x )
 
-ecbuild_add_test( TARGET test_mpas_dirac_noloc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_dirac.x testinput/dirac.noloc.yaml"
-                       testoutput/dirac.noloc.test
-                  MPI     1
-                  DEPENDS mpas_dirac.x )
+################
+# Select REFTYPE
+################
+## For APPLICATION tests, choose either
+## (a) create reference files (REFTYPE == "REFERENCE"):
+#set(REFTYPE "REFERENCE")
+##
+##      OR
+##
+## (b) test then compare to reference for all tests:
+set(REFTYPE "${COMPARESTR}")
 
-ecbuild_add_test( TARGET test_mpas_parameters_bumpcov
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.cov.yaml"
-                       testoutput/parametersbump.cov.test
-                  MPI     1
-                  DEPENDS mpas_parameters.x )
+#############################
+# Individual test definitions
+#############################
 
-ecbuild_add_test( TARGET test_mpas_parameters_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_parameters.x testinput/parametersbump.loc.yaml"
-                       testoutput/parametersbump.loc.test
-                  MPI     1
-                  DEPENDS mpas_parameters.x )
+# UNIT tests of MPAS-JEDI classes
+#--------------------------------
+if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
+    # Unit tests for interface classes to PROJECT_NAME_LOWCASE
+    jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
+    jedi_unit_test( CLASS State           YAMLFILE state )
+    jedi_unit_test( CLASS Model           YAMLFILE model )
+    jedi_unit_test( CLASS Increment       YAMLFILE increment )
+    jedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
+    jedi_unit_test( CLASS VariableChange  YAMLFILE variablechange )
+endif()
 
-ecbuild_add_test( TARGET test_mpas_forecast
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_forecast.x testinput/forecast.yaml"
-                       testoutput/forecast.test
-                  MPI     1
-                  DEPENDS mpas_forecast.x )
+# APPLICATION tests with creation of or comparison to reference output
+#---------------------------------------------------------------------
+jedi_app_ref_test_compare( APP     forecast                                 ${REFTYPE} )
+jedi_app_ref_test_compare( APP     hofx3d                                   ${REFTYPE} )
+jedi_app_ref_test_compare( APP     hofx                                     ${REFTYPE} )
+### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
+##jedi_app_ref_test_compare( APP     enshofx                                  ${REFTYPE})
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${REFTYPE} )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${REFTYPE} )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${REFTYPE} )
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${REFTYPE} )
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${REFTYPE} )
+jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua               ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${REFTYPE}
+                           DEPENDS parameters_bumpcov )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua_bumpcov       ${REFTYPE}
+                           DEPENDS parameters_bumpcov )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc           ${REFTYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_specified ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${REFTYPE}
+                           DEPENDS parameters_bumpcov
+                                   parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${REFTYPE}
+                           DEPENDS parameters_bumploc )
 
-ecbuild_add_test( TARGET test_mpas_gen_ens_pert_B
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_gen_ens_pert_B.x testinput/gen_ens_pert_B.yaml"
-                       testoutput/gen_ens_pert_B.test
-                  MPI     1
-                  DEPENDS mpas_gen_ens_pert_B.x )
+# subset of APPLICATION tests with comparison to reference output on multiple PE's
+#---------------------------------------------------------------------------------
+if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
+    foreach(THIS_NPE ${multi_pe_480})
+        if( THIS_NPE GREATER 1 )
+## hofx is expensive, hold off list for now
+#            jedi_app_ref_test_compare( APP     hofx                                     ${COMPARESTR} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${COMPARESTR} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${COMPARESTR} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua               ${COMPARESTR} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${COMPARESTR} NPE ${THIS_NPE}
+                                       DEPENDS parameters_bumpcov
+                                               parameters_bumploc )
+        endif()
+    endforeach(THIS_NPE)
+endif()
 
-ecbuild_add_test( TARGET test_mpas_3dvar
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar.yaml"
-                       testoutput/3dvar.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dvar_amsua
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_amsua.yaml"
-                       testoutput/3dvar_amsua.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dvar_bumpcov
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_bumpcov.yaml"
-                       testoutput/3dvar_bumpcov.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dvar_amsua_bumpcov
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dvar_amsua_bumpcov.yaml"
-                       testoutput/3dvar_amsua_bumpcov.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3denvar_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bumploc.yaml"
-                       testoutput/3denvar_bumploc.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3denvar_bumploc_specified
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3denvar_bumploc_specified.yaml"
-                       testoutput/3denvar_bumploc_specified.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dhybrid_bumpcov_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dhybrid_bumpcov_bumploc.yaml"
-                       testoutput/3dhybrid_bumpcov_bumploc.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_3dfgat
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/3dfgat.yaml"
-                       testoutput/3dfgat.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_4denvar_ID
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_ID.yaml"
-                       testoutput/4denvar_ID.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )
-
-ecbuild_add_test( TARGET test_mpas_4denvar_bumploc
-                  TYPE SCRIPT
-                  COMMAND "compare.sh"
-                  ARGS "${CMAKE_BINARY_DIR}/bin/mpas_variational.x testinput/4denvar_bumploc.yaml"
-                       testoutput/4denvar_bumploc.test
-                  MPI     1
-                  DEPENDS mpas_variational.x )

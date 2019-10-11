@@ -1,6 +1,6 @@
 Test     : CostJb   : Nonlinear Jb = 0
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7594.93, nobs = 579, Jo/n = 13.1173, err = 1.32875
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1996.59, nobs = 379, Jo/n = 5.26806, err = 2.62545
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7594.93, nobs = 579, Jo/n = 13.1173, err = 1.32875
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1996.59, nobs = 379, Jo/n = 5.26806, err = 2.62545
 Test     : CostFunction: Nonlinear J = 9591.52
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.207937
 Test     : CostFunction::addIncrement: Analysis: 
@@ -17,8 +17,8 @@ Test     : Fld=8  Min=0, Max=0.00022368, RMS=6.2823e-06 : index_qr
 Test     : Fld=9  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
 Test     : Fld=10  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
 Test     : CostJb   : Nonlinear Jb = 0.015482
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 7060.9, nobs = 579, Jo/n = 12.195, err = 1.32875
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1834.05, nobs = 378, Jo/n = 4.85199, err = 2.62577
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7060.9, nobs = 579, Jo/n = 12.195, err = 1.32875
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1834.05, nobs = 378, Jo/n = 4.85199, err = 2.62577
 Test     : CostFunction: Nonlinear J = 8894.97
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.157186
 Test     : CostFunction::addIncrement: Analysis: 
@@ -35,6 +35,6 @@ Test     : Fld=8  Min=0, Max=0.00022368, RMS=6.27649e-06 : index_qr
 Test     : Fld=9  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
 Test     : Fld=10  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
 Test     : CostJb   : Nonlinear Jb = 0.0416145
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch4-7,9-14) = 6844.31, nobs = 578, Jo/n = 11.8414, err = 1.32986
-Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--ch1-3,15) = 1776.43, nobs = 376, Jo/n = 4.72455, err = 2.62339
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 6844.31, nobs = 578, Jo/n = 11.8414, err = 1.32986
+Test     : CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1776.43, nobs = 376, Jo/n = 4.72455, err = 2.62339
 Test     : CostFunction: Nonlinear J = 8620.78

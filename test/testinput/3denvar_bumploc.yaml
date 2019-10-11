@@ -53,7 +53,7 @@ cost_function:
         - uReconstructMeridional
         - surface_pressure
         bump:
-          prefix: mpas_parametersbump_loc
+          prefix: Data/bump/mpas_parametersbump_loc
           default_seed: 1
           method: loc 
           strategy: common  #specific_univariate

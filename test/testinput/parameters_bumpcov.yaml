@@ -41,15 +41,11 @@ ensemble:
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
-covariance:
-  covariance: MPASstatic
-  date: '2018-04-15T00:00:00Z'
-  pseudoens_size: 10
 bump:
-  prefix: mpas_parametersbump_loc
+  prefix: Data/bump/mpas_parametersbump_cov
   default_seed: 1
-  method: loc  #hyb-rnd
-  strategy: common
+  method: cor
+  strategy: specific_univariate
   new_hdiag: 1
   new_nicas: 1
   mask_type: none
@@ -57,7 +53,7 @@ bump:
   nc1: 1024
   ntry: 3
   nrep: 2
-  nc2: 200
+  nc2: 512
   nc3: 10
   dc: 1000000
   nl0r: 1
@@ -78,19 +74,15 @@ bump:
   nldwv: 0
   write_grids: 1
 output:
-- parameter: loc_coef
+- parameter: var
   datadir: Data
-  filename: "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.var.$Y-$M-$D_$h.$m.$s.nc"
   date: '2018-04-15T00:00:00Z'
-- parameter: loc_rh
+- parameter: cor_rh
   datadir: Data
-  filename: "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc"
   date: '2018-04-15T00:00:00Z'
-- parameter: loc_rv
+- parameter: cor_rv
   datadir: Data
-  filename: "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
-- parameter: hyb_coef
-  datadir: Data
-  filename: "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc"
   date: '2018-04-15T00:00:00Z'

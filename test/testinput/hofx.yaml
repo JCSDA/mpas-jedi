@@ -103,11 +103,11 @@ Observations:
         use_compress: 0
     ObsBias: {}
   - ObsSpace:
-      name: AMSUA-NOAA19--ch4-14
+      name: AMSUA-NOAA19--nohydro
       ObsDataIn:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_amsua_n19--ch4-14.nc4
+        obsfile: Data/hofx_amsua_n19--nohydro.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 4-14
@@ -120,11 +120,11 @@ Observations:
         CoefficientPath: Data/
     ObsBias: {}
   - ObsSpace:
-      name: AMSUA-NOAA19--ch1-3,15
+      name: AMSUA-NOAA19--hydro
       ObsDataIn:
         obsfile: Data/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_amsua_n19--ch1-3,15.nc4
+        obsfile: Data/hofx_amsua_n19--hydro.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 1-3,15
