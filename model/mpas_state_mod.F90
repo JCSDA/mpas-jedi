@@ -68,9 +68,10 @@ subroutine add_incr(self,rhs)
    class(mpas_increment), intent(in)    :: rhs  !< increment
    character(len=StrKIND) :: kind_op
 
+   integer :: ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
-   type (field2DReal), pointer :: field2d_t, field2d_p, field2d_sh, field2d_uRz, field2d_uRm, &
-                                  field2d_th, field2d_qv, field2d_rho, field2d_u, field2d_u_inc
+   type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_sh, fld2d_uRz, fld2d_uRm, &
+                                  fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc
 
    ! GD: I don''t see any difference than for self_add other than subFields can contain
    ! different variables than mpas_state and the resolution of incr can be different. 
@@ -87,51 +88,53 @@ subroutine add_incr(self,rhs)
       !  update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       !  update theta from temperature and pressure
       !  update rho   from temperature, pressure, and index_qv
-      call mpas_pool_get_field(self % subFields,            'temperature', field2d_t)
-      call mpas_pool_get_field(self % subFields,               'pressure', field2d_p)
-      call mpas_pool_get_field(self % subFields,                'spechum', field2d_sh)
-      call mpas_pool_get_field(self % subFields,      'uReconstructZonal', field2d_uRz)
-      call mpas_pool_get_field(self % subFields, 'uReconstructMeridional', field2d_uRm)
-      call mpas_pool_get_field(self % subFields,                  'theta', field2d_th)
-      call mpas_pool_get_field(self % subFields,               'index_qv', field2d_qv)
-      call mpas_pool_get_field(self % subFields,                    'rho', field2d_rho)
+      call mpas_pool_get_field(self % subFields,            'temperature', fld2d_t)
+      call mpas_pool_get_field(self % subFields,               'pressure', fld2d_p)
+      call mpas_pool_get_field(self % subFields,                'spechum', fld2d_sh)
+      call mpas_pool_get_field(self % subFields,      'uReconstructZonal', fld2d_uRz)
+      call mpas_pool_get_field(self % subFields, 'uReconstructMeridional', fld2d_uRm)
+      call mpas_pool_get_field(self % subFields,                  'theta', fld2d_th)
+      call mpas_pool_get_field(self % subFields,               'index_qv', fld2d_qv)
+      call mpas_pool_get_field(self % subFields,                    'rho', fld2d_rho)
 
       ! Ensure positive sh
       call da_posdef( self % subFields, (/'spechum'/))
 
-      call temp_to_theta( field2d_t % array(:,:), field2d_p % array(:,:), field2d_th % array(:,:))
-!      write(*,*) 'add_inc: theta min/max = ', minval(field2d_th % array), maxval(field2d_th % array)
-      call q_to_w( field2d_sh % array(:,:), field2d_qv % array(:,:) )
-!      write(*,*) 'add_inc: index_qv min/max = ', minval(field2d_sh % array), maxval(field2d_sh % array)
+      ngrid = self%geom%nCellsSolve
+      call temp_to_theta( fld2d_t % array(:,1:ngrid), fld2d_p % array(:,1:ngrid), fld2d_th % array(:,1:ngrid))
+!      write(*,*) 'add_inc: theta min/max = ', minval(fld2d_th % array), maxval(fld2d_th % array)
+      call q_to_w( fld2d_sh % array(:,1:ngrid), fld2d_qv % array(:,1:ngrid) )
+!      write(*,*) 'add_inc: index_qv min/max = ', minval(fld2d_sh % array), maxval(fld2d_sh % array)
       ! Ensure positive qv : BJJ Do we need this? just in case ? or positive sh would be enough ?
       call da_posdef( self % subFields, (/'index_qv'/))
 
-      call twp_to_rho( field2d_t % array(:,:), field2d_qv % array(:,:), field2d_p % array(:,:), &
-                       field2d_rho % array(:,:) )
-!      write(*,*) 'add_inc: rho min/max = ', minval(field2d_rho % array), maxval(field2d_rho % array)
+      call twp_to_rho( fld2d_t % array(:,1:ngrid), fld2d_qv % array(:,1:ngrid), fld2d_p % array(:,1:ngrid), &
+                       fld2d_rho % array(:,1:ngrid) )
+!      write(*,*) 'add_inc: rho min/max = ', minval(fld2d_rho % array), maxval(fld2d_rho % array)
 
       !  update u     from uReconstructZonal and uReconstructMeridional "incrementally"
-      call mpas_pool_get_field(self % subFields,                      'u', field2d_u)
-      call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', field2d_uRz)
-      call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', field2d_uRm)
+      call mpas_pool_get_field(self % subFields,                      'u', fld2d_u)
+      call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', fld2d_uRz)
+      call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', fld2d_uRm)
 
-      call mpas_duplicate_field(field2d_u, field2d_u_inc)
+      call mpas_duplicate_field(fld2d_u, fld2d_u_inc)
 
-!      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_uRz % array), maxval(field2d_uRz % array)
-!      write(*,*) 'add_inc: v_inc min/max = ', minval(field2d_uRm % array), maxval(field2d_uRm % array)
+!      write(*,*) 'add_inc: u_inc min/max = ', minval(fld2d_uRz % array), maxval(fld2d_uRz % array)
+!      write(*,*) 'add_inc: v_inc min/max = ', minval(fld2d_uRm % array), maxval(fld2d_uRm % array)
 
-      call uv_cell_to_edges(self % geom % domain, field2d_uRz, field2d_uRm, field2d_u_inc, &
+      call uv_cell_to_edges(self % geom % domain, fld2d_uRz, fld2d_uRm, fld2d_u_inc, &
                  self%geom%latCell, self%geom%lonCell, self%geom%nCellsSolve, &
                  self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
                  self%geom%nVertLevels)
-!      write(*,*) 'add_inc: u_guess min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
-!      write(*,*) 'add_inc: u_inc min/max = ', minval(field2d_u_inc % array), maxval(field2d_u_inc % array)
-      field2d_u % array(:,:) = field2d_u % array(:,:) + field2d_u_inc % array(:,:)
-!      write(*,*) 'add_inc: u_analy min/max = ', minval(field2d_u % array), maxval(field2d_u % array)
+!      write(*,*) 'add_inc: u_guess min/max = ', minval(fld2d_u % array), maxval(fld2d_u % array)
+!      write(*,*) 'add_inc: u_inc min/max = ', minval(fld2d_u_inc % array), maxval(fld2d_u_inc % array)
+      ngrid = self%geom%nEdgesSolve
+      fld2d_u % array(:,1:ngrid) = fld2d_u % array(:,1:ngrid) + fld2d_u_inc % array(:,1:ngrid)
+!      write(*,*) 'add_inc: u_analy min/max = ', minval(fld2d_u % array), maxval(fld2d_u % array)
 
       ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
 
-      call mpas_deallocate_field( field2d_u_inc )
+      call mpas_deallocate_field( fld2d_u_inc )
    else
       call abor1_ftn("mpas_state:add_incr: dimension mismatch")
    endif
