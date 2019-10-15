@@ -18,6 +18,7 @@ ModelTest:
   fclength: PT2H
   finalnorm: 28015.994917730037
   tolerance: 0.005
+  testreforecast: false # TODO: fix model module and activate testreforecast
 ModelBias: 
 Model:
   name: MPAS
