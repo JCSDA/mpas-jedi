@@ -203,6 +203,7 @@ cost_function:
         - refractivity
         threshold: 3
       - Filter: ROobserror
+        variables: [refractivity]
         variable: refractivity
         errmodel: GSI
     - ObsSpace:
@@ -237,6 +238,7 @@ cost_function:
         - bending_angle
         threshold: 3
       - Filter: ROobserror
+        variables: [bending_angle]
         variable: bending_angle
         errmodel: ECMWF
     - ObsSpace:
@@ -257,6 +259,7 @@ cost_function:
         threshold: 3
         apply_at_iterations: 0
       - Filter: Difference Check
+        variables: [surface_pressure]
         reference: station_elevation@MetaData
         value: surface_altitude@GeoVaLs
         threshold: 500

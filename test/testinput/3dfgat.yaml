@@ -170,6 +170,7 @@ cost_function:
         - refractivity
         threshold: 3
       - Filter: ROobserror
+        variables: [refractivity]
         variable: refractivity
         errmodel: GSI
     - ObsSpace:
@@ -204,6 +205,7 @@ cost_function:
         - bending_angle
         threshold: 3
       - Filter: ROobserror
+        variables: [bending_angle]
         variable: bending_angle
         errmodel: ECMWF
     - ObsSpace:
