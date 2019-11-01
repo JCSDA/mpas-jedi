@@ -203,7 +203,7 @@ Observations:
 #        Sensor_ID: atms_npp
 #    ObsBias: {}
   - ObsSpace:
-      name: Surface
+      name: SfcPCorrected
       ObsDataIn:
         obsfile: Data/sfc_obs_2018041500_m.nc4
       ObsDataOut:
@@ -211,6 +211,7 @@ Observations:
       simulate:
         variables: [surface_pressure]
     ObsOperator:
-      name: Identity
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
 Prints:
   frequency: PT3H

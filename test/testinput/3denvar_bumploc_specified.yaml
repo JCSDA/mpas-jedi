@@ -242,7 +242,7 @@ cost_function:
         variable: bending_angle
         errmodel: ECMWF
     - ObsSpace:
-        name: Surface
+        name: SfcPCorrected
         ObsDataIn:
           obsfile: Data/sfc_obs_2018041500_m.nc4
         ObsDataOut:
@@ -251,6 +251,9 @@ cost_function:
         simulate:
           variables: [surface_pressure]
       ObsOperator:
+        name: SfcPCorrected
+        da_psfc_scheme: UKMO   # or WRFDA
+      LinearObsOperator:
         name: Identity
       Covariance:
         covariance: diagonal
@@ -263,8 +266,6 @@ cost_function:
         reference: station_elevation@MetaData
         value: surface_altitude@GeoVaLs
         threshold: 500
-      - Filter: HCorrection
-        da_psfc_scheme: UKMO
       - Filter: Background Check
         variables:
         - surface_pressure

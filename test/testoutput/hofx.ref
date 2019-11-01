@@ -37,5 +37,5 @@ Test     : AMSUA-NOAA19--hydro nobs= 400 Min=145.731, Max=290.317, RMS=229.506
 Test     : AIRS-AQUA nobs= 300 Min=210.903, Max=231.052, RMS=221.956
 Test     : CRIS-NPP nobs= 9900 Min=211.188, Max=298.673, RMS=247.593
 Test     : IASI-METOPA nobs= 700 Min=211.501, Max=242.183, RMS=226.415
-Test     : Surface nobs= 252 Min=84554.5, Max=102368, RMS=98260.3
+Test     : SfcPCorrected nobs= 252 Min=84554.5, Max=102368, RMS=98290
 Test     : End H(x)

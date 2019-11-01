@@ -4,7 +4,7 @@ Test     : CostJo   : Nonlinear Jo(Aircraft) = 1528.82, nobs = 1631, Jo/n = 0.93
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.3647, nobs = 63, Jo/n = 0.339122, err = 7.97005
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 5.9521, nobs = 3, Jo/n = 1.98403, err = 2.00376
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 8.61691, nobs = 9, Jo/n = 0.957435, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(Surface) = 587.66, nobs = 51, Jo/n = 11.5227, err = 144.954
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 587.66, nobs = 51, Jo/n = 11.5227, err = 144.954
 Test     : CostFunction: Nonlinear J = 3106.47
 Test     : DRIPCGMinimizer: reduction in residual norm = 0.0689638
 Test     : CostFunction::addIncrement: Analysis: 
@@ -19,14 +19,14 @@ Test     : Fld=6  Min=57106.4, Max=104459, RMS=98640.6 : surface_pressure
 Test     : Fld=7  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
 Test     : Fld=8  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
 Test     : CostJb   : Nonlinear Jb = 1.89254e-05
-Test     : CostJo   : Nonlinear Jo(Radiosonde) = 906.881, nobs = 971, Jo/n = 0.933966, err = 1.98545
-Test     : CostJo   : Nonlinear Jo(Aircraft) = 1230.2, nobs = 1610, Jo/n = 0.7641, err = 2.29825
-Test     : CostJo   : Nonlinear Jo(Satwind) = 21.2254, nobs = 63, Jo/n = 0.336911, err = 7.97005
+Test     : CostJo   : Nonlinear Jo(Radiosonde) = 906.813, nobs = 971, Jo/n = 0.933896, err = 1.98545
+Test     : CostJo   : Nonlinear Jo(Aircraft) = 1230.25, nobs = 1610, Jo/n = 0.764133, err = 2.29825
+Test     : CostJo   : Nonlinear Jo(Satwind) = 21.2265, nobs = 63, Jo/n = 0.336928, err = 7.97005
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.97327, nobs = 3, Jo/n = 0.657755, err = 2.00376
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 8.29915, nobs = 9, Jo/n = 0.922127, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(Surface) = 485.527, nobs = 48, Jo/n = 10.1151, err = 147.309
-Test     : CostFunction: Nonlinear J = 2654.11
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.0645622
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 485.275, nobs = 48, Jo/n = 10.1099, err = 147.309
+Test     : CostFunction: Nonlinear J = 2653.84
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.0645462
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 8
@@ -38,11 +38,11 @@ Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridiona
 Test     : Fld=6  Min=57106.4, Max=104459, RMS=98640.6 : surface_pressure
 Test     : Fld=7  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
 Test     : Fld=8  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
-Test     : CostJb   : Nonlinear Jb = 3.66721e-05
-Test     : CostJo   : Nonlinear Jo(Radiosonde) = 900.883, nobs = 967, Jo/n = 0.931626, err = 1.98679
-Test     : CostJo   : Nonlinear Jo(Aircraft) = 1209.88, nobs = 1607, Jo/n = 0.752883, err = 2.29928
-Test     : CostJo   : Nonlinear Jo(Satwind) = 21.1186, nobs = 63, Jo/n = 0.335216, err = 7.97005
-Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.74014, nobs = 3, Jo/n = 0.580048, err = 2.00376
-Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 7.97333, nobs = 9, Jo/n = 0.885926, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(Surface) = 488.161, nobs = 48, Jo/n = 10.17, err = 147.309
-Test     : CostFunction: Nonlinear J = 2629.76
+Test     : CostJb   : Nonlinear Jb = 3.66702e-05
+Test     : CostJo   : Nonlinear Jo(Radiosonde) = 900.904, nobs = 967, Jo/n = 0.931649, err = 1.98679
+Test     : CostJo   : Nonlinear Jo(Aircraft) = 1209.97, nobs = 1607, Jo/n = 0.752937, err = 2.29928
+Test     : CostJo   : Nonlinear Jo(Satwind) = 21.1209, nobs = 63, Jo/n = 0.335252, err = 7.97005
+Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.7403, nobs = 3, Jo/n = 0.580101, err = 2.00376
+Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 7.97332, nobs = 9, Jo/n = 0.885925, err = 0.000672614
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 489.208, nobs = 48, Jo/n = 10.1918, err = 147.309
+Test     : CostFunction: Nonlinear J = 2630.92

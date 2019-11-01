@@ -4,7 +4,7 @@ Test     : CostJo   : Nonlinear Jo(Aircraft) = 1555.92, nobs = 1591, Jo/n = 0.97
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.8547, nobs = 63, Jo/n = 0.3469, err = 7.97005
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.62431, nobs = 1, Jo/n = 1.62431, err = 3.35131
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 7.33483, nobs = 9, Jo/n = 0.814982, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(Surface) = 655.124, nobs = 49, Jo/n = 13.3699, err = 146.496
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 655.124, nobs = 49, Jo/n = 13.3699, err = 146.496
 Test     : CostFunction: Nonlinear J = 3170.25
 Test     : DRIPCGMinimizer: reduction in residual norm = 5.82679e-05
 Test     : CostFunction::addIncrement: Analysis: 
@@ -22,7 +22,7 @@ Test     : CostJo   : Nonlinear Jo(Aircraft) = 1149.65, nobs = 1586, Jo/n = 0.72
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.4413, nobs = 63, Jo/n = 0.340338, err = 7.97005
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.51731, nobs = 1, Jo/n = 1.51731, err = 3.35131
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 2.85446, nobs = 8, Jo/n = 0.356807, err = 0.000713411
-Test     : CostJo   : Nonlinear Jo(Surface) = 166.896, nobs = 49, Jo/n = 3.40605, err = 146.496
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 166.896, nobs = 49, Jo/n = 3.40605, err = 146.496
 Test     : CostFunction: Nonlinear J = 2304.27
 Test     : DRIPCGMinimizer: reduction in residual norm = 3.92005e-05
 Test     : CostFunction::addIncrement: Analysis: 
@@ -40,5 +40,5 @@ Test     : CostJo   : Nonlinear Jo(Aircraft) = 1140.75, nobs = 1585, Jo/n = 0.71
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.4391, nobs = 63, Jo/n = 0.340303, err = 7.97005
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.51727, nobs = 1, Jo/n = 1.51727, err = 3.35131
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 2.85579, nobs = 8, Jo/n = 0.356974, err = 0.000713411
-Test     : CostJo   : Nonlinear Jo(Surface) = 167.469, nobs = 49, Jo/n = 3.41774, err = 146.496
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 167.469, nobs = 49, Jo/n = 3.41774, err = 146.496
 Test     : CostFunction: Nonlinear J = 2297.62
