@@ -171,8 +171,8 @@ Observations:
         value: surface_altitude@GeoVaLs
         threshold: 500
       - Filter: Background Check
-        variables:
-        - surface_pressure
+        filter variables:
+        - name: surface_pressure
         threshold: 10
 Prints:
   frequency: PT3H

@@ -117,11 +117,6 @@ cost_function:
         threshold: 3
         apply_at_iterations: 0
       - Filter: Background Check
-        variables:
-        - air_temperature
-        - eastward_wind
-        - northward_wind
-        - specific_humidity
         threshold: 3
     - ObsSpace:
         name: Aircraft
@@ -140,11 +135,6 @@ cost_function:
         threshold: 3
         apply_at_iterations: 0
       - Filter: Background Check
-        variables:
-        - air_temperature
-        - eastward_wind
-        - northward_wind
-        - specific_humidity
         threshold: 3
     - ObsSpace:
         name: Satwind
@@ -163,9 +153,6 @@ cost_function:
         threshold: 3
         apply_at_iterations: 0
       - Filter: Background Check
-        variables:
-        - eastward_wind
-        - northward_wind
         threshold: 3
     - ObsSpace:
         name: GnssroRef
@@ -183,23 +170,22 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Domain Check
-        variables: [refractivity]
         where:
-        - variable: altitude@MetaData
+        - variable:
+            name: altitude@MetaData
           minvalue: 0
           maxvalue: 30000
-        - variable: earth_radius_of_curvature@MetaData
+        - variable:
+            name: earth_radius_of_curvature@MetaData
           minvalue: 6250000
           maxvalue: 6450000
-        - variable: geoid_height_above_reference_ellipsoid@MetaData
+        - variable:
+            name: geoid_height_above_reference_ellipsoid@MetaData
           minvalue: -200
           maxvalue: 200
       - Filter: Background Check
-        variables:
-        - refractivity
         threshold: 3
       - Filter: ROobserror
-        variables: [refractivity]
         variable: refractivity
         errmodel: GSI
     - ObsSpace:
@@ -218,23 +204,22 @@ cost_function:
         covariance: diagonal
       ObsFilters:
       - Filter: Domain Check
-        variables: [bending_angle]
         where:
-        - variable: altitude@MetaData
+        - variable:
+            name: altitude@MetaData
           minvalue: 0
           maxvalue: 50000
-        - variable: earth_radius_of_curvature@MetaData
+        - variable:
+            name: earth_radius_of_curvature@MetaData
           minvalue: 6250000
           maxvalue: 6450000
-        - variable: geoid_height_above_reference_ellipsoid@MetaData
+        - variable:
+            name: geoid_height_above_reference_ellipsoid@MetaData
           minvalue: -200
           maxvalue: 200
       - Filter: Background Check
-        variables:
-        - bending_angle
         threshold: 3
       - Filter: ROobserror
-        variables: [bending_angle]
         variable: bending_angle
         errmodel: ECMWF
     - ObsSpace:
@@ -257,13 +242,10 @@ cost_function:
         threshold: 3
         apply_at_iterations: 0
       - Filter: Difference Check
-        variables: [surface_pressure]
         reference: station_elevation@MetaData
         value: surface_altitude@GeoVaLs
         threshold: 500
       - Filter: Background Check
-        variables:
-        - surface_pressure
         threshold: 10
 minimizer:
   algorithm: DRIPCG
