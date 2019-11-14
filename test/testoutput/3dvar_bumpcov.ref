@@ -38,7 +38,7 @@ Test     : CostJb   : Nonlinear Jb = 117.891
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 757.113, nobs = 968, Jo/n = 0.782141, err = 1.9853
 Test     : CostJo   : Nonlinear Jo(Aircraft) = 1001.69, nobs = 1581, Jo/n = 0.63358, err = 2.29743
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.3558, nobs = 63, Jo/n = 0.338981, err = 7.97005
-Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.47355, nobs = 1, Jo/n = 1.47355, err = 3.35131
+Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.47356, nobs = 1, Jo/n = 1.47356, err = 3.35131
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 7.27792, nobs = 9, Jo/n = 0.808658, err = 0.000672614
 Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 195.057, nobs = 49, Jo/n = 3.98076, err = 146.496
 Test     : CostFunction: Nonlinear J = 2101.86

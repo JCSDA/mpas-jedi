@@ -150,7 +150,7 @@ cost_function:
         threshold: 3
       - Filter: ROobserror
         variable: refractivity
-        errmodel: GSI
+        errmodel: NBAM
     - ObsSpace:
         name: GnssroBndROPP1D
         ObsDataIn:

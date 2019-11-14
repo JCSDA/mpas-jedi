@@ -86,7 +86,6 @@ Observations:
       name: GnssroRef
       ObsOptions:
         ro_top_meter: 30000
-        obserr_method: RefGSI
         use_compress: 0
     ObsBias: {}
   - ObsSpace:
