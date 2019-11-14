@@ -150,7 +150,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_4denvar_bump_sonde.nc4
+          obsfile: Data/obsout_4denvar_bump_sondes.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
