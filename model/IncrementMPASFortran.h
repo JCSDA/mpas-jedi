@@ -15,6 +15,10 @@ namespace eckit {
   class Configuration;
 }
 
+namespace oops {
+  class Variables;
+}
+
 namespace util {
   class DateTime;
   class Duration;
@@ -28,7 +32,7 @@ extern "C" {
 //  Increment
 // -----------------------------------------------------------------------------
   void mpas_increment_create_f90(F90inc &, const F90geom &,
-                             const eckit::Configuration * const *);
+                             const oops::Variables &);
   void mpas_increment_delete_f90(F90inc &);
   void mpas_increment_copy_f90(const F90inc &, const F90inc &);
   void mpas_increment_zero_f90(const F90inc &);
@@ -55,10 +59,10 @@ extern "C" {
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
   void mpas_increment_getvalues_tl_f90(const F90inc &, const F90locs &,
-                             const eckit::Configuration * const *,
+                             const oops::Variables &,
                              const F90goms &, const F90ootrj &);
   void mpas_increment_getvalues_ad_f90(const F90inc &, const F90locs &,
-                             const eckit::Configuration * const *,
+                             const oops::Variables &,
                              const F90goms &, const F90ootrj &);
   void mpas_increment_ug_coord_f90(const F90inc &, const int &);
   void mpas_increment_increment_to_ug_f90(const F90inc &, const int &,

@@ -20,6 +20,9 @@ module mpas4da_mod
 !oops
 use kinds, only : kind_real
 
+!ufo
+use ufo_vars_mod
+
 !MPAS-Model
 use mpas_abort, only : mpas_dmpar_global_abort
 use mpas_constants
@@ -642,7 +645,7 @@ use mpas_constants_mod
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -715,7 +718,7 @@ use mpas_constants_mod
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -940,7 +943,7 @@ use mpas_constants_mod
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1004,7 +1007,7 @@ use mpas_constants_mod
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1139,7 +1142,7 @@ use mpas_constants_mod
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1250,7 +1253,7 @@ use mpas_constants_mod
    call mpas_pool_begin_iteration(pool_a)
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-         jj = str_match(trim(poolItr % memberName),fld_select)
+         jj = ufo_vars_getindex(fld_select,trim(poolItr % memberName))
          if ( jj < 0 .or. jj > nf ) cycle
 
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -1389,7 +1392,7 @@ use mpas_constants_mod
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
          if (present(fld_select)) then
-            if (str_match(trim(poolItr % memberName), fld_select) < 0) cycle
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
          end if
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -1761,28 +1764,6 @@ subroutine r3_normalize(ax, ay, az)
    az = az * mi
 
 end subroutine r3_normalize
-
-!-----------------------------------------------------------------------
-
-function str_match(fieldname, fieldnames)
-   character (len=*) :: fieldname
-   character (len=*) :: fieldnames(:)
-   integer :: str_match
-
-
-   integer :: i
-
-   str_match = -1
-   do i = 1, size(fieldnames)
-      if (trim(fieldname) .eq. trim(fieldnames(i))) then
-         str_match = i
-         return
-      end if
-   end do
-
-   return
-
-end function str_match
 
 !===============================================================================================================
 

@@ -101,7 +101,10 @@ class StateMPAS : public util::Printable,
   boost::shared_ptr<const GeometryMPAS> geom_;
   oops::Variables vars_;
   util::DateTime time_;
+
+  static const oops::Variables auxvars_;
 };
+
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas

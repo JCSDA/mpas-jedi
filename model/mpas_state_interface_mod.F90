@@ -10,12 +10,11 @@ module mpas_state_interface_mod
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds, only: kind_real
-use variables_mod
+use oops_variables_mod
 
 use mpas_geom_mod
 use mpas_state_mod
-use mpas_state_utils_mod
-use mpas_increment_utils_mod
+use mpas_field_utils_mod
 
 !State read/write/init
 use datetime_mod
@@ -37,30 +36,27 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-!subroutine mpas_state_create_c(c_key_self, c_key_geom, c_key_vars) 
-!      bind(c,name='mpas_state_create_f90')
-subroutine mpas_state_create_c(c_key_self, c_key_geom, c_vars) &
+subroutine mpas_state_create_c(c_key_self, c_key_geom, c_state_vars, c_inc_vars) &
       bind(c,name='mpas_state_create_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom !< Geometry
-!integer(c_int), intent(in) :: c_key_vars !< List of variables
-type(c_ptr), intent(in) :: c_vars !< List of variables
+integer(c_int), intent(in) :: c_key_geom       !< Geometry
+type(c_ptr), value, intent(in) :: c_state_vars !< List of state variables
+type(c_ptr), value, intent(in) :: c_inc_vars   !< List of increment variables
 
-type(mpas_state), pointer :: self
-type(mpas_geom),  pointer :: geom
-type(oops_vars)           :: vars
-type(fckit_configuration) :: f_vars
+type(mpas_field), pointer :: self
+type(mpas_geom), pointer :: geom
+type(oops_variables) :: state_vars
+type(oops_variables) :: inc_vars
 
-call mpas_state_registry%init()
-call mpas_state_registry%add(c_key_self)
-call mpas_state_registry%get(c_key_self,self)
+call mpas_field_registry%init()
+call mpas_field_registry%add(c_key_self)
+call mpas_field_registry%get(c_key_self,self)
 call mpas_geom_registry%get(c_key_geom, geom)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
-call self%create(geom, vars)
-call oops_vars_delete(vars)
+state_vars = oops_variables(c_state_vars)
+inc_vars = oops_variables(c_inc_vars)
+call self%create(geom, state_vars, inc_vars)
 
 end subroutine mpas_state_create_c
 
@@ -70,13 +66,13 @@ subroutine mpas_state_delete_c(c_key_self) &
       bind(c,name='mpas_state_delete_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_state_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 
 call self%delete()
 
-call mpas_state_registry%remove(c_key_self)
+call mpas_field_registry%remove(c_key_self)
 
 end subroutine mpas_state_delete_c
 
@@ -86,9 +82,9 @@ subroutine mpas_state_zero_c(c_key_self) &
       bind(c,name='mpas_state_zero_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_state_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 call self%zeros()
 
 end subroutine mpas_state_zero_c
@@ -101,10 +97,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_state), pointer :: self
-type(mpas_state), pointer :: rhs
-call mpas_state_registry%get(c_key_self,self)
-call mpas_state_registry%get(c_key_rhs,rhs)
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
 call self%copy(rhs)
 
@@ -119,12 +115,12 @@ integer(c_int), intent(in) :: c_key_self
 real(c_double), intent(in) :: c_zz
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_state), pointer :: self
-type(mpas_state), pointer :: rhs
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
 real(kind=kind_real) :: zz
 
-call mpas_state_registry%get(c_key_self,self)
-call mpas_state_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 zz = c_zz
 
 call self%axpy(zz,rhs)
@@ -138,11 +134,11 @@ subroutine mpas_state_add_incr_c(c_key_self,c_key_rhs) &
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
-type(mpas_state), pointer :: self
-type(mpas_increment), pointer :: rhs
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
 
-call mpas_state_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
 call add_incr(self,rhs)
 
@@ -155,10 +151,10 @@ subroutine mpas_state_change_resol_c(c_key_state,c_key_rhs) &
 implicit none
 integer(c_int), intent(in) :: c_key_state
 integer(c_int), intent(in) :: c_key_rhs
-type(mpas_state), pointer :: state, rhs
+type(mpas_field), pointer :: state, rhs
 
-call mpas_state_registry%get(c_key_state,state)
-call mpas_state_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_state,state)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
 call state%change_resol(rhs)
 
@@ -173,11 +169,11 @@ integer(c_int), intent(in) :: c_key_state  !< State
 type(c_ptr), intent(in)    :: c_conf !< Configuration
 type(c_ptr), intent(inout) :: c_dt   !< DateTime
 
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
-call mpas_state_registry%get(c_key_state,self)
+call mpas_field_registry%get(c_key_state,self)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
 call self%read_file(f_conf, fdate)
@@ -194,12 +190,12 @@ integer(c_int), intent(in) :: c_key_geom  !< Geometry
 type(c_ptr), intent(in)    :: c_conf !< Configuration
 type(c_ptr), intent(inout) :: c_dt   !< DateTime
 
-type(mpas_state), pointer :: state
+type(mpas_field), pointer :: state
 type(mpas_geom), pointer :: geom
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
-call mpas_state_registry%get(c_key_state,state)
+call mpas_field_registry%get(c_key_state,state)
 call mpas_geom_registry%get(c_key_geom,geom)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
@@ -216,11 +212,11 @@ integer(c_int), intent(in) :: c_key_state  !< State
 type(c_ptr), intent(in) :: c_conf !< Configuration
 type(c_ptr), intent(in) :: c_dt   !< DateTime
 
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
-call mpas_state_registry%get(c_key_state,self)
+call mpas_field_registry%get(c_key_state,self)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
 call self%write_file( f_conf, fdate)
@@ -236,11 +232,11 @@ integer(c_int), intent(in) :: c_key_state
 integer(c_int), intent(in) :: kf
 real(c_double), intent(inout) :: pstat(3*kf)
 
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 real(kind=kind_real) :: zstat(3, kf)
 integer :: jj, js, jf
 
-call mpas_state_registry%get(c_key_state,self)
+call mpas_field_registry%get(c_key_state,self)
 
 call self%gpnorm(kf, zstat)
 jj=0
@@ -261,10 +257,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_state
 real(c_double), intent(inout) :: prms
 
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 real(kind=kind_real) :: zz
 
-call mpas_state_registry%get(c_key_state,self)
+call mpas_field_registry%get(c_key_state,self)
 
 call self%rms(zz)
 
@@ -279,23 +275,20 @@ subroutine mpas_state_getvalues_notraj_c(c_key_state,c_key_loc,c_vars,c_key_gom)
 implicit none
 integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 
-type(mpas_state),   pointer :: state
+type(mpas_field),   pointer :: state
 type(ufo_locs),     pointer :: locs
-type(oops_vars)             :: vars
+type(oops_variables)        :: vars
 type(ufo_geovals),  pointer :: gom
-type(fckit_configuration)   :: f_vars
 
-call mpas_state_registry%get(c_key_state, state)
+call mpas_field_registry%get(c_key_state, state)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
+vars = oops_variables(c_vars)
 call getvalues(state, locs, vars, gom)
-call oops_vars_delete(vars)
 
 end subroutine mpas_state_getvalues_notraj_c
 
@@ -306,26 +299,23 @@ subroutine mpas_state_getvalues_c(c_key_state,c_key_loc,c_vars,c_key_gom,c_key_t
 implicit none
 integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in), optional :: c_key_traj !< Trajectory for interpolation/transforms
 
-type(mpas_state),      pointer :: state
-type(ufo_locs),        pointer :: locs
-type(oops_vars)                :: vars
-type(ufo_geovals),     pointer :: gom
+type(mpas_field), pointer :: state
+type(ufo_locs), pointer :: locs
+type(oops_variables) :: vars
+type(ufo_geovals), pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
-type(fckit_configuration)      :: f_vars
 
-call mpas_state_registry%get(c_key_state, state)
+call mpas_field_registry%get(c_key_state, state)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
+vars = oops_variables(c_vars)
 call getvalues(state, locs, vars, gom, traj)
-call oops_vars_delete(vars)
 
 end subroutine mpas_state_getvalues_c
 
@@ -336,9 +326,9 @@ subroutine mpas_state_sizes_c(c_key_self,nc,nf) &
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(inout) :: nc,nf
-type(mpas_state), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_state_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 
 nf = self%nf_ci
 nc = self%geom%nCellsGlobal

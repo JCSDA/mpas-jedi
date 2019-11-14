@@ -39,8 +39,7 @@ IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom,
                              const util::DateTime & time):
   geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_zero_f90(keyInc_);
   oops::Log::trace() << "IncrementMPAS constructed." << std::endl;
 }
@@ -49,8 +48,7 @@ IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
                              const IncrementMPAS & other)
   : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "IncrementMPAS constructed from other." << std::endl;
 }
@@ -58,8 +56,7 @@ IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   if (copy) {
     mpas_increment_copy_f90(keyInc_, other.keyInc_);
   } else {
@@ -71,8 +68,7 @@ IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), &conf);
+  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_copy_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
 }
@@ -161,8 +157,7 @@ void IncrementMPAS::getValuesTL(const ufo::Locations & locs,
                                 ufo::GeoVaLs & gom,
                                 const GetValuesTrajMPAS & traj) const {
   oops::Log::trace() << "IncrementMPAS::getValuesTL starting" << std::endl;
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_increment_getvalues_tl_f90(keyInc_, locs.toFortran(), &conf,
+  mpas_increment_getvalues_tl_f90(keyInc_, locs.toFortran(), vars,
                               gom.toFortran(), traj.toFortran());
   oops::Log::trace() << "IncrementMPAS::getValuesTL done" << std::endl;
 }
@@ -171,9 +166,8 @@ void IncrementMPAS::getValuesAD(const ufo::Locations & locs,
                                 const oops::Variables & vars,
                                 const ufo::GeoVaLs & gom,
                                 const GetValuesTrajMPAS & traj) {
-  const eckit::Configuration * conf = &vars.toFortran();
   oops::Log::trace() << "IncrementMPAS::getValuesAD starting" << std::endl;
-  mpas_increment_getvalues_ad_f90(keyInc_, locs.toFortran(), &conf,
+  mpas_increment_getvalues_ad_f90(keyInc_, locs.toFortran(), vars,
                                   gom.toFortran(), traj.toFortran());
   oops::Log::trace() << "IncrementMPAS::getValuesAD done" << std::endl;
 }

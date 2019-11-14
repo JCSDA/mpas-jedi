@@ -10,7 +10,7 @@ use fckit_configuration_module, only: fckit_configuration
 !oops
 use datetime_mod
 use kinds, only: kind_real
-use variables_mod, only: oops_vars
+use oops_variables_mod, only: oops_variables
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN
@@ -31,22 +31,19 @@ use mpas4da_mod
 
 private
 
-public :: mpas_field, interp_checks, &
+public :: mpas_field, mpas_field_registry, &
+          interp_checks, &
           create_field, delete_field, &
           copy_field, copy_pool, &
           update_diagnostic_fields, &
           mpas_hydrometeor_fields
 
-integer, parameter :: maxLabels = 1000
-logical, dimension(0:maxLabels), save :: labelsInUse
-integer, parameter :: state_min = maxLabels-100+1
-integer, parameter :: state_max = maxLabels
-
 ! ------------------------------------------------------------------------------
 
    !> Fortran derived type to hold MPAS field
-   type, abstract :: mpas_field
+   type :: mpas_field
      private
+
      type (mpas_geom), pointer, public :: geom                            ! grid and MPI infos
      type (MPAS_streamManager_type), pointer, public :: manager
      type (MPAS_Clock_type), pointer, public :: clock
@@ -55,82 +52,94 @@ integer, parameter :: state_max = maxLabels
      type (mpas_pool_type), pointer, public        :: subFields => null() !---> state variables (to be analyzed)
      integer, public :: nf_ci                                             ! Number of variables in CI
      character(len=MAXVARLEN), allocatable, public :: fldnames_ci(:)      ! Control increment identifiers
+
      contains
 
-     procedure :: zeros     => zeros_
-     procedure :: random    => random_
-     procedure :: rms       => rms_
-     procedure :: gpnorm    => gpnorm_
-     procedure :: add       => add_
-     procedure :: sub       => sub_
-     procedure :: schur     => schur_
-     procedure :: mult      => mult_
-     procedure :: axpy      => axpy_
-     procedure :: dot_prod  => dot_prod_
+     procedure :: axpy         => axpy_
+     procedure :: dot_prod     => dot_prod_
+     procedure :: gpnorm       => gpnorm_
+     procedure :: random       => random_
+     procedure :: rms          => rms_
+     procedure :: self_add     => self_add_
+     procedure :: self_schur   => self_schur_
+     procedure :: self_mult    => self_mult_
+     procedure :: self_sub     => self_sub_
+     procedure :: zeros        => zeros_
 
-     procedure :: create     => create_field
-     procedure :: delete     => delete_field
-     procedure :: copy       => copy_field
-     procedure :: write_file => write_field
-     procedure :: read_file  => read_field
      procedure :: change_resol => change_resol_field
+     procedure :: copy         => copy_field
+     procedure :: create       => create_field
+     procedure :: delete       => delete_field
+     procedure :: read_file    => read_field
+     procedure :: write_file   => write_field
+
    end type mpas_field
 
-   abstract interface
-
-   ! ------------------------------------------------------------------------------
-
-      subroutine read_file_(self, f_conf, vdate)
-         import mpas_field, fckit_configuration, datetime
-         implicit none
-         class(mpas_field),         intent(inout) :: self
-         type(fckit_configuration), intent(in)    :: f_conf
-         type(datetime),            intent(inout) :: vdate
-      end subroutine read_file_
-
-   ! ------------------------------------------------------------------------------
-
-   end interface
+!   abstract interface
+!
+!   ! ------------------------------------------------------------------------------
+!
+!      subroutine read_file_(self, f_conf, vdate)
+!         import mpas_field, fckit_configuration, datetime
+!         implicit none
+!         class(mpas_field),         intent(inout) :: self
+!         type(fckit_configuration), intent(in)    :: f_conf
+!         type(datetime),            intent(inout) :: vdate
+!      end subroutine read_file_
+!
+!   ! ------------------------------------------------------------------------------
+!
+!   end interface
 
    character(len=MAXVARLEN) :: mpas_hydrometeor_fields(6) = &
       [ character(len=MAXVARLEN) :: &
-      "index_qc", "index_qi", "index_qr", "index_qs", "index_qg", "index_qh" ]
+      "index_qc", "index_qi", "index_qr", &
+      "index_qs", "index_qg", "index_qh" ]
+
+#define LISTED_TYPE mpas_field
+
+!> Linked list interface - defines registry_t type
+#include "linkedList_i.f"
+
+!> Global registry
+type(registry_t) :: mpas_field_registry
 
 ! ------------------------------------------------------------------------------
+
 contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine create_field(self, geom, vars)
+!> Linked list implementation
+#include "linkedList_c.f"
+
+! ------------------------------------------------------------------------------
+
+subroutine create_field(self, geom, vars, vars_ci)
 
     implicit none
 
     class(mpas_field), intent(inout)       :: self
     type(mpas_geom),   intent(in), pointer :: geom
-    type(oops_vars),   intent(in)          :: vars
+    type(oops_variables), intent(in)       :: vars, vars_ci
 
-    integer :: nsize, nfields
-    integer :: ierr
+    integer :: ivar, ierr
 
-    !-- fortran level test (temporally sit here)
-    real(kind=kind_real), allocatable :: pstat(:, :)
-    real(kind=kind_real)              :: prms
-    type (MPAS_Time_type) :: local_time, write_time, fld_time
-    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename
-    character (len=StrKIND) :: dateTimeString_oops
-    character(len=1024) :: buf
-
-    ! from the namelist
-    self % nf = vars % nv
+    self % nf = vars % nvars()
     allocate(self % fldnames(self % nf))
-    self % fldnames(:) = vars % fldnames(:)
+    do ivar = 1, self % nf
+       self % fldnames(ivar) = trim(vars % variable(ivar))
+    end do
+
+    self % nf_ci = vars_ci % nvars()
+    allocate(self % fldnames_ci(self % nf_ci))
+    do ivar = 1, self % nf_ci
+       self % fldnames_ci(ivar) = trim(vars_ci % variable(ivar))
+    end do
+
 !    write(*,*)'--> create_field: self % nf =',self % nf
 !    write(*,*)'--> create_field: allocate ::',self % fldnames(:)
-
-    self % nf_ci = vars % nv
-    allocate(self % fldnames_ci(self % nf_ci))
-    self % fldnames_ci(:) = vars % fldnames(:)
-
+ 
     ! link geom
     if (associated(geom)) then
       self % geom => geom
@@ -150,28 +159,6 @@ subroutine create_field(self, geom, vars)
     call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
 
     call self%zeros() !-- set zero for self % subFields
-
-!    mpas_get_time(curr_time, YYYY, MM, DD, DoY, H, M, S, S_n, S_d, dateTimeString, ierr)
-!    call mpas_get_time(curr_time, YYYY, MM, DD, H, M, S, dateTimeString, ierr)
-!    call mpas_set_timeInterval(runDuration, timeString=config_run_duration, ierr=local_err)
-!    call mpas_create_clock(core_clock, startTime=startTime, timeStep=timeStep, runDuration=runDuration, ierr=local_err)
-!    currTime = mpas_get_clock_time(clock, MPAS_NOW, ierr)
-!    startTime = mpas_get_clock_time(clock, MPAS_START_TIME, ierr)
-!    currTime = mpas_get_clock_time(clock, MPAS_NOW, ierr)
-!    xtimeTime = currTime - startTime
-!    call mpas_get_timeInterval(interval=xtimeTime, S=s, S_n=s_n, S_d=s_d, ierr=ierr)
-!    xtime_s = (s + s_n / s_d)
-
-!--------------------------------------------------------------------------------------- 
-
-!   write(*,*)''
-!   write(*,*)'=========== MPAS WRITE A RESTART ===================='
-
-!   call mpas_pool_get_subpool(block_ptr % structs, 'state', state)
-!   call mpas_pool_get_subpool(block_ptr % structs, 'diag', diag)
-!   all mpas_pool_get_subpool(block_ptr % structs, 'diag_physics', diag_physics)
-!   call mpas_pool_get_subpool(block_ptr % structs, 'mesh', mesh)
-!   call atm_compute_restart_diagnostics(state, 1, diag, mesh)
 
     return
 
@@ -524,7 +511,7 @@ end subroutine rms_
 
 ! ------------------------------------------------------------------------------
 
-subroutine add_(self,rhs)
+subroutine self_add_(self,rhs)
 
    implicit none
    class(mpas_field), intent(inout) :: self
@@ -534,11 +521,11 @@ subroutine add_(self,rhs)
    kind_op = 'add'
    call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
-end subroutine add_
+end subroutine self_add_
 
 ! ------------------------------------------------------------------------------
 
-subroutine schur_(self,rhs)
+subroutine self_schur_(self,rhs)
 
    implicit none
    class(mpas_field), intent(inout) :: self
@@ -548,11 +535,11 @@ subroutine schur_(self,rhs)
    kind_op = 'schur'
    call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
-end subroutine schur_
+end subroutine self_schur_
 
 ! ------------------------------------------------------------------------------
 
-subroutine sub_(self,rhs)
+subroutine self_sub_(self,rhs)
 
    implicit none
    class(mpas_field), intent(inout) :: self
@@ -562,11 +549,11 @@ subroutine sub_(self,rhs)
    kind_op = 'sub'
    call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
 
-end subroutine sub_
+end subroutine self_sub_
 
 ! ------------------------------------------------------------------------------
 
-subroutine mult_(self,zz)
+subroutine self_mult_(self,zz)
 
    implicit none
    class(mpas_field),    intent(inout) :: self
@@ -574,7 +561,7 @@ subroutine mult_(self,zz)
 
    call da_self_mult(self % subFields, zz)
 
-end subroutine mult_
+end subroutine self_mult_
 
 ! ------------------------------------------------------------------------------
 
@@ -608,11 +595,11 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    use ufo_locs_mod, only: ufo_locs
    use ufo_geovals_mod, only: ufo_geovals
    implicit none
-   character(len=2),  intent(in) :: cop
-   class(mpas_field), intent(in) :: fld
-   type(ufo_locs),    intent(in) :: locs
-   type(oops_vars),   intent(in) :: vars
-   type(ufo_geovals), intent(in) :: gom
+   character(len=2),     intent(in) :: cop
+   class(mpas_field),    intent(in) :: fld
+   type(ufo_locs),       intent(in) :: locs
+   type(oops_variables), intent(in) :: vars
+   type(ufo_geovals),    intent(in) :: gom
    integer :: jvar
    character(len=26) :: cinfo
 
@@ -620,13 +607,13 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
 
    !Check things are the sizes we expect
    !------------------------------------
-   if( gom%nvar .ne. vars%nv )then
+   if( gom%nvar .ne. vars%nvars() )then
       call abor1_ftn(cinfo//"nvar wrong size")
    endif
    if( .not. allocated(gom%geovals) )then
       call abor1_ftn(cinfo//"geovals unallocated")
    endif
-   if( size(gom%geovals) .ne. vars%nv )then
+   if( size(gom%geovals) .ne. vars%nvars() )then
       call abor1_ftn(cinfo//"geovals wrong size")
    endif
    if (cop/="tl" .and. cop/='nl') then !BJJ or cop='ad'.   why only check ad??? because ad is set/allocated in UFO side ??

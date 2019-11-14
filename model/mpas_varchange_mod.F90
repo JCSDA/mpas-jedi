@@ -9,8 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds
 
-use mpas_state_utils_mod, only: mpas_state
-use mpas_increment_utils_mod, only: mpas_increment
+use mpas_field_utils_mod, only: mpas_field
 use mpas_geom_mod,   only: mpas_geom
 
 implicit none
@@ -40,8 +39,8 @@ subroutine mpas_varchange_setup(self, bg, fg, geom, f_conf)
 
 implicit none
 type(mpas_varchange),      intent(inout) :: self    !< Change variable structure
-type(mpas_state), target,  intent(in)    :: bg
-type(mpas_state), target,  intent(in)    :: fg
+type(mpas_field), target,  intent(in)    :: bg
+type(mpas_field), target,  intent(in)    :: fg
 type(mpas_geom),           intent(in)    :: geom
 type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
 
@@ -62,8 +61,8 @@ subroutine mpas_varchange_multiply(self,xctl,xmod)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_increment), intent(inout) :: xctl
-type(mpas_increment), intent(inout) :: xmod
+type(mpas_field), intent(inout) :: xctl
+type(mpas_field), intent(inout) :: xmod
 
 end subroutine mpas_varchange_multiply
 
@@ -73,8 +72,8 @@ subroutine mpas_varchange_multiplyadjoint(self,xmod,xctl)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_increment), intent(inout) :: xmod
-type(mpas_increment), intent(inout) :: xctl
+type(mpas_field), intent(inout) :: xmod
+type(mpas_field), intent(inout) :: xctl
 
 !Adjoint of analysis (control) to model variables
 
@@ -86,8 +85,8 @@ subroutine mpas_varchange_multiplyinverse(self,xinc,xctr)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_increment), intent(inout) :: xinc
-type(mpas_increment), intent(inout) :: xctr
+type(mpas_field), intent(inout) :: xinc
+type(mpas_field), intent(inout) :: xctr
 
 !> Not implemented
 
@@ -99,8 +98,8 @@ subroutine mpas_varchange_multiplyinverseadjoint(self,xinc,xctr)
 
 implicit none
 type(mpas_varchange), intent(inout) :: self
-type(mpas_increment), intent(inout) :: xinc
-type(mpas_increment), intent(inout) :: xctr
+type(mpas_field), intent(inout) :: xinc
+type(mpas_field), intent(inout) :: xctr
 
 !> Not implemented
 

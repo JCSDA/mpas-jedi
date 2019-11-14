@@ -9,8 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use duration_mod
 use mpas_geom_mod
-use mpas_state_utils_mod
-use mpas_increment_utils_mod
+use mpas_field_utils_mod
 use mpas_trajectories
 
 use mpas_derived_types
@@ -40,7 +39,7 @@ public :: mpas_model, &
 type :: mpas_model
    ! GD: for now, model is just using the full geom structure
    ! we update the fields for time integration using subfield
-   ! from mpas_state
+   ! from mpas_field
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
    real (kind=kind_real) :: dt
@@ -161,7 +160,7 @@ subroutine model_prepare_integration(self, jedi_state)
    implicit none
 
    type(mpas_model) :: self
-   type(mpas_state) :: jedi_state
+   type(mpas_field) :: jedi_state
    logical, pointer :: config_do_restart, config_do_DAcycling, config_dt
    integer :: ierr = 0
    real (kind=kind_real), pointer :: dt
@@ -209,7 +208,7 @@ subroutine model_prepare_integration(self, jedi_state)
    !                  & jedi_state%geom%nEdgesOnCell, jedi_state%geom%edgesOnCell, jedi_state%geom%nVertLevels)
 
    !-------------------------------------------------------------------
-   ! update domain % clock using mpas_state clock and config files
+   ! update domain % clock using mpas_field clock and config files
    !-------------------------------------------------------------------
    startTime = mpas_get_clock_time(jedi_state % clock, MPAS_START_TIME, ierr)
    call mpas_set_clock_time(self % domain % clock, startTime, MPAS_START_TIME)
@@ -304,7 +303,7 @@ subroutine model_prepare_integration_ad(self, inc)
 
    implicit none
    type(mpas_model)     :: self
-   type(mpas_increment) :: inc
+   type(mpas_field) :: inc
 
    write(*,*)'===> model_prepare_integration_ad'
 
@@ -316,7 +315,7 @@ subroutine model_prepare_integration_tl(self, inc)
 
    implicit none
    type(mpas_model)     :: self
-   type(mpas_increment) :: inc
+   type(mpas_field) :: inc
 
    write(*,*)'===> model_prepare_integration_tl'
 
@@ -330,7 +329,7 @@ subroutine model_propagate(self, jedi_state)
 
    implicit none
    type(mpas_model) :: self
-   type(mpas_state) :: jedi_state
+   type(mpas_field) :: jedi_state
 
    type (mpas_pool_type), pointer :: state, diag, mesh
    real (kind=kind_real) :: dt
@@ -371,7 +370,7 @@ subroutine model_propagate_ad(self, inc, traj)
    implicit none
 
    type(mpas_model)      :: self
-   type(mpas_increment)  :: inc
+   type(mpas_field)  :: inc
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_prepare_integration_ad'
@@ -384,7 +383,7 @@ subroutine model_propagate_tl(self, inc, traj)
 
    implicit none
    type(mpas_model)      :: self
-   type(mpas_increment)  :: inc
+   type(mpas_field)  :: inc
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_propagate_tl'
@@ -397,7 +396,7 @@ subroutine model_prop_traj(self, jedi_state, traj)
 
    implicit none
    type(mpas_model)      :: self
-   type(mpas_state)      :: jedi_state
+   type(mpas_field)      :: jedi_state
    type(mpas_trajectory) :: traj
 
    write(*,*)'===> model_prop_traj in mpas_model_mod.F90'

@@ -40,12 +40,11 @@ contains
 ! ------------------------------------------------------------------------------
 
 subroutine set_traj(self,state)
-use mpas_state_utils_mod
-use mpas_field_utils_mod, only: copy_pool
+use mpas_field_utils_mod, only: copy_pool, mpas_field
 use mpas_pool_routines
 implicit none
 type(mpas_trajectory), intent(inout) :: self
-type(mpas_state)     , intent(in   ) :: state
+type(mpas_field)     , intent(in   ) :: state
 
  write(*,*) '===> set_traj(self) in mpas_trajectories.F90'
 

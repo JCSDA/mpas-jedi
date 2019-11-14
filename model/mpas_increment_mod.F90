@@ -10,7 +10,7 @@ use fckit_configuration_module, only: fckit_configuration
 !oops
 use datetime_mod
 use kinds, only: kind_real
-use variables_mod
+use oops_variables_mod
 
 !ufo
 use ufo_locs_mod
@@ -29,8 +29,6 @@ use mpas_constants_mod
 use mpas_geom_mod
 use mpas_getvaltraj_mod, only: mpas_getvaltraj
 use mpas_field_utils_mod
-use mpas_increment_utils_mod
-use mpas_state_utils_mod, only: mpas_state
 use mpas2ufo_vars_mod
 use mpas4da_mod
 
@@ -51,9 +49,9 @@ contains
 subroutine diff_incr(lhs,x1,x2)
 
    implicit none
-   class(mpas_increment), intent(inout) :: lhs
-   class(mpas_state),     intent(in)    :: x1
-   class(mpas_state),     intent(in)    :: x2
+   class(mpas_field), intent(inout) :: lhs
+   class(mpas_field), intent(in)    :: x1
+   class(mpas_field), intent(in)    :: x2
    character(len=StrKIND) :: kind_op
 
    call lhs%zeros()
@@ -77,7 +75,7 @@ end subroutine diff_incr
 subroutine dirac(self, f_conf)
 
    implicit none
-   class(mpas_increment),     intent(inout) :: self
+   class(mpas_field),         intent(inout) :: self
    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
    character(len=:), allocatable :: str
    integer                :: ndir, idir, ildir, ndirlocal
@@ -259,9 +257,9 @@ end function sphere_distance
 subroutine getvalues_tl(inc, locs, vars, gom, traj)
 
    implicit none
-   class(mpas_increment), intent(inout) :: inc
+   class(mpas_field),     intent(inout) :: inc
    type(ufo_locs),        intent(in)    :: locs
-   type(oops_vars),        intent(in)    :: vars
+   type(oops_variables),  intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(inout) :: traj
 
@@ -278,6 +276,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    character(len=MAXVARLEN) :: ufo_var_name
+   character(len=MAXVARLEN), allocatable :: ufo_vars(:)
 
    ! Check traj is implemented
    ! -------------------------
@@ -297,7 +296,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    
    !Make sure the return values are allocated and set
    !-------------------------------------------------
-   do jvar=1,vars%nv
+   do jvar=1,vars%nvars()
       if( .not. allocated(gom%geovals(jvar)%vals) )then
          ! air_pressure is required for GNSSRO, but mpas-jedi does not have corresponding TL/AD
          ! code in mpas2ufo_vars_mod.  Temporarily perform allocation here for all "vars".
@@ -322,14 +321,18 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
      
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'getvalues_tl: vars%nv       : ',vars%nv
-   write(0,*)'getvalues_tl: vars%fldnames : ',vars%fldnames
-   write(0,*)'getvalues_tl: nlocs         : ',nlocs
+   allocate(ufo_vars(vars%nvars()))
+   do ivar = 1, vars%nvars()
+      ufo_vars(ivar) = trim(vars%variable(ivar))
+   end do
+   write(0,*)'getvalues_tl: vars%nvars   : ',vars%nvars()
+   write(0,*)'getvalues_tl: vars%varlist : ',ufo_vars
+   write(0,*)'getvalues_tl: nlocs        : ',nlocs
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
    !-------                               or  Theta_m, exner_base, Pressure_base, Scalar(&index_qv)
-   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, ufo_vars, vars % nvars(), ngrid) !--pool_ufo is new pool with ufo_vars
 
    maxlevels = inc%geom%nVertLevelsP1
    allocate(mod_field(ngrid,maxlevels))
@@ -339,7 +342,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ufo_var_name = trim(poolItr % memberName)
-         ivar = str_match(ufo_var_name, vars%fldnames)
+         ivar = ufo_vars_getindex( ufo_vars,ufo_var_name)
          if ( ivar == -1 ) cycle
 
 !         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
@@ -407,6 +410,8 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
 
    call mpas_pool_destroy_pool(pool_ufo)
 
+   if (allocated(ufo_vars)) deallocate(ufo_vars)
+
 !   write(*,*) '---- Leaving getvalues_tl ---'
 end subroutine getvalues_tl
 
@@ -415,9 +420,9 @@ end subroutine getvalues_tl
 subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    implicit none
-   class(mpas_increment), intent(inout) :: inc
+   class(mpas_field),     intent(inout) :: inc
    type(ufo_locs),        intent(in)    :: locs
-   type(oops_vars),        intent(in)    :: vars
+   type(oops_variables),  intent(in)    :: vars
    type(ufo_geovals),     intent(inout) :: gom
    type(mpas_getvaltraj), intent(inout) :: traj
 
@@ -434,6 +439,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    character(len=MAXVARLEN) :: ufo_var_name
+   character(len=MAXVARLEN), allocatable :: ufo_vars(:)
 
    ! Check traj is implemented
    ! -------------------------
@@ -454,13 +460,17 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    !Interpolate fields to obs locations using pre-calculated weights
    !----------------------------------------------------------------
-   write(0,*)'getvalues_ad: vars%nv       : ',vars%nv
-   write(0,*)'getvalues_ad: vars%fldnames : ',vars%fldnames
-   write(0,*)'getvalues_ad: nlocs         : ',nlocs
+   allocate(ufo_vars(vars%nvars()))
+   do ivar = 1, vars%nvars()
+      ufo_vars(ivar) = trim(vars%variable(ivar))
+   end do
+   write(0,*)'getvalues_ad: vars%nvars   : ',vars%nvars()
+   write(0,*)'getvalues_ad: vars%varlist : ',ufo_vars
+   write(0,*)'getvalues_ad: nlocs        : ',nlocs
 
    !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
    !    : Actually their values are initialized as "zero" in following "do while" loop.
-   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoTL(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, ufo_vars, vars % nvars(), ngrid) !--pool_ufo is new pool with ufo_vars
 
    maxlevels = inc%geom%nVertLevelsP1
    allocate(mod_field(ngrid,maxlevels))
@@ -470,7 +480,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ufo_var_name = trim(poolItr % memberName)
-         ivar = str_match(ufo_var_name, vars%fldnames)
+         ivar = ufo_vars_getindex( ufo_vars,ufo_var_name)
          if ( ivar == -1 ) cycle
 
 !         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
@@ -518,7 +528,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    deallocate(mod_field)
    deallocate(obs_field)
 
-   call convert_mpas_field2ufoAD(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, vars % fldnames, vars % nv, ngrid) !--pool_ufo is new pool with ufo_vars
+   call convert_mpas_field2ufoAD(inc % geom, traj % pool_traj, inc % subFields, pool_ufo, ufo_vars, vars % nvars(), ngrid) !--pool_ufo is new pool with ufo_vars
 
    traj%bump%geom%nl0 = 1
 !   allocate(mod_field(ngrid,1))
@@ -531,6 +541,8 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
    call mpas_pool_destroy_pool(pool_ufo)
 
+   if (allocated(ufo_vars)) deallocate(ufo_vars)
+
 !   write(*,*) '---- Leaving getvalues_ad ---' 
 end subroutine getvalues_ad
 
@@ -541,7 +553,7 @@ subroutine ug_size(self, ug)
    use unstructured_grid_mod
    
    implicit none
-   class(mpas_increment),   intent(in)    :: self
+   class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    integer :: igrid
    
@@ -596,7 +608,7 @@ subroutine ug_coord(self, ug)
    use unstructured_grid_mod
    
    implicit none
-   class(mpas_increment),   intent(in)    :: self
+   class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    
    integer :: jl, igrid
@@ -638,7 +650,7 @@ subroutine increment_to_ug(self, ug, its)
    use unstructured_grid_mod
    
    implicit none
-   class(mpas_increment),   intent(in)    :: self
+   class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
    integer,                 intent(in)    :: its
    
@@ -646,13 +658,7 @@ subroutine increment_to_ug(self, ug, its)
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
-   type(oops_vars) :: vars ! temporary to access variable "index" easily
-   character(len=MAXVARLEN) :: ufo_var_name
-
-   ! Set list of variables
-   vars % nv = self % nf
-   allocate(vars % fldnames(vars % nv))
-   vars % fldnames(:) = self % fldnames(:)
+   character(len=MAXVARLEN) :: inc_var_name
 
    ! Define size
    call ug_size(self, ug)
@@ -669,8 +675,8 @@ subroutine increment_to_ug(self, ug, its)
       ! so we select only those members of the pool that are fields
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          idx_var = -999
-         ufo_var_name = trim(poolItr % memberName)
-         idx_var = str_match(ufo_var_name, vars%fldnames)
+         inc_var_name = trim(poolItr % memberName)
+         idx_var = ufo_vars_getindex(self%fldnames,inc_var_name)
          write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
@@ -698,9 +704,6 @@ subroutine increment_to_ug(self, ug, its)
       end if
    end do
 
-   ! Cleanup
-   call oops_vars_delete(vars)
-
 end subroutine increment_to_ug
 
 ! -----------------------------------------------------------------------------
@@ -711,7 +714,7 @@ subroutine increment_from_ug(self, ug, its)
    use unstructured_grid_mod
 
    implicit none
-   class(mpas_increment),   intent(inout) :: self
+   class(mpas_field),       intent(inout) :: self
    type(unstructured_grid), intent(in)    :: ug
    integer,                 intent(in)    :: its
 
@@ -719,13 +722,7 @@ subroutine increment_from_ug(self, ug, its)
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
-   type(oops_vars) :: vars ! temporary to access variable "index" easily
-   character(len=MAXVARLEN) :: ufo_var_name
-
-   ! Set list of variables
-   vars % nv = self % nf
-   allocate(vars % fldnames(vars % nv))
-   vars % fldnames(:) = self % fldnames(:)
+   character(len=MAXVARLEN) :: inc_var_name
 
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
@@ -741,8 +738,8 @@ subroutine increment_from_ug(self, ug, its)
             ! Depending on the dimensionality of the field, we need to set pointers of
             ! the correct type
             idx_var = -999
-            ufo_var_name = trim(poolItr % memberName)
-            idx_var = str_match(ufo_var_name, vars%fldnames)
+            inc_var_name = trim(poolItr % memberName)
+            idx_var = ufo_vars_getindex(self%fldnames,inc_var_name)
 
             if(idx_var.gt.0) then
                if (poolItr % nDims == 1) then
@@ -768,9 +765,6 @@ subroutine increment_from_ug(self, ug, its)
          end if
       end if
    end do
-
-   ! Cleanup
-   call oops_vars_delete(vars)
 
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS

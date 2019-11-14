@@ -31,28 +31,49 @@
 namespace mpas {
 
 // -----------------------------------------------------------------------------
+/// Temporary Auxilliary Variable Definitions
+// -----------------------------------------------------------------------------
+//--- TODO: theta, rho, u should come from "State" variables in YAML
+//          + var list for oops::State4D previously came from
+//            cost_function/variables YAML, but needs to come from
+//            cost_function/Jb/Background/state/variables
+//          + vars_ initialized in ModelMPAS, TlmMPAS, and TlmIdMPAS
+//            from YAML will need updating to reflect any changes
+//          + Note: it may be possible to merge State and Increment back
+//            into Fields class once YAML definitions used correctly
+//--- TODO: all other aux variables should come from "VariableChange"
+//          variables in YAML
+const oops::Variables
+    StateMPAS::auxvars_({ "theta", "rho", "u", "index_qv",
+        "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp",
+        "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w",
+        "re_cloud", "re_ice", "re_snow"});
+
+// -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & geom,
-                     const oops::Variables & vars,
+                     const oops::Variables & incvars,
                      const util::DateTime & time)
-  : geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
+  : geom_(new GeometryMPAS(geom)), vars_(incvars), time_(time)
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create." << std::endl;
-  const eckit::Configuration * conf = &vars_.toFortran();
-  mpas_state_create_f90(keyState_, geom_->toFortran(), &conf);
+  oops::Variables statevars(vars_);
+  statevars += auxvars_;
+  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & resol,
-                     const oops::Variables & vars,
+                     const oops::Variables & incvars,
                      const eckit::Configuration & file)
-  : geom_(new GeometryMPAS(resol)), vars_(vars), time_(util::DateTime())
+  : geom_(new GeometryMPAS(resol)), vars_(incvars), time_(util::DateTime())
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
 
-  const eckit::Configuration * cvars = &vars_.toFortran();
-  mpas_state_create_f90(keyState_, geom_->toFortran(), &cvars);
+  oops::Variables statevars(vars_);
+  statevars += auxvars_;
+  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
 
   const eckit::Configuration * conf = &file;
   util::DateTime * dtp = &time_;
@@ -71,10 +92,12 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
                      const StateMPAS & other)
   : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
   oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation."
                      << std::endl;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), &conf);
+
+  oops::Variables statevars(vars_);
+  statevars += auxvars_;
+  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
   mpas_state_change_resol_f90(keyState_, other.keyState_);
   oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation."
                      << std::endl;
@@ -83,9 +106,11 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
 StateMPAS::StateMPAS(const StateMPAS & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  const eckit::Configuration * conf = &vars_.toFortran();
   oops::Log::trace() << "StateMPAS::StateMPAS before copied." << std::endl;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), &conf);
+
+  oops::Variables statevars(vars_);
+  statevars += auxvars_;
+  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
   mpas_state_copy_f90(keyState_, other.keyState_);
   oops::Log::trace() << "StateMPAS::StateMPAS copied." << std::endl;
 }
@@ -109,8 +134,7 @@ void StateMPAS::getValues(const ufo::Locations & locs,
                           const oops::Variables & vars,
                           ufo::GeoVaLs & gom) const {
   oops::Log::trace() << "StateMPAS::getValues starting" << std::endl;
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_state_getvalues_notraj_f90(keyState_, locs.toFortran(), &conf,
+  mpas_state_getvalues_notraj_f90(keyState_, locs.toFortran(), vars,
                                  gom.toFortran());
   oops::Log::trace() << "StateMPAS::getValues done" << std::endl;
 }
@@ -120,8 +144,7 @@ void StateMPAS::getValues(const ufo::Locations & locs,
                           ufo::GeoVaLs & gom,
                           const GetValuesTrajMPAS & traj) const {
   oops::Log::trace() << "StateMPAS::getValues traj starting" << std::endl;
-  const eckit::Configuration * conf = &vars.toFortran();
-  mpas_state_getvalues_f90(keyState_, locs.toFortran(), &conf,
+  mpas_state_getvalues_f90(keyState_, locs.toFortran(), vars,
                            gom.toFortran(), traj.toFortran());
   oops::Log::trace() << "StateMPAS::getValues traj done" << std::endl;
 }

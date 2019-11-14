@@ -10,12 +10,11 @@ module mpas_increment_interface_mod
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds, only: kind_real
-use variables_mod
+use oops_variables_mod
 
 use mpas_geom_mod
 use mpas_increment_mod
-use mpas_state_utils_mod
-use mpas_increment_utils_mod
+use mpas_field_utils_mod
 
 !Increment read/write
 use datetime_mod
@@ -37,30 +36,24 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-!subroutine mpas_increment_create_c(c_key_self, c_key_geom, c_key_vars) &
-!                               bind(c,name='mpas_increment_create_f90')
 subroutine mpas_increment_create_c(c_key_self, c_key_geom, c_vars) &
       bind(c,name='mpas_increment_create_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-integer(c_int), intent(in)    :: c_key_geom !< Geometry
-!integer(c_int), intent(in)    :: c_key_vars !< List of variables
-type(c_ptr),    intent(in)    :: c_vars !< List of variables
+integer(c_int), intent(in) :: c_key_geom !< Geometry
+type(c_ptr), value, intent(in) :: c_vars !< List of variables
 
-type(mpas_increment), pointer :: self
-type(mpas_geom),      pointer :: geom
-type(oops_vars)               :: vars
-type(fckit_configuration)     :: f_vars
+type(mpas_field), pointer :: self
+type(mpas_geom), pointer :: geom
+type(oops_variables) :: vars
 
 call mpas_geom_registry%get(c_key_geom, geom)
-call mpas_increment_registry%init()
-call mpas_increment_registry%add(c_key_self)
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%init()
+call mpas_field_registry%add(c_key_self)
+call mpas_field_registry%get(c_key_self,self)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
-call self%create(geom, vars)
-call oops_vars_delete(vars)
+vars = oops_variables(c_vars)
+call self%create(geom, vars, vars)
 
 end subroutine mpas_increment_create_c
 
@@ -70,13 +63,13 @@ subroutine mpas_increment_delete_c(c_key_self) &
       bind(c,name='mpas_increment_delete_f90')
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 
 call self%delete()
 
-call mpas_increment_registry%remove(c_key_self)
+call mpas_field_registry%remove(c_key_self)
 
 end subroutine mpas_increment_delete_c
 
@@ -86,9 +79,9 @@ subroutine mpas_increment_zero_c(c_key_self) &
       bind(c,name='mpas_increment_zero_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 call self%zeros()
 
 end subroutine mpas_increment_zero_c
@@ -101,10 +94,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 type(c_ptr), intent(in)    :: c_conf !< Configuration
 
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 type(fckit_configuration) :: f_conf
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 f_conf = fckit_configuration(c_conf)
 call dirac(self,f_conf)
 
@@ -116,9 +109,9 @@ subroutine mpas_increment_random_c(c_key_self) &
       bind(c,name='mpas_increment_random_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 call self%random()
 
 end subroutine mpas_increment_random_c
@@ -131,10 +124,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_increment), pointer :: rhs
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
 call self%copy(rhs)
 
@@ -148,12 +141,12 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_increment), pointer :: rhs
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
-call self%add(rhs)
+call self%self_add(rhs)
 
 end subroutine mpas_increment_self_add_c
 
@@ -165,12 +158,12 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_increment), pointer :: rhs
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
-call self%schur(rhs)
+call self%self_schur(rhs)
 
 end subroutine mpas_increment_self_schur_c
 
@@ -182,12 +175,12 @@ implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_increment), pointer :: rhs
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
-call self%sub(rhs)
+call self%self_sub(rhs)
 
 end subroutine mpas_increment_self_sub_c
 
@@ -198,13 +191,13 @@ subroutine mpas_increment_self_mul_c(c_key_self,c_zz) &
 implicit none
 integer(c_int), intent(in) :: c_key_self
 real(c_double), intent(in) :: c_zz
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 real(kind=kind_real) :: zz
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 zz = c_zz
 
-call self%mult(zz)
+call self%self_mult(zz)
 
 end subroutine mpas_increment_self_mul_c
 
@@ -217,12 +210,12 @@ integer(c_int), intent(in) :: c_key_self
 real(c_double), intent(in) :: c_zz
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_increment), pointer :: rhs
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
 real(kind=kind_real) :: zz
 
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 zz = c_zz
 
 call self%axpy(zz,rhs)
@@ -238,12 +231,12 @@ integer(c_int), intent(in) :: c_key_self
 real(c_double), intent(in) :: c_zz
 integer(c_int), intent(in) :: c_key_rhs
 
-type(mpas_increment), pointer :: self
-type(mpas_state), pointer :: rhs
+type(mpas_field), pointer :: self
+type(mpas_field), pointer :: rhs
 real(kind=kind_real) :: zz
 
-call mpas_increment_registry%get(c_key_self,self)
-call mpas_state_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_rhs,rhs)
 zz = c_zz
 
 call self%axpy(zz,rhs)
@@ -258,10 +251,10 @@ implicit none
 integer(c_int), intent(in)    :: c_key_inc1, c_key_inc2
 real(c_double), intent(inout) :: c_prod
 real(kind=kind_real) :: zz
-type(mpas_increment), pointer :: inc1, inc2
+type(mpas_field), pointer :: inc1, inc2
 
-call mpas_increment_registry%get(c_key_inc1,inc1)
-call mpas_increment_registry%get(c_key_inc2,inc2)
+call mpas_field_registry%get(c_key_inc1,inc1)
+call mpas_field_registry%get(c_key_inc2,inc2)
 
 call inc1%dot_prod(inc2,zz)
 
@@ -277,13 +270,13 @@ implicit none
 integer(c_int), intent(in) :: c_key_lhs
 integer(c_int), intent(in) :: c_key_x1
 integer(c_int), intent(in) :: c_key_x2
-type(mpas_increment), pointer :: lhs
-type(mpas_state), pointer :: x1
-type(mpas_state), pointer :: x2
+type(mpas_field), pointer :: lhs
+type(mpas_field), pointer :: x1
+type(mpas_field), pointer :: x2
 
-call mpas_increment_registry%get(c_key_lhs,lhs)
-call mpas_state_registry%get(c_key_x1,x1)
-call mpas_state_registry%get(c_key_x2,x2)
+call mpas_field_registry%get(c_key_lhs,lhs)
+call mpas_field_registry%get(c_key_x1,x1)
+call mpas_field_registry%get(c_key_x2,x2)
 
 call diff_incr(lhs,x1,x2)
 
@@ -296,10 +289,10 @@ subroutine mpas_increment_change_resol_c(c_key_inc,c_key_rhs) &
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_rhs
-type(mpas_increment), pointer :: inc, rhs
+type(mpas_field), pointer :: inc, rhs
 
-call mpas_increment_registry%get(c_key_inc,inc)
-call mpas_increment_registry%get(c_key_rhs,rhs)
+call mpas_field_registry%get(c_key_inc,inc)
+call mpas_field_registry%get(c_key_rhs,rhs)
 
 call inc%change_resol(rhs)
 
@@ -313,10 +306,10 @@ use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
-type(mpas_increment), pointer :: inc
+type(mpas_field), pointer :: inc
 type(unstructured_grid), pointer :: ug
 
-call mpas_increment_registry%get(c_key_inc,inc)
+call mpas_field_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
 
 call ug_coord(inc, ug)
@@ -332,11 +325,11 @@ implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
 integer(c_int), intent(in) :: c_its
-type(mpas_increment), pointer :: inc
+type(mpas_field), pointer :: inc
 type(unstructured_grid), pointer :: ug
 integer :: its
 
-call mpas_increment_registry%get(c_key_inc,inc)
+call mpas_field_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
 its = c_its+1
 
@@ -353,11 +346,11 @@ implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
 integer(c_int), intent(in) :: c_its
-type(mpas_increment), pointer :: inc
+type(mpas_field), pointer :: inc
 type(unstructured_grid), pointer :: ug
 integer :: its
 
-call mpas_increment_registry%get(c_key_inc,inc)
+call mpas_field_registry%get(c_key_inc,inc)
 call unstructured_grid_registry%get(c_key_ug,ug)
 its = c_its+1
 
@@ -374,11 +367,11 @@ integer(c_int), intent(in) :: c_key_inc  !< Fields
 type(c_ptr), intent(in)    :: c_conf !< Configuration
 type(c_ptr), intent(inout) :: c_dt   !< DateTime
 
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
-call mpas_increment_registry%get(c_key_inc,self)
+call mpas_field_registry%get(c_key_inc,self)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
 call self%read_file(f_conf, fdate)
@@ -394,11 +387,11 @@ integer(c_int), intent(in) :: c_key_inc  !< Fields
 type(c_ptr), intent(in) :: c_conf !< Configuration
 type(c_ptr), intent(in) :: c_dt   !< DateTime
 
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
-call mpas_increment_registry%get(c_key_inc,self)
+call mpas_field_registry%get(c_key_inc,self)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
 call self%write_file(f_conf, fdate)
@@ -414,11 +407,11 @@ integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: kf
 real(c_double), intent(inout) :: pstat(3*kf)
 
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 real(kind=kind_real) :: zstat(3, kf)
 integer :: jj, js, jf
 
-call mpas_increment_registry%get(c_key_inc,self)
+call mpas_field_registry%get(c_key_inc,self)
 
 call self%gpnorm(kf, zstat)
 jj=0
@@ -439,10 +432,10 @@ implicit none
 integer(c_int), intent(in) :: c_key_inc
 real(c_double), intent(inout) :: prms
 
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 real(kind=kind_real) :: zz
 
-call mpas_increment_registry%get(c_key_inc,self)
+call mpas_field_registry%get(c_key_inc,self)
 
 call self%rms(zz)
 
@@ -456,9 +449,9 @@ subroutine mpas_increment_print_c(c_key_self) &
       bind(c,name='mpas_increment_print_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 
 !call increment_print(self)
 
@@ -471,26 +464,23 @@ subroutine mpas_increment_getvalues_tl_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
-type(mpas_increment),  pointer :: inc
+type(mpas_field),  pointer :: inc
 type(ufo_locs),        pointer :: locs
-type(oops_vars)                :: vars
+type(oops_variables)           :: vars
 type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
-type(fckit_configuration)      :: f_vars
 
-call mpas_increment_registry%get(c_key_inc, inc)
+call mpas_field_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
+vars = oops_variables(c_vars)
 call getvalues_tl(inc, locs, vars, gom, traj)
-call oops_vars_delete(vars)
 
 end subroutine mpas_increment_getvalues_tl_c
 
@@ -501,26 +491,23 @@ subroutine mpas_increment_getvalues_ad_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
 integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr),    intent(in) :: c_vars  !< List of requested variables
+type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
 integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
 integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
 
-type(mpas_increment),  pointer :: inc
+type(mpas_field),  pointer :: inc
 type(ufo_locs),        pointer :: locs
-type(oops_vars)                :: vars
+type(oops_variables)           :: vars
 type(ufo_geovals),     pointer :: gom
 type(mpas_getvaltraj), pointer :: traj
-type(fckit_configuration)      :: f_vars
 
-call mpas_increment_registry%get(c_key_inc, inc)
+call mpas_field_registry%get(c_key_inc, inc)
 call ufo_locs_registry%get(c_key_loc, locs)
 call ufo_geovals_registry%get(c_key_gom, gom)
 call mpas_getvaltraj_registry%get(c_key_traj, traj)
 
-f_vars = fckit_configuration(c_vars)
-call oops_vars_create(f_vars, vars)
+vars = oops_variables(c_vars)
 call getvalues_ad(inc, locs, vars, gom, traj)
-call oops_vars_delete(vars)
 
 end subroutine mpas_increment_getvalues_ad_c
 
@@ -531,9 +518,9 @@ subroutine mpas_increment_sizes_c(c_key_self,nc,nf) &
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(inout) :: nc,nf
-type(mpas_increment), pointer :: self
+type(mpas_field), pointer :: self
 
-call mpas_increment_registry%get(c_key_self,self)
+call mpas_field_registry%get(c_key_self,self)
 
 nf = self%nf_ci
 nc = self%geom%nCellsGlobal

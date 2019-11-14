@@ -56,8 +56,7 @@ subroutine c_mpas_b_inv_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_increment_utils_mod
-use mpas_field_utils_mod, only: copy_pool
+use mpas_field_utils_mod
 use kinds
 use mpas_framework !BJJ
 
@@ -66,12 +65,12 @@ integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_increment), pointer :: xin
-type(mpas_increment), pointer :: xout
+type(mpas_field), pointer :: xin
+type(mpas_field), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_in,xin)
-call mpas_increment_registry%get(c_key_out,xout)
+call mpas_field_registry%get(c_key_in,xin)
+call mpas_field_registry%get(c_key_out,xout)
 !TODO BJJ
 !Implement this
 !xout = xin
@@ -97,20 +96,27 @@ end subroutine c_mpas_b_inv_mult
 subroutine c_mpas_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_b_mult_f90')
 
 use iso_c_binding
-use mpas_covariance_mod
-use mpas_increment_utils_mod
-use mpas_field_utils_mod, only: copy_pool
+
+!oops
 use kinds
+
+!ufo
+use ufo_vars_mod, only: ufo_vars_getindex
+
+!MPAS-Model
 use mpas_framework !BJJ
-use mpas4da_mod, only: str_match
+
+!mpas-jedi
+use mpas_covariance_mod
+use mpas_field_utils_mod
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_increment), pointer :: xin
-type(mpas_increment), pointer :: xout
+type(mpas_field), pointer :: xin
+type(mpas_field), pointer :: xout
 type (mpas_pool_iterator_type) :: poolItr
 type (field1DReal), pointer   :: field1d_src
 type (field2DReal), pointer   :: field2d_src
@@ -118,8 +124,8 @@ type (field2DReal), pointer   :: field2d_src
 integer :: ivar
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_in,xin)
-call mpas_increment_registry%get(c_key_out,xout)
+call mpas_field_registry%get(c_key_in,xin)
+call mpas_field_registry%get(c_key_out,xout)
 
    write(*,*) '---- inside sub c_mpas_b_mult ----'
 !TODO BJJ
@@ -132,7 +138,7 @@ call mpas_increment_registry%get(c_key_out,xout)
    call mpas_pool_begin_iteration(xout % subFields)
    do while ( mpas_pool_get_next_member(xout % subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD .AND. poolItr % dataType == MPAS_POOL_REAL) then
-         ivar = str_match(trim(poolItr % memberName), self % var_scaling_variables)
+         ivar = ufo_vars_getindex(self % var_scaling_variables,trim(poolItr % memberName))
          if ( ivar < 1 ) cycle
          if (poolItr % nDims == 1) then
             call mpas_pool_get_field(xout % subFields, poolItr % memberName, field1d_src)
@@ -158,17 +164,17 @@ subroutine c_mpas_b_randomize(c_key_self, c_key_out) bind(c,name='mpas_b_randomi
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_increment_utils_mod
+use mpas_field_utils_mod
 use kinds
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_increment), pointer :: xout
+type(mpas_field), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_increment_registry%get(c_key_out,xout)
+call mpas_field_registry%get(c_key_out,xout)
 
 call xout%random()
 
