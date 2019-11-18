@@ -62,6 +62,8 @@ list( APPEND mpas_graphics
   graphics/write_diagnostic_stats.py
   graphics/plot_utils.py
   graphics/plot_stats_timeseries.py
+  graphics/plot_inc.py
+  graphics/basic_plot_functions.py
 )
 
 # This line copies all files to binary dir

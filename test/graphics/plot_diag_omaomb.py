@@ -2,11 +2,27 @@ from netCDF4 import Dataset
 import os
 import numpy as np
 from copy import deepcopy
+import matplotlib
+matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
 import fnmatch
 import math
+import basic_plot_functions
+
+'''
+Directory Structure:
+test/
+ ├── Data/
+ │   ├── obsout_3denvar_bump_sondes_0000.nc4
+ │   ├── obsout_3denvar_bump_sondes_0001.nc4
+ │   ├── ...
+ ├── graphics/
+ │   ├── plot_diag_omaomb.py
+ │   ├── basic_plot_functions.py
+ │   ├── ...
+'''
 
 # columns: var_name            unit_used   abbr.
 vardict = { \
@@ -26,7 +42,7 @@ def readdata():
     print_fmt = 'png' #lower fidelity, faster
     #print_fmt = 'pdf' #higher fidelity, slower
 
-    profile_group  = ['sonde','aircraft','satwind','gnssroref','gnssrobndropp1d']
+    profile_group  = ['sondes','aircraft','satwind','gnssroref','gnssrobndropp1d']
     radiance_group = ['amsua_n19--ch1-3,15','amsua_n19--ch4-7,9-14']
     #dummy_group   = ['dummy_obstype1']
 
@@ -133,6 +149,8 @@ def readdata():
             qcbnc = np.asarray([])
             qcanc = np.asarray([])
             prenc = np.asarray([])
+            latnc = np.asarray([])
+            lonnc = np.asarray([])
 
             # Build up arrays in loop over exob_group, 
             # excluding category in exob_group[0]
@@ -155,6 +173,12 @@ def readdata():
                 omanc = np.append( omanc, np.negative( nc.variables[depan] ) ) # oma = (-) depan
                 qcbnc  = np.append( qcbnc,  nc.variables[qcb]  )
                 qcanc  = np.append( qcanc,  nc.variables[qca]  )
+                latnc = np.append( latnc, nc.variables['latitude@MetaData'] )
+                lonnc = np.append( lonnc, nc.variables['longitude@MetaData'] )
+
+                for i in range(len(lonnc)):
+                    if lonnc[i] > 180:
+                        lonnc[i] = lonnc[i]-360
 
             #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
             #keep data @EffectiveQC=0
@@ -176,7 +200,8 @@ def readdata():
                 obsnums  = []
                 ombnums  = []
                 omanums  = []
-
+                latncs   = []
+                lonncs   = []
                 if ''.join(obstype)[:6] == 'gnssro':
                     bins = list(np.arange(50000.0, -1000, -2000.))
                     binsfory= list(np.arange(49500.0,-500.0,-2000.))
@@ -189,10 +214,14 @@ def readdata():
                     obsncbin = deepcopy(obsnc)
                     ombncbin = deepcopy(ombnc)
                     omancbin = deepcopy(omanc)
+                    latncbin = deepcopy(latnc)
+                    lonncbin = deepcopy(lonnc)
 
                     obsncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     ombncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     omancbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                    latncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                    lonncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
 
                     RMSEomb = np.sqrt(np.nanmean(ombncbin**2))
                     RMSEoma = np.sqrt(np.nanmean(omancbin**2))
@@ -207,6 +236,10 @@ def readdata():
                     omanums = np.append(omanums,omanum)
                     RMSEombs = np.append(RMSEombs,RMSEomb)
                     RMSEomas = np.append(RMSEomas,RMSEoma)
+                    print(obstype)
+                    # plot oma, omb from every bin range
+                    basic_plot_functions.plotDistri(latncbin,lonncbin,ombncbin,obstype,varname,vardict[varname][0],expt_obs,int(ombnums[j]),"omb_vertbin"+str(j))
+                    basic_plot_functions.plotDistri(latncbin,lonncbin,omancbin,obstype,varname,vardict[varname][0],expt_obs,int(omanums[j]),"oma_vertbin"+str(j))
 
                 plotrmsepro(RMSEombs,RMSEomas,binsfory,ombnums,omanums,expt_obs,varname,print_fmt)
             else:

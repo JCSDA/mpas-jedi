@@ -36,6 +36,7 @@ varDict = { \
   , 'refractivity':           [ '%',     'Ref' ] \
   , 'specific_humidity':      [ 'kg/kg', 'qv'  ] \
   , 'virtual_temperature':    [ 'K',     'Tv'  ] \
+  , 'surface_pressure':       [ 'Pa',    'Ps'  ] \
   , 'latitude':               [ 'deg',   'lat' ] \
   , 'longitude':              [ 'deg',   'lon' ] \
     }
@@ -295,21 +296,49 @@ radiance_s = 'radiance'
 
 # columns: ObsSpace name (YAML)    ObsSpaceGrp              process?                  binGrps
 ObsSpaceDict_base = { \
-    'sonde':                 {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+    'sondes':                {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
   , 'aircraft':              {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
   , 'satwind':               {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
   , 'gnssroref':             {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
   , 'gnssrobndropp1d':       {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
-  , 'amsua_n15':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_n18':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_n19':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_metop-b':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_aqua':            {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_n19--ch1-3,15':   {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
-  , 'amsua_n19--ch4-7,9-14': {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps  } \
+  , 'gnssro':                {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'airs_aqua':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [1,6,7] } \
+  , 'amsua_n15':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [5,6,7,8,9] } \
+  , 'amsua_n18':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [5,6,7,8,9] } \
+  , 'amsua_n19':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [5,6,7,9] } \
+  , 'amsua_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [5,6,9] } \
+  , 'amsua_metop-b':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [] } \
+  , 'amsua_aqua':            {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [8,9] } \
+  , 'amsua_n19--ch1-3,15':   {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [1,2,3,15] } \
+  , 'amsua_n19--ch4-7,9-14': {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+                              'channels': [4,5,6,7,9,10,11,12,13,14] } \
+  , 'cris-fsr_npp':          {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': [24,26,28,32,37,39] } \
+  , 'hirs4_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,16) } \
+  , 'iasi_metop-a':          {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': [16,29,32,35,38,41,44] } \
+  , 'mhs_n19':               {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,6) } \
+  , 'seviri_m08':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': [5] } \
+  , 'sndrd1_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,16) } \
+  , 'sndrd2_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,16) } \
+  , 'sndrd3_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,16) } \
+  , 'sndrd4_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+                              'channels': range(1,16) } \
     }
-
 
 #============================
 # figure/plotting definitions

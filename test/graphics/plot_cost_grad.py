@@ -1,4 +1,6 @@
 #!/usr/bin/python
+import matplotlib
+matplotlib.use('AGG')
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -32,13 +34,13 @@ def readdata():
 
     dalogfiles = []
     for files in os.listdir('../testoutput/'):
-        if fnmatch.fnmatch(files, '?d*.test.log.out'):
+        if fnmatch.fnmatch(files, '?d*.run'):
             dalogfiles.append('../testoutput/'+files)
             #print(dalogfiles)
 
     for dalogfile in dalogfiles:
-        print(dalogfile)
-        file_name = 'costgrad_'+dalogfile[14:][:-13]+'.txt'
+        print('check dalogfile=',dalogfile,dalogfile[14:][:-4])
+        file_name = 'costgrad_'+dalogfile[14:][:-4]+'.txt'
 
         exists = os.path.isfile(file_name)
         if exists:
@@ -77,7 +79,7 @@ def plot(forx,value,iters,VAR,expname):
     plt.plot(forx,value,'r.-')
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,4))
     plt.grid(True)
-    plt.savefig('%s_%s.png'%(VAR[:4],expname[:-13]),dpi=200,bbox_inches='tight')
+    plt.savefig('%s_%s.png'%(VAR[:4],expname[:-4]),dpi=200,bbox_inches='tight')
     plt.close()
    
 def main():
