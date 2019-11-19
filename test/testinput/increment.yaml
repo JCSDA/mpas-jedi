@@ -37,10 +37,11 @@ _InterpTest:
       simulate:
         variables: []
       Generate:
-        nobs: 10
-        lat1: -90
-        lat2: 90
-        lon1: 0
-        lon2: 360
+        Random:
+          nobs: 10
+          lat1: -90
+          lat2: 90
+          lon1: 0
+          lon2: 360
+          random_seed: 560921
         obs_errors: []
-        random_seed: 560921
