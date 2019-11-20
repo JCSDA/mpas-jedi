@@ -19,7 +19,7 @@ cost_function:
   window_begin: '2018-04-14T21:00:00Z'
   window_length: PT6H
   window_sub: PT3H
-  variables:
+  variables: &incvars
   - temperature
   - pressure
   - spechum
@@ -30,31 +30,13 @@ cost_function:
   Jb:
     Background:
       state:
-      - variables:
-        - temperature
-        - pressure
-        - spechum
-        - uReconstructZonal
-        - uReconstructMeridional
-        - surface_pressure
+      - variables: *incvars
         filename: "./restart.2018-04-14_21.00.00.nc"
         date: '2018-04-14T21:00:00Z'
-      - variables:
-        - temperature
-        - pressure
-        - spechum
-        - uReconstructZonal
-        - uReconstructMeridional
-        - surface_pressure
+      - variables: *incvars
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
-      - variables:
-        - temperature
-        - pressure
-        - spechum
-        - uReconstructZonal
-        - uReconstructMeridional
-        - surface_pressure
+      - variables: *incvars
         filename: "./restart.2018-04-15_03.00.00.nc"
         date: '2018-04-15T03:00:00Z'
     Covariance:
@@ -65,13 +47,7 @@ cost_function:
         - '2018-04-14T21:00:00Z'
         - '2018-04-15T00:00:00Z'
         - '2018-04-15T03:00:00Z'
-        variables:
-        - temperature
-        - pressure
-        - spechum
-        - uReconstructZonal
-        - uReconstructMeridional
-        - surface_pressure
+        variables: *incvars
         bump:
           prefix: Data/bump/mpas_parametersbump_loc
           default_seed: 1
@@ -136,13 +112,7 @@ cost_function:
           date: '2018-04-15T00:00:00Z'
         - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
           date: '2018-04-15T03:00:00Z'
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-      - surface_pressure
+      variables: *incvars
   Jo:
     ObsTypes:
     - ObsSpace:
@@ -307,13 +277,7 @@ variational:
       tstep: PT3H
       trajectory:
         tstep: PT3H
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-      - surface_pressure
+      variables: *incvars
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -327,13 +291,7 @@ variational:
       tstep: PT3H
       trajectory:
         tstep: PT3H
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-      - surface_pressure
+      variables: *incvars
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'

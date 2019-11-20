@@ -19,7 +19,7 @@ cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
   window_length: PT6H
-  variables:
+  variables: &incvars
   - temperature
   - pressure
   - spechum
@@ -31,14 +31,7 @@ cost_function:
   Jb:
     Background:
       state:
-      - variables:
-        - temperature
-        - pressure
-        - spechum
-        - uReconstructZonal
-        - uReconstructMeridional
-#        - index_qc
-#        - index_qi
+      - variables: *incvars
         filename: "./restart.2018-04-15_00.00.00.nc"
         date: '2018-04-15T00:00:00Z'
     Covariance:
@@ -135,14 +128,7 @@ variational:
       tstep: PT0H
       trajectory:
         tstep: PT0H
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-#      - index_qc
-#      - index_qi
+      variables: *incvars
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
@@ -156,14 +142,7 @@ variational:
       tstep: PT0H
       trajectory:
         tstep: PT0H
-      variables:
-      - temperature
-      - pressure
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-#      - index_qc
-#      - index_qi
+      variables: *incvars
     ninner: '10'
     gradient_norm_reduction: 1e-10
     test: 'on'
