@@ -43,7 +43,7 @@ def readdata():
     #print_fmt = 'pdf' #higher fidelity, slower
 
     profile_group  = ['sondes','aircraft','satwind','gnssroref','gnssrobndropp1d']
-    radiance_group = ['amsua_n19--ch1-3,15','amsua_n19--ch4-7,9-14']
+    radiance_group = ['amsua_n19--hydro','amsua_n19--nohydro']
     #dummy_group   = ['dummy_obstype1']
 
     all_groups = []
@@ -144,6 +144,8 @@ def readdata():
             #print("obs=",obs,"depbg=",depbg,"depan=",depan)
 
             obsnc = np.asarray([])
+            bkgnc = np.asarray([])
+            ananc = np.asarray([])
             ombnc = np.asarray([])
             omanc = np.asarray([])
             qcbnc = np.asarray([])
@@ -175,6 +177,8 @@ def readdata():
                 qcanc  = np.append( qcanc,  nc.variables[qca]  )
                 latnc = np.append( latnc, nc.variables['latitude@MetaData'] )
                 lonnc = np.append( lonnc, nc.variables['longitude@MetaData'] )
+                bkgnc = obsnc - ombnc
+                ananc = obsnc - omanc
 
                 for i in range(len(lonnc)):
                     if lonnc[i] > 180:
@@ -187,6 +191,10 @@ def readdata():
             ombnc[qcbnc != 0] = np.NaN
             omanc[np.less(omanc,-1.0e+15)] = np.NaN
             omanc[qcanc != 0] = np.NaN
+            bkgnc[np.less(bkgnc,-1.0e+15)] = np.NaN
+            bkgnc[qcbnc != 0] = np.NaN
+            ananc[np.less(ananc,-1.0e+15)] = np.NaN
+            ananc[qcanc != 0] = np.NaN
 
             if ''.join(obstype)[:6] == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
@@ -247,6 +255,11 @@ def readdata():
 
                 # Maximum number of variables/channels per figure
                 maxsubplts = 12
+                ombnum = len(ombnc)-np.isnan(ombnc).sum()
+                obsnum = len(obsnc)-np.isnan(obsnc).sum()
+                bkgnum = len(bkgnc)-np.isnan(bkgnc).sum()
+                ananum = len(ananc)-np.isnan(ananc).sum()
+                omanum = len(omanc)-np.isnan(omanc).sum()
                 if ''.join(obstype) in radiance_group:
                     #RADIANCE OBS
                     maxsubplts = 16
@@ -277,6 +290,13 @@ def readdata():
                                      obsnc, ombnc, omanc, \
                                      nx_subplt, ny_subplt, \
                                      nfigtypes, figs, expt_obs,print_fmt)
+                # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
+                shortname = varval[1] + '_ch_' + ch
+                basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obstype,shortname,dictname,expt_obs,int(obsnum),"obs")
+                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc,obstype,shortname,dictname,expt_obs,int(bkgnum),"bkg")
+                basic_plot_functions.plotDistri(latnc,lonnc,ananc,obstype,shortname,dictname,expt_obs,int(ananum),"ana")
+                basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,shortname,dictname,expt_obs,int(ombnum),"omb")
+                basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,shortname,dictname,expt_obs,int(omanum),"oma")
 
                 if ivar == nvars-1:
                     # Close figs in reverse order to avoid seg fault
