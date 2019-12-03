@@ -346,7 +346,7 @@ def plot_stats_timeseries(nproc, myproc):
             for statName in statNames:
                 #This only applies to the unbounded quantities (omb, oma, ana/bak for velocity)
                 if statName == 'Mean' and \
-                   diagName == 'omb' or diagName == 'oma': 
+                   (diagName == 'omb' or diagName == 'oma'): 
                     posdef.append(False)
                 else:
                     posdef.append(True)
