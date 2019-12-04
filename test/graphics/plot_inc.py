@@ -59,21 +59,21 @@ def readdata():
 
      for lvl in range(0,nVertL.size,int(INTERVAL)):
          print('lvl=',lvl)
-         bakmpas = np.array( baknc.variables[VAR_NAME][0,:,lvl-1] )
-         anampas = np.array( ananc.variables[VAR_NAME][0,:,lvl-1] )
+         bakmpas = np.array( baknc.variables[VAR_NAME][0,:,lvl] )
+         anampas = np.array( ananc.variables[VAR_NAME][0,:,lvl] )
          ambmpas = anampas - bakmpas
-         plot(lats,lons,anampas,DATE,lvl,'MPASANA')
-         plot(lats,lons,bakmpas,DATE,lvl,'MPASBAK')
-         plot(lats,lons,ambmpas,DATE,lvl,'MPASAMB')
+         plot(lats,lons,anampas,DATE,lvl+1,'MPASANA')
+         plot(lats,lons,bakmpas,DATE,lvl+1,'MPASBAK')
+         plot(lats,lons,ambmpas,DATE,lvl+1,'MPASAMB')
 
          if (USE_GFSANA):
-             gfs     = np.array( gfsnc.variables[VAR_NAME][0,:,lvl-1] )
+             gfs     = np.array( gfsnc.variables[VAR_NAME][0,:,lvl] )
              anamgfs = anampas - gfs
              bakmgfs = bakmpas - gfs
 
             #compare with gfsana: plot()
-             plot(lats,lons,anamgfs,DATE,lvl,'MPASANA-GFSANA')
-             plot(lats,lons,bakmgfs,DATE,lvl,'MPASBAK-GFSANA')
+             plot(lats,lons,anamgfs,DATE,lvl+1,'MPASANA-GFSANA')
+             plot(lats,lons,bakmgfs,DATE,lvl+1,'MPASBAK-GFSANA')
 
 def plot(lats,lons,data,yyyymmddhh,lvl,source):
     fig,ax=plt.subplots(figsize=(8,8))
