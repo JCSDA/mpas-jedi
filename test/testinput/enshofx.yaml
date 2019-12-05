@@ -163,7 +163,7 @@ Observations:
         covariance: diagonal
       ObsFilters:
       - Filter: PreQC
-        threshold: 3
+        maxvalue: 3
         apply_at_iterations: 0
       - Filter: Difference Check
         reference: station_elevation@MetaData
