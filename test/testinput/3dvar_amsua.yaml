@@ -59,7 +59,6 @@ cost_function:
         simulate:
           variables: [brightness_temperature]
           channels: 4-7,9-14
-      ObsBias: {}
       Covariance:
         covariance: diagonal
       ObsFilters:
@@ -83,7 +82,6 @@ cost_function:
         simulate:
           variables: [brightness_temperature]
           channels: 1-3,15
-      ObsBias: {}
       Covariance:
         covariance: diagonal
       ObsFilters:

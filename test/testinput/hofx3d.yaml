@@ -34,7 +34,6 @@ Observations:
         variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: VertInterp
-    ObsBias: {}
   - ObsSpace:
       name: Aircraft
       ObsDataIn:
@@ -45,7 +44,6 @@ Observations:
         variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
       name: VertInterp
-    ObsBias: {}
   - ObsSpace:
       name: Satwind
       ObsDataIn:
@@ -56,7 +54,6 @@ Observations:
         variables: [eastward_wind, northward_wind]
     ObsOperator:
       name: VertInterp
-    ObsBias: {}
   - ObsSpace:
       name: GnssroRef
       ObsDataIn:
@@ -70,7 +67,6 @@ Observations:
       ObsOptions:
         ro_top_meter: 30000
         use_compress: 0
-    ObsBias: {}
   - ObsSpace:
       name: GnssroBndROPP1D
       ObsDataIn:
@@ -83,7 +79,6 @@ Observations:
       name: GnssroBndROPP1D
       ObsOptions:
         use_compress: 0
-    ObsBias: {}
   - ObsSpace:
       name: AMSUA-NOAA19--nohydro
       ObsDataIn:
@@ -100,7 +95,6 @@ Observations:
         Sensor_ID: amsua_n19
         EndianType: little_endian
         CoefficientPath: Data/
-    ObsBias: {}
   - ObsSpace:
       name: AMSUA-NOAA19--hydro
       ObsDataIn:
@@ -115,7 +109,6 @@ Observations:
       Clouds: [Water, Ice, Rain, Snow, Graupel]
       ObsOptions:
         <<: *crtmobsopts
-    ObsBias: {}
   - ObsSpace:
       name: AIRS-AQUA
       ObsDataIn:
@@ -131,7 +124,6 @@ Observations:
         <<: *crtmobsopts
         Sensor_ID: airs_aqua
         IRVISlandCoeff: USGS
-    ObsBias: {}
   - ObsSpace:
       name: CRIS-NPP
       ObsDataIn:
@@ -153,7 +145,6 @@ Observations:
         <<: *crtmobsopts
         Sensor_ID: cris-fsr_npp
         IRVISlandCoeff: USGS
-    ObsBias: {}
   - ObsSpace:
       name: IASI-METOPA
       ObsDataIn:
@@ -169,7 +160,6 @@ Observations:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
         IRVISlandCoeff: USGS
-    ObsBias: {}
 #  - ObsSpace:
 #      name: ATMS-NPP--ch5-15
 #      ObsDataIn:
@@ -184,7 +174,6 @@ Observations:
 #      ObsOptions:
 #        <<: *crtmobsopts
 #        Sensor_ID: atms_npp
-#    ObsBias: {}
 #  - ObsSpace:
 #      name: ATMS-NPP--ch1-4,16-22
 #      ObsDataIn:
@@ -200,7 +189,6 @@ Observations:
 #      ObsOptions:
 #        <<: *crtmobsopts
 #        Sensor_ID: atms_npp
-#    ObsBias: {}
   - ObsSpace:
       name: SfcPCorrected
       ObsDataIn:
