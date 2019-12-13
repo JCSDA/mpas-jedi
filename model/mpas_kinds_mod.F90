@@ -8,7 +8,8 @@ module mpas_kinds
   implicit none
 
   private
-  public kind_real
+  public kind_real, kind_double
   
   integer, parameter :: kind_real=c_double
+  integer, parameter :: kind_double=c_double
 end module mpas_kinds

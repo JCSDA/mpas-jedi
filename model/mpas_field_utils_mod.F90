@@ -36,7 +36,8 @@ public :: mpas_field, mpas_field_registry, &
           create_field, delete_field, &
           copy_field, copy_pool, &
           update_diagnostic_fields, &
-          mpas_hydrometeor_fields
+          mpas_hydrometeor_fields,  &
+          mpas_re_fields
 
 ! ------------------------------------------------------------------------------
 
@@ -95,6 +96,9 @@ public :: mpas_field, mpas_field_registry, &
       [ character(len=MAXVARLEN) :: &
       "index_qc", "index_qi", "index_qr", &
       "index_qs", "index_qg", "index_qh" ]
+   character(len=MAXVARLEN) :: mpas_re_fields(3) = &
+      [ character(len=MAXVARLEN) :: &
+      "re_cloud", "re_ice  ", "re_snow " ]
 
 #define LISTED_TYPE mpas_field
 

@@ -46,8 +46,7 @@ namespace mpas {
 const oops::Variables
     StateMPAS::auxvars_({ "theta", "rho", "u", "index_qv",
         "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp",
-        "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w",
-        "re_cloud", "re_ice", "re_snow"});
+        "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w"});
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor

@@ -35,6 +35,9 @@ use mpas_field_routines
 use mpas_pool_routines
 use mpas_geom_mod
 
+!MPAS-JEDI
+use mpas_kinds, only : kind_double
+
 private
 
 public :: convert_type_soil, convert_type_veg
@@ -436,6 +439,207 @@ subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields,
 
 end subroutine
 !-------------------------------------------------------------------------------------------
+real (kind=kind_real) function wgamma(y)
+implicit none
+real (kind=kind_real), intent(in):: y
+
+wgamma = exp(gammln(y))
+
+end function wgamma
+!-------------------------------------------------------------------------------------------
+real (kind=kind_real) function gammln(xx)
+implicit none
+real (kind=kind_real), intent(in)     :: xx
+real (kind=kind_double)               :: stp = 2.5066282746310005D0
+real (kind=kind_double), dimension(6) :: &
+cof = (/76.18009172947146D0, -86.50532032941677D0, &
+        24.01409824083091D0, -1.231739572450155D0, &
+       .1208650973866179D-2, -.5395239384953D-5/)
+real (kind=kind_double)               :: ser,tmp,x,y
+integer:: j
+
+x=xx
+y=x
+tmp=x+5.5D0
+tmp=(x+0.5D0)*log(tmp)-tmp
+ser=1.000000000190015D0
+do j=1,6
+   y=y+1.D0
+   ser=ser+cof(j)/y
+end do
+gammln=tmp+log(stp*ser/x)
+end function gammln
+
+!-------------------------------------------------------------------------------------------
+subroutine effectRad_rainwater (qr, rho, nr, re_qr, mp_scheme, ngrid, nVertLevels)
+!-----------------------------------------------------------------------
+!  Compute radiation effective radii of rainwater for WSM6/Thompson microphysics.
+!  These are consistent with microphysics equations.
+!  References: WRF/phys/module_mp_wsm6.F
+!              Lin, Y. L., Farley, R. D., & Orville, H. D. (1983). Bulk parameterization of the snow field in a cloud model. Journal of climate and applied meteorology, 22(6), 1065-1092.
+!              WRF/phys/module_mp_thompson.F
+!              Thompson, G., Rasmussen, R. M., & Manning, K. (2004). Explicit forecasts of winter precipitation using an improved bulk microphysics scheme. Part I: Description and sensitivity analysis. Monthly Weather Review, 132(2), 519-542.
+!              Thompson, G., Field, P. R., Rasmussen, R. M., & Hall, W. D. (2008). Explicit forecasts of winter precipitation using an improved bulk microphysics scheme. Part II: Implementation of a new snow parameterization. Monthly Weather Review, 136(12), 5095-5115.
+!-----------------------------------------------------------------------
+
+implicit none
+
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: qr, rho
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: nr
+integer,                                               intent(in) :: ngrid, nVertLevels
+character(len=StrKIND),                                intent(in) :: mp_scheme
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out):: re_qr
+
+!Local variables
+real(kind=kind_real), parameter      :: denr = 1000., n0r = 8.e6
+real(kind=kind_double) :: lamdar
+integer                :: i, k
+logical                :: has_qr
+real(kind=kind_real)   :: R1 = 1.e-12, R2 = 1.e-6
+real(kind=kind_real), dimension( nVertLevels, ngrid ):: rqr, nr_rho
+!For Thompson scheme
+real(kind=kind_real) :: cre2,cre3,crg2,crg3,org2,ombr,obmr
+!Generalized gamma distributions for rain
+! N(D) = N_0 * D**mu * exp(-lamda*D);  mu=0 is exponential.
+real(kind=kind_real) :: mu_r = 0.0
+real(kind=kind_real) :: am_r = pii*denr/6.0
+real(kind=kind_real) :: bm_r = 3.0
+
+!-----------------------------------------------------------------------
+has_qr = .false.
+am_r = pii*denr/6.0
+cre2 = mu_r + 1.
+cre3 = bm_r + mu_r + 1.
+crg2 = wgamma(cre2)
+crg3 = wgamma(cre3)
+org2 = 1./crg2
+obmr = 1./bm_r
+
+do i = 1, ngrid
+   do k = 1, nVertLevels
+      rqr(k,i) = max(R1, qr(k,i)*rho(k,i))
+      if (rqr(k,i).gt.R1) has_qr = .true.
+   enddo
+enddo
+
+if (has_qr) then
+   do i = 1, ngrid
+      do k = 1, nVertLevels
+         re_qr(k,i) = 99.e-6
+         if (rqr(k,i).le.R1) CYCLE
+         select case (trim(mp_scheme))
+         case ('mp_wsm6')
+            lamdar = sqrt(sqrt(pii*denr*n0r/rqr(k,i)))
+            re_qr(k,i) =  max(99.9e-6,min(1.5/lamdar,1999.e-6))
+         case ('mp_thompson')
+            nr_rho(k,i) = max(R2, nr(k,i)*rho(k,i))
+            lamdar = (am_r*crg3*org2*nr_rho(k,i)/rqr(k,i))**obmr
+            re_qr(k,i) = max(99.9e-6, min(0.5D0 * dble(3.+mu_r)/lamdar, 1999.e-6))
+         case default
+            re_qr(k,i) = 999.e-6
+         end select
+      enddo
+   enddo
+endif
+
+end subroutine effectRad_rainwater
+
+!-------------------------------------------------------------------------------------------
+subroutine effectRad_graupel (qg, rho, re_qg, mp_scheme, ngrid, nVertLevels)
+
+!-----------------------------------------------------------------------
+!  Compute radiation effective radii of graupel for WSM6/Thompson microphysics.
+!  These are consistent with microphysics equations.
+!  References: WRF/phys/module_mp_wsm6.F
+!              Lin, Y. L., Farley, R. D., & Orville, H. D. (1983). Bulk parameterization of the snow field in a cloud model. Journal of climate and applied meteorology, 22(6), 1065-1092.
+!              WRF/phys/module_mp_thompson.F
+!              Thompson, G., Rasmussen, R. M., & Manning, K. (2004). Explicit forecasts of winter precipitation using an improved bulk microphysics scheme. Part I: Description and sensitivity analysis. Monthly Weather Review, 132(2), 519-542.
+!              Thompson, G., Field, P. R., Rasmussen, R. M., & Hall, W. D. (2008). Explicit forecasts of winter precipitation using an improved bulk microphysics scheme. Part II: Implementation of a new snow parameterization. Monthly Weather Review, 136(12), 5095-5115.
+!-----------------------------------------------------------------------
+
+implicit none
+
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: qg, rho
+integer,                                               intent(in) :: ngrid, nVertLevels
+character (len=StrKIND),                               intent(in) :: mp_scheme
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out):: re_qg
+
+!Local variables
+integer                :: i, k, k_0
+real(kind=kind_double) :: lamdag, lam_exp, N0_exp
+real(kind=kind_real)   :: n0g, deng
+logical                :: has_qg
+real(kind=kind_real)   :: R1 = 1.e-12, R2 = 1.e-6
+real(kind=kind_real), dimension( nVertLevels, ngrid ):: rqg
+!MPAS model set it as 0, WRF model set it through namelist
+integer:: hail_opt = 0
+! for Thompson scheme
+real(kind=kind_real) :: mu_g = 0.0
+real(kind=kind_real) :: obmg, cge1,cgg1,oge1,cge3,cgg3,ogg1,cge2,cgg2,ogg2
+real(kind=kind_real) :: xslw1, ygra1, zans1
+real(kind=kind_real) :: am_g = pii*500./6.0
+real(kind=kind_real) :: bm_g = 3.0
+
+!-----------------------------------------------------------------------
+has_qg = .false.
+obmg = 1./bm_g
+cge1 = bm_g + 1.
+cgg1 = wgamma(cge1)
+oge1 = 1./cge1
+cge3 = bm_g + mu_g + 1.
+cgg3 = wgamma(cge3)
+ogg1 = 1./cgg1
+cge2 = mu_g + 1.
+cgg2 = wgamma(cge2)
+ogg2 = 1./cgg2
+
+if (hail_opt .eq. 1) then
+   n0g  = 4.e4
+   deng = 700.
+else
+   n0g  = 4.e6
+   deng = 500
+endif
+
+do i = 1, ngrid
+   do k = 1, nVertLevels
+      rqg(k,i) = max(R1, qg(k,i)*rho(k,i))
+      if (rqg(k,i).gt.R1) has_qg = .true.
+   enddo
+enddo
+
+if (has_qg) then
+   select case (trim(mp_scheme))
+   case ('mp_wsm6')
+      do i = 1, ngrid
+         do k = 1, nVertLevels
+            re_qg(k,i) = 49.7e-6
+            if (rqg(k,i).le.R1) CYCLE
+            lamdag = sqrt(sqrt(pii*deng*n0g/rqg(k,i)))
+            re_qg(k,i) = max(50.e-6,min(1.5/lamdag,9999.e-6))
+         end do
+      end do
+   case ('mp_thompson')
+      do i = 1, ngrid
+         do k = nVertLevels, 1, -1
+            re_qg(k,i) = 99.5e-6
+            if (rqg(k,i).le.R1) CYCLE
+            ygra1 = alog10(sngl(max(1.e-9, rqg(k,i))))
+            zans1 = (2.5 + 2.5/7. * (ygra1+7.))
+            zans1 = max(2., min(zans1, 7.)) ! new in WRF V4.2
+            N0_exp = 10.**(zans1)
+            lam_exp = (N0_exp*am_g*cgg1/rqg(k,i))**oge1
+            lamdag = lam_exp * (cgg3*ogg2*ogg1)**obmg ! we can simplify this without considering rainwater
+            re_qg(k,i) = max(99.9e-6, min(0.5D0 * dble(3.+mu_g)/lamdag, 9999.e-6))
+         enddo
+      enddo
+   case default
+      re_qg = 600.e-6
+   end select
+endif
+
+end subroutine effectRad_graupel
+!-------------------------------------------------------------------------------------------
 
 !--- variables can be found in subFields
 subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield, ngrid)
@@ -466,6 +670,9 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
    real (kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
    real (kind=kind_real) :: lat
+   type (field2DReal), pointer :: field2d_nr, field2d_qr, field2d_qg, field2d_rho
+   character(len=StrKIND),  pointer :: config_microp_scheme
+   logical,  pointer :: config_microp_re
 
    !--- create new pool for geovals
    call mpas_pool_create_pool(convFields)
@@ -612,50 +819,99 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
          call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
          call index_q_fields_forward_and_TL('index_qh', var_clh, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
-     case ( var_clwefr ) !-effective_radius_of_cloud_liquid_water_particle :TODO: currently filled w/ default value
-        call mpas_pool_get_field(subFields, 're_cloud', field2d_src) !- [m]
-        call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 10.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+     case ( var_clwefr ) !-effective_radius_of_cloud water particle
+        call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
+        if (config_microp_re) then
+           call mpas_pool_get_field(subFields, 're_cloud', field2d_src) !- [m]
+           call mpas_duplicate_field(field2d_src, field2d)
+           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+        else
+           call mpas_pool_get_field(subFields, 'index_qc', field2d_src) ! We do not really need 're_cloud' unless it is calculated in MPAS model microp
+           call mpas_duplicate_field(field2d_src, field2d)
+           field2d % array(:,1:ngrid) = 10.0_kind_real ![micron]  ! Or, we can refer to rre_cloud which is default for MPAS radiance scheme
+        end if
         field2d % fieldName = var_clwefr
         call mpas_pool_add_field(convFields, var_clwefr, field2d)
 !        write(*,*) "end-of ",var_clwefr
 
-     case ( var_cliefr ) !-effective_radius_of_cloud_ice_particle :TODO: currently filled w/ default value
-        call mpas_pool_get_field(subFields, 're_ice', field2d_src) !- [m]
-        call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+     case ( var_cliefr ) !-effective_radius_of_cloud ice particle
+        call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
+        if (config_microp_re) then
+           call mpas_pool_get_field(subFields, 're_ice', field2d_src) !- [m]
+           call mpas_duplicate_field(field2d_src, field2d)
+           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+        else
+           call mpas_pool_get_field(subFields, 'index_qi', field2d_src) ! We do not really need 're_ice' unless it is calculated in MPAS model microp
+           call mpas_duplicate_field(field2d_src, field2d)
+           field2d % array(:,1:ngrid) = 30.0_kind_real ! [micron]
+        end if
         field2d % fieldName = var_cliefr
         call mpas_pool_add_field(convFields, var_cliefr, field2d)
 !        write(*,*) "end-of ",var_cliefr
 
-      case ( var_clrefr ) !-effective_radius_of_rain_particle :TODO: currently filled w/ default value
-         call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m] :TODO: only snow available in file
-         call mpas_duplicate_field(field2d_src, field2d)
-         field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+      case ( var_clrefr )  !-effective_radius_of_rain water_particle
+         call mpas_pool_get_field(subFields, 'index_qr', field2d_qr) ! effective_radius of rain_water is not calculated in MPAS model physics
+         call mpas_duplicate_field(field2d_qr, field2d)
+         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
+         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
+         if (config_microp_re) then
+            call mpas_duplicate_field(field2d_qr, field2d_a)
+            if (trim(config_microp_scheme) == 'mp_thompson') then
+               call mpas_pool_get_field(subFields, 'index_nr', field2d_nr) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
+            else
+               call mpas_duplicate_field(field2d_qr, field2d_nr)
+               field2d_nr % array(:,1:ngrid) = 1.0_kind_real
+            end if
+            call mpas_pool_get_field(subFields, 'rho', field2d_rho) !- [kg m^{-3}]: Dry air density
+            call effectRad_rainwater(field2d_qr%array(:,1:ngrid), field2d_rho%array(:,1:ngrid),&
+                                     field2d_nr%array(:,1:ngrid), field2d_a%array(:,1:ngrid), config_microp_scheme, &
+                                     ngrid, geom%nVertLevels)
+            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+         else
+            field2d % array(:,1:ngrid) = 999.0_kind_real ! [micron]
+         end if
          field2d % fieldName = var_clrefr
          call mpas_pool_add_field(convFields, var_clrefr, field2d)
  !        write(*,*) "end-of ",var_clrefr
 
-      case ( var_clsefr ) !-effective_radius_of_snow_particle :TODO: currently filled w/ default value
-         call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m]
-         call mpas_duplicate_field(field2d_src, field2d)
-         field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+      case ( var_clsefr ) !-effective_radius_of_snow particle
+         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
+         if (config_microp_re) then
+            call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m]
+            call mpas_duplicate_field(field2d_src, field2d)
+            field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+         else
+            call mpas_pool_get_field(subFields, 'index_qs', field2d_src) ! We do not really need 're_snow' unless it is calculated in MPAS model microp
+            call mpas_duplicate_field(field2d_src, field2d)
+            field2d % array(:,1:ngrid) = 600.0_kind_real ! [micron]
+         end if
          field2d % fieldName = var_clsefr
          call mpas_pool_add_field(convFields, var_clsefr, field2d)
  !        write(*,*) "end-of ",var_clsefr
 
-      case ( var_clgefr ) !-effective_radius_of_graupel_particle :TODO: currently filled w/ default value
-         call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m] :TODO: only snow available in file
-         call mpas_duplicate_field(field2d_src, field2d)
-         field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+      case ( var_clgefr ) !-effective_radius_of_graupel_particle
+         call mpas_pool_get_field(subFields, 'index_qg', field2d_qg) !effective_radius_of_graupel is not calculated in MPAS model physics
+         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
+         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
+         call mpas_duplicate_field(field2d_qg, field2d)
+         if (config_microp_re) then
+            call mpas_duplicate_field(field2d_qg, field2d_a)
+            call mpas_pool_get_field(subFields, 'rho', field2d_rho) !- [kg m^{-3}]: Dry air density
+            call effectRad_graupel(field2d_qg%array(:,1:ngrid), field2d_rho%array(:,1:ngrid), &
+                                   field2d_a% array(:,1:ngrid), config_microp_scheme,         &
+                                   ngrid, geom%nVertLevels)
+            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+         else
+            field2d % array(:,1:ngrid) = 600.0_kind_real ! [micron]
+         end if
          field2d % fieldName = var_clgefr
          call mpas_pool_add_field(convFields, var_clgefr, field2d)
  !        write(*,*) "end-of ",var_clgefr
 
       case ( var_clhefr ) !-effective_radius_of_hail_particle :TODO: currently filled w/ default value
-         call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m] :TODO: only snow available in file
+         call mpas_pool_get_field(subFields, 'index_qg', field2d_src) !The current MP schemes do not include hail (wsm7 has)
          call mpas_duplicate_field(field2d_src, field2d)
-         field2d % array(:,1:ngrid) = 30.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e-6 ! [m] -> [micron]
+         field2d % array(:,1:ngrid) = 600.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
          field2d % fieldName = var_clhefr
          call mpas_pool_add_field(convFields, var_clhefr, field2d)
  !        write(*,*) "end-of ",var_clhefr

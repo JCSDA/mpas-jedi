@@ -66,7 +66,8 @@ use mpas_constants_mod
                       indexName.eq.'index_qr' .or. & ! rain
                       indexName.eq.'index_qs' .or. & ! snow
                       indexName.eq.'index_qg' .or. & ! graupel
-                      indexName.eq.'index_qh'      & ! hail
+                      indexName.eq.'index_qh' .or. & ! hail
+                      indexName.eq.'index_nr'      & ! number concentration of rain
                      )
 
    end function
