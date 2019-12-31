@@ -178,33 +178,77 @@ list (APPEND ioda_obs_test_data
   atmosphere/aircraft_obs_2018041500_s.nc4
   atmosphere/airs_aqua_obs_2018041500_m.nc4
   atmosphere/amsua_n19_obs_2018041500_m.nc4
-#  atmosphere/amsua_n19_obs_2018041500_s.nc4
-#  atmosphere/atms_npp_obs_2018041500_m.nc4
-#  atmosphere/aod_obs_2018041500_m.nc4
-#  atmosphere/aod_obs_2018041500_s.nc4
   atmosphere/cris-fsr_npp_obs_2018041500_m.nc4
-#  atmosphere/gmi_gpm_obs_2018041500_m.nc4
   atmosphere/gnssro_obs_2018041500_s.nc4
   atmosphere/gnssro_obs_2018041500_m.nc4
-#  atmosphere/hirs4_metop-a_obs_2018041500_m.nc4
   atmosphere/iasi_metop-a_obs_2018041500_m.nc4
-#  atmosphere/mhs_n19_obs_2018041500_m.nc4
   atmosphere/satwind_obs_2018041500_m.nc4
   atmosphere/satwind_obs_2018041500_s.nc4
-#  atmosphere/seviri_m08_obs_2018041500_m.nc4
   atmosphere/sfc_obs_2018041500_m.nc4
   atmosphere/sfc_obs_2018041500_s.nc4
-#  atmosphere/sndrd1_g15_obs_2018041500_m.nc4
-#  atmosphere/sndrd2_g15_obs_2018041500_m.nc4
-#  atmosphere/sndrd3_g15_obs_2018041500_m.nc4
-#  atmosphere/sndrd4_g15_obs_2018041500_m.nc4
   atmosphere/sondes_obs_2018041500_m.nc4
   atmosphere/sondes_obs_2018041500_s.nc4
   )
 
-CREATE_SYMLINK_FILENAME( ${ioda_SOURCE_DIR}/test/testinput
-                         ${CMAKE_CURRENT_BINARY_DIR}/Data
-                         ${ioda_obs_test_data} )
+# IODA observation files
+list( APPEND mpas_ioda_test_data
+     testinput_tier_1.tar.gz
+     )
+# Set URL for IODA test files
+set(ECBUILD_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com/ioda)
+
+# Use `LOCAL_PATH_TESTFILES` to pass path to local test files
+if (DEFINED ENV{LOCAL_PATH_TESTFILES})
+    set(LOCAL_PATH_TESTFILES "$ENV{LOCAL_PATH_TESTFILES}")
+endif()
+
+# If it is not defined then download to build bundle 
+# in `test_data` directory
+# If local path to testfiles is defined don't download
+if( NOT DEFINED LOCAL_PATH_TESTFILES )
+  set(TESTFILE_DIR ${CMAKE_BINARY_DIR}/test_data/ioda CACHE PATH "data dir for test data")
+  file(MAKE_DIRECTORY ${TESTFILE_DIR})
+else()
+  set(TESTFILE_DIR ${LOCAL_PATH_TESTFILES})
+endif()
+
+# Get the current git branch and use it to download
+# specific data for this branch on S3. If specific data 
+# does not exist, it will use default (develop) data
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Check whether the URL exists or not 
+ecbuild_check_multiurl(NAMES   ${fv3_ioda_test_data}
+                       DIRHOST ${GIT_BRANCH}
+                       RESULT  SPECIFIC_TEST_FILES)
+
+# Set distant directory
+if(${SPECIFIC_TEST_FILES} MATCHES 0)
+    # Download and extract new test files (distant directory = git branch)
+    set(DIRHOST ${GIT_BRANCH})
+else()
+    # Download and extract develop test files (distant directory = develop)
+    set(DIRHOST "develop")
+endif()
+message(STATUS "Test data downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRHOST})
+
+# Now run test to download data
+ecbuild_get_test_multidata ( TARGET get_ioda_test_data_mpas
+                               NAMES ${mpas_ioda_test_data}
+                               DIRHOST ${DIRHOST}
+                               DIRLOCAL ${TESTFILE_DIR}
+                               EXTRACT
+                           )
+# Link test files 
+execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+                 ${TESTFILE_DIR}
+                 ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda
+                 )
 
 #####################################################################
 # Files for CRTM tests

@@ -89,7 +89,7 @@ cost_function:
     - ObsSpace:
         name: Radiosonde
         ObsDataIn:
-          obsfile: Data/sondes_obs_2018041500_m.nc4
+          obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_sondes.nc4
         simulate:
@@ -107,7 +107,7 @@ cost_function:
     - ObsSpace:
         name: Aircraft
         ObsDataIn:
-          obsfile: Data/aircraft_obs_2018041500_m.nc4
+          obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_aircraft.nc4
         simulate:
@@ -125,7 +125,7 @@ cost_function:
     - ObsSpace:
         name: Satwind
         ObsDataIn:
-          obsfile: Data/satwind_obs_2018041500_m.nc4
+          obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_satwind.nc4
         simulate:
@@ -143,7 +143,7 @@ cost_function:
     - ObsSpace:
         name: GnssroRef
         ObsDataIn:
-          obsfile: Data/gnssro_obs_2018041500_s.nc4
+          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_gnssroref.nc4
         simulate:
@@ -177,7 +177,7 @@ cost_function:
     - ObsSpace:
         name: GnssroBndROPP1D
         ObsDataIn:
-          obsfile: Data/gnssro_obs_2018041500_s.nc4
+          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_gnssrobndropp1d.nc4
         simulate:
@@ -211,7 +211,7 @@ cost_function:
     - ObsSpace:
         name: SfcPCorrected
         ObsDataIn:
-          obsfile: Data/sfc_obs_2018041500_m.nc4
+          obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/obsout_3denvar_bump_specified_sfc.nc4
         obsvalue: ObsValue

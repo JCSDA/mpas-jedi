@@ -44,7 +44,7 @@ Observations:
   - ObsSpace:
       name: Radiosonde
       ObsDataIn:
-        obsfile: Data/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_sondes.nc4
       simulate:
@@ -54,7 +54,7 @@ Observations:
   - ObsSpace:
       name: Aircraft
       ObsDataIn:
-        obsfile: Data/aircraft_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_aircraft.nc4
       simulate:
@@ -64,7 +64,7 @@ Observations:
   - ObsSpace:
       name: Satwind
       ObsDataIn:
-        obsfile: Data/satwind_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_satwind.nc4
       simulate:
@@ -74,7 +74,7 @@ Observations:
   - ObsSpace:
       name: GnssroRef
       ObsDataIn:
-        obsfile: Data/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssroref.nc4
       simulate:
@@ -87,7 +87,7 @@ Observations:
   - ObsSpace:
       name: GnssroBndROPP1D
       ObsDataIn:
-        obsfile: Data/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/hofx_gnssrobndropp1d.nc4
       simulate:
@@ -99,7 +99,7 @@ Observations:
   - ObsSpace:
       name: AMSUA-NOAA19--nohydro
       ObsDataIn:
-        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_amsua_n19--nohydro.nc4
       simulate:
@@ -115,7 +115,7 @@ Observations:
   - ObsSpace:
       name: AMSUA-NOAA19--hydro
       ObsDataIn:
-        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_amsua_n19--hydro.nc4
       simulate:
@@ -129,7 +129,7 @@ Observations:
   - ObsSpace:
       name: AIRS-AQUA
       ObsDataIn:
-        obsfile: Data/airs_aqua_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_airs_aqua.nc4
       simulate:
@@ -144,7 +144,7 @@ Observations:
   - ObsSpace:
       name: CRIS-NPP
       ObsDataIn:
-        obsfile: Data/cris-fsr_npp_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_cris-fsr_npp.nc4
       simulate:
@@ -165,7 +165,7 @@ Observations:
   - ObsSpace:
       name: IASI-METOPA
       ObsDataIn:
-        obsfile: Data/iasi_metop-a_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_iasi_metop-a.nc4
       simulate:
@@ -209,7 +209,7 @@ Observations:
   - ObsSpace:
       name: SfcPCorrected
       ObsDataIn:
-        obsfile: Data/sfc_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/hofx_sfc.nc4
       simulate:
