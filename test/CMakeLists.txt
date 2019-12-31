@@ -172,24 +172,6 @@ foreach(FILENAME ${mpas_test_ensemble_480})
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
 endforeach(FILENAME)
 
-# Add ioda obs test data
-list (APPEND ioda_obs_test_data
-  atmosphere/aircraft_obs_2018041500_m.nc4
-  atmosphere/aircraft_obs_2018041500_s.nc4
-  atmosphere/airs_aqua_obs_2018041500_m.nc4
-  atmosphere/amsua_n19_obs_2018041500_m.nc4
-  atmosphere/cris-fsr_npp_obs_2018041500_m.nc4
-  atmosphere/gnssro_obs_2018041500_s.nc4
-  atmosphere/gnssro_obs_2018041500_m.nc4
-  atmosphere/iasi_metop-a_obs_2018041500_m.nc4
-  atmosphere/satwind_obs_2018041500_m.nc4
-  atmosphere/satwind_obs_2018041500_s.nc4
-  atmosphere/sfc_obs_2018041500_m.nc4
-  atmosphere/sfc_obs_2018041500_s.nc4
-  atmosphere/sondes_obs_2018041500_m.nc4
-  atmosphere/sondes_obs_2018041500_s.nc4
-  )
-
 # IODA observation files
 list( APPEND mpas_ioda_test_data
      testinput_tier_1.tar.gz
