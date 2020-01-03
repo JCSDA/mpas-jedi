@@ -403,12 +403,25 @@ def TDeltas2Seconds(x_):
         return x
     return x_
 
+def timeTicks(x, pos):
+    d = dt.timedelta(seconds=x)
+    if d.seconds > 0:
+       return str(d)
+    else:
+       return '{:d}'.format(d.days)+'d'
+
+#DTimeLocator = AutoDateLocator(interval_multiples=True)
+DTimeLocator = AutoDateLocator()
+DTimeFormatter = ConciseDateFormatter(DTimeLocator) #DateFormatter('%m-%d_%HZ')
+TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
+
 def format_x_for_dates(ax,x):
     if isinstance(x[0],dt.datetime):
         ax.xaxis.set_major_locator(DTimeLocator)
         ax.xaxis.set_major_formatter(DTimeFormatter)
-        ax.xaxis.set_tick_params(rotation=30)
-        ax.set_xlabel('Date',fontsize=4)
+#        ax.xaxis.set_tick_params(rotation=30)
+#        ax.set_xlabel('Date',fontsize=4)
+        ax.xaxis.get_offset_text().set_fontsize(3)
     if isinstance(x[0],dt.timedelta):
         x = TDeltas2Seconds(x)
         ax.set_xlim(min(x),max(x))
@@ -422,17 +435,6 @@ def format_x_for_dates(ax,x):
         ax.xaxis.set_major_formatter(TDeltaFormatter)
         ax.xaxis.set_tick_params(rotation=30)
         ax.set_xlabel('Lead Time',fontsize=4)
-
-def timeTicks(x, pos):
-    d = dt.timedelta(seconds=x)
-    if d.seconds > 0:
-       return str(d)
-    else:
-       return '{:d}'.format(d.days)+'d'
-
-DTimeLocator = AutoDateLocator(interval_multiples=True)
-DTimeFormatter = DateFormatter('%m-%d_%HZ')
-TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
 
 
 def get_clean_ax_limits(xmin_=np.NaN,xmax_=np.NaN,plotVals=[np.NaN], \

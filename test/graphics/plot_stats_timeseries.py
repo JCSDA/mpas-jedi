@@ -743,9 +743,14 @@ def plot_stats_timeseries(nproc, myproc):
                                 ymax = diagDF.loc[varLoc,statName].dropna().max()
 
                                 # collect statName for all lines on this subplot, letting cyDTime vary
+                                xsVals = []
                                 linesVals = []
                                 fcTDeltas_labels = []
                                 for ifc, fcTDelta in enumerate(fcTDeltas):
+                                    xVals = []
+                                    for cyDTime in cyDTimes:
+                                        xVals.append(cyDTime+fcTDelta)
+                                    xsVals.append(xVals)
 
                                     #Setting to avoid over-crowding
                                     if ifc > (MAX_FC_LINES-1): continue
@@ -773,7 +778,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                                 # perform subplot agnostic plotting (all expNames)
                                 plotTimeSeries( fig, \
-                                                cyDTimes, linesVals, fcTDeltas_labels, \
+                                                xsVals, linesVals, fcTDeltas_labels, \
                                                 title, data_labels[istat], \
                                                 sciticks[istat], signdef[istat], \
                                                 ny, nx, nsubplots, ivar, \
@@ -1558,7 +1563,7 @@ def plotProfile(fig, \
 lenWarnTS=0
 nanWarnTS=0
 def plotTimeSeries(fig, \
-                   xDates, linesVals, \
+                   xsDates, linesVals, \
                    linesLabel, \
                    title="", ylabel="", \
                    sciticks=False, signdef=False, \
@@ -1570,7 +1575,8 @@ def plotTimeSeries(fig, \
 
 # ARGUMENTS
 # fig              - matplotlib figure object
-# xDates           - date x-values (array of float seconds, dt.timedelta, dt.datetime)
+# xsDates          - date x-values (list/array or list of lists/arrays
+#                                   of float seconds, dt.timedelta, dt.datetime)
 # linesVals        - dependent variable (list of arrays)
 # linesLabel       - legend label for linesVals (list)
 
@@ -1596,9 +1602,6 @@ def plotTimeSeries(fig, \
     #title
     ax.set_title(title,fontsize=5)
 
-    #float xVals
-    xVals = pu.TDeltas2Seconds(xDates)
-
     #add lines
     plotVals = []
     nLines = 0
@@ -1610,6 +1613,13 @@ def plotTimeSeries(fig, \
                 print(title,ylabel,linesLabel[iline])
             nanWarnTS=nanWarnTS+1
             continue
+
+        #float xVals
+        if isinstance(xsDates[0],(list,np.ndarray)):
+            xVals = pu.TDeltas2Seconds(xsDates[min([iline,len(xsDates)-1])])
+        else:
+            xVals = pu.TDeltas2Seconds(xsDates)
+
         if len(lineVals)!=len(xVals):
             global lenWarnTS
             if lenWarnTS==0:
@@ -1617,6 +1627,13 @@ def plotTimeSeries(fig, \
                 print(title,ylabel,linesLabel[iline])
             lenWarnTS=lenWarnTS+1
             continue
+
+        if iline == 0:
+            minX = xVals[0]
+            maxX = xVals[-1]
+        else:
+            minX = min([xVals[0], minX])
+            maxX = max([xVals[-1], maxX])
 
         # Plot line for each lineVals that has non-missing data
         pColor = pu.plotColors[iline+lineAttribOffset]
@@ -1673,7 +1690,10 @@ def plotTimeSeries(fig, \
         return
 
     #axes settings
-    pu.format_x_for_dates(ax, xDates)
+    if isinstance(xsDates[0],(list,np.ndarray)):
+        pu.format_x_for_dates(ax, xsDates[0])
+    else:
+        pu.format_x_for_dates(ax, xsDates)
     ax.xaxis.set_tick_params(labelsize=3)
     ax.yaxis.set_tick_params(labelsize=3)
 
@@ -1683,7 +1703,7 @@ def plotTimeSeries(fig, \
 
     # add horizontal zero line for unbounded quantities
     if not signdef:
-        ax.plot([xVals[0], xVals[-1]], [0., 0.], ls="--", c=".3", \
+        ax.plot([minX, maxX], [0., 0.], ls="--", c=".3", \
             linewidth=0.7,markersize=0)
 
     # standardize y-limits
@@ -1803,6 +1823,8 @@ def plotTimeSeries2D(fig, \
         #scientific formatting
         if sciticks:
             cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+            cb.ax.yaxis.get_offset_text().set_fontsize(3)
+
         cb.ax.tick_params(labelsize=3)
         cb.set_label(clabel,fontsize=5)
 
