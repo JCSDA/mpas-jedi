@@ -205,7 +205,7 @@ execute_process(
 )
 
 # Check whether the URL exists or not 
-ecbuild_check_multiurl(NAMES   ${fv3_ioda_test_data}
+ecbuild_check_multiurl(NAMES   ${mpas_ioda_test_data}
                        DIRHOST ${GIT_BRANCH}
                        RESULT  SPECIFIC_TEST_FILES)
 
@@ -221,10 +221,10 @@ message(STATUS "Test data downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRH
 
 # Now run test to download data
 ecbuild_get_test_multidata ( TARGET get_ioda_test_data_mpas
-                               NAMES ${mpas_ioda_test_data}
-                               DIRHOST ${DIRHOST}
-                               DIRLOCAL ${TESTFILE_DIR}
-                               EXTRACT
+                             NAMES ${mpas_ioda_test_data}
+                             DIRHOST ${DIRHOST}
+                             DIRLOCAL ${TESTFILE_DIR}
+                             EXTRACT
                            )
 # Link test files 
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
