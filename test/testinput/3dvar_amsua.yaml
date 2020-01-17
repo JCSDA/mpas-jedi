@@ -90,9 +90,11 @@ cost_function:
       ObsOperator:
         <<: *crtmobsoper
         Clouds: [Water, Ice, Rain, Snow, Graupel]
+        Cloud_Fraction: 1.0
         LinearObsOperator:
           Absorbers: [H2O]
           Clouds: [Water, Ice, Rain, Snow, Graupel]
+          Cloud_Fraction: 1.0
         ObsOptions:
           <<: *crtmobsopts
 minimizer:
