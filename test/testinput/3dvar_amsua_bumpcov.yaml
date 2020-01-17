@@ -109,7 +109,6 @@ cost_function:
 #        LinearObsOperator:
 #          Absorbers: [H2O]
 #          Clouds: [Water, Ice, Rain, Snow, Graupel]
-#          Cloud_Fraction: 1.0
 #        ObsOptions:
 #          Sensor_ID: amsua_n19
 #          EndianType: little_endian
