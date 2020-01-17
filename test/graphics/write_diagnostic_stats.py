@@ -304,22 +304,6 @@ def write_stats(ObsSpace, ObsSpaceGrp, varName, varUnits, diagName, \
 
     fp = open(statsFile, 'a')
 
-    #Only include non-NaN values in statistics
-    STATS = {}
-    STATS['Count']  = len(array_f)-np.isnan(array_f).sum()
-    if STATS['Count'] > 0:
-        STATS['Mean'] = np.nanmean(array_f)
-        STATS['RMS']  = np.sqrt(np.nanmean(array_f**2))
-        STATS['STD']  = np.nanstd(array_f)
-        STATS['Min']  = np.nanmin(array_f)
-        STATS['Max']  = np.nanmax(array_f)
-    else:
-        STATS['Mean'] = np.NaN
-        STATS['RMS']  = np.NaN
-        STATS['STD']  = np.NaN
-        STATS['Min']  = np.NaN
-        STATS['Max']  = np.NaN
-
     #TODO: use binary/netcdf or other non-ASCII format
     line = ObsSpaceGrp          \
            +pu.csvSEP+varName   \
@@ -328,6 +312,8 @@ def write_stats(ObsSpace, ObsSpaceGrp, varName, varUnits, diagName, \
            +pu.csvSEP+binVar    \
            +pu.csvSEP+binVal    \
            +pu.csvSEP+binUnits
+
+    STATS = pu.calcStats(array_f)
 
     for statName in pu.allFileStats:
         if statName == "Count":

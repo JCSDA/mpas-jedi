@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime as dt
 import getopt
 import matplotlib
@@ -126,11 +127,11 @@ for ibin in list(range(len(pressureBinBounds)-1)):
 
 # latitude, north to south
 # 'NAMED'
-allNamedLatBands = ['NPol','NXTro','NTro','STro','SXTro','SPol']
-allNamedLatBandsMinBounds = [60.0, 30.0,  0.0, -30.0, -60.0, -90.0]
-allNamedLatBandsMaxBounds = [90.0, 60.0, 30.0,   0.0, -30.0, -60.0]
+allNamedLatBands = ['NPol','NXTro','Tro','SXTro','SPol']
+allNamedLatBandsMinBounds = [60.0, 30.0, -30.0, -90.0, -90.0]
+allNamedLatBandsMaxBounds = [90.0, 90.0,  30.0, -30.0, -60.0]
 
-namedLatBandsStrVals = ['NXTro','NTro','STro','SXTro']
+namedLatBandsStrVals = ['NXTro','Tro','SXTro']
 namedLatBandsMinBounds = []
 namedLatBandsMaxBounds = []
 for latBand in namedLatBandsStrVals:
@@ -344,10 +345,19 @@ ObsSpaceDict_base = { \
 # figure/plotting definitions
 #============================
 
-plotMarkers = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*', \
-               'k--+','b--+','g--+','r--+','c--+','m--+']
+plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*', \
+             'k--+','b--+','g--+','r--+','c--+','m--+']
 
-def setup_fig(nx, ny, inch_size, aspect, ybuffer):
+plotLineStyles = ['-', '-', '-', '-', '-', '-', \
+                  '--','--','--','--','--','--']
+
+plotColors = ['k','b','g','r','c','m', \
+              'k','b','g','r','c','m']
+
+plotMarkers = ['*','*','*','*','*','*', \
+               '+','+','+','+','+','+']
+
+def setup_fig(nx=1, ny=1, inch_size=1.5, aspect=1.0, ybuffer=True):
 #INPUTS
 # nx - number of subplots in x direction
 # ny - number of subplots in y direction
@@ -366,17 +376,20 @@ def setup_fig(nx, ny, inch_size, aspect, ybuffer):
 
     return(fig)
 
-def finalize_fig(fig, filename, filetype, ybuffer):
+def finalize_fig(fig, filename='temporary_figure', filetype='png', ybuffer=True, xbuffer=False):
 #INPUTS
 # fig - plt.figure() type
 # filename - name of figure file without extension
 # filetype - file extension, e.g., 'png'
-# ybuffer - whether to give extra y space for labeling
+# x/ybuffer - whether to give extra x/y space for labeling
 
-    if ybuffer:
-        fig.subplots_adjust(wspace=0.35,hspace=0.70)
-    else:
-        fig.subplots_adjust(wspace=0.35,hspace=0.40)
+    wspace = 0.35
+    if xbuffer: wspace = 0.6
+
+    hspace = 0.40
+    if ybuffer: hspace = 0.70
+
+    fig.subplots_adjust(wspace=wspace,hspace=hspace)
 
     if filetype == 'png':
         fig.savefig(filename+'.png', dpi=200,bbox_inches='tight')
@@ -390,11 +403,25 @@ def TDeltas2Seconds(x_):
         return x
     return x_
 
+def timeTicks(x, pos):
+    d = dt.timedelta(seconds=x)
+    if d.seconds > 0:
+       return str(d)
+    else:
+       return '{:d}'.format(d.days)+'d'
+
+#DTimeLocator = AutoDateLocator(interval_multiples=True)
+DTimeLocator = AutoDateLocator()
+DTimeFormatter = ConciseDateFormatter(DTimeLocator) #DateFormatter('%m-%d_%HZ')
+TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
+
 def format_x_for_dates(ax,x):
     if isinstance(x[0],dt.datetime):
         ax.xaxis.set_major_locator(DTimeLocator)
         ax.xaxis.set_major_formatter(DTimeFormatter)
-        ax.xaxis.set_tick_params(rotation=30)
+#        ax.xaxis.set_tick_params(rotation=30)
+#        ax.set_xlabel('Date',fontsize=4)
+        ax.xaxis.get_offset_text().set_fontsize(3)
     if isinstance(x[0],dt.timedelta):
         x = TDeltas2Seconds(x)
         ax.set_xlim(min(x),max(x))
@@ -407,17 +434,33 @@ def format_x_for_dates(ax,x):
         ax.set_xticks(ticks)
         ax.xaxis.set_major_formatter(TDeltaFormatter)
         ax.xaxis.set_tick_params(rotation=30)
+        ax.set_xlabel('Lead Time',fontsize=4)
 
-def timeTicks(x, pos):
-    d = dt.timedelta(seconds=x)
-    if d.seconds > 0:
-       return str(d)
+
+def get_clean_ax_limits(xmin_=np.NaN,xmax_=np.NaN,plotVals=[np.NaN], \
+                        signdef=False,symmetric=True):
+    if not np.isnan(xmin_) and not np.isnan(xmax_):
+        xmin = xmin_
+        xmax = xmax_
     else:
-       return '{:d}'.format(d.days)+'d'
+        xmin = np.nanmin(plotVals)
+        xmax = np.nanmax(plotVals)
 
-DTimeLocator = AutoDateLocator(interval_multiples=True)
-DTimeFormatter = DateFormatter('%m-%d_%HZ')
-TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
+    xmaxabs=np.nanmax([abs(xmin),abs(xmax)])
+    if xmaxabs == 0.0 or np.isnan(xmaxabs):
+        minxval = 0.0
+        maxxval = 1.0
+    else:
+        roundfact = np.round(1. / 10.0 ** np.floor(np.log10(xmaxabs)))
+        if np.isnan(roundfact) or roundfact <= 0.0: roundfact = 1.0
+
+        if signdef or not symmetric:
+            maxxval = np.ceil(    xmax*roundfact ) / roundfact
+            minxval = np.floor(   xmin*roundfact ) / roundfact
+        else:
+            maxxval = np.ceil(    xmaxabs*roundfact ) / roundfact
+            minxval = np.floor( - xmaxabs*roundfact ) / roundfact
+    return minxval, maxxval
 
 
 #===========================
@@ -449,38 +492,383 @@ def isint(value):
     return False
 
 
-#========================
-# aggregation definitions
-#========================
+#======================================
+# multi-population statistical grouping
+#======================================
 
-#Ordered list of statistics available in ASCII stats_* files that can be aggregated
-aggregatableFileStats = ['Count','Mean','RMS','STD','Min','Max']
+# basic aggregation
+
+#Ordered list of statistics available in ASCII stats_* files...
+# (1) that can be aggregated
+aggregatableFileStats = ['Count','Mean','MS','RMS','STD','Min','Max']
+
 allFileStats = aggregatableFileStats
 
-def aggStatsSeries(x):
-#PURPOSE: aggregate DataFrame group of statistics
-# INPUT: x - group of statistics that include all aggregatableFileStats
-# OUTPUT: pandas Series of aggregated values for aggregatableFileStats
+# (2) that can be sampled with bootstrap
+sampleableAggStats = ['Count','Mean','MS','RMS']
+
+def calcStats(array_f):
+    # array_f (float(:)) - 1-d array of float values for which statistics should be calculated
+
+    #Only include non-NaN values in statistics
+    STATS = {}
+    STATS['Count']  = len(array_f)-np.isnan(array_f).sum()
+    if STATS['Count'] > 0:
+        STATS['Mean'] = np.nanmean(array_f)
+        STATS['MS']   = np.nanmean(array_f**2)
+        STATS['RMS']  = np.sqrt(STATS['MS'])
+        STATS['STD']  = np.nanstd(array_f)
+        STATS['Min']  = np.nanmin(array_f)
+        STATS['Max']  = np.nanmax(array_f)
+    else:
+        for stat in allFileStats:
+            if stat != 'Count':
+                STATS[stat] = np.NaN
+
+    return STATS
+
+
+def aggStatsDF(x):
+#PURPOSE: aggregate DataFrame containing aggregatableFileStats
+# INPUT: x - pandas DataFrame containing the subpopulation stats
+# OUTPUT: y - dictionary formatted as a pandas Series containing aggregated stats
+    
+    #converting to dictionary first speeds up the memory access
+    y = aggStatsDict(x.to_dict('list'))
+
+    return pd.Series(y, index=aggregatableFileStats)
+
+def aggStatsDict(x_): #, stats = aggregatableFileStats):
+#PURPOSE: aggregate Dictionary containing aggregatableFileStats
+# INPUT: x - dictionary containing the subpopulation stats
+# OUTPUT: y - dictionary containing aggregated stats
+
+    # convert lists to np.array to enable math functions
+    x = {}
+#    for stat in stats:
+    for stat in aggregatableFileStats:
+
+        x[stat] = np.array(x_[stat])
+
     y = {}
 
     y['Count'] = x['Count'].sum()
 
-    y['Mean'] = (x['Mean'] * x['Count'].astype(float)).sum() / x['Count'].astype(float).sum()
+    y['Mean'] = ( np.multiply(x['Mean'], x['Count'].astype(float)) ).sum() \
+                    / ( x['Count'].sum().astype(float) )
 
-    y['RMS'] = np.sqrt((x['RMS']**2 * x['Count'].astype(float)).sum() / x['Count'].astype(float).sum())
+    y['MS'] = ( np.multiply(x['MS'], x['Count'].astype(float)) ).sum() \
+                   / x['Count'].sum().astype(float)
 
-    y['STD'] = np.sqrt( ( ((x['STD'] ** 2 + x['Mean'] ** 2) \
-                          * x['Count'].astype(float)).sum()  \
-                          / x['Count'].astype(float).sum() ) \
-                        - y['Mean'] ** 2 )
+    y['RMS'] = np.sqrt( y['MS'] )
+
+    y['STD'] = np.sqrt( ( \
+                   ( np.multiply( \
+                       (np.square(x['STD']) + np.square(x['Mean'])),  \
+                       x['Count'].astype(float) ) ).sum()  \
+                          / x['Count'].sum().astype(float) ) \
+                        - np.square(y['Mean']) )
     # Pooled variance Formula as described here:
     #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
+    y['Min'] = np.nanmin(x['Min'])
 
-    y['Min'] = x['Min'].min()
+    y['Max'] = np.nanmax(x['Max'])
 
-    y['Max'] = x['Max'].max()
+    return y
 
-    return pd.Series(y, index=aggregatableFileStats)
+# bootstrapping
+
+cimean = 'VALUE'
+cimin = 'LO'
+cimax = 'HI'
+ciTraits = [cimean, cimin, cimax]
+
+def identityFunc(x):
+    return x
+
+def rmsFunc(x, axis=0):
+    return np.sqrt(np.nanmean(np.square(x),axis=axis))
+
+
+################################################################################
+def bootStrapVector(X, alpha=0.05, n_samples=8000, weights=None):
+# PURPOSE: compute bootstrap confidence intervals on vector of data
+#
+#INPUTs:
+# X       - array of values
+# alpha   - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n       - number of bootstrap samples, optional
+# weights - apply to X when performing mean
+
+#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+
+    Ndata = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+
+    if type(n_samples) is list:
+        nsSamples = n_samples
+    elif type(n_samples) is np.array \
+        or type(n_samples) is np.ndarray:
+        nsSamples = list(n_samples)
+    else:
+        nsSamples = [n_samples]
+    max_samples = np.max(nsSamples)
+
+    if weights is None:
+        iResample = np.random.choice(Ndata, (Ndata,max_samples) ) #
+    else:
+        iResample = np.random.choice(Ndata, (Ndata,max_samples), p = weights ) #
+
+    XResample = X[ iResample ]
+    Expect = np.nanmean(XResample,axis=0)
+
+    STATS = {}
+    for trait in ciTraits:
+        STATS[trait] = []
+
+    for nSamples in nsSamples:
+        sampleVals = np.sort( Expect[0:nSamples] )
+        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+
+        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
+        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
+        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+
+        STATS[cimean].append(sampleVals[iMid])
+        STATS[cimin].append(sampleVals[iLeft])
+        STATS[cimax].append(sampleVals[iRight])
+
+    return STATS
+
+
+################################################################################
+def bootStrapVectorRMSFunc(X, Y, statFunc=np.subtract, \
+                           alpha=0.05, n_samples=8000):
+# PURPOSE: compute bootstrap confidence intervals on RMS of vector of data
+#
+#INPUTs:
+# X, Y     - arrays of values for whole population
+# statFunc - function f(RMS(X),RMS(Y)), optional, default is np.subtract
+# alpha    - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n        - number of bootstrap samples, optional
+
+#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+
+    Ndata = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+
+    if type(n_samples) is list:
+        nsSamples = n_samples
+    elif type(n_samples) is np.array \
+        or type(n_samples) is np.ndarray:
+        nsSamples = list(n_samples)
+    else:
+        nsSamples = [n_samples]
+    max_samples = np.max(nsSamples)
+
+    iResample = np.random.choice(Ndata, (Ndata,max_samples) )
+
+    XResample = rmsFunc(X[ iResample ], axis=0)
+    YResample = rmsFunc(Y[ iResample ], axis=0)
+
+    Expect = statFunc(XResample,YResample)
+
+    STATS = {}
+    for trait in ciTraits:
+        STATS[trait] = []
+
+    for nSamples in nsSamples:
+        sampleVals = np.sort( Expect[0:nSamples] )
+        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+
+        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
+        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
+        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+
+        STATS[cimean].append(sampleVals[iMid])
+        STATS[cimin].append(sampleVals[iLeft])
+        STATS[cimax].append(sampleVals[iRight])
+
+    return STATS
+
+
+################################################################################
+def bootStrapAggRMSFunc(X, Y, Ns, statFunc=np.subtract, \
+                           alpha=0.05, n_samples=8000):
+# PURPOSE: compute bootstrap confidence intervals on aggregated RMS of vector of RMS of subpopulations
+#
+# X, Y     - arrays of RMS for multiple subpopulations
+# statFunc - function f(agg(X),agg(Y)), optional, default is np.subtract
+# alpha    - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n        - number of bootstrap samples, optional
+
+#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+
+    if type(n_samples) is list:
+        nsSamples = n_samples
+    elif type(n_samples) is np.array \
+        or type(n_samples) is np.ndarray:
+        nsSamples = list(n_samples)
+    else:
+        nsSamples = [n_samples]
+    max_samples = np.max(nsSamples)
+
+    # remove zero-size clusters
+    X_ = []
+    Y_ = []
+    Ns_ = []
+    for i, n in enumerate(Ns):
+        if n > 0.0:
+            X_.append(X[i])
+            Y_.append(Y[i])
+            Ns_.append(n)
+
+    X_ = np.asarray(X_)
+    Y_ = np.asarray(Y_)
+    Ns_ = np.asarray(Ns_)
+
+    Ndata = len(X_) ; # number of "data points"
+
+    iResample = np.random.choice(Ndata, (Ndata,max_samples) )
+
+    NsResample = Ns_[ iResample ]
+    XResample = np.nansum(np.multiply(np.square(X_[ iResample ]), NsResample),axis=0)
+    YResample = np.nansum(np.multiply(np.square(Y_[ iResample ]), NsResample),axis=0)
+
+    NaggResample = np.nansum(NsResample,axis=0)
+    XaggResample = np.sqrt(np.divide(XResample, NaggResample))
+    YaggResample = np.sqrt(np.divide(YResample, NaggResample))
+
+    Expect = statFunc(XaggResample,YaggResample)
+
+    STATS = {}
+    for trait in ciTraits:
+        STATS[trait] = []
+
+    for nSamples in nsSamples:
+        sampleVals = np.sort( Expect[0:nSamples] )
+        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+
+        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
+        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
+        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+
+        STATS[cimean].append(sampleVals[iMid])
+        STATS[cimin].append(sampleVals[iLeft])
+        STATS[cimax].append(sampleVals[iRight])
+
+    return STATS
+
+
+################################################################################
+def bootStrapVectorFunc(X, Y, alpha=0.05, \
+                        n_samples=5000, \
+                        vecFuncs=[identityFunc], \
+                        bootFuncs=[bootStrapVector], \
+                        statFunc=np.subtract):
+# PURPOSE: compute bootstrap confidence intervals on
+#          E[statFunc(vecFunc(X),vecFunc(Y))]
+#          using vectors of data, X and Y, that contain the whole population
+#INPUTS:
+# X, Y      - vectors of values for the whole population 
+# alpha     - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples - number of bootstrap samples, optional, default==5000
+#             can either be a scalar or a list of values
+# vecFuncs  - function to apply independently to X and Y, e.g., np.square, optional
+# statFunc  - function f(vecFunc(X),vecFunc(Y)), optional, default is np.subtract
+
+#OUTPUTS: 
+# STATS - dictionary object containing median, low CI, and high CI of bootstrapped stats
+
+    N = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+
+    if type(n_samples) is list:
+        nsSamples = n_samples
+    elif type(n_samples) is np.array \
+        or type(n_samples) is np.ndarray:
+        nsSamples = list(n_samples)
+    else:
+        nsSamples = [n_samples]
+    max_samples = np.max(nsSamples)
+
+    STATS = {}
+    for ifunc, func in enumerate(vecFuncs):
+        bootFunc = bootFuncs[ifunc]
+        if bootFunc is bootStrapVector:
+            ciVals = bootFunc( \
+                         statFunc(func(X), func(Y)), \
+                         n_samples=nsSamples)
+        elif bootFunc is bootStrapVectorRMSFunc:
+            ciVals = bootFunc( \
+                         X, Y, statFunc, \
+                         n_samples=nsSamples)
+
+        STATS[ifunc] = {}
+        for trait in ciTraits:
+            STATS[ifunc][trait] = ciVals[trait]
+
+    return STATS
+
+
+################################################################################
+def bootStrapClusterFunc(X, Y, alpha=0.05, \
+                         n_samples=5000, \
+                         statFunc=np.subtract, \
+                         statNames=sampleableAggStats):
+# PURPOSE: compute bootstrap confidence intervals on
+#          E[calcStats(X)] or E[statFunc(calcStats(X),calcStats(Y))]
+#          using Stats from subgroups of a whole population
+#INPUTS:
+# X, Y      - pandas DataFrames containing aggregatable stats for all subgroups
+# alpha     - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples - number of bootstrap samples, optional, default==5000
+#             can either be a scalar or a list of values
+# statFunc  - function, optional, default is np.subtract
+# statNames - the stats for which CI's will be produced
+
+#OUTPUTS: 
+# STATS   - dictionary object containing median, low CI, and high CI of bootstrapped stats
+
+    nClust = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+
+    if type(n_samples) is list:
+        nsSamples = n_samples
+    elif type(n_samples) is np.array \
+        or type(n_samples) is np.ndarray:
+        nsSamples = list(n_samples)
+    else:
+        nsSamples = [n_samples]
+    max_samples = np.max(nsSamples)
+
+    STATS = {}
+    for stat in statNames:
+        if stat == 'Count': continue
+        Ns = X.loc[:,'Count'].to_numpy().astype(float)
+        X_ = X.loc[:,stat].to_numpy()
+        Y_ = Y.loc[:,stat].to_numpy()
+
+        if any(Ns > 0.0):
+            if stat == 'Mean' or stat == 'MS':
+                weights = np.divide(Ns,np.nansum(Ns))
+                ciVals = bootStrapVector( \
+                             statFunc(X_,Y_), \
+                             weights=weights, \
+                             n_samples=nsSamples)
+            elif stat == 'RMS':
+                ciVals = bootStrapAggRMSFunc( \
+                             X_, Y_, Ns, statFunc, \
+                             n_samples=nsSamples)
+            else:
+                print("\n\nERROR: stat not implemented: ", stat)
+                os._exit(1)
+        else:
+            ciVals = {}
+            for trait in ciTraits: ciVals[trait] = [np.NaN]
+
+
+        STATS[stat] = {}
+        for trait in ciTraits:
+            STATS[stat][trait] = ciVals[trait]
+
+    return STATS
 
 
 #================================
