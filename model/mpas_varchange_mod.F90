@@ -9,6 +9,7 @@ use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds
 
+!mpas-jedi
 use mpas_field_utils_mod, only: mpas_field
 use mpas_geom_mod,   only: mpas_geom
 

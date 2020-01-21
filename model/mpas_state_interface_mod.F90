@@ -12,9 +12,13 @@ use iso_c_binding
 use kinds, only: kind_real
 use oops_variables_mod
 
+!mpas-jedi
 use mpas_geom_mod
 use mpas_state_mod
 use mpas_field_utils_mod
+use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
+
+!MPAS-Model
 use mpas_kind_types, only: StrKIND
 use mpas_pool_routines, only: mpas_pool_get_config
 
@@ -27,7 +31,6 @@ use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
-use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 
 implicit none
 private

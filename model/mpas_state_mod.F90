@@ -6,12 +6,18 @@
 module mpas_state_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fckit_mpi_module, only: fckit_mpi_comm
+use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 
 !oops
 use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
+
+!saber?
+use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
+       test1_advection_hadley, test3_gravity_wave
+use dcmip_initial_conditions_test_4, only : test4_baroclinic_wave
+use type_bump, only: bump_type
 
 !ufo
 use ufo_locs_mod
@@ -24,6 +30,8 @@ use mpas_derived_types
 use mpas_field_routines
 use mpas_kind_types, only: StrKIND
 use mpas_pool_routines
+use mpas_dmpar, only: mpas_dmpar_exch_halo_field
+
 
 !mpas-jedi
 use mpas_constants_mod
@@ -59,8 +67,6 @@ contains
 !!
 subroutine add_incr(self,rhs)
 
-   use mpas2ufo_vars_mod, only: q_to_w, temp_to_theta, twp_to_rho
-   use mpas_dmpar, only: mpas_dmpar_exch_halo_field
    implicit none
    class(mpas_field), intent(inout) :: self !< state
    class(mpas_field), intent(in)    :: rhs  !< increment
@@ -167,10 +173,6 @@ end subroutine add_incr
 !! \date July, 2018: Created
 !!
 subroutine analytic_IC(self, geom, f_conf, vdate)
-
-  use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
-       test1_advection_hadley, test3_gravity_wave
-  use dcmip_initial_conditions_test_4, only : test4_baroclinic_wave
 
 !  !MPAS Test Cases
 !  !JJG: This initialization requires the init_atmospher_core core_type 
@@ -518,10 +520,6 @@ end subroutine invent_state
 ! ------------------------------------------------------------------------------
 
 subroutine getvalues(self, locs, vars, gom, traj)
-
-   use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
-   use type_bump, only: bump_type
-   use mpas2ufo_vars_mod !, only: usgs_to_crtm_mw, wrf_to_crtm_soil
 
    implicit none
    class(mpas_field),                       intent(in)    :: self
@@ -1024,9 +1022,6 @@ end subroutine getvalues
 
 subroutine initialize_bump(grid, locs, bump, bumpid)
 
-   use mpas_geom_mod, only: mpas_geom
-   use type_bump, only: bump_type
-   
    implicit none
    type(mpas_geom),          intent(in)  :: grid
    type(ufo_locs),           intent(in)  :: locs

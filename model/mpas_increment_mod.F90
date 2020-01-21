@@ -12,6 +12,9 @@ use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod
 
+!saber
+use unstructured_grid_mod
+
 !ufo
 use ufo_locs_mod
 use ufo_geovals_mod
@@ -550,8 +553,6 @@ end subroutine getvalues_ad
 
 subroutine ug_size(self, ug)
 
-   use unstructured_grid_mod
-   
    implicit none
    class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
@@ -605,8 +606,6 @@ end subroutine ug_size
 
 subroutine ug_coord(self, ug)
 
-   use unstructured_grid_mod
-   
    implicit none
    class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
@@ -646,9 +645,6 @@ end subroutine ug_coord
 
 subroutine increment_to_ug(self, ug, its)
 
-   use mpas_pool_routines
-   use unstructured_grid_mod
-   
    implicit none
    class(mpas_field),       intent(in)    :: self
    type(unstructured_grid), intent(inout) :: ug
@@ -709,9 +705,6 @@ end subroutine increment_to_ug
 ! -----------------------------------------------------------------------------
 
 subroutine increment_from_ug(self, ug, its)
-
-   use mpas_pool_routines
-   use unstructured_grid_mod
 
    implicit none
    class(mpas_field),       intent(inout) :: self

@@ -33,10 +33,10 @@ use mpas_dmpar
 use mpas_derived_types
 use mpas_field_routines
 use mpas_pool_routines
-use mpas_geom_mod
 
 !MPAS-JEDI
 use mpas_kinds, only : kind_double
+use mpas_geom_mod
 
 private
 
@@ -643,8 +643,6 @@ end subroutine effectRad_graupel
 
 !--- variables can be found in subFields
 subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield, ngrid)
-
-   use mpas_geom_mod
 
    implicit none
 

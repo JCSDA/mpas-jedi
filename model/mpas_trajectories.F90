@@ -5,7 +5,12 @@
 
 module mpas_trajectories
 
+!MPAS-Model
 use mpas_derived_types
+use mpas_pool_routines
+
+!mpas-jedi
+use mpas_field_utils_mod, only: copy_pool, mpas_field
 
 implicit none
 private
@@ -40,8 +45,6 @@ contains
 ! ------------------------------------------------------------------------------
 
 subroutine set_traj(self,state)
-use mpas_field_utils_mod, only: copy_pool, mpas_field
-use mpas_pool_routines
 implicit none
 type(mpas_trajectory), intent(inout) :: self
 type(mpas_field)     , intent(in   ) :: state
