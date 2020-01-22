@@ -395,7 +395,7 @@ subroutine index_q_fields_forward_and_TL(indexName, geovalName, subFields, convF
    converted_field % fieldName = geovalName
    call mpas_pool_add_field(convFields, geovalName, converted_field)
    !        write(*,*) "end-of ",geovalName
-end subroutine
+end subroutine index_q_fields_forward_and_TL
 !-------------------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------------------
@@ -430,14 +430,14 @@ subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields,
    do i=1,ngrid
    do k=1,geom%nVertLevels
    kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-   index_increment % array(k,i) = geoval_field_src%array(k,i) / kgkg_kgm2
+   index_increment % array(k,i) = geoval_field_src%array(k,i) * kgkg_kgm2
    enddo
    enddo
    index_array(:,1:ngrid) = index_array(:,1:ngrid) + index_increment % array(:,1:ngrid)
    call mpas_deallocate_field(index_increment) ! not used
    deallocate (pressure_levels)
 
-end subroutine
+end subroutine index_q_fields_AD
 !-------------------------------------------------------------------------------------------
 real (kind=kind_real) function wgamma(y)
 implicit none
