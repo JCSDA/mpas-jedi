@@ -14,6 +14,8 @@ use oops_variables_mod, only: oops_variables
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN
+use ufo_locs_mod, only: ufo_locs
+use ufo_geovals_mod, only: ufo_geovals
 
 !MPAS-Model
 use atm_core, only: atm_simulation_clock_init, atm_compute_output_diagnostics
@@ -27,6 +29,7 @@ use mpas_timekeeping
 !mpas-jedi
 use mpas_geom_mod
 use mpas4da_mod
+use mpas2ufo_vars_mod, only: w_to_q, theta_to_temp
 
 
 private
@@ -347,8 +350,6 @@ end subroutine read_field
 
 subroutine update_diagnostic_fields(domain, subFields, ngrid)
 
-   use mpas2ufo_vars_mod, only: w_to_q, theta_to_temp
-
    implicit none
    type (domain_type), pointer,    intent(inout) :: domain
    type (mpas_pool_type), pointer, intent(inout) :: subFields
@@ -596,8 +597,6 @@ end subroutine dot_prod_
 
 subroutine interp_checks(cop, fld, locs, vars, gom)
 
-   use ufo_locs_mod, only: ufo_locs
-   use ufo_geovals_mod, only: ufo_geovals
    implicit none
    character(len=2),     intent(in) :: cop
    class(mpas_field),    intent(in) :: fld

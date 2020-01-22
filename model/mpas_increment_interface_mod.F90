@@ -12,9 +12,14 @@ use iso_c_binding
 use kinds, only: kind_real
 use oops_variables_mod
 
+!saber
+use unstructured_grid_mod
+
+!mpas-jedi
 use mpas_geom_mod
 use mpas_increment_mod
 use mpas_field_utils_mod
+use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 
 !Increment read/write
 use datetime_mod
@@ -25,7 +30,6 @@ use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
-use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 
 implicit none
 private
@@ -302,7 +306,6 @@ end subroutine mpas_increment_change_resol_c
 
 subroutine mpas_increment_ug_coord_c(c_key_inc, c_key_ug) &
       bind (c,name='mpas_increment_ug_coord_f90')
-use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
@@ -320,7 +323,6 @@ end subroutine mpas_increment_ug_coord_c
 
 subroutine mpas_increment_increment_to_ug_c(c_key_inc, c_key_ug, c_its) &
       bind (c,name='mpas_increment_increment_to_ug_f90')
-use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug
@@ -341,7 +343,6 @@ end subroutine mpas_increment_increment_to_ug_c
 
 subroutine mpas_increment_increment_from_ug_c(c_key_inc, c_key_ug, c_its) &
       bind (c,name='mpas_increment_increment_from_ug_f90')
-use unstructured_grid_mod
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: c_key_ug

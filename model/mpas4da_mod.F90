@@ -20,6 +20,9 @@ module mpas4da_mod
 !oops
 use kinds, only : kind_real
 
+!saber?
+use random_mod, only: normal_distribution
+
 !ufo
 use ufo_vars_mod
 
@@ -622,8 +625,6 @@ use mpas_constants_mod
    !
    !-----------------------------------------------------------------------
    subroutine da_random(pool_a, fld_select)
-
-   use random_mod, only: normal_distribution
 
       implicit none
 
