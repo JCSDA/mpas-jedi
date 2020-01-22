@@ -53,7 +53,8 @@ type(mpas_field), pointer :: self
 type(mpas_geom), pointer :: geom
 type(oops_variables) :: state_vars
 type(oops_variables) :: inc_vars
-character(len=StrKIND),  pointer :: config_microp_scheme
+character(len=StrKIND),  pointer :: config_microp_scheme, &
+                                    config_radt_cld_scheme
 logical,  pointer :: config_microp_re
 
 call mpas_field_registry%init()
@@ -66,14 +67,18 @@ inc_vars = oops_variables(c_inc_vars)
 
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
-write(*,*) "config_microp_re=",config_microp_re
-write(*,*) "config_microp_scheme=",config_microp_scheme
+call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_radt_cld_scheme', config_radt_cld_scheme)
+
 if (config_microp_re) then
    call state_vars%push_back(mpas_re_fields)
 end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
    call state_vars%push_back("index_nr")
 end if
+if (trim(config_radt_cld_scheme) /= 'off') then
+   call state_vars%push_back("cldfrac")
+end if
+
 call self%create(geom, state_vars, inc_vars)
 
 end subroutine mpas_state_create_c
