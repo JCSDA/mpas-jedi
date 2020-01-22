@@ -324,16 +324,6 @@ subroutine read_field(self, f_conf, vdate)
       write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
    end if
 
-   !==TODO: Speific part when reading parameterEst. for BUMP.
-   !      : They write/read a list of variables directly.
-   if (f_conf%has("no_transf")) then
-      call f_conf%get_or_die("no_transf",ierr)
-      if(ierr .eq. 1) then
-         call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
-        return
-      endif
-   endif
-
    !(1) diagnose pressure
    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)
    call mpas_pool_get_field(diag, 'pressure_p', pressure_p)
