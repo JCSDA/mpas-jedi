@@ -23,17 +23,17 @@ import sys
 #               for each forecast length between fcTDeltaFirst and fcTDeltaLast
 #             - x-axis: cycle initial time
 #             -    line: per experiment
-#             - subplot: per obs. variable
+#             - subplot: per diag space variable
 #             -    file: combination of FC lead time, statistic, and bin (if applicable)
 # AGGREGATEFC - creates a timeseries figure between fcTDeltaFirst and fcTDeltaLast containing 
 #               aggregated statistics for the period between firstCycleDTime and lastCycleDTime
 #             - x-axis: forecast duration
 #             -    line: per experiment
-#             - subplot: per obs. variable
+#             - subplot: per diag space variable
 #             -    file: combination of statistic and bin
 # SNAPSHOTCY2D/AGGREGATEFC2D creates contour maps similar to above with vertical info on y-axis
-#             - only applicable to binned observations (e.g., vertical dimension, latitude)
-#             - subplot: column by experiment, row by obs. variable
+#             - only applicable to binned diagnostics (e.g., vertical dimension, latitude)
+#             - subplot: column by experiment, row by diag space variable
 #             SNAPSHOTCY2D
 #             -    file: combination of FC lead time and statistic
 #             AGGREGATEFC2D
@@ -42,30 +42,30 @@ import sys
 #             - each vertical column of data is plotted as a profile on
 #               a separate set of axes
 #             -    line: per experiment
-#             - subplot: column by lead time, row by obs. variable
+#             - subplot: column by lead time, row by diag space variable
 #             -    file: per statistic
 #             - MAX_FC_SUBFIGS determines number of FC lead times to include
 MAX_FC_SUBFIGS = 3
 # SNAPSHOTFC  similar to SNAPSHOTCY, except
 #             -    line: per FC lead time
-#             - subplot: per obs. variable
+#             - subplot: per diag space variable
 #             -    file: combination of experiment, statistic, and bin
 #             - MAX_FC_LINES determines number of FC lead times to include
 MAX_FC_LINES = 5
 # SNAPSHOTCY_LAT1 similar to SNAPSHOTCY, except
 #             -    line: named latitude bins
-#             - subplot: column by experiment, row by obs. variable
+#             - subplot: column by experiment, row by diag space variable
 #             -    file: combination of statistic and forecast length
 #             - by default, skipped for radiances due to large # figures (slow)
 # SNAPSHOTCY_LAT2 similar to SNAPSHOTCY, except
 #             -    line: per experiment
-#             - subplot: column by LAT bin, row by obs. variable
+#             - subplot: column by LAT bin, row by diag space variable
 #             -    file: combination of statistic and forecast length
 #             - by default, skipped for radiances due to large # figures (slow)
 # SNAPSHOTCY_QC similar to SNAPSHOTCY, except
 #             - only plots 'Count' statistic
 #             -    line: named QC bins
-#             - subplot: column by experiment, row by obs. variable
+#             - subplot: column by experiment, row by diag space variable
 #             -    file: forecast length
 # AGGREGATEFC_DIFFCI/AGGREGATEFCPROFILE_DIFFCI similar to their per experiment counterparts
 #             - shows difference between experiment(s) and control
@@ -98,16 +98,16 @@ plotGroup = "multiFCLen" # "singleFCLen"
 
 
 # multiFCLen ASCII statistics file example for cycling run (on cheyenne):
-#statFile = '/glade/scratch/user/pandac/DA_3dvar/2018041500/0/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.txt'
+#statFile = '/glade/scratch/user/pandac/DA_3dvar/2018041500/0/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.nc'
 #            |                         |        |          | |                      |             |         |
 #                       ^                   ^        ^      ^           ^                  ^           ^
-#                  expDirectory          expName  cyDTime fcTDelta statsFilePrefix     DAMethod   ObsSpaceName
+#                  expDirectory          expName  cyDTime fcTDelta statsFilePrefix     DAMethod   DiagSpaceName
 
 # singleFCLen ASCII statistics file example for cycling run (on cheyenne):
-#statFile = '/glade/scratch/user/pandac/DA_3dvar/2018041500/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.txt'
+#statFile = '/glade/scratch/user/pandac/DA_3dvar/2018041500/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.nc'
 #            |                         |        |          |                      |             |         |
 #                       ^                   ^        ^                ^                  ^           ^
-#                  expDirectory          expName  cyDTime      statsFilePrefix     DAMethod   ObsSpaceName
+#                  expDirectory          expName  cyDTime      statsFilePrefix     DAMethod   DiagSpaceName
 
 
 plotTypes = []
@@ -227,12 +227,12 @@ def plot_stats_timeseries(nproc, myproc):
 #  Note: these arguments are used when an external program has multiple processors
 #        available.  The default values are 1 and 0, respectively.
 
-    # Assign processors round-robin to each ObsSpace name
-    ObsSpaceDict = {}
-    for ii, (key,baseval) in enumerate(pu.ObsSpaceDict_base.items()):
+    # Assign processors round-robin to each DiagSpace name
+    DiagSpaceDict = {}
+    for ii, (key,baseval) in enumerate(pu.DiagSpaceDict.items()):
         val = deepcopy(baseval)
         if ii%nproc != myproc: continue
-        ObsSpaceDict[key] = val
+        DiagSpaceDict[key] = val
 
     if fcTDeltaFirst == fcTDeltaLast and firstCycleDTime == lastCycleDTime:
         print("\n\nERROR: Time difference is required for all plotTypes (either forecast or multiple cycles)")
@@ -264,8 +264,8 @@ def plot_stats_timeseries(nproc, myproc):
         dumDateTime = dumDateTime + cyTimeInc
     nCY = len(cyDTimes)
 
-    # Retrieve list of ObsSpaceNames from all experiments
-    expsObsSpaceNames = []
+    # Retrieve list of DiagSpaceNames from all experiments
+    expsDiagSpaceNames = []
     for expName in expLongNames:
         dateDir = cyDTimes_dir[0]
         if plotGroup == "multiFCLen":
@@ -274,88 +274,90 @@ def plot_stats_timeseries(nproc, myproc):
         FILEPREFIX0 = expDirectory + expName +'/'+dateDir+'/' \
                       +statsFilePrefix+DAMethods[0]+"_"
 
-        ObsSpaceNames = []
-        for File in glob.glob(FILEPREFIX0+'*.txt'):
-           ObsSpaceName = re.sub(".txt","",re.sub(FILEPREFIX0,"",File))
-           ObsSpaceInfo_ = ObsSpaceDict.get(ObsSpaceName,pu.nullObsSpaceInfo)
-           if ObsSpaceInfo_['process']:
-               ObsSpaceNames.append(ObsSpaceName)
-        expsObsSpaceNames.append(ObsSpaceNames)
+        DiagSpaceNames = []
+        for File in glob.glob(FILEPREFIX0+'*.nc'):
+           DiagSpaceName = re.sub(".nc","",re.sub(FILEPREFIX0,"",File))
+           DiagSpaceInfo_ = DiagSpaceDict.get(DiagSpaceName,pu.nullDiagSpaceInfo)
+           if DiagSpaceInfo_['process']:
+               DiagSpaceNames.append(DiagSpaceName)
+        expsDiagSpaceNames.append(DiagSpaceNames)
 
-    # Remove ObsSpaceNames that are not common to all experiments
-    ObsSpaceNames = deepcopy(expsObsSpaceNames[0])
-    if len(expsObsSpaceNames) > 1:
-        for expObsSpaceNames in expsObsSpaceNames[1:]:
-            for ObsSpaceName in expObsSpaceNames:
-                if not (ObsSpaceName in expObsSpaceNames):
-                    ObsSpaceNames.remove(ObsSpaceName)
-    ObsSpaceNames.sort()
+    # Remove DiagSpaceNames that are not common to all experiments
+    DiagSpaceNames = deepcopy(expsDiagSpaceNames[0])
+    if len(expsDiagSpaceNames) > 1:
+        for expDiagSpaceNames in expsDiagSpaceNames[1:]:
+            for DiagSpaceName in expDiagSpaceNames:
+                if not (DiagSpaceName in expDiagSpaceNames):
+                    DiagSpaceNames.remove(DiagSpaceName)
+    DiagSpaceNames.sort()
 
     print("")
-    print("Processing data for these ObsSpaceNames:")
+    print("Processing data for these DiagSpaceNames:")
     print("---------------------------------------")
-    print(ObsSpaceNames)
+    print(DiagSpaceNames)
 
-    # Read stats and make figures for all ObsSpaceNames
-    for ObsSpaceName in ObsSpaceNames:
+    # Read stats and make figures for all DiagSpaceNames
+    for DiagSpaceName in DiagSpaceNames:
         print("\n==============================")
-        print("ObsSpaceName = "+ObsSpaceName)
+        print("DiagSpaceName = "+DiagSpaceName)
         print("==============================")
 
-        print("\nConcatenating ASCII files...")
+        print("\nReading NC intermediate files into common Pandas DataFrame...")
 
-        # create temporary csv file with statistics from all expNames, fcTDeltas, cyDTimes
-        tmpStatsFile = 'temp_stats_'+ObsSpaceName+'.txt'
-        if os.path.exists(tmpStatsFile):
-            os.remove(tmpStatsFile)
-        fpw = open(tmpStatsFile, 'a')
+        dsDict = {}
+        dsDict['expName'] = np.asarray([])
+        dsDict['fcTDelta'] = np.asarray([])
+        dsDict['cyDTime'] = np.asarray([])
+        for attribName in pu.fileStatAttributes:
+            dsDict[attribName] = np.asarray([])
+        for statName in pu.allFileStats:
+            dsDict[statName] = np.asarray([])
+
         for iexp, expName in enumerate(expNames):
             expPrefix = expDirectory + expLongNames[iexp] +'/'
-            statsFile = statsFilePrefix+DAMethods[iexp]+'_'+ObsSpaceName+'.txt'
+            ncStatsFile = statsFilePrefix+DAMethods[iexp]+'_'+DiagSpaceName+'.nc'
             for ifc, fcTDelta in enumerate(fcTDeltas):
                 fcstr=fcTDelta.__str__()
                 for icy, cyDTime in enumerate(cyDTimes):
-                    #Read all stats from ASCII file for diagName and varName
+                    #Read all stats/attributes from NC file for DiagSpaceName, ExpName, fcTDelta, cyDTime
                     dateDir = cyDTimes_dir[icy]
                     if plotGroup == "multiFCLen":
                         dateDir = dateDir+'/'+fcTDeltas_dir[ifc]
-                    cyStatsFile = expPrefix+dateDir+'/'+statsFile
+                    cyStatsFile = expPrefix+dateDir+'/'+ncStatsFile
 
-                    statLines = \
-                        readStatsFile(cyStatsFile)
+                    statsDict = pu.read_stats_nc(cyStatsFile)
+                    nrows = len(statsDict[pu.fileStatAttributes[0]])
+                    dsDict['expName'] = \
+                        np.append(dsDict['expName'], [expName] * nrows)
+                    dsDict['fcTDelta'] = \
+                        np.append(dsDict['fcTDelta'], [fcTDelta] * nrows)
+                    dsDict['cyDTime'] = \
+                        np.append(dsDict['cyDTime'], [cyDTime] * nrows)
 
-                    prefix=expName+pu.csvSEP+fcstr+pu.csvSEP+cyDTime.__str__()+pu.csvSEP
-                    for il, line in enumerate(statLines):
-                        writeLine = re.sub("\n","",line)
-#                        writeLine = re.sub("\s+",pu.csvSEP,writeLine)
-                        fpw.write(prefix+writeLine+"\n")
-        fpw.close()
+                    for attribName in pu.fileStatAttributes:
+                        dsDict[attribName] = \
+                            np.append(dsDict[attribName],statsDict[attribName])
+                    for statName in pu.allFileStats:
+                        dsDict[statName] = \
+                            np.append(dsDict[statName],statsDict[statName])
 
-        print("\nPopulating pandas DataFrame...")
+        #Convert dsDict to DataFrame
+        dsDF = pd.DataFrame.from_dict(dsDict)
 
-        # load csv file into pandas DataFrame
-        columnNames = ['expName','fcTDelta','cyDTime','ObsSpaceGrp', \
-                        'varName','varUnits','diagName','binVar','binVal','binUnits']
-        for stat in pu.allFileStats:
-            columnNames.append(stat)
-        indexNames = ['expName','fcTDelta','cyDTime','ObsSpaceGrp', \
+        indexNames = ['expName','fcTDelta','cyDTime','DiagSpaceGrp', \
                       'varName','diagName','binVal']
-        osDF = pd.read_csv(tmpStatsFile, sep=pu.csvSEP, parse_dates=['cyDTime'], \
-                             names=columnNames, index_col=indexNames, \
-                             converters={'binVar': str,'binVal': str,'binUnits': str, \
-                                         'fcTDelta': pd.to_timedelta,'Count':int} \
-                            )
-        osDF = osDF.sort_index()
+        dsDF.set_index(indexNames,inplace=True)
+        dsDF.sort_index(inplace=True)
 
-        ##  obsspace
-        ObsSpaceGrp = osDF.index.levels[indexNames.index('ObsSpaceGrp')]
+        ##  diagspace
+        DiagSpaceGrp = dsDF.index.levels[indexNames.index('DiagSpaceGrp')]
 
         ##  variables
         # get varNames and sort alphabetically
-        varNames = osDF.index.levels[indexNames.index('varName')]
+        varNames = dsDF.index.levels[indexNames.index('varName')]
         nVars = len(varNames)
         indices = list(range(nVars))
-        if ObsSpaceGrp[0] == pu.radiance_s:
+        if DiagSpaceGrp[0] == pu.radiance_s:
             # sort by channel number (int) for radiances
             chlist = []
             for varName in varNames:
@@ -366,18 +368,18 @@ def plot_stats_timeseries(nproc, myproc):
         varNames = list(map(varNames.__getitem__, indices))
 
         ##  bins (may want to sort numerical values)
-        binVals = osDF.index.levels[indexNames.index('binVal')].tolist()
+        binVals = dsDF.index.levels[indexNames.index('binVal')].tolist()
 
         # extract units for all varNames from varUnits DF column
-        varsLoc = (expNames[0],fcTDeltas[0],cyDTimes[0],ObsSpaceGrp,varNames,diagNames[0],binVals[0])
-        varUnitss = osDF.loc[varsLoc,'varUnits'].tolist()
+        varsLoc = (expNames[0],fcTDeltas[0],cyDTimes[0],DiagSpaceGrp,varNames,diagNames[0],binVals[0])
+        varUnitss = dsDF.loc[varsLoc,'varUnits'].tolist()
 
         # define first location for simpler extraction of additional info
         ##  bins
         # extract bin information from binVar and binUnits DF columns
-        binsLoc = (expNames[0],fcTDeltas[0],cyDTimes[0],ObsSpaceGrp,varNames[0],diagNames[0],binVals)
-        binVars = osDF.loc[binsLoc,'binVar'].tolist()
-        binUnitss = osDF.loc[binsLoc,'binUnits'].tolist()
+        binsLoc = (expNames[0],fcTDeltas[0],cyDTimes[0],DiagSpaceGrp,varNames[0],diagNames[0],binVals)
+        binVars = dsDF.loc[binsLoc,'binVar'].tolist()
+        binUnitss = dsDF.loc[binsLoc,'binUnits'].tolist()
 
         # convert binVals to numeric type that can be used as axes values
         binNumVals = []
@@ -389,14 +391,11 @@ def plot_stats_timeseries(nproc, myproc):
             else:
                 binNumVals.append(np.NaN)
 
-        if os.path.exists(tmpStatsFile):
-            os.remove(tmpStatsFile)
-
         #==================================
         # Create figures for all diagNames
         #==================================
 
-        OSFigPath = "./"+ObsSpaceName+"_figs"
+        OSFigPath = "./"+DiagSpaceName+"_figs"
         if not os.path.exists(OSFigPath):
             os.mkdir(OSFigPath)
 
@@ -429,8 +428,8 @@ def plot_stats_timeseries(nproc, myproc):
 
             # reduce the index space by two dimensions
             #            expName     fcTDelta    cyDTime                    varName              binVal
-            diagLoc = (slice(None),slice(None),slice(None),ObsSpaceGrp[0],slice(None),diagName,slice(None))
-            diagDF = osDF.xs(diagLoc)
+            diagLoc = (slice(None),slice(None),slice(None),DiagSpaceGrp[0],slice(None),diagName,slice(None))
+            diagDF = dsDF.xs(diagLoc)
 
 
 
@@ -530,7 +529,7 @@ def plot_stats_timeseries(nproc, myproc):
                                                 ymin = ymin, ymax = ymax )
 
                             filename = OSFigPath+'/SNAPSHOTCY_TSeries_%sday_%s_%s_%s'%( \
-                                       fcTDeltas_dir[ifc],ObsSpaceName, \
+                                       fcTDeltas_dir[ifc],DiagSpaceName, \
                                        diagName,statName)+filebin
 
                             pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -599,7 +598,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         # save each figure
                         filename = OSFigPath+'/AGGREGATEFC_TSeries_%s-%sday_%s_%s_%s'%( \
-                                   fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
+                                   fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName, \
                                    fcDiagName,statName)+filebin
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -698,7 +697,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         # save each figure
                         filename = OSFigPath+'/AGGREGATEFC_DIFFCI_TSeries_%s-%sday_%s_%s_%s'%( \
-                                   fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
+                                   fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName, \
                                    fcDiagName,statName)+filebin
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -786,7 +785,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                             expName_file = re.sub("\.","",re.sub("\s+","-",expName))
                             filename = OSFigPath+'/SNAPSHOTFC_TSeries_%s_%s_%s_%s'%( \
-                                       expName_file,ObsSpaceName, \
+                                       expName_file,DiagSpaceName, \
                                        fcDiagName,statName)+filebin
 
                             pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -799,7 +798,7 @@ def plot_stats_timeseries(nproc, myproc):
             selectBinVals1D = pu.namedLatBandsStrVals
             if "SNAPSHOTCY_LAT1" in plotTypes \
                 and len(selectBinVals1D) > 0 \
-                and ObsSpaceGrp[0] != pu.radiance_s:
+                and DiagSpaceGrp[0] != pu.radiance_s:
 
                 print("\nGenerating SNAPSHOTCY_LAT1 figures...")
                 subplot_size = 1.9
@@ -859,7 +858,7 @@ def plot_stats_timeseries(nproc, myproc):
                                 iplot = iplot + 1
 
                         filename = OSFigPath+'/SNAPSHOTCY_LAT1_TSeries_%sday_%s_%s_%s'%( \
-                                   fcTDeltas_dir[ifc],ObsSpaceName, \
+                                   fcTDeltas_dir[ifc],DiagSpaceName, \
                                    diagName,statName)
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -872,7 +871,7 @@ def plot_stats_timeseries(nproc, myproc):
             selectBinVals1D = pu.namedLatBandsStrVals
             if "SNAPSHOTCY_LAT2" in plotTypes \
                 and len(selectBinVals1D) > 0 \
-                and ObsSpaceGrp[0] != pu.radiance_s:
+                and DiagSpaceGrp[0] != pu.radiance_s:
                 print("\nGenerating SNAPSHOTCY_LAT2 figures...")
                 nsubplots = len(selectBinVals1D)*nVars
                 nx = len(selectBinVals1D)
@@ -934,7 +933,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         #expName_file = re.sub("\.","",re.sub("\s+","-",expName))
                         filename = OSFigPath+'/SNAPSHOTCY_LAT2_TSeries_%sday_%s_%s_%s'%( \
-                                   fcTDeltas_dir[ifc],ObsSpaceName, \
+                                   fcTDeltas_dir[ifc],DiagSpaceName, \
                                    diagName,statName)
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -1007,7 +1006,7 @@ def plot_stats_timeseries(nproc, myproc):
                             iplot = iplot + 1
 
                     filename = OSFigPath+'/SNAPSHOTCY_QC_TSeries_%sday_%s_%s_%s'%( \
-                               fcTDeltas_dir[ifc],ObsSpaceName, \
+                               fcTDeltas_dir[ifc],DiagSpaceName, \
                                diagName,statName)
 
                     pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -1120,7 +1119,7 @@ def plot_stats_timeseries(nproc, myproc):
                                     iplot = iplot + 1
 
                             filename = OSFigPath+'/SNAPSHOTCY2D_%s_TSeries_%sday_%s_%s_%s'%( \
-                                       binVar2D,fcTDeltas_dir[ifc],ObsSpaceName, \
+                                       binVar2D,fcTDeltas_dir[ifc],DiagSpaceName, \
                                        diagName,statName)
 
                             pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -1194,7 +1193,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         # save each figure
                         filename = OSFigPath+'/AGGREGATEFC2D_%s_TSeries_%s-%sday_%s_%s_%s'%( \
-                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
+                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName, \
                                    fcDiagName,statName)
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS)
@@ -1265,7 +1264,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         # save each figure
                         filename = OSFigPath+'/AGGREGATEFCPROFILE_%s_TSeries_%s-%sday_%s_%s_%s'%( \
-                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
+                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName, \
                                    fcDiagName,statName)
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
@@ -1356,7 +1355,7 @@ def plot_stats_timeseries(nproc, myproc):
 
                         # save each figure
                         filename = OSFigPath+'/AGGREGATEFCPROFILE_DIFFCI_%s_TSeries_%s-%sday_%s_%s_%s'%( \
-                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],ObsSpaceName, \
+                                   binVar2D,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName, \
                                    fcDiagName,statName)
 
                         pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
@@ -1369,27 +1368,7 @@ def plot_stats_timeseries(nproc, myproc):
 
         # end diagName loop
 
-    # end ObsSpaceName loop
-
-
-###############################################################################
-def readStatsFile(statsFile):
-# INPUTS
-# statsFile (string) - file containing statistical information
-#
-# OUTPUTS
-# statLines (string) - all lines in file (ascii)
-
-    if not os.path.exists(statsFile):
-        print ('\n\nERROR: statsFile is missing: '+statsFile)
-        os._exit(1)
-
-    fp = open(statsFile, 'r')
-    statLines = []
-    for line in fp:
-        statLines.append(line)
-    fp.close()
-    return statLines
+    # end DiagSpaceName loop
 
 
 ###############################################################################

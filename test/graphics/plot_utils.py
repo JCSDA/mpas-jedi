@@ -3,7 +3,8 @@ import datetime as dt
 import getopt
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.dates import DateFormatter, AutoDateLocator
+from matplotlib.dates import ConciseDateFormatter, DateFormatter, AutoDateLocator
+from netCDF4 import Dataset
 import numpy as np
 import os
 import pandas as pd
@@ -185,6 +186,7 @@ badFlagNames = ['missing', 'preQC',   'bounds',  'domain', \
 # bin dictionary used for all bin groups
 #========================================
 
+# NC variable names for IODA ObsSpace's
 vNameStr = 'varName'
 varQC = vNameStr+'@EffectiveQC'
 prsMeta = 'air_pressure@MetaData'
@@ -194,70 +196,77 @@ latMeta = 'latitude@MetaData'
 
 goodBinNames = goodFlagNames
 
+## NC variable names for MPAS Model
+#altModel = 'zgrid' # --> needs to be interpolated to nVertLevels instead of nVertLevelsP1
+#prsModel = 'pressure_p'
+#
+#latModel = 'latCell'
+#lonModel = 'lonCell'
+
 binGrpDict = { \
 #    #name            binVars ... followed by dictionary defitions of each binDesc
-    'qc':      { 'variables': [varQC] \
-                 , 'good':      { 'filters': [\
-                                    {'where': notEqualBound, 'args': [varQC], 'bounds': goodFlags, \
-                                     'apply_to': nonObsDiags}], \
-                                  'labels': goodBinNames } \
-                 , 'bad':       { 'filters': [\
-                                    {'where': notEqualBound, 'args': [varQC], 'bounds': badFlags, \
-                                     'apply_to': nonObsDiags} \
-                                  , {'where': equalBound,    'args': [varQC], 'bounds': badFlags, \
-                                     'mask_value': 0.0, 'apply_to': nonObsDiags}] \
-                              , 'labels': badFlagNames } \
-                 } \
-  , 'pressure':  { 'variables': [varQC,prsMeta] \
-                 , 'default':   { 'filters': [\
-                                    {'where': lessBound,       'args': [prsMeta], 'bounds': pressureMinBounds} \
-                                  , {'where': greatEqualBound, 'args': [prsMeta], 'bounds': pressureMaxBounds} \
-                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(pressureBinStrVals), \
-                                     'apply_to': nonObsDiags} ] \
-                                , 'labels': pressureBinStrVals } \
-                 } \
-  , 'altitude':  { 'variables': [varQC,altMeta] \
-                 , 'default':   { 'filters': [\
-                                    {'where': lessBound,       'args': [altMeta], 'bounds': altitudeMinBounds} \
-                                  , {'where': greatEqualBound, 'args': [altMeta], 'bounds': altitudeMaxBounds} \
-                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(altitudeBinStrVals), \
-                                     'apply_to': nonObsDiags} ] \
-                                , 'labels': altitudeBinStrVals } \
-                 } \
-  , 'latband':   { 'variables': [varQC,latMeta] \
-                 , 'NAMED':     { 'filters': [\
-                                    {'where': lessBound,       'args': [latMeta], 'bounds': namedLatBandsMinBounds} \
-                                  , {'where': greatEqualBound, 'args': [latMeta], 'bounds': namedLatBandsMaxBounds} \
-                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(namedLatBandsStrVals), \
-                                     'apply_to': nonObsDiags} ] \
-                                , 'labels': namedLatBandsStrVals } \
-                 , 'NUMERICAL': { 'filters': [\
-                                    {'where': lessBound,       'args': [latMeta], 'bounds': latitudeMinBounds} \
-                                  , {'where': greatEqualBound, 'args': [latMeta], 'bounds': latitudeMaxBounds} \
-                                  , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(latitudeBinStrVals), \
-                                     'apply_to': nonObsDiags} ] \
-                                , 'labels': latitudeBinStrVals } \
-                 } \
-  , 'box':       { 'variables': [varQC,lonMeta,latMeta] \
-                 , 'AFRICA':    nullBinDesc \
-                 , 'ATLANTIC':  nullBinDesc \
-                 , 'AUSTRALIA': nullBinDesc \
-                 , 'CONUS':     { 'filters': [\
-                                    {'where': lessBound,     'args': [lonMeta], 'bounds': [234.0]} \
-                                  , {'where': greatBound,    'args': [lonMeta], 'bounds': [294.0]} \
-                                  , {'where': lessBound,     'args': [latMeta], 'bounds': [ 25.0]} \
-                                  , {'where': greatBound,    'args': [latMeta], 'bounds': [ 50.0]} \
-                                  , {'where': notEqualBound, 'args': [varQC],   'bounds': goodFlags, \
-                                     'apply_to': nonObsDiags} ] \
-                               , 'labels': ['CONUS'] } \
-                 , 'EUROPE':    nullBinDesc \
-                 , 'E_EUROPE':  nullBinDesc \
-                 , 'NAMERICA':  nullBinDesc \
-                 , 'PACIFIC':   nullBinDesc \
-                 , 'SAMERICA':  nullBinDesc \
-                 , 'SE_ASIA':   nullBinDesc \
-                 , 'S_ASIA':    nullBinDesc \
-                  } \
+    'ObsQC':      { 'variables': [varQC] \
+                    , 'good':      { 'filters': [\
+                                       {'where': notEqualBound, 'args': [varQC], 'bounds': goodFlags, \
+                                        'apply_to': nonObsDiags}], \
+                                     'labels': goodBinNames } \
+                    , 'bad':       { 'filters': [\
+                                       {'where': notEqualBound, 'args': [varQC], 'bounds': badFlags, \
+                                        'apply_to': nonObsDiags} \
+                                     , {'where': equalBound,    'args': [varQC], 'bounds': badFlags, \
+                                        'mask_value': 0.0, 'apply_to': nonObsDiags}] \
+                                 , 'labels': badFlagNames } \
+                    } \
+  , 'ObsPressure':  { 'variables': [varQC,prsMeta] \
+                    , 'default':   { 'filters': [\
+                                       {'where': lessBound,       'args': [prsMeta], 'bounds': pressureMinBounds} \
+                                     , {'where': greatEqualBound, 'args': [prsMeta], 'bounds': pressureMaxBounds} \
+                                     , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(pressureBinStrVals), \
+                                        'apply_to': nonObsDiags} ] \
+                                   , 'labels': pressureBinStrVals } \
+                    } \
+  , 'ObsAltitude':  { 'variables': [varQC,altMeta] \
+                    , 'default':   { 'filters': [\
+                                       {'where': lessBound,       'args': [altMeta], 'bounds': altitudeMinBounds} \
+                                     , {'where': greatEqualBound, 'args': [altMeta], 'bounds': altitudeMaxBounds} \
+                                     , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(altitudeBinStrVals), \
+                                        'apply_to': nonObsDiags} ] \
+                                   , 'labels': altitudeBinStrVals } \
+                    } \
+  , 'ObsLatBand':   { 'variables': [varQC,latMeta] \
+                    , 'NAMED':     { 'filters': [\
+                                       {'where': lessBound,       'args': [latMeta], 'bounds': namedLatBandsMinBounds} \
+                                     , {'where': greatEqualBound, 'args': [latMeta], 'bounds': namedLatBandsMaxBounds} \
+                                     , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(namedLatBandsStrVals), \
+                                        'apply_to': nonObsDiags} ] \
+                                   , 'labels': namedLatBandsStrVals } \
+                    , 'NUMERICAL': { 'filters': [\
+                                       {'where': lessBound,       'args': [latMeta], 'bounds': latitudeMinBounds} \
+                                     , {'where': greatEqualBound, 'args': [latMeta], 'bounds': latitudeMaxBounds} \
+                                     , {'where': notEqualBound,   'args': [varQC],   'bounds': goodFlags*len(latitudeBinStrVals), \
+                                        'apply_to': nonObsDiags} ] \
+                                   , 'labels': latitudeBinStrVals } \
+                    } \
+  , 'ObsBox':       { 'variables': [varQC,lonMeta,latMeta] \
+                    , 'AFRICA':    nullBinDesc \
+                    , 'ATLANTIC':  nullBinDesc \
+                    , 'AUSTRALIA': nullBinDesc \
+                    , 'CONUS':     { 'filters': [\
+                                       {'where': lessBound,     'args': [lonMeta], 'bounds': [234.0]} \
+                                     , {'where': greatBound,    'args': [lonMeta], 'bounds': [294.0]} \
+                                     , {'where': lessBound,     'args': [latMeta], 'bounds': [ 25.0]} \
+                                     , {'where': greatBound,    'args': [latMeta], 'bounds': [ 50.0]} \
+                                     , {'where': notEqualBound, 'args': [varQC],   'bounds': goodFlags, \
+                                        'apply_to': nonObsDiags} ] \
+                                  , 'labels': ['CONUS'] } \
+                    , 'EUROPE':    nullBinDesc \
+                    , 'E_EUROPE':  nullBinDesc \
+                    , 'NAMERICA':  nullBinDesc \
+                    , 'PACIFIC':   nullBinDesc \
+                    , 'SAMERICA':  nullBinDesc \
+                    , 'SE_ASIA':   nullBinDesc \
+                    , 'S_ASIA':    nullBinDesc \
+                     } \
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g., 
 #  , 'polygon':   { 'variables': [varQC,lonMeta,latMeta] \
 #                 , 'CONUS':    { 'filters': [ \
@@ -267,79 +276,130 @@ binGrpDict = { \
 #                                 {'where': outsideRegion, 'args': [lonMeta,latMeta], 'bounds': ['EUROPE']}], \
 #                               , 'labels': ['EUROPE'] } \
 #                  } \
+#TODO: enable binning in MPAS Model space
+#  , 'ModelPressure':  { 'variables': [varQC,prsMeta] \
+#                      , 'default':   { 'filters': [\
+#                                         {'where': lessBound,       'args': [prsMeta], 'bounds': pressureMinBounds} \
+#                                       , {'where': greatEqualBound, 'args': [prsMeta], 'bounds': pressureMaxBounds} ] \
+#                                     , 'labels': pressureBinStrVals } \
+#                      } \
+#  , 'ModelAltitude':  { 'variables': [altModel] \
+#                      , 'default':   { 'filters': [\
+#                                         {'where': lessBound,       'args': [altModel], 'bounds': altitudeMinBounds} \
+#                                       , {'where': greatEqualBound, 'args': [altModel], 'bounds': altitudeMaxBounds} ] \
+#                                     , 'labels': altitudeBinStrVals } \
+#                      } \
+#  , 'ModelLatBand':   { 'variables': [latModel] \
+#                      , 'NAMED':     { 'filters': [\
+#                                         {'where': lessBound,       'args': [latModel], 'bounds': namedLatBandsMinBounds} \
+#                                       , {'where': greatEqualBound, 'args': [latModel], 'bounds': namedLatBandsMaxBounds} ] \
+#                                     , 'labels': namedLatBandsStrVals } \
+#                      , 'NUMERICAL': { 'filters': [\
+#                                         {'where': lessBound,       'args': [latModel], 'bounds': latitudeMinBounds} \
+#                                       , {'where': greatEqualBound, 'args': [latModel], 'bounds': latitudeMaxBounds} ] \
+#                                     , 'labels': latitudeBinStrVals } \
+#                      } \
+#  , 'ModelBox':       { 'variables': [lonModel,latModel] \
+#                      , 'AFRICA':    nullBinDesc \
+#                      , 'ATLANTIC':  nullBinDesc \
+#                      , 'AUSTRALIA': nullBinDesc \
+#                      , 'CONUS':     { 'filters': [\
+#                                         {'where': lessBound,     'args': [lonModel], 'bounds': [234.0]} \
+#                                       , {'where': greatBound,    'args': [lonModel], 'bounds': [294.0]} \
+#                                       , {'where': lessBound,     'args': [latModel], 'bounds': [ 25.0]} \
+#                                       , {'where': greatBound,    'args': [latModel], 'bounds': [ 50.0]} ] \
+#                                    , 'labels': ['CONUS'] } \
+#                      , 'EUROPE':    nullBinDesc \
+#                      , 'E_EUROPE':  nullBinDesc \
+#                      , 'NAMERICA':  nullBinDesc \
+#                      , 'PACIFIC':   nullBinDesc \
+#                      , 'SAMERICA':  nullBinDesc \
+#                      , 'SE_ASIA':   nullBinDesc \
+#                      , 'S_ASIA':    nullBinDesc \
+#                       } \
 }
 
 
-#=====================
-# ObsSpace definitions
-#=====================
+#=======================
+# DiagSpace definitions
+# e.g. IODA ObsSpace
+#      MPAS ModelSpace
+#=======================
 
 nullBinGrps = [[miss_s,[]]]
-profPressBinGrps = [ ['qc',['good','bad']], \
-                     ['latband',['NAMED','NUMERICAL']], \
-                     ['box',['CONUS']], \
-                     ['pressure',['default']] \
+profPressBinGrps = [ ['ObsQC',['good','bad']], \
+                     ['ObsLatBand',['NAMED','NUMERICAL']], \
+                     ['ObsBox',['CONUS']], \
+                     ['ObsPressure',['default']] \
                    ]
-profAltBinGrps   = [ ['qc',['good','bad']], \
-                     ['latband',['NAMED','NUMERICAL']], \
-                     ['box',['CONUS']], \
-                     ['altitude',['default']] \
+profAltBinGrps   = [ ['ObsQC',['good','bad']], \
+                     ['ObsLatBand',['NAMED','NUMERICAL']], \
+                     ['ObsBox',['CONUS']], \
+                     ['ObsAltitude',['default']] \
                    ]
-radianceBinGrps  = [ ['qc',['good','bad']], \
-                     ['latband',['NAMED','NUMERICAL']], \
-                     ['box',['CONUS']] \
+radianceBinGrps  = [ ['ObsQC',['good','bad']], \
+                     ['ObsLatBand',['NAMED','NUMERICAL']], \
+                     ['ObsBox',['CONUS']] \
                    ]
+#modelBinGrps     = [ ['ModelLatBand',['NAMED','NUMERICAL']], \
+#                     ['ModelBox',['CONUS']], \
+#                     ['ModelAltitude',['default']] \
+#                     ['ModelPressure',['default']] \
+#                   ]
 
-nullObsSpaceInfo = {'ObsSpaceGrp': miss_s,    'process': 0, 'binGrps': nullBinGrps }
+nullDiagSpaceInfo = {'DiagSpaceGrp': miss_s,    'process': False, 'binGrps': nullBinGrps }
 
 profile_s = 'profile'
 radiance_s = 'radiance'
+model_s = 'MPAS'
 
-# columns: ObsSpace name (YAML)    ObsSpaceGrp              process?                  binGrps
-ObsSpaceDict_base = { \
-    'sondes':                {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
-  , 'aircraft':              {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
-  , 'satwind':               {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
-  , 'gnssroref':             {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
-  , 'gnssrobndropp1d':       {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
-  , 'gnssro':                {'ObsSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
-  , 'airs_aqua':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+# columns: DiagSpace name (YAML)    DiagSpaceGrp              process?                  binGrps
+DiagSpaceDict = { \
+    'sondes':                {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'aircraft':              {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'satwind':               {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profPressBinGrps } \
+  , 'gnssroref':             {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'gnssrobndropp1d':       {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'gnssro':                {'DiagSpaceGrp': profile_s,  'process': True, 'binGrps': profAltBinGrps   } \
+  , 'airs_aqua':             {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [1,6,7] } \
-  , 'amsua_n15':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_n15':             {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [5,6,7,8,9] } \
-  , 'amsua_n18':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_n18':             {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [5,6,7,8,9] } \
-  , 'amsua_n19':             {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_n19':             {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [5,6,7,9] } \
-  , 'amsua_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_metop-a':         {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [5,6,9] } \
-  , 'amsua_metop-b':         {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_metop-b':         {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [] } \
-  , 'amsua_aqua':            {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_aqua':            {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [8,9] } \
-  , 'amsua_n19--ch1-3,15':   {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_n19--ch1-3,15':   {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [1,2,3,15] } \
-  , 'amsua_n19--ch4-7,9-14': {'ObsSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
+  , 'amsua_n19--ch4-7,9-14': {'DiagSpaceGrp': radiance_s, 'process': True, 'binGrps': radianceBinGrps, \
                               'channels': [4,5,6,7,9,10,11,12,13,14] } \
-  , 'cris-fsr_npp':          {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'cris-fsr_npp':          {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': [24,26,28,32,37,39] } \
-  , 'hirs4_metop-a':         {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'hirs4_metop-a':         {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,16) } \
-  , 'iasi_metop-a':          {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'iasi_metop-a':          {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': [16,29,32,35,38,41,44] } \
-  , 'mhs_n19':               {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'mhs_n19':               {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,6) } \
-  , 'seviri_m08':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'seviri_m08':            {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': [5] } \
-  , 'sndrd1_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'sndrd1_g15':            {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,16) } \
-  , 'sndrd2_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'sndrd2_g15':            {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,16) } \
-  , 'sndrd3_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'sndrd3_g15':            {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,16) } \
-  , 'sndrd4_g15':            {'ObsSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
+  , 'sndrd4_g15':            {'DiagSpaceGrp': radiance_s, 'process': False, 'binGrps': radianceBinGrps, \
                               'channels': range(1,16) } \
+#  , 'mpas-gfs':              {'DiagSpaceGrp': model_s,    'process': False, 'binGrps': modelBinGrps    } \
     }
+
 
 #============================
 # figure/plotting definitions
@@ -357,6 +417,8 @@ plotColors = ['k','b','g','r','c','m', \
 plotMarkers = ['*','*','*','*','*','*', \
                '+','+','+','+','+','+']
 
+
+###############################################################################
 def setup_fig(nx=1, ny=1, inch_size=1.5, aspect=1.0, ybuffer=True):
 #INPUTS
 # nx - number of subplots in x direction
@@ -376,7 +438,10 @@ def setup_fig(nx=1, ny=1, inch_size=1.5, aspect=1.0, ybuffer=True):
 
     return(fig)
 
-def finalize_fig(fig, filename='temporary_figure', filetype='png', ybuffer=True, xbuffer=False):
+
+###############################################################################
+def finalize_fig(fig, filename='temporary_figure', filetype='png', \
+                 ybuffer=True, xbuffer=False):
 #INPUTS
 # fig - plt.figure() type
 # filename - name of figure file without extension
@@ -395,6 +460,8 @@ def finalize_fig(fig, filename='temporary_figure', filetype='png', ybuffer=True,
         fig.savefig(filename+'.png', dpi=200,bbox_inches='tight')
     plt.close(fig)
 
+
+###############################################################################
 def TDeltas2Seconds(x_):
     if isinstance(x_[0],dt.timedelta):
         x = []
@@ -403,6 +470,8 @@ def TDeltas2Seconds(x_):
         return x
     return x_
 
+
+###############################################################################
 def timeTicks(x, pos):
     d = dt.timedelta(seconds=x)
     if d.seconds > 0:
@@ -415,6 +484,8 @@ DTimeLocator = AutoDateLocator()
 DTimeFormatter = ConciseDateFormatter(DTimeLocator) #DateFormatter('%m-%d_%HZ')
 TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
 
+
+###############################################################################
 def format_x_for_dates(ax,x):
     if isinstance(x[0],dt.datetime):
         ax.xaxis.set_major_locator(DTimeLocator)
@@ -437,6 +508,7 @@ def format_x_for_dates(ax,x):
         ax.set_xlabel('Lead Time',fontsize=4)
 
 
+###############################################################################
 def get_clean_ax_limits(xmin_=np.NaN,xmax_=np.NaN,plotVals=[np.NaN], \
                         signdef=False,symmetric=True):
     if not np.isnan(xmin_) and not np.isnan(xmax_):
@@ -475,6 +547,8 @@ def uniqueMembers(listVar):
             output.append(x)
     return output
 
+
+#########################################################
 def isfloat(value):
 #PURPOSE determine if value can be converted to float
   try:
@@ -483,6 +557,8 @@ def isfloat(value):
   except ValueError:
     return False
 
+
+#########################################################
 def isint(value):
 #PURPOSE determine if value can be converted to int
   try:
@@ -493,10 +569,8 @@ def isint(value):
 
 
 #======================================
-# multi-population statistical grouping
+# statistics and basic aggregation
 #======================================
-
-# basic aggregation
 
 #Ordered list of statistics available in ASCII stats_* files...
 # (1) that can be aggregated
@@ -507,6 +581,10 @@ allFileStats = aggregatableFileStats
 # (2) that can be sampled with bootstrap
 sampleableAggStats = ['Count','Mean','MS','RMS']
 
+fileStatAttributes = ['DiagSpaceGrp','varName','varUnits','diagName','binVar','binVal','binUnits']
+
+
+###############################################################################
 def calcStats(array_f):
     # array_f (float(:)) - 1-d array of float values for which statistics should be calculated
 
@@ -528,6 +606,47 @@ def calcStats(array_f):
     return STATS
 
 
+###############################################################################
+def write_stats_nc(statSpace,statsDict):
+
+    statsFile = 'stats_'+statSpace+'.nc'
+    if os.path.exists(statsFile):
+        os.remove(statsFile)
+
+    ncid = Dataset(statsFile, 'w', format='NETCDF4')
+    ncid.description = statSpace+" diagnostic statistics"
+
+    nrows = len(statsDict[fileStatAttributes[0]])
+    ncid.createDimension('nrows', nrows)
+
+    for attribName in fileStatAttributes:
+        attribHandle = ncid.createVariable(attribName,str,'nrows')
+        attribHandle[:] = np.array(statsDict[attribName], dtype=object)
+
+    for statName in allFileStats:
+        statHandle = ncid.createVariable(statName,'f4','nrows')  #'f8'
+        statHandle[:] = statsDict[statName]
+
+    ncid.close()
+
+
+###############################################################################
+def read_stats_nc(statsFile):
+
+    ncid = Dataset(statsFile, 'r')
+
+    statsDict = {}
+    for attribName in fileStatAttributes:
+        statsDict[attribName] = np.asarray(ncid.variables[attribName])
+    for statName in allFileStats:
+        statsDict[statName] = np.asarray(ncid.variables[statName])
+
+    ncid.close()
+
+    return statsDict
+
+
+###############################################################################
 def aggStatsDF(x):
 #PURPOSE: aggregate DataFrame containing aggregatableFileStats
 # INPUT: x - pandas DataFrame containing the subpopulation stats
@@ -576,16 +695,22 @@ def aggStatsDict(x_): #, stats = aggregatableFileStats):
 
     return y
 
-# bootstrapping
+
+#============================================
+# bootstrapping for confidence intervals (CI)
+#============================================
 
 cimean = 'VALUE'
 cimin = 'LO'
 cimax = 'HI'
 ciTraits = [cimean, cimin, cimax]
 
+################################################################################
 def identityFunc(x):
     return x
 
+
+################################################################################
 def rmsFunc(x, axis=0):
     return np.sqrt(np.nanmean(np.square(x),axis=axis))
 
