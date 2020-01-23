@@ -58,11 +58,11 @@ def readdata():
             elif (test == 'cycling'):
                 allobstypes.append(files[:-19])
 
-    #get obs types with 'process': True from dictionary ObsSpaceDict_base
+    #get obs types with 'process': True from dictionary DiagSpaceDict
     ObsSpaceDict = {}
     obsfiles_prefix = []
-    for (key,baseval) in pu.ObsSpaceDict_base.items():
-        if baseval['process']:
+    for (key,baseval) in pu.DiagSpaceDict.items():
+        if baseval['process'] and baseval['DiagSpaceGrp'] != pu.model_s:
             ObsSpaceDict = deepcopy(baseval)
             obsfiles_prefix.append(key)
 
@@ -95,7 +95,7 @@ def readdata():
             if lonnc[i] > 180:
                 lonnc[i] = lonnc[i]-360
 
-        ObsSpaceInfo = pu.ObsSpaceDict_base.get(obstype,pu.nullObsSpaceInfo)
+        ObsSpaceInfo = pu.DiagSpaceDict.get(obstype,pu.nullDiagSpaceInfo)
         channels = ObsSpaceInfo.get('channels',[pu.miss_i])
         #select variables with the suffix 'ObsValue'
         if len(channels) == 0:

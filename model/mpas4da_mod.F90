@@ -225,7 +225,7 @@ use mpas_constants_mod
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_b)
                   r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
-                  write(0,*)'Operator add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!                  write(0,*)'Operator add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r3d_ptr_b)
@@ -487,7 +487,7 @@ use mpas_constants_mod
       ! Iterate over allFields and copy those with names matching fieldname into subFields
       !
       call mpas_pool_begin_iteration(allFields)
-      write(0,*)'Before iterating'
+!      write(0,*)'Before iterating'
 
       do while ( mpas_pool_get_next_member(allFields, poolItr) )
          ! Pools may in general contain dimensions, namelist options, fields, or other pools,
@@ -586,7 +586,7 @@ use mpas_constants_mod
 
       nsize0 = 0
       nsize  = size(fieldname)
-      write(0,*)'da_common_vars size: ',nsize
+!      write(0,*)'da_common_vars size: ',nsize
       call mpas_pool_begin_iteration(pool_a)
 
          do while ( mpas_pool_get_next_member(pool_a, poolItr) )
@@ -608,7 +608,7 @@ use mpas_constants_mod
             end if
          end do
 
-      write(0,*)'da_common_vars = ',nsize0
+!      write(0,*)'da_common_vars = ',nsize0
 
    end function da_common_vars
 
@@ -1206,11 +1206,11 @@ use mpas_constants_mod
        isDecomposed = .false.
        return
     end if
-    if ( isDecomposed ) then 
-       write(*,*)'is Decomposed ',trim(dimName)
-    else
-       write(*,*)'is not Decomposed ',trim(dimName)
-    end if
+!    if ( isDecomposed ) then 
+!       write(*,*)'is Decomposed ',trim(dimName)
+!    else
+!       write(*,*)'is not Decomposed ',trim(dimName)
+!    end if
 
     end function isDecomposed
    
@@ -1341,9 +1341,9 @@ use mpas_constants_mod
                   pstat(3,jj) = sqrt( globalSum / dimtot_global )
                end if
 
-               write(0,*)'Variable: ',trim(poolItr % memberName),jj
-               write(0,*)'Min/Max stat: ',pstat(1,jj),pstat(2,jj),pstat(3,jj)
-               write(0,*)'' 
+!               write(0,*)'Variable: ',trim(poolItr % memberName),jj
+!               write(0,*)'Min/Max stat: ',pstat(1,jj),pstat(2,jj),pstat(3,jj)
+!               write(0,*)'' 
 
             end if
          end if
@@ -1401,7 +1401,7 @@ use mpas_constants_mod
             if (poolItr % memberType == MPAS_POOL_FIELD) then
             
                ndims = poolItr % nDims
-               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
+!               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
 
                if (ndims == 1) then
                   call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
@@ -1619,8 +1619,8 @@ use mpas_constants_mod
         s    = inString2(18:19)
      end if
 
-     write(*,*)'cvt_oopsmpas_date instring: ',trim(YYYY),trim(MM),trim(DD),trim(h),trim(m),trim(s)
-     write(*,*)'cvt_oopsmpas_date input ',trim(instring2)
+!     write(*,*)'cvt_oopsmpas_date instring: ',trim(YYYY),trim(MM),trim(DD),trim(h),trim(m),trim(s)
+!     write(*,*)'cvt_oopsmpas_date input ',trim(instring2)
 
      write(outString,*) ''
      instring = trim(outstring2)     
@@ -1661,7 +1661,7 @@ use mpas_constants_mod
      end do
 
      outString2 = trim(outString)
-     write(*,*)'cvt_oopsmpas_date output ',trim(outstring2)
+!     write(*,*)'cvt_oopsmpas_date output ',trim(outstring2)
 
   end subroutine cvt_oopsmpas_date
 

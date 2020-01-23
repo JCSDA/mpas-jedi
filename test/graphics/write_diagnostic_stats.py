@@ -46,10 +46,9 @@ def write_diag_stats(nproc, myproc):
 
     # Assign processors round-robin to each ObsSpace name
     ObsSpaceDict = {}
-    for ii, (key,baseval) in enumerate(pu.ObsSpaceDict_base.items()):
-        val = deepcopy(baseval)
-        if ii%nproc != myproc: continue
-        ObsSpaceDict[key] = val
+    for ii, (key,baseval) in enumerate(pu.DiagSpaceDict.items()):
+        if ii%nproc != myproc or baseval['DiagSpaceGrp'] == pu.model_s: continue
+        ObsSpaceDict[key] = deepcopy(baseval)
 
     obsoutfiles = []
     for files in os.listdir(diagdir):
@@ -87,10 +86,10 @@ def write_diag_stats(nproc, myproc):
         # Determine ObsSpace from expt_ObsSpace string
         expt_parts = expt_obs.split("_")
         nstr = len(expt_parts)
-        ObsSpaceInfo = pu.nullObsSpaceInfo
+        ObsSpaceInfo = pu.nullDiagSpaceInfo
         for i in range(0,nstr):
             ObsSpaceName_ = '_'.join(expt_parts[i:nstr])
-            ObsSpaceInfo_ = ObsSpaceDict.get( ObsSpaceName_,pu.nullObsSpaceInfo)
+            ObsSpaceInfo_ = ObsSpaceDict.get( ObsSpaceName_,pu.nullDiagSpaceInfo)
             if ObsSpaceInfo_['process']:
                 ObsSpaceName = ObsSpaceName_
                 ObsSpaceInfo = ObsSpaceInfo_
@@ -99,7 +98,7 @@ def write_diag_stats(nproc, myproc):
 
         pu.proc_print(nproc,myproc,"write_diag_stats: EXPERIMENT_OBSSPACE =  "+expt_obs)
 
-        ObsSpaceGrp = ObsSpaceInfo['ObsSpaceGrp']
+        ObsSpaceGrp = ObsSpaceInfo['DiagSpaceGrp']
         binGrps = ObsSpaceInfo['binGrps']
 
         # compile list of unique variables needed for binning
@@ -127,7 +126,7 @@ def write_diag_stats(nproc, myproc):
             uniqBinGrps.append(''.join(varGrp.split("@")[-1]))
 
         #Extract binning variables (e.g., vertical coordinate, latitude) 
-        fileBinVarsVals = accumulateVarNC(uniqBinVarGrps,ObsSpaceFiles)
+        fileBinVarsVals = collectVarNC(uniqBinVarGrps,ObsSpaceFiles)
         #Convert air_pressure from Pa to hPa if needed
         for ivar, varName in enumerate(uniqBinVars):
             if varName == 'air_pressure' and np.max(fileBinVarsVals[ivar]) > 10000.0:
@@ -154,6 +153,12 @@ def write_diag_stats(nproc, myproc):
         #Create a new stats file for exob_group
         newFile = True
 
+        statsDict = {}
+        for attribName in pu.fileStatAttributes:
+            statsDict[attribName] = []
+        for statName in pu.allFileStats:
+            statsDict[statName] = []
+
         # Loop over variables with omb suffix
         for ivar, depbgName in enumerate(bglist):
             varName = ''.join(depbgName.split("@")[:-1])
@@ -162,7 +167,7 @@ def write_diag_stats(nproc, myproc):
             depanName=''.join(depbgName.split("@")[:-1])+'@'+depan_var
             #print(nproc,myproc,"obs="+obsName+"depbgName="+depbgName+"depan="+depanName)
 
-            tmp = accumulateVarNC([obsName, depbgName, depanName],ObsSpaceFiles)
+            tmp = collectVarNC([obsName, depbgName, depanName],ObsSpaceFiles)
             obsVals = tmp[0]
             ombVals = np.negative(tmp[1]) # omb = (-) depbg
             omaVals = np.negative(tmp[2]) # oma = (-) depan
@@ -171,7 +176,7 @@ def write_diag_stats(nproc, myproc):
             for ivar, varGrp in enumerate(uniqBinVarGrps):
                 if uniqBinVars[ivar]==pu.vNameStr:
                     varGrpSub = re.sub(pu.vNameStr,varName,varGrp)
-                    tmp = accumulateVarNC([varGrpSub],ObsSpaceFiles)
+                    tmp = collectVarNC([varGrpSub],ObsSpaceFiles)
                     fileBinVarsVals[ivar] = tmp[0]
 
             if ObsSpaceGrp == pu.radiance_s:
@@ -266,11 +271,30 @@ def write_diag_stats(nproc, myproc):
                                     pu.proc_print(nproc,myproc,'\n\nERROR: mask is incorrectly defined for '\
                                                   +diagName+" "+binGrpKey+" "+binKey+" "+binVal)
                                     os._exit(1)
+                            #END binFilters LOOP
 
-                            newFile = write_stats(expt_obs, ObsSpaceGrp, varShortName, varUnits, diagName, \
-                                                  binVar, binVal, binUnits, binnedDiagnostic, newFile)
+                            statsDict['DiagSpaceGrp'].append(ObsSpaceGrp)
+                            statsDict['varName'].append(varShortName)
+                            statsDict['varUnits'].append(varUnits)
+                            statsDict['diagName'].append(diagName)
+                            statsDict['binVar'].append(binVar)
+                            statsDict['binVal'].append(binVal)
+                            statsDict['binUnits'].append(binUnits)
 
-def accumulateVarNC(varNames,ncFiles):
+                            statsVal = pu.calcStats(binnedDiagnostic)
+                            for statName in pu.allFileStats:
+                                statsDict[statName].append(statsVal[statName])
+
+                        #END binVals LOOP
+                    #END binKeys LOOP
+                #END binGrps LOOP
+            #END diagNames LOOP
+        #END bglist LOOP
+
+        pu.write_stats_nc(expt_obs,statsDict)
+        
+
+def collectVarNC(varNames,ncFiles):
 # varNames (string) - list of variables desired from the ncFiles
 # ncFiles (string)  - list of netcdf files to be read (e.g., from multiple processor/experiment outputs)
 
@@ -284,51 +308,6 @@ def accumulateVarNC(varNames,ncFiles):
             if varName in nc.variables:
                 varsVals[ivar] = np.append( varsVals[ivar], nc.variables[varName] )
     return varsVals
-
-def write_stats(ObsSpace, ObsSpaceGrp, varName, varUnits, diagName, \
-                binVar, binVal, binUnits, array_f, newFile):
-# ObsSpace (string)      - ObsSpace name (e.g., sonde)
-# ObsSpaceGrp (string)   - group of the ObsSpace (e.g., profile, radar, radiance)
-# varName (string)       - observed variable associated with the diagnostic
-# varUnits (string)      - units of the variable
-# diagName (string)      - name of the diagnostic (e.g., 'omb')
-# binVar (string)        - binning variable (e.g., altitude)
-# binVal (string)        - name of this bin
-# binUnits (string)      - units of binning variable
-# array_f (float(:))     - 1-d array of float values for which statistics should be calculated
-# newFile (logical)      - whether a new file should be created
-
-    statsFile = 'stats_'+ObsSpace+'.txt'
-    if newFile and os.path.exists(statsFile):
-        os.remove(statsFile)
-
-    fp = open(statsFile, 'a')
-
-    #TODO: use binary/netcdf or other non-ASCII format
-    line = ObsSpaceGrp          \
-           +pu.csvSEP+varName   \
-           +pu.csvSEP+varUnits  \
-           +pu.csvSEP+diagName  \
-           +pu.csvSEP+binVar    \
-           +pu.csvSEP+binVal    \
-           +pu.csvSEP+binUnits
-
-    STATS = pu.calcStats(array_f)
-
-    for statName in pu.allFileStats:
-        if statName == "Count":
-            line = line+pu.csvSEP+"{:d}".format(STATS[statName])
-        else:
-            line = line+pu.csvSEP+"{:.8e}".format(STATS[statName])
-
-    fp.write( line+"\n")
-
-    fp.close()
-
-    if os.path.exists(statsFile):
-        return False
-    else:
-        return True
 
 #================================
 #================================

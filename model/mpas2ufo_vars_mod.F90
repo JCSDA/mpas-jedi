@@ -677,8 +677,8 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
    call mpas_pool_create_pool(convFields)
 
    do ivar=1, nfield
-     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, &
-               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+!     write(*,*) 'convert_mpas_field2ufo  :inside do/select case, &
+!               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -1084,8 +1084,8 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
    call mpas_pool_create_pool(convFields_tl)
 
    do ivar=1, nfield
-     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, &
-               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+!     write(*,*) 'convert_mpas_field2ufoTL:inside do/select case, &
+!               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 
@@ -1326,8 +1326,8 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
    real (kind=kind_real) :: kgkg_kgm2 !-- for var_clw, var_cli
 
    do ivar=1, nfield
-     write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, &
-               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
+!     write(*,*) 'convert_mpas_field2ufoAD: inside do/select case, &
+!               & ivar, trim(fieldname(ivar))=',ivar,trim(fieldname(ivar))
 
      select case (trim(fieldname(ivar)))
 

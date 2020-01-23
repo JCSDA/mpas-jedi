@@ -90,19 +90,19 @@ subroutine geo_setup(self, f_conf)
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
-   write(*,*)' ==> create geom'
+!   write(*,*)' ==> create geom'
 
    self % corelist => run_corelist
    self % domain   => run_domain
 
-   if (associated(self % domain)) then
-       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
-   end if
-   if (associated(self % corelist)) then
-       write(*,*)'inside geom: geom % corelist associated'
-   else
-       write(*,*)'inside geom: geom % corelist not associated'
-   end if
+!   if (associated(self % domain)) then
+!       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
+!   end if
+!   if (associated(self % corelist)) then
+!       write(*,*)'inside geom: geom % corelist associated'
+!   else
+!       write(*,*)'inside geom: geom % corelist not associated'
+!   end if
 
    !  These pool accesses refer to memory (local+halo) for a single MPAS block (standard)
    block_ptr => self % domain % blocklist
@@ -185,7 +185,7 @@ subroutine geo_setup(self, f_conf)
    !self % lonEdge = self % lonEdge / deg2rad
 
 
-   write(*,*)'End of geo_setup'
+!   write(*,*)'End of geo_setup'
 
 end subroutine geo_setup
 
@@ -198,12 +198,12 @@ subroutine geo_clone(self, other)
    type(mpas_geom), intent(in) :: self
    type(mpas_geom), intent(inout) :: other
 
-   write(*,*)'====> copy of geom array'
-   if (allocated(other%latCell)) then 
-      write(*,*)'Allocated array other%latCell'
-   else
-      write(*,*)'Not Allocated array other%latCell'
-   end if   
+!   write(*,*)'====> copy of geom array'
+!   if (allocated(other%latCell)) then 
+!      write(*,*)'Allocated array other%latCell'
+!   else
+!      write(*,*)'Not Allocated array other%latCell'
+!   end if   
 
    other % nCellsGlobal  = self % nCellsGlobal
    other % nCells        = self % nCells
@@ -245,18 +245,18 @@ subroutine geo_clone(self, other)
    other % edgesOnCell       = self % edgesOnCell
    other % cellsOnCell       = self % cellsOnCell
 
-   write(*,*)'====> copy of geom corelist and domain'
+!   write(*,*)'====> copy of geom corelist and domain'
 
    if ((associated(other % corelist)).and.(associated(other % domain))) then 
-      write(*,*)'associated(other % corelist), associated(other % domain)'
+!      write(*,*)'associated(other % corelist), associated(other % domain)'
    else
-      write(*,*)'not associated(other % corelist), associated(other % domain)'
+!      write(*,*)'not associated(other % corelist), associated(other % domain)'
       other % corelist => run_corelist
       other % domain   => run_domain
    end if
-   write(*,*)'inside geo_clone: other % domain % domainID = ', other % domain % domainID
+!   write(*,*)'inside geo_clone: other % domain % domainID = ', other % domain % domainID
 
-   write(*,*)'====> copy of geom done'
+!   write(*,*)'====> copy of geom done'
 
 end subroutine geo_clone
 
@@ -268,7 +268,7 @@ subroutine geo_delete(self)
 
    type(mpas_geom), intent(inout) :: self
 
-   write(*,*)'==> delete geom array'
+!   write(*,*)'==> delete geom array'
    if (allocated(self%latCell)) deallocate(self%latCell)
    if (allocated(self%lonCell)) deallocate(self%lonCell)
    if (allocated(self%latEdge)) deallocate(self%latEdge)
@@ -284,9 +284,9 @@ subroutine geo_delete(self)
    if ((associated(self % corelist)).and.(associated(self % domain))) then
       nullify(self % corelist)
       nullify(self % domain)
-      write(*,*)'==> nullify geom corelist and domain'
+!      write(*,*)'==> nullify geom corelist and domain'
    end if
-   write(*,*)'==> delete geom done'
+!   write(*,*)'==> delete geom done'
 
 end subroutine geo_delete
 

@@ -639,9 +639,9 @@ subroutine getvalues(self, locs, vars, gom, traj)
    do ivar = 1, vars%nvars()
       ufo_vars(ivar) = trim(vars%variable(ivar))
    end do
-   write(0,*)'getvalues   : vars%nvars    : ',vars%nvars()
-   write(0,*)'getvalues   : vars%varlist  : ',ufo_vars
-   write(0,*)'getvalues   : nlocs, nlocsg : ',nlocs, ',',  nlocsg
+!   write(0,*)'getvalues   : vars%nvars    : ',vars%nvars()
+!   write(0,*)'getvalues   : vars%varlist  : ',ufo_vars
+!   write(0,*)'getvalues   : nlocs, nlocsg : ',nlocs, ',',  nlocsg
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.

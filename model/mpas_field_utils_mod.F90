@@ -316,23 +316,13 @@ subroutine read_field(self, f_conf, vdate)
    call mpas_set_clock_time(self % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-   write(*,*)'--> read_field: Reading ',trim(filename)
+!   write(*,*)'--> read_field: Reading ',trim(filename)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
       call abor1_ftn(buf)
       write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
    end if
-
-   !==TODO: Speific part when reading parameterEst. for BUMP.
-   !      : They write/read a list of variables directly.
-   if (f_conf%has("no_transf")) then
-      call f_conf%get_or_die("no_transf",ierr)
-      if(ierr .eq. 1) then
-         call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
-        return
-      endif
-   endif
 
    !(1) diagnose pressure
    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)
@@ -440,7 +430,7 @@ subroutine write_field(self, f_conf, vdate)
    !streamID = 'da'
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
-   write(*,*)'--> write_field: writing ',trim(filename)
+!   write(*,*)'--> write_field: writing ',trim(filename)
    call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
    if ( ierr .ne. 0  ) then
      write(buf,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr

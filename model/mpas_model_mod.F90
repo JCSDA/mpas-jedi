@@ -85,7 +85,7 @@ subroutine model_setup(self, geom, f_conf)
 
 !   type(fckit_mpi_comm) :: f_comm
    
-   write(*,*) "---- Inside of Sub. model_setup ----"
+!   write(*,*) "---- Inside of Sub. model_setup ----"
 #define ModelMPAS_setup
 #ifdef ModelMPAS_setup
    self % corelist => geom % corelist
@@ -109,14 +109,14 @@ subroutine model_setup(self, geom, f_conf)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_restart_timestamp_name', config_restart_timestamp_name)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_run_duration', config_run_duration)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_stop_time', config_stop_time)
-   write(*,*)'config_dt: ',config_dt
-   write(*,*)'config_start_time: ',trim(config_start_time)
-   write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
-   write(*,*)'config_run_duration: ',trim(config_run_duration)
-   write(*,*)'config_stop_time: ',trim(config_stop_time)
-   write(0,*)'geom % nCellsGlobal: ',geom % nCellsGlobal
-   write(0,*)'geom % nCells: ',geom % nCells
-   write(0,*)'geom % nCellsSolve: ',geom % nCellsSolve
+!   write(*,*)'config_dt: ',config_dt
+!   write(*,*)'config_start_time: ',trim(config_start_time)
+!   write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
+!   write(*,*)'config_run_duration: ',trim(config_run_duration)
+!   write(*,*)'config_stop_time: ',trim(config_stop_time)
+!   write(0,*)'geom % nCellsGlobal: ',geom % nCellsGlobal
+!   write(0,*)'geom % nCells: ',geom % nCells
+!   write(0,*)'geom % nCellsSolve: ',geom % nCellsSolve
 
 
 
@@ -125,7 +125,7 @@ subroutine model_setup(self, geom, f_conf)
    call f_conf%get_or_die("tstep",str)
    ststep = str
    dtstep = trim(ststep)
-   write(0,*)'ststep: ', ststep
+!   write(0,*)'ststep: ', ststep
    self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
    ! call f_conf%get_or_die("dstep",str)
    ! dstep = str
@@ -144,7 +144,7 @@ subroutine model_delete(self)
    type(mpas_model) :: self
 
    ! For now, all the structure is hold by geom
-   write(*,*)'===> model_delete'
+!   write(*,*)'===> model_delete'
 !   if ((associated(self % corelist)).and.(associated(self % domain))) then
 !      write(*,*)'==> delete model corelist and domain'
 !      call mpas_timer_set_context( self % domain )
@@ -179,7 +179,7 @@ subroutine model_prepare_integration(self, jedi_state)
    type (MPAS_Timeinterval_Type) ::  runDuration
    type (MPAS_Alarm_type), pointer :: alarmPtr
 
-   write(*,*)'===> model_prepare_integration'
+!   write(*,*)'===> model_prepare_integration'
 
    !--------------------------
    ! GD: the present design relies on the hypothesis that we run
@@ -218,19 +218,19 @@ subroutine model_prepare_integration(self, jedi_state)
    stopTime = startTime + runDuration
    call mpas_set_clock_time(self % domain % clock, stopTime, MPAS_STOP_TIME)
    call mpas_get_time(stopTime, dateTimeString=stopTimeStamp)
-   write(*,*)'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
+!   write(*,*)'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
  !--
    nowTime = mpas_get_clock_time(jedi_state % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
-   write(*,*)'MPAS_NOW from jedi_state % clock: ',trim(nowTimeStamp)
+!   write(*,*)'MPAS_NOW from jedi_state % clock: ',trim(nowTimeStamp)
    nowTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
-   write(*,*)'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
+!   write(*,*)'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
 !-- set xtime as startTimeStamp
    call mpas_pool_get_array(self % domain % blocklist % allFields, 'xtime', xtime, 1)
-   write(*,*) 'xtime_old=',xtime
+!   write(*,*) 'xtime_old=',xtime
    xtime = startTimeStamp
-   write(*,*) 'xtime_new=',xtime
+!   write(*,*) 'xtime_new=',xtime
 
    !--------------------------------------------------------------------
    ! Computation of theta_m from theta and qv
