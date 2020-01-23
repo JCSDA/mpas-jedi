@@ -128,8 +128,8 @@ subroutine dirac(self, f_conf)
       end if
    end do
 
-   write(*,*) ' This processor owns ',ndirlocal, &
-              ' dirac forcing locations'
+!   write(*,*) ' This processor owns ',ndirlocal, &
+!              ' dirac forcing locations'
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_increment:dirac non-positive ndir")
@@ -160,7 +160,7 @@ subroutine dirac(self, f_conf)
       ! so we select only those members of the pool that are fields
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
@@ -328,9 +328,9 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
    do ivar = 1, vars%nvars()
       ufo_vars(ivar) = trim(vars%variable(ivar))
    end do
-   write(0,*)'getvalues_tl: vars%nvars   : ',vars%nvars()
-   write(0,*)'getvalues_tl: vars%varlist : ',ufo_vars
-   write(0,*)'getvalues_tl: nlocs        : ',nlocs
+!   write(0,*)'getvalues_tl: vars%nvars   : ',vars%nvars()
+!   write(0,*)'getvalues_tl: vars%varlist : ',ufo_vars
+!   write(0,*)'getvalues_tl: nlocs        : ',nlocs
 
    !------- need some table matching UFO_Vars & related MPAS_Vars
    !------- for example, Tv @ UFO may require Theta, Pressure, Qv.
@@ -467,9 +467,9 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
    do ivar = 1, vars%nvars()
       ufo_vars(ivar) = trim(vars%variable(ivar))
    end do
-   write(0,*)'getvalues_ad: vars%nvars   : ',vars%nvars()
-   write(0,*)'getvalues_ad: vars%varlist : ',ufo_vars
-   write(0,*)'getvalues_ad: nlocs        : ',nlocs
+!   write(0,*)'getvalues_ad: vars%nvars   : ',vars%nvars()
+!   write(0,*)'getvalues_ad: vars%varlist : ',ufo_vars
+!   write(0,*)'getvalues_ad: nlocs        : ',nlocs
 
    !NOTE: This TL routine is called JUST to create "pool_ufo". Their values from TL routine doesn't matter.
    !    : Actually their values are initialized as "zero" in following "do while" loop.
@@ -673,7 +673,7 @@ subroutine increment_to_ug(self, ug, its)
          idx_var = -999
          inc_var_name = trim(poolItr % memberName)
          idx_var = ufo_vars_getindex(self%fldnames,inc_var_name)
-         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
          if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -725,7 +725,7 @@ subroutine increment_from_ug(self, ug, its)
       ! so we select only those members of the pool that are fields
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
