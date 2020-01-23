@@ -18,6 +18,11 @@ public
 ! ------------------------------------------------------------------------------
 
 real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
+real(kind=kind_real), parameter :: ZERO = 0.0_kind_real
+real(kind=kind_real), parameter :: ONE = 1.0_kind_real
+real(kind=kind_real), parameter :: LESSONE = 0.9999999999999999_kind_real
+
+character(len=3), parameter :: OFF = 'off'
 
 ! ------------------------------------------------------------------------------
 

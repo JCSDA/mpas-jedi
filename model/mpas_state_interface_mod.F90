@@ -13,6 +13,7 @@ use kinds, only: kind_real
 use oops_variables_mod
 
 !mpas-jedi
+use mpas_constants_mod
 use mpas_geom_mod
 use mpas_state_mod
 use mpas_field_utils_mod
@@ -25,7 +26,7 @@ use mpas_pool_routines, only: mpas_pool_get_config
 !State read/write/init
 use datetime_mod
 
-!GetValues+traj
+!UFO
 use ufo_locs_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
@@ -56,6 +57,7 @@ type(oops_variables) :: inc_vars
 character(len=StrKIND),  pointer :: config_microp_scheme, &
                                     config_radt_cld_scheme
 logical,  pointer :: config_microp_re
+integer :: ivar
 
 call mpas_field_registry%init()
 call mpas_field_registry%add(c_key_self)
@@ -75,7 +77,8 @@ end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
    call state_vars%push_back("index_nr")
 end if
-if (trim(config_radt_cld_scheme) /= 'off') then
+if ( trim(config_radt_cld_scheme) /= OFF .and. &
+     trim(config_microp_scheme) /= OFF ) then
    call state_vars%push_back("cldfrac")
 end if
 

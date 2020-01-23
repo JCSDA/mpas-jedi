@@ -35,8 +35,9 @@ use mpas_field_routines
 use mpas_pool_routines
 
 !MPAS-JEDI
-use mpas_kinds, only : kind_double
+use mpas_constants_mod
 use mpas_geom_mod
+use mpas_kinds, only : kind_double
 
 private
 
@@ -916,14 +917,31 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
  !        write(*,*) "end-of ",var_clhefr
 
       case ( var_cldfrac ) !-cloud_area_fraction_in_atmosphere_layer
-         call mpas_pool_get_config(geom % domain % blocklist % configs, &
-                                   'config_radt_cld_scheme', &
-                                   config_radt_cld_scheme)
+         call mpas_pool_get_field(subFields, 'temperature', field2d_a)
+         call mpas_duplicate_field(field2d_a, field2d)
 
-         call mpas_pool_get_field(subFields, 'cldfrac', field2d_src) 
-         call mpas_duplicate_field(field2d_src, field2d)
-         if (trim(config_radt_cld_scheme) == 'off') then
-            field2d % array(:,1:ngrid) = 1.0_kind_real
+         call mpas_pool_get_config(geom % domain % blocklist % configs, &
+                                   'config_radt_cld_scheme', config_radt_cld_scheme)
+         call mpas_pool_get_config(geom % domain % blocklist % configs, &
+                                   'config_microp_scheme', config_microp_scheme)
+
+         if ( trim(config_radt_cld_scheme) == OFF .or. &
+              trim(config_microp_scheme) == OFF ) then
+            field2d % array(:,1:ngrid) = LESSONE
+         else
+            call mpas_pool_get_field(subFields, 'cldfrac', field2d_src)
+            field2d % array(:,1:ngrid) = field2d_src % array(:,1:ngrid)
+            where(field2d % array(:,1:ngrid) > LESSONE)
+               field2d % array(:,1:ngrid) = LESSONE
+            end where
+            where(field2d % array(:,1:ngrid) < ZERO)
+               field2d % array(:,1:ngrid) = ZERO
+            end where
+
+            ! Assume clouds fill entire column when subgrid fraction is zero everywhere
+            if ( all(field2d % array(:,1:ngrid) <= ZERO) ) then
+               field2d % array(:,1:ngrid) = LESSONE
+            end if
          end if
          field2d % fieldName = var_cldfrac
          call mpas_pool_add_field(convFields, var_cldfrac, field2d)
