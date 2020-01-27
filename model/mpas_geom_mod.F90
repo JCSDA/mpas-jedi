@@ -178,13 +178,6 @@ subroutine geo_setup(self, f_conf)
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )             
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
-   !> radians to degrees (not here for now)
-   !self % latCell = self % latCell / deg2rad
-   !self % lonCell = self % lonCell / deg2rad
-   !self % latEdge = self % latEdge / deg2rad
-   !self % lonEdge = self % lonEdge / deg2rad
-
-
 !   write(*,*)'End of geo_setup'
 
 end subroutine geo_setup

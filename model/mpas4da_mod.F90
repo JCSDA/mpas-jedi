@@ -1688,7 +1688,7 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    type (field2DReal), pointer, intent(in) :: u_field    ! u wind updated from filter
    type (field2DReal), pointer, intent(in) :: v_field    ! v wind updated from filter
    type (field2DReal), pointer, intent(inout) :: du       ! normal velocity increment on the edges
-   real(kind_real), intent(in) :: lonCell(1:nCells), latCell(1:nCells)    ! normal velocity increment on the edges
+   real(kind_real), intent(in) :: lonCell(1:nCells), latCell(1:nCells) ! lon, lat at cell centers in radians
    real(kind_real), intent(in) :: edgeNormalVectors(:,:)
    integer, intent(in) :: nEdgesOnCell(:), edgesOnCell(:,:)
    integer, intent(in) :: nCells, nVertLevels
@@ -1696,31 +1696,24 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    ! Local variables
    integer, parameter :: R3 = 3
    real(kind_real), dimension(:,:), allocatable :: east, north
-   real(kind_real), dimension(:), allocatable :: lonCell_rad, latCell_rad
    integer  :: iCell, iEdge, jEdge, k
 
    ! allocation
    allocate(east(R3,nCells))
    allocate(north(R3,nCells))
-   allocate(lonCell_rad(nCells))
-   allocate(latCell_rad(nCells))
 
    ! Initialization
    du%array(:,:) = 0.0_kind_real
 
-   ! Back to radians (locally)
-   lonCell_rad = lonCell*deg2rad
-   latCell_rad = latCell*deg2rad
-
    ! Compute unit vectors in east and north directions for each cell:
    do iCell = 1, nCells
-       east(1,iCell) = -sin(lonCell_rad(iCell))
-       east(2,iCell) =  cos(lonCell_rad(iCell))
+       east(1,iCell) = -sin(lonCell(iCell))
+       east(2,iCell) =  cos(lonCell(iCell))
        east(3,iCell) =  0.0_kind_real
        call r3_normalize(east(1,iCell), east(2,iCell), east(3,iCell))
-       north(1,iCell) = -cos(lonCell_rad(iCell))*sin(latCell_rad(iCell))
-       north(2,iCell) = -sin(lonCell_rad(iCell))*sin(latCell_rad(iCell))
-       north(3,iCell) =  cos(latCell_rad(iCell))
+       north(1,iCell) = -cos(lonCell(iCell))*sin(latCell(iCell))
+       north(2,iCell) = -sin(lonCell(iCell))*sin(latCell(iCell))
+       north(3,iCell) =  cos(latCell(iCell))
        call r3_normalize(north(1,iCell), north(2,iCell), north(3,iCell))
    end do
 
@@ -1745,8 +1738,6 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    ! deallocation
    deallocate(east)
    deallocate(north)
-   deallocate(lonCell_rad)
-   deallocate(latCell_rad)
 
 end subroutine uv_cell_to_edges
 
