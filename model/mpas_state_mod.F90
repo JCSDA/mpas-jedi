@@ -321,7 +321,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
            ! Now loop over all levels
            do jlev = 1, geom%nVertLevels
 
-              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              zhalf = MPAS_JEDI_HALF_kr * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
               Call test1_advection_deformation(rlon,rlat,pk,zhalf,1,u0,v0,w0,t0,&
                                                phis0,ps0,rho0,hum0,q1,q2,q3,q4)
               p_ptr(jlev,ii) = pk
@@ -349,7 +349,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
            ! Now loop over all levels
            do jlev = 1, geom%nVertLevels
 
-              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              zhalf = MPAS_JEDI_HALF_kr * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
               Call test1_advection_hadley(rlon,rlat,pk,zhalf,1,u0,v0,w0,&
                                           t0,phis0,ps0,rho0,hum0,q1)
               p_ptr(jlev,ii) = pk
@@ -378,7 +378,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
            ! Now loop over all levels
            do jlev = 1, geom%nVertLevels
 
-              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              zhalf = MPAS_JEDI_HALF_kr * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
               Call test3_gravity_wave(rlon,rlat,pk,zhalf,1,u0,v0,w0,&
                                       t0,phis0,ps0,rho0,hum0)
 
@@ -407,8 +407,8 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
            ! Now loop over all levels
            do jlev = 1, geom%nVertLevels
 
-              zhalf = 0.5_kind_real * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
-              Call test4_baroclinic_wave(0,1.0_kind_real,rlon,rlat,pk,zhalf,1,u0,v0,w0,&
+              zhalf = MPAS_JEDI_HALF_kr * (geom%zgrid(jlev,ii) + geom%zgrid(jlev+1,ii))
+              Call test4_baroclinic_wave(0,MPAS_JEDI_ONE_kr,rlon,rlat,pk,zhalf,1,u0,v0,w0,&
                                       t0,phis0,ps0,rho0,hum0,q1,q2)
 
               p_ptr(jlev,ii) = pk
@@ -475,7 +475,7 @@ subroutine invent_state(self,f_conf)
    call mpas_pool_get_array(pool_a, "uReconstructMeridional", r2d_ptr_a)
    do jlev = 1,self % geom % nVertLevels
       do ii = 1, self % geom % nCellsSolve
-         r2d_ptr_a(jlev,ii) = 1.0_kind_real
+         r2d_ptr_a(jlev,ii) = MPAS_JEDI_ONE_kr
       enddo
    enddo
 
@@ -498,7 +498,7 @@ subroutine invent_state(self,f_conf)
    !surface_pressure
    call mpas_pool_get_array(pool_a, "surface_pressure", r1d_ptr_a)
    do ii = 1, self % geom % nCellsSolve
-      r1d_ptr_a(ii) = 1.0_kind_real
+      r1d_ptr_a(ii) = MPAS_JEDI_ONE_kr
    enddo
    !Scalars (state pool)
    !qv
@@ -508,7 +508,7 @@ subroutine invent_state(self,f_conf)
       r2d_ptr_a => field3d % array(index_qv,:,:)
       do jlev = 1,self % geom % nVertLevels
          do ii = 1, self % geom % nCellsSolve
-            r2d_ptr_a(jlev,ii) = 0.0_kind_real
+            r2d_ptr_a(jlev,ii) = MPAS_JEDI_ZERO_kr
          enddo
       enddo
    end if
@@ -775,7 +775,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
        end if
        do jloc = 1, nlocs
          call uv_to_wdir(tmp_field(jloc,1), tmp_field(jloc,2), wdir) ! uu, vv, wind10_direction in radian
-         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = wdir / deg2rad           ! radian -> degree
+         gom%geovals(ivar)%vals(1,locs%indx(jloc)) = wdir * MPAS_JEDI_RAD2DEG_kr  ! radian -> degree
        enddo
 !       write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -809,7 +809,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
      do jloc = 1, nlocs
        !Picks index of pbump%obsop%h%S containing maxium weight for obs jloc
        !Generic method for any interpolation scheme
-       weight_nn = 0.0_kind_real
+       weight_nn = MPAS_JEDI_ZERO_kr
        where ( pbump%obsop%h%row .eq. jloc ) 
           weight_nn = pbump%obsop%h%S
        end where
@@ -949,11 +949,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
        enddo
        do jloc = 1, nlocs
          jj = locs%indx(jloc)
-         if(gom%geovals(ivari)%vals(1,jj).gt.0.0_kind_real) then
-           gom%geovals(ivar)%vals(1,jj) = min( gom%geovals(ivar)%vals(1,jj), 1.0_kind_real - gom%geovals(ivari)%vals(1,jj) )
-           gom%geovals(ivarw)%vals(1,jj)= 1.0_kind_real - gom%geovals(ivari)%vals(1,jj) - gom%geovals(ivar)%vals(1,jj)
+         if(gom%geovals(ivari)%vals(1,jj).gt.MPAS_JEDI_ZERO_kr) then
+           gom%geovals(ivar)%vals(1,jj) = min( gom%geovals(ivar)%vals(1,jj), MPAS_JEDI_ONE_kr - gom%geovals(ivari)%vals(1,jj) )
+           gom%geovals(ivarw)%vals(1,jj)= MPAS_JEDI_ONE_kr - gom%geovals(ivari)%vals(1,jj) - gom%geovals(ivar)%vals(1,jj)
          else
-           gom%geovals(ivarw)%vals(1,jj)= 1.0_kind_real - gom%geovals(ivarl)%vals(1,jj)
+           gom%geovals(ivarw)%vals(1,jj)= MPAS_JEDI_ONE_kr - gom%geovals(ivarl)%vals(1,jj)
          endif
        enddo
 !       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -964,8 +964,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
      if(ivar .ne. -1) then
        do jloc = 1, nlocs
          jj = locs%indx(jloc)
-         gom%geovals(ivar)%vals(1,jj) = max( 1.0_kind_real - gom%geovals(ivarw)%vals(1,jj) - gom%geovals(ivari)%vals(1,jj) &
-                                                          - gom%geovals(ivars)%vals(1,jj), 0.0_kind_real)
+         gom%geovals(ivar)%vals(1,jj) = max( MPAS_JEDI_ONE_kr - gom%geovals(ivarw)%vals(1,jj) - gom%geovals(ivari)%vals(1,jj) &
+                                                          - gom%geovals(ivars)%vals(1,jj), MPAS_JEDI_ZERO_kr)
        enddo
 !       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -986,11 +986,11 @@ subroutine getvalues(self, locs, vars, gom, traj)
         .or. (ufo_vars_getindex(ufo_vars,var_sfc_soiltyp) .ne. -1) ) then
      do jloc = 1, nlocs
        jj = locs%indx(jloc)
-       if(gom%geovals(ivarl)%vals(1,jj) .gt. 0.0_kind_real) then
+       if(gom%geovals(ivarl)%vals(1,jj) .gt. MPAS_JEDI_ZERO_kr) then
          if(nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
             nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
-           gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), 1.0_kind_real )
-           gom%geovals(ivarl)%vals(1,jj) = 0.0_kind_real
+           gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), MPAS_JEDI_ONE_kr )
+           gom%geovals(ivarl)%vals(1,jj) = MPAS_JEDI_ZERO_kr
          endif
        endif
      enddo
@@ -1052,8 +1052,8 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    !------------------------------------------
    allocate( mod_lat(mod_num) )
    allocate( mod_lon(mod_num) )
-   mod_lat(:) = grid%latCell( 1:mod_num ) / deg2rad !- to Degrees
-   mod_lon(:) = grid%lonCell( 1:mod_num ) / deg2rad !- to Degrees
+   mod_lat(:) = grid%latCell( 1:mod_num ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+   mod_lon(:) = grid%lonCell( 1:mod_num ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
 
    ! Namelist options
    ! ----------------
@@ -1074,8 +1074,8 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    allocate(vunit(mod_num,1))
    allocate(lmask(mod_num,1))
 
-   area  = 1.0          ! Dummy area, unit [m^2]
-   vunit = 1.0          ! Dummy vertical unit
+   area  = MPAS_JEDI_ONE_kr          ! Dummy area, unit [m^2]
+   vunit = MPAS_JEDI_ONE_kr          ! Dummy vertical unit
    lmask = .true.       ! Mask
 
    ! Initialize BUMP

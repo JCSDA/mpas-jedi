@@ -9,7 +9,7 @@ module mpas_constants_mod
 use kinds, only : kind_real
 
 !MPAS-Model
-use mpas_constants
+use mpas_constants, only: pii
 
 implicit none
 
@@ -17,7 +17,26 @@ public
 
 ! ------------------------------------------------------------------------------
 
-real(kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real !-BJJ: TODO:  To-be-removed, when MPAS-release updated from Gael.
+!Geometry
+real(kind=kind_real), parameter :: MPAS_JEDI_PII_kr      = real(pii,kind_real)
+real(kind=kind_real), parameter :: MPAS_JEDI_DEG2RAD_kr  = MPAS_JEDI_PII_kr/180.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_RAD2DEG_kr  = 180.0_kind_real/MPAS_JEDI_PII_kr
+
+! ------------------------------------------------------------------------------
+
+!Commonly used numbers
+real(kind=kind_real), parameter :: MPAS_JEDI_ZERO_kr     = 0.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_HALF_kr     = 0.5_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_ONE_kr      = 1.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_TWO_kr      = 2.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_THREE_kr    = 3.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_THOUSAND_kr = 1000.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_MILLION_kr  = 1000000.0_kind_real
+
+! ------------------------------------------------------------------------------
+
+!Comparison
+real(kind=kind_real), parameter :: MPAS_JEDI_LESSONE_kr  = 0.9999999999999999_kind_real
 
 ! ------------------------------------------------------------------------------
 

@@ -28,15 +28,16 @@ use ufo_vars_mod
 !MPAS-Model
 use atm_core
 use mpas_abort, only : mpas_dmpar_global_abort
-use mpas_constants, only : gravity, rgas, rv, cp, pii
+use mpas_constants, only : gravity, rgas, rv, cp
 use mpas_dmpar
 use mpas_derived_types
 use mpas_field_routines
 use mpas_pool_routines
 
 !MPAS-JEDI
-use mpas_kinds, only : kind_double
+use mpas_constants_mod
 use mpas_geom_mod
+use mpas_kinds, only : kind_double
 
 private
 
@@ -171,24 +172,24 @@ subroutine uv_to_wdir(uu5, vv5, wind10_direction)
    integer                            :: iquadrant  
    real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
    real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
-   real(kind=kind_real),parameter:: quadcof  (4, 2  ) =      &
-      reshape((/0.0_kind_real, 1.0_kind_real, 1.0_kind_real, 2.0_kind_real, 1.0_kind_real, &
-               -1.0_kind_real, 1.0_kind_real, -1.0_kind_real/), (/4, 2/))
+   real(kind=kind_real),parameter:: quadcof  (4, 2  ) = &
+      reshape((/MPAS_JEDI_ZERO_kr,  MPAS_JEDI_ONE_kr,  MPAS_JEDI_ONE_kr,  MPAS_JEDI_TWO_kr, &
+                MPAS_JEDI_ONE_kr,  -MPAS_JEDI_ONE_kr,  MPAS_JEDI_ONE_kr, -MPAS_JEDI_ONE_kr/), (/4, 2/))
 
-   if (uu5 >= 0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 1
-   if (uu5 >= 0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 2
-   if (uu5 <  0.0_kind_real .and. vv5 >= 0.0_kind_real) iquadrant = 4
-   if (uu5 <  0.0_kind_real .and. vv5 <  0.0_kind_real) iquadrant = 3
+   if (uu5 >= MPAS_JEDI_ZERO_kr .and. vv5 >= MPAS_JEDI_ZERO_kr) iquadrant = 1
+   if (uu5 >= MPAS_JEDI_ZERO_kr .and. vv5 <  MPAS_JEDI_ZERO_kr) iquadrant = 2
+   if (uu5 <  MPAS_JEDI_ZERO_kr .and. vv5 >= MPAS_JEDI_ZERO_kr) iquadrant = 4
+   if (uu5 <  MPAS_JEDI_ZERO_kr .and. vv5 <  MPAS_JEDI_ZERO_kr) iquadrant = 3
    if (abs(vv5) >= windlimit) then
       windratio = uu5 / vv5
    else
-      windratio = 0.0_kind_real
+      windratio = MPAS_JEDI_ZERO_kr
       if (abs(uu5) > windlimit) then
          windratio = windscale * uu5
       endif
    endif
    windangle        = atan(abs(windratio))   ! wind azimuth is in radians
-   wind10_direction = ( quadcof(iquadrant, 1) * pii + windangle * quadcof(iquadrant, 2) )
+   wind10_direction = ( quadcof(iquadrant, 1) * MPAS_JEDI_PII_kr + windangle * quadcof(iquadrant, 2) )
 
 end subroutine uv_to_wdir
 
@@ -198,7 +199,7 @@ elemental subroutine w_to_q(mixing_ratio, specific_humidity)
    real (kind=kind_real), intent(in)  :: mixing_ratio
    real (kind=kind_real), intent(out) :: specific_humidity
 
-   specific_humidity = mixing_ratio / (1.0_kind_real + mixing_ratio)
+   specific_humidity = mixing_ratio / (MPAS_JEDI_ONE_kr + mixing_ratio)
 end subroutine w_to_q
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w(specific_humidity, mixing_ratio)
@@ -206,7 +207,7 @@ elemental subroutine q_to_w(specific_humidity, mixing_ratio)
    real (kind=kind_real), intent(in)  :: specific_humidity
    real (kind=kind_real), intent(out) :: mixing_ratio
 
-   mixing_ratio = specific_humidity / (1.0_kind_real - specific_humidity)
+   mixing_ratio = specific_humidity / (MPAS_JEDI_ONE_kr - specific_humidity)
 end subroutine q_to_w
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w_tl(specific_humidity_tl, sh_traj, mixing_ratio_tl)
@@ -215,7 +216,7 @@ elemental subroutine q_to_w_tl(specific_humidity_tl, sh_traj, mixing_ratio_tl)
    real (kind=kind_real), intent(in)  :: sh_traj
    real (kind=kind_real), intent(out) :: mixing_ratio_tl
 
-   mixing_ratio_tl = specific_humidity_tl / (1.0_kind_real - sh_traj)**2
+   mixing_ratio_tl = specific_humidity_tl / (MPAS_JEDI_ONE_kr - sh_traj)**2
 end subroutine q_to_w_tl
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w_ad(specific_humidity_ad, sh_traj, mixing_ratio_ad)
@@ -225,7 +226,7 @@ elemental subroutine q_to_w_ad(specific_humidity_ad, sh_traj, mixing_ratio_ad)
    real (kind=kind_real), intent(in)    :: mixing_ratio_ad
 
    specific_humidity_ad = specific_humidity_ad + &
-                 1.0_kind_real / ( 1.0_kind_real - sh_traj)**2 * mixing_ratio_ad
+                 MPAS_JEDI_ONE_kr / ( MPAS_JEDI_ONE_kr - sh_traj)**2 * mixing_ratio_ad
 end subroutine q_to_w_ad
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv(temperature,mixing_ratio,virtual_temperature)
@@ -235,7 +236,7 @@ elemental subroutine tw_to_tv(temperature,mixing_ratio,virtual_temperature)
    real (kind=kind_real), intent(out) :: virtual_temperature
 
    virtual_temperature = temperature * &
-                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*mixing_ratio )
+                  ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*mixing_ratio )
 end subroutine tw_to_tv
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv_tl(temperature_tl,mixing_ratio_tl,t_traj,m_traj,virtual_temperature_tl)
@@ -247,8 +248,8 @@ elemental subroutine tw_to_tv_tl(temperature_tl,mixing_ratio_tl,t_traj,m_traj,vi
    real (kind=kind_real), intent(out) :: virtual_temperature_tl
 
    virtual_temperature_tl = temperature_tl * &
-                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*m_traj )  + &
-                  t_traj * (rv/rgas - 1.0_kind_real)*mixing_ratio_tl
+                  ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*m_traj )  + &
+                  t_traj * (rv/rgas - MPAS_JEDI_ONE_kr)*mixing_ratio_tl
 end subroutine tw_to_tv_tl
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv_ad(temperature_ad,mixing_ratio_ad,t_traj,m_traj,virtual_temperature_ad)
@@ -260,9 +261,9 @@ elemental subroutine tw_to_tv_ad(temperature_ad,mixing_ratio_ad,t_traj,m_traj,vi
    real (kind=kind_real), intent(in)    :: virtual_temperature_ad
 
    temperature_ad = temperature_ad + virtual_temperature_ad * &
-                  ( 1.0_kind_real + (rv/rgas - 1.0_kind_real)*m_traj )
+                  ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*m_traj )
    mixing_ratio_ad = mixing_ratio_ad + virtual_temperature_ad * &
-                  t_traj * (rv/rgas - 1.0_kind_real)
+                  t_traj * (rv/rgas - MPAS_JEDI_ONE_kr)
 end subroutine tw_to_tv_ad
 !-------------------------------------------------------------------------------------------
 elemental subroutine theta_to_temp(theta,pressure,temperature)
@@ -294,7 +295,7 @@ elemental subroutine twp_to_rho(temperature,mixing_ratio,pressure,rho)
    real (kind=kind_real), intent(in)  :: pressure
    real (kind=kind_real), intent(out) :: rho
    rho = pressure / ( rgas * temperature * &
-                                ( 1.0_kind_real + (rv/rgas) * mixing_ratio ) )
+                                ( MPAS_JEDI_ONE_kr + (rv/rgas) * mixing_ratio ) )
 end subroutine twp_to_rho
 !-------------------------------------------------------------------------------------------
 subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
@@ -319,7 +320,7 @@ subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
 
         do k = kts+1,kte
         do i = its,ite
-          tem1 = 1.0_kind_real/(zgrid(k+1,i)- zgrid(k-1,i))
+          tem1 = MPAS_JEDI_ONE_kr/(zgrid(k+1,i)- zgrid(k-1,i))
           fzm_p(i,k) = ( zgrid(k,i)- zgrid(k-1,i)) * tem1
           fzp_p(i,k) = ( zgrid(k+1,i)- zgrid(k,i)) * tem1
           pressure_f(k,i) = fzm_p(i,k)*pressure(k,i) + fzp_p(i,k)*pressure(k-1,i)
@@ -328,20 +329,20 @@ subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
         k = kte+1
         do i = its,ite
           z0 = zgrid(k,i)
-          z1 = 0.5_kind_real*(zgrid(k,i)+zgrid(k-1,i))
-          z2 = 0.5_kind_real*(zgrid(k-1,i)+zgrid(k-2,i))
+          z1 = MPAS_JEDI_HALF_kr*(zgrid(k,i)+zgrid(k-1,i))
+          z2 = MPAS_JEDI_HALF_kr*(zgrid(k-1,i)+zgrid(k-2,i))
           w1 = (z0-z2)/(z1-z2)
-          w2 = 1.0_kind_real-w1
+          w2 = MPAS_JEDI_ONE_kr-w1
           !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
           pressure_f(k,i) = exp( w1*log(pressure(k-1,i)) + w2*log(pressure(k-1,i)) )
         enddo
         k = kts
         do i = its,ite
           z0 = zgrid(k,i)
-          z1 = 0.5_kind_real*(zgrid(k,i)+zgrid(k+1,i))
-          z2 = 0.5_kind_real*(zgrid(k+1,i)+zgrid(k+2,i))
+          z1 = MPAS_JEDI_HALF_kr*(zgrid(k,i)+zgrid(k+1,i))
+          z2 = MPAS_JEDI_HALF_kr*(zgrid(k+1,i)+zgrid(k+2,i))
           w1 = (z0-z2)/(z1-z2)
-          w2 = 1.0_kind_real-w1
+          w2 = MPAS_JEDI_ONE_kr-w1
           pressure_f(k,i) = w1*pressure(k,i) + w2*pressure(k+1,i)
         enddo
 
@@ -357,7 +358,7 @@ subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
 !  calculate midpoint geometricZ:
    do i=1,nC
       do k=1,nV
-         zgrid(k,i) = ( zgrid_f(k,i) + zgrid_f(k+1,i) ) * 0.5_kind_real
+         zgrid(k,i) = ( zgrid_f(k,i) + zgrid_f(k+1,i) ) * MPAS_JEDI_HALF_kr
       enddo
    enddo
 end subroutine geometricZ_full_to_half
@@ -383,10 +384,10 @@ subroutine index_q_fields_forward_and_TL(indexName, geovalName, subFields, convF
    call mpas_pool_get_field(subFields, indexName, index_field_src) !- [kg/kg]
    call mpas_duplicate_field(index_field_src, converted_field)
    do i=1,ngrid
-   do k=1,nVertLevels
-   kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-   converted_field % array(k,i) = index_field_src%array(k,i) * kgkg_kgm2
-   enddo
+      do k=1,nVertLevels
+         kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
+         converted_field % array(k,i) = index_field_src%array(k,i) * kgkg_kgm2
+      enddo
    enddo
    !        write(*,*) 'MIN/MAX of index_qc.converted=',minval(converted_field % array),maxval(converted_field % array)
    !converted_field % array(:,1:ngrid) = pressure_levels(:,1:ngrid) ! TODO: [kg/kg] -> [kg/m2]
@@ -428,10 +429,10 @@ subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields,
    call mpas_pool_get_field(convFields, geovalName, geoval_field_src)
    call mpas_duplicate_field(geoval_field_src, index_increment)
    do i=1,ngrid
-   do k=1,geom%nVertLevels
-   kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-   index_increment % array(k,i) = geoval_field_src%array(k,i) * kgkg_kgm2
-   enddo
+      do k=1,geom%nVertLevels
+         kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
+         index_increment % array(k,i) = geoval_field_src%array(k,i) * kgkg_kgm2
+      enddo
    enddo
    index_array(:,1:ngrid) = index_array(:,1:ngrid) + index_increment % array(:,1:ngrid)
    call mpas_deallocate_field(index_increment) ! not used
@@ -441,7 +442,7 @@ end subroutine index_q_fields_AD
 !-------------------------------------------------------------------------------------------
 real (kind=kind_real) function wgamma(y)
 implicit none
-real (kind=kind_real), intent(in):: y
+real (kind=kind_real), intent(in) :: y
 
 wgamma = exp(gammln(y))
 
@@ -449,25 +450,25 @@ end function wgamma
 !-------------------------------------------------------------------------------------------
 real (kind=kind_real) function gammln(xx)
 implicit none
-real (kind=kind_real), intent(in)     :: xx
-real (kind=kind_double)               :: stp = 2.5066282746310005D0
-real (kind=kind_double), dimension(6) :: &
-cof = (/76.18009172947146D0, -86.50532032941677D0, &
-        24.01409824083091D0, -1.231739572450155D0, &
-       .1208650973866179D-2, -.5395239384953D-5/)
-real (kind=kind_double)               :: ser,tmp,x,y
-integer:: j
+real (kind=kind_real), intent(in)  :: xx
+real (kind=kind_double), parameter :: stp = 2.5066282746310005_kind_double
+real (kind=kind_double), parameter :: &
+   cof(6) = (/   76.18009172947146_kind_double,    -86.50532032941677_kind_double, &
+                 24.01409824083091_kind_double,    -1.231739572450155_kind_double, &
+              0.001208650973866179_kind_double, -0.000005395239384953_kind_double/)
+real (kind=kind_double) :: ser,tmp,x,y
+integer :: j
 
-x=xx
+x=real(xx,kind_double)
 y=x
-tmp=x+5.5D0
-tmp=(x+0.5D0)*log(tmp)-tmp
-ser=1.000000000190015D0
+tmp=x+5.5_kind_double
+tmp=(x+0.5_kind_double)*log(tmp)-tmp
+ser=1.000000000190015_kind_double
 do j=1,6
-   y=y+1.D0
+   y=y+1.0_kind_double
    ser=ser+cof(j)/y
 end do
-gammln=tmp+log(stp*ser/x)
+gammln=real(tmp+log(stp*ser/x),kind_real)
 end function gammln
 
 !-------------------------------------------------------------------------------------------
@@ -484,57 +485,60 @@ subroutine effectRad_rainwater (qr, rho, nr, re_qr, mp_scheme, ngrid, nVertLevel
 
 implicit none
 
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: qr, rho
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: nr
-integer,                                               intent(in) :: ngrid, nVertLevels
-character(len=StrKIND),                                intent(in) :: mp_scheme
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out):: re_qr
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in)  :: qr, rho
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in)  :: nr
+integer,                                               intent(in)  :: ngrid, nVertLevels
+character(len=StrKIND),                                intent(in)  :: mp_scheme
+real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out) :: re_qr
 
 !Local variables
-real(kind=kind_real), parameter      :: denr = 1000., n0r = 8.e6
+! constants
+real(kind=kind_real), parameter :: denr = MPAS_JEDI_THOUSAND_kr, n0r = 8.e6
+real(kind=kind_real), parameter :: R1 = MPAS_JEDI_ONE_kr / &
+                                        MPAS_JEDI_MILLION_kr / &
+                                        MPAS_JEDI_MILLION_kr, &
+                                   R2 = MPAS_JEDI_ONE_kr / &
+                                        MPAS_JEDI_MILLION_kr
+real(kind=kind_real), parameter :: mu_r = MPAS_JEDI_ZERO_kr
+real(kind=kind_real), parameter :: am_r = MPAS_JEDI_PII_kr*denr/6.0_kind_real
+real(kind=kind_real), parameter :: bm_r = MPAS_JEDI_THREE_kr
+
 real(kind=kind_double) :: lamdar
 integer                :: i, k
-logical                :: has_qr
-real(kind=kind_real)   :: R1 = 1.e-12, R2 = 1.e-6
-real(kind=kind_real), dimension( nVertLevels, ngrid ):: rqr, nr_rho
+
+real(kind=kind_real), dimension( nVertLevels, ngrid ) :: rqr, nr_rho
 !For Thompson scheme
 real(kind=kind_real) :: cre2,cre3,crg2,crg3,org2,ombr,obmr
 !Generalized gamma distributions for rain
 ! N(D) = N_0 * D**mu * exp(-lamda*D);  mu=0 is exponential.
-real(kind=kind_real) :: mu_r = 0.0
-real(kind=kind_real) :: am_r = pii*denr/6.0
-real(kind=kind_real) :: bm_r = 3.0
 
 !-----------------------------------------------------------------------
-has_qr = .false.
-am_r = pii*denr/6.0
-cre2 = mu_r + 1.
-cre3 = bm_r + mu_r + 1.
+cre2 = mu_r + MPAS_JEDI_ONE_kr
+cre3 = bm_r + mu_r + MPAS_JEDI_ONE_kr
 crg2 = wgamma(cre2)
 crg3 = wgamma(cre3)
-org2 = 1./crg2
-obmr = 1./bm_r
+org2 = MPAS_JEDI_ONE_kr/crg2
+obmr = MPAS_JEDI_ONE_kr/bm_r
 
 do i = 1, ngrid
    do k = 1, nVertLevels
       rqr(k,i) = max(R1, qr(k,i)*rho(k,i))
-      if (rqr(k,i).gt.R1) has_qr = .true.
    enddo
 enddo
 
-if (has_qr) then
+if (any(rqr > R1)) then
    do i = 1, ngrid
       do k = 1, nVertLevels
          re_qr(k,i) = 99.e-6
          if (rqr(k,i).le.R1) CYCLE
          select case (trim(mp_scheme))
          case ('mp_wsm6')
-            lamdar = sqrt(sqrt(pii*denr*n0r/rqr(k,i)))
-            re_qr(k,i) =  max(99.9e-6,min(1.5/lamdar,1999.e-6))
+            lamdar = sqrt(sqrt(MPAS_JEDI_PII_kr*denr*n0r/rqr(k,i)))
+            re_qr(k,i) =  max(99.9D-6,min(1.5_kind_double/lamdar,1999.D-6))
          case ('mp_thompson')
             nr_rho(k,i) = max(R2, nr(k,i)*rho(k,i))
             lamdar = (am_r*crg3*org2*nr_rho(k,i)/rqr(k,i))**obmr
-            re_qr(k,i) = max(99.9e-6, min(0.5D0 * dble(3.+mu_r)/lamdar, 1999.e-6))
+            re_qr(k,i) = max(99.9e-6, min(real(MPAS_JEDI_HALF_kr*(MPAS_JEDI_THREE_kr+mu_r),kind_double)/lamdar, 1999.e-6))
          case default
             re_qr(k,i) = 999.e-6
          end select
@@ -568,69 +572,68 @@ real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out):: re_qg
 integer                :: i, k, k_0
 real(kind=kind_double) :: lamdag, lam_exp, N0_exp
 real(kind=kind_real)   :: n0g, deng
-logical                :: has_qg
-real(kind=kind_real)   :: R1 = 1.e-12, R2 = 1.e-6
+real(kind=kind_real), parameter :: R1 = MPAS_JEDI_ONE_kr / &
+                                        MPAS_JEDI_MILLION_kr / &
+                                        MPAS_JEDI_MILLION_kr
 real(kind=kind_real), dimension( nVertLevels, ngrid ):: rqg
 !MPAS model set it as 0, WRF model set it through namelist
 integer:: hail_opt = 0
 ! for Thompson scheme
-real(kind=kind_real) :: mu_g = 0.0
+real(kind=kind_real) :: mu_g = MPAS_JEDI_ZERO_kr
 real(kind=kind_real) :: obmg, cge1,cgg1,oge1,cge3,cgg3,ogg1,cge2,cgg2,ogg2
 real(kind=kind_real) :: xslw1, ygra1, zans1
-real(kind=kind_real) :: am_g = pii*500./6.0
-real(kind=kind_real) :: bm_g = 3.0
+real(kind=kind_real), parameter :: am_g = MPAS_JEDI_PII_kr*500.0_kind_real/6.0_kind_real
+real(kind=kind_real), parameter :: bm_g = MPAS_JEDI_THREE_kr
 
 !-----------------------------------------------------------------------
-has_qg = .false.
-obmg = 1./bm_g
-cge1 = bm_g + 1.
+obmg = MPAS_JEDI_ONE_kr/bm_g
+cge1 = bm_g + MPAS_JEDI_ONE_kr
 cgg1 = wgamma(cge1)
-oge1 = 1./cge1
-cge3 = bm_g + mu_g + 1.
+oge1 = MPAS_JEDI_ONE_kr/cge1
+cge3 = bm_g + mu_g + MPAS_JEDI_ONE_kr
 cgg3 = wgamma(cge3)
-ogg1 = 1./cgg1
-cge2 = mu_g + 1.
+ogg1 = MPAS_JEDI_ONE_kr/cgg1
+cge2 = mu_g + MPAS_JEDI_ONE_kr
 cgg2 = wgamma(cge2)
-ogg2 = 1./cgg2
+ogg2 = MPAS_JEDI_ONE_kr/cgg2
 
 if (hail_opt .eq. 1) then
    n0g  = 4.e4
-   deng = 700.
+   deng = 700.0_kind_real
 else
    n0g  = 4.e6
-   deng = 500
+   deng = 500.0_kind_real
 endif
 
 do i = 1, ngrid
    do k = 1, nVertLevels
       rqg(k,i) = max(R1, qg(k,i)*rho(k,i))
-      if (rqg(k,i).gt.R1) has_qg = .true.
    enddo
 enddo
 
-if (has_qg) then
+if (any( rqg > R1 )) then
    select case (trim(mp_scheme))
    case ('mp_wsm6')
+      re_qg = 49.7e-6
       do i = 1, ngrid
          do k = 1, nVertLevels
-            re_qg(k,i) = 49.7e-6
             if (rqg(k,i).le.R1) CYCLE
-            lamdag = sqrt(sqrt(pii*deng*n0g/rqg(k,i)))
-            re_qg(k,i) = max(50.e-6,min(1.5/lamdag,9999.e-6))
+            lamdag = sqrt(sqrt(MPAS_JEDI_PII_kr*deng*n0g/rqg(k,i)))
+            re_qg(k,i) = max(50.D-6,min(1.5_kind_double/lamdag,9999.D-6))
          end do
       end do
    case ('mp_thompson')
+      re_qg = 99.5e-6
       do i = 1, ngrid
          do k = nVertLevels, 1, -1
-            re_qg(k,i) = 99.5e-6
             if (rqg(k,i).le.R1) CYCLE
             ygra1 = alog10(sngl(max(1.e-9, rqg(k,i))))
-            zans1 = (2.5 + 2.5/7. * (ygra1+7.))
-            zans1 = max(2., min(zans1, 7.)) ! new in WRF V4.2
-            N0_exp = 10.**(zans1)
+            zans1 = (2.5_kind_real + 2.5_kind_real/7.0_kind_real * (ygra1+7.0_kind_real))
+            zans1 = max(MPAS_JEDI_TWO_kr, min(zans1, 7.0_kind_real)) ! new in WRF V4.2
+            N0_exp = 10.0_kind_real**(zans1)
             lam_exp = (N0_exp*am_g*cgg1/rqg(k,i))**oge1
             lamdag = lam_exp * (cgg3*ogg2*ogg1)**obmg ! we can simplify this without considering rainwater
-            re_qg(k,i) = max(99.9e-6, min(0.5D0 * dble(3.+mu_g)/lamdag, 9999.e-6))
+            re_qg(k,i) = max(99.9e-6, min(real(MPAS_JEDI_HALF_kr*(MPAS_JEDI_THREE_kr+mu_g),kind_double)/lamdag, 9999.e-6))
          enddo
       enddo
    case default
@@ -666,7 +669,6 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
    type (field2DReal), pointer :: field2d, field2d_a, field2d_src
    integer :: ivar, i, k
 
-   real (kind=kind_real), parameter :: deg2rad = pii/180.0_kind_real
    real (kind=kind_real) :: lat
    type (field2DReal), pointer :: field2d_nr, field2d_qr, field2d_qg, field2d_rho
    character(len=StrKIND),  pointer :: config_microp_scheme
@@ -727,7 +729,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_get_field(subFields, 'spechum', field2d_src) !< get specific_humidity
         call mpas_duplicate_field(field2d_src, field2d)! for humidity_mixing_ratio
         call q_to_w(field2d_src % array(:,1:ngrid) , field2d % array(:,1:ngrid))
-        field2d % array(:,1:ngrid) = max(0.0_kind_real, field2d % array(:,1:ngrid)) * 1000.0_kind_real ! [kg/kg] -> [g/kg]
+        field2d % array(:,1:ngrid) = max(MPAS_JEDI_ZERO_kr, field2d % array(:,1:ngrid)) * MPAS_JEDI_THOUSAND_kr ! [kg/kg] -> [g/kg]
         field2d % fieldName = var_mixr
         call mpas_pool_add_field(convFields, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
@@ -773,7 +775,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        call mpas_pool_get_array(subFields, "o3", r2d_ptr_a)
         call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 0.0_kind_real !r2d_ptr_a(:,1:ngrid) ! convert ??
+        field2d % array(:,1:ngrid) = MPAS_JEDI_ZERO_kr !r2d_ptr_a(:,1:ngrid) ! convert ??
         field2d % fieldName = var_oz
         call mpas_pool_add_field(convFields, var_oz, field2d)
 !        write(*,*) "end-of ",var_oz
@@ -782,7 +784,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        call mpas_pool_get_array(subFields, "co2", r2d_ptr_a)
         call mpas_pool_get_field(subFields, 'theta', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
-        field2d % array(:,1:ngrid) = 0.0_kind_real !r2d_ptr_a(:,1:ngrid) ! convert ??
+        field2d % array(:,1:ngrid) = MPAS_JEDI_ZERO_kr !r2d_ptr_a(:,1:ngrid) ! convert ??
         field2d % fieldName = var_co2
         call mpas_pool_add_field(convFields, var_co2, field2d)
 !        write(*,*) "end-of ",var_co2
@@ -822,7 +824,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         if (config_microp_re) then
            call mpas_pool_get_field(subFields, 're_cloud', field2d_src) !- [m]
            call mpas_duplicate_field(field2d_src, field2d)
-           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
         else
            call mpas_pool_get_field(subFields, 'index_qc', field2d_src) ! We do not really need 're_cloud' unless it is calculated in MPAS model microp
            call mpas_duplicate_field(field2d_src, field2d)
@@ -837,7 +839,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         if (config_microp_re) then
            call mpas_pool_get_field(subFields, 're_ice', field2d_src) !- [m]
            call mpas_duplicate_field(field2d_src, field2d)
-           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+           field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
         else
            call mpas_pool_get_field(subFields, 'index_qi', field2d_src) ! We do not really need 're_ice' unless it is calculated in MPAS model microp
            call mpas_duplicate_field(field2d_src, field2d)
@@ -858,13 +860,13 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
                call mpas_pool_get_field(subFields, 'index_nr', field2d_nr) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
             else
                call mpas_duplicate_field(field2d_qr, field2d_nr)
-               field2d_nr % array(:,1:ngrid) = 1.0_kind_real
+               field2d_nr % array(:,1:ngrid) = MPAS_JEDI_ONE_kr
             end if
             call mpas_pool_get_field(subFields, 'rho', field2d_rho) !- [kg m^{-3}]: Dry air density
             call effectRad_rainwater(field2d_qr%array(:,1:ngrid), field2d_rho%array(:,1:ngrid),&
                                      field2d_nr%array(:,1:ngrid), field2d_a%array(:,1:ngrid), config_microp_scheme, &
                                      ngrid, geom%nVertLevels)
-            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          else
             field2d % array(:,1:ngrid) = 999.0_kind_real ! [micron]
          end if
@@ -877,7 +879,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
          if (config_microp_re) then
             call mpas_pool_get_field(subFields, 're_snow', field2d_src) !- [m]
             call mpas_duplicate_field(field2d_src, field2d)
-            field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+            field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          else
             call mpas_pool_get_field(subFields, 'index_qs', field2d_src) ! We do not really need 're_snow' unless it is calculated in MPAS model microp
             call mpas_duplicate_field(field2d_src, field2d)
@@ -898,7 +900,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
             call effectRad_graupel(field2d_qg%array(:,1:ngrid), field2d_rho%array(:,1:ngrid), &
                                    field2d_a% array(:,1:ngrid), config_microp_scheme,         &
                                    ngrid, geom%nVertLevels)
-            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+            field2d % array(:,1:ngrid) = field2d_a % array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          else
             field2d % array(:,1:ngrid) = 600.0_kind_real ! [micron]
          end if
@@ -909,7 +911,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
       case ( var_clhefr ) !-effective_radius_of_hail_particle :TODO: currently filled w/ default value
          call mpas_pool_get_field(subFields, 'index_qg', field2d_src) !The current MP schemes do not include hail (wsm7 has)
          call mpas_duplicate_field(field2d_src, field2d)
-         field2d % array(:,1:ngrid) = 600.0_kind_real !field2d_src%array(:,1:ngrid) * 1.0e6 ! [m] -> [micron]
+         field2d % array(:,1:ngrid) = 600.0_kind_real !field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          field2d % fieldName = var_clhefr
          call mpas_pool_add_field(convFields, var_clhefr, field2d)
  !        write(*,*) "end-of ",var_clhefr
@@ -932,7 +934,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) 'MIN/MAX of snowh=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
-        field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) * 1000.0_kind_real ! [m] -> [mm]
+        field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) * MPAS_JEDI_THOUSAND_kr ! [m] -> [mm]
         field1d % fieldName = var_sfc_sdepth
         call mpas_pool_add_field(convFields, var_sfc_sdepth, field1d)
 !        write(*,*) "end-of ",var_sfc_sdepth
@@ -987,7 +989,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
                                      geom % nVertLevels,field2d_a%array(:,1:ngrid))
 
         do i=1,ngrid
-           lat = geom%latCell(i) / deg2rad !- to Degrees
+           lat = geom%latCell(i) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
            do k=1,geom % nVertLevels
               call geometric2geop(lat,field2d_a%array(k,i), field2d%array(k,i))
            enddo
@@ -1002,7 +1004,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_duplicate_field(field1d_src, field1d)
 
         do i=1,ngrid
-           lat = geom%latCell(i) / deg2rad !- to Degrees
+           lat = geom%latCell(i) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
            call geometric2geop(lat,geom%zgrid(1,i), field1d%array(i))
         enddo
         field1d % fieldName = var_sfc_z
@@ -1149,10 +1151,10 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
         call mpas_duplicate_field(field2d_src, field2d)
 
         call q_to_w_tl(field2d_src % array(:,1:ngrid), traj_r2d_a(:,1:ngrid), field2d % array(:,1:ngrid)) 
-        where (traj_r2d_a(:,1:ngrid) <= 0.0_kind_real)
-          field2d % array(:,1:ngrid) = 0.0_kind_real
+        where (traj_r2d_a(:,1:ngrid) <= MPAS_JEDI_ZERO_kr)
+          field2d % array(:,1:ngrid) = MPAS_JEDI_ZERO_kr
         end where
-        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * 1000.0_kind_real
+        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * MPAS_JEDI_THOUSAND_kr
         field2d % fieldName = var_mixr
         call mpas_pool_add_field(convFields_tl, var_mixr, field2d)
 !        write(*,*) "end-of ",var_mixr
@@ -1337,7 +1339,7 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
         call mpas_duplicate_field(field2d, traj_field2d_a) ! for NL of mixing_ratio, intermediate variable
 
         call q_to_w( traj_r2d_b(:,1:ngrid) , traj_field2d_a % array(:,1:ngrid) ) !NL coeff.
-        field2d_a % array(:,1:ngrid) = 0.0_kind_real !initialize local var.
+        field2d_a % array(:,1:ngrid) = MPAS_JEDI_ZERO_kr !initialize local var.
         call tw_to_tv_ad(r2d_ptr_a(:,1:ngrid), field2d_a % array(:,1:ngrid), &
                          traj_r2d_a(:,1:ngrid), traj_field2d_a % array(:,1:ngrid), &
                          field2d % array(:,1:ngrid) )
@@ -1395,10 +1397,10 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
         call mpas_pool_get_field(convFields_ad, var_mixr, field2d)
 !        write(*,*) 'MIN/MAX of AD var_mixr =',minval(field2d % array(:,1:ngrid)),maxval(field2d % array(:,1:ngrid))
 
-        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * 1000.0_kind_real
+        field2d % array(:,1:ngrid) = field2d % array(:,1:ngrid) * MPAS_JEDI_THOUSAND_kr
         call q_to_w_ad(r2d_ptr_a(:,1:ngrid), traj_r2d_a(:,1:ngrid), field2d % array(:,1:ngrid))
-        where (traj_r2d_a(:,1:ngrid) <= 0.0_kind_real)
-          r2d_ptr_a(:,1:ngrid) = 0.0_kind_real
+        where (traj_r2d_a(:,1:ngrid) <= MPAS_JEDI_ZERO_kr)
+          r2d_ptr_a(:,1:ngrid) = MPAS_JEDI_ZERO_kr
         end where
 !        write(*,*) 'MIN/MAX of AD spechum(out) =',minval(r2d_ptr_a(:,1:ngrid)),maxval(r2d_ptr_a(:,1:ngrid))
 
