@@ -77,9 +77,16 @@ end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
    call state_vars%push_back("index_nr")
 end if
-if ( trim(config_radt_cld_scheme) /= OFF .and. &
-     trim(config_microp_scheme) /= OFF ) then
-   call state_vars%push_back("cldfrac")
+if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
+     trim(config_microp_scheme) /= MPAS_JEDI_OFF ) then
+   do ivar = 1, state_vars % nvars()
+      ! Only need cloud fraction when hydrometeors are in state
+      if ( ufo_vars_getindex( mpas_hydrometeor_fields, &
+                              state_vars%variable(ivar) ) > 0 ) then
+         call state_vars%push_back("cldfrac")
+         exit
+      end if
+   end do
 end if
 
 call self%create(geom, state_vars, inc_vars)

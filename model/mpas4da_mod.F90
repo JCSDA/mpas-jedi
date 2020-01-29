@@ -118,13 +118,13 @@ use mpas_constants_mod
       call mpas_pool_get_field(allFields, 'theta', field)
       call mpas_pool_add_field(da_state, 'theta', field)
       write(0,*) 'Now, max value of theta is ', maxval(field % array),minval(field % array)
-      field % array(:,:) = 1.0
+      field % array(:,:) = MPAS_JEDI_ONE_kr
       write(0,*)'Dimensions Field: ',field % dimSizes(:)
 
       call mpas_pool_get_field(allFields, 'rho', field)
       call mpas_pool_add_field(da_state, 'rho', field)
       write(0,*) 'Now, max value of rho is ', maxval(field % array),minval(field % array)
-      field % array(:,:) = 1.0
+      field % array(:,:) = MPAS_JEDI_ONE_kr
 
       !
       ! Create another pool
@@ -661,16 +661,16 @@ use mpas_constants_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  !call normal_distribution(r0d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
+                  !call normal_distribution(r0d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  call normal_distribution(r1d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
+                  call normal_distribution(r1d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  call normal_distribution(r2d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
+                  call normal_distribution(r2d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  call normal_distribution(r3d_ptr_a, 0.0_kind_real, 1.0_kind_real, rseed)
+                  call normal_distribution(r3d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
                end if
 
             end if
@@ -737,7 +737,7 @@ use mpas_constants_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r0d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r0d_ptr_c)
-                     r0d_ptr_a = 0.0_kind_real
+                     r0d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      r0d_ptr_a = r0d_ptr_a + r0d_ptr_b
@@ -765,7 +765,7 @@ use mpas_constants_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r1d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r1d_ptr_c)
-                     r1d_ptr_a = 0.0_kind_real
+                     r1d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      if (present(pool_c)) then
@@ -792,7 +792,7 @@ use mpas_constants_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r2d_ptr_c)
-                     r2d_ptr_a = 0.0_kind_real
+                     r2d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
 !                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
@@ -823,7 +823,7 @@ use mpas_constants_mod
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r3d_ptr_b)
                   if (present(pool_c)) then
                      call mpas_pool_get_array(pool_c, trim(poolItr % memberName), r3d_ptr_c)
-                     r3d_ptr_a = 0.0_kind_real
+                     r3d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
                      if (present(pool_c)) then
@@ -959,16 +959,16 @@ use mpas_constants_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  r0d_ptr_a = 0.0_kind_real
+                  r0d_ptr_a = MPAS_JEDI_ZERO_kr
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  r1d_ptr_a = 0.0_kind_real
+                  r1d_ptr_a = MPAS_JEDI_ZERO_kr
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  r2d_ptr_a = 0.0_kind_real
+                  r2d_ptr_a = MPAS_JEDI_ZERO_kr
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  r3d_ptr_a = 0.0_kind_real
+                  r3d_ptr_a = MPAS_JEDI_ZERO_kr
                end if
 
             end if
@@ -1023,16 +1023,16 @@ use mpas_constants_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  r0d_ptr_a = max(0.0_kind_real, r0d_ptr_a)
+                  r0d_ptr_a = max(MPAS_JEDI_ZERO_kr, r0d_ptr_a)
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  r1d_ptr_a = max(0.0_kind_real, r1d_ptr_a)
+                  r1d_ptr_a = max(MPAS_JEDI_ZERO_kr, r1d_ptr_a)
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  r2d_ptr_a = max(0.0_kind_real, r2d_ptr_a)
+                  r2d_ptr_a = max(MPAS_JEDI_ZERO_kr, r2d_ptr_a)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  r3d_ptr_a = max(0.0_kind_real, r3d_ptr_a)
+                  r3d_ptr_a = max(MPAS_JEDI_ZERO_kr, r3d_ptr_a)
                end if
 
             end if
@@ -1246,7 +1246,7 @@ use mpas_constants_mod
    integer, pointer :: solveDim1, solveDim2, solveDim3
    !integer, pointer :: solveDim(:)
 
-   pstat = 0.0_kind_real
+   pstat = MPAS_JEDI_ZERO_kr
 
    !
    ! Iterate over all fields in pool_a
@@ -1382,8 +1382,8 @@ use mpas_constants_mod
    integer :: jj, ndims
    integer, pointer :: solveDim1, solveDim2, solveDim3
 
-   prodtot = 0.0_kind_real
-   dimtot  = 0.0_kind_real
+   prodtot = MPAS_JEDI_ZERO_kr
+   dimtot  = MPAS_JEDI_ZERO_kr
 
    !
    ! Iterate over all fields in pool_a
@@ -1502,7 +1502,7 @@ use mpas_constants_mod
    !
    call mpas_pool_begin_iteration(pool_a)
 
-   zprod_local = 0.0_kind_real
+   zprod_local = MPAS_JEDI_ZERO_kr
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
@@ -1703,13 +1703,13 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    allocate(north(R3,nCells))
 
    ! Initialization
-   du%array(:,:) = 0.0_kind_real
+   du%array(:,:) = MPAS_JEDI_ZERO_kr
 
    ! Compute unit vectors in east and north directions for each cell:
    do iCell = 1, nCells
        east(1,iCell) = -sin(lonCell(iCell))
        east(2,iCell) =  cos(lonCell(iCell))
-       east(3,iCell) =  0.0_kind_real
+       east(3,iCell) =  MPAS_JEDI_ZERO_kr
        call r3_normalize(east(1,iCell), east(2,iCell), east(3,iCell))
        north(1,iCell) = -cos(lonCell(iCell))*sin(latCell(iCell))
        north(2,iCell) = -sin(lonCell(iCell))*sin(latCell(iCell))
@@ -1723,11 +1723,11 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
       do jEdge = 1, nEdgesOnCell(iCell)
          iEdge = edgesOnCell(jEdge, iCell)
             do k = 1, nVertLevels
-               du%array(k,iEdge) = du%array(k,iEdge) + 0.5_kind_real * u_field%array(k,iCell)   &
+               du%array(k,iEdge) = du%array(k,iEdge) + MPAS_JEDI_HALF_kr * u_field%array(k,iCell)   &
                      * (edgeNormalVectors(1,iEdge) * east(1,iCell)  &
                      +  edgeNormalVectors(2,iEdge) * east(2,iCell)  &
                      +  edgeNormalVectors(3,iEdge) * east(3,iCell)) &
-                     + 0.5_kind_real * v_field%array(k,iCell)            &
+                     + MPAS_JEDI_HALF_kr * v_field%array(k,iCell)            &
                      * (edgeNormalVectors(1,iEdge) * north(1,iCell) &
                      +  edgeNormalVectors(2,iEdge) * north(2,iCell) &
                      +  edgeNormalVectors(3,iEdge) * north(3,iCell))
@@ -1750,7 +1750,7 @@ subroutine r3_normalize(ax, ay, az)
    real(kind_real), intent(inout) :: ax, ay, az
    real(kind_real) :: mi
 
-   mi = 1.0_kind_real / sqrt(ax**2 + ay**2 + az**2)
+   mi = MPAS_JEDI_ONE_kr / sqrt(ax**2 + ay**2 + az**2)
 
    ax = ax * mi
    ay = ay * mi

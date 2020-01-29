@@ -112,8 +112,8 @@ subroutine dirac(self, f_conf)
    ndirlocal = 0
    do idir=1,ndir
       nearestCell = self % geom % nCellsSolve
-      nearestCell = nearest_cell( (dirLats(idir) * deg2rad), &
-                                  (dirLons(idir) * deg2rad), &
+      nearestCell = nearest_cell( (dirLats(idir) * MPAS_JEDI_DEG2RAD_kr), &
+                                  (dirLons(idir) * MPAS_JEDI_DEG2RAD_kr), &
                                   nearestCell, self % geom % nCells, self % geom % maxEdges, &
                                   self % geom % nEdgesOnCell, self % geom % cellsOnCell, &
                                   self % geom % latCell, self % geom % lonCell )
@@ -171,10 +171,10 @@ subroutine dirac(self, f_conf)
                   if ( dirOwned(idir).eq.1 ) then
                      if (poolItr % nDims == 1) then
                         call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
-                        r1d_ptr_a( dirCells(idir) ) = 1.0_kind_real
+                        r1d_ptr_a( dirCells(idir) ) = MPAS_JEDI_ONE_kr
                      else if (poolItr % nDims == 2) then
                         call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-                        r2d_ptr_a( ildir, dirCells(idir) ) = 1.0_kind_real
+                        r2d_ptr_a( ildir, dirCells(idir) ) = MPAS_JEDI_ONE_kr
                      else if (poolItr % nDims == 3) then
                         write(*,*)'Not implemented yet'
                      end if
@@ -224,13 +224,13 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
    do while (nearest_cell /= current_cell)
       current_cell = nearest_cell
       current_distance = sphere_distance(latCell(current_cell), lonCell(current_cell), target_lat, &
-                                         target_lon, 1.0_kind_real)
+                                         target_lon, MPAS_JEDI_ONE_kr)
       nearest_cell = current_cell
       nearest_distance = current_distance
       do i = 1, nEdgesOnCell(current_cell)
          iCell = cellsOnCell(i,current_cell)
          if (iCell <= nCells) then
-            d = sphere_distance(latCell(iCell), lonCell(iCell), target_lat, target_lon, 1.0_kind_real)
+            d = sphere_distance(latCell(iCell), lonCell(iCell), target_lat, target_lon, MPAS_JEDI_ONE_kr)
             if (d < nearest_distance) then
                nearest_cell = iCell
                nearest_distance = d
@@ -316,7 +316,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
          !   gom%geovals(jvar)%nval = 1
          !end if
          allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nlocs) )
-         gom%geovals(jvar)%vals = 0.0_kind_real
+         gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
 !         write(*,*) ' gom%geovals(n)%vals allocated'
          gom%linit = .true.
       endif
@@ -358,7 +358,7 @@ subroutine getvalues_tl(inc, locs, vars, gom, traj)
                deallocate(gom%geovals(ivar)%vals)
                gom%geovals(ivar)%nval = 1
                allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-               gom%geovals(ivar)%vals = 0.0_kind_real
+               gom%geovals(ivar)%vals = MPAS_JEDI_ZERO_kr
                gom%linit = .true.
             endif
             nlevels = gom%geovals(ivar)%nval
@@ -495,7 +495,7 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
             ilev = nlevels - jlev + 1
             do jloc = 1, nlocs
                obs_field(jloc,jlev) = gom%geovals(ivar)%vals(ilev, locs%indx(jloc))
-               gom%geovals(ivar)%vals(ilev, locs%indx(jloc)) = 0.0_kind_real
+               gom%geovals(ivar)%vals(ilev, locs%indx(jloc)) = MPAS_JEDI_ZERO_kr
             end do
          end do
 
@@ -508,13 +508,13 @@ subroutine getvalues_ad(inc, locs, vars, gom, traj)
 
          if (poolItr % nDims == 1) then
             call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-            r1d_ptr_a=0.0_kind_real
+            r1d_ptr_a=MPAS_JEDI_ZERO_kr
             r1d_ptr_a(1:ngrid) = r1d_ptr_a(1:ngrid) + mod_field(:,1)
          else if (poolItr % nDims == 2) then
 
             if (poolItr % dataType == MPAS_POOL_REAL) then
                call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-               r2d_ptr_a=0.0_kind_real
+               r2d_ptr_a=MPAS_JEDI_ZERO_kr
 !               write(*,*) "Interp. var=",trim(poolItr % memberName)
 !               write(*,*) "ufo_vars_getindex, ivar=",ivar
                do jlev = 1, nlevels
@@ -620,8 +620,8 @@ subroutine ug_coord(self, ug)
 
    ! Copy coordinates
    if (ug%colocated==1) then ! colocated
-     ug%grid(1)%lon = self%geom%lonCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
-     ug%grid(1)%lat = self%geom%latCell(1:ug%grid(1)%nmga) / deg2rad !- to Degrees
+     ug%grid(1)%lon = self%geom%lonCell(1:ug%grid(1)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+     ug%grid(1)%lat = self%geom%latCell(1:ug%grid(1)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
      ug%grid(1)%area = self%geom%areaCell(1:ug%grid(1)%nmga)
      do jl=1,self%geom%nVertLevels
        ug%grid(1)%vunit(:,jl) = real(jl,kind=kind_real)
@@ -629,8 +629,8 @@ subroutine ug_coord(self, ug)
      enddo
    else ! Not colocated
      do igrid=1,ug%ngrid
-       ug%grid(igrid)%lon = self%geom%lonCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
-       ug%grid(igrid)%lat = self%geom%latCell(1:ug%grid(igrid)%nmga) / deg2rad !- to Degrees
+       ug%grid(igrid)%lon = self%geom%lonCell(1:ug%grid(igrid)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+       ug%grid(igrid)%lat = self%geom%latCell(1:ug%grid(igrid)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
        ug%grid(igrid)%area = self%geom%areaCell(1:ug%grid(igrid)%nmga)
        do jl=1,self%geom%nVertLevels
          ug%grid(igrid)%vunit(:,jl) = real(jl,kind=kind_real)
@@ -665,7 +665,7 @@ subroutine increment_to_ug(self, ug, its)
    ! Copy field
    call mpas_pool_begin_iteration(self % subFields)
    
-   ug%grid(1)%fld(:,:,:,its) = 0.0_kind_real
+   ug%grid(1)%fld(:,:,:,its) = MPAS_JEDI_ZERO_kr
    do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
       ! Pools may in general contain dimensions, namelist options, fields, or other pools,
       ! so we select only those members of the pool that are fields
