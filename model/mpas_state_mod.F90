@@ -129,7 +129,7 @@ subroutine add_incr(self,rhs)
       call mpas_dmpar_exch_halo_field(fld2d_uRz)
       call mpas_dmpar_exch_halo_field(fld2d_uRm)
       call uv_cell_to_edges(self % geom % domain, fld2d_uRz, fld2d_uRm, fld2d_u_inc, &
-                 self%geom%latCell, self%geom%lonCell, self%geom%nCells, &
+                 self%geom%lonCell, self%geom%latCell, self%geom%nCells, &
                  self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
                  self%geom%nVertLevels)
 !      write(*,*) 'add_inc: u_guess min/max = ', minval(fld2d_u % array), maxval(fld2d_u % array)
