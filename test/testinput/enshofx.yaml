@@ -71,7 +71,7 @@ Observations:
   - ObsSpace:
       name: Radiosonde
       ObsDataIn:
-        obsfile: Data/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_sondes.nc4
       simulate:
@@ -82,7 +82,7 @@ Observations:
   - ObsSpace:
       name: Aircraft
       ObsDataIn:
-        obsfile: Data/aircraft_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_aircraft.nc4
       simulate:
@@ -93,7 +93,7 @@ Observations:
   - ObsSpace:
       name: Satwind
       ObsDataIn:
-        obsfile: Data/satwind_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_satwind.nc4
       simulate:
@@ -104,7 +104,7 @@ Observations:
   - ObsSpace:
       name: GnssroRef
       ObsDataIn:
-        obsfile: Data/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/enshofx_gnssroref.nc4
       simulate:
@@ -118,7 +118,7 @@ Observations:
   - ObsSpace:
       name: GnssroBndROPP1D
       ObsDataIn:
-        obsfile: Data/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
         obsfile: Data/enshofx_gnssrobndropp1d.nc4
       simulate:
@@ -139,7 +139,7 @@ Observations:
     ObsSpace:
       name: CRTM
       ObsDataIn:
-        obsfile: Data/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
         obsfile: Data/enshofx_amsua.nc4
       simulate:
@@ -149,7 +149,7 @@ Observations:
   - ObsSpace:
         name: SfcPCorrected
         ObsDataIn:
-          obsfile: Data/sfc_obs_2018041500_m.nc4
+          obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
         ObsDataOut:
           obsfile: Data/enshofx_sfc.nc4
         simulate:
