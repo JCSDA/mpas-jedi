@@ -38,6 +38,8 @@ real(kind=kind_real), parameter :: MPAS_JEDI_MILLION_kr  = 1000000.0_kind_real
 !Comparison
 real(kind=kind_real), parameter :: MPAS_JEDI_LESSONE_kr  = 0.9999999999999999_kind_real
 
+! reference pressure p0 in Pa
+real(kind=kind_real), parameter :: MPAS_JEDI_P0_kr  = 100000.0_kind_real
 ! ------------------------------------------------------------------------------
 
 contains

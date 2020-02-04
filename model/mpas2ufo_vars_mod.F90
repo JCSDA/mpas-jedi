@@ -45,7 +45,7 @@ public :: convert_type_soil, convert_type_veg
 public :: uv_to_wdir
 public :: w_to_q, q_to_w
 public :: theta_to_temp, temp_to_theta
-public :: twp_to_rho
+public :: twp_to_rho, hydrostatic_balance
 
 public :: update_mpas_field
 public :: convert_mpas_field2ufo,   &
@@ -272,11 +272,11 @@ elemental subroutine theta_to_temp(theta,pressure,temperature)
    real (kind=kind_real), intent(in)  :: pressure
    real (kind=kind_real), intent(out) :: temperature
    temperature = theta / &
-             ( 100000.0_kind_real / pressure ) ** ( rgas / cp )
+             ( MPAS_JEDI_P0_kr / pressure ) ** ( rgas / cp )
    !TODO: Following formula would give the same result with the formular above,
    !      but gives a slightly different precision. Need to check.
    !temperature = theta * &
-   !          ( pressure / 100000.0_kind_real ) ** ( rgas / cp )
+   !          ( pressure / MPAS_JEDI_P0_kr ) ** ( rgas / cp )
 end subroutine theta_to_temp
 !-------------------------------------------------------------------------------------------
 elemental subroutine temp_to_theta(temperature,pressure,theta)
@@ -285,7 +285,7 @@ elemental subroutine temp_to_theta(temperature,pressure,theta)
    real (kind=kind_real), intent(in)  :: pressure
    real (kind=kind_real), intent(out) :: theta
    theta = temperature * &
-             ( 100000.0_kind_real / pressure ) ** ( rgas / cp )
+             ( MPAS_JEDI_P0_kr / pressure ) ** ( rgas / cp )
 end subroutine temp_to_theta
 !-------------------------------------------------------------------------------------------
 elemental subroutine twp_to_rho(temperature,mixing_ratio,pressure,rho)
@@ -347,6 +347,71 @@ subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
         enddo
 
 end subroutine pressure_half_to_full
+!-------------------------------------------------------------------------------------------
+subroutine hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, rho, theta)
+!---------------------------------------------------------------------------------------
+! Purpose: 
+!    Derive 3D pressure, dry air density, and dry potential temperature
+!    from analyzed surface pressure, temperature, and water vapor mixing 
+!    ratio by applying hypsometric equation, equation of state, and
+!    Poisson's equation from bottom to top.
+! Method:  
+!    1. Assume a layer's (T,Qv) between w levels (i.e., full levels) are
+!       constant and take the values at u levels (i.e., half levels). 
+!    2. Layer's virtual T: Tv = T * (1 + 0.608*Qv)
+!    3. Hypsometric Eq.: P(z2) = P(z1) * exp[-g*(z2-z1)/(Rd*Tv)]
+!    4. Eq. of State: rho_m = P/(Rd*Tv); rho_d = rho_m/(1+Qv). Add Qc/Qi/Qs/Qg?
+!    5. Poisson's Eq.: theta_d = T * (P0/P)^(Rd/cp)
+! References: 
+!    MPAS-A model user's guide version 7.0, Appendix C.2 for vertical grid.
+!--------------------------------------------------------------------------
+   implicit none
+   integer,                                            intent(in)  :: ncells, nlevels
+   real (kind=kind_real), dimension(nlevels+1,ncells), intent(in)  :: zw    ! physical height m at w levels
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: t     ! temperature, K
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: qv    ! mixing ratio, kg/kg
+   real (kind=kind_real), dimension(ncells),           intent(in)  :: ps    ! surface P, Pa
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: p     ! 3D P, Pa
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: rho   ! dry air density, kg/m^3
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: theta ! dry potential T, K
+   
+   integer                :: icell, k
+   real (kind=kind_real)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
+   real (kind=kind_real), dimension(nlevels)   :: tv  ! half level virtual T
+   real (kind=kind_real), dimension(nlevels+1) :: pf  ! full level pressure
+   real (kind=kind_real), dimension(nlevels)   :: zu  ! physical height at u level
+   
+      rvordm1 = rv/rgas - MPAS_JEDI_ONE_kr
+
+      do icell=1,ncells
+
+       ! first full level P is at surface
+         pf(1) = ps(icell)
+
+       do k=1,nlevels
+
+       ! half level physical height
+         zu(k) = MPAS_JEDI_HALF_kr * ( zw(k,icell) + zw(k+1,icell) )
+
+       ! half level Tv
+         tv(k) = t(k,icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,icell) )
+
+       ! integral from full level k to k+1, hypsometric Eq. from hydrostatic/state Eqs
+         pf(k+1) = pf(k) * exp( -gravity * (zw(k+1,icell)-zw(k,icell))/(rgas*tv(k)) )
+
+       ! integral from full level k to half level k
+         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv(k)) )
+
+       ! dry air density at half level, equation of state
+         rho(k,icell) = p(k,icell)/( rgas*tv(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
+
+       ! dry potential T at half level, Poisson's equation
+         theta(k,icell) = t(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp)
+
+       end do
+      end do
+
+end subroutine hydrostatic_balance
 !-------------------------------------------------------------------------------------------
 subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
    implicit none
