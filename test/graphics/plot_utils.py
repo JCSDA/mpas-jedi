@@ -43,6 +43,18 @@ varDict = { \
   , 'longitude':              [ 'deg',   'lon' ] \
     }
 
+# columns: var_name            unit_used   abbr.
+varDictModel = { \
+    'theta':                  [ 'K',    'Theta'] \
+  , 'pressure':               [ 'Pa',    'P'   ] \
+  , 'pressure_p':             [ 'Pa',    'PP'  ] \
+  , 'rho':                    [ 'kg/m\N{SUPERSCRIPT THREE}', 'rho' ] \
+  , 'qv':                     [ 'g/kg',  'Qv'  ] \
+  , 'uReconstructZonal':      [ 'm/s',   'U'   ] \
+  , 'uReconstructMeridional': [ 'm/s',   'V'   ] \
+  , 'u':                      [ 'm/s',  'uedge'] \
+    }
+#Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv. 
 #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
 #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == 'altitude':
 
