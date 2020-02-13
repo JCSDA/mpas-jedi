@@ -107,6 +107,7 @@ Observations:
     ObsOperator:
       <<: *crtmobsoper
       Clouds: [Water, Ice, Rain, Snow, Graupel]
+      Cloud_Fraction: 1.0
       ObsOptions:
         <<: *crtmobsopts
   - ObsSpace:
@@ -186,6 +187,7 @@ Observations:
 #    ObsOperator:
 #      <<: *crtmobsoper
 #      Clouds: [Water, Ice, Rain, Snow, Graupel]
+#      Cloud_Fraction: 1.0
 #      ObsOptions:
 #        <<: *crtmobsopts
 #        Sensor_ID: atms_npp

@@ -13,6 +13,7 @@ use kinds, only: kind_real
 use oops_variables_mod
 
 !mpas-jedi
+use mpas_constants_mod
 use mpas_geom_mod
 use mpas_state_mod
 use mpas_field_utils_mod
@@ -25,7 +26,7 @@ use mpas_pool_routines, only: mpas_pool_get_config
 !State read/write/init
 use datetime_mod
 
-!GetValues+traj
+!UFO
 use ufo_locs_mod
 use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
@@ -53,8 +54,10 @@ type(mpas_field), pointer :: self
 type(mpas_geom), pointer :: geom
 type(oops_variables) :: state_vars
 type(oops_variables) :: inc_vars
-character(len=StrKIND),  pointer :: config_microp_scheme
+character(len=StrKIND),  pointer :: config_microp_scheme, &
+                                    config_radt_cld_scheme
 logical,  pointer :: config_microp_re
+integer :: ivar
 
 call mpas_field_registry%init()
 call mpas_field_registry%add(c_key_self)
@@ -66,14 +69,26 @@ inc_vars = oops_variables(c_inc_vars)
 
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
-write(*,*) "config_microp_re=",config_microp_re
-write(*,*) "config_microp_scheme=",config_microp_scheme
+call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_radt_cld_scheme', config_radt_cld_scheme)
+
 if (config_microp_re) then
    call state_vars%push_back(mpas_re_fields)
 end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
    call state_vars%push_back("index_nr")
 end if
+if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
+     trim(config_microp_scheme) /= MPAS_JEDI_OFF ) then
+   do ivar = 1, state_vars % nvars()
+      ! Only need cloud fraction when hydrometeors are in state
+      if ( ufo_vars_getindex( mpas_hydrometeor_fields, &
+                              state_vars%variable(ivar) ) > 0 ) then
+         call state_vars%push_back("cldfrac")
+         exit
+      end if
+   end do
+end if
+
 call self%create(geom, state_vars, inc_vars)
 
 end subroutine mpas_state_create_c

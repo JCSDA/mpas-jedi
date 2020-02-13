@@ -17,6 +17,9 @@ public
 
 ! ------------------------------------------------------------------------------
 
+!Strings
+character(len=3), parameter :: MPAS_JEDI_OFF = 'off'
+
 !Geometry
 real(kind=kind_real), parameter :: MPAS_JEDI_PII_kr      = real(pii,kind_real)
 real(kind=kind_real), parameter :: MPAS_JEDI_DEG2RAD_kr  = MPAS_JEDI_PII_kr/180.0_kind_real

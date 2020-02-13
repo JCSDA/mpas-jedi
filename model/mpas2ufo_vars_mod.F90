@@ -736,7 +736,8 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
    real (kind=kind_real) :: lat
    type (field2DReal), pointer :: field2d_nr, field2d_qr, field2d_qg, field2d_rho
-   character(len=StrKIND),  pointer :: config_microp_scheme
+   character(len=StrKIND),  pointer :: config_microp_scheme, &
+                                       config_radt_cld_scheme
    logical,  pointer :: config_microp_re
 
    !--- create new pool for geovals
@@ -980,6 +981,36 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
          field2d % fieldName = var_clhefr
          call mpas_pool_add_field(convFields, var_clhefr, field2d)
  !        write(*,*) "end-of ",var_clhefr
+
+      case ( var_cldfrac ) !-cloud_area_fraction_in_atmosphere_layer
+         call mpas_pool_get_field(subFields, 'temperature', field2d_a)
+         call mpas_duplicate_field(field2d_a, field2d)
+
+         call mpas_pool_get_config(geom % domain % blocklist % configs, &
+                                   'config_radt_cld_scheme', config_radt_cld_scheme)
+         call mpas_pool_get_config(geom % domain % blocklist % configs, &
+                                   'config_microp_scheme', config_microp_scheme)
+
+         if ( trim(config_radt_cld_scheme) == MPAS_JEDI_OFF .or. &
+              trim(config_microp_scheme) == MPAS_JEDI_OFF ) then
+            field2d % array(:,1:ngrid) = MPAS_JEDI_LESSONE_kr
+         else
+            call mpas_pool_get_field(subFields, 'cldfrac', field2d_src)
+            field2d % array(:,1:ngrid) = field2d_src % array(:,1:ngrid)
+            where(field2d % array(:,1:ngrid) > MPAS_JEDI_LESSONE_kr)
+               field2d % array(:,1:ngrid) = MPAS_JEDI_LESSONE_kr
+            end where
+            where(field2d % array(:,1:ngrid) < MPAS_JEDI_ZERO_kr)
+               field2d % array(:,1:ngrid) = MPAS_JEDI_ZERO_kr
+            end where
+
+            ! Assume clouds fill entire column when subgrid fraction is zero everywhere
+            if ( all(field2d % array(:,1:ngrid) <= MPAS_JEDI_ZERO_kr) ) then
+               field2d % array(:,1:ngrid) = MPAS_JEDI_LESSONE_kr
+            end if
+         end if
+         field2d % fieldName = var_cldfrac
+         call mpas_pool_add_field(convFields, var_cldfrac, field2d)
 
      case ( var_sfc_wtmp, var_sfc_ltmp, var_sfc_itmp, var_sfc_stmp ) !-surface_temperature_where_sea, surface_temperature_where_land, surface_temperature_where_ice, surface_temperature_where_snow
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
