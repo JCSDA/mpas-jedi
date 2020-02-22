@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import datetime as dt 
 from datetime import *
 import ast
-import plot_utils as pu
+import var_utils as vu
 
 #This script is for plotting increments in 2D. 
 #x-axis:Cells/edges, y-axis: verfical levels
@@ -83,7 +83,7 @@ def plot(xarray,binsfory,model,yyyymmddhh,source):
     valuemax = np.amax(model)
     norm = matplotlib.colors.DivergingNorm(vmin=valuemin, vcenter=0, vmax=valuemax)
     plt.contourf(xarray,binsfory,model,10,vmin=valuemin,vmax=valuemax,norm=norm,cmap=cmap)
-    plt.title( source+' '+pu.varDictModel[VAR_NAME][1]+'('+ pu.varDictModel[VAR_NAME][0]+') max=' +str(round(valuemax,4))+' min='+str(round(valuemin,4)))
+    plt.title( source+' '+vu.varDictModel[VAR_NAME][1]+'('+ vu.varDictModel[VAR_NAME][0]+') max=' +str(round(valuemax,4))+' min='+str(round(valuemin,4)))
     major_ticks = np.arange(0, 56, 5)
     ax1.set_yticks(major_ticks)
     ax1.set_ylim([0,54])
@@ -101,7 +101,7 @@ def plot(xarray,binsfory,model,yyyymmddhh,source):
         ax1.set_xlabel( 'Cell',fontsize=15)
 
     plt.colorbar(extend='both',orientation="horizontal")
-    plt.savefig('%s_%s_%s.png'%(pu.varDictModel[VAR_NAME][1],yyyymmddhh,source),dpi=200,bbox_inches='tight')
+    plt.savefig('%s_%s_%s.png'%(vu.varDictModel[VAR_NAME][1],yyyymmddhh,source),dpi=200,bbox_inches='tight')
 
 def main():
     readdata()

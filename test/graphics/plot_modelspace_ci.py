@@ -10,7 +10,7 @@ from copy import deepcopy
 import datetime as dt
 from datetime import datetime, timedelta
 import numpy.random as npr
-import plot_utils as pu
+import var_utils as vu
 
 EXP_DIR1 = os.getenv('FCDIAG_WORK_DIR1','/gpfs/fs1/scratch/jban/pandac/conv60it/FC1/')
 EXP_DIR2 = os.getenv('FCDIAG_WORK_DIR2','/gpfs/fs1/scratch/jban/pandac/conv60it/FC1/')
@@ -68,7 +68,7 @@ def readdata():
            var    = ''.join(varName.split("_")[3:][:-1])
            stats  = ''.join(varName.split("_")[4:])
            print('jban check',varName,region,var,stats)
-           plt.title(stats+'  variable:'+pu.varDictModel[var][1]+'('+ pu.varDictModel[var][0]+')  '+region, fontsize = 12)
+           plt.title(stats+'  variable:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+')  '+region, fontsize = 12)
            plt.plot(data1[:,0],t)
            plt.fill_betweenx( t, data1[:,1],data1[:,2],alpha=0.3,  linestyle='-.')
            plt.plot([0,0],[0, x], ls="--", c=".3")  # zero line
@@ -80,7 +80,7 @@ def readdata():
            var    = ''.join(varName.split("_")[2:][:-1])
            stats  = ''.join(varName.split("_")[3:])
            print('jban check',region,var,stats)
-           plt.title(stats+'  variable:'+pu.varDictModel[var][1]+'('+ pu.varDictModel[var][0]+')  '+region, fontsize = 12)
+           plt.title(stats+'  variable:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+')  '+region, fontsize = 12)
            plt.plot(t,data1[:,0])
            plt.fill_between( t,data1[:,1],data1[:,2],alpha=0.3,  linestyle='-.')
            plt.plot([0, x],[0,0], ls="--", c=".3")  # zero line

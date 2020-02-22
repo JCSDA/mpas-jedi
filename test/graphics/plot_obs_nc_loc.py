@@ -14,7 +14,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
 import fnmatch
 import basic_plot_functions
-import plot_utils as pu
+import var_utils as vu
 
 '''
 Directory Structure:
@@ -61,8 +61,8 @@ def readdata():
     #get obs types with 'process': True from dictionary DiagSpaceDict
     ObsSpaceDict = {}
     obsfiles_prefix = []
-    for (key,baseval) in pu.DiagSpaceDict.items():
-        if baseval['process'] and baseval['DiagSpaceGrp'] != pu.model_s:
+    for (key,baseval) in vu.DiagSpaceDict.items():
+        if baseval['process'] and baseval['DiagSpaceGrp'] != vu.model_s:
             ObsSpaceDict = deepcopy(baseval)
             obsfiles_prefix.append(key)
 
@@ -95,12 +95,12 @@ def readdata():
             if lonnc[i] > 180:
                 lonnc[i] = lonnc[i]-360
 
-        ObsSpaceInfo = pu.DiagSpaceDict.get(obstype,pu.nullDiagSpaceInfo)
-        channels = ObsSpaceInfo.get('channels',[pu.miss_i])
+        ObsSpaceInfo = vu.DiagSpaceDict.get(obstype,vu.nullDiagSpaceInfo)
+        channels = ObsSpaceInfo.get('channels',[vu.miss_i])
         #select variables with the suffix 'ObsValue'
         if len(channels) == 0:
             continue
-        if channels[0] == pu.miss_i:
+        if channels[0] == vu.miss_i:
             obslist = [obs for obs in varlist if (obs[-8:] == 'ObsValue')]
         else:
             obslist = ['brightness_temperature_{0}@ObsValue'.format(i) for i in channels]
@@ -122,9 +122,9 @@ def readdata():
             var_name = var[:-9]
             out_name = file_name[:-4]
             if '_'.join(var_name.split("_")[:-1]) == 'brightness_temperature':
-                var_unit = pu.varDict['brightness_temperature'][0]
+                var_unit = vu.varDictObs['brightness_temperature'][0]
             else:
-                var_unit = pu.varDict[var_name][0]
+                var_unit = vu.varDictObs[var_name][0]
 
             levbin='all'
             basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin)

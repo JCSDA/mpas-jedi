@@ -10,6 +10,7 @@ import pandas as pd
 #import sys
 
 import plot_utils as pu
+import stat_utils as su
 
 
 def bootstrap_test():
@@ -35,8 +36,8 @@ def bootstrap_test():
 
     # establish f(g(X),g(Y)) for full population sampling
     #g(x)
-    vecFuncs = [pu.identityFunc, np.square, pu.rmsFunc]
-    bootFuncs = [pu.bootStrapVector,pu.bootStrapVector,pu.bootStrapVectorRMSFunc]
+    vecFuncs = [su.identityFunc, np.square, su.rmsFunc]
+    bootFuncs = [su.bootStrapVector,su.bootStrapVector,su.bootStrapVectorRMSFunc]
     # vecFuncs = [np.square]
     nFuncs = len(vecFuncs)
 
@@ -53,19 +54,19 @@ def bootstrap_test():
     X2_SAMPLE = X2MEAN + X2STD*randSample2
 
     print("\n\nX1_SAMPLE stats:")
-    print(pu.calcStats(X1_SAMPLE))
+    print(su.calcStats(X1_SAMPLE))
 
     print("\n\nX2_SAMPLE stats:")
-    print(pu.calcStats(X2_SAMPLE))
+    print(su.calcStats(X2_SAMPLE))
 
     print("\n\nstatFunc(vecFunc(X2),vecFunc(X1)) stats:")
     sampleStats = []
     for ifunc, vecFunc in enumerate(vecFuncs):
-        if vecFunc is pu.rmsFunc:
+        if vecFunc is su.rmsFunc:
             sampleStats.append({'Mean': statFunc(vecFunc(X2_SAMPLE),vecFunc(X1_SAMPLE))})
 
         else:
-            sampleStats.append(pu.calcStats(statFunc(vecFunc(X2_SAMPLE),vecFunc(X1_SAMPLE))))
+            sampleStats.append(su.calcStats(statFunc(vecFunc(X2_SAMPLE),vecFunc(X1_SAMPLE))))
 
     print(sampleStats)
 
@@ -73,7 +74,7 @@ def bootstrap_test():
     # MEAN(statFunc(vecFunc(X2),vecFunc(X1)))
 
     # Bootstrap on full population
-    statsCIFullSamples = pu.bootStrapVectorFunc( \
+    statsCIFullSamples = su.bootStrapVectorFunc( \
                              X2_SAMPLE, X1_SAMPLE, 
                              n_samples = nBootSamples, \
                              vecFuncs = vecFuncs, \
@@ -138,13 +139,13 @@ def bootstrap_test():
         #X1_SAMPLE
         X1ClustsValues = []
         X1ClustsStats = {}
-        for stat in pu.aggregatableFileStats:
+        for stat in su.aggregatableFileStats:
             X1ClustsStats[stat] = []
 
         for ic, clusts in enumerate(clustsN):
             X1ClustsValues.append(X1_SAMPLE[clustsStart[ic]:clustsEnd[ic]])
-            clustStats = pu.calcStats(X1ClustsValues[ic]) 
-            for stat in pu.aggregatableFileStats:
+            clustStats = su.calcStats(X1ClustsValues[ic]) 
+            for stat in su.aggregatableFileStats:
                 X1ClustsStats[stat].append(clustStats[stat])
 
         X1ClustsStatsDF = pd.DataFrame.from_dict(X1ClustsStats)
@@ -155,20 +156,20 @@ def bootstrap_test():
 
 
         print("\n\nX1 aggregated stats:")
-        aggClustStats = pu.aggStatsDF(X1ClustsStatsDF)
+        aggClustStats = su.aggStatsDF(X1ClustsStatsDF)
         print(aggClustStats)
 
 
         #X2_SAMPLE
         X2ClustsValues = []
         X2ClustsStats = {}
-        for stat in pu.aggregatableFileStats:
+        for stat in su.aggregatableFileStats:
             X2ClustsStats[stat] = []
 
         for ic, clusts in enumerate(clustsN):
             X2ClustsValues.append(X2_SAMPLE[clustsStart[ic]:clustsEnd[ic]])
-            clustStats = pu.calcStats(X2ClustsValues[ic]) 
-            for stat in pu.aggregatableFileStats:
+            clustStats = su.calcStats(X2ClustsValues[ic]) 
+            for stat in su.aggregatableFileStats:
                 X2ClustsStats[stat].append(clustStats[stat])
 
         X2ClustsStatsDF = pd.DataFrame.from_dict(X2ClustsStats)
@@ -180,14 +181,14 @@ def bootstrap_test():
 
 
         print("\n\nX2 aggregated stats:")
-        aggClustStats = pu.aggStatsDF(X2ClustsStatsDF)
+        aggClustStats = su.aggStatsDF(X2ClustsStatsDF)
         print(aggClustStats)
 
 
         print("\n\nPerforming bootstrap for sigmaN = ",SIGMAN)
 
         # Bootstrap on cluster subpopulations
-        statsCIClustSamples = pu.bootStrapClusterFunc( \
+        statsCIClustSamples = su.bootStrapClusterFunc( \
                                   X2ClustsStatsDF, X1ClustsStatsDF, \
                                   n_samples = nBootSamples, \
                                   statFunc = statFunc)
@@ -203,11 +204,11 @@ def bootstrap_test():
 
         for ifunc, vecFunc in enumerate(vecFuncs):
             bootFunc = bootFuncs[ifunc]
-            if vecFunc is pu.identityFunc:
+            if vecFunc is su.identityFunc:
                 sampleAggStat = "Mean"
             elif vecFunc is np.square:
                 sampleAggStat = "MS"
-            elif vecFunc is pu.rmsFunc:
+            elif vecFunc is su.rmsFunc:
                 sampleAggStat = "RMS"
             else:
                 print("ERROR: vecFunc has no equivalent in aggregated cluster bootstrap")
