@@ -356,8 +356,10 @@ subroutine hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, rho, theta)
 !    ratio by applying hypsometric equation, equation of state, and
 !    Poisson's equation from bottom to top.
 ! Method:  
-!    1. Assume a layer's (T,Qv) between w levels (i.e., full levels) are
-!       constant and take the values at u levels (i.e., half levels). 
+!    1. Vertical integral of pressure from half level k-1 to k is split 
+!       into two steps: step-1 does integral from half level k-1 to full
+!       level k, followed by a step-2 integral from full level k to half level k.
+!       Full-level Tv is derived using bilinear interpolation of half level Tv.
 !    2. Layer's virtual T: Tv = T * (1 + 0.608*Qv)
 !    3. Hypsometric Eq.: P(z2) = P(z1) * exp[-g*(z2-z1)/(Rd*Tv)]
 !    4. Eq. of State: rho_m = P/(Rd*Tv); rho_d = rho_m/(1+Qv). Add Qc/Qi/Qs/Qg?
@@ -377,33 +379,57 @@ subroutine hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, rho, theta)
    
    integer                :: icell, k
    real (kind=kind_real)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
-   real (kind=kind_real), dimension(nlevels)   :: tv  ! half level virtual T
-   real (kind=kind_real), dimension(nlevels+1) :: pf  ! full level pressure
-   real (kind=kind_real), dimension(nlevels)   :: zu  ! physical height at u level
+   real (kind=kind_real), dimension(nlevels)   :: tv_h  ! half level virtual T
+   real (kind=kind_real), dimension(nlevels+1) :: pf    ! full level pressure
+   real (kind=kind_real), dimension(nlevels)   :: zu    ! physical height at u level
+   real (kind=kind_real)  :: tv_f, tv, w
    
       rvordm1 = rv/rgas - MPAS_JEDI_ONE_kr
 
       do icell=1,ncells
 
-       ! first full level P is at surface
-         pf(1) = ps(icell)
-
-       do k=1,nlevels
-
-       ! half level physical height
+         k = 1 ! 1st half level
+         pf(k) = ps(icell) ! first full level P is at surface
          zu(k) = MPAS_JEDI_HALF_kr * ( zw(k,icell) + zw(k+1,icell) )
-
-       ! half level Tv
-         tv(k) = t(k,icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,icell) )
-
-       ! integral from full level k to k+1, hypsometric Eq. from hydrostatic/state Eqs
-         pf(k+1) = pf(k) * exp( -gravity * (zw(k+1,icell)-zw(k,icell))/(rgas*tv(k)) )
+         tv_h(k) = t(k,icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,icell) )
 
        ! integral from full level k to half level k
-         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv(k)) )
+         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv_h(k)) )
+         rho(k,icell) = p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
+         theta(k,icell) = t(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp)
 
+       do k=2,nlevels ! loop over half levels
+
+       ! half level physical height, zu(k-1) -> zw(k) -> zu(k)
+         zu(k) = MPAS_JEDI_HALF_kr * ( zw(k,icell) + zw(k+1,icell) )
+   
+       ! bilinear interpolation weight for value at the half level below the full level
+         w = ( zu(k) - zw(k,icell) )/( zu(k) - zu(k-1) )
+
+       ! half level Tv
+         tv_h(k)   = t(k,  icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,  icell) )
+
+       ! interpolate two half levels Tv to a full level Tv
+         tv_f = w * tv_h(k-1) + (MPAS_JEDI_ONE_kr - w) * tv_h(k)
+
+       ! two-step integral from half level k-1 to k
+       !-----------------------------------------------------------
+
+       ! step-1: tv used for integral from half level k-1 to full level k
+         tv = MPAS_JEDI_HALF_kr * ( tv_h(k-1) + tv_f )
+
+       ! step-1: integral from half level k-1 to full level k, hypsometric Eq.
+         pf(k) = p(k-1,icell) * exp( -gravity * (zw(k,icell)-zu(k-1))/(rgas*tv) )
+
+       ! step-2: tv used for integral from full level k to half level k
+         tv = MPAS_JEDI_HALF_kr * ( tv_h(k) + tv_f )
+
+       ! step-2: integral from full level k to half level k
+         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv) )
+
+       !------------------------------------------------------------
        ! dry air density at half level, equation of state
-         rho(k,icell) = p(k,icell)/( rgas*tv(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
+         rho(k,icell) = p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
 
        ! dry potential T at half level, Poisson's equation
          theta(k,icell) = t(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp)
