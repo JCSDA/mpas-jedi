@@ -187,45 +187,49 @@ endif()
 # If it is not defined then download to build bundle 
 # in `test_data` directory
 # If local path to testfiles is defined don't download
+
 if( NOT DEFINED LOCAL_PATH_TESTFILES )
   set(TESTFILE_DIR ${CMAKE_BINARY_DIR}/test_data/ioda CACHE PATH "data dir for test data")
   file(MAKE_DIRECTORY ${TESTFILE_DIR})
-else()
-  set(TESTFILE_DIR ${LOCAL_PATH_TESTFILES})
-endif()
+  message (STATUS "LOCAL_PATH_TESTFILES not defined, download test files")
 
-# Get the current git branch and use it to download
-# specific data for this branch on S3. If specific data 
-# does not exist, it will use default (develop) data
-execute_process(
+  # Get the current git branch and use it to download
+  # specific data for this branch on S3. If specific data 
+  # does not exist, it will use default (develop) data
+  execute_process(
     COMMAND git rev-parse --abbrev-ref HEAD
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_BRANCH
     OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+  )
 
-# Check whether the URL exists or not 
-ecbuild_check_multiurl(NAMES   ${mpas_ioda_test_data}
+  # Check whether the URL exists or not 
+  ecbuild_check_multiurl(NAMES   ${mpas_ioda_test_data}
                        DIRNAME ${GIT_BRANCH}
                        RESULT  SPECIFIC_TEST_FILES)
 
-# Set distant directory
-if(${SPECIFIC_TEST_FILES} MATCHES 0)
+  # Set distant directory
+  if(${SPECIFIC_TEST_FILES} MATCHES 0)
     # Download and extract new test files (distant directory = git branch)
     set(DIRNAME ${GIT_BRANCH})
-else()
+  else()
     # Download and extract develop test files (distant directory = develop)
     set(DIRNAME "develop")
-endif()
-message(STATUS "Test data downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME})
+  endif()
+  message(STATUS "Test data downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME})
 
-# Now run test to download data
-ecbuild_get_test_multidata ( TARGET get_ioda_test_data_mpas
+  # Now run test to download data
+  ecbuild_get_test_multidata ( TARGET get_ioda_test_data_mpas
                              NAMES ${mpas_ioda_test_data}
                              DIRNAME ${DIRNAME}
                              DIRLOCAL ${TESTFILE_DIR}
                              EXTRACT
                            )
+else()
+  set(TESTFILE_DIR ${LOCAL_PATH_TESTFILES})
+  message (STATUS "LOCAL_PATH_TESTFILES set to : " ${LOCAL_PATH_TESTFILES})
+endif()
+
 # Link test files 
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
                  ${TESTFILE_DIR}
