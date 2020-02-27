@@ -64,7 +64,7 @@ end type mpas_geom
 #define LISTED_TYPE mpas_geom
 
 !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_geom_registry
@@ -73,7 +73,7 @@ type(registry_t) :: mpas_geom_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 subroutine geo_setup(self, f_conf)

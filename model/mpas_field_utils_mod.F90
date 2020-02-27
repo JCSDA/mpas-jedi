@@ -106,7 +106,7 @@ public :: mpas_field, mpas_field_registry, &
 #define LISTED_TYPE mpas_field
 
 !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_field_registry
@@ -118,7 +118,7 @@ contains
 ! ------------------------------------------------------------------------------
 
 !> Linked list implementation
-#include "linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 

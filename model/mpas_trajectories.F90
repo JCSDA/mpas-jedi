@@ -31,7 +31,7 @@ end type mpas_trajectory
 #define LISTED_TYPE mpas_trajectory
 
 !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_traj_registry
@@ -40,7 +40,7 @@ type(registry_t) :: mpas_traj_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 

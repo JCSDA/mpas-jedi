@@ -30,7 +30,7 @@ end type mpas_getvaltraj
 #define LISTED_TYPE mpas_getvaltraj
 
 !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_getvaltraj_registry
@@ -39,7 +39,7 @@ type(registry_t) :: mpas_getvaltraj_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
 

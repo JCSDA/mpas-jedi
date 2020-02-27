@@ -24,7 +24,7 @@ end type mpas_varchange
 #define LISTED_TYPE mpas_varchange
 
 !> Linked list interface - defines registry_t type
-#include "linkedList_i.f"
+#include "oops/util/linkedList_i.f"
 
 !> Global registry
 type(registry_t) :: mpas_varchange_registry
@@ -33,7 +33,7 @@ type(registry_t) :: mpas_varchange_registry
 contains
 ! ------------------------------------------------------------------------------
 !> Linked list implementation
-#include "linkedList_c.f"
+#include "oops/util/linkedList_c.f"
 ! ------------------------------------------------------------------------------
 
 subroutine mpas_varchange_setup(self, bg, fg, geom, f_conf)
