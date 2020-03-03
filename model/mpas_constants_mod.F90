@@ -20,11 +20,6 @@ public
 !Strings
 character(len=3), parameter :: MPAS_JEDI_OFF = 'off'
 
-!Geometry
-real(kind=kind_real), parameter :: MPAS_JEDI_PII_kr      = real(pii,kind_real)
-real(kind=kind_real), parameter :: MPAS_JEDI_DEG2RAD_kr  = MPAS_JEDI_PII_kr/180.0_kind_real
-real(kind=kind_real), parameter :: MPAS_JEDI_RAD2DEG_kr  = 180.0_kind_real/MPAS_JEDI_PII_kr
-
 ! ------------------------------------------------------------------------------
 
 !Commonly used numbers
@@ -38,11 +33,23 @@ real(kind=kind_real), parameter :: MPAS_JEDI_MILLION_kr  = 1000000.0_kind_real
 
 ! ------------------------------------------------------------------------------
 
+!Geometry
+real(kind=kind_real), parameter :: MPAS_JEDI_PII_kr      = real(pii,kind_real)
+real(kind=kind_real), parameter :: MPAS_JEDI_PIIo2_kr    = MPAS_JEDI_PII_kr/MPAS_JEDI_TWO_kr
+real(kind=kind_real), parameter :: MPAS_JEDI_DEG2RAD_kr  = MPAS_JEDI_PII_kr/180.0_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_RAD2DEG_kr  = 180.0_kind_real/MPAS_JEDI_PII_kr
+
+! ------------------------------------------------------------------------------
+
 !Comparison
-real(kind=kind_real), parameter :: MPAS_JEDI_LESSONE_kr  = 0.9999999999999999_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_GREATERZERO_kr = 0.0000000000000001_kind_real
+real(kind=kind_real), parameter :: MPAS_JEDI_LESSONE_kr     = 0.9999999999999999_kind_real
+
+! ------------------------------------------------------------------------------
 
 ! reference pressure p0 in Pa
 real(kind=kind_real), parameter :: MPAS_JEDI_P0_kr  = 100000.0_kind_real
+
 ! ------------------------------------------------------------------------------
 
 contains

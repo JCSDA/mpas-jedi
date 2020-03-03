@@ -158,6 +158,13 @@ subroutine geo_setup(self, f_conf)
 
    call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )           
    self % latCell = r1d_ptr(1:self % nCells)
+   where (self % latCell > MPAS_JEDI_PIIo2_kr)
+       self % latCell = MPAS_JEDI_PIIo2_kr
+   end where
+   where (self % latCell < - MPAS_JEDI_PIIo2_kr)
+       self % latCell = - MPAS_JEDI_PIIo2_kr
+   end where
+
    call mpas_pool_get_array ( meshPool, 'lonCell', r1d_ptr )           
    self % lonCell = r1d_ptr(1:self % nCells)
    call mpas_pool_get_array ( meshPool, 'areaCell', r1d_ptr )          
