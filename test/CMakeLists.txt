@@ -179,19 +179,19 @@ list( APPEND mpas_ioda_test_data
 # Set URL for IODA test files
 set(ECBUILD_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com/ioda)
 
-# Use `LOCAL_PATH_TESTFILES` to pass path to local test files
-if (DEFINED ENV{LOCAL_PATH_TESTFILES})
-    set(LOCAL_PATH_TESTFILES "$ENV{LOCAL_PATH_TESTFILES}")
+# Use `LOCAL_PATH_TESTFILES_IODA` to pass path to local test files
+if (DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
+    set(LOCAL_PATH_TESTFILES_IODA "$ENV{LOCAL_PATH_TESTFILES_IODA}")
 endif()
 
 # If it is not defined then download to build bundle 
 # in `test_data` directory
 # If local path to testfiles is defined don't download
 
-if( NOT DEFINED LOCAL_PATH_TESTFILES )
-  set(TESTFILE_DIR ${CMAKE_BINARY_DIR}/test_data/ioda CACHE PATH "data dir for test data")
-  file(MAKE_DIRECTORY ${TESTFILE_DIR})
-  message (STATUS "LOCAL_PATH_TESTFILES not defined, download test files")
+if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
+  set(TESTFILE_DIR_IODA ${CMAKE_BINARY_DIR}/test_data/ioda CACHE PATH "data dir for test data")
+  file(MAKE_DIRECTORY ${TESTFILE_DIR_IODA})
+  message (STATUS "LOCAL_PATH_TESTFILES_IODA not defined, download test files")
 
   # Get the current git branch and use it to download
   # specific data for this branch on S3. If specific data 
@@ -222,17 +222,17 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES )
   ecbuild_get_test_multidata ( TARGET get_ioda_test_data_mpas
                              NAMES ${mpas_ioda_test_data}
                              DIRNAME ${DIRNAME}
-                             DIRLOCAL ${TESTFILE_DIR}
+                             DIRLOCAL ${TESTFILE_DIR_IODA}
                              EXTRACT
                            )
 else()
-  set(TESTFILE_DIR ${LOCAL_PATH_TESTFILES})
-  message (STATUS "LOCAL_PATH_TESTFILES set to : " ${LOCAL_PATH_TESTFILES})
+  set(TESTFILE_DIR_IODA ${LOCAL_PATH_TESTFILES_IODA})
+  message (STATUS "LOCAL_PATH_TESTFILES_IODA set to : " ${LOCAL_PATH_TESTFILES_IODA})
 endif()
 
 # Link test files 
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-                 ${TESTFILE_DIR}
+                 ${TESTFILE_DIR_IODA}
                  ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda
                  )
 
