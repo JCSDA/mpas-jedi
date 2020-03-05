@@ -120,25 +120,29 @@ def aggStatsDict(x_): #, stats = aggregatableFileStats):
 
     y['Count'] = x['Count'].sum()
 
-    y['Mean'] = ( ( np.multiply(x['Mean'], x['Count'].astype(float)) ).sum()
-                    / ( x['Count'].sum().astype(float) ) )
+    for stat in aggregatableFileStats:
+        if stat != 'Count': y[stat] = np.NaN
 
-    y['MS'] = ( ( np.multiply(x['MS'], x['Count'].astype(float)) ).sum()
-                   / x['Count'].sum().astype(float) )
+    if y['Count'] > 0:
+        y['Mean'] = ( np.nansum( np.multiply(x['Mean'], x['Count'].astype(float)) )
+                        / ( np.sum(x['Count']).astype(float) ) )
 
-    y['RMS'] = np.sqrt( y['MS'] )
+        y['MS'] = ( np.nansum( np.multiply(x['MS'], x['Count'].astype(float)) )
+                       / np.sum(x['Count']).astype(float) )
 
-    y['STD'] = ( np.sqrt( (
-                   ( np.multiply(
-                       (np.square(x['STD']) + np.square(x['Mean'])),
-                       x['Count'].astype(float) ) ).sum()
-                          / x['Count'].sum().astype(float) )
-                        - np.square(y['Mean']) ) )
+        y['RMS'] = np.sqrt( y['MS'] )
+
+        y['STD'] = ( np.sqrt( (
+                       np.nansum( np.multiply(
+                           (np.square(x['STD']) + np.square(x['Mean'])),
+                           x['Count'].astype(float) ) )
+                              / np.sum(x['Count']).astype(float) )
+                            - np.square(y['Mean']) ) )
     # Pooled variance Formula as described here:
     #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
-    y['Min'] = np.nanmin(x['Min'])
+        y['Min'] = np.nanmin(x['Min'])
 
-    y['Max'] = np.nanmax(x['Max'])
+        y['Max'] = np.nanmax(x['Max'])
 
     return y
 
