@@ -1,4 +1,6 @@
 import argparse
+import binning_utils as bu
+import config as conf
 from copy import deepcopy
 import fnmatch
 import glob
@@ -10,7 +12,6 @@ from netCDF4 import Dataset
 import numpy as np
 import os
 import par_utils as paru
-import re
 import stat_utils as su
 import sys
 import ufo_file_utils as ufofu
@@ -25,10 +26,9 @@ selectDiagNames = ['omb','oma']
 
 this_program = os.path.basename(sys.argv[0])
 
-#quality control
-qcIterBG='0'
+#analysis outer iteration
 NOUTER=os.getenv('NOUTER',1) #set equal to number of outer iterations
-qcIterAN=str(NOUTER)
+anIter=str(NOUTER)
 
 def writediagstats_obsspace(database, osKey):
     #  database - ufofu.FeedbackFiles object
@@ -38,71 +38,64 @@ def writediagstats_obsspace(database, osKey):
 
     database.initHandles(osKey)
 
+
     ##############################################
     ## Extract constructor info about the ObsSpace
     ##############################################
 
-    ObsSpaceName = database.ObsSpaceName[osKey]
-    ObsSpaceInfo = vu.DiagSpaceDict[ObsSpaceName]
-    ObsSpaceGrp = ObsSpaceInfo['DiagSpaceGrp']
-    binGrps = ObsSpaceInfo.get('binGrps',{})
-
-
-    ###########################################
-    ## Generate comprehensive list of variables
-    ##  to read from database
-    ###########################################
-
-    # compile list of unique variables needed for binning
-    uniqBinVarGrps = []
-    # TODO: initialize uniqBinVarGrps with selected binMethods, binArgs,
-    #       and binFunc and not 'variables' dictionary member
-    for binGrpKey, binMethods in binGrps.items():
-        grpDict = vu.binGrpDict.get(binGrpKey,{'variables': []})
-        binVarGrps = grpDict['variables']
-        for binVarGrp in binVarGrps:
-            if binVarGrp not in uniqBinVarGrps:
-                uniqBinVarGrps.append(binVarGrp)
-
-    # add iteration numbers to QC varGrp
-    for ivar, varGrp in enumerate(uniqBinVarGrps):
-        if varGrp==vu.selfQCValue:
-            uniqBinVarGrps[ivar] = varGrp+qcIterBG
-            uniqBinVarGrps.insert(ivar+1,varGrp+qcIterAN)
+    ObsSpaceName  = database.ObsSpaceName[osKey]
+    ObsSpaceInfo  = conf.DiagSpaceConfig[ObsSpaceName]
+    ObsSpaceGrp   = ObsSpaceInfo['DiagSpaceGrp']
+    binVarConfigs = ObsSpaceInfo.get('binVarConfigs',{})
 
     # create observed variable list by selecting those variables in the
     # obs feedback files (ufofu.obsFKey) with the suffix vu.depbgGroup
-    varlist, chanlist = database.varList(osKey,ufofu.obsFKey,vu.depbgGroup)
+    obsVars = database.varList(osKey,ufofu.obsFKey,vu.depbgGroup)
 
-    # replace binning variables that
-    # (1) contain vu.vNameStr
-    # (2) contain vu.vChanStr
-    for ivar, varGrp in enumerate(uniqBinVarGrps):
-        binVarName, binGrpName = vu.splitObsVarGrp(varGrp)
-        if (binVarName == vu.vNameStr
-            or vu.vChanStr in binVarName.split("_")):
-            for jvar, varName in enumerate(varlist):
-                varGrpSub = re.sub(vu.vNameStr,varName,varGrp)
-                varGrpSub = re.sub(vu.vChanStr,chanlist[jvar],varGrpSub)
-                uniqBinVarGrps.insert(ivar+1,varGrpSub)
-            uniqBinVarGrps.remove(varGrp)
 
-    # add unique obs and departure variables to combined list
-    uniqFileVarGrps = deepcopy(uniqBinVarGrps)
-    for varName in varlist:
+    ########################################################
+    ## Construct dictionary of binMethods for this ObsSpace
+    ########################################################
+
+    binMethods = {}
+
+    for binVarKey, binMethodKeys in binVarConfigs.items():
+        binVarConfig = bu.binVarConfigs.get(binVarKey,bu.nullBinVarConfig)
+        for binMethodKey in binMethodKeys:
+            binMethodConfig = binVarConfig.get(binMethodKey,bu.nullBinMethod)
+
+            if (len(binMethodConfig['values']) < 1 or
+                len(binMethodConfig['filters']) < 1): continue
+
+            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(binMethodConfig)
+
+
+    ############################################
+    ## Generate comprehensive list of variables
+    ##  and then read from database
+    ############################################
+
+    dbVars = []
+
+    for varName in obsVars:
+        # add obs and departure variables
         for grpName in [vu.obsGroup, vu.depbgGroup, vu.depanGroup]:
             varGrp   = varName+'@'+grpName
-            if varGrp not in uniqFileVarGrps:
-                uniqFileVarGrps.append(varGrp)
-    #print(uniqFileVarGrps)
+            dbVars.append(varGrp)
 
-    # read the variables into memory
-    fileVarsVals = database.readVars(osKey,uniqFileVarGrps)
+        # add all variables needed for binning
+        for (binVarKey,binMethodKey), binMethod in binMethods.items():
+            for varGrp in binMethod.dbVars(
+                varName,[vu.bgIter,anIter]):
+                dbVars.append(varGrp)
+
+    # read the database values into memory
+    dbVals = database.readVars(osKey,dbVars)
 
 
-    #################################################
-    ## Collect statistics for each varName in varlist
-    #################################################
+    ######################################
+    ## Collect statistics for all obsVars
+    ######################################
 
     # Initialize a dictionary to contain all statistical info for this osKey
     statsDict = {}
@@ -112,131 +105,70 @@ def writediagstats_obsspace(database, osKey):
         statsDict[statName] = []
 
     print(LOGPREFIX+"Calculating/writing diagnostic stats for:")
-    for ivar, varName in enumerate(varlist):
+    for varName in obsVars:
         print(LOGPREFIX+"VARIABLE = "+varName)
         obsName   = varName+'@'+vu.obsGroup
         depbgName = varName+'@'+vu.depbgGroup
         depanName = varName+'@'+vu.depanGroup
 
-        chanStr = chanlist[ivar]
-        if ObsSpaceGrp == vu.radiance_s:
-            dictName = '_'.join(varName.split("_")[:-1])
-            varVal = vu.varDictObs.get(dictName,['',dictName])
-            varShort = varVal[1]+'_'+chanStr
-        else:
-            varVal = vu.varDictObs.get(varName,['',varName])
-            varShort = varVal[1]
-        varUnits = varVal[0]
-
-
-        # add binning arguments that are functions of
-        # variables already contained within fileVarsVals:
-        # TODO: move this to bin variables constructor stage
-        #       using a new binFunction class and binFunction.argVars member
-        # (1) varName@vu.bakGroup
-        varGrp = varName+'@'+vu.bakGroup
-        if varGrp in uniqBinVarGrps:
-            fileVarsVals[varGrp] = np.add(
-                fileVarsVals[depbgName],
-                fileVarsVals[obsName])
-
+        varShort, varUnits = vu.varAttributes(varName)
 
         # collect stats for all selectDiagNames
         for diagName in selectDiagNames:
             print(LOGPREFIX+"DIAG = "+diagName)
+            outerIter = vu.bgIter
+            # TODO: calculate diagnostics using *FilterFunc classes
+            #  --> if more complex diagnostics are needed
             if diagName == 'omb':
-                Diagnostic = np.negative(fileVarsVals[depbgName])
+                Diagnostic = np.negative(dbVals[depbgName])
             elif diagName == 'oma':
-                Diagnostic = np.negative(fileVarsVals[depanName])
+                Diagnostic = np.negative(dbVals[depanName])
+                outerIter = anIter
             elif diagName == 'obs':
-                Diagnostic = deepcopy(fileVarsVals[obsName])
+                Diagnostic = deepcopy(dbVals[obsName])
             elif diagName == 'bak':
-                Diagnostic = np.add(fileVarsVals[depbgName], fileVarsVals[obsName])
+                Diagnostic = np.add(dbVals[depbgName], dbVals[obsName])
             elif diagName == 'ana':
-                Diagnostic = np.add(fileVarsVals[depanName], fileVarsVals[obsName])
+                Diagnostic = np.add(dbVals[depanName], dbVals[obsName])
+                outerIter = anIter
             else:
                 print('\n\nERROR: diagName is undefined: '+diagName)
                 os._exit(1)
 
             if ((diagName == 'omb' or diagName == 'oma')
                and 'gnssro' in ObsSpaceName):
-                Diagnostic = np.multiply(np.divide(Diagnostic,fileVarsVals[obsName]),100.)
+                Diagnostic = np.multiply(np.divide(Diagnostic,dbVals[obsName]),100.)
 
+            for (binVarKey,binMethodKey), binMethod in binMethods.items():
+                binVarName, binGrpName = vu.splitObsVarGrp(binVarKey)
+                binVarShort, binVarUnits = vu.varAttributes(binVarName)
 
-            # filter and store Diagnostic statistics for each binGrp
-            for binGrpKey, binMethods in binGrps.items():
-                grpDict = vu.binGrpDict.get(binGrpKey,{'variables': [vu.miss_s]})
-                if grpDict['variables'][0] == vu.miss_s: continue
+                # initialize binMethod filter function result
+                binMethod.evaluate(dbVals,varName,outerIter)
 
-                binVarName = grpDict.get('binVarName',vu.miss_s)
-                binVar, binGrp = vu.splitObsVarGrp(binVarName)
-                binVarDict  = vu.varDictObs.get(binVar,[vu.miss_s,binVar])
-                binVarUnits = binVarDict[0]
-                binVarShort = binVarDict[1]
+                for binVal in binMethod.values:
+                    # store metadata common to all bins
+                    statsDict['DiagSpaceGrp'].append(ObsSpaceGrp)
+                    statsDict['varName'].append(varShort)
+                    statsDict['varUnits'].append(varUnits)
+                    statsDict['diagName'].append(diagName)
+                    statsDict['binMethod'].append(binMethodKey)
+                    statsDict['binVar'].append(binVarShort)
+                    statsDict['binUnits'].append(binVarUnits)
 
-                for ikey, binMethod in enumerate(binMethods):
-                    keyDesc = grpDict.get(binMethod,vu.nullBinMethod)
-                    binVals = keyDesc['labels']
-                    if binVals[0] == vu.miss_s: continue
+                    # apply binMethod filters for binVal
+                    binnedDiagnostic = binMethod.apply(Diagnostic,diagName,binVal)
 
-                    binFilters = keyDesc['filters']
-                    for ibin, binVal in enumerate(binVals):
-                        # filter data that meets bin criteria
-                        binnedDiagnostic = deepcopy(Diagnostic)
-                        for binFilter in binFilters:
-                            applyToDiags = binFilter.get('apply_to',vu.allDiags)
-                            if not (diagName in applyToDiags): continue
+                    # store value and statistics associated with this bin
+                    statsDict['binVal'].append(binVal)
+                    statsVal = su.calcStats(binnedDiagnostic)
+                    for statName in su.allFileStats:
+                        statsDict[statName].append(statsVal[statName])
 
-                            binWhere   = binFilter['where']
-                            binFunc    = binFilter.get('binFunc',vu.firstKey)
-                            binArgs    = binFilter['binArgs']
-                            binArgsMod = deepcopy(binArgs)
-                            # substitute relevant varName and channel as needed
-                            for jvar, varGrp in enumerate(binArgsMod):
-                                varGrpSub = re.sub(vu.vNameStr,varName,varGrp)
-                                varGrpSub = re.sub(vu.vChanStr,chanStr,varGrpSub)
-                                if (diagName == 'oma' or diagName == 'ana'):
-                                    varGrpSub = re.sub(vu.qcGroup,vu.qcGroup+qcIterAN,varGrpSub)
-                                else:
-                                    varGrpSub = re.sub(vu.qcGroup,vu.qcGroup+qcIterBG,varGrpSub)
-                                binArgsMod[jvar] = varGrpSub
-
-                            binArgsVals = {}
-                            for iarg, arg in enumerate(binArgs):
-                                binArgsVals[arg] = fileVarsVals[binArgsMod[iarg]]
-
-                            binBound = (binFilter['bounds'])[ibin]
-
-                            # blacklist locations where the mask is True
-                            mask = binWhere(binFunc(binArgsVals),binBound)
-                            maskValue = binFilter.get('mask_value',np.NaN)
-                            if len(mask) == len(binnedDiagnostic):
-                                binnedDiagnostic[mask] = maskValue
-                            else:
-                                print('\n\nERROR: mask is incorrectly defined for '
-                                              +diagName+" "+binGrpKey+" "+binMethod+" "+binVal)
-                                os._exit(1)
-                        #END binFilters LOOP
-
-                        statsDict['DiagSpaceGrp'].append(ObsSpaceGrp)
-                        statsDict['varName'].append(varShort)
-                        statsDict['varUnits'].append(varUnits)
-                        statsDict['diagName'].append(diagName)
-                        statsDict['binMethod'].append(binMethod)
-                        statsDict['binVar'].append(binVarShort)
-                        statsDict['binUnits'].append(binVarUnits)
-                        statsDict['binVal'].append(binVal)
-
-                        statsVal = su.calcStats(binnedDiagnostic)
-                        for statName in su.allFileStats:
-                            statsDict[statName].append(statsVal[statName])
-
-                    #END binVals LOOP
-                #END binMethods LOOP
-            #END binGrps LOOP
+                #END binMethod.values LOOP
+            #END binMethods tuple LOOP
         #END selectDiagNames LOOP
-    #END varlist LOOP
-
+    #END obsVars LOOP
 
     ## Create a new stats file for osKey
     su.write_stats_nc(osKey,statsDict)
@@ -271,8 +203,6 @@ def main():
     else:
         nprocs = 1
 
-    ospool = Pool(processes=nprocs)
-
     data_path = ufofu.default_path
     if MyArgs.data_path: data_path = MyArgs.data_path
 
@@ -288,6 +218,8 @@ def main():
     database = ufofu.FeedbackFiles(data_path,'nc4',argfPrefixes)
 
     # Loop over all experiment+observation combinations (keys) alphabetically
+    ospool = Pool(processes=nprocs)
+
     for osKey in sorted(database.Files):
         res = ospool.apply_async(writediagstats_obsspace, args=(database,osKey))
 

@@ -1,8 +1,10 @@
+import config as conf
 from copy import deepcopy
 import glob
 from netCDF4 import Dataset
 import numpy as np
 import os
+import plot_utils as pu
 import var_utils as vu
 import sys
 
@@ -90,6 +92,7 @@ class FeedbackFiles:
 
         # error checking
         self.nObsFiles = {}
+        self.exists = {}
         for osKey, fileGroups in self.Files.items():
             nObsFiles = len(fileGroups.get(obsFKey,[]))
             # force crash when there are no obsFKey files available for an osKey
@@ -99,10 +102,12 @@ class FeedbackFiles:
                 print("ERROR: osKey = "+osKey)
                 os._exit(1)
             self.nObsFiles[osKey] = nObsFiles
-
+            self.exists[osKey] = {}
+            self.exists[osKey][obsFKey] = True
             # force crash when # of non-obs files is > 1 but ~= # of obsFKey files
             for key, prefix in self.filePrefixes.items():
                 if key == obsFKey: continue
+                self.exists[osKey][key] = False
                 nFiles = len(fileGroups.get(key,[]))
                 if nFiles > 0 and nFiles < nObsFiles:
                     print("\n\nERROR: there are not enough "+key+
@@ -111,6 +116,8 @@ class FeedbackFiles:
                     print("ERROR: #"+key+"=",nFiles)
                     print("ERROR: osKey = "+osKey)
                     os._exit(1)
+                elif nFiles > 0:
+                    self.exists[osKey][key] = True
 
         # eliminate osKeys that are designated to not be processed
         self.ObsSpaceName = {}
@@ -120,16 +127,16 @@ class FeedbackFiles:
             # and only process valid ObsSpaceNames
             expt_parts = osKey.split("_")
             nstr = len(expt_parts)
-            ObsSpaceInfo = vu.nullDiagSpaceInfo
+            ObsSpaceInfo = conf.nullDiagSpaceInfo
             for i in range(0,nstr):
                 ObsSpaceName_ = '_'.join(expt_parts[i:nstr])
-                ObsSpaceInfo_ = vu.DiagSpaceDict.get( ObsSpaceName_,vu.nullDiagSpaceInfo)
+                ObsSpaceInfo_ = conf.DiagSpaceConfig.get( ObsSpaceName_,conf.nullDiagSpaceInfo)
                 if ObsSpaceInfo_['process']:
                     ObsSpaceName = deepcopy(ObsSpaceName_)
                     ObsSpaceInfo = deepcopy(ObsSpaceInfo_)
             if ((len(osKeySelect)>0 and osKey not in osKeySelect) or
                 not ObsSpaceInfo['process'] or
-                ObsSpaceInfo.get('DiagSpaceGrp',vu.model_s) == vu.model_s):
+                ObsSpaceInfo.get('DiagSpaceGrp',conf.model_s) == conf.model_s):
                 del self.Files[osKey]
             else:
                 self.ObsSpaceName[osKey] = deepcopy(ObsSpaceName)
@@ -161,6 +168,7 @@ class FeedbackFiles:
     def print(self,x,key=""):
         print(self.LOGPREFIX+key+" : "+x)
 
+
     def initHandlesNC(self,osKey):
     #initialize LOGPREFIX and Handles for osKey
     # osKey (string) - experiment-ObsSpace key
@@ -172,7 +180,7 @@ class FeedbackFiles:
             self.Handles[osKey][fileType] = []
 
         for fileType, files in self.Files[osKey].items():
-            if fileType == obsFKey or len(files) == self.nObsFiles[osKey]:
+            if len(files) == self.nObsFiles[osKey]:
                 self.print(" fileType = "+fileType,osKey)
                 for ii, File in enumerate(files):
                     self.Handles[osKey][fileType].append(
@@ -186,11 +194,12 @@ class FeedbackFiles:
         if osKey in self.Handles:
             del self.Handles[osKey]
 
+
     def varListNC(self,osKey,fileType,selectGrp):
     #return a list of variable names that fits the input parameters
-    # osKey (string)      - experiment-ObsSpace key for self.Files
-    # selectGrp (string)  - variable group name desired from self.Files
-    # fileType (string)   - file type key for self.Files[osKey]
+    # osKey (string)     - experiment-ObsSpace key
+    # selectGrp (string) - variable group name desired from self.Files
+    # fileType (string)  - file type key for self.Files[osKey]
 
         # extract file handles
         fHandles = self.Handles[osKey].get(fileType,[])
@@ -202,48 +211,60 @@ class FeedbackFiles:
         #  from fHandles[0]
         allvarlist = fHandles[0].variables.keys()
         varlist = []
-        for vargrp in allvarlist:
-            var, grp = vu.splitObsVarGrp(vargrp)
-            if grp == selectGrp: varlist.append(var)
-
-        # sort varlist alphabetically
-        indices = list(range(len(varlist)))
-        if (self.ObsSpaceGroup[osKey] == vu.radiance_s and
-           (selectGrp == vu.obsGroup or
-            selectGrp == vu.depbgGroup or
-            selectGrp == vu.depanGroup)):
-            # Sort by channel number (int) for radiances
-            chanlist = [vu.splitChan(varName) for varName in varlist]
-            indices.sort(key=[int(ch) for ch in chanlist].__getitem__)
+        if fileType == obsFKey:
+            for vargrp in allvarlist:
+                var, grp = vu.splitObsVarGrp(vargrp)
+                if grp == selectGrp: varlist.append(var)
+# NOT CURRENTLY USED
+#        elif ((fileType == diagFKey and vu.diagGroup in selectGrp and self.exists[osKey][diagFKey]) or
+#              (fileType == geoFKey and vu.geoGroup in selectGrp and self.exists[osKey][geoFKey])):
+#            for vargrp in allvarlist:
+#                var, grp = vu.splitObsVarGrp(vargrp)
+#                varlist.append(var)
         else:
-            chanlist = ['']*len(varlist)
+            self.print("ERROR: varListNC not implemented for "+fileType)
+            os._exit(1)
+
+
+        # sort varlist alphabetically or
+        # by integer suffix for uniform dictName (e.g., channel number)
+        indices = list(range(len(varlist)))
+        dictName0, suf = vu.splitIntSuffix(varlist[0])
+        intlist = []
+        sortbyInt = True
+        for var in varlist:
+            dictName, suf = vu.splitIntSuffix(var)
+            if not pu.isint(suf) or dictName != dictName0:
+                sortbyInt = False
+                break
+            intlist.append(suf)
+
+        if sortbyInt:
+            indices.sort(key=[int(i) for i in intlist].__getitem__)
+        else:
             indices.sort(key=varlist.__getitem__)
         varlist = list(map(varlist.__getitem__, indices))
 
-        return varlist, chanlist
+        return varlist
 
 
-    def readVarsNC(self,osKey,varNames):
-    # osKey (string)    - experiment and ObsSpace to access
-    # varNames (string) - list of variables desired from self.Files
+    def readVarsNC(self,osKey,dbVars):
+    # osKey (string)  - experiment-ObsSpace key
+    # dbVars (string) - list of variables desired from self.Handles[osKey]
 
-        self.print("Reading all variables from UFO file(s)...",osKey)
+        self.print("Reading requested variables from UFO file(s)...",osKey)
 
         obsHandles  = self.Handles[osKey][obsFKey]
         diagHandles = self.Handles[osKey][diagFKey]
         geoHandles  = self.Handles[osKey][geoFKey]
 
-        diagExists = len(diagHandles) > 0
-        geoExists  = len(geoHandles) > 0
-
         # Construct output dictionary
         varsVals = {}
         diagLev = 0
         geoLev  = 0
-        for varGrp in varNames:
+        for varGrp in pu.uniqueMembers(dbVars):
             # self.print(varGrp,osKey)
             varName, grpName = vu.splitObsVarGrp(varGrp)
-            varFound = True
             if varGrp in obsHandles[0].variables:
                 varsVals[varGrp] = np.asarray([])
                 for h in obsHandles:
@@ -254,8 +275,7 @@ class FeedbackFiles:
                 if (vu.obsVarPrs in varGrp and np.max(varsVals[varGrp]) > 10000.0):
                     varsVals[varGrp] = np.divide(varsVals[varGrp],100.0)
 
-
-            elif vu.diagGroup in grpName and diagExists:
+            elif vu.diagGroup in grpName and self.exists[osKey][diagFKey]:
                 if varName in diagHandles[0].variables:
                     varsVals[varGrp] = np.asarray([])
                     for h in diagHandles:
@@ -263,7 +283,7 @@ class FeedbackFiles:
                             np.transpose(np.asarray(h.variables[varName][:]))[diagLev][:] )
                     dtype = h.variables[varName].datatype
 
-            elif vu.geovalGroup in grpName and geoExists:
+            elif vu.geoGroup in grpName and self.exists[osKey][geoFKey]:
                 if varName in geoHandles[0].variables:
                     varsVals[varGrp] = np.asarray([])
                     for h in geoHandles:
@@ -272,21 +292,17 @@ class FeedbackFiles:
                     dtype = h.variables[varName].datatype
 
             else:
-                self.print("WARNING: varGrp not found => "+varGrp,osKey)
-                varFound = False
+                self.print("ERROR: varGrp not found => "+varGrp,osKey)
+                os._exit(1)
 
-            if varFound:
-                if 'int32' in dtype.name:
-                    missing = np.greater(np.abs(varsVals[varGrp]), MAXINT32)
-                elif 'float32' in dtype.name:
-                    missing = np.greater(np.abs(varsVals[varGrp]), MAXFLOAT)
-                elif 'float64' in dtype.name:
-                    missing = np.greater(np.abs(varsVals[varGrp]), MAXDOUBLE)
-                else:
-                    missing = np.full_like(varsVals[varGrp],False,dtype=bool)
-
-                varsVals[varGrp][missing] = np.NaN
-
+            if 'int32' in dtype.name:
+                missing = np.greater(np.abs(varsVals[varGrp]), MAXINT32)
+            elif 'float32' in dtype.name:
+                missing = np.greater(np.abs(varsVals[varGrp]), MAXFLOAT)
+            elif 'float64' in dtype.name:
+                missing = np.greater(np.abs(varsVals[varGrp]), MAXDOUBLE)
+            else:
+                missing = np.full_like(varsVals[varGrp],False,dtype=bool)
+            varsVals[varGrp][missing] = np.NaN
 
         return varsVals
-

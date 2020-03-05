@@ -5,11 +5,11 @@ import os
 # parallel processing definitions
 #================================
 
-def proc_print(nproc,myproc,msg):
+def proc_print(myproc,msg):
     # addendum to normal print()
-    # add prefix of processor rank (myproc) when #of processors (nproc) > 0
+    # add prefix of processor rank (myproc) when myproc > 0
     prefix = ""
-    if nproc > 1:
+    if myproc > 0:
         prefix = "p="+"{:d}".format(myproc)+": "
     print(prefix+msg)
 

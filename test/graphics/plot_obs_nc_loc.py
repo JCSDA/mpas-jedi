@@ -1,3 +1,4 @@
+import config as conf
 import os, json
 import sys
 import numpy
@@ -58,11 +59,11 @@ def readdata():
             elif (test == 'cycling'):
                 allobstypes.append(files[:-19])
 
-    #get obs types with 'process': True from dictionary DiagSpaceDict
+    #get obs types with 'process': True from dictionary conf.DiagSpaceConfig
     ObsSpaceDict = {}
     obsfiles_prefix = []
-    for (key,baseval) in vu.DiagSpaceDict.items():
-        if baseval['process'] and baseval['DiagSpaceGrp'] != vu.model_s:
+    for (key,baseval) in conf.DiagSpaceConfig.items():
+        if baseval['process'] and baseval['DiagSpaceGrp'] != conf.model_s:
             ObsSpaceDict = deepcopy(baseval)
             obsfiles_prefix.append(key)
 
@@ -95,7 +96,7 @@ def readdata():
             if lonnc[i] > 180:
                 lonnc[i] = lonnc[i]-360
 
-        ObsSpaceInfo = vu.DiagSpaceDict.get(obstype,vu.nullDiagSpaceInfo)
+        ObsSpaceInfo = conf.DiagSpaceConfig.get(obstype,conf.nullDiagSpaceInfo)
         channels = ObsSpaceInfo.get('channels',[vu.miss_i])
         #select variables with the suffix 'ObsValue'
         if len(channels) == 0:
