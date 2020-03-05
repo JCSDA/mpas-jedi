@@ -74,6 +74,20 @@ satzenMeta   = obsVarSatZen+'@'+metaGroup
 
 clrskyBTDiag = 'brightness_temperature_assuming_clear_sky_'+vChanStr+'@'+diagGroup
 
+# functions for extracting sub-parts of UFO variable names
+def splitObsVarGrp(varATgroup):
+    if "@" in varATgroup:
+        var = ''.join(varATgroup.split("@")[:-1])
+        grp = ''.join(varATgroup.split("@")[-1])
+    else:
+        var = varATgroup
+        grp = miss_s
+    return var, grp
+
+def splitChan(var):
+    varName, grpName = splitObsVarGrp(var)
+    ch = ''.join(varName.split("_")[-1:])
+    return ch
 
 ## NC variable names for MPAS-Model
 #modVarAlt = 'zgrid' # --> needs to be interpolated to nVertLevels instead of nVertLevelsP1
@@ -743,6 +757,7 @@ obsBinGrps = { 'ObsQC':      [defaultBinMethod,'bad']
              , 'ObsBox':     ['CONUS']
              }
 
+
 ## binGrps for surface obs
 surfBinGrps = deepcopy(obsBinGrps)
 
@@ -812,6 +827,7 @@ for iband, latBand in enumerate(namedLatBands['labels']):
 ## binGrps for radiance obs
 radianceBinGrps = deepcopy(obsBinGrps)
 radianceBinGrps['ObsZenith'] = [defaultBinMethod]
+
 
 ## binGrps for GOES-ABI obs
 abiBinGrps = deepcopy(radianceBinGrps)
