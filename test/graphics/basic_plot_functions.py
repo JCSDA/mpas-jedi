@@ -265,7 +265,7 @@ def plotSeries(fig, \
         ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
         ax.yaxis.get_offset_text().set_fontsize(3)
 
-    # add vertical zero line for unbounded quantities
+    # add horizontal zero line for unbounded quantities
     if not signdef:
         ax.plot([xVals[0], xVals[-1]], [0., 0.], ls="--", c=".3", \
             linewidth=0.7,markersize=0)
@@ -289,6 +289,7 @@ def plotSeries(fig, \
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
         ax.set_xlabel(indepLabel,fontsize=4)
+    if interiorLabels or iy == ny-1:
         ax.set_ylabel(dataLabel,fontsize=4)
 
     #legend
@@ -332,7 +333,7 @@ def plotProfile(fig, \
 # linesLabel       - legend label for linesVals (list)
 
 # title            - subplot title, optional
-# dataLabel           - label for linesVals, optional
+# dataLabel        - label for linesVals, optional
 # sciticks         - whether linesVals needs scientific formatting for ticks, optional
 # signdef          - whether linesVals is positive/negative definite, optional
 # indepLabel       - label for yVals, optional
@@ -461,6 +462,7 @@ def plotProfile(fig, \
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
         ax.set_xlabel(dataLabel,fontsize=4)
+    if interiorLabels or iy == ny-1:
         ax.set_ylabel(indepLabel,fontsize=4)
 
     #legend
@@ -803,5 +805,312 @@ def transformXY_for_pcolor(xs,ys):
 def main():
     print ('This is not a runnable program.')
     os._exit(0)
+
+
+###############################################################################
+lenWarnPDF = 0
+nanWarnPDF = 0
+def plotPDF(fig,
+             countsVals, xVals,
+             countsLabel,
+             title="",
+             indepLabel="x",
+             ny=1, nx=1, nplots=1, iplot=0,
+             lineAttribOffset=1,
+             legend_inside=True,
+             interiorLabels=True):
+
+# ARGUMENTS
+# fig              - matplotlib figure object
+# countsVals       - list of arrays, each containing counts across xVals
+# xVals            - independent variable on x-axis (array)
+# countsLabel      - legend label for countsVals (list)
+
+# title            - subplot title, optional
+# indepLabel       - label for xVals, optional
+
+# ny, nx           - number of subplots in x/y direction, optional
+# nplots           - total number of subplots, optional
+# iplot            - this subplot index (starting at 0), optional
+
+# lineAttribOffset - offset for selecting line attributes, optional
+# legend_inside    - whether legend should be placed inside the subplot, optional
+
+    ax = fig.add_subplot(ny, nx, iplot+1)
+
+    #title
+    ax.set_title(title,fontsize=5)
+
+    #add counts
+    plotVals = []
+    nPDFs = 0
+    for ihist, countVals in enumerate(countsVals):
+        if all(np.isnan(countVals)):
+            global nanWarnPDF
+            if nanWarnPDF==0:
+                print("\nWARNING: skipping all-NaN data")
+                print(title,indepLabel,countsLabel[ihist])
+            nanWarnPDF=nanWarnPDF+1
+            continue
+        if len(countVals)!=len(xVals):
+            global lenWarnPDF
+            if lenWarnPDF==0:
+                print("\nWARNING: skipping data where len(x)!=len(y)")
+                print(title,indepLabel,countsLabel[ihist])
+            lenWarnPDF=lenWarnPDF+1
+            continue
+
+        # Plot line for each countVals that has non-missing data
+
+        # assume constant dx between bins
+        dx = xVals[1] - xVals[0]
+
+        ax.plot(xVals, np.divide(countVals,np.sum(countVals)*dx),
+                color=pu.plotColors[ihist+lineAttribOffset],
+                label=countsLabel[ihist],
+                ls=pu.plotLineStyles[ihist+lineAttribOffset],
+                linewidth=0.5)
+        nPDFs = nPDFs + 1
+        plotVals.append(countVals)
+
+
+    if nPDFs == 0:
+        ax.tick_params(axis='x',labelbottom=False)
+        ax.tick_params(axis='y',labelleft=False)
+        return
+
+    # add a standard normal pdf
+    from scipy.stats import norm
+    ax.plot(xVals, norm.pdf(xVals),
+                color='k',
+                ls='-',
+                linewidth=0.35,
+                label='N(0,1)'
+    )
+
+    #axes settings
+    ax.xaxis.set_tick_params(labelsize=3)
+    ax.yaxis.set_tick_params(labelsize=3)
+    plt.yscale('log')
+
+
+    #handle interior subplot ticks/labels
+    ix = int(iplot)%int(nx)
+    iy = int(iplot)/int(nx)
+    if not interiorLabels \
+       and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
+        ax.tick_params(axis='x',labelbottom=False)
+    if interiorLabels or ix == 0:
+        ax.set_xlabel(indepLabel,fontsize=4)
+        ax.set_ylabel('PDF',fontsize=4)
+
+    #legend
+    if legend_inside:
+        #INSIDE AXES
+        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+                       framealpha=0.4,ncol=1)
+        lh.get_frame().set_linewidth(0.0)
+    elif ix==nx-1 or iplot==nplots-1:
+        #OUTSIDE AXES
+        ax.legend(loc='upper left',fontsize=3,frameon=False, \
+                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+    ax.grid()
+
+    return
+
+
+###############################################################################
+lenWarnRamp = 0
+nanWarnRamp = 0
+def plotfitRampComposite(fig,
+               xVals,
+               countVals,
+               meanVals,
+               rmsVals,
+               stdVals,
+               title="", dataLabel="y", \
+               indepLabel="x",
+               ny=1, nx=1, nplots=1, iplot=0,
+               lineAttribOffset=1,
+               legend_inside=True,
+               interiorLabels=True):
+
+# ARGUMENTS
+# fig              - matplotlib figure object
+# countVals        - Count of quantity (array)
+# meanVals         - Mean of quantity (array)
+# rmsVals          - RMS of quantity (array)
+# stdVals          - STD of quantity (array)
+
+# xVals           - independent variable on x-axis (array)
+
+# title            - subplot title, optional
+# dataLabel        - label for y-axis, optional
+# indepLabel       - label for xVals, optional
+
+# ny, nx           - number of subplots in x/y direction, optional
+# nplots           - total number of subplots, optional
+# iplot            - this subplot index (starting at 0), optional
+
+# lineAttribOffset - offset for selecting line attributes, optional
+# legend_inside    - whether legend should be placed inside the subplot, optional
+
+    ax = fig.add_subplot(ny, nx, iplot+1)
+    ix = int(iplot)%int(nx)
+    iy = int(iplot)/int(nx)
+
+    #title
+    ax.set_title(title,fontsize=5)
+
+    #add lines
+    plotVals = []
+    nLines = 0
+    linesLabel = ['RMS','STD','Mean']
+    for iline, lineVals in enumerate([rmsVals,stdVals,meanVals]):
+        if all(np.isnan(lineVals)):
+            global nanWarnRamp
+            if nanWarnRamp==0:
+                print("\nWARNING: skipping all-NaN data")
+                print(title,indepLabel,linesLabel[iline])
+            nanWarnRamp=nanWarnRamp+1
+            continue
+        if len(lineVals)!=len(xVals):
+            global lenWarnRamp
+            if lenWarnRamp==0:
+                print("\nWARNING: skipping data where len(x)!=len(y)")
+                print(title,indepLabel,linesLabel[iline])
+            lenWarnRamp=lenWarnRamp+1
+            continue
+
+        # Plot line for each lineVals that has non-missing data
+        pColor = pu.plotColors[iline+lineAttribOffset]
+
+        ax.plot(xVals, lineVals,
+                color=pColor,
+                label=linesLabel[iline],
+                ls=pu.plotLineStyles[iline+lineAttribOffset],
+                linewidth=0.6)
+        nLines = nLines + 1
+        plotVals.append(lineVals)
+
+    if nLines == 0:
+        ax.tick_params(axis='x',labelbottom=False)
+        ax.tick_params(axis='y',labelleft=False)
+        return
+
+    # Add fit for stdVals here using info from countVals
+    ind0 = np.argmax(countVals)
+
+    indexMaxX4Std = 0
+    for ii, std in enumerate(stdVals):
+        if not np.isnan(std): indexMaxX4Std = ii
+    indexMaxX = indexMaxX4Std
+    maxCount = 0
+    for ii, count in enumerate(countVals):
+        if count > maxCount: maxCount = count
+        if count < 0.002*maxCount:
+            indexMaxX = ii
+            break
+    if indexMaxX > indexMaxX4Std:
+        ind1 = np.argmax(stdVals[0:indexMaxX4Std])
+    else:
+        ind1 = np.argmax(stdVals[0:indexMaxX])
+
+    weights = [0.2]*(ind1-ind0+1)
+    weights[0] = 1.0
+    p = np.polyfit(xVals[ind0:ind1+1],stdVals[ind0:ind1+1],1,
+                   w=weights)
+
+    X0 = xVals[ind0]
+    ERR0 = X0 * p[0] + p[1]
+
+    # X1 = xVals[ind1]
+    # ERR1 = X1 * p[0] + p[1]
+    ERR1 = stdVals[ind1]
+    X1 = (ERR1 - p[1]) / p[0]
+
+
+    ERRfitDict = {
+        'bu':{
+            'X':  [round(X0,2),  round(X1,2)],
+            'ERR': [round(ERR0,2), round(ERR1,2)],
+        },
+        'YAML':{
+            'X0': [round(X0,2)],
+            'X1': [round(X1,2)],
+            'ERR0': [round(ERR0,2)],
+            'ERR1': [round(ERR1,2)],
+        },
+    }
+
+    fitX  = np.asarray([0.0]  + ERRfitDict['bu']['X']  + [xVals[indexMaxX4Std]])
+    fitERR = np.asarray([ERR0] + ERRfitDict['bu']['ERR'] + [ERR1])
+
+    plotVals.append(fitERR)
+
+    pColor = pu.plotColors[1+lineAttribOffset]
+
+    ax.plot(fitX, fitERR,
+            color=pColor,
+            label='Fit-STD',
+            ls='-.',
+            linewidth=1.2,
+            marker='+',
+            ms=1.5
+    )
+
+    #axes settings
+    ax.xaxis.set_tick_params(labelsize=3)
+    ax.yaxis.set_tick_params(labelsize=3)
+
+    # standardize x-limits
+    mindval, maxdval = pu.get_clean_ax_limits(plotVals=plotVals)
+    if (not np.isnan(mindval) and
+        not np.isnan(maxdval) and
+        not np.isinf(mindval) and
+        not np.isinf(maxdval)):
+        ax.set_ylim(mindval,maxdval)
+
+    #handle interior subplot ticks/labels
+    if not interiorLabels \
+       and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
+        ax.tick_params(axis='x',labelbottom=False)
+    if interiorLabels or ix == 0:
+        ax.set_xlabel(indepLabel,fontsize=4)
+    if interiorLabels or iy == ny-1:
+        ax.set_ylabel(dataLabel,fontsize=4)
+
+    #legend
+    if legend_inside:
+        #INSIDE AXES
+        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+                       framealpha=0.4,ncol=1)
+        lh.get_frame().set_linewidth(0.0)
+    elif ix==nx-1 or iplot==nplots-1:
+        #OUTSIDE AXES
+        ax.legend(loc='upper left',fontsize=3,frameon=False, \
+                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+    ax.grid()
+
+    # Add count on RHS y-axis
+    ax2 = ax.twinx()
+    color = 'black'
+    if interiorLabels or ix == nx:
+        ax2.set_ylabel('Count',fontsize=4,color=color)
+    ax2.plot(xVals[:indexMaxX4Std], countVals[:indexMaxX4Std],
+             color=color,
+             label='Count',
+             ls=':',
+             linewidth=0.5)
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.yaxis.set_tick_params(labelsize=3)
+    plt.yscale('log')
+
+
+    return ERRfitDict
+
+
 
 if __name__ == '__main__': main()

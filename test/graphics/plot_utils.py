@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import datetime as dt
 import matplotlib
 import matplotlib.pyplot as plt
@@ -124,10 +125,17 @@ def get_clean_ax_limits(xmin_=np.NaN,xmax_=np.NaN,plotVals=[np.NaN],
         xmin = xmin_
         xmax = xmax_
     else:
-        xmin = np.nanmin(plotVals)
-        xmax = np.nanmax(plotVals)
+        if isinstance(plotVals[0], Iterable):
+            xmin = np.nanmin(plotVals[0])
+            xmax = np.nanmax(plotVals[0])
+            for vals in plotVals[1:]:
+                xmin = np.nanmin([np.nanmin(vals),xmin])
+                xmax = np.nanmax([np.nanmin(vals),xmax])
+        else:
+            xmin = np.nanmin(plotVals)
+            xmax = np.nanmax(plotVals)
 
-    xmaxabs=np.nanmax([abs(xmin),abs(xmax)])
+    xmaxabs=np.nanmax([abs(xmin),abs(xmax)])*1.2
     if xmaxabs == 0.0 or np.isnan(xmaxabs):
         minxval = 0.0
         maxxval = 1.0

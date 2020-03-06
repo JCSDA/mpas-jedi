@@ -15,10 +15,13 @@ csvSEP = ';'
 
 ## NC variable names for MPAS-JEDI
 obsVarAlt     = 'altitude'
-obsVarCa      = 'symmetric_cloud_impact'
+obsVarSCI     = 'symmetric_cloud_impact'
 obsVarCldFrac = 'cloud_area_fraction'
+obsVarDT      = 'datetime'
+obsVarLT      = 'LocalTime'
 obsVarLon     = 'longitude'
 obsVarLat     = 'latitude'
+obsVarNormErr = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
 obsVarPrs     = 'air_pressure'
 obsVarQC      = 'QCflag'
 obsVarSatZen  = 'sensor_zenith_angle'
@@ -27,24 +30,26 @@ degree= u'\N{DEGREE SIGN}'
 
 # columns: var_name            unit_used   abbr.
 varDictObs = {
-    'air_temperature':        [ 'K',     'T'       ]
-  , 'bending_angle':          [ '%',     'Bnd'     ]
-  , 'brightness_temperature': [ 'K',     'BT'      ]
-  , 'eastward_wind':          [ 'm/s',   'U'       ]
-  , 'northward_wind':         [ 'm/s',   'V'       ]
-  , 'refractivity':           [ '%',     'Ref'     ]
-  , 'specific_humidity':      [ 'kg/kg', 'qv'      ]
-  , 'surface_pressure':       [ 'Pa',    'Ps'      ]
-  , 'virtual_temperature':    [ 'K',     'Tv'      ]
-  , obsVarAlt:                [ 'm',     'alt'     ]
-  , obsVarCa:                 [ 'K',     'Ca'      ]
-  , obsVarCldFrac:            [ miss_s,  'cldfrac' ]
-  , obsVarLat:                [ degree,  'lat'     ]
-  , obsVarLon:                [ degree,  'lon'     ]
-  , obsVarPrs:                [ 'hPa',   'P'       ]
-  , obsVarQC:                 [ miss_s,  obsVarQC  ]
-  , obsVarSatZen:             [ degree,  'zenith'  ]
-    }
+    'air_temperature':        [ 'K',     'T'       ],
+    'bending_angle':          [ '%',     'Bnd'     ],
+    'brightness_temperature': [ 'K',     'BT'      ],
+    'eastward_wind':          [ 'm/s',   'U'       ],
+    'northward_wind':         [ 'm/s',   'V'       ],
+    'refractivity':           [ '%',     'Ref'     ],
+    'specific_humidity':      [ 'kg/kg', 'qv'      ],
+    'surface_pressure':       [ 'Pa',    'Ps'      ],
+    'virtual_temperature':    [ 'K',     'Tv'      ],
+    obsVarAlt:                [ 'm',     'alt'     ],
+    obsVarSCI:                [ 'K',     'SCI'     ],
+    obsVarCldFrac:            [ miss_s,  'cldfrac' ],
+    obsVarLat:                [ degree,  'lat'     ],
+    obsVarLon:                [ degree,  'lon'     ],
+    obsVarLT:                 [ 'hr',    obsVarLT  ],
+    obsVarNormErr:            [ miss_s,  obsVarNormErr ],
+    obsVarPrs:                [ 'hPa',   'P'       ],
+    obsVarQC:                 [ miss_s,  obsVarQC  ],
+    obsVarSatZen:             [ degree,  'zenith'  ],
+}
 #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
 #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == obsVarAlt:
 
@@ -76,6 +81,7 @@ selfErrorValue = vNameStr+'@'+errorGroup
 
 altMeta      = obsVarAlt+'@'+metaGroup
 cldfracMeta  = obsVarCldFrac+'@'+metaGroup
+dtMeta       = obsVarDT+'@'+metaGroup
 lonMeta      = obsVarLon+'@'+metaGroup
 latMeta      = obsVarLat+'@'+metaGroup
 prsMeta      = obsVarPrs+'@'+metaGroup
@@ -116,19 +122,16 @@ def splitIntSuffix(var):
     if not pu.isint(suf):
         suf = ''
     else:
-        obsVarName = ''.join(obsVarName.split("_")[:-1])
+        obsVarName = '_'.join(obsVarName.split("_")[:-1])
     return obsVarName, suf
 
 
 def varAttributes(var):
     # return short name and units
     dictName, suf = splitIntSuffix(var)
-    varVal = varDictObs.get(dictName,[miss_s,dictName])
-    if suf != '':
-        varShort = varVal[1]+'_'+suf
-    else:
-        varShort = varVal[1]
-    varUnits = varVal[0]
+    varAtt = varDictObs.get(dictName,[miss_s,dictName])
+    varShort = varAtt[1]+suf
+    varUnits = varAtt[0]
     return varShort, varUnits
 
 

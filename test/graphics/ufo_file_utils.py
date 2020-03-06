@@ -267,9 +267,17 @@ class FeedbackFiles:
             varName, grpName = vu.splitObsVarGrp(varGrp)
             if varGrp in obsHandles[0].variables:
                 varsVals[varGrp] = np.asarray([])
-                for h in obsHandles:
-                    varsVals[varGrp] = np.append( varsVals[varGrp], h.variables[varGrp][:] )
-                dtype = h.variables[varGrp].datatype
+                dtype = obsHandles[0].variables[varGrp].datatype
+                if 'byte' in dtype.name:
+                    for h in obsHandles:
+                        tmp = []
+                        for bytelist in h.variables[varGrp][:]:
+                            tmp.append(b''.join(bytelist).decode("utf-8"))
+
+                        varsVals[varGrp] = np.append( varsVals[varGrp], tmp )
+                else:
+                    for h in obsHandles:
+                        varsVals[varGrp] = np.append( varsVals[varGrp], h.variables[varGrp][:] )
 
                 # convert pressure from Pa to hPa if needed (kludge)
                 if (vu.obsVarPrs in varGrp and np.max(varsVals[varGrp]) > 10000.0):

@@ -14,6 +14,8 @@ nullBinVars = {vu.miss_s: []}
 obsBinVars = {
     vu.obsVarQC:  [bu.defaultBinMethod,'bad'],
     vu.obsVarLat: [bu.defaultBinMethod,'NAMED'],
+    vu.obsVarLT: [bu.defaultBinMethod],
+    vu.obsVarNormErr: [bu.defaultBinMethod],
     'ObsRegion':  ['CONUS'],
 }
 
@@ -21,42 +23,70 @@ obsBinVars = {
 ## binVarConfigs for surface obs
 surfBinVars = deepcopy(obsBinVars)
 
-
+##########################################################
 ## binVarConfigs for profile obs w/ pressure vertical bins
+##########################################################
 profPressBinVars = deepcopy(obsBinVars)
 profPressBinVars[vu.obsVarPrs] = [bu.defaultBinMethod,bu.PjetMethod]
 profPressBinVars[vu.obsVarLat].append(bu.PjetMethod)
 
-# Add named latitude-band-specific pressure bins
+# 2D pressure bins with named latitude-band methods
 for iband, latBand in enumerate(bu.namedLatBands['values']):
     profPressBinVars[vu.obsVarPrs].append(latBand)
 
+
+##########################################################
 ## binVarConfigs for profile obs w/ altitude vertical bins
+##########################################################
 profAltBinVars = deepcopy(obsBinVars)
 profAltBinVars[vu.obsVarAlt] = [bu.defaultBinMethod,bu.altjetMethod]
 profAltBinVars[vu.obsVarLat].append(bu.altjetMethod)
 
-# Add named latitude-band-specific altitude bins
+# 2D altitude bins with named latitude-band methods
 for iband, latBand in enumerate(bu.namedLatBands['values']):
     profAltBinVars[vu.obsVarAlt].append(latBand)
 
 
+#################################
 ## binVarConfigs for radiance obs
+#################################
 radianceBinVars = deepcopy(obsBinVars)
 radianceBinVars[vu.obsVarSatZen] = [bu.defaultBinMethod]
 
 
+#################################
 ## binVarConfigs for GOES-ABI obs
+#################################
 abiBinVars = deepcopy(radianceBinVars)
 abiBinVars[vu.obsVarCldFrac] = [bu.defaultBinMethod]
-abiBinVars[vu.obsVarLat].append(bu.clrskyMethod)
-abiBinVars[vu.obsVarLat].append(bu.cldskyMethod)
-abiBinVars[vu.obsVarSatZen].append(bu.clrskyMethod)
-abiBinVars[vu.obsVarSatZen].append(bu.cldskyMethod)
-abiBinVars[vu.obsVarCa] = ['Okamoto','ScaledOkamoto']
-#abiBinVars[vu.obsVarCa].append('ModHarnisch')
-#abiBinVars[vu.obsVarCa].append('ScaledModHarnisch')
 
+# Binning variables with clr-/cld-sky methods
+clrcldVars = [
+   vu.obsVarLat,
+   vu.obsVarLT,
+   vu.obsVarCldFrac,
+   vu.obsVarSatZen
+]
+for var in clrcldVars:
+    abiBinVars[var].append(bu.clrskyMethod)
+    abiBinVars[var].append(bu.cldskyMethod)
+
+# symmetric cloud impact (expensive)
+selectSCIMethods = [
+    bu.OkamotoMethod,
+    bu.ScaleOkamotoMethod,
+#    bu.ModHarnischMethod,
+#    bu.ScaleModHarnischMethod,
+]
+abiBinVars[vu.obsVarSCI] = []
+for method in selectSCIMethods:
+    abiBinVars[vu.obsVarSCI].append(method)
+    abiBinVars[vu.obsVarNormErr].append(method)
+
+
+#########################################
+# binVarConfigs for model space variables
+#########################################
 #modelBinVars = { 'ModelLatBand':  ['NAMED',bu.defaultBinMethod]
 #               , 'ModelBox':      ['CONUS']
 #               , 'ModelAltitude': [bu.defaultBinMethod]

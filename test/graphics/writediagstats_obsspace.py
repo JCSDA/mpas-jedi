@@ -67,7 +67,7 @@ def writediagstats_obsspace(database, osKey):
             if (len(binMethodConfig['values']) < 1 or
                 len(binMethodConfig['filters']) < 1): continue
 
-            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(binMethodConfig)
+            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(binMethodConfig,ObsSpaceName)
 
 
     ############################################
