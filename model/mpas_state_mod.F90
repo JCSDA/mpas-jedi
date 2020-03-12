@@ -1059,7 +1059,8 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
    ! ----------------
 
    !Important namelist options
-   call bump%nam%init
+   f_comm = fckit_mpi_comm()
+   call bump%nam%init(f_comm%size())
 
    !Less important namelist options (should not be changed)
    bump%nam%prefix       = trim(bump_nam_prefix)  ! Prefix for files output
@@ -1080,7 +1081,6 @@ subroutine initialize_bump(grid, locs, bump, bumpid)
 
    ! Initialize BUMP
    ! ---------------
-   f_comm = fckit_mpi_comm()
    call bump%setup_online(f_comm,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
                           nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
