@@ -180,7 +180,13 @@ def isint(value):
 #PURPOSE determine if value can be converted to int
   try:
     int(value)
-    return True
+    if isfloat(value):
+        if float(value).is_integer():
+            return True
+        else:
+            return False
+    else:
+        return True
   except ValueError:
     return False
 

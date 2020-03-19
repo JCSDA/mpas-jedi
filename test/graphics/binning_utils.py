@@ -9,7 +9,7 @@ import var_utils as vu
 # names and values of bins
 #==========================
 
-# heterogeneous/named bins
+## heterogeneous/named bins
 # latitude bands, north to south
 allNamedLatBands = {}
 allNamedLatBands['values']    = ['NPol','NXTro','Tro','SXTro','SPol']
@@ -25,8 +25,10 @@ for latBand in namedLatBands['values']:
     iband = allNamedLatBands['values'].index(latBand)
     namedLatBands['minBounds'].append(allNamedLatBands['minBounds'][iband])
     namedLatBands['maxBounds'].append(allNamedLatBands['maxBounds'][iband])
+latbandsMethod = 'LatBands'
 
-# homogeneous bins
+
+## homogeneous bins
 binLims = {}
 
 binLims[vu.obsVarPrs] = {}
@@ -667,7 +669,7 @@ class BinMethod:
 # Each binVarConfig member has the following properties
 # key: binVar string describes the variable to bin over
 # binMethod: used to distinguish between multiple methods with the same binVar
-#  (e.g., defaultBinMethod, bad, NAMED, etc.)
+#  (e.g., defaultBinMethod, bad, latbandsMethod, etc.)
 #     filters: list of filters that will blacklist locations for each method
 #     for each filter:
 #         where: logical function that determines locations that are blacklisted
@@ -796,7 +798,7 @@ binVarConfigs = {
             ],
             'values': binLims[vu.obsVarLat]['values'],
         },
-        'NAMED':{
+        latbandsMethod:{
             'filters':[
             {'where': lessBound,
              'variable': vu.latMeta,
@@ -1231,7 +1233,7 @@ binVarConfigs = {
 #            ],
 #            'values: binLims[vu.modVarLat]['values'],
 #        },
-#        'NAMED':{
+#        latbandsMethod:{
 #            'filters':[
 #            {'where': lessBound,
 #             'variable': vu.modVarLat,

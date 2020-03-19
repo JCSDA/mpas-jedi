@@ -13,7 +13,7 @@ nullBinVars = {vu.miss_s: []}
 ## Generic binVarConfigs that apply to all observation categories
 obsBinVars = {
     vu.obsVarQC:  [bu.defaultBinMethod,'bad'],
-    vu.obsVarLat: [bu.defaultBinMethod,'NAMED'],
+    vu.obsVarLat: [bu.defaultBinMethod,bu.latbandsMethod],
     vu.obsVarLT: [bu.defaultBinMethod],
     vu.obsVarNormErr: [bu.defaultBinMethod],
     'ObsRegion':  ['CONUS'],
@@ -54,11 +54,12 @@ radianceBinVars = deepcopy(obsBinVars)
 radianceBinVars[vu.obsVarSatZen] = [bu.defaultBinMethod]
 
 
-#################################
-## binVarConfigs for GOES-ABI obs
-#################################
-abiBinVars = deepcopy(radianceBinVars)
-abiBinVars[vu.obsVarCldFrac] = [bu.defaultBinMethod]
+#########################################
+## binVarConfigs for geostationary IR obs
+## i.e., GOES-ABI, Himawari-AHI
+#########################################
+geoirBinVars = deepcopy(radianceBinVars)
+geoirBinVars[vu.obsVarCldFrac] = [bu.defaultBinMethod]
 
 # Binning variables with clr-/cld-sky methods
 clrcldVars = [
@@ -68,8 +69,8 @@ clrcldVars = [
    vu.obsVarSatZen
 ]
 for var in clrcldVars:
-    abiBinVars[var].append(bu.clrskyMethod)
-    abiBinVars[var].append(bu.cldskyMethod)
+    geoirBinVars[var].append(bu.clrskyMethod)
+    geoirBinVars[var].append(bu.cldskyMethod)
 
 # symmetric cloud impact (expensive)
 selectSCIMethods = [
@@ -78,16 +79,16 @@ selectSCIMethods = [
 #    bu.ModHarnischMethod,
 #    bu.ScaleModHarnischMethod,
 ]
-abiBinVars[vu.obsVarSCI] = []
+geoirBinVars[vu.obsVarSCI] = []
 for method in selectSCIMethods:
-    abiBinVars[vu.obsVarSCI].append(method)
-    abiBinVars[vu.obsVarNormErr].append(method)
+    geoirBinVars[vu.obsVarSCI].append(method)
+    geoirBinVars[vu.obsVarNormErr].append(method)
 
 
 #########################################
 # binVarConfigs for model space variables
 #########################################
-#modelBinVars = { 'ModelLatBand':  ['NAMED',bu.defaultBinMethod]
+#modelBinVars = { 'ModelLatBand':  [bu.latbandsMethod,bu.defaultBinMethod]
 #               , 'ModelBox':      ['CONUS']
 #               , 'ModelAltitude': [bu.defaultBinMethod]
 #               , 'ModelPressure': [bu.defaultBinMethod]
@@ -113,7 +114,7 @@ DiagSpaceConfig = {
   , 'gnssroref':             {'DiagSpaceGrp': profile_s,  'process': True, 'binVarConfigs': profAltBinVars   }
   , 'gnssrobndropp1d':       {'DiagSpaceGrp': profile_s,  'process': True, 'binVarConfigs': profAltBinVars   }
   , 'gnssro':                {'DiagSpaceGrp': profile_s,  'process': True, 'binVarConfigs': profAltBinVars   }
-  , 'abi_g16':               {'DiagSpaceGrp': radiance_s, 'process': True, 'binVarConfigs': abiBinVars,
+  , 'abi_g16':               {'DiagSpaceGrp': radiance_s, 'process': True, 'binVarConfigs': geoirBinVars,
                               'channels': [8,9,10,11,13,14,15,16] }
   , 'airs_aqua':             {'DiagSpaceGrp': radiance_s, 'process': False, 'binVarConfigs': radianceBinVars,
                               'channels': [1,6,7] }
