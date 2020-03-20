@@ -19,7 +19,7 @@ list( APPEND mpas_test_input
   testinput/gen_ens_pert_B.yaml
   testinput/geometry.yaml
   testinput/hofx.yaml
-  testinput/hofx3d.yaml
+  testinput/hofx_nomodel.yaml
   testinput/increment.yaml
   testinput/model.yaml
   testinput/parameters_bumpcov.yaml
@@ -46,7 +46,7 @@ list( APPEND mpas_testoutput
   testoutput/forecast.ref
   testoutput/gen_ens_pert_B.ref
   testoutput/hofx.ref
-  testoutput/hofx3d.ref
+  testoutput/hofx_nomodel.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
 #  testoutput/staticbinit.ref
@@ -551,7 +551,7 @@ endif()
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
 jedi_app_ref_test_compare( APP     forecast                                 ${REFTYPE} )
-jedi_app_ref_test_compare( APP     hofx3d                                   ${REFTYPE} )
+jedi_app_ref_test_compare( APP     hofx_nomodel                             ${REFTYPE} )
 jedi_app_ref_test_compare( APP     hofx                                     ${REFTYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
 ##jedi_app_ref_test_compare( APP     enshofx                                  ${REFTYPE})

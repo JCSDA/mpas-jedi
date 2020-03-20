@@ -12,7 +12,22 @@ Test     : Fld=8  Min=0, Max=0.000143053, RMS=7.33263e-06 : index_qi
 Test     : Fld=9  Min=0, Max=0.00022368, RMS=6.28566e-06 : index_qr
 Test     : Fld=10  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
 Test     : Fld=11  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
-Test     : H(x): Radiosonde nobs= 3896 Min=-30.5236, Max=298.988, RMS=122.06
+Test     : Final state: 
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 11
+Test     : Fld=1  Min=199.61, Max=305.248, RMS=243.965 : temperature
+Test     : Fld=2  Min=1472.27, Max=98066.9, RMS=49313.6 : pressure
+Test     : Fld=3  Min=0, Max=0.0189684, RMS=0.00463052 : spechum
+Test     : Fld=4  Min=-44.1611, Max=83.0029, RMS=17.6546 : uReconstructZonal
+Test     : Fld=5  Min=-45.5359, Max=58.6079, RMS=9.00177 : uReconstructMeridional
+Test     : Fld=6  Min=56985.5, Max=104693, RMS=98674.5 : surface_pressure
+Test     : Fld=7  Min=0, Max=0.000476202, RMS=3.59299e-05 : index_qc
+Test     : Fld=8  Min=0, Max=0.000143053, RMS=7.33263e-06 : index_qi
+Test     : Fld=9  Min=0, Max=0.00022368, RMS=6.28566e-06 : index_qr
+Test     : Fld=10  Min=0, Max=0.000950839, RMS=2.03852e-05 : index_qs
+Test     : Fld=11  Min=0, Max=0.000399269, RMS=7.47929e-06 : index_qg
+Test     : H(x): 
+Test     : Radiosonde nobs= 3896 Min=-30.5236, Max=298.988, RMS=122.06
 Test     : Aircraft nobs= 8392 Min=-35.3525, Max=296.633, RMS=127.999
 Test     : Satwind nobs= 198 Min=-28.8641, Max=49.8238, RMS=11.2324
 Test     : GnssroRef nobs= 20 Min=0.206527, Max=357.672, RMS=133.91
@@ -23,3 +38,4 @@ Test     : AIRS-AQUA nobs= 300 Min=210.839, Max=231.067, RMS=222.107
 Test     : CRIS-NPP nobs= 9900 Min=210.968, Max=298.489, RMS=247.449
 Test     : IASI-METOPA nobs= 700 Min=210.824, Max=241.918, RMS=227.22
 Test     : SfcPCorrected nobs= 252 Min=84700.2, Max=102181, RMS=98362.2
+Test     : End H(x)

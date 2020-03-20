@@ -9,8 +9,8 @@ ecbuild_add_executable( TARGET  mpas_hofx.x
                         LIBS    mpas
                       )
 
-ecbuild_add_executable( TARGET  mpas_hofx3d.x
-                        SOURCES mpasHofX3D.cc
+ecbuild_add_executable( TARGET  mpas_hofx_nomodel.x
+                        SOURCES mpasHofXNoModel.cc
                         LIBS    mpas
                       )
 
