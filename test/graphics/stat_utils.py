@@ -446,11 +446,3 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
 
     return STATS
 
-#================================
-#================================
-
-def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
-
-if __name__ == '__main__': main()

@@ -1,164 +1,58 @@
 from collections.abc import Iterable
 from copy import deepcopy
+import inspect
 import numpy as np
 import os
 import plot_utils as pu
 import var_utils as vu
 
-#==========================
-# names and values of bins
-#==========================
 
-## heterogeneous/named bins
-# latitude bands, north to south
-allNamedLatBands = {}
-allNamedLatBands['values']    = ['NPol','NXTro','Tro','SXTro','SPol']
-allNamedLatBands['minBounds'] = [60.0, 30.0, -30.0, -90.0, -90.0]
-allNamedLatBands['maxBounds'] = [90.0, 90.0,  30.0, -30.0, -60.0]
+#================
+# binning methods
+#================
 
-namedLatBands = {}
-namedLatBands['values'] = ['NXTro','Tro','SXTro']
-namedLatBands['minBounds'] = []
-namedLatBands['maxBounds'] = []
+# identity
+identityBinMethod = 'identity'
 
-for latBand in namedLatBands['values']:
-    iband = allNamedLatBands['values'].index(latBand)
-    namedLatBands['minBounds'].append(allNamedLatBands['minBounds'][iband])
-    namedLatBands['maxBounds'].append(allNamedLatBands['maxBounds'][iband])
-latbandsMethod = 'LatBands'
+#QC
+goodQCMethod = 'good'
+badQCMethod = 'bad'
 
-
-## homogeneous bins
-binLims = {}
-
-binLims[vu.obsVarPrs] = {}
-binLims[vu.obsVarPrs]['start']  =    0.0
-binLims[vu.obsVarPrs]['finish'] = 1000.0
-binLims[vu.obsVarPrs]['step']   =  100.0
-binLims[vu.obsVarPrs]['format'] = '{:.0f}'
-
-binLims[vu.obsVarAlt] = {}
-binLims[vu.obsVarAlt]['start']  = 1000.0
-binLims[vu.obsVarAlt]['finish'] = 50000.0
-binLims[vu.obsVarAlt]['step']   = 2000.0
-binLims[vu.obsVarAlt]['format'] = '{:.0f}'
-
-binLims[vu.obsVarLat] = {}
-binLims[vu.obsVarLat]['start']  = -90.0
-binLims[vu.obsVarLat]['finish'] =  90.0
-binLims[vu.obsVarLat]['step']   =  10.0
-binLims[vu.obsVarLat]['format'] = '{:.0f}'
-
-binLims[vu.obsVarLT] = {}
-binLims[vu.obsVarLT]['start']  = 0.0
-binLims[vu.obsVarLT]['finish'] = 23.0
-binLims[vu.obsVarLT]['step']   = 1.0
-binLims[vu.obsVarLT]['format'] = '{:.0f}'
-
-binLims[vu.obsVarSatZen] = {}
-binLims[vu.obsVarSatZen]['start']  = 0.0
-binLims[vu.obsVarSatZen]['finish'] = 70.0
-binLims[vu.obsVarSatZen]['step']   = 5.0
-binLims[vu.obsVarSatZen]['format'] = '{:.0f}'
-
-binLims[vu.obsVarCldFrac] = {}
-binLims[vu.obsVarCldFrac]['start']  = 0.0
-binLims[vu.obsVarCldFrac]['finish'] = 1.0
-binLims[vu.obsVarCldFrac]['step']   = 0.05
-binLims[vu.obsVarCldFrac]['format'] = '{:.2f}'
-
-binLims[vu.obsVarSCI] = {}
-binLims[vu.obsVarSCI]['start']  = 0.0
-binLims[vu.obsVarSCI]['finish'] = 60.0
-binLims[vu.obsVarSCI]['step']   = 1.0
-binLims[vu.obsVarSCI]['format'] = '{:.0f}'
-
-binLims[vu.obsVarNormErr] = {}
-binLims[vu.obsVarNormErr]['start']  = -7.0
-binLims[vu.obsVarNormErr]['finish'] =  7.0
-binLims[vu.obsVarNormErr]['step']   =  0.25
-binLims[vu.obsVarNormErr]['format'] = '{:.2f}'
-
-#binLims[vu.modVarLat] = {}
-#binLims[vu.modVarLat]['start']  = -90.0
-#binLims[vu.modVarLat]['finish'] =  90.0
-#binLims[vu.modVarLat]['step']   =  30.0
-#binLims[vu.modVarLat]['format'] = '{:.0f}'
-
-#binLims[vu.modVarAlt] = {}
-#binLims[vu.modVarAlt]['start']  = 0.0
-#binLims[vu.modVarAlt]['finish'] = 50000.0
-#binLims[vu.modVarAlt]['step']   = 5000.0
-#binLims[vu.modVarAlt]['format'] = '{:.0f}'
-
-for binType, param in binLims.items():
-    binBounds = list(np.arange(
-        param['start']-0.5*np.abs(param['step']),
-        param['finish']+1.5*param['step'],
-        param['step']))
-    binLims[binType]['minBounds'] = []
-    binLims[binType]['maxBounds'] = []
-    binLims[binType]['values'] = []
-    for ibin in list(range(len(binBounds)-1)):
-        binLims[binType]['minBounds'].append(binBounds[ibin])
-        binLims[binType]['maxBounds'].append(binBounds[ibin+1])
-
-        binVal = 0.5 * (binBounds[ibin+1] + binBounds[ibin])
-        binLims[binType]['values'].append(param['format'].format(binVal))
-
-#jet-stream bin method specifications
+#jet-stream pressure
 P_jet_min = 250.0
 P_jet_max = 350.0
 P_jet_val = '{:.0f}'.format(0.5 * (P_jet_min + P_jet_max))
 PjetMethod = 'P='+P_jet_val+'hPa'
 
+#jet-stream altitude
 alt_jet_min = 9500.0
 alt_jet_max = 10500.0
 alt_jet_val = '{:.0f}'.format(0.5 * (alt_jet_min + alt_jet_max))
 altjetMethod = 'alt='+alt_jet_val+'m'
 
+#LocalHour
+LH0  = 0.0
+LH1  = 23.0
+LHDT = 1.0
 
-# clear/cloudy bin method specifications
-clrskyMethod = 'clear-sky'
-clrskyThresh = 0.1
+#named latitude-bands
+latbandsMethod = 'LatBands'
 
-cldskyMethod = 'cloud-sky'
-cldskyThresh = 0.9
+#named cloudiness-bands
+clrskyMethod = 'clear'
+cldskyMethod = 'cloudy'
+mixskyMethod = 'mixed-clrcld'
+allskyMethod = 'allsky'
+cloudbandsMethod = 'cloudiness'
 
-# SCI method specifications
+# symmetric cloud impact (SCI)
 OkamotoMethod       = 'Okamoto'
 ScaleOkamotoMethod  = 'ScaledOkamoto'
 ModHarnischMethod      = 'ModHarnisch'
 ScaleModHarnischMethod = 'ScaledModHarnisch'
 
-
-#@EffectiveQC* values:
-# pass    = 0;   // we like that one!
-# missing = 1;   // missing values prevent use of observation
-# preQC   = 2;   // observation rejected by pre-processing
-# bounds  = 3;   // observation value out of bounds
-# domain  = 4;   // observation not within domain of use
-# black   = 5;   // observation black listed
-# Hfailed = 6;   // H(x) computation failed
-# thinned = 7;   // observation removed due to thinning
-# diffref = 8;   // metadata too far from reference
-# clw     = 9;   // observation removed due to cloud field
-# fguess  = 10;  // observation too far from guess
-# seaice  = 11;  // observation based sea ice detection, also flags land points
-#
-# Static list above copied on 3 Oct 2019
-# see ufo/src/ufo/filters/QCflags.h for up-to-date list
-
-goodFlag = 0
-goodFlagName = 'pass'
-
-badFlags     = [1,         2,         3,         4,
-                5,         6,         7,         8,
-                9,         10,        11]
-badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
-                'black',   'Hfailed', 'thinned', 'diffref',
-                'clw',     'fguess',  'seaice']
-
+# glint angle
+maxGlint = 90.0
 
 #========================
 # binning where functions
@@ -168,60 +62,92 @@ badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
 
 def equalBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.equal(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.equal(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def notEqualBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.not_equal(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.not_equal(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def lessEqualBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.less_equal(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.less_equal(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def lessBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.less(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.less(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def greatEqualBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.greater_equal(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.greater_equal(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def greatBound(x, bound, nanmask=True):
     nanlocs = np.isnan(x)
-    mask = np.empty_like(x,dtype=bool)
-    mask[~nanlocs] = np.greater(x[~nanlocs],bound)
+    mask = np.empty_like(x, dtype=bool)
+    mask[~nanlocs] = np.greater(x[~nanlocs], bound)
     mask[nanlocs] = nanmask
     return mask
 
 def betweenBounds(x, bound1, bound2, nanmask=True):
     nanlocs = np.isnan(x)
-    belowbounds = lessEqualBound(x,bound1)
-    abovebounds = greatEqualBound(x,bound2)
+    belowbounds = lessEqualBound(x, bound1)
+    abovebounds = greatEqualBound(x, bound2)
     mask        = np.logical_not(np.logical_or(
-                      belowbounds,abovebounds ))
+                      belowbounds, abovebounds ))
     mask[nanlocs] = nanmask
     return mask
 
 
-#========================================================
-# specific function classes
+#=========================================================
+# ObsFunction classes to be accessed w/ ObsFunctionWrapper
 # i.e., functions of variables contained in the database
-#========================================================
+#=========================================================
+
+class GlintAngle:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.senzenMeta)
+        self.baseVars.append(vu.senaziMeta)
+        self.baseVars.append(vu.solzenMeta)
+        self.baseVars.append(vu.solaziMeta)
+
+    def evaluate(self, dbVals, caseParams):
+        senazi = dbVals[vu.senaziMeta]
+        solazi = dbVals[vu.solaziMeta]
+
+        relazi = np.abs(np.subtract(solazi,senazi))
+        relazi[relazi > 180.0] = np.subtract(360.0,relazi[relazi > 180.0])
+        relazi = np.multiply(np.subtract(180.0,relazi), vu.deg2rad)
+
+        senzen = np.multiply(dbVals[vu.senzenMeta], vu.deg2rad)
+        solzen = np.multiply(dbVals[vu.solzenMeta], vu.deg2rad)
+
+        glint = np.add(np.multiply(np.cos(solzen), np.cos(senzen)),
+                    np.multiply(np.sin(solzen),
+                        np.multiply(np.sin(senzen), np.cos(relazi))))
+
+        glint[glint >  1.0] = np.NaN
+        glint[glint < -1.0] = np.NaN
+
+        glint = np.multiply(np.arccos(glint), vu.rad2deg)
+        glint[glint > maxGlint] = maxGlint
+
+        return glint
+
 
 class LocalHour:
     def __init__(self):
@@ -229,14 +155,14 @@ class LocalHour:
         self.baseVars.append(vu.dtMeta)
         self.baseVars.append(vu.lonMeta)
 
-    def evaluate(self,dbVals,caseParams):
+    def evaluate(self, dbVals, caseParams):
         TimeStr = dbVals[vu.dtMeta]
         tzOffset = np.divide(dbVals[vu.lonMeta],15.0)
 
         LH = np.full_like(tzOffset,0.0)
-        t0 = binLims[vu.obsVarLT]['start']
-        t1 = binLims[vu.obsVarLT]['finish']
-        dt = binLims[vu.obsVarLT]['step']
+        t0 = LH0
+        t1 = LH1
+        dt = LHDT
         for ii, time in enumerate(TimeStr):
             ## Expecting time to fit YYYY-MM-DDThh:mm:ssZ
             # YYYY = float(time[0:4])
@@ -253,7 +179,9 @@ class LocalHour:
 
         return LH
 
-class SCIOkamoto:
+
+#classes related to the Asymmetric Cloud Impact (ACI)
+class AsymmetricCloudImpact:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
@@ -261,15 +189,38 @@ class SCIOkamoto:
         self.baseVars.append(vu.clrskyBTDiag)
 
     def evaluate(self,dbVals,caseParams):
-        # Okamoto, et al.
+        # Minamide and Zhang, 2018
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
         BTbak = np.add(BTdep,BTobs)
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
+        ACE = np.subtract(np.abs(np.subtract(BTobs,BTclr)),
+                          np.abs(np.subtract(BTbak,BTclr)))
+        return ACE
+
+
+#classes related to the Symmetric Cloud Impact (SCI)
+class SCIOkamoto:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfObsValue)
+        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.clrskyBTDiag)
+
+    def evaluate(self, dbVals, caseParams):
+        # Okamoto, et al.
+        # Co = abs(Bias-Corrected BTobs - BTclr)
+        # Cm = abs(BTbak - BTclr)
+
+        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTbak = np.add(BTdep, BTobs)
+        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         SCI = np.multiply( 0.5,
-                 np.add(np.abs(np.subtract(BTobs,BTclr)),
-                        np.abs(np.subtract(BTbak,BTclr))) )
+                 np.add(np.abs(np.subtract(BTobs, BTclr)),
+                        np.abs(np.subtract(BTbak, BTclr))) )
         return SCI
 
 
@@ -281,19 +232,27 @@ class ScaledSCIOkamoto:
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
-    def evaluate(self,dbVals,caseParams):
-        # Okamoto, et al.
+    def evaluate(self, dbVals, caseParams):
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep,BTobs)
+        BTbak = np.add(BTdep, BTobs)
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
 
+        #Scale both Co and Cm by retrieved cloud fraction
+        # SCI = np.multiply( 0.5,
+        #          np.multiply(CldFrac,
+        #              np.add(np.abs(np.subtract(BTobs, BTclr)),
+        #                     np.abs(np.subtract(BTbak, BTclr))) ) )
+
+        #Scale only Co by retrieved cloud fraction
         SCI = np.multiply( 0.5,
-                 np.multiply(CldFrac,
-                     np.add(np.abs(np.subtract(BTobs,BTclr)),
-                            np.abs(np.subtract(BTbak,BTclr))) ) )
+                  np.add(
+                     np.multiply(CldFrac,
+                            np.abs(np.subtract(BTobs, BTclr))),
+                            np.abs(np.subtract(BTbak, BTclr)) ) )
+
         return SCI
 
 
@@ -304,17 +263,17 @@ class SCIModHarnisch:
         self.baseVars.append(vu.selfDepValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
-    def evaluate(self,dbVals,caseParams):
+    def evaluate(self, dbVals, caseParams):
         # Modified Harnisch, et al.
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep,BTobs)
+        BTbak = np.add(BTdep, BTobs)
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         zeros = np.full_like(BTbak,0.0)
         SCI = np.multiply( 0.5,
-                 np.add(np.maximum(zeros,np.subtract(BTclr,BTobs)),
-                        np.maximum(zeros,np.subtract(BTclr,BTbak))) )
+                 np.add(np.maximum(zeros, np.subtract(BTclr, BTobs)),
+                        np.maximum(zeros, np.subtract(BTclr, BTbak))) )
         return SCI
 
 
@@ -326,11 +285,11 @@ class ScaledSCIModHarnisch:
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
-    def evaluate(self,dbVals,caseParams):
+    def evaluate(self, dbVals, caseParams):
         # Modified Harnisch, et al.
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep,BTobs)
+        BTbak = np.add(BTdep, BTobs)
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
@@ -338,8 +297,8 @@ class ScaledSCIModHarnisch:
         zeros = np.full_like(BTbak,0.0)
         SCI = np.multiply( 0.5,
                  np.multiply(CldFrac,
-                     np.add(np.maximum(zeros,np.subtract(BTclr,BTobs)),
-                            np.maximum(zeros,np.subtract(BTclr,BTbak))) ) )
+                     np.add(np.maximum(zeros, np.subtract(BTclr, BTobs)),
+                            np.maximum(zeros, np.subtract(BTclr, BTbak))) ) )
         return SCI
 
 
@@ -349,12 +308,12 @@ class NormalizedError:
         self.baseVars.append(vu.selfDepValue)
         self.baseVars.append(vu.selfErrorValue)
 
-    def evaluate(self,dbVals,caseParams):
+    def evaluate(self, dbVals, caseParams):
         BTerr = dbVals[caseParams['base2db'][vu.selfErrorValue]]
         BTerr[BTerr==0.0] = np.NaN
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
 
-        return np.divide(BTdep,BTerr)
+        return np.divide(BTdep, BTerr)
 
 SCIERRParams = {}
 SCIERRParams['abi_g16'] = {}
@@ -406,7 +365,7 @@ class SCINormalizedError:
     def __init__(self):
         pass
 
-    def evaluate(self,dbVals,caseParams,SCISTDName,SCI):
+    def evaluate(self, dbVals, caseParams, SCISTDName, SCI):
         # Parameterize BTerr as a ramped step function
         # --------------------------------------------
         # STD1 |. . . ____
@@ -420,29 +379,30 @@ class SCINormalizedError:
         #        SCI0 SCI1
         #---------------------------------------------
         osName = caseParams['osName']
-        if osName not in SCIERRParams:
+        if osName is None or osName not in SCIERRParams:
             print("ERROR: osName not available in SCIERRParams => "+osName)
             os._exit(1)
 
         varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
-        STD0 = SCIERRParams[osName][(int(ch),SCISTDName)]['ERR'][0]
-        STD1 = SCIERRParams[osName][(int(ch),SCISTDName)]['ERR'][1]
-        SCI0  = SCIERRParams[osName][(int(ch),SCISTDName)]['X'][0]
-        SCI1  = SCIERRParams[osName][(int(ch),SCISTDName)]['X'][1]
+        STD0 = SCIERRParams[osName][(int(ch), SCISTDName)]['ERR'][0]
+        STD1 = SCIERRParams[osName][(int(ch), SCISTDName)]['ERR'][1]
+        SCI0  = SCIERRParams[osName][(int(ch), SCISTDName)]['X'][0]
+        SCI1  = SCIERRParams[osName][(int(ch), SCISTDName)]['X'][1]
         slope = (STD1 - STD0) / (SCI1 - SCI0)
 
-        belowramp = lessEqualBound(SCI,SCI0,False)
-        aboveramp = greatEqualBound(SCI,SCI1,False)
-        onramp    = betweenBounds(SCI,SCI0,SCI1,False)
+        belowramp = lessEqualBound(SCI, SCI0, False)
+        aboveramp = greatEqualBound(SCI, SCI1, False)
+        onramp    = betweenBounds(SCI, SCI0, SCI1, False)
 
-        BTerr = np.full_like(SCI,np.NaN)
+        BTerr = np.full_like(SCI, np.NaN)
         BTerr[belowramp] = STD0
         BTerr[onramp]    = STD0 + slope * (SCI[onramp] - SCI0)
         BTerr[aboveramp] = STD1
 
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
 
-        return np.divide(BTdep,BTerr)
+        return np.divide(BTdep, BTerr)
+
 
 class OkamotoNormalizedError(SCINormalizedError):
     def __init__(self):
@@ -452,9 +412,10 @@ class OkamotoNormalizedError(SCINormalizedError):
         self.SCI = SCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self,dbVals,caseParams):
-        SCI = self.SCI.evaluate(dbVals,caseParams)
-        return super().evaluate(dbVals,caseParams,OkamotoMethod,SCI)
+    def evaluate(self, dbVals, caseParams):
+        SCI = self.SCI.evaluate(dbVals, caseParams)
+        return super().evaluate(dbVals, caseParams, OkamotoMethod, SCI)
+
 
 class ScaledOkamotoNormalizedError(SCINormalizedError):
     def __init__(self):
@@ -464,9 +425,10 @@ class ScaledOkamotoNormalizedError(SCINormalizedError):
         self.SCI = ScaledSCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self,dbVals,caseParams):
-        SCI = self.SCI.evaluate(dbVals,caseParams)
-        return super().evaluate(dbVals,caseParams,ScaleOkamotoMethod,SCI)
+    def evaluate(self, dbVals, caseParams):
+        SCI = self.SCI.evaluate(dbVals, caseParams)
+        return super().evaluate(dbVals, caseParams, ScaleOkamotoMethod, SCI)
+
 
 class ModHarnischNormalizedError(SCINormalizedError):
     def __init__(self):
@@ -476,9 +438,10 @@ class ModHarnischNormalizedError(SCINormalizedError):
         self.SCI = SCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self,dbVals,caseParams):
-        SCI = self.SCI.evaluate(dbVals,caseParams)
-        return super().evaluate(dbVals,caseParams,ModHarnischMethod,SCI)
+    def evaluate(self, dbVals, caseParams):
+        SCI = self.SCI.evaluate(dbVals, caseParams)
+        return super().evaluate(dbVals, caseParams, ModHarnischMethod, SCI)
+
 
 class ScaledModHarnischNormalizedError(SCINormalizedError):
     def __init__(self):
@@ -488,118 +451,135 @@ class ScaledModHarnischNormalizedError(SCINormalizedError):
         self.SCI = ScaledSCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self,dbVals,caseParams):
-        SCI = self.SCI.evaluate(dbVals,caseParams)
-        return super().evaluate(dbVals,caseParams,ScaleModHarnischMethod,SCI)
+    def evaluate(self, dbVals, caseParams):
+        SCI = self.SCI.evaluate(dbVals, caseParams)
+        return super().evaluate(dbVals, caseParams, ScaleModHarnischMethod, SCI)
 
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
-#def outsideRegion(dbVals,REGION_NAME):
+#def outsideRegion(dbVals, REGION_NAME):
 #    Note: depending on shape file definitions, LON may need to be -180 to 180 instead of 0 to 360
 #
 #    shp = READ_SHAPEFILE(REGION_NAME)
 #    lons = dbVals['longitdue']
 #    lats = dbVals['latitude']
 #    nlocs = len(lons)
-#    REGIONS = isinsideregions(lons,lats,shp)
+#    REGIONS = isinsideregions(lons, lats, shp)
 #    return REGIONS
 
 
-#======================
-# generic bin classes
-#======================
-class BaseFilterFunc:
+#=========================================
+# generic wrappers for ObsFunction classes
+#=========================================
+class BaseObsFunction:
     def __init__(self, baseVars):
         self.baseVars = deepcopy(baseVars)
         pass
 
-    def dbVars(self,varName,outerIters):
+    def dbVars(self, varName, outerIters_):
         dbVars = []
+
+        if not isinstance(outerIters_, Iterable):
+            outerIters = [outerIters_]
+        else:
+            outerIters = outerIters_
+
         for base in self.baseVars:
             for outerIter in outerIters:
                 dbVar = vu.base2dbVar(
-                    base,varName,outerIter)
+                    base, varName, outerIter)
                 dbVars.append(dbVar)
         return pu.uniqueMembers(dbVars)
 
 
-class IdFilterFunc(BaseFilterFunc):
-    def __init__(self,variable):
+class IdObsFunction(BaseObsFunction):
+    def __init__(self, variable):
         super().__init__([variable])
-        self.result = []
 
-    def evaluate(self,dbVals,caseParams):
-        self.result = dbVals[caseParams['base2db'][self.baseVars[0]]]
+    def evaluate(self, dbVals, caseParams):
+        return dbVals[caseParams['base2db'][self.baseVars[0]]]
 
 
-class FilterFuncWrapper(BaseFilterFunc):
-    def __init__(self,function):
+class ObsFunction(BaseObsFunction):
+    def __init__(self, function):
         self.function = function()
+        assert hasattr(self.function, 'baseVars'), \
+            ("ERROR, function class must have the baseVars attribute:", function)
         super().__init__(self.function.baseVars)
-        self.result = []
 
-    def evaluate(self,dbVals,caseParams):
-        self.result = self.function.evaluate(dbVals,caseParams)
+    def evaluate(self, dbVals, caseParams):
+        return self.function.evaluate(dbVals, caseParams)
 
+
+class ObsFunctionWrapper:
+    def __init__(self, config):
+        self.osName = config.get('osName', None)
+        variable = config['variable']
+        varIsString = isinstance(variable,str)
+        varIsClass = inspect.isclass(variable)
+        assert varIsString ^ varIsClass, \
+            ("ERROR: 'variable' must either be a String or a Class", config)
+
+        if varIsString:
+            self.function = IdObsFunction(variable)
+
+        if varIsClass:
+            self.function = ObsFunction(variable)
+
+    def dbVars(self, varName, outerIters):
+        return self.function.dbVars(varName, outerIters)
+
+    def evaluate(self, dbVals, varName, outerIter):
+        caseParams = {}
+        caseParams['base2db'] = {}
+        for base in self.function.baseVars:
+            caseParams['base2db'][base] = vu.base2dbVar(
+                    base, varName, outerIter)
+        caseParams['osName'] = self.osName
+        self.result = self.function.evaluate(dbVals, caseParams)
+
+
+#========================
+# generic binning classes
+#========================
 
 class BinFilter:
-    def __init__(self,config,nBins,osName):
+    def __init__(self, config):
         self.where  = config['where']
         tmp         = config['bounds']
 
         # allow for scalar and iterable bounds
-        self.bounds = np.empty(nBins)
+        self.bounds = np.empty(config['nBins'])
         if (not isinstance(tmp, Iterable) or
             len(tmp) == 1):
             self.bounds[:] = tmp
-        elif len(tmp) == nBins:
-            for ii in list(range(nBins)):
+        elif len(tmp) == config['nBins']:
+            for ii in list(range(config['nBins'])):
                 self.bounds[ii] = tmp[ii]
         else:
             print("ERROR: 'bounds' need to be a scalar or an Iterable with the same length as 'values'!")
             os._exit(1)
 
-        self.apply_to_diags = config.get('apply_to_diags',vu.allDiags)
-        self.mask_value     = config.get('mask_value',np.NaN)
+        self.function = ObsFunctionWrapper(config)
+        self.except_diags = config.get('except_diags', [])
+        self.mask_value = config.get('mask_value', np.NaN)
         #TODO: add other actions besides mask_value/blacklist
-
-        function = config.get('function',None)
-        variable = config.get('variable',None)
-        if variable is not None and function is None:
-            # print("VARIABLE ",variable)
-            self.function = IdFilterFunc(variable)
-        elif function is not None and variable is None:
-            # print("FUNC ",function)
-            self.function = FilterFuncWrapper(function)
-        else:
-            print("ERROR: either 'variable' or 'function' must be provided to BinFilter constructor, but never both")
-            os._exit(1)
-
-        self.osName = osName
 
 #    def baseVars(self):
 #        return pu.uniqueMembers(self.function.baseVars)
 
-    def dbVars(self,varName,outerIters):
-        dbVars = []
-        for dbVar in self.function.dbVars(
-            varName,outerIters):
-            dbVars.append(dbVar)
+    def dbVars(self, varName, outerIters):
+        dbVars = self.function.dbVars(
+            varName, outerIters)
         return pu.uniqueMembers(dbVars)
 
-    def evaluate(self,dbVals,varName,outerIter):
-        caseParams = {}
-        caseParams['base2db'] = {}
-        for base in self.function.baseVars:
-            caseParams['base2db'][base] = vu.base2dbVar(
-                    base,varName,outerIter)
-        caseParams['osName'] = self.osName
-        self.function.evaluate(dbVals,caseParams)
+    def evaluate(self, dbVals, varName, outerIter):
+        self.function.evaluate(dbVals, varName, outerIter)
 
-    def apply(self,array,diagName,ibin):
+    def apply(self, array, diagName, ibin):
         # blacklist locations where the mask is True
         mask = self.where(self.function.result,(self.bounds)[ibin])
 
-        if diagName in self.apply_to_diags:
+        if diagName not in self.except_diags:
             if len(mask) == len(array):
                 array[mask] = self.mask_value
             else:
@@ -609,29 +589,39 @@ class BinFilter:
         return array
 
 
+exclusiveDiags = ['obs','bak','ana','SCI']
+
 class BinMethod:
-    def __init__(self,config,osName):
-        #handle scalar/str and iterable values inputs
+    def __init__(self, config):
+        #allows for scalar, str, and Iterable 'values'
         tmp = config['values']
         self.values = []
         if (not isinstance(tmp, Iterable) or
-            isinstance(tmp,str)):
+            isinstance(tmp, str)):
             self.values += [tmp]
         else:
             self.values += tmp
 
+        self.excludeDiags = deepcopy(exclusiveDiags)
+        override = config.get('override_exclusiveDiags',[])
+        for diag in override:
+            if diag in self.excludeDiags:
+                self.excludeDiags.remove(diag)
+
+        fconf = {}
+        fconf['osName'] = config['osName']
+        fconf['nBins'] = len(self.values)
+
         self.filters = []
         for filterConf in config['filters']:
-            self.filters.append(
-                BinFilter(filterConf,len(self.values),osName) )
+            filterConf.update(fconf)
+            self.filters.append(BinFilter(filterConf))
 
         enoughBounds = False
         for Filter in self.filters:
             if len(Filter.bounds) == len(self.values):
                 enoughBounds = True
-        if not enoughBounds:
-            print('\n\nERROR: BinMethod : at least one filter must have len(bounds) == len(values)!')
-            os._exit(1)
+        assert enoughBounds, '\n\nERROR: BinMethod : at least one filter must have len(bounds) == len(values)!'
 
 #    def baseVars(self):
 #        baseVars = []
@@ -640,698 +630,22 @@ class BinMethod:
 #                baseVars.append(variable)
 #        return pu.uniqueMembers(baseVars)
 
-    def dbVars(self,varName,outerIters=['0']):
+    def dbVars(self, varName, outerIters=['0']):
         dbVars = []
         for Filter in self.filters:
-            for dbVar in Filter.dbVars(
-                varName,outerIters):
-                dbVars.append(dbVar)
+            dbVars += Filter.dbVars(
+                varName, outerIters)
         return pu.uniqueMembers(dbVars)
 
-    def evaluate(self,dbVals,varName,outerIter):
+    def evaluate(self, dbVals, varName, outerIter):
         for ii in list(range(len(self.filters))):
             self.filters[ii].evaluate(
-                dbVals,varName,outerIter)
+                dbVals, varName, outerIter)
 
-    def apply(self,array,diagName,binVal):
+    def apply(self, array, diagName, binVal):
         ibin = self.values.index(binVal)
         masked_array = deepcopy(array)
         for Filter in self.filters:
             masked_array = Filter.apply(
-                masked_array,diagName,ibin)
+                masked_array, diagName, ibin)
         return masked_array
-
-
-#=================================================
-# binning configurations used for all bin methods
-#=================================================
-
-# Each binVarConfig member has the following properties
-# key: binVar string describes the variable to bin over
-# binMethod: used to distinguish between multiple methods with the same binVar
-#  (e.g., defaultBinMethod, bad, latbandsMethod, etc.)
-#     filters: list of filters that will blacklist locations for each method
-#     for each filter:
-#         where: logical function that determines locations that are blacklisted
-#         variable (optional): variable that is used to initialize the IdFilterFunc class
-#         function (optional): the where test is applied to function.values. defaults to None
-#         bounds: numerical value(s) used in the where test (scalar or Iterable same length as values). At least one filter must have len(bounds)==len(values).
-#         apply_to_diags (optional): list of diagnostics for which a particular filter applies
-#     values (string): list of values associated with each bin
-#
-# Note: either variable or function must be provided to each filter
-#
-#TODO: add "diags" selection for each binMethod (some only need to be calculated for omb/oma)
-#TODO: classify each binmethod as 1D, 2D, etc. to indicate which types of figures apply to it
-
-# standard binMethod name
-defaultBinMethod = 'default'
-
-nullBinMethod = { 'filters': [], 'values': [] }
-nullBinVarConfig = { defaultBinMethod:nullBinMethod }
-
-binVarConfigs = {
-    vu.obsVarQC:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': goodFlagName,
-        },
-        'bad':{
-            'filters':[
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': badFlags,
-             'apply_to_diags': vu.nonObsDiags},
-            {'where': equalBound,
-             'variable': vu.selfQCValue,
-             'bounds': badFlags,
-             'apply_to_diags': vu.nonObsDiags,
-             'mask_value': 0.0},
-            ],
-            'values': badFlagNames,
-        },
-    },
-    vu.obsVarPrs:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.prsMeta,
-             'bounds': binLims[vu.obsVarPrs]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.prsMeta,
-             'bounds': binLims[vu.obsVarPrs]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarPrs]['values'],
-        },
-        PjetMethod:{
-            'filters':[
-# eliminate locations outside P_jet_min to P_jet_max
-            {'where': lessBound,
-             'variable': vu.prsMeta,
-             'bounds': P_jet_min},
-            {'where': greatEqualBound,
-             'variable': vu.prsMeta,
-             'bounds': P_jet_max},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': P_jet_val,
-        },
-    },
-    vu.obsVarAlt:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.altMeta,
-             'bounds': binLims[vu.obsVarAlt]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.altMeta,
-             'bounds': binLims[vu.obsVarAlt]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarAlt]['values'],
-        },
-        altjetMethod:{
-            'filters':[
-# eliminate locations outside alt_jet_min to alt_jet_max
-            {'where': lessBound,
-             'variable': vu.altMeta,
-             'bounds': alt_jet_min},
-            {'where': greatEqualBound,
-             'variable': vu.altMeta,
-             'bounds': alt_jet_max},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': alt_jet_val,
-        },
-    },
-    vu.obsVarLat:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLat]['values'],
-        },
-        latbandsMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': namedLatBands['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': namedLatBands['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': namedLatBands['values'],
-        },
-        PjetMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['maxBounds']},
-            {'where': lessBound,
-             'variable': vu.prsMeta,
-             'bounds': P_jet_min},
-            {'where': greatEqualBound,
-             'variable': vu.prsMeta,
-             'bounds': P_jet_max},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLat]['values'],
-        },
-        altjetMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['maxBounds']},
-            {'where': lessBound,
-             'variable': vu.altMeta,
-             'bounds': alt_jet_min},
-            {'where': greatEqualBound,
-             'variable': vu.altMeta,
-             'bounds': alt_jet_max},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLat]['values'],
-        },
-        clrskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['maxBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.cldfracMeta,
-             'bounds': clrskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLat]['values'],
-        },
-        cldskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.latMeta,
-             'bounds': binLims[vu.obsVarLat]['maxBounds']},
-            {'where': lessBound,
-             'variable': vu.cldfracMeta,
-             'bounds': cldskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLat]['values'],
-        },
-    },
-    vu.obsVarLT:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['minBounds']},
-            {'where': greatEqualBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLT]['values'],
-        },
-        clrskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['minBounds']},
-            {'where': greatEqualBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['maxBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.cldfracMeta,
-             'bounds': clrskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLT]['values'],
-        },
-        cldskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['minBounds']},
-            {'where': greatEqualBound,
-             'function': LocalHour,
-             'bounds': binLims[vu.obsVarLT]['maxBounds']},
-            {'where': lessBound,
-             'variable': vu.cldfracMeta,
-             'bounds': cldskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarLT]['values'],
-        },
-    },
-    vu.obsVarSatZen:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarSatZen]['values'],
-        },
-        clrskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['maxBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.cldfracMeta,
-             'bounds': clrskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarSatZen]['values'],
-        },
-        cldskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.satzenMeta,
-             'bounds': binLims[vu.obsVarSatZen]['maxBounds']},
-            {'where': lessBound,
-             'variable': vu.cldfracMeta,
-             'bounds': cldskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarSatZen]['values'],
-        },
-    },
-    vu.obsVarCldFrac:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.cldfracMeta,
-             'bounds': binLims[vu.obsVarCldFrac]['minBounds']},
-            {'where': greatEqualBound,
-             'variable': vu.cldfracMeta,
-             'bounds': binLims[vu.obsVarCldFrac]['maxBounds']},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': binLims[vu.obsVarCldFrac]['values'],
-        },
-        clrskyMethod:{
-            'filters':[
-            {'where': greatEqualBound,
-             'variable': vu.cldfracMeta,
-             'bounds': clrskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': clrskyMethod,
-        },
-        cldskyMethod:{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.cldfracMeta,
-             'bounds': cldskyThresh},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': cldskyMethod,
-        },
-    },
-    vu.obsVarSCI:{
-        OkamotoMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': SCIOkamoto,
-             'bounds': binLims[vu.obsVarSCI]['minBounds']},
-            {'where': greatEqualBound,
-             'function': SCIOkamoto,
-             'bounds': binLims[vu.obsVarSCI]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarSCI]['values'],
-        },
-        ScaleOkamotoMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': ScaledSCIOkamoto,
-             'bounds': binLims[vu.obsVarSCI]['minBounds']},
-            {'where': greatEqualBound,
-             'function': ScaledSCIOkamoto,
-             'bounds': binLims[vu.obsVarSCI]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarSCI]['values'],
-        },
-        ModHarnischMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': SCIModHarnisch,
-             'bounds': binLims[vu.obsVarSCI]['minBounds']},
-            {'where': greatEqualBound,
-             'function': SCIModHarnisch,
-             'bounds': binLims[vu.obsVarSCI]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarSCI]['values'],
-        },
-        ScaleModHarnischMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': ScaledSCIModHarnisch,
-             'bounds': binLims[vu.obsVarSCI]['minBounds']},
-            {'where': greatEqualBound,
-             'function': ScaledSCIModHarnisch,
-             'bounds': binLims[vu.obsVarSCI]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarSCI]['values'],
-        },
-    },
-    vu.obsVarNormErr:{
-        defaultBinMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': NormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['minBounds']},
-            {'where': greatEqualBound,
-             'function': NormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarNormErr]['values'],
-        },
-        OkamotoMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': OkamotoNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['minBounds']},
-            {'where': greatEqualBound,
-             'function': OkamotoNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarNormErr]['values'],
-        },
-        ScaleOkamotoMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': ScaledOkamotoNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['minBounds']},
-            {'where': greatEqualBound,
-             'function': ScaledOkamotoNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarNormErr]['values'],
-        },
-        ModHarnischMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': ModHarnischNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['minBounds']},
-            {'where': greatEqualBound,
-             'function': ModHarnischNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarNormErr]['values'],
-        },
-        ScaleModHarnischMethod:{
-            'filters':[
-            {'where': lessBound,
-             'function': ScaledModHarnischNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['minBounds']},
-            {'where': greatEqualBound,
-             'function': ScaledModHarnischNormalizedError,
-             'bounds': binLims[vu.obsVarNormErr]['maxBounds']},
-            ],
-            'values': binLims[vu.obsVarNormErr]['values'],
-        },
-    },
-    'ObsRegion':{
-        'AFRICA':    nullBinMethod,
-        'ATLANTIC':  nullBinMethod,
-        'AUSTRALIA': nullBinMethod,
-        'CONUS':{
-            'filters':[
-            {'where': lessBound,
-             'variable': vu.lonMeta,
-             'bounds': [234.0]},
-            {'where': greatBound,
-             'variable': vu.lonMeta,
-             'bounds': [294.0]},
-            {'where': lessBound,
-             'variable': vu.latMeta,
-             'bounds': [ 25.0]},
-            {'where': greatBound,
-             'variable': vu.latMeta,
-             'bounds': [ 50.0]},
-            {'where': notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'apply_to_diags': vu.nonObsDiags},
-            ],
-            'values': ['CONUS'],
-        },
-        'EUROPE':    nullBinMethod,
-        'E_EUROPE':  nullBinMethod,
-        'NAMERICA':  nullBinMethod,
-        'PACIFIC':   nullBinMethod,
-        'SAMERICA':  nullBinMethod,
-        'SE_ASIA':   nullBinMethod,
-        'S_ASIA':    nullBinMethod,
-#TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
-#        'CONUS_POLYGON':{
-#            'filters':[
-#            {'where': notInBound,
-#             'function': Regions,
-#             'variable': [vu.lonMeta,vu.latMeta],
-#             'bounds': ['CONUS']},
-#            ],
-#            'values': ['CONUS'],
-#        },
-#        'EUROPE_POLYGON':{
-#            'filters':[
-#            {'where': notInBound,
-#             'function': Regions,
-#             'variable': [vu.lonMeta,vu.latMeta],
-#             'bounds': ['EUROPE']},
-#            ],
-#            'values': ['EUROPE'],
-#        },
-    },
-#TODO: enable binning in MPAS Model space
-#    vu.modVarPrs:{
-#        defaultBinMethod:{
-#            'filters':[
-#            {'where': lessBound,
-#             'variable': vu.modVarPrs,
-#             'bounds': binLims[vu.modVarPrs]['minBounds']},
-#            {'where': greatEqualBound,
-#             'variable': vu.modVarPrs,
-#             'bounds': binLims[vu.modVarPrs]['maxBounds']},
-#            ],
-#            'values': binLims[vu.modVarPrs]['values'],
-#        },
-#    },
-#    vu.modVarAlt:{
-#        defaultBinMethod:{
-#            'filters':[
-#            {'where': lessBound,
-#             'variable': vu.modVarAlt,
-#             'bounds': binLims[vu.modVarAlt]['minBounds']},
-#            {'where': greatEqualBound,
-#             'variable': vu.modVarAlt,
-#             'bounds': binLims[vu.modVarAlt]['maxBounds']},
-#            ],
-#            'values': binLims[vu.modVarAlt]['values'],
-#        },
-#    },
-#    vu.modVarLat:{
-#        defaultBinMethod:{
-#            'filters':[
-#            {'where': lessBound,
-#             'variable': vu.modVarLat,
-#             'bounds': binLims[vu.modVarLat]['minBounds']},
-#            {'where': greatEqualBound,
-#             'variable': vu.modVarLat,
-#             'bounds': binLims[vu.modVarLat]['maxBounds']},
-#            ],
-#            'values: binLims[vu.modVarLat]['values'],
-#        },
-#        latbandsMethod:{
-#            'filters':[
-#            {'where': lessBound,
-#             'variable': vu.modVarLat,
-#             'bounds': namedLatBands['minBounds']},
-#            {'where': greatEqualBound,
-#             'variable': vu.modVarLat,
-#             'bounds': namedLatBands['maxBounds']},
-#            ],
-#            'values': namedLatBands['values'],
-#        },
-#    },
-#    'ModelRegion':{
-#        'AFRICA':    nullBinMethod,
-#        'ATLANTIC':  nullBinMethod,
-#        'AUSTRALIA': nullBinMethod,
-#        'CONUS':{
-#            'filters':[
-#            {'where': lessBound,
-#             'variable': vu.modVarLon,
-#             'bounds': [234.0]},
-#            {'where': greatBound,
-#             'variable': vu.modVarLon,
-#             'bounds': [294.0]},
-#            {'where': lessBound,
-#             'variable': vu.modVarLat,
-#             'bounds': [ 25.0]},
-#            {'where': greatBound,
-#             'variable': vu.modVarLat,
-#             'bounds': [ 50.0]},
-#            ],
-#            'values': ['CONUS'],
-#        },
-#        'EUROPE':    nullBinMethod,
-#        'E_EUROPE':  nullBinMethod,
-#        'NAMERICA':  nullBinMethod,
-#        'PACIFIC':   nullBinMethod,
-#        'SAMERICA':  nullBinMethod,
-#        'SE_ASIA':   nullBinMethod,
-#        'S_ASIA':    nullBinMethod,
-#    },
-}
-
-
-#=============================
-# Parameterized binVarConfigs
-#=============================
-
-# Add named latitude-band-specific pressure bins
-for iband, latBand in enumerate(namedLatBands['values']):
-    binVarConfigs[vu.obsVarPrs][latBand] = {
-        'filters':[
-        {'where': lessBound,
-         'variable': vu.prsMeta,
-         'bounds': binLims[vu.obsVarPrs]['minBounds']},
-        {'where': greatEqualBound,
-         'variable': vu.prsMeta,
-         'bounds': binLims[vu.obsVarPrs]['maxBounds']},
-        {'where': lessBound,
-         'variable': vu.latMeta,
-         'bounds': namedLatBands['minBounds'][iband]},
-        {'where': greatEqualBound,
-         'variable': vu.latMeta,
-         'bounds': namedLatBands['maxBounds'][iband]},
-        {'where': notEqualBound,
-         'variable': vu.selfQCValue,
-         'bounds': goodFlag,
-         'apply_to_diags': vu.nonObsDiags},
-        ],
-        'values': binLims[vu.obsVarPrs]['values'],
-    }
-
-
-# Add named latitude-band-specific altitude bins
-for iband, latBand in enumerate(namedLatBands['values']):
-    binVarConfigs[vu.obsVarAlt][latBand] = {
-        'filters':[
-        {'where': lessBound,
-         'variable': vu.altMeta,
-         'bounds': binLims[vu.obsVarAlt]['minBounds']},
-        {'where': greatEqualBound,
-         'variable': vu.altMeta,
-         'bounds': binLims[vu.obsVarAlt]['maxBounds']},
-        {'where': lessBound,
-         'variable': vu.latMeta,
-         'bounds': namedLatBands['minBounds'][iband]},
-        {'where': greatEqualBound,
-         'variable': vu.latMeta,
-         'bounds': namedLatBands['maxBounds'][iband]},
-        {'where': notEqualBound,
-         'variable': vu.selfQCValue,
-         'bounds': goodFlag,
-         'apply_to_diags': vu.nonObsDiags},
-        ],
-        'values': binLims[vu.obsVarAlt]['values'],
-    }
-
-def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
-
-if __name__ == '__main__': main()

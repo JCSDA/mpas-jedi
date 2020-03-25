@@ -802,10 +802,6 @@ def transformXY_for_pcolor(xs,ys):
 
     return xs_pcolormesh_midpoints, ys_pcolormesh_midpoints
 
-def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
-
 
 ###############################################################################
 lenWarnPDF = 0
@@ -892,7 +888,7 @@ def plotPDF(fig,
     ax.xaxis.set_tick_params(labelsize=3)
     ax.yaxis.set_tick_params(labelsize=3)
     plt.yscale('log')
-
+    ax.set_ylim(bottom=1.e-6)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -1107,10 +1103,6 @@ def plotfitRampComposite(fig,
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.yaxis.set_tick_params(labelsize=3)
     plt.yscale('log')
-
+    ax2.set_ylim(bottom=100.)
 
     return ERRfitDict
-
-
-
-if __name__ == '__main__': main()

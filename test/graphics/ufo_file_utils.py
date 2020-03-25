@@ -258,14 +258,18 @@ class FeedbackFiles:
         diagHandles = self.Handles[osKey][diagFKey]
         geoHandles  = self.Handles[osKey][geoFKey]
 
-        # Construct output dictionary
-        varsVals = {}
+        #TODO: enable multiple levels of ObsDiagnostics and GeoVaLs
         diagLev = 0
         geoLev  = 0
+
+        # Construct output dictionary
+        varsVals = {}
         for varGrp in pu.uniqueMembers(dbVars):
             # self.print(varGrp,osKey)
             varName, grpName = vu.splitObsVarGrp(varGrp)
             if varGrp in obsHandles[0].variables:
+                #TODO: pre-allocate numpy array (np.empty(nlocs))
+                #    determine nlocs during handle definitions by summing nlocs attribute from ncfiles
                 varsVals[varGrp] = np.asarray([])
                 dtype = obsHandles[0].variables[varGrp].datatype
                 if 'byte' in dtype.name:
@@ -285,6 +289,7 @@ class FeedbackFiles:
 
             elif vu.diagGroup in grpName and self.exists[osKey][diagFKey]:
                 if varName in diagHandles[0].variables:
+                    #TODO: pre-allocate numpy array (np.empty,ndiaglevs)
                     varsVals[varGrp] = np.asarray([])
                     for h in diagHandles:
                         varsVals[varGrp] = np.append( varsVals[varGrp],
@@ -293,6 +298,8 @@ class FeedbackFiles:
 
             elif vu.geoGroup in grpName and self.exists[osKey][geoFKey]:
                 if varName in geoHandles[0].variables:
+                    #TODO: pre-allocate numpy array (np.empty(nlocs,ngeolevs))
+                    # ngeolevs=?ndiaglevs, often ngeolevs==1...handle cases
                     varsVals[varGrp] = np.asarray([])
                     for h in geoHandles:
                         varsVals[varGrp] = np.append( varsVals[varGrp],

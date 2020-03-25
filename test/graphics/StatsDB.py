@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 import binning_utils as bu
+import binning_configs as bcs
 from copy import deepcopy
 import datetime as dt
 import glob
@@ -59,7 +60,7 @@ class StatsDataBase:
         self.expDirectory = conf['expDirectory']
         self.expLongNames = conf['expLongNames']
         self.expNames = conf['expNames']
-        self.DAMethods = conf['DAmethods']
+        self.DAMethods = conf['DAMethods']
 
         # group of selected plots (single/multi)
         self.plotGroup = conf['plotGroup']
@@ -139,7 +140,7 @@ class StatsDataBase:
         self.available = True
 
         print("")
-        print("\n=========================================================")
+        print("\n\n\n=========================================================")
         print("Initialize DataFrame for DiagSpaceName = "+self.DiagSpaceName)
         print("=========================================================")
 
@@ -235,14 +236,17 @@ class StatsDataBase:
         varLoc['expName'] = self.expNames[0]
         varLoc['fcTDelta'] = self.fcTDeltas[0]
         varLoc['cyDTime'] = self.cyDTimes[0]
-        varLoc['diagName'] = self.allDiagNames[0]
         varLoc['binVar'] = vu.obsVarQC
-        varLoc['binVal'] = [bu.goodFlagName]
-        varLoc['binMethod'] = bu.defaultBinMethod
+        varLoc['binVal'] = bcs.goodFlagName
+        varLoc['binMethod'] = bu.goodQCMethod
+        goodDiags = self.dfw.levels('diagName',varLoc)
+        varLoc['diagName'] = goodDiags[0]
+
         for varName in self.varNames:
             varLoc['varName'] = varName
             units = self.dfw.uniquevals('varUnits',varLoc)
-            assert len(units) == 1,"\n\nERROR: too many units values for varName = "+varName
+            assert len(units) == 1, ("\n\nERROR: too many units values for varName = "+varName,
+                                    units, varLoc)
             self.varUnitss.append(units[0])
 
 

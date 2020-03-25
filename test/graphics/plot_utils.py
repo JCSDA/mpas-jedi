@@ -189,13 +189,3 @@ def isint(value):
         return True
   except ValueError:
     return False
-
-
-#================================
-#================================
-
-def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
-
-if __name__ == '__main__': main()

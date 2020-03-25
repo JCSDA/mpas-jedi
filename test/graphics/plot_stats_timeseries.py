@@ -1,5 +1,6 @@
 import basic_plot_functions as bpf
 import binning_utils as bu
+import binning_configs as bcs
 from collections.abc import Iterable
 import config as conf
 from copy import deepcopy
@@ -8,6 +9,7 @@ import datetime as dt
 import glob
 import numpy as np
 import par_utils as paru
+from pathlib import Path
 import plot_utils as pu
 import re
 import os
@@ -87,14 +89,14 @@ statNames = ['Count','Mean','RMS','STD']
 plotGroup = sdb.singleFCLen
 #plotGroup = sdb.multiFCLen
 
-figureFileType = 'pdf' #['pdf','png']
-
 #TODO: move the following configuration step to a wrapper function
 #      possibly take arguments from the command line
 #TODO: use multiprocessing module instead of requiring GNU parallel,
 #      similar to writediagstats_obsspace.py
 #TODO: move independent plotLoops (1-D, 2-D, QCLines, LatLines, PDF, statsComposite) to
 #      individual classes that take a StatsDataBase object as an argument
+#TODO: multiple diagNames on same subplot
+#      e.g., diagNameGroups = [['omb','oma'],['obs','bak','ana']]
 
 #Note: refer to the StatsDataBase class to configure the
 #      directory structure below
@@ -102,26 +104,20 @@ figureFileType = 'pdf' #['pdf','png']
 plotTypes = []
 
 if plotGroup == sdb.singleFCLen:
-    #Select the diagnostics for plotting
-    # options: 'omb','oma','obs','bak','ana'
-    diagNames = ['omb']
-    #TODO (maybe): multiple diagNames on same subplot
-    #diagGroups_to_plot = [['omb'],['omb','oma'],['obs','bak','ana']]
-
     user = 'guerrett'
 
     expLongNames = [
-                 'cycling_30km_omb_conv_clear_abi/DAdiag',
+#                 'cycling_30km_omb_conv_clear_abi/DAdiag',
                  'cycling_30km_omb_conv_cloud_abi/DAdiag',
                  ]
 
     expNames = [
-                 'clrsky-CRTM',
+#                 'clrsky-CRTM',
                  'allsky-CRTM',
                  ]
 
     DAMethods = [
-                 'omb',
+#                 'omb',
                  'omb',
                  ]
 
@@ -143,10 +139,6 @@ if plotGroup == sdb.singleFCLen:
 
 
 if plotGroup == sdb.multiFCLen:
-    #Select the diagnostics for plotting
-    # options: 'omb','obs','bak'
-    diagNames = ['omb']
-
     user = 'jban'
 
     expLongNames = [
@@ -178,10 +170,7 @@ if plotGroup == sdb.multiFCLen:
     # --------------------------------------------------------------------------
     plotTypes.append('AGGREGATEFC')
     plotTypes.append('SNAPSHOTFC')
-    if len(expNames) > 1:
-        plotTypes.append('AGGREGATEFC_DiffCI')
     # plotTypes.append('AGGREGATEFC2D')
-
 
 nExp  = len(expNames)
 
@@ -203,7 +192,10 @@ expDirectory = os.getenv('EXP_DIR','/glade/scratch/'+user+'/pandac/')
 
 statsFilePrefix = 'diagnostic_stats/'+su.statsFilePrefix
 
-#plot settings
+
+## plot settings
+figureFileType = 'pdf' #['pdf','png']
+
 interiorLabels = True
 
 sciTickss = []
@@ -254,7 +246,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
     dbConf['expDirectory'] = expDirectory
     dbConf['expLongNames'] = expLongNames
     dbConf['expNames'] = expNames
-    dbConf['DAmethods'] = DAMethods
+    dbConf['DAMethods'] = DAMethods
 
     # group of selected plots (single/multi)
     dbConf['plotGroup'] = plotGroup
@@ -262,6 +254,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
     # Read stats and make figures for all DiagSpaceNames
     for DiagSpaceName in sorted(DiagSpaceConfig):
         dbConf['DiagSpaceName'] = DiagSpaceName
+        diagNames = DiagSpaceConfig[DiagSpaceName]['diagNames']
 
         ## construct and initialize the statistical database
         statsDB = StatsDataBase(dbConf)
@@ -295,19 +288,18 @@ def plot_stats_timeseries(nproc=1, myproc=0):
         binNumVals = statsDB.binNumVals
         binNumVals2DasStr = statsDB.binNumVals2DasStr
 
-
-        #==================================
+        #=======================================
         # Create figures for all diagNames
-        #==================================
+        #=======================================
 
-        OSFigPath = "./"+DiagSpaceName+"_figs"
-        if not os.path.exists(OSFigPath):
-            os.mkdir(OSFigPath)
+        OSFigPath = Path("./"+DiagSpaceName+"_figs")
+        OSFigPath.mkdir(parents=True, exist_ok=True)
 
         for diagName in diagNames:
             if diagName not in allDiagNames: continue
 
-            print("\nCreate figures for diagName = "+diagName)
+            print("\n\n---------------------------------------")
+            print("Create figures for diagName = "+diagName)
             print("---------------------------------------")
 
             fcDiagName = diagName
@@ -345,6 +337,9 @@ def plot_stats_timeseries(nproc=1, myproc=0):
             diagBinVars = diagDFW.levels('binVar')
             diagBinMethods = diagDFW.levels('binMethod')
 
+            # apply aggregation over cyDTime
+            aggCYDFW = DFWrapper.fromAggStats(diagDFW,['cyDTime'])
+
             #=============
             # 1-D figures
             #=============
@@ -357,7 +352,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
             if PLOT_EXP_LINES:
                 binVarsExpLines = {
-                    (vu.obsVarQC, bu.defaultBinMethod):{
+                    (vu.obsVarQC, bu.goodQCMethod):{
                         'CalcGrossStats': True,
                         'OnlyPlotStats': statNames,
                     },
@@ -373,18 +368,11 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                         'CalcGrossStats': False,
                         'OnlyPlotStats': statNames,
                     },
-                    (vu.obsVarCldFrac, bu.clrskyMethod):{
+                    (vu.obsVarCldFrac, bu.cloudbandsMethod):{
                         'CalcGrossStats': True,
                         'OnlyPlotStats': statNames,
                     },
-                    (vu.obsVarCldFrac, bu.cldskyMethod):{
-                        'CalcGrossStats': False,
-                        'OnlyPlotStats': statNames,
-                    },
                 }
-
-                # apply aggregation over cyDTime
-                aggDFW = DFWrapper.fromAggStats(diagDFW,['cyDTime'])
 
                 for (selectBinVar,binMethod), options in binVarsExpLines.items():
                     binVar = vu.varDictObs[selectBinVar][1]
@@ -396,6 +384,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     binLoc = {}
                     binLoc['diagName'] = diagName
                     binLoc['binVar'] = binVar
+                    binVarLoc = deepcopy(binLoc)
                     binLoc['binMethod'] = binMethod
 
                     dbSelect1DBinVals = diagDFW.levels('binVal',binLoc)
@@ -406,10 +395,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     binUnits = binUnitss[0]
 
                     binMethodFile = ''
-                    if binMethod != bu.defaultBinMethod: binMethodFile = binMethod+'_'
+                    if binMethod != bu.goodQCMethod: binMethodFile = binMethod+'_'
 
                     # reorder select1DBinVals to match binMethod definition
-                    tmp = deepcopy(bu.binVarConfigs.get(
+                    tmp = deepcopy(bcs.binVarConfigs.get(
                         selectBinVar,{}).get(
                         binMethod,{}).get(
                         'values',dbSelect1DBinVals))
@@ -432,7 +421,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             t = " @ "+binVar+"="+binVal
                             if binUnits != vu.miss_s:
                                 t = t+" "+binUnits
-                        elif binVal in [bu.goodFlagName]:
+                        elif binVal in [bcs.goodFlagName]:
                             t = ""
                         else:
                             t = " @ "+binVal
@@ -455,13 +444,13 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     if ("SNAPSHOTCY" in plotTypes and
                         nCY > 1):
                         print("\nGenerating SNAPSHOTCY figures"+binMessage)
-                        plotTypePath = OSFigPath+'/SNAPSHOTCY'
+                        ptypePath = OSFigPath/'SNAPSHOTCY'/diagName
                         subplot_size = 1.9
                         aspect = 0.75
 
                         lineLoc = deepcopy(binLoc)
-                        axLimLoc = deepcopy(binLoc)
-                        axLimLoc['binVal'] = select1DBinVals
+                        axLimLoc = deepcopy(binVarLoc)
+                        # axLimLoc['binVal'] = select1DBinVals
 
                         #file loop 1
                         for (fcTDelta, fcTDelta_dir) in fcMap:
@@ -481,7 +470,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                     # use specific y-axis limits for each varName
                                     axLimLoc['varName'] = varName
-                                    dmin = diagDFW.min(axLimLoc,statName)
+                                    if statName == 'Count':
+                                        dmin = 0.
+                                    else:
+                                        dmin = diagDFW.min(axLimLoc,statName)
                                     dmax = diagDFW.max(axLimLoc,statName)
 
                                     #subplot loop 2
@@ -522,12 +514,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 # end varMap loop
 
                                 # save each figure
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%sTSeries_%sday_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%sTSeries_%sday_%s_%s_%s'%(
                                            binMethodFile,fcTDelta_dir,DiagSpaceName,
-                                           diagName,statName)
+                                           diagName,statName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                             # end statName loop
 
@@ -539,13 +531,13 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     if ("AGGREGATEFC" in plotTypes and
                         nFC > 1):
                         print("\nGenerating AGGREGATEFC figures"+binMessage)
-                        plotTypePath = OSFigPath+'/AGGREGATEFC'
+                        ptypePath = OSFigPath/'AGGREGATEFC'/fcDiagName
                         subplot_size = 1.9
                         aspect = 0.6
 
                         lineLoc = deepcopy(binLoc)
-                        axLimLoc = deepcopy(binLoc)
-                        axLimLoc['binVal'] = select1DBinVals
+                        axLimLoc = deepcopy(binVarLoc)
+                        # axLimLoc['binVal'] = select1DBinVals
 
                         #file loop 1
                         for (statName, statDiagLabel, sciTicks, signDefinite) in FCStatsMap:
@@ -561,8 +553,11 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                 # use specific y-axis limits for each varName
                                 axLimLoc['varName'] = varName
-                                dmin = aggDFW.min(axLimLoc,statName)
-                                dmax = aggDFW.max(axLimLoc,statName)
+                                if statName == 'Count':
+                                    dmin = 0.
+                                else:
+                                    dmin = aggCYDFW.min(axLimLoc,statName)
+                                dmax = aggCYDFW.max(axLimLoc,statName)
 
                                 #subplot loop 2
                                 for binVal, binTitle in binMap:
@@ -572,14 +567,14 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                     linesVals = []
                                     for expName in expNames:
                                         lineLoc['expName'] = expName
-                                        lineFCTDeltas = aggDFW.levels('fcTDelta',lineLoc)
+                                        lineFCTDeltas = aggCYDFW.levels('fcTDelta',lineLoc)
 
                                         lineVals = np.full(nFC,np.NaN)
                                         fcLoc = deepcopy(lineLoc)
                                         for fcTDelta in lineFCTDeltas:
                                             ifc = fcTDeltas.index(fcTDelta)
                                             fcLoc['fcTDelta'] = fcTDelta
-                                            lineVals[ifc] = aggDFW.loc(fcLoc,statName)
+                                            lineVals[ifc] = aggCYDFW.loc(fcLoc,statName)
                                         linesVals.append(lineVals)
 
                                     # define subplot title
@@ -602,12 +597,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             # end varMap loop
 
                             # save each figure
-                            if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                            filename = plotTypePath+'/%sTSeries_%s-%sday_%s_%s_%s'%(
+                            ptypePath.mkdir(parents=True, exist_ok=True)
+                            filename = ptypePath/('%sTSeries_%s-%sday_%s_%s_%s'%(
                                        binMethodFile,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                                       fcDiagName,statName)
+                                       fcDiagName,statName))
 
-                            pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                            pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                         # end statName loop
 
@@ -617,7 +612,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     if ("AGGREGATEFC_DiffCI" in plotTypes and
                         nFC > 1 and nExp > 1):
                         print("\nGenerating AGGREGATEFC_DiffCI figures"+binMessage)
-                        plotTypePath = OSFigPath+'/AGGREGATEFC_DiffCI'
+                        ptypePath = OSFigPath/'AGGREGATEFC_DiffCI'/fcDiagName
                         subplot_size = 1.9
                         aspect = 0.6
 
@@ -700,12 +695,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             # end varName loop
 
                             # save each figure
-                            if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                            filename = plotTypePath+'/%sTSeries_%s-%sday_%s_%s_%s'%(
+                            ptypePath.mkdir(parents=True, exist_ok=True)
+                            filename = ptypePath/('%sTSeries_%s-%sday_%s_%s_%s'%(
                                        binMethodFile,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                                       fcDiagName,statName)
+                                       fcDiagName,statName))
 
-                            pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                            pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
                         # end statName loop
 
                     # end AGGREGATEFC_DiffCI
@@ -713,13 +708,13 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     if ("SNAPSHOTFC" in plotTypes and
                         nFC > 1 and nCY > 1):
                         print("\nGenerating SNAPSHOTFC figures"+binMessage)
-                        plotTypePath = OSFigPath+'/SNAPSHOTFC'
+                        ptypePath = OSFigPath/'SNAPSHOTFC'/fcDiagName
                         subplot_size = 1.9
                         aspect = 0.75
 
-                        axLimLoc = deepcopy(binLoc)
                         lineLoc = deepcopy(binLoc)
-                        axLimLoc['binVal'] = select1DBinVals
+                        axLimLoc = deepcopy(binVarLoc)
+                        # axLimLoc['binVal'] = select1DBinVals
 
                         #file loop 1
                         for expName in expNames:
@@ -739,7 +734,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                     # use specific y-axis limits for each varName
                                     axLimLoc['varName'] = varName
-                                    dmin = diagDFW.min(axLimLoc,statName)
+                                    if statName == 'Count':
+                                        dmin = 0.
+                                    else:
+                                        dmin = diagDFW.min(axLimLoc,statName)
                                     dmax = diagDFW.max(axLimLoc,statName)
 
                                     #subplot loop 2
@@ -794,12 +792,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 # end varMap loop
 
                                 expName_file = re.sub("\.","",re.sub("\s+","-",expName))
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%sTSeries_%s_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%sTSeries_%s_%s_%s_%s'%(
                                            binMethodFile,expName_file,DiagSpaceName,
-                                           fcDiagName,statName)
+                                           fcDiagName,statName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                             # end statMap loop
 
@@ -821,7 +819,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 statsLoc['varName'] = varName
                                 for expName in expNames:
                                     statsLoc['expName'] = expName
-                                    statsDFW = DFWrapper.fromLoc(aggDFW,statsLoc)
+                                    statsDFW = DFWrapper.fromLoc(aggCYDFW,statsLoc)
                                     for statName in statNames:
                                         GrossStats[(statName,expName,varName)] = statsDFW.var(statName).to_numpy()
                             for expName in expNames:
@@ -849,15 +847,16 @@ def plot_stats_timeseries(nproc=1, myproc=0):
             #      QCLines only plots statName=='Count', so must add selectStatNames
             #      dictionary option similar to 2D figures or plot all statNames...
             selectBinVar = vu.varDictObs[vu.obsVarLat][1]
-            select1DBinVals = bu.namedLatBands['values']
+            select1DBinVals = bcs.namedLatBands['values']
             selectBinMethod = bu.latbandsMethod
             if ("SNAPSHOTCY_LatLines" in plotTypes and
+                selectBinVar in diagBinVars and
                 len(select1DBinVals) > 0 and
                 nCY > 1 and
                 statsDB.DiagSpaceGrp[0] != conf.radiance_s):
 
                 print("\nGenerating SNAPSHOTCY_LatLines figures...")
-                plotTypePath = OSFigPath+'/SNAPSHOTCY_LatLines'
+                ptypePath = OSFigPath/'SNAPSHOTCY_LatLines'/diagName
 
                 subplot_size = 1.9
                 aspect = 0.75
@@ -891,7 +890,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                             # use specific y-axis limits for each varName
                             axLimLoc['varName'] = varName
-                            dmin = diagDFW.min(axLimLoc,statName)
+                            if statName == 'Count':
+                                dmin = 0.
+                            else:
+                                dmin = diagDFW.min(axLimLoc,statName)
                             dmax = diagDFW.max(axLimLoc,statName)
 
                             #subplot loop 2
@@ -927,25 +929,26 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                     interiorLabels = interiorLabels)
 
                                 iplot = iplot + 1
-                        if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                        filename = plotTypePath+'/TSeries_%sday_%s_%s_%s'%(
+                        ptypePath.mkdir(parents=True, exist_ok=True)
+                        filename = ptypePath/('TSeries_%sday_%s_%s_%s'%(
                                    fcTDelta_dir,DiagSpaceName,
-                                   diagName,statName)
+                                   diagName,statName))
 
-                        pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                        pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                 # end binVal loop
 
             # end SNAPSHOTCY_LatLines
 
             selectBinVar = vu.varDictObs[vu.obsVarQC][1]
-            select1DBinVals = [bu.goodFlagName] + bu.badFlagNames
-            selectBinMethods = [bu.defaultBinMethod,'bad']
+            select1DBinVals = [bcs.goodFlagName] + bcs.badFlagNames
+            selectBinMethods = [bu.goodQCMethod,bu.badQCMethod]
             if ("SNAPSHOTCY_QCLines" in plotTypes and
+                selectBinVar in diagBinVars and
                 len(select1DBinVals) > 0 and
                 nCY > 1):
                 print("\nGenerating SNAPSHOTCY_QCLines figures...")
-                plotTypePath = OSFigPath+'/SNAPSHOTCY_QCLines'
+                ptypePath = OSFigPath/'SNAPSHOTCY_QCLines'/diagName
                 subplot_size = 1.9
                 aspect = 0.75
 
@@ -955,14 +958,18 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                 statName = 'Count'
                 istat = statNames.index(statName)
+                (statName, statDiagLabel, sciTicks, signDefinite) = StatsMap[istat]
 
                 axLimLoc = {}
                 axLimLoc['diagName'] = diagName
                 axLimLoc['binVar'] = selectBinVar
-                axLimLoc['binMethod'] = selectBinMethods
-                axLimLoc['binVal'] = select1DBinVals
+                # axLimLoc['binMethod'] = selectBinMethods
+                # axLimLoc['binVal'] = select1DBinVals
 
                 lineLoc = deepcopy(axLimLoc)
+                lineLoc['binMethod'] = selectBinMethods
+                lineLoc['binVal'] = select1DBinVals
+
                 #file loop 1
                 for (fcTDelta, fcTDelta_dir) in fcMap:
                     lineLoc['fcTDelta'] = fcTDelta
@@ -978,7 +985,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                         # use specific y-axis limits for each varName
                         axLimLoc['varName'] = varName
-                        dmin = diagDFW.min(axLimLoc,statName)
+                        if statName == 'Count':
+                            dmin = 0.
+                        else:
+                            dmin = diagDFW.min(axLimLoc,statName)
                         dmax = diagDFW.max(axLimLoc,statName)
 
                         #subplot loop 2
@@ -1015,12 +1025,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                             iplot = iplot + 1
 
-                    if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                    filename = plotTypePath+'/TSeries_%sday_%s_%s_%s'%(
+                    ptypePath.mkdir(parents=True, exist_ok=True)
+                    filename = ptypePath/('TSeries_%sday_%s_%s_%s'%(
                                fcTDelta_dir,DiagSpaceName,
-                               diagName,statName)
+                               diagName,statName))
 
-                    pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                    pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                 # end binVal loop
 
@@ -1038,12 +1048,14 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
             if PLOT_ACROSS_BINS:
                 binVars2D = {
-                    vu.obsVarPrs:     {'profilePlotFunc': bpf.plotProfile},
                     vu.obsVarAlt:     {'profilePlotFunc': bpf.plotProfile},
+                    vu.obsVarACI:     {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarCldFrac: {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarGlint:   {'profilePlotFunc': bpf.plotSeries},
                     vu.obsVarLat:     {'profilePlotFunc': bpf.plotProfile},
                     vu.obsVarLT:      {'profilePlotFunc': bpf.plotSeries},
-                    vu.obsVarSatZen:  {'profilePlotFunc': bpf.plotSeries},
-                    vu.obsVarCldFrac: {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarPrs:     {'profilePlotFunc': bpf.plotProfile},
+                    vu.obsVarSenZen:  {'profilePlotFunc': bpf.plotSeries},
                 }
 
                 for selectBinVar, options in binVars2D.items():
@@ -1056,21 +1068,29 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     binVarLoc['diagName'] = diagName
                     binVarLoc['binVar'] = binVar
                     binVarLoc['binVal'] = binNumVals2DasStr
-                    aggDFW = DFWrapper.fromAggStats(
-                                 DFWrapper.fromLoc(diagDFW,binVarLoc),
-                                 ['cyDTime'])
 
                     selectBinMethods = diagDFW.levels('binMethod',binVarLoc)
 
                     selectStatNames = options.get('stats',statNames)
 
-                    methodLoc = deepcopy(binVarLoc)
+                    varMethodLoc = deepcopy(binVarLoc)
+                    axLimLoc = {}
+                    axLimLoc['diagName'] = diagName
+                    axLimLoc['binVal'] = binNumVals2DasStr
+
+                    ## all binMethod's with same binVar have same axis limits
+                    #  comment out to share limits between binVars
+                    axLimLoc['binVar'] = binVar
+
                     for binMethod in selectBinMethods:
-                        methodLoc['binMethod'] = binMethod
+                        ## all binVar's with same binMethod have same axis limits
+                        #  comment out to share limits between binMethods
+                        axLimLoc['binMethod'] = binMethod
 
-                        select2DBinVals = diagDFW.levels('binVal',methodLoc)
+                        varMethodLoc['binMethod'] = binMethod
+                        select2DBinVals = diagDFW.levels('binVal',varMethodLoc)
 
-                        binUnits = diagDFW.uniquevals('binUnits',methodLoc)[0]
+                        binUnits = diagDFW.uniquevals('binUnits',varMethodLoc)[0]
 
                         # assume all bins represent same variable/units
                         indepLabel = binVar
@@ -1078,7 +1098,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             indepLabel = indepLabel+" ("+binUnits+")"
 
                         binMethodFile = ''
-                        if binMethod != bu.defaultBinMethod: binMethodFile = '_'+binMethod
+                        if binMethod != bu.identityBinMethod: binMethodFile = '_'+binMethod
 
                         # bin info
                         select2DBinNumVals = []
@@ -1098,16 +1118,13 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                         if len(select2DBinVals) < 2: continue
 
-                        binValLoc = deepcopy(methodLoc)
-                        binValLoc['binVal'] = select2DBinVals
-
                         binMessage = ' across '+binVar+' and binMethod=>'+binMethod
 
                         if ("SNAPSHOTCY2D" in plotTypes and
                             nCY > 1):
 
                             print("\nGenerating SNAPSHOTCY2D figures"+binMessage)
-                            plotTypePath = OSFigPath+'/SNAPSHOTCY2D'
+                            ptypePath = OSFigPath/'SNAPSHOTCY2D'/diagName
                             # top-level 2-D plot settings
                             subplot_size = 2.4
                             aspect = 0.65
@@ -1115,10 +1132,11 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             ny = nVars
                             nsubplots = nx * ny
 
-                            axLimLoc = deepcopy(binValLoc)
+                            planeLoc = deepcopy(varMethodLoc)
 
                             #file loop 1
                             for (fcTDelta, fcTDelta_dir) in fcMap:
+                                planeLoc['fcTDelta'] = fcTDelta
 
                                 #file loop 2
                                 for (statName, statDiagLabel, sciTicks, signDefinite) in StatsMap:
@@ -1132,15 +1150,18 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                     #subplot loop 1
                                     for (varName, varLabel) in varMap:
+                                        planeLoc['varName'] = varName
+
                                         # use specific c-axis limits for each varName
                                         axLimLoc['varName'] = varName
-                                        dmin = diagDFW.min(axLimLoc,statName)
+                                        if statName == 'Count':
+                                            dmin = 0.
+                                        else:
+                                            dmin = diagDFW.min(axLimLoc,statName)
                                         dmax = diagDFW.max(axLimLoc,statName)
 
                                         #subplot loop 2
                                         # letting cyDTime and binVal vary
-                                        planeLoc = deepcopy(axLimLoc)
-                                        planeLoc['fcTDelta'] = fcTDelta
                                         for expName in expNames:
                                             planeLoc['expName'] = expName
                                             planeCYDTimes = diagDFW.levels('cyDTime',planeLoc)
@@ -1170,12 +1191,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                             iplot = iplot + 1
 
-                                    if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                    filename = plotTypePath+'/%s%s_TSeries_%sday_%s_%s_%s'%(
+                                    ptypePath.mkdir(parents=True, exist_ok=True)
+                                    filename = ptypePath/('%s%s_TSeries_%sday_%s_%s_%s'%(
                                                binVar,binMethodFile,fcTDelta_dir,DiagSpaceName,
-                                               diagName,statName)
+                                               diagName,statName))
 
-                                    pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                                    pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                                 # end statName loop
 
@@ -1187,7 +1208,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             nFC > 1):
 
                             print("\nGenerating AGGREGATEFC2D figures"+binMessage)
-                            plotTypePath = OSFigPath+'/AGGREGATEFC2D'
+                            ptypePath = OSFigPath/'AGGREGATEFC2D'/fcDiagName
                             # top-level 2-D plot settings
                             subplot_size = 2.4
                             aspect = 0.55
@@ -1195,7 +1216,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                             ny = nVars
                             nsubplots = nx * ny
 
-                            axLimLoc = deepcopy(binValLoc)
+                            planeLoc = deepcopy(varMethodLoc)
 
                             #file loop 1
                             for (statName, statDiagLabel, sciTicks, signDefinite) in FCStatsMap:
@@ -1207,22 +1228,26 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 iplot = 0
                                 #subplot loop
                                 for (varName, varLabel) in varMap:
+                                    planeLoc['varName'] = varName
+
                                     # use specific c-axis limits for each varName
                                     axLimLoc['varName'] = varName
-                                    dmin = aggDFW.min(axLimLoc,statName)
-                                    dmax = aggDFW.max(axLimLoc,statName)
+                                    if statName == 'Count':
+                                        dmin = 0.
+                                    else:
+                                        dmin = aggCYDFW.min(axLimLoc,statName)
+                                    dmax = aggCYDFW.max(axLimLoc,statName)
 
-                                    planeLoc = deepcopy(axLimLoc)
                                     #collect aggregated statName, varying across fcTDelta+binVal
                                     for expName in expNames:
                                         planeLoc['expName'] = expName
-                                        planeFCTDeltas = aggDFW.levels('fcTDelta',planeLoc)
+                                        planeFCTDeltas = aggCYDFW.levels('fcTDelta',planeLoc)
 
                                         planeVals = np.full((len(select2DBinVals),nFC),np.NaN)
                                         binLoc = deepcopy(planeLoc)
                                         for ibin, binVal in enumerate(select2DBinVals):
                                             binLoc['binVal'] = binVal
-                                            tmp = aggDFW.loc(binLoc,statName).to_numpy()
+                                            tmp = aggCYDFW.loc(binLoc,statName).to_numpy()
                                             for jfc, fcTDelta in enumerate(planeFCTDeltas):
                                                 ifc = fcTDeltas.index(fcTDelta)
                                                 planeVals[ibin,ifc] = tmp[jfc]
@@ -1244,12 +1269,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                         iplot = iplot + 1
 
                                 # save each figure
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%s%s_TSeries_%s-%sday_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%s%s_TSeries_%s-%sday_%s_%s_%s'%(
                                            binVar,binMethodFile,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                                           fcDiagName,statName)
+                                           fcDiagName,statName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
                             # end statName loop
 
@@ -1257,7 +1282,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                         if "AGGREGATEFC_Profile" in plotTypes:
                             print("\nGenerating AGGREGATEFC_Profile figures"+binMessage)
-                            plotTypePath = OSFigPath+'/AGGREGATEFC_Profile'
+                            ptypePath = OSFigPath/'AGGREGATEFC_Profile'/fcDiagName
                             # top-level 2-D plot settings
                             subplot_size = 1.2
                             aspect = 1.3
@@ -1271,7 +1296,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 nx = np.int(np.ceil(np.sqrt(nsubplots)))
                                 ny = np.int(np.ceil(np.true_divide(nsubplots,nx)))
 
-                            axLimLoc = deepcopy(binValLoc)
+                            ptLoc = deepcopy(varMethodLoc)
 
                             #file loop 1
                             for (statName, statDiagLabel, sciTicks, signDefinite) in FCStatsMap:
@@ -1283,15 +1308,19 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                 #subplot loop 1
                                 for (varName, varLabel) in varMap:
+                                    ptLoc['varName'] = varName
+
                                     # use specific x-axis limits for each varName
                                     axLimLoc['varName'] = varName
-                                    dmin = aggDFW.min(axLimLoc,statName)
-                                    dmax = aggDFW.max(axLimLoc,statName)
+                                    if statName == 'Count':
+                                        dmin = 0.
+                                    else:
+                                        dmin = aggCYDFW.min(axLimLoc,statName)
+                                    dmax = aggCYDFW.max(axLimLoc,statName)
 
                                     #subplot loop 2
-                                    binLoc = deepcopy(axLimLoc)
                                     for fcTDelta in fcTDeltas:
-                                        binLoc['fcTDelta'] = fcTDelta
+                                        ptLoc['fcTDelta'] = fcTDelta
 
                                         #Setting to avoid over-crowding
                                         if fcTDeltas.index(fcTDelta) > (MAX_FC_SUBFIGS-1): continue
@@ -1299,12 +1328,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                         #collect aggregated statNames, varying across fcTDelta
                                         linesVals = []
                                         for expName in expNames:
-                                            binLoc['expName'] = expName
+                                            ptLoc['expName'] = expName
 
                                             lineVals = []
                                             for binVal in select2DBinVals:
-                                                binLoc['binVal'] = binVal
-                                                lineVals.append(aggDFW.loc(binLoc,statName))
+                                                ptLoc['binVal'] = binVal
+                                                lineVals.append(aggCYDFW.loc(ptLoc,statName))
 
                                             linesVals.append(lineVals)
 
@@ -1327,12 +1356,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                         iplot = iplot + 1
 
                                 # save each figure
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%s%s_Agg_%s-%sday_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%s%s_Agg_%s-%sday_%s_%s_%s'%(
                                            binVar,binMethodFile,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                                           fcDiagName,statName)
+                                           fcDiagName,statName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels, True)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
                             # end statName loop
 
@@ -1341,7 +1370,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                         if ("AGGREGATEFC_Profile_DiffCI" in plotTypes and
                             nExp > 1):
                             print("\nGenerating AGGREGATEFC_Profile_DiffCI figures"+binMessage)
-                            plotTypePath = OSFigPath+'/AGGREGATEFC_Profile_DiffCI'
+                            ptypePath = OSFigPath/'AGGREGATEFC_Profile_DiffCI'/fcDiagName
                             # top-level 2-D plot settings
                             subplot_size = 1.2
                             aspect = 1.3
@@ -1364,11 +1393,15 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                 iplot = 0
 
                                 #subplot loop 1
-                                varLoc = deepcopy(binValLoc)
+                                fcLoc = deepcopy(varMethodLoc)
                                 for (varName, varLabel) in varMap:
-                                    varLoc['varName'] = varName
+                                    fcLoc['varName'] = varName
+
                                     #subplot loop 2
                                     for fcTDelta in fcTDeltas:
+                                        fcLoc['fcTDelta'] = fcTDelta
+                                        cntrlLoc = deepcopy(fcLoc)
+                                        expLoc = deepcopy(fcLoc)
 
                                         #Setting to avoid over-crowding
                                         if fcTDeltas.index(fcTDelta) > (MAX_FC_SUBFIGS-1): continue
@@ -1379,12 +1412,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                             lineVals = {}
                                             for trait in su.ciTraits: lineVals[trait] = []
 
-                                            cntrlLoc = deepcopy(varLoc)
-                                            cntrlLoc['fcTDelta'] = fcTDelta
                                             cntrlLoc['expName'] = cntrlName
-
-                                            expLoc = deepcopy(varLoc)
-                                            expLoc['fcTDelta'] = fcTDelta
                                             expLoc['expName'] = expName
 
                                             for binVal in select2DBinVals:
@@ -1429,12 +1457,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                         iplot = iplot + 1
 
                                 # save each figure
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%s%s_Agg_%s-%sday_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%s%s_Agg_%s-%sday_%s_%s_%s'%(
                                            binVar,binMethodFile,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                                           fcDiagName,statName)
+                                           fcDiagName,statName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels, True)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
                             # end statName loop
 
@@ -1447,124 +1475,123 @@ def plot_stats_timeseries(nproc=1, myproc=0):
             # end PLOT_ACROSS_BINS
 
 
-            if "AGGREGATEFC_PDF" in plotTypes:
-                binVarPDF = vu.varDictObs[vu.obsVarNormErr][1]
+            if ("AGGREGATEFC_PDF" in plotTypes):
+                binVarsPDF = [
+                    vu.varDictObs[vu.obsVarNormErr][1]
+                ]
+                for binVarPDF in binVarsPDF:
+                    if binVarPDF not in diagBinVars: continue
 
-                print("\nGenerating AGGREGATEFC_PDF figures across "+binVarPDF)
-                plotTypePath = OSFigPath+'/AGGREGATEFC_PDF'
-                # top-level 2-D plot settings
-                subplot_size = 1.2
-                aspect = 1.3
+                    print("\nGenerating AGGREGATEFC_PDF figures across "+binVarPDF)
+                    ptypePath = OSFigPath/'AGGREGATEFC_PDF'/fcDiagName
+                    # top-level 2-D plot settings
+                    subplot_size = 1.2
+                    aspect = 1.3
 
-                if nFC > 1:
-                    nx = min([nFC,MAX_FC_SUBFIGS])
-                    ny = nVars
-                    nsubplots = nx * ny
-                else:
-                    nsubplots = nVars
-                    nx = np.int(np.ceil(np.sqrt(nsubplots)))
-                    ny = np.int(np.ceil(np.true_divide(nsubplots,nx)))
+                    if nFC > 1:
+                        nx = min([nFC,MAX_FC_SUBFIGS])
+                        ny = nVars
+                        nsubplots = nx * ny
+                    else:
+                        nsubplots = nVars
+                        nx = np.int(np.ceil(np.sqrt(nsubplots)))
+                        ny = np.int(np.ceil(np.true_divide(nsubplots,nx)))
 
-                if (binVarPDF not in diagBinVars): break
+                    #Get all float/int binVals associated with binVarPDF
+                    binVarLoc = {}
+                    binVarLoc['diagName'] = diagName
+                    binVarLoc['binVar'] = binVarPDF
+                    binVarLoc['binVal'] = binNumVals2DasStr
 
-                #Get all float/int binVals associated with binVarPDF
-                binVarLoc = {}
-                binVarLoc['diagName'] = diagName
-                binVarLoc['binVar'] = binVarPDF
-                binVarLoc['binVal'] = binNumVals2DasStr
-                aggDFW = DFWrapper.fromAggStats(
-                             DFWrapper.fromLoc(diagDFW,binVarLoc),
-                             ['cyDTime'])
+                    selectBinMethods = diagDFW.levels('binMethod',binVarLoc)
 
-                selectBinMethods = diagDFW.levels('binMethod',binVarLoc)
+                    selectPDFBinVals = diagDFW.levels('binVal',binVarLoc)
 
-                selectPDFBinVals = diagDFW.levels('binVal',binVarLoc)
+                    binUnits = diagDFW.uniquevals('binUnits',binVarLoc)[0]
 
-                binUnits = diagDFW.uniquevals('binUnits',binVarLoc)[0]
+                    # assume all bins represent same variable/units
+                    indepLabel = binVarPDF
+                    if binUnits != vu.miss_s:
+                        indepLabel = indepLabel+" ("+binUnits+")"
 
-                # assume all bins represent same variable/units
-                indepLabel = binVarPDF
-                if binUnits != vu.miss_s:
-                    indepLabel = indepLabel+" ("+binUnits+")"
+                    # bin info
+                    selectPDFBinNumVals = []
+                    for binVal in selectPDFBinVals:
+                        ibin = allBinVals.index(binVal)
+                        selectPDFBinNumVals.append(binNumVals[ibin])
 
-                # bin info
-                selectPDFBinNumVals = []
-                for binVal in selectPDFBinVals:
-                    ibin = allBinVals.index(binVal)
-                    selectPDFBinNumVals.append(binNumVals[ibin])
+                    # sort bins by numeric value
+                    indices = list(range(len(selectPDFBinNumVals)))
+                    indices.sort(key=selectPDFBinNumVals.__getitem__)
+                    selectPDFBinNumVals = list(map(selectPDFBinNumVals.__getitem__, indices))
+                    selectPDFBinVals = list(map(selectPDFBinVals.__getitem__, indices))
 
-                # sort bins by numeric value
-                indices = list(range(len(selectPDFBinNumVals)))
-                indices.sort(key=selectPDFBinNumVals.__getitem__)
-                selectPDFBinNumVals = list(map(selectPDFBinNumVals.__getitem__, indices))
-                selectPDFBinVals = list(map(selectPDFBinVals.__getitem__, indices))
+                    if len(selectPDFBinVals) < 2: continue
 
-                if len(selectPDFBinVals) < 2: break
+                    ptLoc = deepcopy(binVarLoc)
+                    #file loop 1
+                    for expName in expNames:
+                        ptLoc['expName'] = expName
 
-                binLoc = deepcopy(binVarLoc)
-                #file loop 1
-                for expName in expNames:
-                    binLoc['expName'] = expName
+                        # establish a new figure
+                        fig = pu.setup_fig(nx, ny, subplot_size, aspect, interiorLabels)
 
-                    # establish a new figure
-                    fig = pu.setup_fig(nx, ny, subplot_size, aspect, interiorLabels)
+                        iplot = 0
 
-                    iplot = 0
+                        #subplot loop 1
+                        for (varName, varLabel) in varMap:
+                            ptLoc['varName'] = varName
 
-                    #subplot loop 1
-                    for (varName, varLabel) in varMap:
-                        binLoc['varName'] = varName
+                            #subplot loop 2
+                            for fcTDelta in fcTDeltas:
+                                ptLoc['fcTDelta'] = fcTDelta
 
-                        #subplot loop 2
-                        for fcTDelta in fcTDeltas:
-                            binLoc['fcTDelta'] = fcTDelta
+                                #Setting to avoid over-crowding
+                                if fcTDeltas.index(fcTDelta) > (MAX_FC_SUBFIGS-1): continue
 
-                            #Setting to avoid over-crowding
-                            if fcTDeltas.index(fcTDelta) > (MAX_FC_SUBFIGS-1): continue
+                                #collect aggregated statNames, varying across fcTDelta
+                                linesVals = []
+                                binMethodLabels = []
+                                for binMethod in selectBinMethods:
+                                    ptLoc['binMethod'] = binMethod
 
-                            #collect aggregated statNames, varying across fcTDelta
-                            linesVals = []
-                            binMethodLabels = []
-                            for binMethod in selectBinMethods:
-                                binLoc['binMethod'] = binMethod
+                                    # if binMethod != bu.identityBinMethod: do something with bu.identityBinMethod
+                                    if binMethod == bu.identityBinMethod:
+                                        binMethodLabels.append('CONST')
+                                    else:
+                                        binMethodLabels.append(binMethod)
 
-                                # if binMethod != bu.defaultBinMethod: do something with bu.defaultBinMethod
-                                if binMethod == bu.defaultBinMethod:
-                                    binMethodLabels.append('CONST')
-                                else:
-                                    binMethodLabels.append(binMethod)
+                                    lineVals = []
+                                    for binVal in selectPDFBinVals:
+                                        ptLoc['binVal'] = binVal
+                                        lineVals.append(aggCYDFW.loc(ptLoc,'Count'))
 
-                                lineVals = []
-                                for binVal in selectPDFBinVals:
-                                    binLoc['binVal'] = binVal
-                                    lineVals.append(aggDFW.loc(binLoc,'Count'))
+                                    linesVals.append(lineVals)
 
-                                linesVals.append(lineVals)
+                                # define subplot title
+                                title = varLabel+" @ "+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+"days"
 
-                            # define subplot title
-                            title = varLabel+" @ "+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+"days"
+                                # perform subplot agnostic plotting (all expNames)
+                                bpf.plotPDF(
+                                    fig,
+                                    linesVals, selectPDFBinNumVals,
+                                    binMethodLabels,
+                                    title,
+                                    indepLabel,
+                                    ny, nx, nsubplots, iplot,
+                                    interiorLabels = interiorLabels)
 
-                            # perform subplot agnostic plotting (all expNames)
-                            bpf.plotPDF(
-                                fig,
-                                linesVals, selectPDFBinNumVals,
-                                binMethodLabels,
-                                title,
-                                indepLabel,
-                                ny, nx, nsubplots, iplot,
-                                interiorLabels = interiorLabels)
+                                iplot = iplot + 1
 
-                            iplot = iplot + 1
+                        # save each figure
+                        ptypePath.mkdir(parents=True, exist_ok=True)
+                        filename = ptypePath/('%s_Agg_%s-%sday_%s_%s_%s'%(
+                                   binVarPDF,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
+                                   fcDiagName,expName))
 
-                    # save each figure
-                    if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                    filename = plotTypePath+'/%s_Agg_%s-%sday_%s_%s_%s'%(
-                               binVarPDF,fcTDeltas_dir[0],fcTDeltas_dir[-1],DiagSpaceName,
-                               fcDiagName,expName)
+                        pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
-                    pu.finalize_fig(fig, filename, figureFileType, interiorLabels, True)
-
-                # end expName loop
+                    # end expName loop
 
             # end AGGREGATEFC_PDF
 
@@ -1579,7 +1606,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     if (statBinVar not in diagBinVars): continue
 
                     print("\nGenerating AGGREGATEFC_StatsComposite figures across "+statBinVar)
-                    plotTypePath = OSFigPath+'/AGGREGATEFC_StatsComposite'
+                    ptypePath = OSFigPath/'AGGREGATEFC_StatsComposite'/fcDiagName
                     # top-level 2-D plot settings
                     subplot_size = 1.9
                     aspect = 0.9
@@ -1593,9 +1620,6 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     binVarLoc['diagName'] = diagName
                     binVarLoc['binVar'] = statBinVar
                     binVarLoc['binVal'] = binNumVals2DasStr
-                    aggDFW = DFWrapper.fromAggStats(
-                                 DFWrapper.fromLoc(diagDFW,binVarLoc),
-                                 ['cyDTime'])
 
                     selectBinMethods = diagDFW.levels('binMethod',binVarLoc)
 
@@ -1625,22 +1649,22 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                     nBins = len(selectStatBinVals)
                     if nBins < 2: continue
 
-                    binLoc = deepcopy(binVarLoc)
+                    ptLoc = deepcopy(binVarLoc)
 
                     #file loop 1
                     for binMethod in selectBinMethods:
-                        binLoc['binMethod'] = binMethod
+                        ptLoc['binMethod'] = binMethod
 
                         binMethodFile = ''
-                        if binMethod != bu.defaultBinMethod: binMethodFile = '_'+binMethod
+                        if binMethod != bu.identityBinMethod: binMethodFile = '_'+binMethod
 
                         #file loop 2
                         for expName in expNames:
-                            binLoc['expName'] = expName
+                            ptLoc['expName'] = expName
 
                             #file loop 3
                             for (fcTDelta, fcTDelta_dir) in fcMap:
-                                binLoc['fcTDelta'] = fcTDelta
+                                ptLoc['fcTDelta'] = fcTDelta
 
                                 # establish a new figure
                                 fig = pu.setup_fig(nx, ny, subplot_size, aspect, interiorLabels)
@@ -1651,7 +1675,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                 #subplot loop 1
                                 for (varName, varLabel) in varMap:
-                                    binLoc['varName'] = varName
+                                    ptLoc['varName'] = varName
 
                                     #collect aggregated statNames, varying across fcTDelta
                                     countsVals = np.full(nBins,0)
@@ -1660,11 +1684,11 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                     stdsVals   = np.full(nBins,np.NaN)
 
                                     for ibin, binVal in enumerate(selectStatBinVals):
-                                        binLoc['binVal'] = binVal
-                                        countsVals[ibin] = aggDFW.loc(binLoc,'Count').to_numpy()
-                                        meansVals[ibin] = aggDFW.loc(binLoc,'Mean').to_numpy()
-                                        rmssVals[ibin] = aggDFW.loc(binLoc,'RMS').to_numpy()
-                                        stdsVals[ibin] = aggDFW.loc(binLoc,'STD').to_numpy()
+                                        ptLoc['binVal'] = binVal
+                                        countsVals[ibin] = aggCYDFW.loc(ptLoc,'Count').to_numpy()
+                                        meansVals[ibin] = aggCYDFW.loc(ptLoc,'Mean').to_numpy()
+                                        rmssVals[ibin] = aggCYDFW.loc(ptLoc,'RMS').to_numpy()
+                                        stdsVals[ibin] = aggCYDFW.loc(ptLoc,'STD').to_numpy()
 
                                     # define subplot title
                                     title = varLabel
@@ -1678,7 +1702,7 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                         rmssVals,
                                         stdsVals,
                                         title,
-                                        "STATS("+diagName+")",
+                                        "STATS("+fcDiagName+")",
                                         indepLabel,
                                         ny, nx, nsubplots, iplot,
                                         interiorLabels = interiorLabels)
@@ -1703,12 +1727,12 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                                     print('  '+param+':',val)
 
                                 # save each figure
-                                if not os.path.exists(plotTypePath): os.mkdir(plotTypePath)
-                                filename = plotTypePath+'/%s%s_Agg_%sday_%s_%s_%s'%(
+                                ptypePath.mkdir(parents=True, exist_ok=True)
+                                filename = ptypePath/('%s%s_Agg_%sday_%s_%s_%s'%(
                                            statBinVar,binMethodFile,fcTDelta_dir,DiagSpaceName,
-                                           fcDiagName,expName)
+                                           fcDiagName,expName))
 
-                                pu.finalize_fig(fig, filename, figureFileType, interiorLabels, True)
+                                pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
                         # end expName loop
 

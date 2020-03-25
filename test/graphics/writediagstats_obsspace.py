@@ -1,7 +1,9 @@
 import argparse
 import binning_utils as bu
+import binning_configs as bcs
 import config as conf
 from copy import deepcopy
+import diag_utils as du
 import fnmatch
 import glob
 #import math
@@ -17,18 +19,10 @@ import sys
 import ufo_file_utils as ufofu
 import var_utils as vu
 
-# This script can be executed normally OR with optional arguments -n and -i
-# in order to run with GNU parallel. See par_utils.par_args for more information.
-
-#Select the diagnostics for which statistics are calculated
-# options: 'omb','oma','obs','bak','ana'
-selectDiagNames = ['omb','oma']
-
 this_program = os.path.basename(sys.argv[0])
 
 #analysis outer iteration
-NOUTER=os.getenv('NOUTER',1) #set equal to number of outer iterations
-anIter=str(NOUTER)
+anIter=str(du.NOUTER)
 
 def writediagstats_obsspace(database, osKey):
     #  database - ufofu.FeedbackFiles object
@@ -38,15 +32,15 @@ def writediagstats_obsspace(database, osKey):
 
     database.initHandles(osKey)
 
-
-    ##############################################
+    ###############################################
     ## Extract constructor info about the ObsSpace
-    ##############################################
+    ###############################################
 
     ObsSpaceName  = database.ObsSpaceName[osKey]
     ObsSpaceInfo  = conf.DiagSpaceConfig[ObsSpaceName]
     ObsSpaceGrp   = ObsSpaceInfo['DiagSpaceGrp']
     binVarConfigs = ObsSpaceInfo.get('binVarConfigs',{})
+    selectDiagNames = ObsSpaceInfo.get('diagNames',{})
 
     # create observed variable list by selecting those variables in the
     # obs feedback files (ufofu.obsFKey) with the suffix vu.depbgGroup
@@ -60,33 +54,70 @@ def writediagstats_obsspace(database, osKey):
     binMethods = {}
 
     for binVarKey, binMethodKeys in binVarConfigs.items():
-        binVarConfig = bu.binVarConfigs.get(binVarKey,bu.nullBinVarConfig)
+        binVarConfig = bcs.binVarConfigs.get(binVarKey,bcs.nullBinVarConfig)
         for binMethodKey in binMethodKeys:
-            binMethodConfig = binVarConfig.get(binMethodKey,bu.nullBinMethod)
+            config = binVarConfig.get(binMethodKey,bcs.nullBinMethod).copy()
 
-            if (len(binMethodConfig['values']) < 1 or
-                len(binMethodConfig['filters']) < 1): continue
+            if (len(config['values']) < 1 or
+                len(config['filters']) < 1): continue
 
-            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(binMethodConfig,ObsSpaceName)
+            config['osName'] = ObsSpaceName
+            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
 
+
+    ##################################
+    ## Construct diagnostic functions
+    ##################################
+
+    diagFunctions = {}
+    for diagName in selectDiagNames:
+        config = deepcopy(du.availableDiagnostics.get(diagName,None))
+        if config is None:
+            print('\n\nERROR: diagName is undefined: '+diagName)
+            os._exit(1)
+
+        osNames = config.get('osNames',[])
+        if (len(osNames) > 0 and
+            ObsSpaceName not in osNames): continue
+
+        config['osName'] = ObsSpaceName
+
+        outerIter = '0'
+        outerIterStr = config.get('iter',None)
+        if outerIterStr is not None:
+            if outerIterStr == 'bg':
+                outerIter = vu.bgIter
+            elif outerIterStr == 'an':
+                outerIter = anIter
+            elif pu.isint(outerIterStr):
+                outerIter = outerIterStr
+            else:
+                print('\n\nERROR: outerIter is undefined: '+outerIterStr)
+                os._exit(1)
+
+        diagFunctions[diagName] = {
+            'ObsFunction': bu.ObsFunctionWrapper(config),
+            'outerIter': outerIter,
+        }
 
     ############################################
-    ## Generate comprehensive list of variables
-    ##  and then read from database
+    ## Generate comprehensive list of required
+    ## variables, then read from database
     ############################################
 
     dbVars = []
 
     for varName in obsVars:
-        # add obs and departure variables
-        for grpName in [vu.obsGroup, vu.depbgGroup, vu.depanGroup]:
-            varGrp   = varName+'@'+grpName
-            dbVars.append(varGrp)
+        # variables for diagnostics
+        for diagName, diagFunction in diagFunctions.items():
+            for varGrp in diagFunction['ObsFunction'].dbVars(
+                varName, diagFunction['outerIter']):
+                dbVars.append(varGrp)
 
-        # add all variables needed for binning
+        # variables for binning
         for (binVarKey,binMethodKey), binMethod in binMethods.items():
             for varGrp in binMethod.dbVars(
-                varName,[vu.bgIter,anIter]):
+                varName, [vu.bgIter,anIter]):
                 dbVars.append(varGrp)
 
     # read the database values into memory
@@ -107,39 +138,21 @@ def writediagstats_obsspace(database, osKey):
     print(LOGPREFIX+"Calculating/writing diagnostic stats for:")
     for varName in obsVars:
         print(LOGPREFIX+"VARIABLE = "+varName)
-        obsName   = varName+'@'+vu.obsGroup
-        depbgName = varName+'@'+vu.depbgGroup
-        depanName = varName+'@'+vu.depanGroup
 
         varShort, varUnits = vu.varAttributes(varName)
 
-        # collect stats for all selectDiagNames
-        for diagName in selectDiagNames:
+        # collect stats for all diagFunctions
+        for diagName, diagFunction in diagFunctions.items():
             print(LOGPREFIX+"DIAG = "+diagName)
-            outerIter = vu.bgIter
-            # TODO: calculate diagnostics using *FilterFunc classes
-            #  --> if more complex diagnostics are needed
-            if diagName == 'omb':
-                Diagnostic = np.negative(dbVals[depbgName])
-            elif diagName == 'oma':
-                Diagnostic = np.negative(dbVals[depanName])
-                outerIter = anIter
-            elif diagName == 'obs':
-                Diagnostic = deepcopy(dbVals[obsName])
-            elif diagName == 'bak':
-                Diagnostic = np.add(dbVals[depbgName], dbVals[obsName])
-            elif diagName == 'ana':
-                Diagnostic = np.add(dbVals[depanName], dbVals[obsName])
-                outerIter = anIter
-            else:
-                print('\n\nERROR: diagName is undefined: '+diagName)
-                os._exit(1)
 
-            if ((diagName == 'omb' or diagName == 'oma')
-               and 'gnssro' in ObsSpaceName):
-                Diagnostic = np.multiply(np.divide(Diagnostic,dbVals[obsName]),100.)
+            func = diagFunction['ObsFunction']
+            outerIter = diagFunction['outerIter']
+            func.evaluate(dbVals,varName,outerIter)
+            Diagnostic = func.result
 
             for (binVarKey,binMethodKey), binMethod in binMethods.items():
+                if diagName in binMethod.excludeDiags: continue
+
                 binVarName, binGrpName = vu.splitObsVarGrp(binVarKey)
                 binVarShort, binVarUnits = vu.varAttributes(binVarName)
 
@@ -223,7 +236,7 @@ def main():
     for osKey in sorted(database.Files):
         res = ospool.apply_async(writediagstats_obsspace, args=(database,osKey))
 
-#        # FOR DEBUGGING
+        # FOR DEBUGGING
 #        writediagstats_obsspace(database,osKey)
 
     ospool.close()

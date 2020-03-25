@@ -15,7 +15,7 @@ csvSEP = ';'
 
 ## NC variable names for MPAS-JEDI
 obsVarAlt     = 'altitude'
-obsVarSCI     = 'symmetric_cloud_impact'
+obsVarACI     = 'asymmetric_cloud_impact'
 obsVarCldFrac = 'cloud_area_fraction'
 obsVarDT      = 'datetime'
 obsVarLT      = 'LocalTime'
@@ -24,7 +24,12 @@ obsVarLat     = 'latitude'
 obsVarNormErr = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
 obsVarPrs     = 'air_pressure'
 obsVarQC      = 'QCflag'
-obsVarSatZen  = 'sensor_zenith_angle'
+obsVarSCI     = 'symmetric_cloud_impact'
+obsVarSenZen  = 'sensor_zenith_angle'
+obsVarSenAzi  = 'sensor_azimuth_angle'
+obsVarSolZen  = 'solar_zenith_angle'
+obsVarSolAzi  = 'solar_azimuth_angle'
+obsVarGlint   = 'glint'
 
 degree= u'\N{DEGREE SIGN}'
 
@@ -40,7 +45,7 @@ varDictObs = {
     'surface_pressure':       [ 'Pa',    'Ps'      ],
     'virtual_temperature':    [ 'K',     'Tv'      ],
     obsVarAlt:                [ 'm',     'alt'     ],
-    obsVarSCI:                [ 'K',     'SCI'     ],
+    obsVarACI:                [ 'K',     'ACI'     ],
     obsVarCldFrac:            [ miss_s,  'cldfrac' ],
     obsVarLat:                [ degree,  'lat'     ],
     obsVarLon:                [ degree,  'lon'     ],
@@ -48,7 +53,9 @@ varDictObs = {
     obsVarNormErr:            [ miss_s,  obsVarNormErr ],
     obsVarPrs:                [ 'hPa',   'P'       ],
     obsVarQC:                 [ miss_s,  obsVarQC  ],
-    obsVarSatZen:             [ degree,  'zenith'  ],
+    obsVarSCI:                [ 'K',     'SCI'     ],
+    obsVarSenZen:             [ degree,  'zenith'  ],
+    obsVarGlint:              [ degree,  obsVarGlint  ],
 }
 #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
 #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == obsVarAlt:
@@ -58,7 +65,7 @@ vNameStr = 'varName'
 vChanStr = 'varCHAN'
 
 # MPAS-JEDI suffixes for observation-type variables
-bakGroup    = 'HofX'
+hofxGroup   = 'hofx'
 depbgGroup  = 'depbg'
 depanGroup  = 'depan'
 depGroup    = 'depIter'
@@ -75,7 +82,7 @@ selfObsValue   = vNameStr+'@'+obsGroup
 #selfDepANValue = vNameStr+'@'+depanGroup
 selfDepValue   = vNameStr+'@'+depGroup
 
-#selfBakValue  = vNameStr+'@'+bakGroup
+selfHofXValue  = vNameStr+'@'+hofxGroup
 selfQCValue    = vNameStr+'@'+qcGroup
 selfErrorValue = vNameStr+'@'+errorGroup
 
@@ -85,7 +92,10 @@ dtMeta       = obsVarDT+'@'+metaGroup
 lonMeta      = obsVarLon+'@'+metaGroup
 latMeta      = obsVarLat+'@'+metaGroup
 prsMeta      = obsVarPrs+'@'+metaGroup
-satzenMeta   = obsVarSatZen+'@'+metaGroup
+senzenMeta   = obsVarSenZen+'@'+metaGroup
+senaziMeta   = obsVarSenAzi+'@'+metaGroup
+solzenMeta   = obsVarSolZen+'@'+metaGroup
+solaziMeta   = obsVarSolAzi+'@'+metaGroup
 
 clrskyBTDiag = 'brightness_temperature_assuming_clear_sky_'+vChanStr+'@'+diagGroup
 
@@ -137,12 +147,14 @@ def varAttributes(var):
 
 bgIter = '0'
 def base2dbVar(baseVar,varName,Iter):
+    iterStr = str(Iter)
     dictName, suf = splitIntSuffix(varName)
     dbVar = re.sub(vNameStr,varName,baseVar)
     dbVar = re.sub(vChanStr,suf,dbVar)
-    dbVar = re.sub(qcGroup,qcGroup+Iter,dbVar)
-    dbVar = re.sub(errorGroup,errorGroup+Iter,dbVar)
-    if Iter == bgIter:
+    dbVar = re.sub(hofxGroup,hofxGroup+iterStr,dbVar)
+    dbVar = re.sub(errorGroup,errorGroup+iterStr,dbVar)
+    dbVar = re.sub(qcGroup,qcGroup+iterStr,dbVar)
+    if iterStr == bgIter:
         dbVar = re.sub(depGroup,depbgGroup,dbVar)
     else:
         dbVar = re.sub(depGroup,depanGroup,dbVar)
@@ -171,16 +183,7 @@ varDictModel = {
 #Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv.
 
 
-#===========================
-# obs diagnostic definitions
-#===========================
+#misc. constants; TODO: collect into single script
+deg2rad = np.pi / np.float(180.0)
+rad2deg = np.float(180.0) / np.pi
 
-allDiags = ['omb','oma','obs','bak','ana']
-nonObsDiags = [diag for diag in allDiags if diag!='obs']
-
-
-def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
-
-if __name__ == '__main__': main()
