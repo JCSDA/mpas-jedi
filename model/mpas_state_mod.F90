@@ -730,8 +730,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
    allocate(obs_field(nlocs,1))
 
    !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
-   if ( (ufo_vars_getindex(ufo_vars,var_sfc_wspeed)    .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_wdir) .ne. -1) ) then
+   if ( (ufo_vars_getindex(ufo_vars,var_sfc_wspeed)    > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_wdir) > 0) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
 
@@ -752,7 +752,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !- allocate geoval & put values for var_sfc_wspeed
      ivar = ufo_vars_getindex(ufo_vars,var_sfc_wspeed)
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -765,7 +765,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !- allocate geoval & put values for var_sfc_wdir
      ivar = ufo_vars_getindex(ufo_vars,var_sfc_wdir)
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -786,9 +786,9 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
 
    !---add special cases: var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
-   if ( (ufo_vars_getindex(ufo_vars,var_sfc_landtyp)      .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_vegtyp)  .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_soiltyp) .ne. -1) ) then
+   if ( (ufo_vars_getindex(ufo_vars,var_sfc_landtyp)      > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_vegtyp)  > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_soiltyp) > 0) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_landtyp, var_sfc_vegtyp, or var_sfc_soiltyp'
 
@@ -823,7 +823,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !- allocate geoval & put values for var_sfc_landtyp
      ivar = ufo_vars_getindex(ufo_vars,var_sfc_landtyp)
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -840,7 +840,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !- allocate geoval & put values for var_sfc_vegtyp
      ivar = ufo_vars_getindex(ufo_vars,var_sfc_vegtyp)
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -857,7 +857,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !- allocate geoval & put values for var_sfc_soiltyp
      ivar = ufo_vars_getindex(ufo_vars,var_sfc_soiltyp)
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -879,10 +879,10 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
    !---add special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac
    !---    simple interpolation now, but can be more complex: Consider FOV ??
-   if ( (ufo_vars_getindex(ufo_vars,var_sfc_wfrac)      .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_lfrac) .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_ifrac) .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_sfrac) .ne. -1) ) then
+   if ( (ufo_vars_getindex(ufo_vars,var_sfc_wfrac)      > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_lfrac) > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_ifrac) > 0) &
+        .or. (ufo_vars_getindex(ufo_vars,var_sfc_sfrac) > 0) ) then
 
 !     write(*,*) ' BJJ: special cases: var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, or var_sfc_sfrac'
 
@@ -902,7 +902,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
 
      !--- Land first. will be adjusted later
      ivar = ivarl
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -916,7 +916,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
      !--- determine ICE
      ivar = ivari
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -930,7 +930,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
      !--- detemine/adjust SNOW & SEA
      ivar = ivars
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        if( .not. allocated(gom%geovals(ivar)%vals) )then
           gom%geovals(ivar)%nval = 1
           allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
@@ -946,11 +946,30 @@ subroutine getvalues(self, locs, vars, gom, traj)
        enddo
        do jloc = 1, nlocs
          jj = locs%indx(jloc)
-         if(gom%geovals(ivari)%vals(1,jj).gt.MPAS_JEDI_ZERO_kr) then
-           gom%geovals(ivar)%vals(1,jj) = min( gom%geovals(ivar)%vals(1,jj), MPAS_JEDI_ONE_kr - gom%geovals(ivari)%vals(1,jj) )
-           gom%geovals(ivarw)%vals(1,jj)= MPAS_JEDI_ONE_kr - gom%geovals(ivari)%vals(1,jj) - gom%geovals(ivar)%vals(1,jj)
+         if (gom%geovals(ivari)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
+           gom%geovals(ivar)%vals(1,jj)  = & 
+             max(min(gom%geovals(ivar)%vals(1,jj), &
+                     MPAS_JEDI_ONE_kr - &
+                     gom%geovals(ivari)%vals(1,jj)), &
+                 MPAS_JEDI_ZERO_kr)
+           gom%geovals(ivarw)%vals(1,jj) = &
+             max(MPAS_JEDI_ONE_kr - &
+                 gom%geovals(ivari)%vals(1,jj) - &
+                 gom%geovals(ivar)%vals(1,jj), &
+                 MPAS_JEDI_ZERO_kr)
+         else if (gom%geovals(ivar)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
+           gom%geovals(ivarw)%vals(1,jj) = &
+             max(MPAS_JEDI_ONE_kr - &
+                 gom%geovals(ivar)%vals(1,jj), &
+                 MPAS_JEDI_ZERO_kr)
+           gom%geovals(ivari)%vals(1,jj) = MPAS_JEDI_ZERO_kr
          else
-           gom%geovals(ivarw)%vals(1,jj)= MPAS_JEDI_ONE_kr - gom%geovals(ivarl)%vals(1,jj)
+           gom%geovals(ivarw)%vals(1,jj) = &
+             max(MPAS_JEDI_ONE_kr - &
+                 gom%geovals(ivarl)%vals(1,jj), &
+                 MPAS_JEDI_ZERO_kr)
+           gom%geovals(ivari)%vals(1,jj) = MPAS_JEDI_ZERO_kr
+           gom%geovals(ivar)%vals(1,jj)  = MPAS_JEDI_ZERO_kr
          endif
        enddo
 !       write(*,*) 'MIN/MAX of ',trim(var_sfc_sfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -958,11 +977,15 @@ subroutine getvalues(self, locs, vars, gom, traj)
      endif
      !--- Final adjust LAND
      ivar = ivarl
-     if(ivar .ne. -1) then
+     if(ivar > 0) then
        do jloc = 1, nlocs
          jj = locs%indx(jloc)
-         gom%geovals(ivar)%vals(1,jj) = max( MPAS_JEDI_ONE_kr - gom%geovals(ivarw)%vals(1,jj) - gom%geovals(ivari)%vals(1,jj) &
-                                                          - gom%geovals(ivars)%vals(1,jj), MPAS_JEDI_ZERO_kr)
+         gom%geovals(ivar)%vals(1,jj) = &
+           max(MPAS_JEDI_ONE_kr - &
+               gom%geovals(ivarw)%vals(1,jj) - &
+               gom%geovals(ivari)%vals(1,jj) - &
+               gom%geovals(ivars)%vals(1,jj), &
+               MPAS_JEDI_ZERO_kr)
        enddo
 !       write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
      endif
@@ -970,29 +993,24 @@ subroutine getvalues(self, locs, vars, gom, traj)
      !write(*,*) gom%geovals(ivarl)%vals(1,ii), gom%geovals(ivarw)%vals(1,ii), &
      !           gom%geovals(ivari)%vals(1,ii), gom%geovals(ivars)%vals(1,ii)
      !enddo
-   endif  !---end special cases
 
-   !--- OMG: adjust between sfc coverage & sfc type
-   !         see wrfda/da_get_innov_vector_crtm.inc#L521
-   if ( (ufo_vars_getindex(ufo_vars,var_sfc_wfrac)      .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_lfrac) .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_ifrac) .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_sfrac) .ne. -1) ) then
-   if ( (ufo_vars_getindex(ufo_vars,var_sfc_landtyp)      .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_vegtyp)  .ne. -1) &
-        .or. (ufo_vars_getindex(ufo_vars,var_sfc_soiltyp) .ne. -1) ) then
-     do jloc = 1, nlocs
-       jj = locs%indx(jloc)
-       if(gom%geovals(ivarl)%vals(1,jj) .gt. MPAS_JEDI_ZERO_kr) then
-         if(nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
-            nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
-           gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), MPAS_JEDI_ONE_kr )
-           gom%geovals(ivarl)%vals(1,jj) = MPAS_JEDI_ZERO_kr
+     !--- OMG: adjust between sfc coverage & sfc type
+     !         see wrfda/da_get_innov_vector_crtm.inc#L521
+     if ( (ufo_vars_getindex(ufo_vars,var_sfc_landtyp)      > 0) &
+          .or. (ufo_vars_getindex(ufo_vars,var_sfc_vegtyp)  > 0) &
+          .or. (ufo_vars_getindex(ufo_vars,var_sfc_soiltyp) > 0) ) then
+       do jloc = 1, nlocs
+         jj = locs%indx(jloc)
+         if(gom%geovals(ivarl)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
+           if(nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
+              nint(gom%geovals(ufo_vars_getindex(ufo_vars,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
+             gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), MPAS_JEDI_ONE_kr )
+             gom%geovals(ivarl)%vals(1,jj) = MPAS_JEDI_ZERO_kr
+           endif
          endif
-       endif
-     enddo
-   endif
-   endif  !--- OMG: end
+       enddo
+     endif  !--- OMG: end
+   endif  !---end special cases
 
 
    if (.not. present(traj)) then
