@@ -8,7 +8,6 @@ StateTest:
   StateFile:
     variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -16,12 +15,11 @@ StateTest:
     filename: "./restart.2018-04-15_00.00.00.nc"
     date: '2018-04-15T00:00:00Z'
   date: '2018-04-15T00:00:00Z'
-  norm-file: '28013.829836879424'
+  norm-file: '19735.265702001503'
   StateGenerate:
     analytic_init: dcmip-test-4-0
     variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -33,7 +31,7 @@ StateTest:
     variables:
     - air_temperature
     - air_pressure
-  norm-gen: '27821.614077946924'
+  norm-gen: '20000.378266179847'
   tolerance:
   - 1.0e-08
   interp_tolerance:

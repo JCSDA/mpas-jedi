@@ -6,7 +6,6 @@ resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 variables:
 - temperature
-- pressure
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
@@ -14,7 +13,6 @@ variables:
 initial:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

@@ -9,7 +9,6 @@ model:
   tstep: PT3H
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -20,7 +19,6 @@ cost_function:
   window_length: PT6H
   variables: &incvars
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

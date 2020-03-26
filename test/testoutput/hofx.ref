@@ -1,31 +1,29 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 11
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
-Test     : Fld=2  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
-Test     : Fld=3  Min=0, Max=0.0183791, RMS=0.00452795 : spechum
-Test     : Fld=4  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
-Test     : Fld=5  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
-Test     : Fld=6  Min=57106.4, Max=104459, RMS=98640.6 : surface_pressure
-Test     : Fld=7  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
-Test     : Fld=8  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
-Test     : Fld=9  Min=0, Max=0.000217494, RMS=4.42344e-06 : index_qr
-Test     : Fld=10  Min=0, Max=0.000826256, RMS=1.62665e-05 : index_qs
-Test     : Fld=11  Min=0, Max=0.000209845, RMS=3.58075e-06 : index_qg
+Test     : Fld=2  Min=0, Max=0.0183791, RMS=0.00452795 : spechum
+Test     : Fld=3  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
+Test     : Fld=4  Min=-47.0223, Max=52.9303, RMS=9.08162 : uReconstructMeridional
+Test     : Fld=5  Min=57106.4, Max=104459, RMS=98640.6 : surface_pressure
+Test     : Fld=6  Min=0, Max=0.000490445, RMS=1.86581e-05 : index_qc
+Test     : Fld=7  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
+Test     : Fld=8  Min=0, Max=0.000217494, RMS=4.42344e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.000826256, RMS=1.62665e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000209845, RMS=3.58075e-06 : index_qg
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 11
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
 Test     : Fld=1  Min=194.347, Max=304.711, RMS=243.802 : temperature
-Test     : Fld=2  Min=1457.89, Max=97480.3, RMS=49313.1 : pressure
-Test     : Fld=3  Min=0, Max=0.0199278, RMS=0.00470932 : spechum
-Test     : Fld=4  Min=-40.057, Max=83.3072, RMS=16.7062 : uReconstructZonal
-Test     : Fld=5  Min=-43.2608, Max=58.5281, RMS=8.77445 : uReconstructMeridional
-Test     : Fld=6  Min=56633.7, Max=104136, RMS=98672.7 : surface_pressure
-Test     : Fld=7  Min=0, Max=0.000501147, RMS=5.10628e-05 : index_qc
-Test     : Fld=8  Min=0, Max=0.000145323, RMS=8.01482e-06 : index_qi
-Test     : Fld=9  Min=0, Max=0.000291226, RMS=7.82092e-06 : index_qr
-Test     : Fld=10  Min=0, Max=0.00089417, RMS=2.49829e-05 : index_qs
-Test     : Fld=11  Min=0, Max=0.000326583, RMS=5.13555e-06 : index_qg
+Test     : Fld=2  Min=0, Max=0.0199278, RMS=0.00470932 : spechum
+Test     : Fld=3  Min=-40.057, Max=83.3072, RMS=16.7062 : uReconstructZonal
+Test     : Fld=4  Min=-43.2608, Max=58.5281, RMS=8.77445 : uReconstructMeridional
+Test     : Fld=5  Min=56633.7, Max=104136, RMS=98672.7 : surface_pressure
+Test     : Fld=6  Min=0, Max=0.000501147, RMS=5.10628e-05 : index_qc
+Test     : Fld=7  Min=0, Max=0.000145323, RMS=8.01482e-06 : index_qi
+Test     : Fld=8  Min=0, Max=0.000291226, RMS=7.82092e-06 : index_qr
+Test     : Fld=9  Min=0, Max=0.00089417, RMS=2.49829e-05 : index_qs
+Test     : Fld=10  Min=0, Max=0.000326583, RMS=5.13555e-06 : index_qg
 Test     : H(x): 
 Test     : Radiosonde nobs= 3896 Min=-29.879, Max=299.158, RMS=122.008
 Test     : Aircraft nobs= 8392 Min=-32.5456, Max=296.592, RMS=127.988

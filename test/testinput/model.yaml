@@ -7,7 +7,6 @@ Geometry:
 State:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -16,7 +15,7 @@ State:
   date: '2018-04-15T00:00:00Z'
 ModelTest:
   fclength: PT2H
-  finalnorm: 28015.994917730037
+  finalnorm: 19736.672672314493
   tolerance: 0.005
   testreforecast: false # TODO: fix model module and activate testreforecast
 ModelBias: 
@@ -25,7 +24,6 @@ Model:
   tstep: PT30M
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

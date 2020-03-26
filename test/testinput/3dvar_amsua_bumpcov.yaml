@@ -9,10 +9,10 @@ model:
   tstep: PT30M
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 #  - index_qc
 #  - index_qi
 cost_function:
@@ -21,10 +21,10 @@ cost_function:
   window_length: PT6H
   variables: &incvars
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
+  - surface_pressure
 #  - index_qc
 #  - index_qi
   varchange: Identity

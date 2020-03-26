@@ -360,7 +360,7 @@ subroutine update_diagnostic_fields(domain, subFields, ngrid)
    !    : we need to include "exner" in stream_list.for.reading
 
    call mpas_pool_get_field(domain % blocklist % allFields, 'theta', theta)
-   call mpas_pool_get_field(subFields, 'pressure', pressure)
+   call mpas_pool_get_field(domain % blocklist % allFields, 'pressure', pressure)
    call mpas_pool_get_field(subFields, 'temperature', temperature)
    call mpas_pool_get_field(domain % blocklist % allFields, 'scalars', scalars)
    call mpas_pool_get_field(subFields, 'spechum', specific_humidity)

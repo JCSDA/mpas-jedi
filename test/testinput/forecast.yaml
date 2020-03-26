@@ -5,7 +5,6 @@ nml_file: namelist.atmosphere_2018041500
 initial:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -18,7 +17,6 @@ model:
   tstep: PT30M
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

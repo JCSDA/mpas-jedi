@@ -14,7 +14,6 @@ Model:
   tolerance: 0.005
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -23,7 +22,6 @@ Initial Condition:
   state:
   - variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -32,7 +30,6 @@ Initial Condition:
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -41,7 +38,6 @@ Initial Condition:
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -50,7 +46,6 @@ Initial Condition:
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional
@@ -59,7 +54,6 @@ Initial Condition:
     date: '2018-04-14T21:00:00Z'
   - variables:
     - temperature
-    - pressure
     - spechum
     - uReconstructZonal
     - uReconstructMeridional

@@ -6,7 +6,6 @@ resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 variables:
 - temperature
-- pressure
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
@@ -15,7 +14,6 @@ date: '2018-04-15T00:00:00Z'
 background:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -36,7 +34,6 @@ ensemble:
     date: '2018-04-15T00:00:00Z'
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

@@ -44,7 +44,7 @@ namespace mpas {
 //--- TODO: all other aux variables should come from "VariableChange"
 //          variables in YAML
 const oops::Variables
-    StateMPAS::auxvars_({ "theta", "rho", "u", "index_qv",
+    StateMPAS::auxvars_({ "theta", "rho", "u", "index_qv", "pressure",
         "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp",
         "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w"});
 

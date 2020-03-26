@@ -10,7 +10,6 @@ Geometry:
 Forecasts:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

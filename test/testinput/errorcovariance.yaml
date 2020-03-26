@@ -9,7 +9,6 @@ Geometry:
 Variables:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

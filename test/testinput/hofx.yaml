@@ -14,7 +14,6 @@ Model:
   tolerance: 0.005
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
@@ -27,7 +26,6 @@ Model:
 Initial Condition:
   variables:
   - temperature
-  - pressure
   - spechum
   - uReconstructZonal
   - uReconstructMeridional

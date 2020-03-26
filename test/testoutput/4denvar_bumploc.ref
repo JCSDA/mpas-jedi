@@ -6,71 +6,65 @@ Test     : CostJo   : Nonlinear Jo(GnssroRef) = 5.76286, nobs = 3, Jo/n = 1.9209
 Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 8.61676, nobs = 9, Jo/n = 0.957418, err = 0.000672614
 Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 460.338, nobs = 50, Jo/n = 9.20676, err = 145.712
 Test     : CostFunction: Nonlinear J = 2823.39
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.000256342
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.00026484
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=203.949, Max=306.975, RMS=244.049 : temperature
-Test     : Fld=2  Min=1507.11, Max=97333.6, RMS=49312.5 : pressure
-Test     : Fld=3  Min=0, Max=0.0199692, RMS=0.00452895 : spechum
-Test     : Fld=4  Min=-40.5322, Max=80.5221, RMS=16.6637 : uReconstructZonal
-Test     : Fld=5  Min=-45.3317, Max=52.8934, RMS=9.10491 : uReconstructMeridional
-Test     : Fld=6  Min=57186.7, Max=104253, RMS=98645 : surface_pressure
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=203.961, Max=306.69, RMS=244.049 : temperature
+Test     : Fld=2  Min=0, Max=0.0197416, RMS=0.00452855 : spechum
+Test     : Fld=3  Min=-40.5456, Max=80.5307, RMS=16.6617 : uReconstructZonal
+Test     : Fld=4  Min=-45.3179, Max=52.9095, RMS=9.10371 : uReconstructMeridional
+Test     : Fld=5  Min=57183.8, Max=104237, RMS=98640.6 : surface_pressure
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=199.629, Max=305.938, RMS=243.966 : temperature
-Test     : Fld=2  Min=1472.17, Max=98022.6, RMS=49316.6 : pressure
-Test     : Fld=3  Min=0, Max=0.0217921, RMS=0.0046331 : spechum
-Test     : Fld=4  Min=-44.1286, Max=83.2115, RMS=17.66 : uReconstructZonal
-Test     : Fld=5  Min=-45.5371, Max=58.5988, RMS=9.02415 : uReconstructMeridional
-Test     : Fld=6  Min=57068.2, Max=104623, RMS=98682.4 : surface_pressure
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=199.626, Max=305.752, RMS=243.965 : temperature
+Test     : Fld=2  Min=0, Max=0.0214322, RMS=0.00463261 : spechum
+Test     : Fld=3  Min=-44.145, Max=83.188, RMS=17.6581 : uReconstructZonal
+Test     : Fld=4  Min=-45.5379, Max=58.6039, RMS=9.02157 : uReconstructMeridional
+Test     : Fld=5  Min=57064.3, Max=104631, RMS=98677.8 : surface_pressure
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=194.244, Max=305.137, RMS=243.901 : temperature
-Test     : Fld=2  Min=1455.97, Max=97456.7, RMS=49321 : pressure
-Test     : Fld=3  Min=0, Max=0.0204831, RMS=0.00471283 : spechum
-Test     : Fld=4  Min=-39.7681, Max=85.0117, RMS=16.786 : uReconstructZonal
-Test     : Fld=5  Min=-44.0677, Max=58.5925, RMS=8.86698 : uReconstructMeridional
-Test     : Fld=6  Min=56773.5, Max=104122, RMS=98695 : surface_pressure
-Test     : CostJb   : Nonlinear Jb = 259.634
-Test     : CostJo   : Nonlinear Jo(Radiosonde) = 781.666, nobs = 968, Jo/n = 0.807506, err = 1.9853
-Test     : CostJo   : Nonlinear Jo(Aircraft) = 1111.05, nobs = 1586, Jo/n = 0.700538, err = 2.3136
-Test     : CostJo   : Nonlinear Jo(Satwind) = 21.6355, nobs = 63, Jo/n = 0.343421, err = 7.97005
-Test     : CostJo   : Nonlinear Jo(GnssroRef) = 5.30507, nobs = 3, Jo/n = 1.76836, err = 2.00376
-Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 8.75575, nobs = 9, Jo/n = 0.972861, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 181.313, nobs = 50, Jo/n = 3.62626, err = 145.712
-Test     : CostFunction: Nonlinear J = 2369.36
-Test     : DRIPCGMinimizer: reduction in residual norm = 0.000339468
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=194.238, Max=305.08, RMS=243.9 : temperature
+Test     : Fld=2  Min=0, Max=0.0202847, RMS=0.00471297 : spechum
+Test     : Fld=3  Min=-39.7686, Max=84.9925, RMS=16.7842 : uReconstructZonal
+Test     : Fld=4  Min=-44.1189, Max=58.597, RMS=8.86563 : uReconstructMeridional
+Test     : Fld=5  Min=56772.3, Max=104115, RMS=98689.4 : surface_pressure
+Test     : CostJb   : Nonlinear Jb = 208.203
+Test     : CostJo   : Nonlinear Jo(Radiosonde) = 755.283, nobs = 959, Jo/n = 0.787574, err = 1.99272
+Test     : CostJo   : Nonlinear Jo(Aircraft) = 1114.15, nobs = 1572, Jo/n = 0.708744, err = 2.32186
+Test     : CostJo   : Nonlinear Jo(Satwind) = 21.9775, nobs = 63, Jo/n = 0.348849, err = 7.97005
+Test     : CostJo   : Nonlinear Jo(GnssroRef) = 0.374975, nobs = 1, Jo/n = 0.374975, err = 3.35131
+Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 6.47464, nobs = 8, Jo/n = 0.80933, err = 0.000713411
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 180.938, nobs = 50, Jo/n = 3.61876, err = 145.712
+Test     : CostFunction: Nonlinear J = 2287.4
+Test     : DRIPCGMinimizer: reduction in residual norm = 0.000354118
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=203.948, Max=306.549, RMS=244.055 : temperature
-Test     : Fld=2  Min=1507.11, Max=97499.1, RMS=49315.5 : pressure
-Test     : Fld=3  Min=0, Max=0.0199286, RMS=0.00452656 : spechum
-Test     : Fld=4  Min=-40.532, Max=80.5221, RMS=16.6551 : uReconstructZonal
-Test     : Fld=5  Min=-45.5464, Max=52.8932, RMS=9.09415 : uReconstructMeridional
-Test     : Fld=6  Min=57170.4, Max=104466, RMS=98655.2 : surface_pressure
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=203.961, Max=306.526, RMS=244.05 : temperature
+Test     : Fld=2  Min=0, Max=0.0197537, RMS=0.00452626 : spechum
+Test     : Fld=3  Min=-40.5485, Max=80.5244, RMS=16.653 : uReconstructZonal
+Test     : Fld=4  Min=-45.2182, Max=52.9063, RMS=9.09373 : uReconstructMeridional
+Test     : Fld=5  Min=57166.6, Max=104456, RMS=98648.4 : surface_pressure
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=199.65, Max=305.223, RMS=243.97 : temperature
-Test     : Fld=2  Min=1472.17, Max=98024.4, RMS=49319.5 : pressure
-Test     : Fld=3  Min=0, Max=0.0217431, RMS=0.00463085 : spechum
-Test     : Fld=4  Min=-44.1317, Max=83.2948, RMS=17.6565 : uReconstructZonal
-Test     : Fld=5  Min=-45.5371, Max=58.5987, RMS=9.01733 : uReconstructMeridional
-Test     : Fld=6  Min=57051.7, Max=104624, RMS=98692.2 : surface_pressure
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=199.669, Max=305.19, RMS=243.966 : temperature
+Test     : Fld=2  Min=0, Max=0.0214676, RMS=0.00463031 : spechum
+Test     : Fld=3  Min=-44.1453, Max=83.1799, RMS=17.6547 : uReconstructZonal
+Test     : Fld=4  Min=-45.5376, Max=58.6057, RMS=9.0165 : uReconstructMeridional
+Test     : Fld=5  Min=57047.8, Max=104625, RMS=98685.4 : surface_pressure
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 6
-Test     : Fld=1  Min=194.244, Max=304.587, RMS=243.905 : temperature
-Test     : Fld=2  Min=1455.97, Max=97459.5, RMS=49322.5 : pressure
-Test     : Fld=3  Min=0, Max=0.0204502, RMS=0.00471176 : spechum
-Test     : Fld=4  Min=-39.7679, Max=85.0754, RMS=16.7855 : uReconstructZonal
-Test     : Fld=5  Min=-44.0689, Max=58.5925, RMS=8.85827 : uReconstructMeridional
-Test     : Fld=6  Min=56760.3, Max=104167, RMS=98700.2 : surface_pressure
-Test     : CostJb   : Nonlinear Jb = 112.301
-Test     : CostJo   : Nonlinear Jo(Radiosonde) = 772.778, nobs = 967, Jo/n = 0.79915, err = 1.98548
-Test     : CostJo   : Nonlinear Jo(Aircraft) = 1087.92, nobs = 1583, Jo/n = 0.687249, err = 2.31409
-Test     : CostJo   : Nonlinear Jo(Satwind) = 21.5967, nobs = 63, Jo/n = 0.342805, err = 7.97005
-Test     : CostJo   : Nonlinear Jo(GnssroRef) = 5.5021, nobs = 3, Jo/n = 1.83403, err = 2.00376
-Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 8.76262, nobs = 9, Jo/n = 0.973625, err = 0.000672614
-Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 326.218, nobs = 50, Jo/n = 6.52436, err = 145.712
-Test     : CostFunction: Nonlinear J = 2335.07
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     : Fld=1  Min=194.238, Max=304.626, RMS=243.901 : temperature
+Test     : Fld=2  Min=0, Max=0.0202985, RMS=0.00471173 : spechum
+Test     : Fld=3  Min=-39.7706, Max=85.2778, RMS=16.7855 : uReconstructZonal
+Test     : Fld=4  Min=-44.0303, Max=58.6005, RMS=8.85854 : uReconstructMeridional
+Test     : Fld=5  Min=56757.4, Max=104168, RMS=98693.4 : surface_pressure
+Test     : CostJb   : Nonlinear Jb = 53.3168
+Test     : CostJo   : Nonlinear Jo(Radiosonde) = 743.96, nobs = 958, Jo/n = 0.776576, err = 1.99292
+Test     : CostJo   : Nonlinear Jo(Aircraft) = 1074.81, nobs = 1571, Jo/n = 0.684156, err = 2.32174
+Test     : CostJo   : Nonlinear Jo(Satwind) = 21.9459, nobs = 63, Jo/n = 0.348347, err = 7.97005
+Test     : CostJo   : Nonlinear Jo(GnssroRef) = 0.341572, nobs = 1, Jo/n = 0.341572, err = 3.35131
+Test     : CostJo   : Nonlinear Jo(GnssroBndROPP1D) = 6.41523, nobs = 8, Jo/n = 0.801904, err = 0.000713411
+Test     : CostJo   : Nonlinear Jo(SfcPCorrected) = 325.69, nobs = 50, Jo/n = 6.5138, err = 145.712
+Test     : CostFunction: Nonlinear J = 2226.48

@@ -60,7 +60,8 @@ contains
 !! \details **add_incr()** adds "increment" to "state", such as
 !!          state (containing analysis) = state (containing guess) + increment
 !!          Here, we also update "theta", "rho", and "u" (edge-normal wind), which are
-!!          close to MPAS prognostic variable.
+!!          close to MPAS prognostic variable. 
+!!          Intermediate 3D pressure is diagnosed with hydrostatic balance.
 !!          While conversion to "theta" and "rho" uses full state variables,
 !!          conversion to "u" from cell center winds uses their increment to reduce 
 !!          the smoothing effect.
@@ -76,6 +77,7 @@ subroutine add_incr(self,rhs)
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_sh, fld2d_uRz, fld2d_uRm, &
                                   fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc
+   type (field1DReal), pointer :: fld1d_ps
 
    ! GD: I don''t see any difference than for self_add other than subFields can contain
    ! different variables than mpas_field and the resolution of incr can be different. 
@@ -89,34 +91,29 @@ subroutine add_incr(self,rhs)
       call da_posdef( self % subFields, mpas_hydrometeor_fields)
 
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
-      !  update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
-      !  update theta from temperature and pressure
-      !  update rho   from temperature, pressure, and index_qv
-      call mpas_pool_get_field(self % subFields,            'temperature', fld2d_t)
-      call mpas_pool_get_field(self % subFields,               'pressure', fld2d_p)
-      call mpas_pool_get_field(self % subFields,                'spechum', fld2d_sh)
-      call mpas_pool_get_field(self % subFields,      'uReconstructZonal', fld2d_uRz)
-      call mpas_pool_get_field(self % subFields, 'uReconstructMeridional', fld2d_uRm)
-      call mpas_pool_get_field(self % subFields,                  'theta', fld2d_th)
-      call mpas_pool_get_field(self % subFields,               'index_qv', fld2d_qv)
-      call mpas_pool_get_field(self % subFields,                    'rho', fld2d_rho)
+      call mpas_pool_get_field(self % subFields,      'temperature', fld2d_t)
+      call mpas_pool_get_field(self % subFields,          'spechum', fld2d_sh)
+      call mpas_pool_get_field(self % subFields, 'surface_pressure', fld1d_ps)
+      call mpas_pool_get_field(self % subFields,         'index_qv', fld2d_qv)
+      call mpas_pool_get_field(self % subFields,         'pressure', fld2d_p)
+      call mpas_pool_get_field(self % subFields,              'rho', fld2d_rho)
+      call mpas_pool_get_field(self % subFields,            'theta', fld2d_th)
 
       ! Ensure positive sh
       call da_posdef( self % subFields, (/'spechum'/))
 
       ngrid = self%geom%nCellsSolve
-      call temp_to_theta( fld2d_t % array(:,1:ngrid), fld2d_p % array(:,1:ngrid), fld2d_th % array(:,1:ngrid))
-!      write(*,*) 'add_inc: theta min/max = ', minval(fld2d_th % array), maxval(fld2d_th % array)
+      ! Update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       call q_to_w( fld2d_sh % array(:,1:ngrid), fld2d_qv % array(:,1:ngrid) )
 !      write(*,*) 'add_inc: index_qv min/max = ', minval(fld2d_sh % array), maxval(fld2d_sh % array)
-      ! Ensure positive qv : BJJ Do we need this? just in case ? or positive sh would be enough ?
-      call da_posdef( self % subFields, (/'index_qv'/))
 
-      call twp_to_rho( fld2d_t % array(:,1:ngrid), fld2d_qv % array(:,1:ngrid), fld2d_p % array(:,1:ngrid), &
-                       fld2d_rho % array(:,1:ngrid) )
-!      write(*,*) 'add_inc: rho min/max = ', minval(fld2d_rho % array), maxval(fld2d_rho % array)
+      ! Diagnose 3D pressure and update full state theta and rho
+      call hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
+                fld2d_t%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid), &
+                fld1d_ps%array(1:ngrid), fld2d_p%array(:,1:ngrid), &
+                fld2d_rho%array(:,1:ngrid), fld2d_th%array(:,1:ngrid) )
 
-      !  update u     from uReconstructZonal and uReconstructMeridional "incrementally"
+      ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
       call mpas_pool_get_field(self % subFields,                      'u', fld2d_u)
       call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', fld2d_uRz)
       call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', fld2d_uRm)
