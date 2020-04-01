@@ -225,11 +225,19 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
   set(IODA_BRANCH_NAME ${DIRNAME})
   set(IODA_TESTFILES_PATH ${CMAKE_BINARY_DIR}/test_data/ioda/${DIRNAME})
 
-  CONF_TARGETS_DEPS (ioda_data_downloader.py
-                  ${CMAKE_SOURCE_DIR}/ioda/test
-                  ${CMAKE_BINARY_DIR}/bin
-                  bin_ioda_test_download_scripts_mpas_deps)
 
+  # Create download script for get_ioda_test_data test 
+  set ( FILENAME mpas_data_downloader.py)
+  set ( SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME} )
+  set ( DEST_FILE ${CMAKE_BINARY_DIR}/bin/${FILENAME} )
+  list( APPEND bin_ioda_test_download_scripts_mpas_deps ${DEST_FILE} )
+
+  if( EXISTS "${SOURCE_FILE}.in" )
+    configure_file( ${SOURCE_FILE}.in ${DEST_FILE} @ONLY )
+  else()
+    configure_file( ${SOURCE_FILE}    ${DEST_FILE} @ONLY )
+  endif()
+ 
   add_custom_target( bin_ioda_test_download_scripts_mpas ALL
       COMMAND chmod +x ${bin_ioda_test_download_scripts_mpas_deps}
       DEPENDS ${bin_ioda_test_download_scripts_mpas_deps})
