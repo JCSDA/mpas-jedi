@@ -171,7 +171,12 @@ class StatsDataBase:
                         dateDir = dateDir+'/'+self.fcTDeltas_dir[ifc]
                     cyStatsFile = expPrefix+dateDir+'/'+ncStatsFile
 
-                    statsDict = su.read_stats_nc(cyStatsFile)
+                    if os.path.exists(cyStatsFile):
+                        statsDict = su.read_stats_nc(cyStatsFile)
+                    else:
+                        print("\nWARNING: stats file does not exist: "+str(cyStatsFile)+
+                              "\n    -> this time will be excluded from all statistics and figures")
+                        continue
                     nrows = len(statsDict[su.fileStatAttributes[0]])
                     dsDict['expName'] = \
                         np.append(dsDict['expName'], [expName] * nrows)
