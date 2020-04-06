@@ -292,11 +292,28 @@ def readdata():
                                      nfigtypes, figs, expt_obs,print_fmt)
                 # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
                 shortname = varval[1] + '_ch_' + ch
-                basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obstype,shortname,dictname,expt_obs,int(obsnum),"obs")
-                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc,obstype,shortname,dictname,expt_obs,int(bkgnum),"bkg")
-                basic_plot_functions.plotDistri(latnc,lonnc,ananc,obstype,shortname,dictname,expt_obs,int(ananum),"ana")
-                basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,shortname,dictname,expt_obs,int(ombnum),"omb")
-                basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,shortname,dictname,expt_obs,int(omanum),"oma")
+                dotsize = 0.5
+                dmin = 190
+                dmax = 270
+                color = "gist_ncar"
+                basic_plot_functions.plotDistri(latnc,lonnc,obsnc, \
+                                                obstype,shortname,dictname,expt_obs,int(obsnum),"obs", \
+                                                dmin,dmax,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc, \
+                                                obstype,shortname,dictname,expt_obs,int(bkgnum),"bkg", \
+                                                dmin,dmax,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,ananc, \
+                                                obstype,shortname,dictname,expt_obs,int(ananum),"ana", \
+                                                dmin,dmax,dotsize,color)
+                dmin = -30
+                dmax = 30
+                color = "hsv"
+                basic_plot_functions.plotDistri(latnc,lonnc,ombnc, \
+                                                obstype,shortname,dictname,expt_obs,int(ombnum),"omb", \
+                                                dmin,dmax,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,omanc, \
+                                                obstype,shortname,dictname,expt_obs,int(omanum),"oma", \
+                                                dmin,dmax,dotsize,color)
 
                 if ivar == nvars-1:
                     # Close figs in reverse order to avoid seg fault

@@ -18,7 +18,9 @@ import os
 
 #This script includes basic plotting functions.
 
-def plotDistri(lats,lons,values,ObsType,VarName,var_unit,out_name,nstation,levbin):
+def plotDistri(lats,lons,values, \
+               ObsType,VarName,var_unit,out_name,nstation,levbin, \
+               dmin=None,dmax=None,dotsize=6,color="rainbow"):
 #================================================================
 #INPUTS:
 # lats     - latitude
@@ -30,7 +32,13 @@ def plotDistri(lats,lons,values,ObsType,VarName,var_unit,out_name,nstation,levbi
 # out_name - will be included in output file name. It can be experiment name.
 # nstation - station numbers for sondes.
 # levbin   - plot all levels together (levbin=all); or plot every level.
+# dmin, dmax  - min/max values of colorbars, optional
+# dotsize  - dot size, optional
+# color    - color scheme, optional
 #================================================================
+# For some plots that need to change longitude from [-180,180] to [0,360]
+#    tmp = np.logical_not(lons > 0)
+#    lons[tmp] = lons[tmp] + 360
 
 #set map=======================================================================
     fig,ax=plt.subplots(figsize=(8,8))
@@ -63,9 +71,9 @@ def plotDistri(lats,lons,values,ObsType,VarName,var_unit,out_name,nstation,levbi
             fontsize=12, transform = ax.transAxes)
 
 #draw points onto map =========================================================
-    cm=plt.cm.get_cmap('rainbow')
-    sc=m.scatter(lons[:],lats[:],c=values[:],s=6,cmap=cm,
-        zorder=10) #10 ; zorder determines the order of the layer. If not set,
+    cm=plt.cm.get_cmap(color)
+    sc=m.scatter(lons[:],lats[:],c=values[:],s=dotsize,cmap=cm, vmin=dmin, vmax=dmax,
+       zorder=10) #10 ; zorder determines the order of the layer. If not set,
                         #the point on continent will be blocked
 
 #create axes for colorbar======================================================
