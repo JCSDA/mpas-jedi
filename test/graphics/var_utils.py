@@ -19,8 +19,9 @@ obsVarACI     = 'asymmetric_cloud_impact'
 obsVarCldFrac = 'cloud_area_fraction'
 obsVarDT      = 'datetime'
 obsVarLT      = 'LocalTime'
-obsVarLon     = 'longitude'
+obsVarLandFrac= 'land_area_fraction'
 obsVarLat     = 'latitude'
+obsVarLon     = 'longitude'
 obsVarNormErr = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
 obsVarPrs     = 'air_pressure'
 obsVarQC      = 'QCflag'
@@ -47,6 +48,7 @@ varDictObs = {
     obsVarAlt:                [ 'm',     'alt'     ],
     obsVarACI:                [ 'K',     'ACI'     ],
     obsVarCldFrac:            [ miss_s,  'cldfrac' ],
+    obsVarLandFrac:           [ miss_s,  'landfrac'],
     obsVarLat:                [ degree,  'lat'     ],
     obsVarLon:                [ degree,  'lon'     ],
     obsVarLT:                 [ 'hr',    obsVarLT  ],
@@ -89,13 +91,15 @@ selfErrorValue = vNameStr+'@'+errorGroup
 altMeta      = obsVarAlt+'@'+metaGroup
 cldfracMeta  = obsVarCldFrac+'@'+metaGroup
 dtMeta       = obsVarDT+'@'+metaGroup
-lonMeta      = obsVarLon+'@'+metaGroup
 latMeta      = obsVarLat+'@'+metaGroup
+lonMeta      = obsVarLon+'@'+metaGroup
 prsMeta      = obsVarPrs+'@'+metaGroup
 senzenMeta   = obsVarSenZen+'@'+metaGroup
 senaziMeta   = obsVarSenAzi+'@'+metaGroup
 solzenMeta   = obsVarSolZen+'@'+metaGroup
 solaziMeta   = obsVarSolAzi+'@'+metaGroup
+
+landfracGeo = obsVarLandFrac+'@'+geoGroup
 
 clrskyBTDiag = 'brightness_temperature_assuming_clear_sky_'+vChanStr+'@'+diagGroup
 

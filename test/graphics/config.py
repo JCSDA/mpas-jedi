@@ -58,6 +58,8 @@ for latBand in bcs.namedLatBands['values']:
 radianceBinVars = deepcopy(obsBinVars)
 radianceBinVars[vu.obsVarGlint] = [bu.identityBinMethod]
 radianceBinVars[vu.obsVarSenZen] = [bu.identityBinMethod]
+radianceBinVars[vu.obsVarLandFrac] = [bu.identityBinMethod,
+                                      bu.surfbandsMethod]
 
 
 #########################################
@@ -70,17 +72,15 @@ geoirBinVars[vu.obsVarCldFrac] = [bu.identityBinMethod,
                                   bu.cloudbandsMethod]
 
 
-# Binning variables with clr-/cld-sky methods
-for var in bcs.cldfracBinVars.keys():
-    geoirBinVars[var].append(bu.clrskyMethod)
-    geoirBinVars[var].append(bu.cldskyMethod)
-
-
 # 2D sensor zenith bins with named latitude-band methods and clear profiles
 for var in bcs.clrlatBinVars.keys():
     for latBand in bcs.namedLatBands['values']:
         geoirBinVars[var].append(bcs.clrlatMethods[latBand])
 
+# Binning variables with clr-/cld-sky methods
+for var in bcs.cldfracBinVars.keys():
+    geoirBinVars[var].append(bu.clrskyMethod)
+    geoirBinVars[var].append(bu.cldskyMethod)
 
 # symmetric cloud impact (expensive)
 selectSCIMethods = [

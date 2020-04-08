@@ -372,6 +372,10 @@ def plot_stats_timeseries(nproc=1, myproc=0):
                         'CalcGrossStats': True,
                         'OnlyPlotStats': statNames,
                     },
+                    (vu.obsVarLandFrac, bu.surfbandsMethod):{
+                        'CalcGrossStats': False,
+                        'OnlyPlotStats': statNames,
+                    },
                 }
 
                 for (selectBinVar,binMethod), options in binVarsExpLines.items():
@@ -1048,14 +1052,15 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
             if PLOT_ACROSS_BINS:
                 binVars2D = {
-                    vu.obsVarAlt:     {'profilePlotFunc': bpf.plotProfile},
-                    vu.obsVarACI:     {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarAlt: {'profilePlotFunc': bpf.plotProfile},
+                    vu.obsVarACI: {'profilePlotFunc': bpf.plotSeries},
                     vu.obsVarCldFrac: {'profilePlotFunc': bpf.plotSeries},
-                    vu.obsVarGlint:   {'profilePlotFunc': bpf.plotSeries},
-                    vu.obsVarLat:     {'profilePlotFunc': bpf.plotProfile},
-                    vu.obsVarLT:      {'profilePlotFunc': bpf.plotSeries},
-                    vu.obsVarPrs:     {'profilePlotFunc': bpf.plotProfile},
-                    vu.obsVarSenZen:  {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarGlint: {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarLandFrac: {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarLat: {'profilePlotFunc': bpf.plotProfile},
+                    vu.obsVarLT: {'profilePlotFunc': bpf.plotSeries},
+                    vu.obsVarPrs: {'profilePlotFunc': bpf.plotProfile},
+                    vu.obsVarSenZen: {'profilePlotFunc': bpf.plotSeries},
                 }
 
                 for selectBinVar, options in binVars2D.items():
@@ -1713,18 +1718,17 @@ def plot_stats_timeseries(nproc=1, myproc=0):
 
                                     iplot = iplot + 1
 
-                                print("\n# instrument = "+DiagSpaceName+ ", method = "+binMethod)
                                 YAMLParams = {}
-                                print("\nFor binning_utils config:")
+                                print("\n#For binning_params:")
                                 for key in sorted(ERRParams[DiagSpaceName]):
-                                    print(statBinVar+"ERRParams['"+DiagSpaceName+"'][",key,"]   = ",
+                                    print(statBinVar+"ErrParams['"+DiagSpaceName+"'][",key,"]   = ",
                                            ERRParams[DiagSpaceName][key]['bu'])
                                     for param, val in ERRParams[DiagSpaceName][key]['YAML'].items():
                                         if param not in YAMLParams: YAMLParams[param] = []
                                         YAMLParams[param] += val
-                                print("\nFor UFO YAML config:")
+                                print("\n#For UFO YAML config:")
                                 for param, val in YAMLParams.items():
-                                    print('  '+param+':',val)
+                                    print('#  '+param+':',val)
 
                                 # save each figure
                                 ptypePath.mkdir(parents=True, exist_ok=True)

@@ -4,12 +4,14 @@ import inspect
 import numpy as np
 import os
 import plot_utils as pu
+from binning_params import allSCIErrParams
 import var_utils as vu
 
 
-#================
-# binning methods
-#================
+#===========================
+# binning method descriptors
+#===========================
+# TODO(JJG): should be moved to binning_params
 
 # identity
 identityBinMethod = 'identity'
@@ -37,6 +39,13 @@ LHDT = 1.0
 
 #named latitude-bands
 latbandsMethod = 'LatBands'
+
+#named surface-type-bands
+seasurfMethod = 'sea'
+landsurfMethod = 'land'
+mixsurfMethod = 'mixed-land-sea'
+allsurfMethod = 'all-surface'
+surfbandsMethod = 'surface-type'
 
 #named cloudiness-bands
 clrskyMethod = 'clear'
@@ -315,51 +324,10 @@ class NormalizedError:
 
         return np.divide(BTdep, BTerr)
 
-SCIERRParams = {}
-SCIERRParams['abi_g16'] = {}
-#This dictionary was generated automatically by
-# creating AGGREGATEFC_StatsComposite figures
-# with plot_stats_timeseries.py
-SCIERRParams['abi_g16'][ (7, 'ModHarnisch') ]   =  {'X': [0.0, 30.61], 'ERR': [2.83, 28.13]}
-SCIERRParams['abi_g16'][ (8, 'ModHarnisch') ]   =  {'X': [0.0, 29.45], 'ERR': [2.46, 27.5]}
-SCIERRParams['abi_g16'][ (9, 'ModHarnisch') ]   =  {'X': [1.0, 24.16], 'ERR': [1.22, 22.92]}
-SCIERRParams['abi_g16'][ (10, 'ModHarnisch') ]   =  {'X': [0.0, 33.15], 'ERR': [4.17, 21.59]}
-SCIERRParams['abi_g16'][ (11, 'ModHarnisch') ]   =  {'X': [0.0, 11.03], 'ERR': [1.46, 12.98]}
-SCIERRParams['abi_g16'][ (13, 'ModHarnisch') ]   =  {'X': [0.0, 14.47], 'ERR': [1.57, 15.88]}
-SCIERRParams['abi_g16'][ (14, 'ModHarnisch') ]   =  {'X': [0.0, 21.49], 'ERR': [1.79, 17.77]}
-SCIERRParams['abi_g16'][ (15, 'ModHarnisch') ]   =  {'X': [1.0, 28.29], 'ERR': [1.56, 25.72]}
-SCIERRParams['abi_g16'][ (16, 'ModHarnisch') ]   =  {'X': [1.0, 30.01], 'ERR': [1.8, 27.81]}
 
-SCIERRParams['abi_g16'][ (7, 'Okamoto') ]   =  {'X': [1.0, 30.05], 'ERR': [2.18, 28.22]}
-SCIERRParams['abi_g16'][ (8, 'Okamoto') ]   =  {'X': [1.0, 29.09], 'ERR': [2.06, 27.64]}
-SCIERRParams['abi_g16'][ (9, 'Okamoto') ]   =  {'X': [1.0, 24.19], 'ERR': [1.35, 22.93]}
-SCIERRParams['abi_g16'][ (10, 'Okamoto') ]   =  {'X': [1.0, 32.35], 'ERR': [3.1, 21.59]}
-SCIERRParams['abi_g16'][ (11, 'Okamoto') ]   =  {'X': [1.0, 11.59], 'ERR': [1.62, 14.68]}
-SCIERRParams['abi_g16'][ (13, 'Okamoto') ]   =  {'X': [1.0, 15.35], 'ERR': [1.54, 17.25]}
-SCIERRParams['abi_g16'][ (14, 'Okamoto') ]   =  {'X': [0.0, 21.21], 'ERR': [1.33, 17.77]}
-SCIERRParams['abi_g16'][ (15, 'Okamoto') ]   =  {'X': [1.0, 28.32], 'ERR': [1.77, 25.72]}
-SCIERRParams['abi_g16'][ (16, 'Okamoto') ]   =  {'X': [1.0, 29.77], 'ERR': [1.94, 27.92]}
-
-SCIERRParams['abi_g16'][ (7, 'ScaledModHarnisch') ]   =  {'X': [0.0, 29.96], 'ERR': [4.79, 26.16]}
-SCIERRParams['abi_g16'][ (8, 'ScaledModHarnisch') ]   =  {'X': [0.0, 29.55], 'ERR': [4.64, 25.64]}
-SCIERRParams['abi_g16'][ (9, 'ScaledModHarnisch') ]   =  {'X': [0.0, 25.92], 'ERR': [3.68, 21.35]}
-SCIERRParams['abi_g16'][ (10, 'ScaledModHarnisch') ]   =  {'X': [0.0, 34.42], 'ERR': [4.79, 21.59]}
-SCIERRParams['abi_g16'][ (11, 'ScaledModHarnisch') ]   =  {'X': [0.0, 11.43], 'ERR': [1.87, 12.53]}
-SCIERRParams['abi_g16'][ (13, 'ScaledModHarnisch') ]   =  {'X': [0.0, 16.17], 'ERR': [2.24, 15.63]}
-SCIERRParams['abi_g16'][ (14, 'ScaledModHarnisch') ]   =  {'X': [0.0, 21.63], 'ERR': [2.63, 17.43]}
-SCIERRParams['abi_g16'][ (15, 'ScaledModHarnisch') ]   =  {'X': [0.0, 30.94], 'ERR': [4.39, 24.42]}
-SCIERRParams['abi_g16'][ (16, 'ScaledModHarnisch') ]   =  {'X': [0.0, 30.11], 'ERR': [4.64, 25.98]}
-
-SCIERRParams['abi_g16'][ (7, 'ScaledOkamoto') ]   =  {'X': [0.0, 29.88], 'ERR': [4.71, 26.16]}
-SCIERRParams['abi_g16'][ (8, 'ScaledOkamoto') ]   =  {'X': [0.0, 29.5], 'ERR': [4.58, 25.65]}
-SCIERRParams['abi_g16'][ (9, 'ScaledOkamoto') ]   =  {'X': [0.0, 25.89], 'ERR': [3.65, 21.35]}
-SCIERRParams['abi_g16'][ (10, 'ScaledOkamoto') ]   =  {'X': [0.0, 34.01], 'ERR': [4.43, 21.59]}
-SCIERRParams['abi_g16'][ (11, 'ScaledOkamoto') ]   =  {'X': [0.0, 11.52], 'ERR': [1.68, 13.42]}
-SCIERRParams['abi_g16'][ (13, 'ScaledOkamoto') ]   =  {'X': [0.0, 15.97], 'ERR': [2.12, 16.01]}
-SCIERRParams['abi_g16'][ (14, 'ScaledOkamoto') ]   =  {'X': [0.0, 22.32], 'ERR': [2.62, 17.68]}
-SCIERRParams['abi_g16'][ (15, 'ScaledOkamoto') ]   =  {'X': [0.0, 30.89], 'ERR': [4.32, 24.42]}
-SCIERRParams['abi_g16'][ (16, 'ScaledOkamoto') ]   =  {'X': [0.0, 30.02], 'ERR': [4.56, 25.96]}
-
+mpasFCRes = 120 # km [30, 120]
+biasCorrectType = 'constant' #[None, 'constant', 'varbc']
+SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType)])
 
 class SCINormalizedError:
     def __init__(self):
@@ -379,15 +347,15 @@ class SCINormalizedError:
         #        SCI0 SCI1
         #---------------------------------------------
         osName = caseParams['osName']
-        if osName is None or osName not in SCIERRParams:
-            print("ERROR: osName not available in SCIERRParams => "+osName)
+        if osName is None or osName not in SCIErrParams:
+            print("ERROR: osName not available in SCIErrParams => "+osName)
             os._exit(1)
 
         varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
-        STD0 = SCIERRParams[osName][(int(ch), SCISTDName)]['ERR'][0]
-        STD1 = SCIERRParams[osName][(int(ch), SCISTDName)]['ERR'][1]
-        SCI0  = SCIERRParams[osName][(int(ch), SCISTDName)]['X'][0]
-        SCI1  = SCIERRParams[osName][(int(ch), SCISTDName)]['X'][1]
+        STD0 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][0]
+        STD1 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][1]
+        SCI0  = SCIErrParams[osName][(int(ch), SCISTDName)]['X'][0]
+        SCI1  = SCIErrParams[osName][(int(ch), SCISTDName)]['X'][1]
         slope = (STD1 - STD0) / (SCI1 - SCI0)
 
         belowramp = lessEqualBound(SCI, SCI0, False)

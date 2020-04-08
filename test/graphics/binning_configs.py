@@ -10,7 +10,7 @@ import var_utils as vu
 ## heterogeneous/named bins
 # note: the order of subplots will follow what is specified here
 
-# latitude bands, north to south
+# latbandsMethod bins, north to south
 allNamedLatBands = {}
 allNamedLatBands['values']    = ['NPol','NXTro','Tro','SXTro','SPol']
 allNamedLatBands['minBounds'] = [60.0, 30.0, -30.0, -90.0, -90.0]
@@ -27,7 +27,7 @@ for latBand in namedLatBands['values']:
     namedLatBands['maxBounds'].append(allNamedLatBands['maxBounds'][iband])
 
 
-# cloudiness bins
+# cloudbandsMethod bins
 clrskyThresh = 0.05
 cldskyThresh = 1.0 - clrskyThresh
 
@@ -35,6 +35,16 @@ namedCldFracBands = {}
 namedCldFracBands['values'] = [bu.clrskyMethod, bu.mixskyMethod, bu.cldskyMethod, bu.allskyMethod]
 namedCldFracBands['minBounds'] = [0.0, clrskyThresh, cldskyThresh, 0.0]
 namedCldFracBands['maxBounds'] = [clrskyThresh, cldskyThresh, 1.0, 1.0]
+
+
+# surfbandsMethod bins
+seasurfThresh = 0.05
+landsurfThresh = 1.0 - seasurfThresh
+
+namedLandFracBands = {}
+namedLandFracBands['values'] = [bu.seasurfMethod, bu.mixsurfMethod, bu.landsurfMethod, bu.allsurfMethod]
+namedLandFracBands['minBounds'] = [0.0, seasurfThresh, landsurfThresh, 0.0]
+namedLandFracBands['maxBounds'] = [seasurfThresh, landsurfThresh, 1.0, 1.0]
 
 
 ## homogeneous bins
@@ -81,6 +91,12 @@ binLims[vu.obsVarGlint]['start']  = 0.0
 binLims[vu.obsVarGlint]['finish'] = bu.maxGlint
 binLims[vu.obsVarGlint]['step']   = 10.0
 binLims[vu.obsVarGlint]['format'] = '{:.0f}'
+
+binLims[vu.obsVarLandFrac] = {}
+binLims[vu.obsVarLandFrac]['start']  = 0.0
+binLims[vu.obsVarLandFrac]['finish'] = 1.0
+binLims[vu.obsVarLandFrac]['step']   = seasurfThresh / 2.0
+binLims[vu.obsVarLandFrac]['format'] = '{:.3f}'
 
 binLims[vu.obsVarCldFrac] = {}
 binLims[vu.obsVarCldFrac]['start']  = 0.0
@@ -305,6 +321,23 @@ binVarConfigs = {
                  'except_diags': du.nonQCedDiags},
             ],
             'values': binLims[vu.obsVarLat]['values'],
+        },
+    },
+    vu.obsVarLandFrac: {
+        bu.surfbandsMethod: {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.landfracGeo,
+                 'bounds': namedLandFracBands['minBounds']},
+                {'where': bu.greatBound,
+                 'variable': vu.landfracGeo,
+                 'bounds': namedLandFracBands['maxBounds']},
+                {'where': bu.notEqualBound,
+                 'variable': vu.selfQCValue,
+                 'bounds': goodFlag,
+                 'except_diags': du.nonQCedDiags},
+            ],
+            'values': namedLandFracBands['values'],
         },
     },
     vu.obsVarCldFrac: {
@@ -561,6 +594,7 @@ identityRangeBinVars = {
     vu.obsVarACI: ['variable', bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
     vu.obsVarCldFrac: ['variable', vu.cldfracMeta, ['obs','bak','ana','SCI']],
     vu.obsVarGlint: ['variable', bu.GlintAngle, ['obs','bak','ana','SCI']],
+    vu.obsVarLandFrac: ['variable', vu.landfracGeo, ['obs','bak','ana','SCI']],
     vu.obsVarLat: ['variable', vu.latMeta, ['obs','bak','ana','SCI']],
     vu.obsVarLT: ['variable', bu.LocalHour, ['obs','bak','ana','SCI']],
     vu.obsVarNormErr: ['variable', bu.NormalizedError, []],
@@ -661,6 +695,7 @@ for binVar, rangeVar in clrlatBinVars.items():
 cldfracBinVars = {
     vu.obsVarACI: ['variable', bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
     vu.obsVarGlint: ['variable', bu.GlintAngle, ['obs','bak','ana','SCI']],
+    vu.obsVarLandFrac: ['variable', vu.landfracGeo, ['obs','bak','ana','SCI']],
     vu.obsVarLat: ['variable', vu.latMeta, ['obs','bak','ana','SCI']],
     vu.obsVarLT: ['variable', bu.LocalHour, ['obs','bak','ana','SCI']],
     vu.obsVarSenZen: ['variable', vu.senzenMeta, ['obs','bak','ana','SCI']],
