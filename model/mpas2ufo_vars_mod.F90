@@ -298,10 +298,11 @@ elemental subroutine twp_to_rho(temperature,mixing_ratio,pressure,rho)
                                 ( MPAS_JEDI_ONE_kr + (rv/rgas) * mixing_ratio ) )
 end subroutine twp_to_rho
 !-------------------------------------------------------------------------------------------
-subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
+subroutine pressure_half_to_full(pressure, zgrid, surface_pressure, nC, nV, pressure_f)
    implicit none
    real (kind=kind_real), dimension(nV,nC), intent(in) :: pressure
    real (kind=kind_real), dimension(nV+1,nC), intent(in) :: zgrid
+   real (kind=kind_real), dimension(nC), intent(in) :: surface_pressure
    integer, intent(in) :: nC, nV
    real (kind=kind_real), dimension(nV+1,nC), intent(out) :: pressure_f
 
@@ -338,12 +339,7 @@ subroutine pressure_half_to_full(pressure, zgrid, nC, nV, pressure_f)
         enddo
         k = kts
         do i = its,ite
-          z0 = zgrid(k,i)
-          z1 = MPAS_JEDI_HALF_kr*(zgrid(k,i)+zgrid(k+1,i))
-          z2 = MPAS_JEDI_HALF_kr*(zgrid(k+1,i)+zgrid(k+2,i))
-          w1 = (z0-z2)/(z1-z2)
-          w2 = MPAS_JEDI_ONE_kr-w1
-          pressure_f(k,i) = w1*pressure(k,i) + w2*pressure(k+1,i)
+          pressure_f(k,i) = surface_pressure(i)
         enddo
 
 end subroutine pressure_half_to_full
@@ -544,13 +540,16 @@ subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields,
    real (kind=kind_real), dimension(:,:), pointer :: index_array
    type (field2DReal), pointer :: index_increment, geoval_field_src
    real (kind=kind_real), dimension(:,:), pointer :: pressure_array
+   real (kind=kind_real), dimension(:), pointer :: surface_pressure_array
    real (kind=kind_real) :: kgkg_kgm2
    integer :: i, k
 
    ! Calcluate air_pressure_levels
    call mpas_pool_get_array(trajFields, 'pressure', pressure_array)
+   call mpas_pool_get_array(trajFields, 'surface_pressure', surface_pressure_array)
    allocate (pressure_levels(geom%nVertLevels+1,ngrid))
-   call pressure_half_to_full(pressure_array(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
+   call pressure_half_to_full(pressure_array(:,1:ngrid), geom%zgrid(:,1:ngrid), &
+                              surface_pressure_array(1:ngrid), ngrid, geom%nVertLevels, &
                               pressure_levels)
 
    call mpas_pool_get_array(subFields, indexName, index_array) !- [kg/kg]
@@ -887,11 +886,12 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
      case ( var_prsi ) !-air_pressure_levels
         call mpas_pool_get_array(subFields, "pressure", r2d_ptr_a)
+        call mpas_pool_get_array(subFields, "surface_pressure", r1d_ptr_a)
         call mpas_pool_get_field(subFields, 'w', field2d_src) ! as a dummy array
         call mpas_duplicate_field(field2d_src, field2d)
 
-        call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom % nVertLevels, &
-                                   field2d%array(:,1:ngrid))
+        call pressure_half_to_full(r2d_ptr_a(:,1:ngrid), geom%zgrid(:,1:ngrid), r1d_ptr_a(1:ngrid), &
+                                   ngrid, geom % nVertLevels, field2d%array(:,1:ngrid))
 !        write(*,*) 'MIN/MAX of prsi=',minval(field2d % array),maxval(field2d % array)
 !        write(*,*) 'test prs       =',r2d_ptr_a(:,1)
 !        write(*,*) 'test prsi      =',field2d % array(:,1)
@@ -1221,6 +1221,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
+   real (kind=kind_real), dimension(:), pointer :: traj_r1d_a
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
    type (field1DReal), pointer :: field1d, field1d_src
@@ -1344,54 +1345,60 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
      case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
         ! Calcluate air_pressure_levels
         call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+        call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
         allocate (pressure_f(geom%nVertLevels+1,ngrid))
-        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                   pressure_f)
+        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                   ngrid, geom%nVertLevels, pressure_f)
         call index_q_fields_TL('index_qc', var_clw, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
         deallocate (pressure_f)
 
      case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
         ! Calcluate air_pressure_levels
         call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+        call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
         allocate (pressure_f(geom%nVertLevels+1,ngrid))
-        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                   pressure_f)
+        call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                   ngrid, geom%nVertLevels, pressure_f)
         call index_q_fields_TL('index_qi', var_cli, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
         deallocate (pressure_f)
 
       case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
          ! Calcluate air_pressure_levels
          call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+         call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
-         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                    pressure_f)
+         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                    ngrid, geom%nVertLevels, pressure_f)
          call index_q_fields_TL('index_qr', var_clr, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
          ! Calcluate air_pressure_levels
          call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+         call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
-         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                    pressure_f)
+         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                    ngrid, geom%nVertLevels, pressure_f)
          call index_q_fields_TL('index_qs', var_cls, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
          ! Calcluate air_pressure_levels
          call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+         call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
-         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                    pressure_f)
+         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                    ngrid, geom%nVertLevels, pressure_f)
          call index_q_fields_TL('index_qg', var_clg, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
          ! Calcluate air_pressure_levels
          call mpas_pool_get_array(trajFields, 'pressure', traj_r2d_b)
+         call mpas_pool_get_array(trajFields, 'surface_pressure', traj_r1d_a)
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
-         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), ngrid, geom%nVertLevels, &
-                                    pressure_f)
+         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
+                                    ngrid, geom%nVertLevels, pressure_f)
          call index_q_fields_TL('index_qh', var_clh, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
@@ -1465,6 +1472,7 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
    real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
+   real (kind=kind_real), dimension(:), pointer :: traj_r1d_a
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
    type (field1DReal), pointer :: field1d, field1d_src

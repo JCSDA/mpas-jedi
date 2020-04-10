@@ -551,6 +551,7 @@ subroutine getvalues(self, locs, vars, gom, traj)
    real (kind=kind_real), allocatable :: weight_nn(:)
    type (mpas_pool_type), pointer :: pool_tmp  !< temporary pool for setting trajectory
    type (field2DReal), pointer :: field2d_src => null() !< for setting trajectory
+   type (field1DReal), pointer :: field1d_src => null() !< for setting trajectory
 
    real(kind=kind_real) :: wdir           !< for wind direction
    integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
@@ -596,6 +597,8 @@ subroutine getvalues(self, locs, vars, gom, traj)
        call mpas_pool_add_field(pool_tmp, 'spechum', field2d_src)
        call mpas_pool_get_field(self % subFields, 'pressure', field2d_src)
        call mpas_pool_add_field(pool_tmp, 'pressure', field2d_src)
+       call mpas_pool_get_field(self % subFields, 'surface_pressure', field1d_src)
+       call mpas_pool_add_field(pool_tmp, 'surface_pressure', field1d_src)
 
        call mpas_pool_clone_pool(pool_tmp, traj % pool_traj)
 
