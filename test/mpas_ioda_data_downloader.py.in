@@ -8,11 +8,11 @@ import urllib.request
 
 bucket_name = "jedi-test-files"
 
-repository_name = "@IODA_REP_NAME@"
-testfiles_name = "@IODA_TESTFILES_NAME@"
-branch_name = "@IODA_BRANCH_NAME@"
-testfiles_path = "@IODA_TESTFILES_PATH@"
-download_base_url="@IODA_DOWNLOAD_BASE_URL@"
+repository_name = "@MPAS_IODA_REP_NAME@"
+testfiles_name = "@MPAS_IODA_TESTFILES_NAME@"
+branch_name = "@MPAS_IODA_BRANCH_NAME@"
+testfiles_path = "@MPAS_IODA_TESTFILES_PATH@"
+download_base_url="@MPAS_IODA_DOWNLOAD_BASE_URL@"
 
 s3_file_name = repository_name+"/"+branch_name+"/"+testfiles_name
 

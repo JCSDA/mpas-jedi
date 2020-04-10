@@ -177,7 +177,7 @@ list( APPEND mpas_ioda_test_data
      testinput_tier_1.tar.gz
      )
 # Set URL for IODA test files
-set( IODA_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
+set( MPAS_IODA_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
 
 # Use `LOCAL_PATH_TESTFILES_IODA` to pass path to local test files
 if (DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
@@ -189,48 +189,52 @@ endif()
 # If local path to testfiles is defined don't download
 
 if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
+  # Get the current git branch of mpas-jedi and use it to
+  # download specific data for this branch on S3. If specific
+  # data does not exist, it will use default (develop) data
 
-  # Get the current git branch and use it to download
-  # specific data for this branch on S3. If specific data 
-  # does not exist, it will use default (develop) data
-  execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  if( NOT DEFINED MPAS_IODA_TESTFILES_BRANCH)
+    # MPAS_IODA_TESTFILES_BRANCH can be used when building 
+    # to set a specific branch name for testing. 
+
+    execute_process(
+      COMMAND git rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_BRANCH_MPAS
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+  else()
+    message( STATUS "Branch name provided by user")
+    set( GIT_BRANCH_MPAS ${MPAS_IODA_TESTFILES_BRANCH})
+  endif()
 
   # Check whether the URL exists or not 
-  set( ECBUILD_DOWNLOAD_BASE_URL ${IODA_DOWNLOAD_BASE_URL}/ioda)
+  set( ECBUILD_DOWNLOAD_BASE_URL ${MPAS_IODA_DOWNLOAD_BASE_URL}/ioda)
   ecbuild_check_multiurl(NAMES   ${mpas_ioda_test_data}
-                       DIRHOST ${GIT_BRANCH}
-                       RESULT  SPECIFIC_TEST_FILES)
+                       DIRHOST ${GIT_BRANCH_MPAS}
+                       RESULT  MPAS_SPECIFIC_TEST_FILES)
 
   # Set distant directory
-  if(${SPECIFIC_TEST_FILES} MATCHES 0)
+  if(${MPAS_SPECIFIC_TEST_FILES} MATCHES 0)
     # Download and extract new test files (distant directory = git branch)
-    set(DIRNAME ${GIT_BRANCH})
+    set(DIRNAME ${GIT_BRANCH_MPAS})
   else()
     # Download and extract develop test files (distant directory = develop)
     set(DIRNAME "develop")
   endif()
-  message(STATUS "Test data downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME})
+  message(STATUS "Test data will be downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME})
 
-  set(TESTFILE_DIR_IODA ${CMAKE_BINARY_DIR}/test_data/ioda CACHE PATH "data dir for test data")
-  file(MAKE_DIRECTORY ${TESTFILE_DIR_IODA})
-  message (STATUS "LOCAL_PATH_TESTFILES_IODA not defined, download test files")
-
-  set(IODA_REP_NAME ioda)
-  set(IODA_TESTFILES_NAME ${mpas_ioda_test_data})
-  set(IODA_BRANCH_NAME ${DIRNAME})
-  set(IODA_TESTFILES_PATH ${CMAKE_BINARY_DIR}/test_data/ioda/${DIRNAME})
-
+  set(MPAS_IODA_REP_NAME ioda)
+  set(MPAS_IODA_TESTFILES_NAME ${mpas_ioda_test_data})
+  set(MPAS_IODA_BRANCH_NAME ${DIRNAME})
+  set(MPAS_IODA_TESTFILES_PATH ${CMAKE_BINARY_DIR}/test_data/ioda/${DIRNAME})
+  message(STATUS "Save data to " ${MPAS_IODA_TESTFILES_PATH})
+  file(MAKE_DIRECTORY ${MPAS_IODA_TESTFILES_PATH})
 
   # Create download script for get_ioda_test_data test 
-  set ( FILENAME mpas_data_downloader.py)
+  set ( FILENAME mpas_ioda_data_downloader.py)
   set ( SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME} )
   set ( DEST_FILE ${CMAKE_BINARY_DIR}/bin/${FILENAME} )
-  list( APPEND bin_ioda_test_download_scripts_mpas_deps ${DEST_FILE} )
+  list( APPEND bin_mpas_ioda_test_download_scripts_deps ${DEST_FILE} )
 
   if( EXISTS "${SOURCE_FILE}.in" )
     configure_file( ${SOURCE_FILE}.in ${DEST_FILE} @ONLY )
@@ -238,25 +242,24 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
     configure_file( ${SOURCE_FILE}    ${DEST_FILE} @ONLY )
   endif()
  
-  add_custom_target( bin_ioda_test_download_scripts_mpas ALL
-      COMMAND chmod +x ${bin_ioda_test_download_scripts_mpas_deps}
-      DEPENDS ${bin_ioda_test_download_scripts_mpas_deps})
+  add_custom_target( bin_mpas_ioda_test_download_scripts ALL
+      COMMAND chmod +x ${bin_mpas_ioda_test_download_scripts_deps}
+      DEPENDS ${bin_mpas_ioda_test_download_scripts_deps})
 
   ecbuild_add_test( TARGET    mpas_get_ioda_test_data
                     TYPE      SCRIPT
-                    COMMAND    ${CMAKE_BINARY_DIR}/bin/ioda_data_downloader.py
+                    COMMAND    ${CMAKE_BINARY_DIR}/bin/${FILENAME}
                     ARGS      testoutput/download_test_mpas.log)
 
 else()
-  set(TESTFILE_DIR_IODA ${LOCAL_PATH_TESTFILES_IODA})
+  set(MPAS_IODA_TESTFILES_PATH ${LOCAL_PATH_TESTFILES_IODA})
   message (STATUS "LOCAL_PATH_TESTFILES_IODA set to : " ${LOCAL_PATH_TESTFILES_IODA})
 endif()
 
 # Link test files 
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-                 ${TESTFILE_DIR_IODA}
-                 ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda
-                 )
+                 ${MPAS_IODA_TESTFILES_PATH}
+                 ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda )
 
 #####################################################################
 # Files for CRTM tests
