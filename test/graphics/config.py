@@ -58,8 +58,11 @@ for latBand in bcs.namedLatBands['values']:
 radianceBinVars = deepcopy(obsBinVars)
 radianceBinVars[vu.obsVarGlint] = [bu.identityBinMethod]
 radianceBinVars[vu.obsVarSenZen] = [bu.identityBinMethod]
-radianceBinVars[vu.obsVarLandFrac] = [bu.identityBinMethod,
-                                      bu.surfbandsMethod]
+
+# Uncomment vu.obsVarLandFrac binning variable below to include surface-type bins
+# NOTE: requires geovals to be written for DiagSpaces that use radianceBinVars
+#radianceBinVars[vu.obsVarLandFrac] = [bu.identityBinMethod,
+#                                      bu.surfbandsMethod]
 
 
 #########################################
