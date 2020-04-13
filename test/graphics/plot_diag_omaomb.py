@@ -42,15 +42,28 @@ def readdata():
     print_fmt = 'png' #lower fidelity, faster
     #print_fmt = 'pdf' #higher fidelity, slower
 
-    profile_group  = ['sondes','aircraft','satwind','gnssroref','gnssrobndropp1d']
-    radiance_group = ['amsua_n19--hydro','amsua_n19--nohydro']
-    #dummy_group   = ['dummy_obstype1']
+    profile_group  = [
+        'sondes',
+        'aircraft',
+        'satwind',
+        'gnssroref',
+        'gnssrobndropp1d',
+    ]
+    radiance_group = [
+        'abi_g16',
+        'ahi_himawari8',
+        'amsua_aqua',
+        'amsua_metop-a',
+        'amsua_n15',
+        'amsua_n18',
+        'amsua_n19',
+        'amsua_n19--hydro',
+        'amsua_n19--nohydro',
+    ]
 
     all_groups = []
     all_groups.append(profile_group)
     all_groups.append(radiance_group)
-    #all_groups.append(dummy_group)
-    #all_groups.append(['dummy_obstype2'])
 
     # Diagnostic oma/omb files located in diagdir
     diagdir    = '../Data/'
@@ -68,8 +81,9 @@ def readdata():
     depan_var = 'depan'
 
     #quality control
+    NOUTER=str(os.getenv('NOUTER',2)) #set equal to number of outer iterations
     qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for depbg_var
-    qcan_var  = 'EffectiveQC2' #EffectiveQCi, where i is the iteration for depan_var
+    qcan_var  = 'EffectiveQC'+NOUTER #EffectiveQCi, where i is the iteration for depan_var
 
     obsoutfiles = []
     for files in os.listdir(diagdir):

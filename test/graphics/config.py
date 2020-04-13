@@ -1,5 +1,6 @@
 import binning_utils as bu
 import binning_configs as bcs
+from collections import defaultdict
 from copy import deepcopy
 import diag_utils as du
 import os
@@ -13,13 +14,12 @@ import var_utils as vu
 #################################################################
 ## Generic binVarConfigs that apply to all observation categories
 #################################################################
-obsBinVars = {
-    vu.obsVarQC: [bu.goodQCMethod,bu.badQCMethod],
-    vu.obsVarLat: [bu.identityBinMethod,bu.latbandsMethod],
-    vu.obsVarLT: [bu.identityBinMethod],
-    vu.obsVarNormErr: [bu.identityBinMethod],
-    'ObsRegion': ['CONUS'],
-}
+obsBinVars = defaultdict(list)
+obsBinVars[vu.obsVarQC] += [bu.goodQCMethod, bu.badQCMethod]
+obsBinVars[vu.obsVarLat] += [bu.identityBinMethod, bu.latbandsMethod]
+obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
+obsBinVars[vu.obsVarNormErr] += [bu.identityBinMethod]
+obsBinVars['ObsRegion'] += ['CONUS']
 
 
 ################################
@@ -32,58 +32,62 @@ surfBinVars = deepcopy(obsBinVars)
 ## binVarConfigs for profile obs w/ pressure vertical bins
 ##########################################################
 profPressBinVars = deepcopy(obsBinVars)
-profPressBinVars[vu.obsVarPrs] = [bu.identityBinMethod,bu.PjetMethod]
-profPressBinVars[vu.obsVarLat].append(bu.PjetMethod)
+profPressBinVars[vu.obsVarPrs] += [bu.identityBinMethod, bu.PjetMethod]
+profPressBinVars[vu.obsVarLat] += [bu.PjetMethod]
 
 # 2D pressure bins with named latitude-band methods
 for latBand in bcs.namedLatBands['values']:
-    profPressBinVars[vu.obsVarPrs].append(latBand)
+    profPressBinVars[vu.obsVarPrs] += [latBand]
 
 
 ##########################################################
 ## binVarConfigs for profile obs w/ altitude vertical bins
 ##########################################################
 profAltBinVars = deepcopy(obsBinVars)
-profAltBinVars[vu.obsVarAlt] = [bu.identityBinMethod,bu.altjetMethod]
-profAltBinVars[vu.obsVarLat].append(bu.altjetMethod)
+profAltBinVars[vu.obsVarAlt] += [bu.identityBinMethod, bu.altjetMethod]
+profAltBinVars[vu.obsVarLat] += [bu.altjetMethod]
 
 # 2D altitude bins with named latitude-band methods
 for latBand in bcs.namedLatBands['values']:
-    profAltBinVars[vu.obsVarAlt].append(latBand)
+    profAltBinVars[vu.obsVarAlt] += [latBand]
 
 
 #################################
 ## binVarConfigs for radiance obs
 #################################
 radianceBinVars = deepcopy(obsBinVars)
-radianceBinVars[vu.obsVarGlint] = [bu.identityBinMethod]
-radianceBinVars[vu.obsVarSenZen] = [bu.identityBinMethod]
+radianceBinVars[vu.obsVarGlint] += [bu.identityBinMethod]
+radianceBinVars[vu.obsVarSenZen] += [bu.identityBinMethod]
 
-# Uncomment vu.obsVarLandFrac binning variable below to include surface-type bins
-# NOTE: requires geovals to be written for DiagSpaces that use radianceBinVars
-#radianceBinVars[vu.obsVarLandFrac] = [bu.identityBinMethod,
-#                                      bu.surfbandsMethod]
 
+# binBYLandFrac controls whether to bin by land-ocean fractions and categories
+# NOTE: requires geovals to be written for applicable DiagSpaces
+binBYLandFrac = False
+if binBYLandFrac:
+    radianceBinVars[vu.obsVarLandFrac] += [bu.identityBinMethod,
+                                           bu.surfbandsMethod]
 
 #########################################
 ## binVarConfigs for geostationary IR obs
 ## i.e., GOES-ABI, Himawari-AHI
 #########################################
 geoirBinVars = deepcopy(radianceBinVars)
-geoirBinVars[vu.obsVarACI] = [bu.identityBinMethod]
-geoirBinVars[vu.obsVarCldFrac] = [bu.identityBinMethod,
+geoirBinVars[vu.obsVarACI] += [bu.identityBinMethod]
+geoirBinVars[vu.obsVarCldFrac] += [bu.identityBinMethod,
                                   bu.cloudbandsMethod]
 
 
-# 2D sensor zenith bins with named latitude-band methods and clear profiles
+# 2D bins for named latitude-band methods and clear profiles
 for var in bcs.clrlatBinVars.keys():
-    for latBand in bcs.namedLatBands['values']:
-        geoirBinVars[var].append(bcs.clrlatMethods[latBand])
+    if var != vu.obsVarLandFrac or binBYLandFrac:
+        for latBand in bcs.namedLatBands['values']:
+            geoirBinVars[var] += [bcs.clrlatMethods[latBand]]
 
 # Binning variables with clr-/cld-sky methods
 for var in bcs.cldfracBinVars.keys():
-    geoirBinVars[var].append(bu.clrskyMethod)
-    geoirBinVars[var].append(bu.cldskyMethod)
+    if var != vu.obsVarLandFrac or binBYLandFrac:
+        geoirBinVars[var] += [bu.clrskyMethod]
+        geoirBinVars[var] += [bu.cldskyMethod]
 
 # symmetric cloud impact (expensive)
 selectSCIMethods = [
@@ -93,10 +97,9 @@ selectSCIMethods = [
 #    bu.ScaleModHarnischMethod,
 ]
 
-geoirBinVars[vu.obsVarSCI] = []
 for method in selectSCIMethods:
-    geoirBinVars[vu.obsVarSCI].append(method)
-    geoirBinVars[vu.obsVarNormErr].append(method)
+    geoirBinVars[vu.obsVarSCI] += [method]
+    geoirBinVars[vu.obsVarNormErr] += [method]
 
 
 #########################################
