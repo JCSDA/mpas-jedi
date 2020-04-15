@@ -11,12 +11,18 @@
 #include "MPASTraits.h"
 #include "instantiateLocalizationFactory.h"
 #include "instantiateMPASVarChangeFactory.h"
+#include "saber/oops/instantiateCovarFactory.h"
+#include "saber/oops/instantiateLocalizationFactory.h"
+#include "saber/oops/instantiateVariableChangeFactory.h"
 #include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   mpas::instantiateLocalizationFactory();
   mpas::instantiateMPASVarChangeFactory();
+  saber::instantiateCovarFactory<mpas::MPASTraits>();
+  saber::instantiateLocalizationFactory<mpas::MPASTraits>();
+  saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   ufo::instantiateObsFilterFactory<mpas::MPASTraits>();
   oops::Variational<mpas::MPASTraits> var;
   run.execute(var);

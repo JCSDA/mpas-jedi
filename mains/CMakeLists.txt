@@ -32,11 +32,13 @@ ecbuild_add_executable( TARGET  mpas_dirac.x
 ecbuild_add_executable( TARGET  mpas_variational.x
                         SOURCES mpasVariational.cc
                         LIBS    mpas
+                                saber
                       )
 
 ecbuild_add_executable( TARGET  mpas_parameters.x
                         SOURCES mpasEstimateParams.cc
                         LIBS    mpas
+                                saber
                       )
 
 ecbuild_add_executable( TARGET  mpas_staticbinit.x

@@ -9,9 +9,12 @@
 #include "RunMPAS.h"
 #include "test/interface/LinearVariableChange.h"
 #include "model/instantiateMPASVarChangeFactory.h"
- int main(int argc,  char ** argv) {
+#include "saber/oops/instantiateVariableChangeFactory.h"
+
+int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   mpas::instantiateMPASVarChangeFactory();
+  saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   test::LinearVariableChange<mpas::MPASTraits> tests;
   run.execute(tests);
   return 0;

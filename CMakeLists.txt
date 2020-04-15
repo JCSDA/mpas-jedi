@@ -85,6 +85,10 @@ endif()
 ecbuild_use_package( PROJECT oops VERSION 0.2.1 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
 
+# saber
+ecbuild_use_package( PROJECT saber VERSION 0.0.1 REQUIRED )
+include_directories( ${SABER_INCLUDE_DIRS} )
+
 # ufo
 ecbuild_use_package( PROJECT ufo )
 include_directories( ${UFO_INCLUDE_DIRS} )
@@ -97,7 +101,7 @@ include_directories( ${UFO_INCLUDE_DIRS} )
 # Export package info
 ################################################################################
 
-list( APPEND MPAS_TPLS ufo oops )
+list( APPEND MPAS_TPLS ufo oops saber )
 
 set( MPAS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/model ${CMAKE_CURRENT_BINARY_DIR}/model
                         ${CMAKE_Fortran_MODULE_DIRECTORY} )

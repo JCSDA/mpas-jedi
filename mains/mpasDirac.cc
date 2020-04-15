@@ -10,10 +10,14 @@
 
 #include "MPASTraits.h"
 #include "oops/runs/Dirac.h"
+#include "saber/oops/instantiateCovarFactory.h"
+#include "saber/oops/instantiateLocalizationFactory.h"
 #include "RunMPAS.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
+  saber::instantiateCovarFactory<mpas::MPASTraits>();
+  saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   oops::Dirac<mpas::MPASTraits> dir;
   run.execute(dir);
   return 0;
