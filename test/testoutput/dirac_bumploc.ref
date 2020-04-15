@@ -1,16 +1,16 @@
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=-0.108366, Max=0.16706, RMS=0.00280777 : temperature
-Test     : Fld=2  Min=-3.05842e-05, Max=1.77826e-05, RMS=4.37263e-07 : spechum
-Test     : Fld=3  Min=-0.130592, Max=0.717412, RMS=0.00970649 : uReconstructZonal
-Test     : Fld=4  Min=-0.325685, Max=0.687083, RMS=0.00920749 : uReconstructMeridional
+Test     : Fld=1  Min=-0.108366, Max=0.172368, RMS=0.00286127 : temperature
+Test     : Fld=2  Min=-3.00427e-05, Max=1.83465e-05, RMS=4.4256e-07 : spechum
+Test     : Fld=3  Min=-0.129446, Max=0.717412, RMS=0.00978869 : uReconstructZonal
+Test     : Fld=4  Min=-0.325685, Max=0.729669, RMS=0.00932053 : uReconstructMeridional
 Test     : Fld=5  Min=0, Max=0, RMS=0 : surface_pressure
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=0, Max=1, RMS=0.0285961 : temperature
-Test     : Fld=2  Min=0, Max=1, RMS=0.0285961 : spechum
-Test     : Fld=3  Min=0, Max=1, RMS=0.0285961 : uReconstructZonal
-Test     : Fld=4  Min=0, Max=1, RMS=0.0285961 : uReconstructMeridional
+Test     : Fld=1  Min=0, Max=1, RMS=0.0287139 : temperature
+Test     : Fld=2  Min=0, Max=1, RMS=0.0287139 : spechum
+Test     : Fld=3  Min=0, Max=1, RMS=0.0287139 : uReconstructZonal
+Test     : Fld=4  Min=0, Max=1, RMS=0.0287139 : uReconstructMeridional
 Test     : Fld=5  Min=0, Max=0, RMS=0 : surface_pressure

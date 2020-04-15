@@ -41,7 +41,6 @@ cost_function:
         prefix: Data/bump/mpas_parametersbump_cov
         default_seed: 1
         method: cor
-        nonunit_diag: 1 #effectively "cov"
         strategy: specific_univariate  #common
         new_nicas: 0
         load_nicas: 1
@@ -57,6 +56,15 @@ cost_function:
         forced_radii: 0
         rh: 2000000
         rv: 1
+      variable_changes:
+      - varchange: StdDev
+        inputVariables:
+          variables: *incvars
+        outputVariables:
+          variables: *incvars
+        bump:
+          load_var: 1
+          prefix: Data/bump/mpas_parametersbump_cov
   Jo:
     ObsTypes:
     #NOTES for amsua channels:
