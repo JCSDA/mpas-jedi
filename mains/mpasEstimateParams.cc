@@ -16,7 +16,6 @@ int main(int argc,  char ** argv) {
   mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   saber::EstimateParams<mpas::MPASTraits> dir;
-  run.execute(dir);
-  return 0;
+  return run.execute(dir);
 }
 

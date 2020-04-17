@@ -12,7 +12,6 @@
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   oops::EnsHofX<mpas::MPASTraits> enshofx;
-  run.execute(enshofx);
-  return 0;
+  return run.execute(enshofx);
 }
 

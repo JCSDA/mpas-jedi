@@ -12,7 +12,6 @@
 int main(const int argc, const char ** argv) {
   mpas::RunMPAS run(argc, argv);
   test::ModelAuxIncrement<mpas::MPASTraits> tests;
-  run.execute(tests);
-  return 0;
+  return run.execute(tests);
 }
 

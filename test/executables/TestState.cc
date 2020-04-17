@@ -12,7 +12,6 @@
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   test::State<mpas::MPASTraits> tests;
-  run.execute(tests);
-  return 0;
+  return run.execute(tests);
 }
 

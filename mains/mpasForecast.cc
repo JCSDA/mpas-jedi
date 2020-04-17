@@ -12,6 +12,5 @@
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   oops::Forecast<mpas::MPASTraits> fc;
-  run.execute(fc);
-  return 0;
+  return run.execute(fc);
 }

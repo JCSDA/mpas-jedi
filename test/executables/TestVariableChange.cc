@@ -16,7 +16,6 @@ int main(int argc,  char ** argv) {
   mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   test::LinearVariableChange<mpas::MPASTraits> tests;
-  run.execute(tests);
-  return 0;
+  return run.execute(tests);
 }
 

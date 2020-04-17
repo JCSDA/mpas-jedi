@@ -14,7 +14,6 @@ int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   ufo::instantiateObsFilterFactory<mpas::MPASTraits>();
   oops::HofX<mpas::MPASTraits> hofx;
-  run.execute(hofx);
-  return 0;
+  return run.execute(hofx);
 }
 

@@ -19,6 +19,5 @@ int main(int argc,  char ** argv) {
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   oops::Dirac<mpas::MPASTraits> dir;
-  run.execute(dir);
-  return 0;
+  return run.execute(dir);
 }

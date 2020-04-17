@@ -12,6 +12,5 @@
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   oops::GenEnsPertB<mpas::MPASTraits> ensgen;
-  run.execute(ensgen);
-  return 0;
+  return run.execute(ensgen);
 }

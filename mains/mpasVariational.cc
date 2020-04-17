@@ -25,7 +25,6 @@ int main(int argc,  char ** argv) {
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   ufo::instantiateObsFilterFactory<mpas::MPASTraits>();
   oops::Variational<mpas::MPASTraits> var;
-  run.execute(var);
-  return 0;
+  return run.execute(var);
 }
 

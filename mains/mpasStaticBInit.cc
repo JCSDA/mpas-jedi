@@ -12,6 +12,5 @@
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
   oops::StaticBInit<mpas::MPASTraits> bmat;
-  run.execute(bmat);
-  return 0;
+  return run.execute(bmat);
 }
