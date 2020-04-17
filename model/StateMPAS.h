@@ -68,12 +68,6 @@ class StateMPAS : public util::Printable,
   void zero();
   void accumul(const double &, const StateMPAS &);
 
-/// Get state values at observation locations
-  void getValues(const ufo::Locations &, const oops::Variables &,
-                 ufo::GeoVaLs &) const;
-  void getValues(const ufo::Locations &, const oops::Variables &,
-                 ufo::GeoVaLs &, const GetValuesTrajMPAS &) const;
-
 /// Interpolate full fields
   void changeResolution(const StateMPAS & xx);
 

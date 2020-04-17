@@ -85,12 +85,6 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void random();
   void dirac(const eckit::Configuration &);
 
-/// Get increment values at observation locations
-  void getValuesTL(const ufo::Locations &, const oops::Variables &,
-                   ufo::GeoVaLs &, const GetValuesTrajMPAS &) const;
-  void getValuesAD(const ufo::Locations &, const oops::Variables &,
-                   const ufo::GeoVaLs &, const GetValuesTrajMPAS &);
-
 /// Unstructured grid
   void ug_coord(oops::UnstructuredGrid &) const;
   void field_to_ug(oops::UnstructuredGrid &, const int &) const;

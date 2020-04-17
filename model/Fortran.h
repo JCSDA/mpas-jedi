@@ -46,10 +46,12 @@ typedef int F90hop;
 typedef int F90odb;
 // Localization matrix
 typedef int F90lclz;
-// ObOp trajectory
-typedef int F90ootrj;
 // VarChange key
 typedef int F90vc;
+// GetValues key
+typedef int F90getvalues;
+// LinearGetValues key
+typedef int F90lineargetvalues;
 
 /// Interface to Fortran MPAS model
 /*!
@@ -93,12 +95,6 @@ extern "C" {
 
   void mpas_model_wipe_traj_f90(F90traj &);
   void mpas_traj_minmaxrms_f90(const F90traj &, double &);
-
-// -----------------------------------------------------------------------------
-//  GetValuesTraj
-// -----------------------------------------------------------------------------
-  void mpas_getvaltraj_setup_f90(const F90ootrj &);
-  void mpas_getvaltraj_delete_f90(const F90ootrj &);
 
 // -----------------------------------------------------------------------------
 //  ErrorCovariance (Background error)

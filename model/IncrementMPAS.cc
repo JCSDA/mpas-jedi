@@ -26,7 +26,6 @@
 #include "ufo/Locations.h"
 
 #include "model/GeometryMPAS.h"
-#include "model/GetValuesTrajMPAS.h"
 #include "model/StateMPAS.h"
 
 namespace mpas {
@@ -148,28 +147,6 @@ double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
 // -----------------------------------------------------------------------------
 void IncrementMPAS::random() {
   mpas_increment_random_f90(keyInc_);
-}
-// -----------------------------------------------------------------------------
-/// Get increment values at observation locations
-// -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesTL(const ufo::Locations & locs,
-                                const oops::Variables & vars,
-                                ufo::GeoVaLs & gom,
-                                const GetValuesTrajMPAS & traj) const {
-  oops::Log::trace() << "IncrementMPAS::getValuesTL starting" << std::endl;
-  mpas_increment_getvalues_tl_f90(keyInc_, locs.toFortran(), vars,
-                              gom.toFortran(), traj.toFortran());
-  oops::Log::trace() << "IncrementMPAS::getValuesTL done" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void IncrementMPAS::getValuesAD(const ufo::Locations & locs,
-                                const oops::Variables & vars,
-                                const ufo::GeoVaLs & gom,
-                                const GetValuesTrajMPAS & traj) {
-  oops::Log::trace() << "IncrementMPAS::getValuesAD starting" << std::endl;
-  mpas_increment_getvalues_ad_f90(keyInc_, locs.toFortran(), vars,
-                                  gom.toFortran(), traj.toFortran());
-  oops::Log::trace() << "IncrementMPAS::getValuesAD done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Unstructured grid

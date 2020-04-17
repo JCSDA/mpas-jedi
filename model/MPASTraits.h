@@ -12,13 +12,14 @@
 
 #include "ErrorCovarianceMPAS.h"
 #include "GeometryMPAS.h"
-#include "GetValuesTrajMPAS.h"
 #include "IncrementMPAS.h"
 #include "LocalizationMatrixMPAS.h"
 #include "ModelBiasMPAS.h"
 #include "ModelBiasIncrementMPAS.h"
 #include "ModelBiasCovarianceMPAS.h"
 #include "StateMPAS.h"
+#include "getvalues/GetValues.h"
+#include "getvalues/LinearGetValues.h"
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 #include "ioda/ObsDataVector.h"
@@ -48,9 +49,10 @@ struct MPASTraits {
   typedef mpas::ModelBiasIncrementMPAS   ModelAuxIncrement;
   typedef mpas::ModelBiasCovarianceMPAS  ModelAuxCovariance;
 
-  typedef mpas::LocalizationMatrixMPAS   LocalizationMatrix;
+  typedef mpas::GetValues                GetValues;
+  typedef mpas::LinearGetValues          LinearGetValues;
 
-  typedef mpas::GetValuesTrajMPAS        InterpolatorTraj;
+  typedef mpas::LocalizationMatrixMPAS   LocalizationMatrix;
 
   typedef ufo::GeoVaLs                   GeoVaLs;
   typedef ufo::LinearObsOperator         LinearObsOperator;

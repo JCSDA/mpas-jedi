@@ -19,7 +19,6 @@ use unstructured_grid_mod
 use mpas_geom_mod
 use mpas_increment_mod
 use mpas_field_utils_mod
-use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 
 !Increment read/write
 use datetime_mod
@@ -457,60 +456,6 @@ call mpas_field_registry%get(c_key_self,self)
 !call increment_print(self)
 
 end subroutine mpas_increment_print_c
-
-! ------------------------------------------------------------------------------
-
-subroutine mpas_increment_getvalues_tl_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_key_traj) &
-      bind(c,name='mpas_increment_getvalues_tl_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
-integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
-integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
-integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-
-type(mpas_field),  pointer :: inc
-type(ufo_locs),        pointer :: locs
-type(oops_variables)           :: vars
-type(ufo_geovals),     pointer :: gom
-type(mpas_getvaltraj), pointer :: traj
-
-call mpas_field_registry%get(c_key_inc, inc)
-call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_geovals_registry%get(c_key_gom, gom)
-call mpas_getvaltraj_registry%get(c_key_traj, traj)
-
-vars = oops_variables(c_vars)
-call getvalues_tl(inc, locs, vars, gom, traj)
-
-end subroutine mpas_increment_getvalues_tl_c
-
-! ------------------------------------------------------------------------------
-
-subroutine mpas_increment_getvalues_ad_c(c_key_inc,c_key_loc,c_vars,c_key_gom,c_key_traj) &
-      bind(c,name='mpas_increment_getvalues_ad_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_inc  !< Fields to be interpolated
-integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
-integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
-integer(c_int), intent(in) :: c_key_traj !< Trajectory for interpolation/transforms
-
-type(mpas_field),  pointer :: inc
-type(ufo_locs),        pointer :: locs
-type(oops_variables)           :: vars
-type(ufo_geovals),     pointer :: gom
-type(mpas_getvaltraj), pointer :: traj
-
-call mpas_field_registry%get(c_key_inc, inc)
-call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_geovals_registry%get(c_key_gom, gom)
-call mpas_getvaltraj_registry%get(c_key_traj, traj)
-
-vars = oops_variables(c_vars)
-call getvalues_ad(inc, locs, vars, gom, traj)
-
-end subroutine mpas_increment_getvalues_ad_c
 
 ! ------------------------------------------------------------------------------
 

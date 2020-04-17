@@ -51,12 +51,6 @@ extern "C" {
   void mpas_state_analytic_init_f90(const F90state &, const F90geom &,
                                         const eckit::Configuration * const *,
                                         util::DateTime * const *);
-  void mpas_state_getvalues_notraj_f90(const F90state &, const F90locs &,
-                             const oops::Variables &,
-                             const F90goms &);
-  void mpas_state_getvalues_f90(const F90state &, const F90locs &,
-                             const oops::Variables &,
-                             const F90goms &, const F90ootrj &);
   void mpas_state_sizes_f90(const F90state &, int &, int &);
 
 

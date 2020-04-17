@@ -17,7 +17,6 @@ use mpas_constants_mod
 use mpas_geom_mod
 use mpas_state_mod
 use mpas_field_utils_mod
-use mpas_getvaltraj_mod, only: mpas_getvaltraj, mpas_getvaltraj_registry
 
 !MPAS-Model
 use mpas_kind_types, only: StrKIND
@@ -300,57 +299,6 @@ call self%rms(zz)
 prms = zz
 
 end subroutine mpas_state_rms_c
-
-! ------------------------------------------------------------------------------
-
-subroutine mpas_state_getvalues_notraj_c(c_key_state,c_key_loc,c_vars,c_key_gom) &
-      bind(c,name='mpas_state_getvalues_notraj_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
-integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
-integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
-
-type(mpas_field),   pointer :: state
-type(ufo_locs),     pointer :: locs
-type(oops_variables)        :: vars
-type(ufo_geovals),  pointer :: gom
-
-call mpas_field_registry%get(c_key_state, state)
-call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_geovals_registry%get(c_key_gom, gom)
-
-vars = oops_variables(c_vars)
-call getvalues(state, locs, vars, gom)
-
-end subroutine mpas_state_getvalues_notraj_c
-
-! ------------------------------------------------------------------------------
-
-subroutine mpas_state_getvalues_c(c_key_state,c_key_loc,c_vars,c_key_gom,c_key_traj) &
-      bind(c,name='mpas_state_getvalues_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_state  !< State to be interpolated
-integer(c_int), intent(in) :: c_key_loc  !< List of requested locations
-type(c_ptr), value, intent(in) :: c_vars  !< List of requested variables
-integer(c_int), intent(in) :: c_key_gom  !< Interpolated values
-integer(c_int), intent(in), optional :: c_key_traj !< Trajectory for interpolation/transforms
-
-type(mpas_field), pointer :: state
-type(ufo_locs), pointer :: locs
-type(oops_variables) :: vars
-type(ufo_geovals), pointer :: gom
-type(mpas_getvaltraj), pointer :: traj
-
-call mpas_field_registry%get(c_key_state, state)
-call ufo_locs_registry%get(c_key_loc, locs)
-call ufo_geovals_registry%get(c_key_gom, gom)
-call mpas_getvaltraj_registry%get(c_key_traj, traj)
-
-vars = oops_variables(c_vars)
-call getvalues(state, locs, vars, gom, traj)
-
-end subroutine mpas_state_getvalues_c
 
 ! ------------------------------------------------------------------------------
 

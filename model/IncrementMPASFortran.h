@@ -58,12 +58,6 @@ extern "C" {
   void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, double &);
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
-  void mpas_increment_getvalues_tl_f90(const F90inc &, const F90locs &,
-                             const oops::Variables &,
-                             const F90goms &, const F90ootrj &);
-  void mpas_increment_getvalues_ad_f90(const F90inc &, const F90locs &,
-                             const oops::Variables &,
-                             const F90goms &, const F90ootrj &);
   void mpas_increment_ug_coord_f90(const F90inc &, const int &);
   void mpas_increment_increment_to_ug_f90(const F90inc &, const int &,
                                           const int &);

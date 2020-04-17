@@ -25,7 +25,6 @@
 #include "ufo/Locations.h"
 
 #include "model/GeometryMPAS.h"
-#include "model/GetValuesTrajMPAS.h"
 #include "model/IncrementMPAS.h"
 
 namespace mpas {
@@ -125,27 +124,6 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
   mpas_state_copy_f90(keyState_, rhs.keyState_);
   time_ = rhs.time_;
   return *this;
-}
-// -----------------------------------------------------------------------------
-/// Get state values at observation locations
-// -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ufo::Locations & locs,
-                          const oops::Variables & vars,
-                          ufo::GeoVaLs & gom) const {
-  oops::Log::trace() << "StateMPAS::getValues starting" << std::endl;
-  mpas_state_getvalues_notraj_f90(keyState_, locs.toFortran(), vars,
-                                 gom.toFortran());
-  oops::Log::trace() << "StateMPAS::getValues done" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::getValues(const ufo::Locations & locs,
-                          const oops::Variables & vars,
-                          ufo::GeoVaLs & gom,
-                          const GetValuesTrajMPAS & traj) const {
-  oops::Log::trace() << "StateMPAS::getValues traj starting" << std::endl;
-  mpas_state_getvalues_f90(keyState_, locs.toFortran(), vars,
-                           gom.toFortran(), traj.toFortran());
-  oops::Log::trace() << "StateMPAS::getValues traj done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Interpolate full state

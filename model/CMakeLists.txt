@@ -4,8 +4,6 @@ ErrorCovarianceMPAS.h
 Fortran.h
 GeometryMPAS.cc
 GeometryMPAS.h
-GetValuesTrajMPAS.cc
-GetValuesTrajMPAS.h
 IncrementMPAS.cc
 IncrementMPAS.h
 IncrementMPASFortran.h
@@ -34,7 +32,6 @@ mpas_covariance_mod.F90
 mpas_field_utils_mod.F90
 mpas_geom_interface.F90
 mpas_geom_mod.F90
-mpas_getvaltraj_mod.F90
 mpas_increment_interface_mod.F90
 mpas_increment_mod.F90
 mpas_model_interface.F90
@@ -48,8 +45,18 @@ mpas_varchange_mod.F90
 mpas2ufo_vars_mod.F90
 mpas4da_mod.F90
 mpas_kinds_mod.F90
+getvalues/mpasjedi_getvalues_mod.F90
+getvalues/mpasjedi_lineargetvalues_mod.F90
 instantiateLocalizationFactory.h
 instantiateMPASVarChangeFactory.h
+getvalues/GetValues.cc
+getvalues/GetValues.h
+getvalues/LinearGetValues.cc
+getvalues/LinearGetValues.h
+getvalues/GetValues.interface.h
+getvalues/GetValues.interface.F90
+getvalues/LinearGetValues.interface.h
+getvalues/LinearGetValues.interface.F90
 )
 
 set ( MPAS_LIBRARIES $ENV{MPAS_LIBRARIES} )
