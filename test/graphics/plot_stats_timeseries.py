@@ -176,7 +176,7 @@ nExp  = len(expNames)
 
 #AGGREGATEFC_Profile* figures work for any forecast duration
 plotTypes.append('AGGREGATEFC_Profile')
-plotTypes.append('AGGREGATEFC_PDF')
+#plotTypes.append('AGGREGATEFC_PDF')
 #plotTypes.append('AGGREGATEFC_StatsComposite')
 plotTypes.append('CalcGrossStats')
 if nExp > 1:

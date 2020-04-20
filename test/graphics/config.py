@@ -99,7 +99,9 @@ selectSCIMethods = [
 
 for method in selectSCIMethods:
     geoirBinVars[vu.obsVarSCI] += [method]
-    geoirBinVars[vu.obsVarNormErr] += [method]
+# uncomment to diagnose (HofX - ObsValue) / ObsError for SCI-parameterized ObsError
+# note: requires SCIErrParams to be defined for all all DiagSpaces that use it
+#    geoirBinVars[vu.obsVarNormErr] += [method]
 
 
 #########################################
@@ -182,6 +184,14 @@ DiagSpaceConfig = {
     },
 #radiances
     'abi_g16': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': geoirBinVars,
+        'diagNames': defaultDiags,
+#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'channels': [8,9,10,11,13,14,15,16],
+    },
+    'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'binVarConfigs': geoirBinVars,

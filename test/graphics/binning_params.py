@@ -86,6 +86,34 @@ SCIErrParams['abi_g16'][ (16, 'ScaledOkamoto') ]   =  {'X': [0, 24.34], 'ERR': [
 #  X1: [30.98, 11.81, 14.49, 16.42, 26.34, 28.33, 27.7, 26.85, 24.34]
 #  ERR0: [4.24, 2.34, 2.42, 2.07, 2.75, 3.08, 3.22, 2.94, 2.18]
 #  ERR1: [18.51, 15.74, 18.42, 18.74, 25.65, 28.31, 28.7, 28.41, 24.18]
+
+SCIErrParams['ahi_himawari8'][ (8, 'Okamoto') ]   =  {'X': [1, 10.45], 'ERR': [1.8, 13.46]}
+SCIErrParams['ahi_himawari8'][ (9, 'Okamoto') ]   =  {'X': [1, 13.52], 'ERR': [1.79, 15.46]}
+SCIErrParams['ahi_himawari8'][ (10, 'Okamoto') ]   =  {'X': [1, 22.34], 'ERR': [2.64, 16.95]}
+SCIErrParams['ahi_himawari8'][ (11, 'Okamoto') ]   =  {'X': [1, 32.29], 'ERR': [3.58, 23.19]}
+SCIErrParams['ahi_himawari8'][ (12, 'Okamoto') ]   =  {'X': [1, 26.04], 'ERR': [2.52, 25.22]}
+SCIErrParams['ahi_himawari8'][ (13, 'Okamoto') ]   =  {'X': [1, 25.87], 'ERR': [2.59, 25.41]}
+SCIErrParams['ahi_himawari8'][ (14, 'Okamoto') ]   =  {'X': [1, 23.6], 'ERR': [2.27, 24.82]}
+SCIErrParams['ahi_himawari8'][ (15, 'Okamoto') ]   =  {'X': [1, 23.05], 'ERR': [2.18, 20.6]}
+#For UFO YAML config:
+#  X0: [1, 1, 1, 1, 1, 1, 1, 1]
+#  X1: [10.45, 13.52, 22.34, 32.29, 26.04, 25.87, 23.6, 23.05]
+#  ERR0: [1.8, 1.79, 2.64, 3.58, 2.52, 2.59, 2.27, 2.18]
+#  ERR1: [13.46, 15.46, 16.95, 23.19, 25.22, 25.41, 24.82, 20.6]
+SCIErrParams['ahi_himawari8'][ (8, 'ScaledOkamoto') ]   =  {'X': [0, 11.81], 'ERR': [2.34, 15.74]}
+SCIErrParams['ahi_himawari8'][ (9, 'ScaledOkamoto') ]   =  {'X': [0, 14.49], 'ERR': [2.42, 18.42]}
+SCIErrParams['ahi_himawari8'][ (10, 'ScaledOkamoto') ]   =  {'X': [0, 16.42], 'ERR': [2.07, 18.74]}
+SCIErrParams['ahi_himawari8'][ (11, 'ScaledOkamoto') ]   =  {'X': [0, 26.34], 'ERR': [2.75, 25.65]}
+SCIErrParams['ahi_himawari8'][ (12, 'ScaledOkamoto') ]   =  {'X': [0, 26.34], 'ERR': [2.75, 25.65]}
+SCIErrParams['ahi_himawari8'][ (13, 'ScaledOkamoto') ]   =  {'X': [0, 28.33], 'ERR': [3.08, 28.31]}
+SCIErrParams['ahi_himawari8'][ (14, 'ScaledOkamoto') ]   =  {'X': [0, 27.7], 'ERR': [3.22, 28.7]}
+SCIErrParams['ahi_himawari8'][ (15, 'ScaledOkamoto') ]   =  {'X': [0, 26.85], 'ERR': [2.94, 28.41]}
+SCIErrParams['ahi_himawari8'][ (16, 'ScaledOkamoto') ]   =  {'X': [0, 24.34], 'ERR': [2.18, 24.18]}
+#For UFO YAML config:
+#  X0: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+#  X1: [11.81, 14.49, 16.42, 26.34, 26.34, 28.33, 27.7, 26.85, 24.34]
+#  ERR0: [2.34, 2.42, 2.07, 2.75, 2.75, 3.08, 3.22, 2.94, 2.18]
+#  ERR1: [15.74, 18.42, 18.74, 25.65, 25.65, 28.31, 28.7, 28.41, 24.18]
 allSCIErrParams[(120,None)] = deepcopy(SCIErrParams)
 
 
@@ -100,7 +128,7 @@ allSCIErrParams[(30,'varbc')] = deepcopy(SCIErrParams)
 ## CONSTANT BIAS CORRECTION
 SCIErrParams = defaultdict(dict)
 #EMPTY
-allSCIErrParams[(30,'varbc')] = deepcopy(SCIErrParams)
+allSCIErrParams[(30,'constant')] = deepcopy(SCIErrParams)
 
 
 ## NO BIAS CORRECTION
@@ -125,23 +153,34 @@ SCIErrParams['abi_g16'][ (14, 'ScaledOkamoto') ]   =  {'X': [0.0, 22.32], 'ERR':
 SCIErrParams['abi_g16'][ (15, 'ScaledOkamoto') ]   =  {'X': [0.0, 30.89], 'ERR': [4.32, 24.42]}
 SCIErrParams['abi_g16'][ (16, 'ScaledOkamoto') ]   =  {'X': [0.0, 30.02], 'ERR': [4.56, 25.96]}
 
-#SCIErrParams['abi_g16'][ (7, 'ModHarnisch') ]   =  {'X': [0.0, 30.61], 'ERR': [2.83, 28.13]}
-#SCIErrParams['abi_g16'][ (8, 'ModHarnisch') ]   =  {'X': [0.0, 29.45], 'ERR': [2.46, 27.5]}
-#SCIErrParams['abi_g16'][ (9, 'ModHarnisch') ]   =  {'X': [1.0, 24.16], 'ERR': [1.22, 22.92]}
-#SCIErrParams['abi_g16'][ (10, 'ModHarnisch') ]   =  {'X': [0.0, 33.15], 'ERR': [4.17, 21.59]}
-#SCIErrParams['abi_g16'][ (11, 'ModHarnisch') ]   =  {'X': [0.0, 11.03], 'ERR': [1.46, 12.98]}
-#SCIErrParams['abi_g16'][ (13, 'ModHarnisch') ]   =  {'X': [0.0, 14.47], 'ERR': [1.57, 15.88]}
-#SCIErrParams['abi_g16'][ (14, 'ModHarnisch') ]   =  {'X': [0.0, 21.49], 'ERR': [1.79, 17.77]}
-#SCIErrParams['abi_g16'][ (15, 'ModHarnisch') ]   =  {'X': [1.0, 28.29], 'ERR': [1.56, 25.72]}
-#SCIErrParams['abi_g16'][ (16, 'ModHarnisch') ]   =  {'X': [1.0, 30.01], 'ERR': [1.8, 27.81]}
+SCIErrParams['ahi_himawari8'][ (8, 'Okamoto') ]   =  {'X': [1.0, 32.41], 'ERR': [2.59, 27.61]}
+SCIErrParams['ahi_himawari8'][ (9, 'Okamoto') ]   =  {'X': [1.0, 29.04], 'ERR': [1.77, 24.15]}
+SCIErrParams['ahi_himawari8'][ (10, 'Okamoto') ]   =  {'X': [1.0, 12.36], 'ERR': [1.62, 14.82]}
+SCIErrParams['ahi_himawari8'][ (11, 'Okamoto') ]   =  {'X': [1.0, 15.95], 'ERR': [1.46, 18.17]}
+SCIErrParams['ahi_himawari8'][ (12, 'Okamoto') ]   =  {'X': [0.0, 20.01], 'ERR': [0.81, 19.53]}
+SCIErrParams['ahi_himawari8'][ (13, 'Okamoto') ]   =  {'X': [1.0, 32.17], 'ERR': [2.27, 26.52]}
+SCIErrParams['ahi_himawari8'][ (14, 'Okamoto') ]   =  {'X': [10.0, 31.68], 'ERR': [2.68, 19.73]}
+SCIErrParams['ahi_himawari8'][ (15, 'Okamoto') ]   =  {'X': [1.0, 33.62], 'ERR': [2.68, 28.21]}
+SCIErrParams['ahi_himawari8'][ (16, 'Okamoto') ]   =  {'X': [1.0, 33.17], 'ERR': [2.74, 28.36]}
+#For UFO YAML config:
+# X0: [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 10.0, 1.0, 1.0]
+# X1: [32.41, 29.04, 12.36, 15.95, 20.01, 32.17, 31.68, 33.62, 33.17]
+# ERR0: [2.59, 1.77, 1.62, 1.46, 0.81, 2.27, 2.68, 2.68, 2.74]
+# ERR1: [27.61, 24.15, 14.82, 18.17, 19.53, 26.52, 19.73, 28.21, 28.36]
 
-#SCIErrParams['abi_g16'][ (7, 'ScaledModHarnisch') ]   =  {'X': [0.0, 29.96], 'ERR': [4.79, 26.16]}
-#SCIErrParams['abi_g16'][ (8, 'ScaledModHarnisch') ]   =  {'X': [0.0, 29.55], 'ERR': [4.64, 25.64]}
-#SCIErrParams['abi_g16'][ (9, 'ScaledModHarnisch') ]   =  {'X': [0.0, 25.92], 'ERR': [3.68, 21.35]}
-#SCIErrParams['abi_g16'][ (10, 'ScaledModHarnisch') ]   =  {'X': [0.0, 34.42], 'ERR': [4.79, 21.59]}
-#SCIErrParams['abi_g16'][ (11, 'ScaledModHarnisch') ]   =  {'X': [0.0, 11.43], 'ERR': [1.87, 12.53]}
-#SCIErrParams['abi_g16'][ (13, 'ScaledModHarnisch') ]   =  {'X': [0.0, 16.17], 'ERR': [2.24, 15.63]}
-#SCIErrParams['abi_g16'][ (14, 'ScaledModHarnisch') ]   =  {'X': [0.0, 21.63], 'ERR': [2.63, 17.43]}
-#SCIErrParams['abi_g16'][ (15, 'ScaledModHarnisch') ]   =  {'X': [0.0, 30.94], 'ERR': [4.39, 24.42]}
-#SCIErrParams['abi_g16'][ (16, 'ScaledModHarnisch') ]   =  {'X': [0.0, 30.11], 'ERR': [4.64, 25.98]}
+SCIErrParams['ahi_himawari8'][ (8, 'ScaledOkamoto') ]   =  {'X': [0.0, 33.64], 'ERR': [5.15, 26.93]}
+SCIErrParams['ahi_himawari8'][ (9, 'ScaledOkamoto') ]   =  {'X': [0.0, 30.15], 'ERR': [3.98, 23.52]}
+SCIErrParams['ahi_himawari8'][ (10, 'ScaledOkamoto') ]   =  {'X': [0.0, 12.61], 'ERR': [1.73, 14.49]}
+SCIErrParams['ahi_himawari8'][ (11, 'ScaledOkamoto') ]   =  {'X': [0.0, 16.36], 'ERR': [2.09, 17.76]}
+SCIErrParams['ahi_himawari8'][ (12, 'ScaledOkamoto') ]   =  {'X': [0.0, 21.6], 'ERR': [2.46, 19.39]}
+SCIErrParams['ahi_himawari8'][ (13, 'ScaledOkamoto') ]   =  {'X': [0.0, 34.23], 'ERR': [4.98, 26.19]}
+SCIErrParams['ahi_himawari8'][ (14, 'ScaledOkamoto') ]   =  {'X': [0.0, 36.86], 'ERR': [5.41, 18.95]}
+SCIErrParams['ahi_himawari8'][ (15, 'ScaledOkamoto') ]   =  {'X': [0.0, 35.03], 'ERR': [5.35, 27.69]}
+SCIErrParams['ahi_himawari8'][ (16, 'ScaledOkamoto') ]   =  {'X': [0.0, 35.43], 'ERR': [5.58, 27.71]}
+#For UFO YAML config:
+# X0: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+# X1: [33.64, 30.15, 12.61, 16.36, 21.6, 34.23, 36.86, 35.03, 35.43]
+# ERR0: [5.15, 3.98, 1.73, 2.09, 2.46, 4.98, 5.41, 5.35, 5.58]
+# ERR1: [26.93, 23.52, 14.49, 17.76, 19.39, 26.19, 18.95, 27.69, 27.71]
+
 allSCIErrParams[(30,None)] = deepcopy(SCIErrParams)

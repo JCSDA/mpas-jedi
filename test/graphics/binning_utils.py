@@ -326,8 +326,9 @@ class NormalizedError:
 
 
 mpasFCRes = 120 # km [30, 120]
-biasCorrectType = 'constant' #[None, 'constant', 'varbc']
-SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType)])
+biasCorrectType = {} #[None, 'constant', 'varbc']
+biasCorrectType['abi_g16'] = 'constant'
+biasCorrectType['ahi_himawari8'] = None
 
 class SCINormalizedError:
     def __init__(self):
@@ -350,6 +351,8 @@ class SCINormalizedError:
         if osName is None or osName not in SCIErrParams:
             print("ERROR: osName not available in SCIErrParams => "+osName)
             os._exit(1)
+
+        SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType.get(osName,None))])
 
         varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
         STD0 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][0]
