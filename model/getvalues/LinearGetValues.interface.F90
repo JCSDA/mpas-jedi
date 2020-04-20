@@ -91,13 +91,13 @@ module mpas_lineargetvalues_interface_mod
                                                         c_t2, c_key_locs, c_key_geovals) &
                bind (c,name='mpas_lineargetvalues_set_trajectory_f90')
     
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: c_key_geom
-    integer(c_int), intent(in) :: c_key_state
-    type(c_ptr),    intent(in) :: c_t1
-    type(c_ptr),    intent(in) :: c_t2
-    integer(c_int), intent(in) :: c_key_locs
-    integer(c_int), intent(in) :: c_key_geovals
+    integer(c_int),     intent(in) :: c_key_self
+    integer(c_int),     intent(in) :: c_key_geom
+    integer(c_int),     intent(in) :: c_key_state
+    type(c_ptr), value, intent(in) :: c_t1
+    type(c_ptr), value, intent(in) :: c_t2
+    integer(c_int),     intent(in) :: c_key_locs
+    integer(c_int),     intent(in) :: c_key_geovals
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
@@ -128,13 +128,13 @@ module mpas_lineargetvalues_interface_mod
                                                          c_t2, c_key_locs, c_key_geovals) &
                bind (c,name='mpas_lineargetvalues_fill_geovals_tl_f90')
     
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: c_key_geom
-    integer(c_int), intent(in) :: c_key_inc
-    type(c_ptr),    intent(in) :: c_t1
-    type(c_ptr),    intent(in) :: c_t2
-    integer(c_int), intent(in) :: c_key_locs
-    integer(c_int), intent(in) :: c_key_geovals
+    integer(c_int),     intent(in) :: c_key_self
+    integer(c_int),     intent(in) :: c_key_geom
+    integer(c_int),     intent(in) :: c_key_inc
+    type(c_ptr), value, intent(in) :: c_t1
+    type(c_ptr), value, intent(in) :: c_t2
+    integer(c_int),     intent(in) :: c_key_locs
+    integer(c_int),     intent(in) :: c_key_geovals
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
@@ -164,13 +164,13 @@ module mpas_lineargetvalues_interface_mod
                                                          c_t2, c_key_locs, c_key_geovals) &
                bind (c,name='mpas_lineargetvalues_fill_geovals_ad_f90')
     
-    integer(c_int), intent(in) :: c_key_self
-    integer(c_int), intent(in) :: c_key_geom
-    integer(c_int), intent(in) :: c_key_inc
-    type(c_ptr),    intent(in) :: c_t1
-    type(c_ptr),    intent(in) :: c_t2
-    integer(c_int), intent(in) :: c_key_locs
-    integer(c_int), intent(in) :: c_key_geovals
+    integer(c_int),     intent(in) :: c_key_self
+    integer(c_int),     intent(in) :: c_key_geom
+    integer(c_int),     intent(in) :: c_key_inc
+    type(c_ptr), value, intent(in) :: c_t1
+    type(c_ptr), value, intent(in) :: c_t2
+    integer(c_int),     intent(in) :: c_key_locs
+    integer(c_int),     intent(in) :: c_key_geovals
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom

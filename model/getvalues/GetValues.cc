@@ -31,12 +31,10 @@ GetValues::~GetValues() {
 void GetValues::fillGeoVaLs(const StateMPAS & state, const util::DateTime & t1,
                         const util::DateTime & t2, ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "GetValues::fillGeoVaLs starting" << std::endl;
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
 
   // // Fill GeoVaLs
   mpas_getvalues_fill_geovals_f90(keyGetValues_, geom_->toFortran(),
-                                  state.toFortran(), &t1p, &t2p, locs_.toFortran(),
+                                  state.toFortran(), t1, t2, locs_.toFortran(),
                                   geovals.toFortran());
 
   oops::Log::trace() << "GetValues::fillGeoVaLs done" << std::endl;

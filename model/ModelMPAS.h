@@ -66,7 +66,7 @@ class ModelMPAS: public oops::ModelBase<MPASTraits>,
 
  private:
   void print(std::ostream &) const;
-  F90model keyConfig_;
+  F90model keyModel_;
   util::Duration tstep_;
   const GeometryMPAS geom_;
   const oops::Variables vars_;

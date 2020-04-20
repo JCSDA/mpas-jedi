@@ -42,7 +42,7 @@ class LocalizationMatrixMPAS: public util::Printable,
 
  private:
   void print(std::ostream &) const;
-  F90lclz keyFtnConfig_;
+  F90lclz keyLocal_;
 };
 // -----------------------------------------------------------------------------
 

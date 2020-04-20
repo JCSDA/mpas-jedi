@@ -95,7 +95,7 @@ subroutine mpas_increment_dirac_c(c_key_self,c_conf) &
       bind(c,name='mpas_increment_dirac_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-type(c_ptr), intent(in)    :: c_conf !< Configuration
+type(c_ptr), value, intent(in) :: c_conf !< Configuration
 
 type(mpas_field), pointer :: self
 type(fckit_configuration) :: f_conf
@@ -364,8 +364,8 @@ subroutine mpas_increment_read_file_c(c_key_inc, c_conf, c_dt) &
       bind(c,name='mpas_increment_read_file_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields
-type(c_ptr), intent(in)    :: c_conf !< Configuration
-type(c_ptr), intent(inout) :: c_dt   !< DateTime
+type(c_ptr), value, intent(in) :: c_conf !< Configuration
+type(c_ptr), value, intent(in) :: c_dt   !< DateTime
 
 type(mpas_field), pointer :: self
 type(datetime) :: fdate
@@ -384,8 +384,8 @@ subroutine mpas_increment_write_file_c(c_key_inc, c_conf, c_dt) &
       bind(c,name='mpas_increment_write_file_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_inc  !< Fields
-type(c_ptr), intent(in) :: c_conf !< Configuration
-type(c_ptr), intent(in) :: c_dt   !< DateTime
+type(c_ptr), value, intent(in) :: c_conf !< Configuration
+type(c_ptr), value, intent(in) :: c_dt   !< DateTime
 
 type(mpas_field), pointer :: self
 type(datetime) :: fdate

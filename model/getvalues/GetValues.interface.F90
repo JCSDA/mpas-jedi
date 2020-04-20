@@ -89,13 +89,13 @@ subroutine mpas_getvalues_fill_geovals_c(c_key_self, c_key_geom, c_key_state, c_
                                             c_key_locs, c_key_geovals) &
            bind (c, name='mpas_getvalues_fill_geovals_f90')
 
-integer(c_int), intent(in) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom
-integer(c_int), intent(in) :: c_key_state
-type(c_ptr),    intent(in) :: c_t1
-type(c_ptr),    intent(in) :: c_t2
-integer(c_int), intent(in) :: c_key_locs
-integer(c_int), intent(in) :: c_key_geovals
+integer(c_int),     intent(in) :: c_key_self
+integer(c_int),     intent(in) :: c_key_geom
+integer(c_int),     intent(in) :: c_key_state
+type(c_ptr), value, intent(in) :: c_t1
+type(c_ptr), value, intent(in) :: c_t2
+integer(c_int),     intent(in) :: c_key_locs
+integer(c_int),     intent(in) :: c_key_geovals
 
 type(mpasjedi_getvalues), pointer :: self
 type(mpas_geom),          pointer :: geom

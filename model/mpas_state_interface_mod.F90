@@ -197,9 +197,9 @@ end subroutine mpas_state_change_resol_c
 subroutine mpas_state_read_file_c(c_key_state, c_conf, c_dt) &
       bind(c,name='mpas_state_read_file_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_state  !< State
-type(c_ptr), intent(in)    :: c_conf !< Configuration
-type(c_ptr), intent(inout) :: c_dt   !< DateTime
+integer(c_int), intent(in) :: c_key_state !< State
+type(c_ptr), value, intent(in) :: c_conf  !< Configuration
+type(c_ptr), value, intent(in) :: c_dt    !< DateTime
 
 type(mpas_field), pointer :: self
 type(datetime) :: fdate
@@ -217,10 +217,10 @@ end subroutine mpas_state_read_file_c
 subroutine mpas_state_analytic_init_c(c_key_state, c_key_geom, c_conf, c_dt) &
       bind(c,name='mpas_state_analytic_init_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_state  !< State
+integer(c_int), intent(in) :: c_key_state !< State
 integer(c_int), intent(in) :: c_key_geom  !< Geometry
-type(c_ptr), intent(in)    :: c_conf !< Configuration
-type(c_ptr), intent(inout) :: c_dt   !< DateTime
+type(c_ptr), value, intent(in) :: c_conf  !< Configuration
+type(c_ptr), value, intent(in) :: c_dt    !< DateTime
 
 type(mpas_field), pointer :: state
 type(mpas_geom), pointer :: geom
@@ -240,9 +240,9 @@ end subroutine mpas_state_analytic_init_c
 subroutine mpas_state_write_file_c(c_key_state, c_conf, c_dt) &
       bind(c,name='mpas_state_write_file_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_state  !< State
-type(c_ptr), intent(in) :: c_conf !< Configuration
-type(c_ptr), intent(in) :: c_dt   !< DateTime
+integer(c_int), intent(in) :: c_key_state !< State
+type(c_ptr), value, intent(in) :: c_conf  !< Configuration
+type(c_ptr), value, intent(in) :: c_dt    !< DateTime
 
 type(mpas_field), pointer :: self
 type(datetime) :: fdate

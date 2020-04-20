@@ -34,11 +34,8 @@ void LinearGetValues::setTrajectory(const StateMPAS & state, const util::DateTim
                                     const util::DateTime & t2, ufo::GeoVaLs & geovals) {
   oops::Log::trace() << "LinearGetValues::setTrajectory starting" << std::endl;
 
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
-
   mpas_lineargetvalues_set_trajectory_f90(keyLinearGetValues_, geom_->toFortran(),
-                                          state.toFortran(), &t1p, &t2p,
+                                          state.toFortran(), t1, t2,
                                           locs_.toFortran(), geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::setTrajectory done" << std::endl;
 }
@@ -49,10 +46,8 @@ void LinearGetValues::fillGeoVaLsTL(const IncrementMPAS & inc, const util::DateT
                                     const util::DateTime & t2, ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsTL starting" << std::endl;
 
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   mpas_lineargetvalues_fill_geovals_tl_f90(keyLinearGetValues_, geom_->toFortran(),
-                                           inc.toFortran(), &t1p, &t2p,
+                                           inc.toFortran(), t1, t2,
                                            locs_.toFortran(), geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsTL done" << std::endl;
 }
@@ -63,10 +58,8 @@ void LinearGetValues::fillGeoVaLsAD(IncrementMPAS & inc, const util::DateTime & 
                                     const util::DateTime & t2, const ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsAD starting" << std::endl;
 
-  const util::DateTime * t1p = &t1;
-  const util::DateTime * t2p = &t2;
   mpas_lineargetvalues_fill_geovals_ad_f90(keyLinearGetValues_, geom_->toFortran(),
-                                           inc.toFortran(), &t1p, &t2p,
+                                           inc.toFortran(), t1, t2,
                                            locs_.toFortran(), geovals.toFortran());
 
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsAD done" << std::endl;

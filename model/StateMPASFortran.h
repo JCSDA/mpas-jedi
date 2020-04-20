@@ -41,16 +41,16 @@ extern "C" {
   void mpas_state_add_incr_f90(const F90state &, const F90inc &);
   void mpas_state_change_resol_f90(const F90state &, const F90state &);
   void mpas_state_read_file_f90(const F90state &,
-                                const eckit::Configuration * const *,
-                                util::DateTime * const *);
+                                const eckit::Configuration &,
+                                util::DateTime &);
   void mpas_state_write_file_f90(const F90state &,
-                                 const eckit::Configuration * const *,
-                                 const util::DateTime * const *);
+                                 const eckit::Configuration &,
+                                 const util::DateTime &);
   void mpas_state_gpnorm_f90(const F90state &, const int &, double &);
   void mpas_state_rms_f90(const F90state &, double &);
   void mpas_state_analytic_init_f90(const F90state &, const F90geom &,
-                                        const eckit::Configuration * const *,
-                                        util::DateTime * const *);
+                                        const eckit::Configuration &,
+                                        util::DateTime &);
   void mpas_state_sizes_f90(const F90state &, int &, int &);
 
 

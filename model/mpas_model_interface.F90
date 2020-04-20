@@ -16,7 +16,7 @@ use mpas_geom_mod
 implicit none
 integer(c_int), intent(inout) :: c_key_self  !< Key to model data
 integer(c_int), intent(in)    :: c_key_geom  !< Geometry
-type(c_ptr), intent(in)       :: c_conf      !< pointer to object of class Config
+type(c_ptr), value, intent(in) :: c_conf     !< pointer to object of class Config
 
 type(mpas_model), pointer :: model
 type(mpas_geom), pointer :: geom

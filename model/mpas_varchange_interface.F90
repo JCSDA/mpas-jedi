@@ -14,11 +14,11 @@ use mpas_field_utils_mod
 use mpas_geom_mod
 
 implicit none
-integer(c_int), intent(inout) :: c_key_self     !< Change variable structure
-integer(c_int), intent(in)    :: c_key_state_bg !< Background key
-integer(c_int), intent(in)    :: c_key_state_fg !< First guess key
-integer(c_int), intent(in)    :: c_key_geom     !< Geom key
-type(c_ptr),    intent(in)    :: c_conf         !< Configuration
+integer(c_int), intent(inout)  :: c_key_self     !< Change variable structure
+integer(c_int), intent(in)     :: c_key_state_bg !< Background key
+integer(c_int), intent(in)     :: c_key_state_fg !< First guess key
+integer(c_int), intent(in)     :: c_key_geom     !< Geom key
+type(c_ptr), value, intent(in) :: c_conf         !< Configuration
 
 type(mpas_varchange), pointer :: self
 type(mpas_field), pointer :: bg

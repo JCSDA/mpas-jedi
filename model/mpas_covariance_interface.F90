@@ -14,9 +14,9 @@ use mpas_covariance_mod
 use mpas_geom_mod
 
 implicit none
-integer(c_int), intent(inout) :: c_key_self  !< Background error covariance structure
-type(c_ptr), intent(in)    :: c_conf         !< Configuration
-integer(c_int), intent(in) :: c_key_geom     !< Geometry
+integer(c_int), intent(inout) :: c_key_self !< Background error covariance structure
+type(c_ptr), value, intent(in) :: c_conf    !< Configuration
+integer(c_int), intent(in) :: c_key_geom    !< Geometry
 type(mpas_covar), pointer :: self
 type(mpas_geom),  pointer :: geom
 type(fckit_configuration) :: f_conf

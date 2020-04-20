@@ -28,7 +28,7 @@ subroutine mpas_run_init(c_conf) bind(c,name='mpas_run_init_f90')
    use, intrinsic :: iso_c_binding, only: c_ptr
 
    implicit none
-   type(c_ptr), intent(in) :: c_conf
+   type(c_ptr), value, intent(in) :: c_conf
    character(len=30) :: fn
    type(fckit_mpi_comm) :: f_comm
    type(fckit_configuration) :: f_conf

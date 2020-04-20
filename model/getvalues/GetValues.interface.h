@@ -27,7 +27,7 @@ extern "C" {
   void mpas_getvalues_delete_f90(F90getvalues &);
 
   void mpas_getvalues_fill_geovals_f90(const F90getvalues &, const F90geom &, const F90state &,
-                                          const util::DateTime **, const util::DateTime **,
+                                          const util::DateTime &, const util::DateTime &,
                                           const F90locs &, const F90goms &);
 
 };  // extern "C"

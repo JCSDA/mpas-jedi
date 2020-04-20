@@ -43,11 +43,11 @@ extern "C" {
 
   void mpas_increment_change_resol_f90(const F90inc &, const F90inc &);
   void mpas_increment_read_file_f90(const F90inc &,
-                                const eckit::Configuration * const *,
-                                util::DateTime * const *);
+                                const eckit::Configuration &,
+                                util::DateTime &);
   void mpas_increment_write_file_f90(const F90inc &,
-                                 const eckit::Configuration * const *,
-                                 const util::DateTime * const *);
+                                 const eckit::Configuration &,
+                                 const util::DateTime &);
   void mpas_increment_gpnorm_f90(const F90inc &, const int &, double &);
   void mpas_increment_rms_f90(const F90inc &, double &);
   void mpas_increment_diff_incr_f90(const F90inc &, const F90state &,
@@ -66,7 +66,7 @@ extern "C" {
 
 
   void mpas_increment_dirac_f90(const F90inc &,
-                                const eckit::Configuration * const *);
+                                const eckit::Configuration &);
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);
 
 };  // extern "C"

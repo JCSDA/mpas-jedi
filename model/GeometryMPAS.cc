@@ -13,12 +13,11 @@
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const eckit::Configuration & conf,
+GeometryMPAS::GeometryMPAS(const eckit::Configuration & config,
                            const eckit::mpi::Comm & comm) : comm_(comm) {
-  const eckit::Configuration * configc = &conf;
   oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 1 =========="
                      << std::endl;
-  mpas_geo_setup_f90(keyGeom_, &configc);
+  mpas_geo_setup_f90(keyGeom_, config);
   oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 2 =========="
                      << std::endl;
 }

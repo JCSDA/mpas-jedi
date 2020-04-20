@@ -168,15 +168,11 @@ void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug,
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void IncrementMPAS::read(const eckit::Configuration & config) {
-  const eckit::Configuration * conf = &config;
-  util::DateTime * dtp = &time_;
-  mpas_increment_read_file_f90(keyInc_, &conf, &dtp);
+  mpas_increment_read_file_f90(keyInc_, config, time_);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::write(const eckit::Configuration & config) const {
-  const eckit::Configuration * conf = &config;
-  const util::DateTime * dtp = &time_;
-  mpas_increment_write_file_f90(keyInc_, &conf, &dtp);
+  mpas_increment_write_file_f90(keyInc_, config, time_);
 }
 // -----------------------------------------------------------------------------
 double IncrementMPAS::norm() const {
@@ -202,8 +198,7 @@ void IncrementMPAS::print(std::ostream & os) const {
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::dirac(const eckit::Configuration & config) {
-  const eckit::Configuration * conf = &config;
-  mpas_increment_dirac_f90(keyInc_, &conf);
+  mpas_increment_dirac_f90(keyInc_, config);
 }
 // -----------------------------------------------------------------------------
 

@@ -50,7 +50,7 @@ class ErrorCovarianceMPAS : public util::Printable,
 
  private:
   void print(std::ostream &) const;
-  F90bmat keyFtnConfig_;
+  F90bmat keyErrCov_;
   boost::scoped_ptr<const GeometryMPAS> geom_;
   util::DateTime time_;
 };

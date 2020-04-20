@@ -42,7 +42,7 @@ class VarChangeMPAS: public util::Printable {
   void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const;
 
  private:
-  F90vc keyFtnConfig_;
+  F90vc keyVarChange_;
   void print(std::ostream &) const override;
 };
 // -----------------------------------------------------------------------------

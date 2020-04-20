@@ -63,13 +63,13 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Run
 // -----------------------------------------------------------------------------
-  void mpas_run_init_f90(const eckit::Configuration * const *);
+  void mpas_run_init_f90(const eckit::Configuration &);
   void mpas_run_final_f90();
 
 // -----------------------------------------------------------------------------
 //  Geometry
 // -----------------------------------------------------------------------------
-  void mpas_geo_setup_f90(F90geom &, const eckit::Configuration * const *);
+  void mpas_geo_setup_f90(F90geom &, const eckit::Configuration &);
   void mpas_geo_clone_f90(const F90geom &, F90geom &);
   void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
                          int &, int &, int &);
@@ -78,7 +78,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  Model
 // -----------------------------------------------------------------------------
-  void mpas_model_setup_f90(const eckit::Configuration * const *,
+  void mpas_model_setup_f90(const eckit::Configuration &,
                             const F90geom &, F90model &);
   void mpas_model_delete_f90(F90model &);
 
@@ -99,12 +99,12 @@ extern "C" {
 // -----------------------------------------------------------------------------
 //  ErrorCovariance (Background error)
 // -----------------------------------------------------------------------------
-  void mpas_b_setup_f90(F90bmat &, const eckit::Configuration * const *,
+  void mpas_b_setup_f90(F90bmat &, const eckit::Configuration &,
                         const F90geom &);
   void mpas_b_delete_f90(F90bmat &);
 
   void mpas_b_linearize_f90(const F90bmat &,
-                            const eckit::Configuration * const *);
+                            const eckit::Configuration &);
 
   void mpas_b_mult_f90(const F90bmat &, const F90inc &, const F90inc &);
   void mpas_b_invmult_f90(const F90bmat &, const F90inc &, const F90inc &);
@@ -116,7 +116,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
   void mpas_varchange_setup_f90(const F90vc &, const F90state &,
                                    const F90state &, const F90geom &,
-                                   const eckit::Configuration * const *);
+                                   const eckit::Configuration &);
   void mpas_varchange_delete_f90(F90vc &);
   void mpas_varchange_multiply_f90(const F90vc &, const F90inc &,
                                       const F90inc &);
@@ -130,7 +130,7 @@ extern "C" {
 //  LocalizationMatrix
 // -----------------------------------------------------------------------------
   void mpas_localization_setup_f90(F90lclz &,
-                                 const eckit::Configuration * const *,
+                                 const eckit::Configuration &,
                                  const F90geom &);
   void mpas_localization_delete_f90(F90lclz &);
   void mpas_localization_mult_f90(const F90lclz &, const F90inc &);

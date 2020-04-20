@@ -23,19 +23,18 @@ namespace mpas {
 
 ErrorCovarianceMPAS::ErrorCovarianceMPAS(const GeometryMPAS & resol,
                                          const oops::Variables &,
-                                         const eckit::Configuration & conf,
+                                         const eckit::Configuration & config,
                                          const StateMPAS &,
                                          const StateMPAS & ) {
-  time_ = util::DateTime(conf.getString("date"));
-  const eckit::Configuration * configc = &conf;
-  mpas_b_setup_f90(keyFtnConfig_, &configc, resol.toFortran());
+  time_ = util::DateTime(config.getString("date"));
+  mpas_b_setup_f90(keyErrCov_, config, resol.toFortran());
   oops::Log::trace() << "ErrorCovarianceMPAS created" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
 ErrorCovarianceMPAS::~ErrorCovarianceMPAS() {
-  mpas_b_delete_f90(keyFtnConfig_);
+  mpas_b_delete_f90(keyErrCov_);
   oops::Log::trace() << "ErrorCovarianceMPAS destructed" << std::endl;
 }
 
@@ -50,7 +49,7 @@ void ErrorCovarianceMPAS::linearize(const StateMPAS &,
 
 void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin,
                                    IncrementMPAS & dxout) const {
-  mpas_b_mult_f90(keyFtnConfig_, dxin.toFortran(),
+  mpas_b_mult_f90(keyErrCov_, dxin.toFortran(),
                   dxout.toFortran());
 }
 
@@ -58,14 +57,14 @@ void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin,
 
 void ErrorCovarianceMPAS::inverseMultiply(const IncrementMPAS & dxin,
                                            IncrementMPAS & dxout) const {
-  mpas_b_invmult_f90(keyFtnConfig_, dxin.toFortran(),
+  mpas_b_invmult_f90(keyErrCov_, dxin.toFortran(),
                                dxout.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
 void ErrorCovarianceMPAS::randomize(IncrementMPAS & dx) const {
-  mpas_b_randomize_f90(keyFtnConfig_, dx.toFortran());
+  mpas_b_randomize_f90(keyErrCov_, dx.toFortran());
 }
 
 // -----------------------------------------------------------------------------

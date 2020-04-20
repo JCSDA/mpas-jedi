@@ -10,7 +10,7 @@ use iso_c_binding
 use mpas_geom_mod
 implicit none
 integer(c_int), intent(inout) :: c_key_self
-type(c_ptr), intent(in) :: c_conf
+type(c_ptr), value, intent(in) :: c_conf
 
 type(mpas_geom), pointer :: self
 type(fckit_configuration) :: f_conf
