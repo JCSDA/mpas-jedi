@@ -29,7 +29,7 @@ GetValues::~GetValues() {
 // -------------------------------------------------------------------------------------------------
 
 void GetValues::fillGeoVaLs(const StateMPAS & state, const util::DateTime & t1,
-                        const util::DateTime & t2, ufo::GeoVaLs & geovals) const {
+                            const util::DateTime & t2, ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "GetValues::fillGeoVaLs starting" << std::endl;
 
   // // Fill GeoVaLs
