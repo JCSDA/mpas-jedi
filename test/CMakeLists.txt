@@ -26,6 +26,8 @@ list( APPEND mpas_test_input
   testinput/parameters_bumploc.yaml
   testinput/state.yaml
   testinput/variablechange.yaml
+  testinput/getvalues.yaml
+  testinput/lineargetvalues.yaml
 )
 
 list( APPEND mpas_testoutput
@@ -557,6 +559,8 @@ if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
     jedi_unit_test( CLASS Increment       YAMLFILE increment )
     jedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     jedi_unit_test( CLASS VariableChange  YAMLFILE variablechange )
+    jedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
+    jedi_unit_test( CLASS LinearGetValues YAMLFILE lineargetvalues )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output
