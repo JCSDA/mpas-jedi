@@ -297,8 +297,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
         ilev = nlevels - jlev + 1
         do jloc = 1, nlocs
           !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-          ! only selected obs (using locs%indx()) are filling "geovals"
-          if (time_mask(jloc)) gom%geovals(jvar)%vals(ilev,locs%indx(jloc)) = obs_field(jloc,jlev)
+          if (time_mask(jloc)) gom%geovals(jvar)%vals(ilev,jloc) = obs_field(jloc,jlev)
         end do
       end do
     endif
@@ -389,12 +388,11 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
       do jlev = 1, nlevels
         !ORG- obs_field(:,jlev) = gom%geovals(jvar)%vals(jlev,:)
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-        ! only selected obs (using locs%indx()) are filling "geovals"
         ilev = nlevels - jlev + 1
         do jloc = 1, nlocs
           if (time_mask(jloc)) then
-            obs_field(jloc,jlev) = gom%geovals(jvar)%vals(ilev, locs%indx(jloc))
-            gom%geovals(jvar)%vals(ilev, locs%indx(jloc)) = MPAS_JEDI_ZERO_kr
+            obs_field(jloc,jlev) = gom%geovals(jvar)%vals(ilev, jloc)
+            gom%geovals(jvar)%vals(ilev, jloc) = MPAS_JEDI_ZERO_kr
           endif
         end do
       end do

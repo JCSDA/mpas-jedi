@@ -246,10 +246,9 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
       do jlev = 1, nlevels
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-        ! only selected obs (using locs%indx()) are filling "geovals"
         ilev = nlevels - jlev + 1
         do jloc = 1, nlocs
-          if (time_mask(jloc)) gom%geovals(ivar)%vals(ilev, locs%indx(jloc)) = obs_field(jloc,jlev)
+          if (time_mask(jloc)) gom%geovals(ivar)%vals(ilev, jloc) = obs_field(jloc,jlev)
         end do
       end do
       !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -296,7 +295,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       endif
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = sqrt( tmp_field(jloc,1)**2 + tmp_field(jloc,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
+          gom%geovals(ivar)%vals(1,jloc) = sqrt( tmp_field(jloc,1)**2 + tmp_field(jloc,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
         endif
       end do
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -311,7 +310,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       endif
       do jloc = 1, nlocs
         call uv_to_wdir(tmp_field(jloc,1), tmp_field(jloc,2), wdir) ! uu, vv, wind10_direction in radian
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,locs%indx(jloc)) = wdir * MPAS_JEDI_RAD2DEG_kr  ! radian -> degree
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = wdir * MPAS_JEDI_RAD2DEG_kr  ! radian -> degree
       enddo
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
@@ -371,7 +370,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       allocate( mod_field_ext(self%bump%obsop%nc0b,1) )
       call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
       do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,locs%indx(jloc)) = mod_field_ext( index_nn(jloc), 1 )
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = mod_field_ext( index_nn(jloc), 1 )
       enddo
       deallocate( mod_field_ext )
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
@@ -389,7 +388,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = real(convert_type_veg( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
+          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_veg( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
         endif
       enddo
       deallocate( mod_field_ext )
@@ -408,7 +407,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,locs%indx(jloc)) = real(convert_type_soil( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
+          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_soil( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
         endif
       enddo
       deallocate( mod_field_ext )
@@ -455,7 +454,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
       call self%bump%apply_obsop(mod_field,obs_field)
       do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_lfrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
@@ -469,7 +468,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       mod_field(:,1) = r1d_ptr_a(1:ngrid)
       call self%bump%apply_obsop(mod_field,obs_field)
       do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_ifrac),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
@@ -487,35 +486,34 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       mod_field(:,1) = r1d_ptr_b(1:ngrid)
       call self%bump%apply_obsop(mod_field,obs_field)
       do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,locs%indx(jloc)) = obs_field(jloc,1)
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          jj = locs%indx(jloc)
-          if (gom%geovals(ivari)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
-            gom%geovals(ivar)%vals(1,jj)  = &
-              max(min(gom%geovals(ivar)%vals(1,jj), &
+          if (gom%geovals(ivari)%vals(1,jloc) > MPAS_JEDI_ZERO_kr) then
+            gom%geovals(ivar)%vals(1,jloc)  = &
+              max(min(gom%geovals(ivar)%vals(1,jloc), &
                       MPAS_JEDI_ONE_kr - &
-                      gom%geovals(ivari)%vals(1,jj)), &
+                      gom%geovals(ivari)%vals(1,jloc)), &
                   MPAS_JEDI_ZERO_kr)
-            gom%geovals(ivarw)%vals(1,jj) = &
+            gom%geovals(ivarw)%vals(1,jloc) = &
               max(MPAS_JEDI_ONE_kr - &
-                  gom%geovals(ivari)%vals(1,jj) - &
-                  gom%geovals(ivar)%vals(1,jj), &
+                  gom%geovals(ivari)%vals(1,jloc) - &
+                  gom%geovals(ivar)%vals(1,jloc), &
                   MPAS_JEDI_ZERO_kr)
-          else if (gom%geovals(ivar)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
-            gom%geovals(ivarw)%vals(1,jj) = &
+          else if (gom%geovals(ivar)%vals(1,jloc) > MPAS_JEDI_ZERO_kr) then
+            gom%geovals(ivarw)%vals(1,jloc) = &
               max(MPAS_JEDI_ONE_kr - &
-                  gom%geovals(ivar)%vals(1,jj), &
+                  gom%geovals(ivar)%vals(1,jloc), &
                   MPAS_JEDI_ZERO_kr)
-            gom%geovals(ivari)%vals(1,jj) = MPAS_JEDI_ZERO_kr
+            gom%geovals(ivari)%vals(1,jloc) = MPAS_JEDI_ZERO_kr
           else
-            gom%geovals(ivarw)%vals(1,jj) = &
+            gom%geovals(ivarw)%vals(1,jloc) = &
               max(MPAS_JEDI_ONE_kr - &
-                  gom%geovals(ivarl)%vals(1,jj), &
+                  gom%geovals(ivarl)%vals(1,jloc), &
                   MPAS_JEDI_ZERO_kr)
-            gom%geovals(ivari)%vals(1,jj) = MPAS_JEDI_ZERO_kr
-            gom%geovals(ivar)%vals(1,jj)  = MPAS_JEDI_ZERO_kr
+            gom%geovals(ivari)%vals(1,jloc) = MPAS_JEDI_ZERO_kr
+            gom%geovals(ivar)%vals(1,jloc)  = MPAS_JEDI_ZERO_kr
           endif
         endif
       enddo
@@ -527,12 +525,11 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     if(ivar > 0) then
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          jj = locs%indx(jloc)
-          gom%geovals(ivar)%vals(1,jj) = &
+          gom%geovals(ivar)%vals(1,jloc) = &
             max(MPAS_JEDI_ONE_kr - &
-                gom%geovals(ivarw)%vals(1,jj) - &
-                gom%geovals(ivari)%vals(1,jj) - &
-                gom%geovals(ivars)%vals(1,jj), &
+                gom%geovals(ivarw)%vals(1,jloc) - &
+                gom%geovals(ivari)%vals(1,jloc) - &
+                gom%geovals(ivars)%vals(1,jloc), &
                 MPAS_JEDI_ZERO_kr)
         endif
       enddo
@@ -550,12 +547,13 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
          (ufo_vars_getindex(gom%variables,var_sfc_soiltyp) > 0) ) then
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          jj = locs%indx(jloc)
-          if(gom%geovals(ivarl)%vals(1,jj) > MPAS_JEDI_ZERO_kr) then
-            if(nint(gom%geovals(ufo_vars_getindex(gom%variables,var_sfc_soiltyp))%vals(1,jj)) .eq. 9 .or. &
-              nint(gom%geovals(ufo_vars_getindex(gom%variables,var_sfc_vegtyp))%vals(1,jj)) .eq. 13 ) then
-              gom%geovals(ivari)%vals(1,jj) = min( gom%geovals(ivari)%vals(1,jj) + gom%geovals(ivarl)%vals(1,jj), MPAS_JEDI_ONE_kr )
-              gom%geovals(ivarl)%vals(1,jj) = MPAS_JEDI_ZERO_kr
+          if(gom%geovals(ivarl)%vals(1,jloc) > MPAS_JEDI_ZERO_kr) then
+            if(nint(gom%geovals(ufo_vars_getindex(gom%variables,var_sfc_soiltyp))%vals(1,jloc)) .eq. 9 .or. &
+              nint(gom%geovals(ufo_vars_getindex(gom%variables,var_sfc_vegtyp))%vals(1,jloc)) .eq. 13 ) then
+              gom%geovals(ivari)%vals(1,jloc) = min( gom%geovals(ivari)%vals(1,jloc) + &
+                                                   gom%geovals(ivarl)%vals(1,jloc), &
+                                                   MPAS_JEDI_ONE_kr )
+              gom%geovals(ivarl)%vals(1,jloc) = MPAS_JEDI_ZERO_kr
             endif
           endif
         endif
