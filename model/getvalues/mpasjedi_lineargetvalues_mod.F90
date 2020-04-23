@@ -38,7 +38,7 @@ public :: mpasjedi_lineargetvalues
 public :: mpas_lineargetvalues_registry
 
 type, extends(mpasjedi_getvalues_base) :: mpasjedi_lineargetvalues
-  type (mpas_pool_type), pointer :: trajectory
+  type (mpas_pool_type), pointer :: trajectories
   contains
     procedure, public :: create
     procedure, public :: delete
@@ -74,7 +74,7 @@ subroutine create(self, geom, locs)
   type(ufo_locs),                  intent(in)    :: locs
 
   call initialize_bump(self, geom, locs)
-  call mpas_pool_create_pool(self % trajectory)
+  call mpas_pool_create_pool(self % trajectories)
 
 end subroutine create
 
@@ -85,7 +85,7 @@ subroutine delete(self)
   implicit none
   class(mpasjedi_lineargetvalues), intent(inout) :: self
 
-  call mpas_pool_destroy_pool(self % trajectory)
+  call mpas_pool_destroy_pool(self % trajectories)
 
   call self%bump%dealloc()
 
@@ -105,14 +105,10 @@ subroutine set_trajectory (self, geom, fields, t1, t2, locs, gom)
   type(ufo_geovals),              intent(inout) :: gom
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
+  character(len=41) :: windowkey
 
   type (field2DReal), pointer :: field2d_src, field2d_dst
   type (field1DReal), pointer :: field1d_src, field1d_dst
-
-  ! Reset existing trajectory
-  ! -------------------------
-  call mpas_pool_destroy_pool( self%trajectory )
-  call mpas_pool_create_pool( self%trajectory )
 
 
   ! Initialize this window interpolation trajectory
@@ -139,13 +135,10 @@ subroutine set_trajectory (self, geom, fields, t1, t2, locs, gom)
   call mpas_pool_add_field(windowtraj, 'surface_pressure', field1d_dst)
 
 
-  ! Copy to self, then empty+destroy
-  ! --------------------------------
-  call mpas_pool_clone_pool(windowtraj, self % trajectory)
-
-  call mpas_pool_empty_pool(windowtraj)
-
-  call mpas_pool_destroy_pool(windowtraj)
+  ! Push to self%trajectories
+  ! -------------------------
+  call get_windowkey(t1, t2, windowkey)
+  call mpas_pool_add_subpool(self%trajectories, windowkey, windowtraj)
 
 
   ! fill geovals at this state
@@ -171,6 +164,9 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs
   real(kind=kind_real), allocatable :: mod_field(:,:)
   real(kind=kind_real), allocatable :: obs_field(:,:)
+
+  type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
+  character(len=41) :: windowkey
 
   type (mpas_pool_type), pointer :: pool_ufo
   type (mpas_pool_iterator_type) :: poolItr
@@ -202,7 +198,10 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   ! Allocate intermediate pool of fields w/ geovals vars
   ! and TL of variable conversion
   ! ----------------------------------------------------
-  call convert_mpas_field2ufoTL(geom, self % trajectory, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
+  call get_windowkey(t1, t2, windowkey)
+  call mpas_pool_get_subpool(self%trajectories, windowkey, windowtraj)
+
+  call convert_mpas_field2ufoTL(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
 
 
   ! Allocate and initialize output geovals
@@ -337,6 +336,9 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   real(kind=kind_real), allocatable :: mod_field(:,:)
   real(kind=kind_real), allocatable :: obs_field(:,:)
 
+  type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
+  character(len=41) :: windowkey
+
   type (mpas_pool_type), pointer :: pool_ufo
   type (mpas_pool_iterator_type) :: poolItr
   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
@@ -363,9 +365,12 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   ! Allocate intermediate pool of fields w/ geovals vars
   ! ----------------------------------------------------
+  call get_windowkey(t1, t2, windowkey)
+  call mpas_pool_get_subpool(self%trajectories, windowkey, windowtraj)
+
   !NOTE: this TL routine creates "pool_ufo". The field values from TL routine are unused.
   !    : The fields are initialized as "zero" in following "do while" loop.
-  call convert_mpas_field2ufoTL(geom, self % trajectory, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
+  call convert_mpas_field2ufoTL(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
 
 
   ! Adjoint of interpolate fields to obs locations using pre-calculated weights
@@ -426,7 +431,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   ! AD of variable conversion
   ! -------------------------
-  call convert_mpas_field2ufoAD(geom, self % trajectory, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
+  call convert_mpas_field2ufoAD(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
 
   self%bump%geom%nl0 = 1
   !allocate(mod_field(ngrid,1))
@@ -442,5 +447,17 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   !write(*,*) '---- Leaving fill_geovals_ad ---'
 
 end subroutine fill_geovals_ad
+
+subroutine get_windowkey(t1, t2, key)
+  implicit none
+  type(datetime),    intent(in)  :: t1, t2
+  character(len=41), intent(out) :: key
+
+  character(len=20) :: t1str, t2str
+
+  call datetime_to_string(t1, t1str)
+  call datetime_to_string(t2, t2str)
+  key = trim(t1str)//'_'//trim(t2str)
+end subroutine get_windowkey
 
 end module mpasjedi_lineargetvalues_mod
