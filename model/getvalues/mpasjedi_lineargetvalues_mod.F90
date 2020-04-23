@@ -328,7 +328,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   type(datetime),                 intent(in)     :: t1
   type(datetime),                 intent(in)     :: t2
   type(ufo_locs),                 intent(in)     :: locs
-  type(ufo_geovals),              intent(inout)  :: gom
+  type(ufo_geovals),              intent(in)     :: gom
 
   character(len=*), parameter :: myname = 'fill_geovals_ad'
 
@@ -392,7 +392,6 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
         do jloc = 1, nlocs
           if (time_mask(jloc)) then
             obs_field(jloc,jlev) = gom%geovals(jvar)%vals(ilev, jloc)
-            gom%geovals(jvar)%vals(ilev, jloc) = MPAS_JEDI_ZERO_kr
           endif
         end do
       end do
