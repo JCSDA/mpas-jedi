@@ -80,9 +80,10 @@ def read_stats_nc(statsFile):
 
     statsDict = {}
     for attribName in fileStatAttributes:
-        statsDict[attribName] = np.asarray(ncid.variables[attribName])
+        statsDict[attribName] = np.asarray(ncid.variables[attribName][:])
+
     for statName in allFileStats:
-        statsDict[statName] = np.asarray(ncid.variables[statName])
+        statsDict[statName] = np.asarray(ncid.variables[statName][:])
 
     ncid.close()
 

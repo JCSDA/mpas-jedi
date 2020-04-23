@@ -10,7 +10,10 @@ import plot_utils as pu
 import re
 import os
 import stat_utils as su
+import sys
 import var_utils as vu
+
+this_program = os.path.basename(sys.argv[0])
 
 singleFCLen = "singleFCLen"
 multiFCLen = "multiFCLen"
@@ -43,6 +46,9 @@ class StatsDataBase:
     #            |                         |        |          |                      |             |         |
     #                       ^                   ^        ^                ^                  ^           ^
     #                  expDirectory       expLongName  cyDTime      statsFilePrefix     DAMethod   DiagSpaceName
+        # selected DiagSpace (ObsSpace name or ModelSpace name)
+        self.DiagSpaceName = conf['DiagSpaceName']
+        self.LOGPREFIX = this_program+" : "+self.DiagSpaceName
 
         # cycle DateTimes
         firstCycleDTime = conf['firstCycleDTime']
@@ -61,12 +67,10 @@ class StatsDataBase:
         self.expLongNames = conf['expLongNames']
         self.expNames = conf['expNames']
         self.DAMethods = conf['DAMethods']
+        self.diagNames = conf['diagNames']
 
         # group of selected plots (single/multi)
         self.plotGroup = conf['plotGroup']
-
-        # selected DiagSpace (ObsSpace name or ModelSpace name)
-        self.DiagSpaceName = conf['DiagSpaceName']
 
         self.statsFilePrefix = 'diagnostic_stats/'+su.statsFilePrefix
 
@@ -127,25 +131,27 @@ class StatsDataBase:
                     if DiagSpaceName not in expDiagSpaceNames:
                         self.availDiagSpaceNames.remove(DiagSpaceName)
 
-
-    def initialize(self):
         self.available = False
         if (len(self.availDiagSpaceNames) < 1):
-            print("\nWARNING: stats files not available for creating a StatsDataBase"+
-                  "\nobject for the selected DiagSpace => "+self.DiagSpaceName)
+            self.print("\nWARNING: stats files not available for creating a StatsDataBase"+
+                       "\nobject for the selected DiagSpace => "+self.DiagSpaceName)
             return
 
         assert len(self.availDiagSpaceNames) == 1, (
             "\n\nERROR: only one DiagSpaceName per object is allowed.")
+
         self.available = True
 
-        print("")
-        print("\n\n\n=========================================================")
-        print("Initialize DataFrame for DiagSpaceName = "+self.DiagSpaceName)
-        print("=========================================================")
+    def initialize(self):
+        if not self.available: return
+
+        print("\n\n\n")
+        self.print("=========================================================")
+        self.print("Initialize DataFrame for DiagSpaceName = "+self.DiagSpaceName)
+        self.print("=========================================================")
 
         # Read stats and make figures for this DiagSpaceName
-        print("\nReading NC intermediate files into common Pandas DataFrame...")
+        self.print("-->Reading NC intermediate files into common Pandas DataFrame...")
 
         #TODO: appending numpy arrays requires reallocation in every inner loop (expensive).
         #      Instead, pre-allocate the numpy arrays after determining their global lengths
@@ -158,14 +164,14 @@ class StatsDataBase:
             dsDict[attribName] = np.asarray([])
         for statName in su.allFileStats:
             dsDict[statName] = np.asarray([])
-
+        self.print(self.expNames)
         for iexp, expName in enumerate(self.expNames):
             expPrefix = self.expDirectory + self.expLongNames[iexp] +'/'
             ncStatsFile = self.statsFilePrefix+self.DAMethods[iexp]+'_'+self.DiagSpaceName+'.nc'
             for ifc, fcTDelta in enumerate(self.fcTDeltas):
-                fcstr=fcTDelta.__str__()
                 for icy, cyDTime in enumerate(self.cyDTimes):
-                    #Read all stats/attributes from NC file for DiagSpaceName, ExpName, fcTDelta, cyDTime
+
+                    #Read all stats/attributes from NC file for ExpName, fcTDelta, cyDTime
                     dateDir = self.cyDTimes_dir[icy]
                     if self.plotGroup == multiFCLen:
                         dateDir = dateDir+'/'+self.fcTDeltas_dir[ifc]
@@ -174,29 +180,30 @@ class StatsDataBase:
                     if os.path.exists(cyStatsFile):
                         statsDict = su.read_stats_nc(cyStatsFile)
                     else:
-                        print("\nWARNING: stats file does not exist: "+str(cyStatsFile)+
+                        self.print("\nWARNING: stats file does not exist: "+str(cyStatsFile)+
                               "\n    -> this time will be excluded from all statistics and figures")
                         continue
                     nrows = len(statsDict[su.fileStatAttributes[0]])
-                    dsDict['expName'] = \
-                        np.append(dsDict['expName'], [expName] * nrows)
-                    dsDict['fcTDelta'] = \
-                        np.append(dsDict['fcTDelta'], [fcTDelta] * nrows)
-                    dsDict['cyDTime'] = \
-                        np.append(dsDict['cyDTime'], [cyDTime] * nrows)
 
+                    dsDict['expName'] = \
+                        np.append(dsDict['expName'], np.full(nrows, expName))
+                    dsDict['fcTDelta'] = \
+                        np.append(dsDict['fcTDelta'], np.full(nrows, fcTDelta))
+                    dsDict['cyDTime'] = \
+                        np.append(dsDict['cyDTime'], np.full(nrows, cyDTime))
                     for attribName in su.fileStatAttributes:
                         dsDict[attribName] = \
-                            np.append(dsDict[attribName],statsDict[attribName])
+                            np.append(dsDict[attribName], statsDict[attribName])
+
                     for statName in su.allFileStats:
                         dsDict[statName] = \
-                            np.append(dsDict[statName],statsDict[statName])
+                            np.append(dsDict[statName], statsDict[statName])
 
         #Convert dsDict to DataFrame
         dsDF = pd.DataFrame.from_dict(dsDict)
 
-        indexNames = ['expName','fcTDelta','cyDTime','DiagSpaceGrp',
-                      'varName','diagName','binVar','binVal','binMethod']
+        indexNames = ['expName', 'fcTDelta', 'cyDTime', 'DiagSpaceGrp',
+                      'varName', 'diagName', 'binVar', 'binVal', 'binMethod']
 
         dsDF.set_index(indexNames,inplace=True)
         dsDF.sort_index(inplace=True)
@@ -254,7 +261,6 @@ class StatsDataBase:
                                     units, varLoc)
             self.varUnitss.append(units[0])
 
-
         ##  bin values --> combination of numerical and string, all stored as strings
         self.allBinVals = self.dfw.levels('binVal')
 
@@ -277,6 +283,12 @@ class StatsDataBase:
     ## not used yet
     # def agg(self,aggovers=['cyDTime']):
     #     return DFWrapper(self.dfw.aggStats(groupby))
+
+    def print(self,x):
+        if isinstance(x,str):
+            print(self.LOGPREFIX+" : "+x)
+        else:
+            print(self.LOGPREFIX+": ",x)
 
 class DFWrapper:
     def __init__(self,df):
