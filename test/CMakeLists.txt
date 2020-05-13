@@ -1,3 +1,8 @@
+# (C) Copyright 2017-2020 UCAR.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+
 list( APPEND mpas_test_input
   extract_ref.sh
   testinput/3denvar_bumploc.yaml
@@ -340,7 +345,8 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
 #   jedi_unit_test( [ CLASS <name> ]
 #                   [ YAMLFILE <filename.yaml> ]
 #                   [ ID <id> ]
-#                   [ NPE <number-of-processor-elements> ] )
+#                   [ NPE <number-of-processor-elements> ] 
+#                   [ TESTTIER <tier-of-test> ])
 #
 # Options
 # -------
@@ -357,12 +363,25 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
 # NPE: optional
 #   Number of processor elements to use in this test
 #
+# TESTTIER: optional
+#   Testing tier for this test
+#
 ######################################################################
 function(jedi_unit_test)
     set(options )
-    set(oneValueArgs CLASS YAMLFILE ID NPE)
+    set(oneValueArgs CLASS YAMLFILE ID NPE TESTTIER)
     set(multiValueArgs )
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    if( NOT DEFINED TEST_TESTTIER )
+        set( TEST_TESTTIER "1" )
+    endif()
+
+    # If the tier of the test is larger than the current
+    # MPASJEDI_TEST_TIER, we exit so it is not added.
+    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
+      return()
+    endif()
 
     if( NOT DEFINED TEST_ID )
         set( TEST_ID "${TEST_YAMLFILE}" )
@@ -406,8 +425,9 @@ endfunction()
 #                              [ COMPARE ]
 #                              [ TOL <float> ]
 #                              [ DIF <int> ]
-#                              [ NPE <number-of-processor-elements> ] )
-#                              [ DEPENDS <previous-test1> [<previous-test2> ...]
+#                              [ NPE <number-of-processor-elements> ]
+#                              [ TESTTIER <tier-of-test> ]
+#                              [ DEPENDS <previous-test1> [<previous-test2> ...])
 #
 # Options
 # -------
@@ -440,6 +460,9 @@ endfunction()
 #   Number of processor elements to use in this test.
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
+# TESTTIER: optional
+#   Testing tier for this test
+#
 # DEPENDS: optional
 #   List of previous application test ID's on which this test depends.
 #   These ID's and NPE will be used to generate the list of prior
@@ -448,9 +471,19 @@ endfunction()
 ####################################################################################
 function(jedi_app_ref_test_compare)
     set(options COMPARE REFERENCE)
-    set(oneValueArgs APP ID TOL DIF NPE)
+    set(oneValueArgs APP ID TOL DIF NPE TESTTIER)
     set(multiValueArgs DEPENDS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    if( NOT DEFINED TEST_TESTTIER )
+        set( TEST_TESTTIER "1" )
+    endif()
+
+    # If the tier of the test is larger than the current
+    # MPASJEDI_TEST_TIER, we exit so it is not added.
+    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
+      return()
+    endif()
 
     set( TEST_NAME "${TEST_APP}" )
     if( DEFINED TEST_ID )
@@ -532,6 +565,13 @@ set(COMPARESTR COMPARE TOL ${ctol} DIF ${idif})
 # use compare.sh:
 #set(COMPARESTR COMPARE)
 
+# Default MPASJEDI_TEST_TIER
+set(MPASJEDI_TEST_TIER 1)
+
+# Override MPASJEDI_TEST_TIER using environment variable
+if(DEFINED ENV{MPASJEDI_TEST_TIER})
+    set(MPASJEDI_TEST_TIER "$ENV{MPASJEDI_TEST_TIER}")
+endif()
 
 ################
 # Select REFTYPE
