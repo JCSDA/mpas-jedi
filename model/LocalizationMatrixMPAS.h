@@ -15,7 +15,6 @@
 
 #include "GeometryMPAS.h"
 #include "eckit/config/Configuration.h"
-#include "oops/interface/LocalizationBase.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"

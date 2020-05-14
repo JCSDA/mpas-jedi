@@ -11,7 +11,6 @@
 #ifndef MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 #define MODEL_INSTANTIATELOCALIZATIONFACTORY_H_
 
-#include "oops/interface/LocalizationBase.h"
 #include "LocalizationMatrixMPAS.h"
 #include "MPASTraits.h"
 
