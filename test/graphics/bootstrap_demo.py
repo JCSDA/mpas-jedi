@@ -200,7 +200,7 @@ def bootstrap_test():
         ny = nFuncs
         nx = 2
 
-        fig = pu.setup_fig(nx, ny, inch_size=2.2)
+        fig = pu.setup_fig(nx, ny, inch_width=2.2)
 
         for ifunc, vecFunc in enumerate(vecFuncs):
             bootFunc = bootFuncs[ifunc]

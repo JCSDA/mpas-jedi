@@ -26,11 +26,11 @@ plotMarkers = ['*','*','*','*','*','*',
 
 
 ###############################################################################
-def setup_fig(nx=1, ny=1, inch_size=1.5, aspect=1.0, ybuffer=True):
+def setup_fig(nx=1, ny=1, inch_width=1.5, aspect=1.0, ybuffer=True):
 #INPUTS
 # nx - number of subplots in x direction
 # ny - number of subplots in y direction
-# inch_size - rough subplot size in inches
+# inch_width - rough subplot size in inches
 # ybuffer - whether to give extra y space for labeling
 #
 #OUTPUT
@@ -39,9 +39,9 @@ def setup_fig(nx=1, ny=1, inch_size=1.5, aspect=1.0, ybuffer=True):
     fig = plt.figure()
 
     if ybuffer:
-        fig.set_size_inches(nx*inch_size,aspect*ny*inch_size)
+        fig.set_size_inches(nx*inch_width,aspect*ny*inch_width)
     else:
-        fig.set_size_inches(0.9*nx*inch_size,0.9*aspect*ny*inch_size)
+        fig.set_size_inches(0.9*nx*inch_width,0.9*aspect*ny*inch_width)
 
     return(fig)
 
@@ -82,17 +82,59 @@ def TDeltas2Seconds(x_):
 
 
 ###############################################################################
-def timeTicks(x, pos):
+def timeDeltaTicks(x, pos):
     d = dt.timedelta(seconds=x)
-    if d.seconds > 0:
-       return str(d)
-    else:
-       return '{:d}'.format(d.days)+'d'
+    i = '{:d}'
+    i02 = '{:02d}'
+    vals = {}
+    fmts = {}
+    prefs = {}
+    suffs = {}
+    depends = {}
+
+    vals['D'] = d.days
+    fmts['D'] = i
+    prefs['D'] = ''
+    suffs['D'] = 'd '
+    depends['D'] = ['D']
+
+    vals['HH'], hrem = divmod(d.seconds, 3600)
+    fmts['HH'] = i02
+    prefs['HH'] = ''
+    suffs['HH'] = ''
+    #depends['HH'] = ['HH','MM','SS']
+
+    vals['MM'], vals['SS'] = divmod(hrem, 60)
+    fmts['MM'] = i02
+    prefs['MM'] = ':'
+    suffs['MM'] = ''
+    depends['MM'] = ['MM','SS']
+    fmts['SS'] = i02
+    prefs['SS'] = ':'
+    suffs['SS'] = ''
+    depends['SS'] = ['SS']
+
+    if vals['MM'] == 0 and vals['SS'] == 0:
+        fmts['HH'] = i
+        suffs['HH'] = 'h'
+
+    out = ''
+    for key in vals.keys():
+        include = False
+        if key in depends:
+            for dep in depends[key]:
+                if vals[dep] > 0: include = True
+        else:
+            include = True
+        if include:
+            out += prefs[key]+fmts[key].format(vals[key])+suffs[key]
+
+    return out
 
 #DTimeLocator = AutoDateLocator(interval_multiples=True)
 DTimeLocator = AutoDateLocator()
 DTimeFormatter = ConciseDateFormatter(DTimeLocator) #DateFormatter('%m-%d_%HZ')
-TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeTicks)
+TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeDeltaTicks)
 
 
 ###############################################################################

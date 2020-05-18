@@ -2,7 +2,7 @@
 #PBS -N plot_stats_timeseries
 #PBS -A NMMM0015
 #PBS -q premium
-#PBS -l select=1:ncpus=36:mpiprocs=36
+#PBS -l select=6:ncpus=10:mpiprocs=10
 #PBS -l walltime=5:00:00
 #PBS -m ae
 #PBS -k eod

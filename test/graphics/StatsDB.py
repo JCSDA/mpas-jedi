@@ -1,6 +1,7 @@
-from collections.abc import Iterable
 import binning_utils as bu
 import binning_configs as bcs
+from collections.abc import Iterable
+from collections import defaultdict
 from copy import deepcopy
 import datetime as dt
 import glob
@@ -48,7 +49,7 @@ class StatsDataBase:
     #                  expDirectory       expLongName  cyDTime      statsFilePrefix     DAMethod   DiagSpaceName
         # selected DiagSpace (ObsSpace name or ModelSpace name)
         self.DiagSpaceName = conf['DiagSpaceName']
-        self.LOGPREFIX = this_program+" : "+self.DiagSpaceName
+        self.LOGPREFIX = this_program+" : "+self.DiagSpaceName+" : "
 
         # cycle DateTimes
         firstCycleDTime = conf['firstCycleDTime']
@@ -74,16 +75,18 @@ class StatsDataBase:
 
         self.statsFilePrefix = 'diagnostic_stats/'+su.statsFilePrefix
 
-        self.fcTDeltas_dir = []
+        fcDirFormats = conf['fcDirFormats']
+
         self.fcTDeltas = []
+        self.fcTDeltas_dir = defaultdict(list)
+        self.fcTDeltas_totmin = []
         dumTimeDelta = fcTDeltaFirst
         while dumTimeDelta <= fcTDeltaLast:
-            #TODO: define FC directory names in terms of seconds or d_hh-mm-ss
-            #      in order to allow for increments < 1 day --> modify workflow scripts
-            #fc_date_str = str(dumTimeDelta.total_seconds())
-            #fc_date_str = dumTimeDelta.__str__() #[d days, h:mm:ss] --> need to parse/format to d_hh-mm-ss
-            fc_date_str = str(dumTimeDelta.days)
-            self.fcTDeltas_dir.append(fc_date_str)
+            for expName, fcDirFormat in list(zip(self.expNames,fcDirFormats)):
+                self.fcTDeltas_dir[expName] += [TDelta_dir(dumTimeDelta, fcDirFormat)]
+            self.fcTDeltas_totmin.append(TDelta_dir(dumTimeDelta, "%m"))
+            # self.fcTDeltas_totsec.append(TDelta_dir(dumTimeDelta, "%s"))
+
             self.fcTDeltas.append(dumTimeDelta)
             dumTimeDelta = dumTimeDelta + fcTimeInc
 
@@ -108,12 +111,12 @@ class StatsDataBase:
         # TODO: add the capability to calculate the stats when files are missing/incomplete
         #       and then output to correct file name
         expsDiagSpaceNames = []
-        for expName in self.expLongNames:
+        for expName, expLongName in list(zip(self.expNames,self.expLongNames)):
             dateDir = self.cyDTimes_dir[0]
             if self.plotGroup == multiFCLen:
-                dateDir = dateDir+'/'+self.fcTDeltas_dir[0]
+                dateDir = dateDir+'/'+self.fcTDeltas_dir[expName][0]
 
-            FILEPREFIX0 = self.expDirectory + expName +'/'+dateDir+'/' \
+            FILEPREFIX0 = self.expDirectory + expLongName +'/'+dateDir+'/' \
                           +self.statsFilePrefix+self.DAMethods[0]+"_"
 
             DiagSpaceNames = []
@@ -133,8 +136,8 @@ class StatsDataBase:
 
         self.available = False
         if (len(self.availDiagSpaceNames) < 1):
-            self.print("\nWARNING: stats files not available for creating a StatsDataBase"+
-                       "\nobject for the selected DiagSpace => "+self.DiagSpaceName)
+            self.print(self.LOGPREFIX,"WARNING: stats files not available for creating a StatsDataBase"+
+                       "object for the selected DiagSpace => "+self.DiagSpaceName)
             return
 
         assert len(self.availDiagSpaceNames) == 1, (
@@ -142,16 +145,19 @@ class StatsDataBase:
 
         self.available = True
 
-    def initialize(self):
+    def initialize(self, LOGPREFIX=None):
         if not self.available: return
 
-        print("\n\n\n")
-        self.print("=========================================================")
-        self.print("Initialize DataFrame for DiagSpaceName = "+self.DiagSpaceName)
-        self.print("=========================================================")
+        if LOGPREFIX is None: LOGPREFIX = self.LOGPREFIX
+        self.print(LOGPREFIX,"")
+        self.print(LOGPREFIX,"")
+        self.print(LOGPREFIX,"")
+        self.print(LOGPREFIX,"=========================================================")
+        self.print(LOGPREFIX,"Initialize DataFrame for DiagSpaceName = "+self.DiagSpaceName)
+        self.print(LOGPREFIX,"=========================================================")
 
         # Read stats and make figures for this DiagSpaceName
-        self.print("-->Reading NC intermediate files into common Pandas DataFrame...")
+        self.print(LOGPREFIX,"-->Reading NC intermediate files into common Pandas DataFrame...")
 
         #TODO: appending numpy arrays requires reallocation in every inner loop (expensive).
         #      Instead, pre-allocate the numpy arrays after determining their global lengths
@@ -164,24 +170,28 @@ class StatsDataBase:
             dsDict[attribName] = np.asarray([])
         for statName in su.allFileStats:
             dsDict[statName] = np.asarray([])
-        self.print(self.expNames)
-        for iexp, expName in enumerate(self.expNames):
-            expPrefix = self.expDirectory + self.expLongNames[iexp] +'/'
-            ncStatsFile = self.statsFilePrefix+self.DAMethods[iexp]+'_'+self.DiagSpaceName+'.nc'
-            for ifc, fcTDelta in enumerate(self.fcTDeltas):
-                for icy, cyDTime in enumerate(self.cyDTimes):
+        self.print(LOGPREFIX,self.expNames)
+        for cyDTime, cyDTime_dir in list(zip(self.cyDTimes, self.cyDTimes_dir)):
+            self.print(LOGPREFIX,str(cyDTime))
+            missingFiles = []
+
+            for iexp, expName in enumerate(self.expNames):
+                expPrefix = self.expDirectory + self.expLongNames[iexp] +'/'
+                ncStatsFile = self.statsFilePrefix+self.DAMethods[iexp]+'_'+self.DiagSpaceName+'.nc'
+                for fcTDelta, fcTDelta_dir in list(zip(
+                    self.fcTDeltas, self.fcTDeltas_dir[expName])):
+                    # self.print(LOGPREFIX,fcTDelta_dir[expName])
 
                     #Read all stats/attributes from NC file for ExpName, fcTDelta, cyDTime
-                    dateDir = self.cyDTimes_dir[icy]
+                    dateDir = cyDTime_dir
                     if self.plotGroup == multiFCLen:
-                        dateDir = dateDir+'/'+self.fcTDeltas_dir[ifc]
+                        dateDir = dateDir+'/'+fcTDelta_dir
                     cyStatsFile = expPrefix+dateDir+'/'+ncStatsFile
 
                     if os.path.exists(cyStatsFile):
                         statsDict = su.read_stats_nc(cyStatsFile)
                     else:
-                        self.print("\nWARNING: stats file does not exist: "+str(cyStatsFile)+
-                              "\n    -> this time will be excluded from all statistics and figures")
+                        missingFiles.append(cyStatsFile)
                         continue
                     nrows = len(statsDict[su.fileStatAttributes[0]])
 
@@ -198,6 +208,11 @@ class StatsDataBase:
                     for statName in su.allFileStats:
                         dsDict[statName] = \
                             np.append(dsDict[statName], statsDict[statName])
+            if len(missingFiles) > 0:
+                self.print(LOGPREFIX,"")
+                self.print(LOGPREFIX,"WARNING: the following files do not exist.  Matching times are excluded from the statistsics.")
+                for File in missingFiles:
+                    self.print(LOGPREFIX,File)
 
         #Convert dsDict to DataFrame
         dsDF = pd.DataFrame.from_dict(dsDict)
@@ -284,11 +299,11 @@ class StatsDataBase:
     # def agg(self,aggovers=['cyDTime']):
     #     return DFWrapper(self.dfw.aggStats(groupby))
 
-    def print(self,x):
+    def print(self,LOGPREFIX,x):
         if isinstance(x,str):
-            print(self.LOGPREFIX+" : "+x)
+            print(LOGPREFIX+x)
         else:
-            print(self.LOGPREFIX+": ",x)
+            print(LOGPREFIX,x)
 
 class DFWrapper:
     def __init__(self,df):
@@ -357,3 +372,45 @@ class DFWrapper:
                 +", indexNames = ",self.indexNames)
             if aggover in groupby: groupby.remove(aggover)
         return self.df.groupby(groupby).apply(su.aggStatsDF)
+
+
+def TDelta_dir(tdelta, fmt):
+    subs = {}
+    fmts = {}
+    i = '{:d}'
+    i02 = '{:02d}'
+
+    # "%D %HH:%MM:%SS"
+    subs["D"] = tdelta.days
+    fmts["D"] = i
+
+    subs["HH"], hrem = divmod(tdelta.seconds, 3600)
+    fmts["HH"] = i02
+
+    subs["MM"], subs["SS"] = divmod(hrem, 60)
+    fmts["MM"] = i02
+    fmts["SS"] = i02
+
+    ts = int(tdelta.total_seconds())
+
+    # "%h"
+    subs["h"], hrem = divmod(ts, 3600)
+    fmts["h"] = i
+
+    # "%MIN:%SEC"
+    subs["MIN"], subs["SEC"] = divmod(ts, 60)
+    fmts["MIN"] = i
+    fmts["SEC"] = i02
+
+    subs["m"] = subs["MIN"]
+    fmts["m"] = fmts["MIN"]
+
+    # "%s"
+    subs["s"] = ts
+    fmts["s"] = i
+
+    out = fmt
+    for key in subs.keys():
+        out = out.replace("%"+key,fmts[key].format(subs[key]))
+
+    return out
