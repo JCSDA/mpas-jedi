@@ -117,24 +117,6 @@ cost_function:
       - Filter: Background Check
         threshold: 3
     - ObsSpace:
-        name: Satwind
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/obsout_4denvar_ID_satwind.nc4
-        simulate:
-          variables: [eastward_wind, northward_wind]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
         name: GnssroRef
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4

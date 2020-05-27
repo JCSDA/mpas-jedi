@@ -26,14 +26,13 @@ Test     : Fld=9  Min=0, Max=0.00089417, RMS=2.49829e-05 : index_qs
 Test     : Fld=10  Min=0, Max=0.000326583, RMS=5.13555e-06 : index_qg
 Test     : H(x): 
 Test     : Radiosonde nobs= 3896 Min=-29.879, Max=299.158, RMS=122.008
-Test     : Aircraft nobs= 8392 Min=-32.5456, Max=296.592, RMS=127.988
 Test     : Satwind nobs= 198 Min=-29.4177, Max=49.7966, RMS=11.0351
 Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.325, RMS=132.933
 Test     : GnssroBndROPP1D nobs= 12 Min=0.000561713, Max=0.0131566, RMS=0.00762747
-Test     : AMSUA-NOAA19--nohydro nobs= 1100 Min=208.371, Max=272.692, RMS=234.82
+Test     : AMSUA-NOAA19--nohydro nobs= 500 Min=208.371, Max=272.692, RMS=236.85
 Test     : AMSUA-NOAA19--hydro nobs= 400 Min=146.37, Max=290.372, RMS=224.795
 Test     : AIRS-AQUA nobs= 300 Min=210.903, Max=231.052, RMS=221.956
-Test     : CRIS-NPP nobs= 9900 Min=211.188, Max=298.607, RMS=247.586
+Test     : CRIS-NPP nobs= 800 Min=211.188, Max=296.497, RMS=249.748
 Test     : IASI-METOPA nobs= 700 Min=211.195, Max=243.375, RMS=226.867
 Test     : SfcPCorrected nobs= 252 Min=84554.5, Max=102368, RMS=98290
 Test     : End H(x)

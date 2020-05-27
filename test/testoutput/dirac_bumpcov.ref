@@ -1,8 +1,8 @@
 Test     : Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=0, Max=1, RMS=0.04497 : temperature
-Test     : Fld=2  Min=0, Max=1, RMS=0.04497 : spechum
-Test     : Fld=3  Min=0, Max=1, RMS=0.04497 : uReconstructZonal
-Test     : Fld=4  Min=0, Max=1, RMS=0.04497 : uReconstructMeridional
+Test     : Fld=1  Min=0, Max=0, RMS=0 : temperature
+Test     : Fld=2  Min=0, Max=0, RMS=0 : spechum
+Test     : Fld=3  Min=0, Max=1, RMS=0.0243391 : uReconstructZonal
+Test     : Fld=4  Min=0, Max=0, RMS=0 : uReconstructMeridional
 Test     : Fld=5  Min=0, Max=0, RMS=0 : surface_pressure

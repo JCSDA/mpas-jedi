@@ -13,6 +13,11 @@ model:
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
+  - index_qc
+  - index_qi
+  - index_qr
+  - index_qs
+  - index_qg
 cost_function:
   cost_type: 3D-Var
   window_begin: '2018-04-14T21:00:00Z'
@@ -23,6 +28,11 @@ cost_function:
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
+  - index_qc
+  - index_qi
+  - index_qr
+  - index_qs
+  - index_qg
   varchange: Identity
   Jb:
     Background:
@@ -61,24 +71,6 @@ cost_function:
           obsfile: Data/obsout_3dvar_aircraft.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
-        name: Satwind
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/obsout_3dvar_satwind.nc4
-        simulate:
-          variables: [eastward_wind, northward_wind]
       ObsOperator:
         name: VertInterp
       Covariance:
@@ -182,6 +174,57 @@ cost_function:
         threshold: 500
       - Filter: Background Check
         threshold: 10
+    #NOTES for amsua channels:
+    # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
+    # + vertical peak senstivity increases from 1 to 14 w/ 12-14 exclusive to strat.
+    # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
+    # + 8 is noisy/degraded on n19
+    - ObsSpace:
+        name: AMSUA-NOAA19--nohydro
+        ObsDataIn:
+          obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+        simulate:
+          variables: [brightness_temperature]
+          channels: 4-7,9-14
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        threshold: 10
+      ObsOperator: &crtmobsoper
+        name: CRTM
+        Absorbers: [H2O,O3]
+        LinearObsOperator:
+          Absorbers: [H2O]
+        ObsOptions: &crtmobsopts
+          Sensor_ID: amsua_n19
+          EndianType: little_endian
+          CoefficientPath: Data/
+    - ObsSpace:
+        name: AMSUA-NOAA19--hydro
+        ObsDataIn:
+          obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        ObsDataOut:
+          obsfile: Data/obsout_3dvar_amsua_amsua_n19--hydro.nc4
+        simulate:
+          variables: [brightness_temperature]
+          channels: 1-3,15
+      Covariance:
+        covariance: diagonal
+      ObsFilters:
+      - Filter: Background Check
+        threshold: 10
+      ObsOperator:
+        <<: *crtmobsoper
+        Clouds: [Water, Ice, Rain, Snow, Graupel]
+        Cloud_Fraction: 1.0
+        LinearObsOperator:
+          Absorbers: [H2O]
+          Clouds: [Water, Ice, Rain, Snow, Graupel]
+        ObsOptions:
+          <<: *crtmobsopts
 minimizer:
   algorithm: DRIPCG
 output:

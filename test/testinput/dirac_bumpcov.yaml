@@ -20,27 +20,28 @@ initial:
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 Covariance:
-  covariance: BUMP
-  date: '2018-04-15T00:00:00Z'
-  bump:
-    prefix: mpas_dirac.bumpcov
-    default_seed: 1
-    strategy: common
-    new_nicas: 1
-    check_adjoints: 1
-    ntry: 3
-    nrep: 2
-    lsqrt: 1
-    resol: 4
-    nicas_interp: bilin
-    network: 0
-    mpicom: 2
-    advmode: 0
-    forced_radii: 1
-    rh: 3000000
-    rv: 1
-    write_grids: 1
-  variable_changes: []
+      covariance: BUMP
+      date: '2018-04-15T00:00:00Z'
+      bump:
+        prefix: Data/bump/mpas_parametersbump_cov
+        default_seed: 1
+        method: cor
+        strategy: specific_univariate  #common
+        new_nicas: 0
+        load_nicas: 1
+        load_cmat: 1
+        ntry: 3
+        nrep: 2
+        lsqrt: 1
+        resol: 10
+        nicas_interp: bilin
+        network: 0
+        mpicom: 2
+        advmode: 0
+        forced_radii: 0
+        rh: 2000000
+        rv: 1
+      variable_changes: []
 dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123,  35.68501691,   19.01699038,

@@ -132,24 +132,6 @@ cost_function:
       - Filter: Background Check
         threshold: 3
     - ObsSpace:
-        name: Aircraft
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/obsout_4denvar_bump_aircraft.nc4
-        simulate:
-          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
         name: Satwind
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4

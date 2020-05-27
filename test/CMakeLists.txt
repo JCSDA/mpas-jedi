@@ -6,13 +6,10 @@
 list( APPEND mpas_test_input
   extract_ref.sh
   testinput/3denvar_bumploc.yaml
-  testinput/3denvar_bumploc_specified.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
-  testinput/3dvar_amsua.yaml
   testinput/3dvar_bumpcov.yaml
-  testinput/3dvar_amsua_bumpcov.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
   testinput/dirac_bumpcov.yaml
@@ -37,12 +34,9 @@ list( APPEND mpas_test_input
 
 list( APPEND mpas_testoutput
   testoutput/3denvar_bumploc.ref
-  testoutput/3denvar_bumploc_specified.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
-  testoutput/3dvar_amsua.ref
-  testoutput/3dvar_amsua_bumpcov.ref
   testoutput/3dvar_bumpcov.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
@@ -610,22 +604,20 @@ jedi_app_ref_test_compare( APP     hofx_nomodel                             ${RE
 jedi_app_ref_test_compare( APP     hofx                                     ${REFTYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
 ##jedi_app_ref_test_compare( APP     enshofx                                  ${REFTYPE})
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${REFTYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${REFTYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${REFTYPE} )
 jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${REFTYPE} )
 jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${REFTYPE} )
 ### TODO: Make the gen_ens_pert_B test produce the same output in Debug and Release. Until that time, we remove it.
 #jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${REFTYPE} )
 jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua               ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${REFTYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${REFTYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua_bumpcov       ${REFTYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${REFTYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${REFTYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${REFTYPE}
                            DEPENDS parameters_bumpcov )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc           ${REFTYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_specified ${REFTYPE} )
 jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${REFTYPE}
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
@@ -643,7 +635,7 @@ if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
 #            jedi_app_ref_test_compare( APP     hofx                                     ${COMPARESTR} NPE ${THIS_NPE} )
             jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${COMPARESTR} NPE ${THIS_NPE} )
             jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${COMPARESTR} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dvar_amsua               ${COMPARESTR} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${COMPARESTR} NPE ${THIS_NPE} )
             jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${COMPARESTR} NPE ${THIS_NPE}
                                        DEPENDS parameters_bumpcov
                                                parameters_bumploc )
