@@ -9,6 +9,7 @@ GeoVaLsVariables:
   - virtual_temperature
   - mole_fraction_of_ozone_in_air
   - humidity_mixing_ratio
+  - surface_pressure
 LinearGetValuesTest:
   toleranceLinearity: 1.0e-11
   numiterTL: 10
