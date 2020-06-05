@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
@@ -29,14 +26,14 @@ cost_function:
       state:
       - variables: *incvars
         filename: "./restart.2018-04-15_00.00.00.nc"
-        date: '2018-04-15T00:00:00Z'
+        date: &adate '2018-04-15T00:00:00Z'
     Covariance:
       covariance: ensemble
-      date: '2018-04-15T00:00:00Z'
+      date: *adate
       localization:
         localization: BUMP
         timeslots:
-        - '2018-04-15T00:00:00Z'
+        - *adate
         variables: *incvars
         bump:
           prefix: Data/bump/mpas_parametersbump_loc
@@ -46,7 +43,6 @@ cost_function:
           new_hdiag: 0
           new_nicas: 0
           load_nicas: 1
-          load_cmat: 1
           mask_type: none
           draw_type: random_uniform
           nc1: 1024
@@ -79,7 +75,6 @@ cost_function:
           # new_hdiag: 0
           # new_nicas: 1
           # load_nicas: 0
-          # load_cmat: 0
           # mask_type: none
           # draw_type: random_uniform
           # nc1: 1024
@@ -105,15 +100,15 @@ cost_function:
           # write_grids: 1
       members:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
       - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
       - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
       - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
       - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
       variables: *incvars
   Jo:
     ObsTypes:
@@ -122,7 +117,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3denvar_bump_sondes.nc4
+          obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
@@ -140,7 +135,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3denvar_bump_satwind.nc4
+          obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
         simulate:
           variables: [eastward_wind, northward_wind]
       ObsOperator:
@@ -158,7 +153,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3denvar_bump_gnssroref.nc4
+          obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
         simulate:
           variables: [refractivity]
       ObsOperator:
@@ -192,7 +187,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3denvar_bump_gnssrobndropp1d.nc4
+          obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
         simulate:
           variables: [bending_angle]
       ObsOperator:
@@ -226,7 +221,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3denvar_bump_sfc.nc4
+          obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
         simulate:
           variables: [surface_pressure]
       ObsOperator:
@@ -249,7 +244,7 @@ cost_function:
 minimizer:
   algorithm: DRIPCG
 output:
-  filename: "./mpas.3denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   iteration:
   - resolution:

@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041421
 Assimilation Window:
   window_begin: '2018-04-14T21:00:00Z'
@@ -44,7 +41,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_sondes.nc4
+        obsfile: Data/os/hofx_sondes.nc4
       simulate:
         variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     ObsOperator:
@@ -54,7 +51,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_satwind.nc4
+        obsfile: Data/os/hofx_satwind.nc4
       simulate:
         variables: [eastward_wind, northward_wind]
     ObsOperator:
@@ -64,7 +61,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
-        obsfile: Data/hofx_gnssroref.nc4
+        obsfile: Data/os/hofx_gnssroref.nc4
       simulate:
         variables: [refractivity]
     ObsOperator:
@@ -77,7 +74,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       ObsDataOut:
-        obsfile: Data/hofx_gnssrobndropp1d.nc4
+        obsfile: Data/os/hofx_gnssrobndropp1d.nc4
       simulate:
         variables: [bending_angle]
     ObsOperator:
@@ -89,7 +86,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_amsua_n19--nohydro.nc4
+        obsfile: Data/os/hofx_amsua_n19--nohydro.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 4-8
@@ -105,7 +102,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_amsua_n19--hydro.nc4
+        obsfile: Data/os/hofx_amsua_n19--hydro.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 1-3,15
@@ -120,7 +117,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_airs_aqua.nc4
+        obsfile: Data/os/hofx_airs_aqua.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 1,6-7
@@ -135,7 +132,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_cris-fsr_npp.nc4
+        obsfile: Data/os/hofx_cris-fsr_npp.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 24,26,135,137,332,342,1022,1058
@@ -150,7 +147,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_iasi_metop-a.nc4
+        obsfile: Data/os/hofx_iasi_metop-a.nc4
       simulate:
         variables: [brightness_temperature]
         channels: 16,29,32,35,38,41,44
@@ -165,7 +162,7 @@ Observations:
 #      ObsDataIn:
 #        obsfile: Data/atms_npp_obs_2018041500_m.nc4
 #      ObsDataOut:
-#        obsfile: Data/hofx_atms_npp--ch5-15.nc4
+#        obsfile: Data/os/hofx_atms_npp--ch5-15.nc4
 #      simulate:
 #        variables: [brightness_temperature]
 #        channels: 5-15
@@ -179,7 +176,7 @@ Observations:
 #      ObsDataIn:
 #        obsfile: Data/atms_npp_obs_2018041500_m.nc4
 #      ObsDataOut:
-#        obsfile: Data/hofx_atms_npp--ch1-4,16-22.nc4
+#        obsfile: Data/os/hofx_atms_npp--ch1-4,16-22.nc4
 #      simulate:
 #        variables: [brightness_temperature]
 #        channels: 1-4,16-22
@@ -195,7 +192,7 @@ Observations:
       ObsDataIn:
         obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
       ObsDataOut:
-        obsfile: Data/hofx_sfc.nc4
+        obsfile: Data/os/hofx_sfc.nc4
       simulate:
         variables: [surface_pressure]
     ObsOperator:

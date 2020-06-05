@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
@@ -39,10 +36,10 @@ cost_function:
       state:
       - variables: *incvars
         filename: "./restart.2018-04-15_00.00.00.nc"
-        date: '2018-04-15T00:00:00Z'
+        date: &adate '2018-04-15T00:00:00Z'
     Covariance:
       covariance: MPASstatic
-      date: '2018-04-15T00:00:00Z'
+      date: *adate
   Jo:
     ObsTypes:
     - ObsSpace:
@@ -50,7 +47,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_sondes.nc4
+          obsfile: Data/os/obsout_3dvar_sondes.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
@@ -68,7 +65,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_aircraft.nc4
+          obsfile: Data/os/obsout_3dvar_aircraft.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
@@ -86,7 +83,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_gnssroref.nc4
+          obsfile: Data/os/obsout_3dvar_gnssroref.nc4
         simulate:
           variables: [refractivity]
       ObsOperator:
@@ -120,7 +117,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_gnssrobndropp1d.nc4
+          obsfile: Data/os/obsout_3dvar_gnssrobndropp1d.nc4
         simulate:
           variables: [bending_angle]
       ObsOperator:
@@ -154,7 +151,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_sfc.nc4
+          obsfile: Data/os/obsout_3dvar_sfc.nc4
         simulate:
           variables: [surface_pressure]
       ObsOperator:
@@ -184,7 +181,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
         simulate:
           variables: [brightness_temperature]
           channels: 4-7,9-14
@@ -207,7 +204,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dvar_amsua_amsua_n19--hydro.nc4
+          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
         simulate:
           variables: [brightness_temperature]
           channels: 1-3,15
@@ -228,7 +225,7 @@ cost_function:
 minimizer:
   algorithm: DRIPCG
 output:
-  filename: "./mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   iteration:
   - resolution:

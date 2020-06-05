@@ -23,6 +23,6 @@ model:
   - surface_pressure
 output:
   frequency: PT1H
-  filename: "./mpas_forecast.$Y-$M-$D_$h.$m.$s.nc"
+  filename: Data/states/mpas.forecast.$Y-$M-$D_$h.$m.$s.nc
 prints:
   frequency: PT30M

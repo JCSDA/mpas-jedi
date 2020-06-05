@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
@@ -29,14 +26,14 @@ cost_function:
       state:
       - variables: *incvars
         filename: "./restart.2018-04-15_00.00.00.nc"
-        date: '2018-04-15T00:00:00Z'
+        date: &adate '2018-04-15T00:00:00Z'
     Covariance:
       covariance: hybrid
       static_weight: '0.5'
       ensemble_weight: '0.5'
       static:
         covariance: BUMP
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
         bump:
           prefix: Data/bump/mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
           default_seed: 1
@@ -44,7 +41,6 @@ cost_function:
           strategy: specific_univariate  #common
           new_nicas: 0
           load_nicas: 1
-          load_cmat: 1
           ntry: 3
           nrep: 2
           lsqrt: 1
@@ -66,11 +62,11 @@ cost_function:
             load_var: 1
             prefix: Data/bump/mpas_parametersbump_cov
       ensemble:
-        date: '2018-04-15T00:00:00Z'
+        date: *adate
         localization:
           localization: BUMP
           timeslots: 
-          - '2018-04-15T00:00:00Z'
+          - *adate
           variables: *incvars
           bump:
             prefix: Data/bump/mpas_parametersbump_loc
@@ -80,7 +76,6 @@ cost_function:
             new_hdiag: 0
             new_nicas: 0
             load_nicas: 1
-            load_cmat: 1
             mask_type: none
             draw_type: random_uniform
             nc1: 1024
@@ -102,15 +97,15 @@ cost_function:
             grid_output: 0
         members:
         - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
+          date: *adate
         - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
+          date: *adate
         - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
+          date: *adate
         - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
+          date: *adate
         - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-          date: '2018-04-15T00:00:00Z'
+          date: *adate
         variables: *incvars
   Jo:
     ObsTypes:
@@ -119,7 +114,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dhybrid_bump_sondes.nc4
+          obsfile: Data/os/obsout_3dhybrid_bump_sondes.nc4
         simulate:
           variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       ObsOperator:
@@ -137,7 +132,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dhybrid_bump_gnssroref.nc4
+          obsfile: Data/os/obsout_3dhybrid_bump_gnssroref.nc4
         simulate:
           variables: [refractivity]
       ObsOperator:
@@ -171,7 +166,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dhybrid_bump_gnssrobndropp1d.nc4
+          obsfile: Data/os/obsout_3dhybrid_bump_gnssrobndropp1d.nc4
         simulate:
           variables: [bending_angle]
       ObsOperator:
@@ -205,7 +200,7 @@ cost_function:
         ObsDataIn:
           obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
         ObsDataOut:
-          obsfile: Data/obsout_3dhybrid_bump_sfc.nc4
+          obsfile: Data/os/obsout_3dhybrid_bump_sfc.nc4
         simulate:
           variables: [surface_pressure]
       ObsOperator:
@@ -228,7 +223,7 @@ cost_function:
 minimizer:
   algorithm: DRIPCG
 output:
-  filename: "./mpas.3dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   iteration:
   - resolution:

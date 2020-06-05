@@ -3,8 +3,8 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+## test yamls
 list( APPEND mpas_test_input
-  extract_ref.sh
   testinput/3denvar_bumploc.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
@@ -31,8 +31,17 @@ list( APPEND mpas_test_input
   testinput/getvalues.yaml
   testinput/lineargetvalues.yaml
 )
+# Create Data directory for test input and symlink all files
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
+foreach(FILENAME ${mpas_test_input})
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
+endforeach(FILENAME)
 
+## reference outputs
 list( APPEND mpas_testoutput
+  extract_ref.sh
   testoutput/3denvar_bumploc.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
@@ -53,7 +62,16 @@ list( APPEND mpas_testoutput
 #  testoutput/staticbinit.ref
 #  testoutput/variablechange.ref
 )
+# Create Data directory for reference output and symlink all files
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
+foreach(FILENAME ${mpas_testoutput})
+    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
+endforeach(FILENAME)
 
+## graphical scripts
+# TODO(JJG): re-organize
 list( APPEND mpas_graphics
   graphics/plot_obs_nc_loc.py
   graphics/plot_diag_omaomb.py
@@ -70,22 +88,6 @@ list( APPEND mpas_graphics
 # This line copies all files to binary dir
 #file( COPY ${mpas_test_files} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
 
-# Create Data directory for test input and symlink all files
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
-foreach(FILENAME ${mpas_test_input})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
-
-# Create Data directory for reference output and symlink all files
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
-foreach(FILENAME ${mpas_testoutput})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
-
 # Create directory for graphics and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
 foreach(FILENAME ${mpas_graphics})
@@ -98,9 +100,12 @@ ecbuild_add_resources( TARGET   mpas_test_scripts
                        SOURCES_PACK
                        ${mpas_test_input}
                      )
-
+############
+## Test Data
+############
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
+## MPAS static stream lists
 list( APPEND mpas_test_config_base
   Data/stream_list.atmosphere.output
   Data/stream_list.atmosphere.surface
@@ -110,14 +115,19 @@ CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
                          ${CMAKE_CURRENT_BINARY_DIR}
                          ${mpas_test_config_base} )
 
+
+## Test files specific to the 480km mesh
 # Add or remove values from multi_pe_480 to select multi-PE tests
 # 480km options: 2, 4, 6, 8, 12, 16
 list(APPEND multi_pe_480 2 )
-
+# namelists/streams
 list( APPEND mpas_test_config_480
   Data/480km/namelist.atmosphere_2018041421
   Data/480km/namelist.atmosphere_2018041500
   Data/480km/streams.atmosphere
+)
+# static mesh descriptions
+list( APPEND mpas_test_config_480
   Data/480km/x1.2562.graph.info
 )
 foreach(THIS_NPE ${multi_pe_480})
@@ -127,53 +137,38 @@ foreach(THIS_NPE ${multi_pe_480})
         )
     endif()
 endforeach(THIS_NPE)
-
-
+CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
+                         ${CMAKE_CURRENT_BINARY_DIR}
+                         ${mpas_test_config_480} )
+# backgrounds
 list( APPEND mpas_test_bg_480
   Data/480km/bg/restart.2018-04-14_21.00.00.nc
   Data/480km/bg/restart.2018-04-15_00.00.00.nc
   Data/480km/bg/restart.2018-04-15_03.00.00.nc
 )
-
-list( APPEND mpas_test_ensemble_480
-  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
-  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-  Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_03.00.00.nc
-  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
-  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-  Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_03.00.00.nc
-  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
-  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-  Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_03.00.00.nc
-  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
-  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-  Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_03.00.00.nc
-  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
-  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-  Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
-)
-
-# Setup links in test directory for 480km ctests
-CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
-                         ${CMAKE_CURRENT_BINARY_DIR}
-                         ${mpas_test_config_480} )
-
 CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
                          ${CMAKE_CURRENT_BINARY_DIR}
                          ${mpas_test_bg_480} )
-
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem01)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem02)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem03)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem04)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km/bg/ensemble/mem05)
-foreach(FILENAME ${mpas_test_ensemble_480})
+# ensemble
+set( BASE_ENSDIR_480 480km/bg/ensemble )
+set(ensmembers mem01;mem02;mem03;mem04;mem05)
+list( APPEND mpas_test_ensemble_dates
+  2018-04-14_21.00.00
+  2018-04-15_00.00.00
+  2018-04-15_03.00.00
+)
+foreach(MEM IN LISTS ensmembers)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/${BASE_ENSDIR_480}/${MEM})
+  foreach(DATE ${mpas_test_ensemble_dates})
+    set( FILENAME Data/${BASE_ENSDIR_480}/${MEM}/x1.2562.init.${DATE}.nc )
     execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
            ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
            ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
+  endforeach(DATE)
+endforeach(MEM)
 
-# IODA observation files
+
+## IODA observation files
 list( APPEND mpas_ioda_test_data
      testinput_tier_1.tar.gz
      )
@@ -262,10 +257,8 @@ execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
                  ${MPAS_IODA_TESTFILES_PATH}
                  ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda )
 
-#####################################################################
-# Files for CRTM tests
-#####################################################################
 
+## CRTM coefficient files
 list( APPEND crtm_test_input
   AerosolCoeff/Little_Endian/AerosolCoeff.bin
   CloudCoeff/Little_Endian/CloudCoeff.bin
@@ -317,18 +310,19 @@ list( APPEND crtm_test_input
 #  SpcCoeff/Little_Endian/v.viirs-m_npp.SpcCoeff.bin
 #  TauCoeff/ODAS/Little_Endian/v.viirs-m_npp.TauCoeff.bin
 )
-
-# Symlink all CRTM files
 CREATE_SYMLINK_FILENAME( ${crtm_SOURCE_DIR}/fix
                          ${CMAKE_CURRENT_BINARY_DIR}/Data
                          ${crtm_test_input} )
 
 #####################################################################
 
-# Make some output directories for test data
+# Make directories for output test data
+#bump outputs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/hofx)
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/analysis)
+#ObsSpaces
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os)
+#model states
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states)
 
 ######################################################################
 #
@@ -454,6 +448,10 @@ endfunction()
 #   Number of processor elements to use in this test.
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
+# NMEM: optional
+#   Number of ensemble members to use in an ensemble application (EnsHofX, EnsForecast, EDA)
+#   Additionally will be used to generate the TARGET_NAME of this test.
+#
 # TESTTIER: optional
 #   Testing tier for this test
 #
@@ -465,7 +463,7 @@ endfunction()
 ####################################################################################
 function(jedi_app_ref_test_compare)
     set(options COMPARE REFERENCE)
-    set(oneValueArgs APP ID TOL DIF NPE TESTTIER)
+    set(oneValueArgs APP ID TOL DIF NPE NMEM TESTTIER)
     set(multiValueArgs DEPENDS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -485,13 +483,21 @@ function(jedi_app_ref_test_compare)
     endif() 
 
     set( MPI_SUFFIX "" )
-    if( DEFINED TEST_NPE )
-        if( TEST_NPE GREATER 1 )
-            set( MPI_SUFFIX "_${TEST_NPE}pe" )
-        endif()
-    else()
+    if( NOT DEFINED TEST_NPE )
         set( TEST_NPE 1 )
     endif()
+    if( NOT DEFINED TEST_NMEM )
+        set( TEST_NMEM 1 )
+    endif()
+    math(EXPR REMAIN "${TEST_NPE} % ${TEST_NMEM}")
+    if(NOT ${REMAIN} EQUAL 0)
+        message(FATAL_ERROR "NPE % NMEM must be zero")
+    endif()
+    math(EXPR NPE_PER_MEMBER "${TEST_NPE} / ${TEST_NMEM}")
+    if( ${NPE_PER_MEMBER} GREATER 1 )
+        set( MPI_SUFFIX "_${NPE_PER_MEMBER}pe" )
+    endif()
+
     set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}" ) 
 
     set( TARGET_PREFIX "test" )

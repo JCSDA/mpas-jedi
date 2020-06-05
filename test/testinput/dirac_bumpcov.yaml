@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
@@ -18,10 +15,10 @@ initial:
   - uReconstructMeridional
   - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
-  date: '2018-04-15T00:00:00Z'
+  date: &date '2018-04-15T00:00:00Z'
 Covariance:
       covariance: BUMP
-      date: '2018-04-15T00:00:00Z'
+      date: *date
       bump:
         prefix: Data/bump/mpas_parametersbump_cov
         default_seed: 1
@@ -29,7 +26,6 @@ Covariance:
         strategy: specific_univariate  #common
         new_nicas: 0
         load_nicas: 1
-        load_cmat: 1
         ntry: 3
         nrep: 2
         lsqrt: 1
@@ -59,6 +55,5 @@ dirac:
   ildir: 3
   dirvar: uReconstructZonal
 output_B:
-  datadir: Data
-  filename: "./mpas.Dirac_B_bumpcov.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/states/mpas.Dirac_B_bumpcov.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

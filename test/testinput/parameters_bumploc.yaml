@@ -1,46 +1,33 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-variables:
+variables: &vars
 - temperature
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
-date: '2018-04-15T00:00:00Z'
+date: &date '2018-04-15T00:00:00Z'
 background:
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  variables: *vars
   filename: "./restart.2018-04-15_00.00.00.nc"
-  date: '2018-04-15T00:00:00Z'
+  date: *date
 ensemble:
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+    date: *date
+  variables: *vars
 covariance:
   covariance: MPASstatic
-  date: '2018-04-15T00:00:00Z'
+  date: *date
   pseudoens_size: 10
 bump:
   prefix: Data/bump/mpas_parametersbump_loc
@@ -76,18 +63,14 @@ bump:
   write_grids: 1
 output:
 - parameter: loc_coef
-  datadir: Data
-  filename: "./mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
 - parameter: loc_rh
-  datadir: Data
-  filename: "./mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
 - parameter: loc_rv
-  datadir: Data
-  filename: "./mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
 - parameter: hyb_coef
-  datadir: Data
-  filename: "./mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

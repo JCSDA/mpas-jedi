@@ -1,43 +1,30 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-variables:
+variables: &vars
 - temperature
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
-date: '2018-04-15T00:00:00Z'
+date: &date '2018-04-15T00:00:00Z'
 background:
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  variables: *vars
   filename: "./restart.2018-04-15_00.00.00.nc"
-  date: '2018-04-15T00:00:00Z'
+  date: *date
 ensemble:
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+    date: *date
+  variables: *vars
 bump:
   prefix: Data/bump/mpas_parametersbump_cov
   default_seed: 1
@@ -76,14 +63,11 @@ bump:
   var_rhflt: 3000.0e3
 output:
 - parameter: stddev
-  datadir: Data
-  filename: "./mpas.stddev.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
 - parameter: cor_rh
-  datadir: Data
-  filename: "./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
 - parameter: cor_rv
-  datadir: Data
-  filename: "./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

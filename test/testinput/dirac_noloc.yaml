@@ -1,45 +1,32 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 resolution:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-variables:
+variables: &vars
 - temperature
 - spechum
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
 initial:
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  variables: *vars
   filename: "./restart.2018-04-15_00.00.00.nc"
-  date: '2018-04-15T00:00:00Z'
+  date: &date '2018-04-15T00:00:00Z'
 Covariance:
   covariance: ensemble
   members: '5'
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  date: '2018-04-15T00:00:00Z'
+  variables: *vars
+  date: *date
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
   - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-    date: '2018-04-15T00:00:00Z'
+    date: *date
 dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123,  35.68501691,   19.01699038,
@@ -57,6 +44,5 @@ dirac:
   ildir: 3
   dirvar: uReconstructZonal
 output_B:
-  datadir: Data
-  filename: "./mpas.Dirac_B_noloc.$Y-$M-$D_$h.$m.$s.nc"
-  date: '2018-04-15T00:00:00Z'
+  filename: Data/states/mpas.Dirac_B_noloc.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

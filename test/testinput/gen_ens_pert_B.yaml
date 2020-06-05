@@ -10,7 +10,6 @@ Covariance:
     nonunit_diag: 1 #effectively "cov"
     strategy: specific_univariate  #common
     load_nicas: 1
-    load_cmat: 1
     ntry: 3
     nrep: 2
     lsqrt: 1

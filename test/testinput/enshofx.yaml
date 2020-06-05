@@ -1,9 +1,6 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041421
 Assimilation Window:
-  window_begin: '2018-04-14T21:00:00Z'
+  window_begin: &date '2018-04-14T21:00:00Z'
   window_length: PT6H
 Geometry:
   gridfname: "./restart.2018-04-14_21.00.00.nc"
@@ -12,7 +9,7 @@ Model:
   tstep: PT30M
   finalnorm: 0.020383
   tolerance: 0.005
-  variables:
+  variables: &vars
   - temperature
   - spechum
   - uReconstructZonal
@@ -20,46 +17,21 @@ Model:
   - surface_pressure
 Initial Condition:
   state:
-  - variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+  - variables: *vars
     filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
-    date: '2018-04-14T21:00:00Z'
-  - variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    date: *date
+  - variables: *vars
     filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
-    date: '2018-04-14T21:00:00Z'
-  - variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    date: *date
+  - variables: *vars
     filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
-    date: '2018-04-14T21:00:00Z'
-  - variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    date: *date
+  - variables: *vars
     filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
-    date: '2018-04-14T21:00:00Z'
-  - variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    date: *date
+  - variables: *vars
     filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
-    date: '2018-04-14T21:00:00Z'
+    date: *date
 Observations:
   ObsTypes:
   - ObsSpace:

@@ -1,6 +1,3 @@
----
-logging:
-  categories: Info, Test, Warning, Error, Log, Trace, Stats
 nml_file: namelist.atmosphere_2018041500
 Geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
