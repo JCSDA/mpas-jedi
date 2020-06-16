@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from netCDF4 import Dataset
 import numpy as np
 import os

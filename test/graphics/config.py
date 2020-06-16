@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import binning_utils as bu
 import binning_configs as bcs
 from collections import defaultdict
@@ -67,10 +69,22 @@ if binBYLandFrac:
     radianceBinVars[vu.obsVarLandFrac] += [bu.identityBinMethod,
                                            bu.surfbandsMethod]
 
-#########################################
+
+############################################
+## binVarConfigs for polar-orbitting MW obs,
+## including cloud metrics
+## e.g., AMSUA
+############################################
+polmwBinVars = deepcopy(radianceBinVars)
+polmwBinVars[vu.obsVarACI] += [bu.identityBinMethod]
+polmwBinVars[vu.obsVarSCI] += [bu.OkamotoMethod]
+
+
+##########################################
 ## binVarConfigs for geostationary IR obs
-## i.e., GOES-ABI, Himawari-AHI
-#########################################
+## including cloud metrics
+## e.f., GOES-ABI, Himawari-AHI
+##########################################
 geoirBinVars = deepcopy(radianceBinVars)
 geoirBinVars[vu.obsVarACI] += [bu.identityBinMethod]
 geoirBinVars[vu.obsVarCldFrac] += [bu.identityBinMethod,
@@ -90,14 +104,14 @@ for var in bcs.cldfracBinVars.keys():
         geoirBinVars[var] += [bu.cldskyMethod]
 
 # symmetric cloud impact (expensive)
-selectSCIMethods = [
+geoirSCIMethods = [
     bu.OkamotoMethod,
     bu.ScaleOkamotoMethod,
 #    bu.ModHarnischMethod,
 #    bu.ScaleModHarnischMethod,
 ]
 
-for method in selectSCIMethods:
+for method in geoirSCIMethods:
     geoirBinVars[vu.obsVarSCI] += [method]
 # uncomment to diagnose (HofX - ObsValue) / ObsError for SCI-parameterized ObsError
 # note: requires SCIErrParams to be defined for all all DiagSpaces that use it
@@ -190,6 +204,7 @@ DiagSpaceConfig = {
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
+        'one_pe_per_figure': True
     },
     'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
@@ -198,6 +213,7 @@ DiagSpaceConfig = {
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
+        'one_pe_per_figure': True
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,
@@ -261,6 +277,48 @@ DiagSpaceConfig = {
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [4,5,6,7,9,10,11,12,13,14],
+    },
+    'amsua-cld_aqua': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
+    },
+    'amsua-cld_metop-a': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
+    },
+    'amsua-cld_metop-b': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
+    },
+    'amsua-cld_n15': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
+    },
+    'amsua-cld_n18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
+    },
+    'amsua-cld_n19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'binVarConfigs': polmwBinVars,
+        'diagNames': defaultDiags,
+        'channels': [1,2,3,4,15],
     },
     'cris-fsr_npp': {
         'DiagSpaceGrp': radiance_s,

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import binning_utils as bu
 import numpy as np
 import os

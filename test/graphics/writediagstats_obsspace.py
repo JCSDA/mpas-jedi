@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import binning_utils as bu
 import binning_configs as bcs

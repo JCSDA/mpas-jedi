@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import binning_utils as bu
 import binning_configs as bcs
 from collections.abc import Iterable

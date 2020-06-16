@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from collections.abc import Iterable
 from copy import deepcopy
 import inspect

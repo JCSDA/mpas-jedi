@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import argparse
 import basic_plot_functions as bpf
 import binning_utils as bu
 import binning_configs as bcs
 from collections.abc import Iterable
+from collections import defaultdict
 import config as conf
 from copy import deepcopy
 import collections
@@ -10,7 +13,6 @@ import datetime as dt
 import glob
 from multiprocessing import Pool
 import numpy as np
-import par_utils as paru
 from pathlib import Path
 import plot_utils as pu
 import re
@@ -148,7 +150,7 @@ if plotGroup == sdb.singleFCLen:
     ## plotTypes for considering single forecast length
     ## ------------------------------------------------------------------------
     plotTypes.append('SNAPSHOTCY')
-    plotTypes.append('SNAPSHOTCY_QCLines')
+    # plotTypes.append('SNAPSHOTCY_QCLines')
     # plotTypes.append('SNAPSHOTCY2D')
 
 if plotGroup == sdb.multiFCLen:
@@ -176,14 +178,14 @@ if plotGroup == sdb.multiFCLen:
 
     #First and Last FORECAST durations
     fcTDeltaFirst = dt.timedelta(hours=0)
-    fcTDeltaLast  = dt.timedelta(days=2, hours=0)
+    fcTDeltaLast  = dt.timedelta(days=3, hours=0)
     fcTimeInc  = dt.timedelta(hours=6)
 
     # plotTypes for considering multiple forecast lengths
     # --------------------------------------------------------------------------
     plotTypes.append('AGGREGATEFC')
     plotTypes.append('AGGREGATEFC_DiffCI')
-    plotTypes.append('SNAPSHOTFC')
+    # plotTypes.append('SNAPSHOTFC')
     # plotTypes.append('AGGREGATEFC2D')
 
 nExp  = len(expNames)
@@ -250,7 +252,9 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
 
     statsDB = statsDBs[DiagSpaceName]
 
-    LOGPREFIX = this_program+" : "+DiagSpaceName+" : "+selectPlotTypes[0]+" : "
+    LOGPREFIX = this_program+" : "+DiagSpaceName+" : "
+    if len(selectPlotTypes) == 1: LOGPREFIX += selectPlotTypes[0]+" : "
+
     diagNames = statsDB.diagNames
 
     ## Initialize the database
@@ -311,7 +315,7 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
         for statName in statNames:
             #This only applies to the unbounded quantities (omb, oma, ana/bak for velocity)
             if (statName == 'Mean' and
-                (diagName == 'omb' or diagName == 'oma')):
+                ('omb' in diagName or 'oma' in diagName)):
                 signDefinites.append(False)
             else:
                 signDefinites.append(True)
@@ -390,7 +394,6 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                 binLoc = {}
                 binLoc['diagName'] = diagName
                 binLoc['binVar'] = binVar
-                binVarLoc = deepcopy(binLoc)
                 binLoc['binMethod'] = binMethod
 
                 dbSelect1DBinVals = diagDFW.levels('binVal',binLoc)
@@ -455,12 +458,13 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                     aspect = 0.75
 
                     lineLoc = deepcopy(binLoc)
-                    axLimLoc = deepcopy(binVarLoc)
+                    axLimLoc = deepcopy(binLoc)
                     # axLimLoc['binVal'] = select1DBinVals
 
                     #file loop 1
                     for (fcTDelta, fcTDelta_totmin) in fcMap:
                         lineLoc['fcTDelta'] = fcTDelta
+                        axLimLoc['fcTDelta'] = fcTDelta
 
                         #file loop 2
                         for (statName, statDiagLabel, sciTicks, signDefinite) in StatsMap:
@@ -542,7 +546,7 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                     aspect = 0.9
 
                     lineLoc = deepcopy(binLoc)
-                    axLimLoc = deepcopy(binVarLoc)
+                    axLimLoc = deepcopy(binLoc)
                     # axLimLoc['binVal'] = select1DBinVals
 
                     #file loop 1
@@ -626,7 +630,23 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                     # ny = nVars
                     # nsubplots = nx * ny
 
-                    commonLoc = deepcopy(binLoc)
+                    cntrlLoc = deepcopy(binLoc)
+                    cntrlLoc['expName'] = cntrlName
+
+                    # Only bootstrap over the union of cyDTimes available
+                    # from both experiments
+                    expsCYDTimes = {}
+                    for fcTDelta in fcTDeltas:
+                        cntrlLoc['fcTDelta'] = fcTDelta
+                        cntrlCYDTimes = set(diagDFW.levels('cyDTime',cntrlLoc))
+
+                        expLoc = deepcopy(cntrlLoc)
+                        for expName in noncntrlExpNames:
+                            expLoc['expName'] = expName
+                            expCYDTimes = set(diagDFW.levels('cyDTime',expLoc))
+                            expsCYDTimes[(expName,fcTDelta)] = list(cntrlCYDTimes & expCYDTimes)
+                            if len(cntrlCYDTimes) != len(expCYDTimes):
+                                print(LOGPREFIX+"WARNING: "+cntrlName+" and "+expName+" have different number of CYDTimes at forecast length ",fcTDelta," Only using common CYDTimes for CI calculation.")
 
                     #figure loop 2
                     for statName in bootStrapStats:
@@ -638,28 +658,24 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
 
                         #subplot loop 1
                         for (varName, varLabel) in varMap:
-                            commonLoc['varName'] = varName
+                            cntrlLoc['varName'] = varName
 
                             #subplot loop 2
                             for binVal, binTitle in binMap:
-                                commonLoc['binVal'] = binVal
+                                cntrlLoc['binVal'] = binVal
 
                                 # define subplot title
                                 title = varLabel+binTitle
 
-                                linesVals = {}
-                                for trait in su.ciTraits: linesVals[trait] = []
-
-                                cntrlLoc = deepcopy(commonLoc)
-                                cntrlLoc['expName'] = cntrlName
-                                expLoc = deepcopy(commonLoc)
+                                linesVals = defaultdict(list)
                                 for expName in noncntrlExpNames:
-                                    expLoc['expName'] = expName
-
-                                    lineVals = {}
-                                    for trait in su.ciTraits: lineVals[trait] = []
+                                    lineVals = defaultdict(list)
 
                                     for fcTDelta in fcTDeltas:
+                                        cntrlLoc['cyDTime'] = expsCYDTimes[(expName,fcTDelta)]
+                                        expLoc = deepcopy(cntrlLoc)
+                                        expLoc['expName'] = expName
+
                                         cntrlLoc['fcTDelta'] = fcTDelta
                                         expLoc['fcTDelta'] = fcTDelta
 
@@ -670,11 +686,10 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                                                      statNames = [statName])
 
                                         for trait in su.ciTraits:
-                                            lineVals[trait].append(ciVals[statName][trait][0])
+                                            lineVals[trait] += [ciVals[statName][trait][0]]
 
                                     for trait in su.ciTraits:
-                                        linesVals[trait].append(
-                                            lineVals[trait] )
+                                        linesVals[trait].append(lineVals[trait])
 
                                 # use specific y-axis limits for each varName
                                 dmin = np.nanmin(linesVals[su.cimin])
@@ -719,7 +734,7 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                     aspect = 0.75
 
                     lineLoc = deepcopy(binLoc)
-                    axLimLoc = deepcopy(binVarLoc)
+                    axLimLoc = deepcopy(binLoc)
                     # axLimLoc['binVal'] = select1DBinVals
 
                     #file loop 1
@@ -1062,6 +1077,7 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                 vu.obsVarLat: {'profilePlotFunc': bpf.plotProfile},
 #                vu.obsVarLT: {'profilePlotFunc': bpf.plotSeries},
                 vu.obsVarPrs: {'profilePlotFunc': bpf.plotProfile},
+                vu.obsVarSCI: {'profilePlotFunc': bpf.plotSeries},
                 vu.obsVarSenZen: {'profilePlotFunc': bpf.plotSeries},
             }
 
@@ -1391,6 +1407,24 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                             nx = np.int(np.ceil(np.sqrt(nsubplots)))
                             ny = np.int(np.ceil(np.true_divide(nsubplots,nx)))
 
+                        cntrlLoc = deepcopy(varMethodLoc)
+                        cntrlLoc['expName'] = cntrlName
+
+                        # Only bootstrap over the union of cyDTimes available
+                        # from both experiments
+                        expsCYDTimes = {}
+                        for fcTDelta in fcTDeltas:
+                            cntrlLoc['fcTDelta'] = fcTDelta
+                            cntrlCYDTimes = set(diagDFW.levels('cyDTime',cntrlLoc))
+
+                            expLoc = deepcopy(cntrlLoc)
+                            for expName in noncntrlExpNames:
+                                expLoc['expName'] = expName
+                                expCYDTimes = set(diagDFW.levels('cyDTime',expLoc))
+                                expsCYDTimes[(expName,fcTDelta)] = list(cntrlCYDTimes & expCYDTimes)
+                                if len(cntrlCYDTimes) != len(expCYDTimes):
+                                    print(LOGPREFIX+"WARNING: "+cntrlName+" and "+expName+" have different number of CYDTimes at forecast length ",fcTDelta,". Only using common CYDTimes for CI calculation.")
+
                         #file loop 1
                         for statName in bootStrapStats:
                             if statName not in selectStatNames: continue
@@ -1400,31 +1434,27 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                             iplot = 0
 
                             #subplot loop 1
-                            fcLoc = deepcopy(varMethodLoc)
+                            cntrlLoc = deepcopy(varMethodLoc)
+                            cntrlLoc['expName'] = cntrlName
                             for (varName, varLabel) in varMap:
-                                fcLoc['varName'] = varName
+                                cntrlLoc['varName'] = varName
 
                                 #subplot loop 2
                                 for fcTDelta in fcTDeltas:
-                                    fcLoc['fcTDelta'] = fcTDelta
-                                    cntrlLoc = deepcopy(fcLoc)
-                                    expLoc = deepcopy(fcLoc)
+                                    cntrlLoc['fcTDelta'] = fcTDelta
 
                                     #Setting to avoid over-crowding
                                     if fcTDeltas.index(fcTDelta) > (MAX_FC_SUBFIGS-1): continue
 
-                                    linesVals = {}
-                                    for trait in su.ciTraits: linesVals[trait] = []
+                                    linesVals = defaultdict(list)
                                     for expName in noncntrlExpNames:
-                                        lineVals = {}
-                                        for trait in su.ciTraits: lineVals[trait] = []
+                                        lineVals = defaultdict(list)
 
-                                        cntrlLoc['expName'] = cntrlName
-                                        expLoc['expName'] = expName
-
+                                        cntrlLoc['cyDTime'] = expsCYDTimes[(expName,fcTDelta)]
                                         for binVal in select2DBinVals:
                                             cntrlLoc['binVal'] = binVal
-                                            expLoc['binVal'] = binVal
+                                            expLoc = deepcopy(cntrlLoc)
+                                            expLoc['expName'] = expName
 
                                             ciVals = su.bootStrapClusterFunc(
                                                          X = diagDFW.loc(expLoc),
@@ -1433,7 +1463,7 @@ def plot_stats_timeseries(DiagSpaceName, statsDBs, selectPlotTypes):
                                                          statNames = [statName])
 
                                             for trait in su.ciTraits:
-                                                lineVals[trait].append(ciVals[statName][trait][0])
+                                                lineVals[trait] += [ciVals[statName][trait][0]]
 
                                         for trait in su.ciTraits:
                                             linesVals[trait].append(lineVals[trait])
@@ -1808,14 +1838,18 @@ def main():
 
     # Process all databases asynchronously
     dspool = Pool(processes=nprocs)
-    for plotType in plotTypes:
-        for DiagSpaceName in sorted(DiagSpaceConfig):
-            if statsDBs[DiagSpaceName].available:
-                ## create figures for plotType, statsDBs[DiagSpaceName]
-                res = dspool.apply_async(plot_stats_timeseries, args=(DiagSpaceName, statsDBs, [plotType]))
-
+    for DiagSpaceName in sorted(DiagSpaceConfig):
+        if statsDBs[DiagSpaceName].available:
+            if DiagSpaceConfig[DiagSpaceName].get('one_pe_per_figure',False):
+                # additionally process plotTypes asynchronously
+                for plotType in plotTypes:
+                    res = dspool.apply_async(plot_stats_timeseries, args=(DiagSpaceName, statsDBs, [plotType]))
+                    ## DEBUG
+                    #plot_stats_timeseries(DiagSpaceName, statsDBs, [plotType])
+            else:
+                res = dspool.apply_async(plot_stats_timeseries, args=(DiagSpaceName, statsDBs, plotTypes))
                 ## DEBUG
-#                plot_stats_timeseries(DiagSpaceName, statsDBs)
+                #plot_stats_timeseries(DiagSpaceName, statsDBs, plotTypes)
 
     dspool.close()
     dspool.join()

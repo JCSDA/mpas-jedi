@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from collections.abc import Iterable
 import datetime as dt
 import matplotlib

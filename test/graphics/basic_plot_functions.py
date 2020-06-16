@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import datetime as dt
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -233,13 +235,26 @@ def plotSeries(fig, \
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
             significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
 
-            siginds = np.array([i for i,x in enumerate(significant) if x > 0.0],dtype=int)
-            if len(siginds) > 0:
-                ax.plot(np.array(xVals)[siginds], np.array(lineVals)[siginds], \
+            lineArr = np.array(lineVals)
+            xArr = np.array(xVals)
+            negsiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
+            if len(negsiginds) > 0:
+                ax.plot(xArr[negsiginds], lineArr[negsiginds], \
                         color=pColor, \
                         ls='', \
-                        marker=pu.plotMarkers[iline+lineAttribOffset], \
+                        marker='v', \
                         markersize=1.5)
+
+            possiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
+            if len(possiginds) > 0:
+                ax.plot(xArr[possiginds], lineArr[possiginds], \
+                        color=pColor, \
+                        ls='', \
+                        marker='^', \
+                        markersize=1.5)
+
             ax.plot(xVals, linesValsMinCI[iline], \
                     color=pColor, \
                     alpha=0.4, \
@@ -406,13 +421,26 @@ def plotProfile(fig, \
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
             significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
 
-            siginds = np.array([i for i,x in enumerate(significant) if x > 0.0],dtype=int)
-            if len(siginds) > 0:
-                ax.plot(np.array(lineVals)[siginds], np.array(yVals)[siginds], \
+            lineArr = np.array(lineVals)
+            yArr = np.array(yVals)
+            negsiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
+            if len(negsiginds) > 0:
+                ax.plot(lineArr[negsiginds], yArr[negsiginds], \
                         color=pColor, \
                         ls='', \
-                        marker=pu.plotMarkers[iline+lineAttribOffset], \
+                        marker='<', \
                         markersize=1.5)
+
+            possiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
+            if len(possiginds) > 0:
+                ax.plot(lineArr[possiginds], yArr[possiginds], \
+                        color=pColor, \
+                        ls='', \
+                        marker='>', \
+                        markersize=1.5)
+
             ax.plot(linesValsMinCI[iline], yVals, \
                     color=pColor, \
                     alpha=0.4, \
@@ -591,13 +619,27 @@ def plotTimeSeries(fig, \
             else:
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
             significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
-            siginds = np.array([i for i,x in enumerate(significant) if x > 0.0],dtype=int)
-            if len(siginds) > 0:
-                ax.plot(np.array(xVals)[siginds], np.array(lineVals)[siginds], \
+
+            lineArr = np.array(lineVals)
+            xArr = np.array(xVals)
+            negsiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
+            if len(negsiginds) > 0:
+                ax.plot(xArr[negsiginds], lineArr[negsiginds], \
                         color=pColor, \
                         ls='', \
-                        marker=pu.plotMarkers[iline+lineAttribOffset], \
+                        marker='v', \
                         markersize=1.5)
+
+            possiginds = np.array([i for i,x in enumerate(significant)
+                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
+            if len(possiginds) > 0:
+                ax.plot(xArr[possiginds], lineArr[possiginds], \
+                        color=pColor, \
+                        ls='', \
+                        marker='^', \
+                        markersize=1.5)
+
             ax.plot(xVals, linesValsMinCI[iline], \
                     color=pColor, \
                     alpha=0.4, \
