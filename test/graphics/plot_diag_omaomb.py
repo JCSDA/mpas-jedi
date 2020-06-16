@@ -280,7 +280,7 @@ def readdata():
                     ch = ''.join(varname.split("_")[-1:])
                     ifig = chlist.index(int(ch)) + 1
                     dictname = '_'.join(varname.split("_")[:-1])
-                    shortname = ', ch. '+ch
+                    shortname = '_'+ch
                 else:
                     print('NOTIFICATION: obstype = '+obstype+' not defined, using default scatter plots')
                     #Generic scatter verification for any obstype
@@ -304,35 +304,36 @@ def readdata():
                                      obsnc, ombnc, omanc, \
                                      nx_subplt, ny_subplt, \
                                      nfigtypes, figs, expt_obs,print_fmt)
-                # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
-                shortname = varval[1] + '_ch_' + ch
-                dotsize = 0.5
-                dmin = 190
-                dmax = 270
-                color = "gist_ncar"
-                basic_plot_functions.plotDistri(latnc,lonnc,obsnc, \
-                                                obstype,shortname,dictname,expt_obs,int(obsnum),"obs", \
-                                                dmin,dmax,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc, \
-                                                obstype,shortname,dictname,expt_obs,int(bkgnum),"bkg", \
-                                                dmin,dmax,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,ananc, \
-                                                obstype,shortname,dictname,expt_obs,int(ananum),"ana", \
-                                                dmin,dmax,dotsize,color)
-                dmin = -30
-                dmax = 30
-                color = "hsv"
-                basic_plot_functions.plotDistri(latnc,lonnc,ombnc, \
-                                                obstype,shortname,dictname,expt_obs,int(ombnum),"omb", \
-                                                dmin,dmax,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,omanc, \
-                                                obstype,shortname,dictname,expt_obs,int(omanum),"oma", \
-                                                dmin,dmax,dotsize,color)
-
                 if ivar == nvars-1:
                     # Close figs in reverse order to avoid seg fault
                     for fig in reversed(figs):
                         plt.close(fig)
+
+                # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
+                dotsize = 5.0
+                if ''.join(obstype) in radiance_group:
+                    color = "BT"
+                else:
+                    color = "gist_ncar"
+                basic_plot_functions.plotDistri(latnc,lonnc,obsnc, \
+                                                obstype,shortname,units,expt_obs,int(obsnum),"obs", \
+                                                None,None,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc, \
+                                                obstype,shortname,units,expt_obs,int(bkgnum),"bkg", \
+                                                None,None,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,ananc, \
+                                                obstype,shortname,units,expt_obs,int(ananum),"ana", \
+                                                None,None,dotsize,color)
+                dmin = -30
+                dmax = 30
+                color = "hsv"
+                basic_plot_functions.plotDistri(latnc,lonnc,ombnc, \
+                                                obstype,shortname,units,expt_obs,int(ombnum),"omb", \
+                                                dmin,dmax,dotsize,color)
+                basic_plot_functions.plotDistri(latnc,lonnc,omanc, \
+                                                obstype,shortname,units,expt_obs,int(omanum),"oma", \
+                                                dmin,dmax,dotsize,color)
+
 
 
 def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):

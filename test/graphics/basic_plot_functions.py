@@ -18,7 +18,55 @@ import plot_utils as pu
 import var_utils as vu
 import os
 
+cmGray     = plt.cm.get_cmap("gist_gray")
+cmRainbow  = plt.cm.get_cmap("gist_rainbow")
+cmSpectral = plt.cm.get_cmap("nipy_spectral")
+cmHeat     = plt.cm.get_cmap("gist_heat")
+cmOcean    = plt.cm.get_cmap("ocean")
+cmNCAR     = plt.cm.get_cmap("gist_ncar")
+
+WhiteBlack1 = cmGray(np.linspace(1.0,0.0,17)) # white to black (-90 to -74 C)
+BlackRed    = cmHeat(np.linspace(0.0,0.5,10)) #black to red (-74 to -65 C)
+ROYG        = cmSpectral(np.linspace(0.9,0.43,27)) # red, orange, yellow, green, blue (-65 to -39 C)
+#GreenBlue   = cmNCAR(np.linspace(0.05,0.1,8)) # green to blue (-39 to -32 C)
+#BlueCyan    = cmRainbow(np.linspace(0.8,0.6,13)) # blue to cyan (-32 to -20 C)
+GreenBlueCyan = cmNCAR(np.linspace(0.05,0.2,20)) # green to blue (-39 to -20 C)
+#WhiteBlack2 = cmGray(np.linspace(0.9,0.0,51)) # white to black (-20 to 30 C)
+MVW = cmNCAR(np.linspace(0.8,0.98,21)) # magenta to violet to white (-20 to 0 C)
+WhiteBlack2 = cmGray(np.linspace(0.9,0.0,31)) # white to black (0 to 30 C)
+
+#btcolors = np.concatenate((WhiteBlack1, BlackRed, ROYG, GreenBlue, BlueCyan, WhiteBlack2))
+#btcolors = np.concatenate((WhiteBlack1, BlackRed, ROYG, GreenBlueCyan, WhiteBlack2))
+btcolors = np.concatenate((WhiteBlack1, BlackRed, ROYG, GreenBlueCyan, MVW, WhiteBlack2))
+
+btCMap = colors.ListedColormap(btcolors)
+
 #This script includes basic plotting functions.
+
+distriZooms = {}
+
+#Full Earth
+distriZooms['default'] = {
+    'cLon': None,
+    'minLon': -180,
+    'maxLon': 180,
+    'minLat': -90,
+    'maxLat': 90,
+}
+distriZooms['abi'] = {
+    'cLon': -75.2,
+    'minLon': None,
+    'maxLon': None,
+    'minLat': None,
+    'maxLat': None,
+}
+distriZooms['ahi'] = {
+    'cLon': 140.7,
+    'minLon': None,
+    'maxLon': None,
+    'minLat': None,
+    'maxLat': None,
+}
 
 def plotDistri(lats,lons,values, \
                ObsType,VarName,var_unit,out_name,nstation,levbin, \
@@ -43,40 +91,94 @@ def plotDistri(lats,lons,values, \
 #    lons[tmp] = lons[tmp] + 360
 
 #set map=======================================================================
-    fig,ax=plt.subplots(figsize=(8,8))
-    m=Basemap(projection='cyl',     #map projection
-        llcrnrlon=-180,llcrnrlat=-90,urcrnrlon=180,urcrnrlat=90, #the lat lon of leftlow and upper right corner
-#       llcrnrlon=-20,llcrnrlat=10,urcrnrlon=60,urcrnrlat=80,   #zoom in
-        resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
-    m.drawcoastlines()  #draw coastline
+    cLon = distriZooms['default']['cLon']
+    minLon = distriZooms['default']['minLon']
+    maxLon = distriZooms['default']['maxLon']
+    minLat = distriZooms['default']['minLat']
+    maxLat = distriZooms['default']['maxLat']
+
+    for key, val in distriZooms.items():
+        if key in ObsType:
+            cLon = val['cLon']
+            minLon = val['minLon']
+            maxLon = val['maxLon']
+            minLat = val['minLat']
+            maxLat = val['maxLat']
+
+    parallels=np.arange(-90,90,30)      #lat
+
+    if cLon is not None:
+        fig,ax=plt.subplots(figsize=(5,5))
+        m=Basemap(projection='nsper',     #map projection
+            lon_0 = cLon,
+            lat_0 = 0.0,
+            resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
+        #set the lat lon grid and the ticks of x y axies ==============================
+        m.drawparallels(parallels, linewidth=0.2, dashes=[1,3])
+        meridians=np.arange(-180,180,30)    #lon
+        m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3])
+    else:
+        fig,ax=plt.subplots(figsize=(8,8))
+        m=Basemap(projection='cyl',     #map projection
+            llcrnrlon=minLon, llcrnrlat=minLat, #the lat lon of leftlower corner
+            urcrnrlon=maxLon, urcrnrlat=maxLat, #the lat lon of rightupper corner
+            resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
+        #set the lat lon grid and the ticks of x y axies ==============================
+        m.drawparallels(parallels, linewidth=0.2, dashes=[1,3],
+            labels=[True,True,True,True])   #Turn the ticks on or off
+        meridians=np.arange(-180,180,60)    #lon
+        m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3],
+            labels=[True,True,True,True])
+
+    m.drawcoastlines(linewidth=0.2,zorder=10)  #draw coastline
 #   m.drawmapboundary(fill_color='lightblue') #the whole map is filled with the specified color
 #   m.fillcontinents(color='wheat',lake_color='lightblue') #the continents are filled
 
-#set the lat lon grid and the ticks of x y axies ==============================
-    parallels=np.arange(-90,90,30)      #lat
-    meridians=np.arange(-180,180,60)    #lon
-    m.drawparallels(parallels,
-        labels=[True,True,True,True])   #Turn the ticks on or off
-    m.drawmeridians(meridians,
-        labels=[True,True,True,True])
 
 #set title  ===================================================================
     if nstation == 0:
-        plt.text(0.5, 1.25, '%s   variable: %s %s nlocs:%s' \
+        plt.text(0.5, 1.25, '%s   %s %s nlocs:%s' \
             %(ObsType,VarName,var_unit,len(values)),    \
             horizontalalignment='center', \
             fontsize=12, transform = ax.transAxes)
     else:
-        plt.text(0.5, 1.25, '%s   variable: %s %s nlocs:%s nstation:%s' \
+        plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nstation:%s' \
             %(ObsType,VarName,var_unit,len(values),nstation),    \
             horizontalalignment='center', \
             fontsize=12, transform = ax.transAxes)
 
 #draw points onto map =========================================================
-    cm=plt.cm.get_cmap(color)
-    sc=m.scatter(lons[:],lats[:],c=values[:],s=dotsize,cmap=cm, vmin=dmin, vmax=dmax,
-       zorder=10) #10 ; zorder determines the order of the layer. If not set,
-                        #the point on continent will be blocked
+    if color == "BT":
+        if ("abi" in ObsType or "ahi" in ObsType):
+            cm = btCMap
+            if dmin is None: dmin = 183
+            if dmax is None: dmax = 303
+        else:
+            cm = plt.cm.get_cmap("gist_ncar")
+            if dmin is None: dmin = 190
+            if dmax is None: dmax = 270
+    else:
+        cm = plt.cm.get_cmap(color)
+
+    finite = np.isfinite(values)
+    if ("abi" in ObsType or "ahi" in ObsType) and finite.sum() > 4e4:
+        # option 1: smoothed contours (note: color bar is not quite right)
+        # sc=m.contourf(lons[finite], lats[finite], values[finite],
+        #               cm.N, cmap = cm, vmin = dmin, vmax = dmax,
+        #               latlon = True, tri = True, extend='both')
+
+        # option 2: pixel contours
+        sc = m.pcolor(lons[finite], lats[finite], values[finite],
+                      cmap = cm, vmin = dmin, vmax = dmax,
+                      latlon = True, tri = True)
+
+    else:
+        sc = m.scatter(lons[finite], lats[finite], c=values[finite],
+                       latlon = True,
+                       s = dotsize, cmap = cm, vmin = dmin, vmax = dmax,
+                       marker = '.', linewidth = 0,
+                       zorder=11) #10 ; zorder determines the order of the layer. If not set,
+                                      #the point on continent will be blocked
 
 #create axes for colorbar======================================================
     divider = make_axes_locatable(ax)
