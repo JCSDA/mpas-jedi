@@ -53,17 +53,19 @@ type(mpas_covar),          intent(inout) :: self    !< Covariance structure
 type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
 type(mpas_geom),           intent(in)    :: geom    !< Geometry
 
-character(kind=c_char,len=MAXVARLEN), allocatable :: char_array(:)
-integer(c_size_t),parameter :: csize = MAXVARLEN
+character(kind=c_char,len=:), allocatable :: char_array(:)
 real(kind=c_float), allocatable :: real_array(:)
 
 if (f_conf%has("var_scaling_variables") .and. f_conf%has("var_scaling_magnitudes")) then
-   call f_conf%get_or_die("var_scaling_variables",csize,char_array)
+   call f_conf%get_or_die("var_scaling_variables",char_array)
    call f_conf%get_or_die("var_scaling_magnitudes",real_array)
    if(size(real_array) /= size(char_array)) then
       call abor1_ftn("--> mpas_b_setup_f90: var_scaling_variables and var_scaling_magnitudes have different sizes")
    end if
 
+   if(len(char_array) > MAXVARLEN) then
+      call abor1_ftn("--> mpas_b_setup_f90: length of strings in var_scaling_variables greater than MAXVARLEN")
+   end if
    allocate(self % var_scaling_variables(size(char_array)))
    self % var_scaling_variables = char_array
    allocate(self % var_scaling_magnitudes(size(real_array)))
