@@ -81,6 +81,10 @@ else()
   ecbuild_enable_ompstubs()
 endif()
 
+# atlas
+ecbuild_use_package( PROJECT atlas VERSION 0.18.1 REQUIRED )
+include_directories( ${ATLAS_INCLUDE_DIRS} )
+
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.2.1 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
@@ -101,7 +105,7 @@ include_directories( ${UFO_INCLUDE_DIRS} )
 # Export package info
 ################################################################################
 
-list( APPEND MPAS_TPLS ufo oops saber )
+list( APPEND MPAS_TPLS atlas atlas_f ufo oops saber )
 
 set( MPAS_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/model ${CMAKE_CURRENT_BINARY_DIR}/model
                         ${CMAKE_Fortran_MODULE_DIRECTORY} )

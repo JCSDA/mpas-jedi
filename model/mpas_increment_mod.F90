@@ -5,6 +5,7 @@
 
 module mpas_increment_mod
 
+use atlas_module, only: atlas_geometry
 use fckit_configuration_module, only: fckit_configuration
 
 !oops
@@ -215,20 +216,22 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
    integer :: current_cell
    real (kind=kind_real) :: current_distance, d
    real (kind=kind_real) :: nearest_distance
+   type (atlas_geometry) :: ageometry
 
    nearest_cell = start_cell
    current_cell = -1
 
+   ageometry = atlas_geometry("UnitSphere")
+
    do while (nearest_cell /= current_cell)
       current_cell = nearest_cell
-      current_distance = sphere_distance(latCell(current_cell), lonCell(current_cell), target_lat, &
-                                         target_lon, MPAS_JEDI_ONE_kr)
+      current_distance = ageometry%distance(lonCell(current_cell), latCell(current_cell),  target_lon, target_lat)
       nearest_cell = current_cell
       nearest_distance = current_distance
       do i = 1, nEdgesOnCell(current_cell)
          iCell = cellsOnCell(i,current_cell)
          if (iCell <= nCells) then
-            d = sphere_distance(latCell(iCell), lonCell(iCell), target_lat, target_lon, MPAS_JEDI_ONE_kr)
+            d = ageometry%distance(lonCell(iCell), latCell(iCell), target_lon, target_lat)
             if (d < nearest_distance) then
                nearest_cell = iCell
                nearest_distance = d
@@ -237,21 +240,6 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
       end do
    end do
 end function nearest_cell
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Compute the great-circle distance between (lat1, lon1) and (lat2, lon2) 
-!    on a sphere with given radius.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-real (kind=kind_real) function sphere_distance(lat1, lon1, lat2, lon2, radius)
-
-   implicit none
-
-   real (kind=kind_real), intent(in) :: lat1, lon1, lat2, lon2, radius
-   real (kind=kind_real) :: arg1
-
-   arg1 = sqrt( sin(0.5*(lat2-lat1))**2 + cos(lat1)*cos(lat2)*sin(0.5*(lon2-lon1))**2 )
-   sphere_distance = 2.0 * radius * asin(arg1)
-
-end function sphere_distance
 
 ! ------------------------------------------------------------------------------
 

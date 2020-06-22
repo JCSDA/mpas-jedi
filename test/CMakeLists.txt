@@ -203,11 +203,13 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
     set( GIT_BRANCH_MPAS ${MPAS_IODA_TESTFILES_BRANCH})
   endif()
 
-  # Check whether the URL exists or not 
+   # Check whether the URLs exist or not
   set( ECBUILD_DOWNLOAD_BASE_URL ${MPAS_IODA_DOWNLOAD_BASE_URL}/ioda)
-  ecbuild_check_multiurl(NAMES   ${mpas_ioda_test_data}
-                       DIRHOST ${GIT_BRANCH_MPAS}
-                       RESULT  MPAS_SPECIFIC_TEST_FILES)
+   foreach (mpas_ioda_tar_name ${mpas_ioda_test_data})
+       list(APPEND url_names_data ${GIT_BRANCH_MPAS}/${mpas_ioda_tar_name})
+   endforeach()
+   ecbuild_check_urls(NAMES  ${url_names_data}
+                      RESULT SPECIFIC_TEST_FILES)
 
   # Set distant directory
   if(${MPAS_SPECIFIC_TEST_FILES} MATCHES 0)
