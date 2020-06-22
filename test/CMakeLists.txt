@@ -209,7 +209,7 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
        list(APPEND url_names_data ${GIT_BRANCH_MPAS}/${mpas_ioda_tar_name})
    endforeach()
    ecbuild_check_urls(NAMES  ${url_names_data}
-                      RESULT SPECIFIC_TEST_FILES)
+                      RESULT MPAS_SPECIFIC_TEST_FILES)
 
   # Set distant directory
   if(${MPAS_SPECIFIC_TEST_FILES} MATCHES 0)
