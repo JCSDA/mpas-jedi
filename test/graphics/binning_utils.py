@@ -350,11 +350,11 @@ class SCINormalizedError:
         #        SCI0 SCI1
         #---------------------------------------------
         osName = caseParams['osName']
+        SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType.get(osName,None))])
+
         if osName is None or osName not in SCIErrParams:
             print("ERROR: osName not available in SCIErrParams => "+osName)
             os._exit(1)
-
-        SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType.get(osName,None))])
 
         varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
         STD0 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][0]
