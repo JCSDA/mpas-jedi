@@ -14,6 +14,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "atlas/field.h"
+
 #include "model/IncrementMPASFortran.h"
 
 #include "oops/base/GeneralizedDepartures.h"
@@ -85,10 +87,10 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void random();
   void dirac(const eckit::Configuration &);
 
-/// Unstructured grid
-  void ug_coord(oops::UnstructuredGrid &) const;
-  void field_to_ug(oops::UnstructuredGrid &, const int &) const;
-  void field_from_ug(const oops::UnstructuredGrid &, const int &);
+  /// ATLAS
+  void setAtlas(atlas::FieldSet *) const;
+  void toAtlas(atlas::FieldSet *) const;
+  void fromAtlas(atlas::FieldSet *);
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);

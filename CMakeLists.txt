@@ -88,6 +88,7 @@ include_directories( ${ATLAS_INCLUDE_DIRS} )
 # oops
 ecbuild_use_package( PROJECT oops VERSION 0.2.1 REQUIRED )
 include_directories( ${OOPS_INCLUDE_DIRS} )
+add_definitions(-DATLASIFIED=1) 
 
 # saber
 ecbuild_use_package( PROJECT saber VERSION 0.0.1 REQUIRED )

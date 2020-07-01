@@ -13,6 +13,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "atlas/field.h"
+
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
@@ -149,20 +151,24 @@ void IncrementMPAS::random() {
   mpas_increment_random_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
-/// Unstructured grid
+/// ATLAS
 // -----------------------------------------------------------------------------
-void IncrementMPAS::ug_coord(oops::UnstructuredGrid & ug) const {
-  mpas_increment_ug_coord_f90(keyInc_, ug.toFortran());
+void IncrementMPAS::setAtlas(atlas::FieldSet * afieldset) const {
+  const util::DateTime * dtp = &time_;
+  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                               afieldset->get());
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::field_to_ug(oops::UnstructuredGrid & ug,
-                                const int & its) const {
-  mpas_increment_increment_to_ug_f90(keyInc_, ug.toFortran(), its);
+void IncrementMPAS::toAtlas(atlas::FieldSet * afieldset) const {
+  const util::DateTime * dtp = &time_;
+  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                              afieldset->get());
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::field_from_ug(const oops::UnstructuredGrid & ug,
-                                const int & its) {
-  mpas_increment_increment_from_ug_f90(keyInc_, ug.toFortran(), its);
+void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
+  const util::DateTime * dtp = &time_;
+  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
+                                afieldset->get());
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

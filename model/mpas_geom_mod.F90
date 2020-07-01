@@ -5,6 +5,7 @@
 
 module mpas_geom_mod
 
+use atlas_module
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 
@@ -25,7 +26,7 @@ use mpas_constants_mod
 implicit none
 private
 public :: mpas_geom, &
-        & geo_setup, geo_clone, geo_delete, geo_info
+        & geo_setup, geo_set_atlas_lonlat, geo_fill_atlas_fieldset, geo_clone, geo_delete, geo_info
 public :: mpas_geom_registry
 
 
@@ -59,6 +60,8 @@ type :: mpas_geom
 
    type (domain_type), pointer :: domain => null() 
    type (core_type), pointer :: corelist => null()
+   type(atlas_functionspace) :: afunctionspace
+   type(atlas_fieldset) :: afieldset
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom
@@ -188,6 +191,58 @@ subroutine geo_setup(self, f_conf)
 !   write(*,*)'End of geo_setup'
 
 end subroutine geo_setup
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine geo_set_atlas_lonlat(self, afieldset)
+
+   implicit none
+
+   type(mpas_geom),  intent(inout) :: self
+   type(atlas_fieldset), intent(inout) :: afieldset
+
+   real(kind_real), pointer :: real_ptr(:,:)
+   type(atlas_field) :: afield
+
+   ! Create lon/lat field
+   afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,self%nCellsSolve/))
+   call afield%data(real_ptr)
+   real_ptr(1,:) = self%lonCell(1:self%nCellsSolve) * MPAS_JEDI_RAD2DEG_kr
+   real_ptr(2,:) = self%latCell(1:self%nCellsSolve) * MPAS_JEDI_RAD2DEG_kr
+   call afieldset%add(afield)
+
+end subroutine geo_set_atlas_lonlat
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine geo_fill_atlas_fieldset(self, afieldset)
+
+   implicit none
+
+   type(mpas_geom),  intent(inout) :: self
+   type(atlas_fieldset), intent(inout) :: afieldset
+
+   integer :: i, jz
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   type(atlas_field) :: afield
+
+   ! Add area
+   afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+   call afield%data(real_ptr_1)
+   real_ptr_1 = self%areaCell(1:self%nCellsSolve)
+   call afieldset%add(afield)
+   call afield%final()
+
+   ! Add vertical unit
+   afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
+   call afield%data(real_ptr_2)
+   do jz=1,self%nVertLevels
+      real_ptr_2(jz,:) = real(jz, kind_real)
+   end do
+   call afieldset%add(afield)
+   call afield%final()
+
+end subroutine geo_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 

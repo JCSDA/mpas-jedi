@@ -13,11 +13,10 @@ use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
-!saber?
+!dcmip initialization
 use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
        test1_advection_hadley, test3_gravity_wave
 use dcmip_initial_conditions_test_4, only : test4_baroclinic_wave
-use type_bump, only: bump_type
 
 !ufo
 use ufo_locs_mod

@@ -58,13 +58,21 @@ extern "C" {
   void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, double &);
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
-  void mpas_increment_ug_coord_f90(const F90inc &, const int &);
-  void mpas_increment_increment_to_ug_f90(const F90inc &, const int &,
-                                          const int &);
-  void mpas_increment_increment_from_ug_f90(const F90inc &, const int &,
-                                            const int &);
-
-
+  void mpas_increment_set_atlas_f90(const F90inc &,
+                                    const F90geom &,
+                                    const oops::Variables &,
+                                    const util::DateTime * const *,
+                                    atlas::field::FieldSetImpl *);
+  void mpas_increment_to_atlas_f90(const F90inc &,
+                                   const F90geom &,
+                                   const oops::Variables &,
+                                   const util::DateTime * const *,
+                                   atlas::field::FieldSetImpl *);
+  void mpas_increment_from_atlas_f90(const F90inc &,
+                                     const F90geom &,
+                                     const oops::Variables &,
+                                     const util::DateTime * const *,
+                                     atlas::field::FieldSetImpl *);
   void mpas_increment_dirac_f90(const F90inc &,
                                 const eckit::Configuration &);
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);

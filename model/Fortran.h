@@ -8,6 +8,9 @@
 #ifndef MODEL_FORTRAN_H_
 #define MODEL_FORTRAN_H_
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -70,6 +73,12 @@ extern "C" {
 //  Geometry
 // -----------------------------------------------------------------------------
   void mpas_geo_setup_f90(F90geom &, const eckit::Configuration &);
+  void mpas_geo_set_atlas_lonlat_f90(const F90geom &,
+                                     atlas::field::FieldSetImpl *);
+  void mpas_geo_set_atlas_functionspace_pointer_f90(const F90geom &,
+                    atlas::functionspace::FunctionSpaceImpl *);
+  void mpas_geo_fill_atlas_fieldset_f90(const F90geom &,
+                                        atlas::field::FieldSetImpl *);
   void mpas_geo_clone_f90(const F90geom &, F90geom &);
   void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
                          int &, int &, int &);

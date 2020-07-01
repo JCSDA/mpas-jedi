@@ -5,16 +5,13 @@
 
 module mpas_increment_mod
 
-use atlas_module, only: atlas_geometry
+use atlas_module
 use fckit_configuration_module, only: fckit_configuration
 
 !oops
 use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod
-
-!saber
-use unstructured_grid_mod
 
 !ufo
 use ufo_locs_mod
@@ -40,7 +37,7 @@ implicit none
 private
 
 public :: diff_incr, dirac, &
-        & ug_coord, increment_to_ug, increment_from_ug
+        & set_atlas, to_atlas, from_atlas
 
 ! ------------------------------------------------------------------------------
 
@@ -243,218 +240,191 @@ end function nearest_cell
 
 ! ------------------------------------------------------------------------------
 
-subroutine ug_size(self, ug)
+subroutine set_atlas(self, geom, vars, vdate, afieldset)
 
    implicit none
-   class(mpas_field),       intent(in)    :: self
-   type(unstructured_grid), intent(inout) :: ug
-   integer :: igrid
-   
-   ! Set number of grids
-   if (ug%colocated==1) then
-      ! Colocatd
-      ug%ngrid = 1
-   else
-      ! Not colocatedd
-      ug%ngrid = 1
-   end if
 
-   ! Allocate grid instances
-   if (.not.allocated(ug%grid)) allocate(ug%grid(ug%ngrid))
+   type(mpas_field),     intent(in)    :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(datetime),       intent(in)    :: vdate
+   type(atlas_fieldset), intent(inout) :: afieldset
 
-   if (ug%colocated==1) then ! colocated
+   integer :: jvar
+   logical :: var_found
+   character(len=20) :: sdate
+   character(len=1024) :: fieldname
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
 
-      ! Set local number of points
-      ug%grid(1)%nmga = self%geom%nCellsSolve
+   ! Set date
+   call datetime_to_string(vdate,sdate)
 
-      ! Set number of levels
-      ug%grid(1)%nl0 = self%geom%nVertLevels
-
-      ! Set number of variables
-      ug%grid(1)%nv = self%nf
-
-      ! Set number of timeslots
-      ug%grid(1)%nts = ug%nts
-
-   else ! Not colocated
-
-      do igrid=1,ug%ngrid
-         ! Set local number of points
-         ug%grid(igrid)%nmga = self%geom%nCellsSolve
-
-         ! Set number of levels
-         ug%grid(igrid)%nl0 = self%geom%nVertLevels
-
-         ! Set number of variables
-         ug%grid(igrid)%nv = self%nf
-
-         ! Set number of timeslots
-         ug%grid(igrid)%nts = ug%nts
-      enddo
-   end if
-end subroutine ug_size
-
-! ------------------------------------------------------------------------------
-
-subroutine ug_coord(self, ug)
-
-   implicit none
-   class(mpas_field),       intent(in)    :: self
-   type(unstructured_grid), intent(inout) :: ug
-   
-   integer :: jl, igrid
-   
-   ! Define size
-   call ug_size(self, ug)
-
-   ! Alocate unstructured grid coordinates
-   call allocate_unstructured_grid_coord(ug)
-
-   ! Copy coordinates
-   if (ug%colocated==1) then ! colocated
-     ug%grid(1)%lon = self%geom%lonCell(1:ug%grid(1)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-     ug%grid(1)%lat = self%geom%latCell(1:ug%grid(1)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-     ug%grid(1)%area = self%geom%areaCell(1:ug%grid(1)%nmga)
-     do jl=1,self%geom%nVertLevels
-       ug%grid(1)%vunit(:,jl) = real(jl,kind=kind_real)
-       ug%grid(1)%lmask(:,jl) = .true.
-     enddo
-   else ! Not colocated
-     do igrid=1,ug%ngrid
-       ug%grid(igrid)%lon = self%geom%lonCell(1:ug%grid(igrid)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-       ug%grid(igrid)%lat = self%geom%latCell(1:ug%grid(igrid)%nmga) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-       ug%grid(igrid)%area = self%geom%areaCell(1:ug%grid(igrid)%nmga)
-       do jl=1,self%geom%nVertLevels
-         ug%grid(igrid)%vunit(:,jl) = real(jl,kind=kind_real)
-         ug%grid(igrid)%lmask(:,jl) = .true.
-       enddo
-     enddo
-   endif
-
-end subroutine ug_coord
-
-! ------------------------------------------------------------------------------
-
-subroutine increment_to_ug(self, ug, its)
-
-   implicit none
-   class(mpas_field),       intent(in)    :: self
-   type(unstructured_grid), intent(inout) :: ug
-   integer,                 intent(in)    :: its
-   
-   integer :: idx_var,jC,jl  
-   type (mpas_pool_iterator_type) :: poolItr
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
-   character(len=MAXVARLEN) :: inc_var_name
-
-   ! Define size
-   call ug_size(self, ug)
-
-   ! Allocate unstructured grid field
-   call allocate_unstructured_grid_field(ug)
-
-   ! Copy field
-   call mpas_pool_begin_iteration(self % subFields)
-   
-   ug%grid(1)%fld(:,:,:,its) = MPAS_JEDI_ZERO_kr
-   do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-      ! so we select only those members of the pool that are fields
-      if (poolItr % memberType == MPAS_POOL_FIELD) then
-         idx_var = -999
-         inc_var_name = trim(poolItr % memberName)
-         idx_var = ufo_vars_getindex(self%fldnames,inc_var_name)
-!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-
-         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-         if (poolItr % dataType == MPAS_POOL_REAL) then
-            ! Depending on the dimensionality of the field, we need to set pointers of
-            ! the correct type
-            if(idx_var.gt.0) then
-               if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
-                  do jC=1,self%geom%nCellsSolve
-                     ug%grid(1)%fld(jC,1,idx_var,its) = r1d_ptr_a(jC)
-                  enddo
-               else if (poolItr % nDims == 2) then
-                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-                  do jC=1,self%geom%nCellsSolve
-                     do jl=1,self%geom%nVertLevels
-                        ug%grid(1)%fld(jC,jl,idx_var,its) = r2d_ptr_a(jl,jC)
-                     enddo
-                  enddo
-               else if (poolItr % nDims == 3) then
-                  write(*,*)'Not implemented yet'
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            fieldname = trim(vars%variable(jvar))//'_'//sdate
+            if (.not.afieldset%has_field(trim(fieldname))) then
+               ! Create field
+               if (poolItr%nDims==1) then
+                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+               else if (poolItr%nDims==2) then
+                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=geom%nVertLevels)
+               else if (poolItr%nDims==3) then
+                  call abor1_ftn('not implemented yet')
                end if
+
+               ! Add field
+               call afieldset%add(afield)
+
+               ! Release pointer
+               call afield%final()
             end if
+
+            ! Set flag
+            var_found = .true.
+            exit
          end if
-      end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
    end do
 
-end subroutine increment_to_ug
+end subroutine set_atlas
 
-! -----------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 
-subroutine increment_from_ug(self, ug, its)
+subroutine to_atlas(self, geom, vars, vdate, afieldset)
 
    implicit none
-   class(mpas_field),       intent(inout) :: self
-   type(unstructured_grid), intent(in)    :: ug
-   integer,                 intent(in)    :: its
 
-   integer :: idx_var,jC,jl
-   type (mpas_pool_iterator_type) :: poolItr
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
-   character(len=MAXVARLEN) :: inc_var_name
+   type(mpas_field),     intent(in)    :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(datetime),       intent(in)    :: vdate
+   type(atlas_fieldset), intent(inout) :: afieldset
 
-   ! Copy field
-   call mpas_pool_begin_iteration(self % subFields)
-   
-   do while ( mpas_pool_get_next_member(self % subFields, poolItr) )
-      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-      ! so we select only those members of the pool that are fields
-      if (poolItr % memberType == MPAS_POOL_FIELD) then
-         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+   integer :: jvar
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   logical :: var_found
+   character(len=20) :: sdate
+   character(len=1024) :: fieldname
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
 
-         if (poolItr % dataType == MPAS_POOL_REAL) then
-            ! Depending on the dimensionality of the field, we need to set pointers of
-            ! the correct type
-            idx_var = -999
-            inc_var_name = trim(poolItr % memberName)
-            idx_var = ufo_vars_getindex(self%fldnames,inc_var_name)
+   ! Set date
+   call datetime_to_string(vdate,sdate)
 
-            if(idx_var.gt.0) then
-               if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
-
-!                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
-                  do jC=1,self%geom%nCellsSolve
-                     r1d_ptr_a(jC) = ug%grid(1)%fld(jC,1,idx_var,its)
-                  enddo
-               else if (poolItr % nDims == 2) then
-                  call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
-
-!                  write(*,*) '  sub. convert_from_ug, poolItr % memberName=',trim(poolItr % memberName)
-                  do jC=1,self%geom%nCellsSolve
-                     do jl=1,self%geom%nVertLevels
-                        r2d_ptr_a(jl,jC) = ug%grid(1)%fld(jC,jl,idx_var,its)
-                     enddo
-                  enddo
-               else if (poolItr % nDims == 3) then
-                  write(*,*)'Not implemented yet'
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            fieldname = trim(vars%variable(jvar))//'_'//sdate
+            if (afieldset%has_field(trim(fieldname))) then
+               ! Get field
+               afield = afieldset%field(trim(fieldname))
+            else
+               ! Create field
+               if (poolItr%nDims==1) then
+                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+               else if (poolItr%nDims==2) then
+                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=geom%nVertLevels)
+               else if (poolItr%nDims==3) then
+                  call abor1_ftn('not implemented yet')
                end if
+
+               ! Add field
+               call afieldset%add(afield)
             end if
+
+            ! Copy data
+            if (poolItr%nDims==1) then
+               call afield%data(real_ptr_1)
+               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
+               real_ptr_1 = r1d_ptr_a(1:geom%nCellsSolve)
+            else if (poolItr%nDims==2) then
+               call afield%data(real_ptr_2)
+               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
+               real_ptr_2 = r2d_ptr_a(1:geom%nVertLevels,1:geom%nCellsSolve)
+            end if
+
+            ! Release pointer
+            call afield%final()
+
+            ! Set flag
+            var_found = .true.
+            exit
          end if
-      end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+   end do
+
+end subroutine to_atlas
+
+! ------------------------------------------------------------------------------
+
+subroutine from_atlas(self, geom, vars, vdate, afieldset)
+
+   implicit none
+
+   type(mpas_field),     intent(inout) :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(datetime),       intent(in)    :: vdate
+   type(atlas_fieldset), intent(in)    :: afieldset
+
+   integer :: jvar
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   logical :: var_found
+   character(len=20) :: sdate
+   character(len=1024) :: fieldname
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
+
+   ! Set date
+   call datetime_to_string(vdate,sdate)
+
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            ! Get field
+            fieldname = trim(vars%variable(jvar))//'_'//sdate
+            afield = afieldset%field(trim(fieldname))
+
+            ! Copy data
+            if (poolItr%nDims==1) then
+               call afield%data(real_ptr_1)
+               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
+               r1d_ptr_a(1:geom%nCellsSolve) = real_ptr_1
+            else if (poolItr%nDims==2) then
+               call afield%data(real_ptr_2)
+               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
+               r2d_ptr_a(1:geom%nVertLevels,1:geom%nCellsSolve) = real_ptr_2
+            else if (poolItr%nDims==3) then
+               call abor1_ftn('not implemented yet')
+            end if
+
+            ! Release pointer
+            call afield%final()
+
+            ! Set flag
+            var_found = .true.
+            exit
+         end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
    end do
 
    ! TODO: Since only local locations are updated/transferred from ug, 
    !       need MPAS HALO comms before using these fields in MPAS
 
-end subroutine increment_from_ug
+end subroutine from_atlas
 
 ! ------------------------------------------------------------------------------
 

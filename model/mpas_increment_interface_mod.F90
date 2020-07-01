@@ -7,13 +7,11 @@
 
 module mpas_increment_interface_mod
 
+use atlas_module
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds, only: kind_real
 use oops_variables_mod
-
-!saber
-use unstructured_grid_mod
 
 !mpas-jedi
 use mpas_geom_mod
@@ -303,60 +301,81 @@ end subroutine mpas_increment_change_resol_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_ug_coord_c(c_key_inc, c_key_ug) &
-      bind (c,name='mpas_increment_ug_coord_f90')
+subroutine mpas_increment_set_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+      bind (c,name='mpas_increment_set_atlas_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_inc
-integer(c_int), intent(in) :: c_key_ug
-type(mpas_field), pointer :: inc
-type(unstructured_grid), pointer :: ug
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+type(c_ptr), value, intent(in) :: c_vars
+type(c_ptr),intent(inout) :: c_dt
+type(c_ptr), intent(in), value :: c_afieldset
+type(mpas_field), pointer :: self
+type(mpas_geom),  pointer :: geom
+type(oops_variables) :: vars
+type(datetime) :: fdate
+type(atlas_fieldset) :: afieldset
 
-call mpas_field_registry%get(c_key_inc,inc)
-call unstructured_grid_registry%get(c_key_ug,ug)
+call mpas_field_registry%get(c_key_self,self)
+call mpas_geom_registry%get(c_key_geom, geom)
+vars = oops_variables(c_vars)
+call c_f_datetime(c_dt, fdate)
+afieldset = atlas_fieldset(c_afieldset)
 
-call ug_coord(inc, ug)
+call set_atlas(self, geom, vars, fdate, afieldset)
 
-end subroutine mpas_increment_ug_coord_c
+end subroutine mpas_increment_set_atlas_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_increment_to_ug_c(c_key_inc, c_key_ug, c_its) &
-      bind (c,name='mpas_increment_increment_to_ug_f90')
+subroutine mpas_increment_to_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+      bind (c,name='mpas_increment_to_atlas_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_inc
-integer(c_int), intent(in) :: c_key_ug
-integer(c_int), intent(in) :: c_its
-type(mpas_field), pointer :: inc
-type(unstructured_grid), pointer :: ug
-integer :: its
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+type(c_ptr), value, intent(in) :: c_vars
+type(c_ptr),intent(inout) :: c_dt
+type(c_ptr), intent(in), value :: c_afieldset
+type(mpas_field), pointer :: self
+type(mpas_geom),  pointer :: geom
+type(oops_variables) :: vars
+type(datetime) :: fdate
+type(atlas_fieldset) :: afieldset
 
-call mpas_field_registry%get(c_key_inc,inc)
-call unstructured_grid_registry%get(c_key_ug,ug)
-its = c_its+1
+call mpas_field_registry%get(c_key_self,self)
+call mpas_geom_registry%get(c_key_geom, geom)
+vars = oops_variables(c_vars)
+call c_f_datetime(c_dt, fdate)
+afieldset = atlas_fieldset(c_afieldset)
 
-call increment_to_ug(inc, ug, its)
+call to_atlas(self, geom, vars, fdate, afieldset)
 
-end subroutine mpas_increment_increment_to_ug_c
+end subroutine mpas_increment_to_atlas_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_increment_from_ug_c(c_key_inc, c_key_ug, c_its) &
-      bind (c,name='mpas_increment_increment_from_ug_f90')
+subroutine mpas_increment_from_atlas_c(c_key_self,c_key_geom,c_vars,c_dt,c_afieldset) &
+      bind (c,name='mpas_increment_from_atlas_f90')
 implicit none
-integer(c_int), intent(in) :: c_key_inc
-integer(c_int), intent(in) :: c_key_ug
-integer(c_int), intent(in) :: c_its
-type(mpas_field), pointer :: inc
-type(unstructured_grid), pointer :: ug
-integer :: its
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+type(c_ptr), value, intent(in) :: c_vars
+type(c_ptr),intent(inout) :: c_dt
+type(c_ptr), intent(in), value :: c_afieldset
+type(mpas_field), pointer :: self
+type(mpas_geom),  pointer :: geom
+type(oops_variables) :: vars
+type(datetime) :: fdate
+type(atlas_fieldset) :: afieldset
 
-call mpas_field_registry%get(c_key_inc,inc)
-call unstructured_grid_registry%get(c_key_ug,ug)
-its = c_its+1
+call mpas_field_registry%get(c_key_self, self)
+call mpas_geom_registry%get(c_key_geom, geom)
+vars = oops_variables(c_vars)
+call c_f_datetime(c_dt, fdate)
+afieldset = atlas_fieldset(c_afieldset)
 
-call increment_from_ug(inc, ug, its)
+call from_atlas(self, geom, vars, fdate, afieldset)
 
-end subroutine mpas_increment_increment_from_ug_c
+end subroutine mpas_increment_from_atlas_c
 
 ! ------------------------------------------------------------------------------
 
