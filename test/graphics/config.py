@@ -145,10 +145,26 @@ profile_s  = 'profile'
 radiance_s = 'radiance'
 model_s    = 'MPAS'
 
+## analysis groups for configuring analyze_stats + AnalyzeStatistics
+convGrp = 'conv'
+abiGrp = 'abi'
+ahiGrp = 'ahi'
+amsuaGrp = 'amsua'
+amsuacldGrp = 'amsuacld'
+
+anGroupConfig = {
+    convGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:10:00'},
+    abiGrp: {'npwork': 12, 'npread': 36, 'analyze_walltime': '01:00:00'},
+    ahiGrp: {'npwork': 12, 'npread': 36, 'analyze_walltime': '01:00:00'},
+    amsuaGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
+    amsuacldGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
+}
+
 # Each entry of DiagSpaceConfig is a key-value pair, with the following possible values:
 #DiagSpaceName (fromYAML):{
 #    'DiagSpaceGrp': any of profile_s, radiance_s, model_s
 #    'process': True or False
+#    'anGrp': used to configure statistical analysis jobs and scripts
 #    'binVarConfigs': binning variable configurations used when calculating statistics on diagnostics
 #    'diagNames': list of selected diagnostic names,
 #                 e.g., du.diffDiagNames[+du.absDiagNames][+du.cloudyRadDiagNames]
@@ -163,36 +179,42 @@ DiagSpaceConfig = {
     'aircraft': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
         'diagNames': defaultDiags,
     },
     'gnssro': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
         'diagNames': du.relDiagNames,
     },
     'gnssrobndropp1d': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
         'diagNames': du.relDiagNames,
     },
     'gnssroref': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
         'diagNames': du.relDiagNames,
     },
     'satwind': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
         'diagNames': defaultDiags,
     },
     'sondes': {
         'DiagSpaceGrp': profile_s,
         'process': True,
+        'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
         'diagNames': defaultDiags,
     },
@@ -200,6 +222,7 @@ DiagSpaceConfig = {
     'abi_g16': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': abiGrp,
         'binVarConfigs': geoirBinVars,
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
@@ -209,6 +232,7 @@ DiagSpaceConfig = {
     'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': ahiGrp,
         'binVarConfigs': geoirBinVars,
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
@@ -225,6 +249,7 @@ DiagSpaceConfig = {
     'amsua_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [8,9],
@@ -232,6 +257,7 @@ DiagSpaceConfig = {
     'amsua_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [5,6,9],
@@ -239,6 +265,7 @@ DiagSpaceConfig = {
     'amsua_metop-b': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [],
@@ -246,6 +273,7 @@ DiagSpaceConfig = {
     'amsua_n15': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [5,6,7,8,9],
@@ -253,6 +281,7 @@ DiagSpaceConfig = {
     'amsua_n18': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [5,6,7,8,9],
@@ -260,6 +289,7 @@ DiagSpaceConfig = {
     'amsua_n19': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': [5,6,7,9],
@@ -281,6 +311,7 @@ DiagSpaceConfig = {
     'amsua-cld_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],
@@ -288,6 +319,7 @@ DiagSpaceConfig = {
     'amsua-cld_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],
@@ -295,6 +327,7 @@ DiagSpaceConfig = {
     'amsua-cld_metop-b': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],
@@ -302,6 +335,7 @@ DiagSpaceConfig = {
     'amsua-cld_n15': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],
@@ -309,6 +343,7 @@ DiagSpaceConfig = {
     'amsua-cld_n18': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],
@@ -316,6 +351,7 @@ DiagSpaceConfig = {
     'amsua-cld_n19': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
+        'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
         'diagNames': defaultDiags,
         'channels': [1,2,3,4,15],

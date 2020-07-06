@@ -388,7 +388,7 @@ def plotSeries(fig, \
 
     if sciticks:
         ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        ax.yaxis.get_offset_text().set_fontsize(3)
+    ax.yaxis.get_offset_text().set_fontsize(3)
 
     # add horizontal zero line for unbounded quantities
     if not signdef:
@@ -574,7 +574,7 @@ def plotProfile(fig, \
 
     if sciticks:
         ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-        ax.xaxis.get_offset_text().set_fontsize(3)
+    ax.xaxis.get_offset_text().set_fontsize(3)
 
     # add vertical zero line for unbounded quantities
     if not signdef:
@@ -777,7 +777,7 @@ def plotTimeSeries(fig, \
 
     if sciticks:
         ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        ax.yaxis.get_offset_text().set_fontsize(3)
+    ax.yaxis.get_offset_text().set_fontsize(3)
 
     # add horizontal zero line for unbounded quantities
     if not signdef:
@@ -908,7 +908,7 @@ def plotTimeSeries2D(fig, \
         #scientific formatting
         if sciticks:
             cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-            cb.ax.yaxis.get_offset_text().set_fontsize(3)
+        cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
         cb.ax.tick_params(labelsize=3)
         cb.set_label(clabel,fontsize=5)
