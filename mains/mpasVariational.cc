@@ -7,6 +7,7 @@
 
 #include "oops/runs/Variational.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/ObsTraits.h"
 
 #include "MPASTraits.h"
 #include "instantiateLocalizationFactory.h"
@@ -23,8 +24,8 @@ int main(int argc,  char ** argv) {
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
-  ufo::instantiateObsFilterFactory<mpas::MPASTraits>();
-  oops::Variational<mpas::MPASTraits> var;
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  oops::Variational<mpas::MPASTraits, ufo::ObsTraits> var;
   return run.execute(var);
 }
 

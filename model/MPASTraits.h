@@ -20,17 +20,6 @@
 #include "StateMPAS.h"
 #include "getvalues/GetValues.h"
 #include "getvalues/LinearGetValues.h"
-#include "ufo/GeoVaLs.h"
-#include "ufo/Locations.h"
-#include "ioda/ObsDataVector.h"
-#include "ioda/ObsSpace.h"
-#include "ioda/ObsVector.h"
-#include "ufo/ObsBias.h"
-#include "ufo/ObsBiasIncrement.h"
-#include "ufo/ObsBiasCovariance.h"
-#include "ufo/ObsDiagnostics.h"
-#include "ufo/ObsOperator.h"
-#include "ufo/LinearObsOperator.h"
 
 namespace mpas {
 
@@ -53,19 +42,6 @@ struct MPASTraits {
   typedef mpas::LinearGetValues          LinearGetValues;
 
   typedef mpas::LocalizationMatrixMPAS   LocalizationMatrix;
-
-  typedef ufo::GeoVaLs                   GeoVaLs;
-  typedef ufo::LinearObsOperator         LinearObsOperator;
-  typedef ufo::Locations                 Locations;
-  typedef ufo::ObsBias                   ObsAuxControl;
-  typedef ufo::ObsBiasIncrement          ObsAuxIncrement;
-  typedef ufo::ObsBiasCovariance         ObsAuxCovariance;
-  typedef ufo::ObsDiagnostics            ObsDiagnostics;
-  typedef ufo::ObsOperator               ObsOperator;
-
-  typedef ioda::ObsSpace                 ObsSpace;
-  typedef ioda::ObsVector                ObsVector;
-  template <typename DATA> using ObsDataVector = ioda::ObsDataVector<DATA>;
 };
 
 }  // namespace mpas

@@ -8,10 +8,11 @@
 #include "MPASTraits.h"
 #include "RunMPAS.h"
 #include "test/interface/LinearGetValues.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  test::LinearGetValues<mpas::MPASTraits> tests;
+  test::LinearGetValues<mpas::MPASTraits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }
 

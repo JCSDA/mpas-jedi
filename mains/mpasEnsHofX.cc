@@ -8,10 +8,11 @@
 #include "RunMPAS.h"
 #include "oops/runs/EnsHofX.h"
 #include "MPASTraits.h"
+#include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  oops::EnsHofX<mpas::MPASTraits> enshofx;
+  oops::EnsHofX<mpas::MPASTraits, ufo::ObsTraits> enshofx;
   return run.execute(enshofx);
 }
 

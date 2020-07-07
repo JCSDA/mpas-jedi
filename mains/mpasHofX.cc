@@ -8,12 +8,13 @@
 #include "MPASTraits.h"
 #include "RunMPAS.h"
 #include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/ObsTraits.h"
 #include "oops/runs/HofX.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
-  ufo::instantiateObsFilterFactory<mpas::MPASTraits>();
-  oops::HofX<mpas::MPASTraits> hofx;
+  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  oops::HofX<mpas::MPASTraits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }
 
