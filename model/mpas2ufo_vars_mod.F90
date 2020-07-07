@@ -1075,7 +1075,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
          field2d % fieldName = var_cldfrac
          call mpas_pool_add_field(convFields, var_cldfrac, field2d)
 
-     case ( var_sfc_wtmp, var_sfc_ltmp, var_sfc_itmp, var_sfc_stmp ) !-surface_temperature_where_sea, surface_temperature_where_land, surface_temperature_where_ice, surface_temperature_where_snow
+     case ( var_tsavg5, var_sfc_wtmp, var_sfc_ltmp, var_sfc_itmp, var_sfc_stmp ) !-average_surface_temperature_within_field_of_view, surface_temperature_where_sea, surface_temperature_where_land, surface_temperature_where_ice, surface_temperature_where_snow
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
 
         !-NOTE: Currently assign "skintemp" for all temperature
