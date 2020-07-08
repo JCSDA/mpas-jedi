@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+import logging
 from netCDF4 import Dataset
 import numpy as np
 import os
 import pandas as pd
 
+_logger = logging.getLogger(__name__)
 
 #==========================================================
 # utilities for statistics, aggregation, and bootstrapping
@@ -436,7 +438,7 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
                              X_, Y_, Ns, statFunc,
                              n_samples=nsSamples)
             else:
-                print("\n\nERROR: stat not implemented: ", stat)
+                _logger.error("\n\nERROR: stat not implemented: ", stat)
                 os._exit(1)
         else:
             ciVals = {}

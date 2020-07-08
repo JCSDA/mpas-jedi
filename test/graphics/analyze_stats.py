@@ -5,13 +5,14 @@ import analyze_config as anconf
 import argparse
 import config as conf
 from copy import deepcopy
+import logging
+import logsetup
 import multiprocessing as mp
 import os
 import StatisticsDatabase as sdb
-import sys
 import textwrap
 
-this_program = os.path.basename(sys.argv[0])
+_logger = logging.getLogger(__name__)
 
 depends_on = [
   'analyze_config',
@@ -38,6 +39,8 @@ def main():
        - analyzes the statistics for all selected anconf.analysisTypes (internal multiprocessing)
     See analysis_config for more information
     '''
+    _logger.info('Starting main()')
+
     DiagSpaceConfig = deepcopy(conf.DiagSpaceConfig)
     for key in sorted(DiagSpaceConfig):
         if not DiagSpaceConfig[key]['process']: del DiagSpaceConfig[key]
@@ -107,8 +110,8 @@ def main():
         db = sdb.StatsDB(myDBConf)
 
         if db.available:
-            print("\n")
-            print(this_program+" : "+"Analyzing StatsDB for "+DiagSpaceName)
+            _logger.info('')
+            _logger.info('Analyzing StatsDB for '+DiagSpaceName)
 
             ## Initialize the database
             db.read(npread)
@@ -117,8 +120,6 @@ def main():
 
             analyses.analyze()
 
-    print("\n")
-    print(this_program+" : "+"Finished main() successfully")
-
+    _logger.info('Finished main() successfully')
 
 if __name__ == '__main__': main()

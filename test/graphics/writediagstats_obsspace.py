@@ -9,28 +9,28 @@ import diag_utils as du
 import fnmatch
 import glob
 #import math
+import logging
+import logsetup
 import matplotlib.pyplot as plt
 import matplotlib.axes as maxes
 from multiprocessing import Pool
 from netCDF4 import Dataset
 import numpy as np
 import os
-import par_utils as paru
 import stat_utils as su
-import sys
 import ufo_file_utils as ufofu
 import var_utils as vu
 
-this_program = os.path.basename(sys.argv[0])
-
 #analysis outer iteration
 anIter=str(du.NOUTER)
+
+_logger = logging.getLogger(__name__)
 
 def writediagstats_obsspace(database, osKey):
     #  database - ufofu.FeedbackFiles object
     #  osKey    - key of database members to reference
 
-    LOGPREFIX = this_program+" : "+osKey+" : "
+    logger = logging.getLogger(__name__+'.'+osKey)
 
     database.initHandles(osKey)
 
@@ -75,8 +75,7 @@ def writediagstats_obsspace(database, osKey):
     for diagName in selectDiagNames:
         config = deepcopy(du.availableDiagnostics.get(diagName,None))
         if config is None:
-            print('\n\nERROR: diagName is undefined: '+diagName)
-            os._exit(1)
+            logger.error('diagName is undefined: '+diagName)
 
         osNames = config.get('osNames',[])
         if (len(osNames) > 0 and
@@ -94,8 +93,7 @@ def writediagstats_obsspace(database, osKey):
             elif pu.isint(outerIterStr):
                 outerIter = outerIterStr
             else:
-                print('\n\nERROR: outerIter is undefined: '+outerIterStr)
-                os._exit(1)
+                logger.error('outerIter is undefined: '+outerIterStr)
 
         diagFunctions[diagName] = {
             'ObsFunction': bu.ObsFunctionWrapper(config),
@@ -137,15 +135,15 @@ def writediagstats_obsspace(database, osKey):
     for statName in su.allFileStats:
         statsDict[statName] = []
 
-    print(LOGPREFIX+"Calculating/writing diagnostic stats for:")
+    logger.info('Calculating/writing diagnostic stats for:')
     for varName in obsVars:
-        print(LOGPREFIX+"VARIABLE = "+varName)
+        logger.info('VARIABLE = '+varName)
 
         varShort, varUnits = vu.varAttributes(varName)
 
         # collect stats for all diagFunctions
         for diagName, diagFunction in diagFunctions.items():
-            print(LOGPREFIX+"DIAG = "+diagName)
+            logger.info('DIAG = '+diagName)
 
             func = diagFunction['ObsFunction']
             outerIter = diagFunction['outerIter']
@@ -196,6 +194,10 @@ def writediagstats_obsspace(database, osKey):
 #=========================================================================
 
 def main():
+    '''
+    Wrapper that conducts writediagstats_obsspace across multiple ObsSpaces
+    '''
+    _logger.info('Starting '+__name__)
 
     # Parse command line
     ap = argparse.ArgumentParser()
@@ -243,5 +245,7 @@ def main():
 
     ospool.close()
     ospool.join()
+
+    _logger.info('Finished '+__name__+' successfully')
 
 if __name__ == '__main__': main()

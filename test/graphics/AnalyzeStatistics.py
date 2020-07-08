@@ -9,6 +9,7 @@ from copy import deepcopy
 import collections
 import datetime as dt
 import inspect
+import logging
 import multiprocessing as mp
 import numpy as np
 from pathlib import Path
@@ -17,10 +18,7 @@ import re
 import os
 import stat_utils as su
 import StatisticsDatabase as sdb
-import sys
 import var_utils as vu
-
-this_program = os.path.basename(sys.argv[0])
 
 bootStrapStats = []
 for x in su.sampleableAggStats:
@@ -45,13 +43,12 @@ def anWorkingDir(DiagSpace):
 class AnalyzeStatisticsBase():
     def __init__(self, db, analysisType):
         self.db = db
+        self.DiagSpaceName = db.DiagSpaceName
         self.analysisType = analysisType
 
-        ## Extract useful variables from the database
-        self.LOGPREFIX = db.LOGPREFIX
-        self.LOGPREFIX += self.analysisType+' : '
+        self.logger = logging.getLogger(__name__+'.'+self.DiagSpaceName+'.'+self.analysisType)
 
-        self.DiagSpaceName = db.DiagSpaceName
+        ## Extract useful variables from the database
         self.diagNames = db.diagNames
         self.allDiagNames = db.allDiagNames
 
@@ -114,12 +111,6 @@ class AnalyzeStatisticsBase():
             self.DiagSpacePath = self.DiagSpacePath/DSSubDir
         self.myFigPath = self.DiagSpacePath/self.analysisType
         self.myFigPath.mkdir(parents=True, exist_ok=True)
-
-    def print(self, x):
-        if isinstance(x, str):
-            print(self.LOGPREFIX+x)
-        else:
-            print(self.LOGPREFIX, x)
 
     def binMethodFile(self, binMethod, before = True):
         '''
@@ -191,11 +182,11 @@ class AnalyzeStatisticsBase():
                 expCYDTimes = set(dfw.levels('cyDTime', expLoc))
                 expsCYDTimes[(expName, fcTDelta)] = list(cntrlCYDTimes & expCYDTimes)
                 if len(cntrlCYDTimes) != len(expCYDTimes):
-                    self.print('WARNING: '+self.cntrlExpName+' and '+expName+' have different number of CYDTimes at forecast length ', fcTDelta, ' Only using common CYDTimes for CI calculation.')
+                    self.logger.warning(self.cntrlExpName+' and '+expName+' have different number of CYDTimes at forecast length ', fcTDelta, ' Only using common CYDTimes for CI calculation.')
         return expsCYDTimes
 
     def analyze(self, workers = None):
-        self.print('analyze()')
+        self.logger.info('analyze()')
         if self.blocking:
             # analyses with internal blocking
             self.analyze_()
@@ -321,7 +312,7 @@ class CategoryBinMethodBase(AnalyzeStatisticsBase):
                 for statName in statNames:
                     if statName not in options.get('onlyStatNames', statNames): continue
 
-                    self.print(statName+' : binVar=>'+binVar+', binMethod=>'+binMethod)
+                    self.logger.info(binVar+', '+binMethod+', '+statName)
 
                     if useWorkers:
                         workers.apply_async(self.innerloopsWrapper,
@@ -986,7 +977,7 @@ class OneDimBinMethodBase(AnalyzeStatisticsBase):
                     for statName in statNames:
                         if statName not in options.get('onlyStatNames', statNames): continue
 
-                        self.print(statName+' : binVar=>'+binVar+', binMethod=>'+binMethod)
+                        self.logger.info(binVar+', '+binMethod+', '+statName)
 
                         if useWorkers:
                             workers.apply_async(self.innerloopsWrapper,
@@ -1542,7 +1533,7 @@ class BinValAxisPDF(AnalyzeStatisticsBase):
 
                 if len(binVals) < 2: continue
 
-                self.print('binVar=>'+binVar)
+                self.logger.info('binVar=>'+binVar)
 
                 fcDiagName = self.fcName(diagName)
                 myPath = self.myFigPath/fcDiagName
@@ -1712,7 +1703,7 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
                 for binMethod in binMethods:
                     ptLoc['binMethod'] = binMethod
 
-                    self.print('binVar=>'+binVar+', binMethod=>'+binMethod)
+                    self.logger.info('binVar=>'+binVar+', binMethod=>'+binMethod)
 
                     #file loop 2
                     for expName in self.expNames:
@@ -1843,7 +1834,7 @@ class GrossValues(AnalyzeStatisticsBase):
                 if self.requestAggDFW:
                     mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
 
-                self.print(' Calculate gross statistics: binVar=>'+binVar+', binMethod=>'+binMethod)
+                print(' Calculate gross statistics: binVar=>'+binVar+', binMethod=>'+binMethod)
 
                 binValsMap = categoryBinValsAttributes(
                     mydfwDict['dfw'], fullBinVar, binMethod, options)
@@ -1911,24 +1902,15 @@ def AnalysisFactory(db, analysisType):
 
 class Analyses():
     def __init__(self, db, analysisTypes, nproc = 1):
-        self.LOGPREFIX = db.LOGPREFIX
-
         self.nproc = nproc
-
         self.analyses = []
         for anType in analysisTypes:
             self.analyses.append(AnalysisFactory(db, anType))
-
-        self.print('Analyses Constructed')
-
-    def print(self, x):
-        if isinstance(x, str):
-            print(self.LOGPREFIX+x)
-        else:
-            print(self.LOGPREFIX, x)
+        self.logger = logging.getLogger(__name__+'.'+db.DiagSpaceName)
+        self.logger.info('Analyses Constructed')
 
     def analyze(self):
-        self.print("Entering Analyses.analyze()")
+        self.logger.info("Entering Analyses.analyze()")
 
         if self.nproc > 1:
             workers = mp.Pool(self.nproc)
@@ -1942,4 +1924,4 @@ class Analyses():
             workers.close()
             workers.join()
 
-        self.print("Exiting Analyses.analyze()")
+        self.logger.info("Exiting Analyses.analyze()")

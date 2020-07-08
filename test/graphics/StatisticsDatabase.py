@@ -6,6 +6,7 @@ from collections import defaultdict
 from copy import deepcopy
 import datetime as dt
 import glob
+import logging
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
@@ -13,15 +14,11 @@ import plot_utils as pu
 import re
 import os
 import stat_utils as su
-import sys
 from typing import List
 import var_utils as vu
 
-this_program = os.path.basename(sys.argv[0])
-
 singleFCLen = "singleFCLen"
 multiFCLen = "multiFCLen"
-
 
 class DiagSpaceDict():
     def __init__(self, nrows):
@@ -109,7 +106,7 @@ class StatsDB:
 
         # selected DiagSpace (ObsSpace name or ModelSpace name)
         self.DiagSpaceName = conf['DiagSpaceName']
-        self.LOGPREFIX = this_program+" : "+self.DiagSpaceName+" : "
+        self.logger = logging.getLogger(__name__+'.'+self.DiagSpaceName)
 
         # cycle DateTimes
         firstCycleDTime = conf['firstCycleDTime']
@@ -130,8 +127,8 @@ class StatsDB:
         self.cntrlExpIndex = conf['cntrlExpIndex']
         self.cntrlExpName = self.expNames[min([self.cntrlExpIndex, len(self.expNames)-1])]
         self.noncntrlExpNames = [x for x in self.expNames if x != self.cntrlExpName]
-        self.print('Control Experiment: '+self.cntrlExpName)
-        self.print(('Non-control Experiment(s): ', self.noncntrlExpNames))
+        self.logger.info('Control Experiment: '+self.cntrlExpName)
+        self.logger.info(('Non-control Experiment(s): ', self.noncntrlExpNames))
 
         self.DAMethods = conf['DAMethods']
         self.diagNames = conf['diagNames']
@@ -201,8 +198,8 @@ class StatsDB:
                         self.availDiagSpaceNames.remove(DiagSpaceName)
 
         if (len(self.availDiagSpaceNames) < 1):
-            self.print("WARNING: stats files not available for creating a StatsDB"+
-                       "object for the selected DiagSpace => "+self.DiagSpaceName)
+            self.logger.warning("stats files not available for creating a StatsDB"+
+                                "object for the selected DiagSpace => "+self.DiagSpaceName)
             return
 
         assert len(self.availDiagSpaceNames) == 1, (
@@ -213,19 +210,19 @@ class StatsDB:
     def read(self, np=1):
         if not self.available: return
 
-        self.print("=====================================================")
-        self.print("Construct pandas dataframe from static database files")
-        self.print("=====================================================")
+        self.logger.info("=====================================================")
+        self.logger.info("Construct pandas dataframe from static database files")
+        self.logger.info("=====================================================")
 
         nprocs = min(mp.cpu_count(), np)
 
         # Read stats for this DiagSpaceName
-        self.print("-->Reading intermediate statistics files")
-        self.print("   with "+str(nprocs)+" out of "+str(mp.cpu_count())+" processors")
+        self.logger.info("Reading intermediate statistics files")
+        self.logger.info("with "+str(nprocs)+" out of "+str(mp.cpu_count())+" processors")
         workers = mp.Pool(nprocs)
         dsDictParts = []
         for cyDTime, cyDTime_dir in list(zip(self.cyDTimes, self.cyDTimes_dir)):
-            self.print("        Working on cycle time "+str(cyDTime))
+            self.logger.info("  Working on cycle time "+str(cyDTime))
             missingFiles = []
 
             for iexp, expName in enumerate(self.expNames):
@@ -247,23 +244,22 @@ class StatsDB:
                         missingFiles.append(cyStatsFile)
 
             if len(missingFiles) > 0:
-                self.print("")
-                self.print("WARNING: the following files do not exist.  Matching times are excluded from the statistsics.")
+                self.logger.warning("The following files do not exist.  Matching times are excluded from the statistsics.")
                 for File in missingFiles:
-                    self.print(File)
+                    self.logger.warning(File)
         workers.close()
         workers.join()
 
-        self.print("-->Concatenating statistics sub-dictionaries from multiple processors")
+        self.logger.info("Concatenating statistics sub-dictionaries from multiple processors")
         dsDict = DiagSpaceDict.concatasync(dsDictParts)
 
         ## Convert dsDict to DataFrame
-        self.print("-->Constructing a dataframe from statistics dictionary")
+        self.logger.info("Constructing a dataframe from statistics dictionary")
         dsDF = pd.DataFrame.from_dict(dsDict.values)
         dsDict.destroy()
         del dsDictParts
 
-        self.print("-->Sorting the dataframe index")
+        self.logger.info("Sorting the dataframe index")
 
         indexNames = ['expName', 'fcTDelta', 'cyDTime', 'DiagSpaceGrp',
                       'varName', 'diagName', 'binVar', 'binVal', 'binMethod']
@@ -271,7 +267,7 @@ class StatsDB:
         dsDF.set_index(indexNames, inplace=True)
         dsDF.sort_index(inplace=True)
 
-        self.print("-->Extracting index values")
+        self.logger.info("Extracting index values")
         ##  diagspace group
         self.DiagSpaceGrp = dsDF.index.levels[indexNames.index('DiagSpaceGrp')]
 
@@ -346,11 +342,6 @@ class StatsDB:
     # def agg(self, aggovers=['cyDTime']):
     #     return DFWrapper(self.dfw.aggStats(groupby))
 
-    def print(self, x):
-        if isinstance(x, str):
-            print(self.LOGPREFIX+x)
-        else:
-            print(self.LOGPREFIX, x)
 
 class DFWrapper:
     def __init__(self, df):

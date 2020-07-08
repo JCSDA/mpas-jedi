@@ -3,6 +3,7 @@
 import config as conf
 from copy import deepcopy
 import glob
+import logging
 from netCDF4 import Dataset
 import numpy as np
 import os
@@ -10,7 +11,7 @@ import plot_utils as pu
 import var_utils as vu
 import sys
 
-this_program = os.path.basename(sys.argv[0])
+_logger = logging.getLogger(__name__)
 
 default_path='../Data'
 
@@ -27,6 +28,8 @@ MAXINT32  = np.int32(1e9)
 MAXFLOAT  = np.float32(1.e12)
 MAXDOUBLE = np.float64(1.e12)
 
+_logger = logging.getLogger(__name__)
+
 class FeedbackFiles:
     '''This class provides access to UFO feedback files.'''
     def __init__(self,data_path=default_path,fileExt='nc4'
@@ -38,8 +41,6 @@ class FeedbackFiles:
         # fPrefixes (optional): user-defined prefixes for all file keys
         # osKeySelect (optional): allows for the selection of particular osKey's
 
-        self.LOGPREFIX=this_program+" : "
-
         if 'nc' in fileExt:
             self.initHandles = self.initHandlesNC
             self.varList     = self.varListNC
@@ -49,8 +50,7 @@ class FeedbackFiles:
         #     self.varList     = self.varListODB
         #     self.readVars    = self.readVarsODB
         else:
-            print("ERROR: unsupported file extension => "+fileExt)
-            os._exit(1)
+            _logger.error('unsupported file extension => '+fileExt)
 
         self.filePrefixes = {}
         for key, prefix in fPrefixes.items():
@@ -95,14 +95,16 @@ class FeedbackFiles:
         # error checking
         self.nObsFiles = {}
         self.exists = {}
+        self.loggers = {}
         for osKey, fileGroups in self.Files.items():
+            self.loggers[osKey] = logging.getLogger(__name__+'.'+osKey)
             nObsFiles = len(fileGroups.get(obsFKey,[]))
             # force crash when there are no obsFKey files available for an osKey
             if nObsFiles < 1:
-                print("\n\nERROR: there are no "+obsFKey+
-                           " feedback files with prefix "+self.filePrefixes[obsFKey])
-                print("ERROR: osKey = "+osKey)
-                os._exit(1)
+                self.loggers[osKey].error('''
+                           There are no '''+obsFKey+'''
+                           feedback files with prefix '''+self.filePrefixes[obsFKey]+'''
+                           osKey = '''+osKey)
             self.nObsFiles[osKey] = nObsFiles
             self.exists[osKey] = {}
             self.exists[osKey][obsFKey] = True
@@ -112,12 +114,12 @@ class FeedbackFiles:
                 self.exists[osKey][key] = False
                 nFiles = len(fileGroups.get(key,[]))
                 if nFiles > 0 and nFiles < nObsFiles:
-                    print("\n\nERROR: there are not enough "+key+
-                               " feedback files with prefix "+prefix)
-                    print("ERROR: #"+obsFKey+"=",nObsFiles)
-                    print("ERROR: #"+key+"=",nFiles)
-                    print("ERROR: osKey = "+osKey)
-                    os._exit(1)
+                    self.loggers[osKey].error('''
+                               There are not enough '''+key+'''
+                               feedback files with prefix '''+prefix+'''
+                               #'''+obsFKey+' = '+str(nObsFiles)+'''
+                               #'''+key+' = '+str(nFiles)+'''
+                               osKey = '''+osKey)
                 elif nFiles > 0:
                     self.exists[osKey][key] = True
 
@@ -167,15 +169,11 @@ class FeedbackFiles:
     # TODO: enable __init__ function to check for concatenated version
     # TODO: of osKey files
 
-    def print(self,x,key=""):
-        print(self.LOGPREFIX+key+" : "+x)
-
 
     def initHandlesNC(self,osKey):
-    #initialize LOGPREFIX and Handles for osKey
+    #initialize Handles for osKey
     # osKey (string) - experiment-ObsSpace key
-
-        self.print("Initializing UFO file handles...",osKey)
+        self.loggers[osKey].info('Initializing UFO file handles...')
 
         self.Handles[osKey] = {}
         for fileType in self.filePrefixes.keys():
@@ -183,7 +181,7 @@ class FeedbackFiles:
 
         for fileType, files in self.Files[osKey].items():
             if len(files) == self.nObsFiles[osKey]:
-                self.print(" fileType = "+fileType,osKey)
+                self.loggers[osKey].info(' fileType = '+fileType)
                 for ii, File in enumerate(files):
                     self.Handles[osKey][fileType].append(
                         Dataset(File, 'r'))
@@ -206,8 +204,7 @@ class FeedbackFiles:
         # extract file handles
         fHandles = self.Handles[osKey].get(fileType,[])
         if len(fHandles) < 1:
-            print("ERROR: no files exist => "+fileType)
-            os._exit(1)
+            self.loggers[osKey].error('no files exist => '+fileType)
 
         # select departure variables with the suffix selectGrp
         #  from fHandles[0]
@@ -224,8 +221,7 @@ class FeedbackFiles:
 #                var, grp = vu.splitObsVarGrp(vargrp)
 #                varlist.append(var)
         else:
-            self.print("ERROR: varListNC not implemented for "+fileType)
-            os._exit(1)
+            self.loggers[osKey].error('varListNC not implemented for '+fileType)
 
 
         # sort varlist alphabetically or
@@ -254,7 +250,7 @@ class FeedbackFiles:
     # osKey (string)  - experiment-ObsSpace key
     # dbVars (string) - list of variables desired from self.Handles[osKey]
 
-        self.print("Reading requested variables from UFO file(s)...",osKey)
+        self.loggers[osKey].info('Reading requested variables from UFO file(s)...')
 
         obsHandles  = self.Handles[osKey][obsFKey]
         diagHandles = self.Handles[osKey][diagFKey]
@@ -267,7 +263,7 @@ class FeedbackFiles:
         # Construct output dictionary
         varsVals = {}
         for varGrp in pu.uniqueMembers(dbVars):
-            # self.print(varGrp,osKey)
+            # self.loggers[osKey].info(varGrp)
             varName, grpName = vu.splitObsVarGrp(varGrp)
             if varGrp in obsHandles[0].variables:
                 #TODO: pre-allocate numpy array (np.empty(nlocs))
@@ -309,8 +305,7 @@ class FeedbackFiles:
                     dtype = h.variables[varName].datatype
 
             else:
-                self.print("ERROR: varGrp not found => "+varGrp,osKey)
-                os._exit(1)
+                self.loggers[osKey].error('varGrp not found => '+varGrp)
 
             if 'int32' in dtype.name:
                 missing = np.greater(np.abs(varsVals[varGrp]), MAXINT32)

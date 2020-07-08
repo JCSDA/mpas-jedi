@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import datetime as dt
+import logging
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 import matplotlib
 matplotlib.use('AGG')
+import matplotlib.axes as maxes
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.colors import BoundaryNorm
@@ -12,11 +14,12 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.axes as maxes
 import numpy as np
 import plot_utils as pu
 import var_utils as vu
 import os
+
+_logger = logging.getLogger(__name__)
 
 cmGray     = plt.cm.get_cmap("gist_gray")
 cmRainbow  = plt.cm.get_cmap("gist_rainbow")
@@ -302,15 +305,15 @@ def plotSeries(fig, \
         if all(np.isnan(lineVals)):
             global nanWarnSer
             if nanWarnSer==0:
-                print("\nWARNING: skipping all-NaN data")
-                print(title,indepLabel,linesLabel[iline])
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
             nanWarnSer=nanWarnSer+1
             continue
         if len(lineVals)!=len(xVals):
             global lenWarnSer
             if lenWarnSer==0:
-                print("\nWARNING: skipping data where len(x)!=len(y)")
-                print(title,indepLabel,linesLabel[iline])
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
             lenWarnSer=lenWarnSer+1
             continue
 
@@ -488,15 +491,15 @@ def plotProfile(fig, \
         if all(np.isnan(lineVals)):
             global nanWarnProf
             if nanWarnProf==0:
-                print("\nWARNING: skipping all-NaN data")
-                print(title,dataLabel,linesLabel[iline])
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             nanWarnProf=nanWarnProf+1
             continue
         if len(lineVals)!=len(yVals):
             global lenWarnProf
             if lenWarnProf==0:
-                print("\nWARNING: skipping data where len(x)!=len(y)")
-                print(title,dataLabel,linesLabel[iline])
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             lenWarnProf=lenWarnProf+1
             continue
 
@@ -673,8 +676,8 @@ def plotTimeSeries(fig, \
         if all(np.isnan(lineVals)):
             global nanWarnTS
             if nanWarnTS==0:
-                print("\nWARNING: skipping all-NaN data")
-                print(title,ylabel,linesLabel[iline])
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+ylabel+"; "+linesLabel[iline])
             nanWarnTS=nanWarnTS+1
             continue
 
@@ -687,8 +690,8 @@ def plotTimeSeries(fig, \
         if len(lineVals)!=len(xVals):
             global lenWarnTS
             if lenWarnTS==0:
-                print("\nWARNING: skipping data where len(x)!=len(y)")
-                print(title,ylabel,linesLabel[iline])
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+ylabel+"; "+linesLabel[iline])
             lenWarnTS=lenWarnTS+1
             continue
 
@@ -996,15 +999,15 @@ def plotPDF(fig,
         if all(np.isnan(countVals)):
             global nanWarnPDF
             if nanWarnPDF==0:
-                print("\nWARNING: skipping all-NaN data")
-                print(title,indepLabel,countsLabel[ihist])
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+indepLabel+"; "+countsLabel[ihist])
             nanWarnPDF=nanWarnPDF+1
             continue
         if len(countVals)!=len(xVals):
             global lenWarnPDF
             if lenWarnPDF==0:
-                print("\nWARNING: skipping data where len(x)!=len(y)")
-                print(title,indepLabel,countsLabel[ihist])
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+indepLabel+"; "+countsLabel[ihist])
             lenWarnPDF=lenWarnPDF+1
             continue
 
@@ -1119,15 +1122,15 @@ def plotfitRampComposite(fig,
         if all(np.isnan(lineVals)):
             global nanWarnRamp
             if nanWarnRamp==0:
-                print("\nWARNING: skipping all-NaN data")
-                print(title,indepLabel,linesLabel[iline])
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
             nanWarnRamp=nanWarnRamp+1
             continue
         if len(lineVals)!=len(xVals):
             global lenWarnRamp
             if lenWarnRamp==0:
-                print("\nWARNING: skipping data where len(x)!=len(y)")
-                print(title,indepLabel,linesLabel[iline])
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
             lenWarnRamp=lenWarnRamp+1
             continue
 

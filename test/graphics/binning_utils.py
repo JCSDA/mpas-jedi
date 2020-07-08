@@ -3,12 +3,14 @@
 from collections.abc import Iterable
 from copy import deepcopy
 import inspect
+import logging
 import numpy as np
 import os
 import plot_utils as pu
 from binning_params import allSCIErrParams
 import var_utils as vu
 
+_logger = logging.getLogger(__name__)
 
 #===========================
 # binning method descriptors
@@ -353,7 +355,7 @@ class SCINormalizedError:
         SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType.get(osName,None))])
 
         if osName is None or osName not in SCIErrParams:
-            print("ERROR: osName not available in SCIErrParams => "+osName)
+            _logger.error('osName not available in SCIErrParams => '+osName)
             os._exit(1)
 
         varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
@@ -529,7 +531,7 @@ class BinFilter:
             for ii in list(range(config['nBins'])):
                 self.bounds[ii] = tmp[ii]
         else:
-            print("ERROR: 'bounds' need to be a scalar or an Iterable with the same length as 'values'!")
+            _logger.error("'bounds' need to be a scalar or an Iterable with the same length as 'values'!")
             os._exit(1)
 
         self.function = ObsFunctionWrapper(config)
@@ -556,7 +558,7 @@ class BinFilter:
             if len(mask) == len(array):
                 array[mask] = self.mask_value
             else:
-                print('\n\nERROR: BinFilter mask is incorrectly defined!')
+                _logger.error('BinFilter mask is incorrectly defined!')
                 os._exit(1)
 
         return array
