@@ -3,86 +3,105 @@ import sys
 import numpy
 import numpy as np
 from netCDF4 import Dataset
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
-from copy import deepcopy
 import datetime as dt
 from datetime import datetime, timedelta
 import basic_plot_functions as BasicPF
-
-EXP_DIR1 = os.getenv('FCDIAG_WORK_DIR1','FC1DIAG DIR OR FC2DIAG DIR FOR EXP1')
-EXP_DIR2 = os.getenv('FCDIAG_WORK_DIR2','FC1DIAG DIR OR FC2DIAG DIR FOR CONTROL')
-
-initDate = os.getenv('start_init', '2018041500')
-endDate  = os.getenv('end_init', '2018051400')
-diff2exp = os.getenv('diff2exp', 'False')
-
-fcHours = os.getenv('fcHours', 6)
-intervalHours = os.getenv('intervalHours', 6)
-
-SDATE = datetime.strptime(initDate,"%Y%m%d%H")
-EDATE = datetime.strptime(endDate,"%Y%m%d%H")
-DATEINC = dt.timedelta(days=0.25)
-
-varNames = ['pressure','theta','qv','uReconstructZonal','uReconstructMeridional']
-allmetrics =['Mean','RMS','MS','STD'] #,'Min','Max']
-latBands = ['NXTro','Tro','SXTro']
-
-fcRange = int(fcHours)/24.
-interval = int(intervalHours)/24.
-
+import plot_utils as pu
+import var_utils as vu
+import modelsp_utils as mu
 def readdata():
 
-    for fcTDelta in np.arange(0,fcRange+interval,interval):
+    for fcTDelta in np.arange(0,mu.fcRange+mu.interval,mu.interval):
         varNamesListAll = []
-        for metrics in allmetrics:
-            for varName in varNames:
-                for latBand in latBands:
-                    for fcTDelta in np.arange(0, fcRange+interval,interval):
-                    
+        for metrics in mu.allFileStats: #allmetrics:
+            for varName in mu.varNames3d:
+                for latBand in mu.latBands:
                         varNamesList = ['expmgfs_day'+str(fcTDelta)+'_'+ latBand +'_'+ varName + '_' + metrics]
                         varNamesListAll.append(varNamesList)
         for i in range(0,len(varNamesListAll)): 
+          arraylist = []
+          for iexp, expName in enumerate(mu.expNames):
+
             alldata = []
+            alldata2 = []
             alldiffdata = []
             alldiffdata_rmsdiv = []
             xlabeltime  = []
-            TDATE = SDATE 
-            while TDATE <= EDATE:
+            TDATE = mu.SDATE
+
+            while TDATE <= mu.EDATE:
+
                 data1 = []
                 diffdata = []
                 diffdata_rmsdiv = []
                 date = TDATE.strftime('%Y%m%d%H')
                 xlabeltime = np.append(xlabeltime,date[4:][:-2])
-                nc_file1 = EXP_DIR1+'/'+date+'/diagnostic_stats/expmgfs.nc'          
-                nc_fid1 = Dataset(nc_file1, "r", format="NETCDF4") 
-                #data1: exp1-GFSANA 
-                data1 = np.array( nc_fid1.variables[''.join(varNamesListAll[i])][:] )
-                alldata = np.append(alldata, data1)
 
-                if (diff2exp == 'True' and ''.join(varNamesListAll[i])[-3:] == 'RMS'):
-                    nc_file2 = EXP_DIR2+'/'+date+'/diagnostic_stats/expmgfs.nc'
-                    nc_fid2 = Dataset(nc_file2, "r", format="NETCDF4")
-                    data2 = np.array( nc_fid2.variables[''.join(varNamesListAll[i])][:] )
-                    #diffdata: (exp1-GFSANA)-(exp2-GFSANA) 
-                    diffdata = data1 - data2
-                    alldiffdata = np.append(alldiffdata, diffdata)
+                nc_file = mu.expDirectory+'/'+mu.expLongNames[iexp]+'/FC1DIAG/'+date+'/diagnostic_stats/expmgfs.nc'
+                nc_fid = Dataset(nc_file, "r", format="NETCDF4")
+                #data: exp1-GFSANA
+                data = np.array( nc_fid.variables[''.join(varNamesListAll[i])][:] )
+                alldata = np.append(alldata, data)
 
-                    diffdata_rmsdiv = (data1-data2)/data2 *100
-                    alldiffdata_rmsdiv = np.append(alldiffdata_rmsdiv, diffdata_rmsdiv)
+                TDATE += mu.DATEINC
 
-                TDATE += DATEINC
-            ylevels = list(np.arange(0,len(data1),1))
-            alldata = alldata.reshape(len(xlabeltime),len(data1)).T
-            BasicPF.plotTimeserial2D(alldata,xlabeltime,ylevels,''.join(varNamesListAll[i]))
-       
-            if (diff2exp == 'True' and ''.join(varNamesListAll[i])[-3:] == 'RMS'):
-                alldiffdata = alldiffdata.reshape(len(xlabeltime),len(diffdata)).T
-                BasicPF.plotTimeserial2D(alldiffdata,xlabeltime,ylevels,''.join(varNamesListAll[i])+'diff2exp')
-                alldiffdata_rmsdiv = alldiffdata_rmsdiv.reshape(len(xlabeltime),len(data1)).T
-                BasicPF.plotTimeserial2D(alldiffdata_rmsdiv,xlabeltime,ylevels,''.join(varNamesListAll[i])+'dividediff2exp')
+            ylevels = list(np.arange(0,len(data),1))
+            alldata = alldata.reshape(len(xlabeltime),len(data)).T
+            if (iexp == 0):
+                arraylist = [alldata]
+            else:
+                arraylist= arraylist + [alldata]
 
+          dmin = np.amin(arraylist) #min(arraylist.all()) #np.amin(arraylist)
+          dmax = np.amax(arraylist) #max(arraylist.all()) #np.amax(arraylist)
+          nx = mu.nExp
+          ny = 1 #nVars
+          nsubplots = nx * ny
+          subplot_size = 2.4
+          aspect = 0.55
+          FULL_SUBPLOT_LABELS =True
+          interiorLabels = True
+          fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
+          title_tmp = ''.join(varNamesListAll[i])
+          region = ''.join(title_tmp.split("_")[2:][:-2])
+          var    = ''.join(title_tmp.split("_")[3:][:-1])
+          stats  = ''.join(title_tmp.split("_")[4:])
+          FCDay  = ''.join(title_tmp.split("_")[1:][:-3])
+          statDiagLabel = stats
+          if (stats == 'Mean'):
+              signDefinite = False
+          else:
+              signDefinite = True
+          #print(region,var,stats)
+          indepLabel = 'Vertical level'
+          sciTicks = False
+          invert_ind_axis = False
+          iplot = 0
+
+          for k in arraylist:
+                valuemin = np.amin(k)
+                valuemax = np.amax(k)
+                title = mu.expNames[iplot] +' var:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+')\
+ '+region+' min=' +str(round(valuemin,3))+' max='+str(round(valuemax,3))
+
+                BasicPF.plotTimeSeries2D( fig, \
+                              xlabeltime,ylevels, k, \
+                              title, statDiagLabel, \
+                              sciTicks, signDefinite, \
+                              indepLabel, invert_ind_axis, \
+                              ny, nx, nsubplots, iplot, \
+                              dmin = dmin, dmax = dmax, \
+                              interiorLabels = interiorLabels )
+                iplot = iplot +1
+                filename = ''.join(varNamesListAll[i])+'_TS_2d'
+                pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
+
+          #plot diff between two exp for RMS:
+          if (mu.diff2exp == 'True' and ''.join(varNamesListAll[i])[-3:] == 'RMS'):
+              for iexp in range(1,mu.nExp):
+              #             target_exp - control_exp
+                  alldiffdata = arraylist[iexp]-arraylist[0]
+                  BasicPF.plotTimeserial2D(alldiffdata,xlabeltime,ylevels,''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0])
 def main():
     readdata()
 

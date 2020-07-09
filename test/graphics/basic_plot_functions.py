@@ -879,9 +879,12 @@ def plotTimeSeries2D(fig, \
     cmap = plt.get_cmap(cmapName)
     cmap.set_bad(color = 'k', alpha = 1.0)
     norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
-    xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
-    cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm = norm)
-
+    if (type(xVals[0]) == float):
+        xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
+        cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm = norm)
+    else:
+        cp = ax.pcolormesh(xVals, yVals, contourVals, cmap=cmap, norm = norm)
+        ax.xaxis.set_tick_params(rotation=90)
     #title
     ax.set_title(title,fontsize=5)
 

@@ -183,8 +183,15 @@ varDictModel = {
   , 'uReconstructZonal':      [ 'm/s',   'U'   ]
   , 'uReconstructMeridional': [ 'm/s',   'V'   ]
   , 'u':                      [ 'm/s',   'uedge']
+  , 'w':                      [ 'm/s',   'W'   ]
   , modVarLat:                [ degree,  'lat' ]
   , modVarLon:                [ degree,  'lon' ]
+  , 'temperature':            [ 'C',    'T'    ]
+  , 't2m':                    [ 'C',    'T2m'  ]
+  , 'surface_pressure':       [ 'Pa',    'Ps'  ]
+  , 'q2':                     [ 'g/kg',  'Q2m' ]
+  , 'u10':                    [ 'm/s',  'U10m' ]
+  , 'v10':                    [ 'm/s',  'V10m' ]
     }
 #Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv.
 

@@ -10,90 +10,56 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from copy import deepcopy
 from datetime import datetime, timedelta
+import modelsp_utils as mu
 
-aggregatableFileStats = ['Mean','RMS','STD','Min','Max']
-allFileStats = aggregatableFileStats
-
-expStats = 'expmgfs'
-varNames = ['pressure','theta','uReconstructZonal','uReconstructMeridional','qv']
-
-#latitude, north to south
-#'NAMED': N extrtropics, tropics, S extrtropics
-latBands = ['NXTro','Tro','SXTro']
-latBandsBounds = [90.0, 30.0, -30.0, -90.0]
-
-fcRange = 10 # 10day fc
-
-#setting for 120km res.:
-nlevels = 55
-ncells  = 40962
-
-EXP_DIR = '/gpfs/fs1/scratch/jban/pandac/'
-EXP_NAME1 = 'gfsanal_x1.'+str(ncells)
 def write_diag_stats():
-    if os.path.exists(expStats+'.nc'):
-        os.remove(expStats+'.nc')    
+    if os.path.exists(mu.expStats+'.nc'):
+        os.remove(mu.expStats+'.nc')
     path = os.getcwd()
     fcdirs = [d for d in os.listdir('.') if os.path.isdir(d)]
     allfiledate = []
-    lats, lons = readGrid()
-    for varName in varNames:
-        for latBand in range(0, len(latBands)): 
-            for fcTDelta in range(0, fcRange+1): 
+    lats, lons = mu.readGrid()
+    for varName in mu.varNames:
+        for latBand in range(0, len(mu.latBands)):
+            for fcTDelta in np.arange(0,mu.fcRange+mu.interval,mu.interval):
                 alltmp = [[]]
                 tmp = []
                 for fcdir in range(0,len(fcdirs)):
                     d = datetime.strptime(fcdirs[fcdir], "%Y%m%d%H") + timedelta(days=fcTDelta)
                     fileDate= d.strftime("%Y-%m-%d_%H.%M.%S")
  
-                    ncFile1 = EXP_DIR+EXP_NAME1+'/x1.'+str(ncells)+'.init.'+fileDate+'.nc'
+                    ncFile1 = mu.GFSANA_DIR+'/x1.'+str(mu.ncells)+'.init.'+fileDate+'.nc'
                     ncFile2 = './'+fcdirs[fcdir]+'/restart.'+fileDate+'.nc'
-
                     if (varName == 'pressure'):
-                        pressure_model =  varRead('pressure_base',ncFile2) + varRead('pressure_p',ncFile2)
-                        pressure_gfs = varRead('pressure_base',ncFile1) + varRead('pressure_p',ncFile1)
+                        pressure_model = mu.varRead('pressure_base',ncFile2) + mu.varRead('pressure_p',ncFile2)
+                        pressure_gfs = mu.varRead('pressure_base',ncFile1) + mu.varRead('pressure_p',ncFile1)
                         tmp = pressure_model - pressure_gfs
+                    elif (varName == 'temperature'):
+                        tmp = mu.getTemperature(varName,ncFile2) - mu.getTemperature(varName,ncFile1)
                     else:
-                        tmp = varDiff(varName,ncFile1,ncFile2)
+                        tmp = mu.varDiff(varName,ncFile1,ncFile2)
 
                     tmpbin = deepcopy(tmp)
-                    tmpbin[np.logical_or(lats < latBandsBounds [latBand+1], lats > latBandsBounds [latBand])] = np.NaN
+                    tmpbin[np.logical_or(lats < mu.latBandsBounds [latBand+1], lats > mu.latBandsBounds [latBand])] = np.NaN
 
                     if (fcdir == 0):
                         alltmp = np.append(alltmp, tmpbin)
-                        alltmp = alltmp.reshape(ncells,nlevels)
-                    else:
-                        alltmp = np.append(alltmp, tmpbin, axis=0)
+                        if varName in mu.varNames3d:
+                            if (varName == 'w'):
+                                alltmp = alltmp.reshape(mu.ncells,mu.nlevelsP1)
+                            else:
+                                alltmp = alltmp.reshape(mu.ncells,mu.nlevels)
+                        else:
+                            alltmp = alltmp.reshape(mu.ncells,mu.nlevelSurface)
+
+                    if (fcdir != 0):
+                        if varName in mu.varNames3d:
+                            alltmp = np.append(alltmp, tmpbin, axis=0)
+                        else:
+                            alltmp = np.append(alltmp, tmpbin)
                     if (fcdir == len(fcdirs)-1):
-                        newfile = write_stats(alltmp,varName,latBands[latBand],str(fcTDelta))
+                        newfile = write_stats(alltmp,varName,mu.latBands[latBand],str(fcTDelta))
 #TODO: move the following functions to plot_utils.py or basic_plot_functions.py
-def readGrid():
-    path = os.getcwd()
-    date = '2018041500'
-    d = datetime.strptime(date,"%Y%m%d%H")
-    filedate= d.strftime("%Y-%m-%d_%H.%M.%S")
-    diagdir    = '../'
-    ncGFS = EXP_DIR+EXP_NAME1+'/x1.'+str(ncells)+'.init.'+filedate+'.nc'
-    nc_fid2 = Dataset(ncGFS, "r", format="NETCDF4")
-    lats = np.array( nc_fid2.variables['latCell'][:] ) * 180.0 / np.pi 
-    lons = np.array( nc_fid2.variables['lonCell'][:] ) * 180.0 / np.pi
-    return (lats,lons)
-
-def varDiff(varNames,ncFile1,ncFile2):
-    nc_fid1 = Dataset(ncFile1, "r", format="NETCDF4")
-    nc_fid2 = Dataset(ncFile2, "r", format="NETCDF4")
-    varsVals = np.array( nc_fid2.variables[varNames][0,:,:] ) - np.array( nc_fid1.variables[varNames][0,:,:] )
-    if (varNames == 'qv'):
-        varsVals = varsVals * 1000.
-    return varsVals
-
-def varRead(varNames,ncFile1):
-    nc_fid1 = Dataset(ncFile1, "r", format="NETCDF4")
-    varsVals = np.array( nc_fid1.variables[varNames][0,:,:] )
-    if (varNames == 'qv'):
-        varsVals = varsVals * 1000.
-    return varsVals
-
 def write_stats(array_f,varNames,band,fcTDelta):
     STATS = {}
     STATS['Mean'] = np.nanmean(array_f,axis=0)
@@ -102,16 +68,24 @@ def write_stats(array_f,varNames,band,fcTDelta):
     STATS['Min']  = np.nanmin(array_f,axis=0)
     STATS['Max']  = np.nanmax(array_f,axis=0)
 
-    if os.path.exists(expStats+'.nc'):
-        w_nc_fid = Dataset(expStats+'.nc', 'a', format='NETCDF4')
+    if os.path.exists(mu.expStats+'.nc'):
+        w_nc_fid = Dataset(mu.expStats+'.nc', 'a', format='NETCDF4')
     else:
-        w_nc_fid = Dataset(expStats+'.nc', 'w', format='NETCDF4')
+        w_nc_fid = Dataset(mu.expStats+'.nc', 'w', format='NETCDF4')
         w_nc_fid.description = "MPAS diagnostics/statistics" 
-        w_nc_fid.createDimension('level', nlevels)
+        w_nc_fid.createDimension('level', mu.nlevels)
+        w_nc_fid.createDimension('levelP1',mu.nlevelsP1)
+        w_nc_fid.createDimension('levelSurface', mu.nlevelSurface)
+    for statName in mu.allFileStats:
+        if varNames in mu.varNames3d:
+            if (varNames == 'w'):
+                bias2exp = w_nc_fid.createVariable(mu.expStats+"_day"+fcTDelta+"_"+band+"_"+varNames+"_"+statName,'f4', "levelP1")
+            else:
+                bias2exp = w_nc_fid.createVariable(mu.expStats+"_day"+fcTDelta+"_"+band+"_"+varNames+"_"+statName,'f4', "level")
+        else:
+            bias2exp = w_nc_fid.createVariable(mu.expStats+"_day"+fcTDelta+"_"+band+"_"+varNames+"_"+statName,'f4', "levelSurface")
+        w_nc_fid.variables[mu.expStats+"_day"+fcTDelta+'_'+band+'_'+varNames+'_'+statName][:] = STATS[statName]
 
-    for statName in allFileStats:
-        bias2exp = w_nc_fid.createVariable(expStats+"_day"+fcTDelta+"_"+band+"_"+varNames+"_"+statName,'f4', "level")
-        w_nc_fid.variables[expStats+"_day"+fcTDelta+'_'+band+'_'+varNames+'_'+statName][:] = STATS[statName]
 
     w_nc_fid.close()
 

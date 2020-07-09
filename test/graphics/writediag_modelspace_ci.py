@@ -10,30 +10,10 @@ from copy import deepcopy
 import datetime as dt
 from datetime import datetime, timedelta
 import numpy.random as npr
+import modelsp_utils as mu
 
-EXP_DIR1 = os.getenv('FCDIAG_WORK_DIR1','FC1DIAG DIR OR FC2DIAG DIR FOR EXP1')
-EXP_DIR2 = os.getenv('FCDIAG_WORK_DIR2','FC1DIAG DIR OR FC2DIAG DIR FOR CONTROL')
-
-initDate = os.getenv('start_init', '2018041500')
-endDate  = os.getenv('end_init', '2018051400')
-diff2exp = os.getenv('diff2exp', 'True')
-
-fcHours = os.getenv('fcHours', 6)
-intervalHours = os.getenv('intervalHours', 6)
-interval = int(intervalHours)/24.
-fcNums = os.getenv('fcNums', '1')
-
-SDATE = datetime.strptime(initDate,"%Y%m%d%H")
-EDATE = datetime.strptime(endDate,"%Y%m%d%H")
-
-DATEINC = dt.timedelta(days=interval)
 expStats = 'expmgfsci'
-varNames = ['pressure','theta','uReconstructZonal','uReconstructMeridional','qv']
 allmetrics = ['RMS'] #,'MS']
-latBands = ['NXTro','Tro','SXTro']
-
-fcRange = int(fcHours)/24.
-interval = int(intervalHours)/24.
 
 def readdata():
 
@@ -42,47 +22,46 @@ def readdata():
 
    varNamesListAll = []
    for metrics in allmetrics:
-       for varName in varNames:
-           for latBand in latBands:
-               for fcTDelta in np.arange(0, fcRange+interval,interval):
+       #only for 3dim variables
+       for varName in mu.varNames3d:
+           for latBand in mu.latBands:
+               for fcTDelta in np.arange(0, mu.fcRange+mu.interval,mu.interval):
                    varNamesList = ['expmgfs_day'+str(fcTDelta)+'_'+ latBand +'_'+ varName + '_' + metrics]
                    varNamesListAll.append(varNamesList)
-                   #print('check',varNamesListAll)
    for metrics in allmetrics:
-       for varName in varNames:
-           for latBand in latBands:
-               #for all levels:
+       #for 2dim and 3dim variables:
+       for varName in mu.varNames:
+           for latBand in mu.latBands:
                varNamesList2 = ['expmgfs_'+ latBand +'_'+ varName + '_' + metrics]
                varNamesListAll.append(varNamesList2)
-   print('check varNamesListAll=',(varNamesListAll))
    for i in range(0,len(varNamesListAll)): 
        alldata = []
        alldatacon = []
        alldiffdata = []
        alldiffdata_rmsdiv = []
        xlabeltime  = []
-       TDATE = SDATE 
-       while TDATE <= EDATE:
-           print('TDATE=',TDATE)
+       TDATE = mu.SDATE
+       while TDATE <= mu.EDATE:
            data1 = []
            diffdata = []
            diffdata_rmsdiv = []
            date = TDATE.strftime('%Y%m%d%H')
            xlabeltime = np.append(xlabeltime,date[4:][:-2])
-           nc_file1 = EXP_DIR1+'/'+date+'/diagnostic_stats/expmgfs.nc'
+           nc_file1 = mu.EXP_DIR1+'/'+date+'/diagnostic_stats/expmgfs.nc'
            nc_fid1 = Dataset(nc_file1, "r", format="NETCDF4")
-           # data1: exp1-GFSANA 
+           #data1: exp1-GFSANA
            data1 = np.array( nc_fid1.variables[''.join(varNamesListAll[i])][:] )
            alldata = np.append(alldata, data1)
-           if (diff2exp == 'True'): # and ''.join(varNamesListAll[i])[-3:] == 'rms'):
-               nc_file2 = EXP_DIR2+'/'+date+'/diagnostic_stats/expmgfs.nc'
-               nc_fid2 = Dataset(nc_file2, "r", format="NETCDF4")
-               data2 = np.array( nc_fid2.variables[''.join(varNamesListAll[i])][:] )
-               #diffdata, e.g. rms(exp1-GFSANA)-rms(exp2-GFSANA) 
-               diffdata = data1 - data2
-               alldiffdata = np.append(alldiffdata, diffdata)
 
-           TDATE += DATEINC
+           nc_file2 = mu.EXP_DIR2+'/'+date+'/diagnostic_stats/expmgfs.nc'
+           nc_fid2 = Dataset(nc_file2, "r", format="NETCDF4")
+           #data2: exp2-GFSANA
+           data2 = np.array( nc_fid2.variables[''.join(varNamesListAll[i])][:] )
+           #diffdata, e.g. rms(exp1-GFSANA)-rms(exp2-GFSANA)
+           diffdata = data2 - data1
+           alldiffdata = np.append(alldiffdata, diffdata)
+
+           TDATE += mu.DATEINC
 
        alldiffdata = alldiffdata.reshape(len(xlabeltime),len(diffdata)).T
        newfile = write_stats(alldiffdata,''.join(varNamesListAll[i]))
@@ -112,11 +91,14 @@ def write_stats(array_f,varNames):
     else:
         w_nc_fid = Dataset(expStats+'.nc', 'w', format='NETCDF4')
         w_nc_fid.description = "MPAS diagnostics/statistics"
-        w_nc_fid.createDimension('levels',55)
-        w_nc_fid.createDimension('fcnums',int(fcNums))
+        w_nc_fid.createDimension('level',int(mu.nlevels))
+        w_nc_fid.createDimension('levelP1',int(mu.nlevelsP1))
+        w_nc_fid.createDimension('fcnums',int(mu.fcNums))
         w_nc_fid.createDimension('stat',3)
     if x == 55:
-        w_nc_var = w_nc_fid.createVariable(varNames,'f4', ('levels','stat')) 
+        w_nc_var = w_nc_fid.createVariable(varNames,'f4', ('level','stat'))
+    elif (x == 56):
+        w_nc_var = w_nc_fid.createVariable(varNames,'f4', ('levelP1','stat'))
     else:
         w_nc_var = w_nc_fid.createVariable(varNames,'f4', ('fcnums','stat')) 
     w_nc_fid.variables[varNames][:] = stat
