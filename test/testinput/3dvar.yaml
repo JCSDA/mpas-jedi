@@ -1,10 +1,25 @@
 nml_file: namelist.atmosphere_2018041500
-resolution:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
-model:
-  name: MPAS
-  tstep: PT6H
-  variables:
+cost function:
+  cost type: 3D-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  geometry:
+    gridfname: "./restart.2018-04-15_00.00.00.nc"
+  model:
+    name: MPAS
+    tstep: PT6H
+    model variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+    - index_qc
+    - index_qi
+    - index_qr
+    - index_qs
+    - index_qg
+  analysis variables: &incvars
   - temperature
   - spechum
   - uReconstructZonal
@@ -15,244 +30,219 @@ model:
   - index_qr
   - index_qs
   - index_qg
-cost_function:
-  cost_type: 3D-Var
-  window_begin: '2018-04-14T21:00:00Z'
-  window_length: PT6H
-  variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  - index_qc
-  - index_qi
-  - index_qr
-  - index_qs
-  - index_qg
-  varchange: Identity
-  Jb:
-    Background:
-      state:
-      - variables: *incvars
-        filename: "./restart.2018-04-15_00.00.00.nc"
-        date: &adate '2018-04-15T00:00:00Z'
-    Covariance:
-      covariance: MPASstatic
-      date: *adate
-  Jo:
-    ObsTypes:
-    - ObsSpace:
-        name: Radiosonde
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_sondes.nc4
-        simulate:
-          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
-        name: Aircraft
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_aircraft.nc4
-        simulate:
-          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
-        name: GnssroRef
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_gnssroref.nc4
-        simulate:
-          variables: [refractivity]
-      ObsOperator:
-        name: GnssroRef
-        ObsOptions:
-          use_compress: 0
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Domain Check
-        where:
-        - variable:
-            name: altitude@MetaData
-          minvalue: 0
-          maxvalue: 30000
-        - variable:
-            name: earth_radius_of_curvature@MetaData
-          minvalue: 6250000
-          maxvalue: 6450000
-        - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
-          minvalue: -200
-          maxvalue: 200
-      - Filter: Background Check
-        threshold: 3
-      - Filter: ROobserror
-        variable: refractivity
-        errmodel: NBAM
-    - ObsSpace:
-        name: GnssroBndROPP1D
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_gnssrobndropp1d.nc4
-        simulate:
-          variables: [bending_angle]
-      ObsOperator:
-        name: GnssroBndROPP1D
-        ObsOptions:
-          use_compress: 0
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Domain Check
-        where:
-        - variable:
-            name: altitude@MetaData
-          minvalue: 0
-          maxvalue: 50000
-        - variable:
-            name: earth_radius_of_curvature@MetaData
-          minvalue: 6250000
-          maxvalue: 6450000
-        - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
-          minvalue: -200
-          maxvalue: 200
-      - Filter: Background Check
-        threshold: 3
-      - Filter: ROobserror
-        variable: bending_angle
-        errmodel: ECMWF
-    - ObsSpace:
-        name: SfcPCorrected
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_sfc.nc4
-        simulate:
-          variables: [surface_pressure]
-      ObsOperator:
-        name: SfcPCorrected
-        da_psfc_scheme: UKMO   # or WRFDA
-      LinearObsOperator:
-        name: Identity
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Difference Check
-        reference: station_elevation@MetaData
-        value: surface_altitude@GeoVaLs
-        threshold: 500
-      - Filter: Background Check
-        threshold: 10
-    #NOTES for amsua channels:
-    # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
-    # + vertical peak senstivity increases from 1 to 14 w/ 12-14 exclusive to strat.
-    # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
-    # + 8 is noisy/degraded on n19
-    - ObsSpace:
-        name: AMSUA-NOAA19--nohydro
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
-        simulate:
-          variables: [brightness_temperature]
-          channels: 4-7,9-14
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        threshold: 10
-      ObsOperator: &crtmobsoper
-        name: CRTM
-        Absorbers: [H2O,O3]
-        LinearObsOperator:
-          Absorbers: [H2O]
-        ObsOptions: &crtmobsopts
-          Sensor_ID: amsua_n19
-          EndianType: little_endian
-          CoefficientPath: Data/
-    - ObsSpace:
-        name: AMSUA-NOAA19--hydro
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
-        simulate:
-          variables: [brightness_temperature]
-          channels: 1-3,15
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Background Check
-        threshold: 10
-      ObsOperator:
-        <<: *crtmobsoper
+  variable change: Identity
+  background:
+    state variables: *incvars
+    filename: "./restart.2018-04-15_00.00.00.nc"
+    date: &adate '2018-04-15T00:00:00Z'
+  background error:
+    covariance model: MPASstatic
+    date: *adate
+  observations:
+  - obs space:
+      name: Radiosonde
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_sondes.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Background Check
+      threshold: 3
+  - obs space:
+      name: Aircraft
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_aircraft.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Background Check
+      threshold: 3
+  - obs space:
+      name: GnssroRef
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_gnssroref.nc4
+      simulated variables: [refractivity]
+    obs operator:
+      name: GnssroRef
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 30000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      threshold: 3
+    - filter: ROobserror
+      variable: refractivity
+      errmodel: NBAM
+  - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 50000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      threshold: 3
+    - filter: ROobserror
+      variable: bending_angle
+      errmodel: ECMWF
+  - obs space:
+      name: SfcPCorrected
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_sfc.nc4
+      simulated variables: [surface_pressure]
+    obs operator:
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
+    linear obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Difference Check
+      reference: station_elevation@MetaData
+      value: surface_altitude@GeoVaLs
+      threshold: 500
+    - filter: Background Check
+      threshold: 10
+  #NOTES for amsua channels:
+  # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
+  # + vertical peak senstivity increases from 1 to 14 w/ 12-14 exclusive to strat.
+  # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
+  # + 8 is noisy/degraded on n19
+  - obs space:
+      name: AMSUA-NOAA19--nohydro
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+      simulated variables: [brightness_temperature]
+      channels: 4-7,9-14
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Background Check
+      threshold: 10
+    obs operator: &crtmobsoper
+      name: CRTM
+      Absorbers: [H2O,O3]
+      linear obs operator:
+        Absorbers: [H2O]
+      obs options: &crtmobsopts
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
+  - obs space:
+      name: AMSUA-NOAA19--hydro
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
+      simulated variables: [brightness_temperature]
+      channels: 1-3,15
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Background Check
+      threshold: 10
+    obs operator:
+      <<: *crtmobsoper
+      Clouds: [Water, Ice, Rain, Snow, Graupel]
+      Cloud_Fraction: 1.0
+      linear obs operator:
+        Absorbers: [H2O]
         Clouds: [Water, Ice, Rain, Snow, Graupel]
-        Cloud_Fraction: 1.0
-        LinearObsOperator:
-          Absorbers: [H2O]
-          Clouds: [Water, Ice, Rain, Snow, Graupel]
-        ObsOptions:
-          <<: *crtmobsopts
-minimizer:
-  algorithm: DRIPCG
+      obs options:
+        <<: *crtmobsopts
 output:
   filename: "Data/states/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
 variational:
-  iteration:
-  - resolution:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linearmodel:
-      varchange: Identity
-      version: MPASIdTLM
+    linear model:
+      name: MPASIdTLM
+      variable change: Identity
       tstep: PT6H
       trajectory:
         tstep: PT6H
-      variables: *incvars
+      tlm variables: *incvars
     ninner: '10'
-    gradient_norm_reduction: 1e-10
+    gradient norm reduction: 1e-10
     test: 'on'
     diagnostics:
       departures: depbg
-  - resolution:
+  - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linearmodel:
-      varchange: Identity
-      version: MPASIdTLM
+    linear model:
+      name: MPASIdTLM
+      variable change: Identity
       tstep: PT6H
       trajectory:
         tstep: PT6H
-      variables: *incvars
+      tlm variables: *incvars
     ninner: '10'
-    gradient_norm_reduction: 1e-10
+    gradient norm reduction: 1e-10
     test: 'on'
 final:
   diagnostics:

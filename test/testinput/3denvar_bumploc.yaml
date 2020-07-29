@@ -1,277 +1,274 @@
 nml_file: namelist.atmosphere_2018041500
-resolution:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
-model:
-  name: MPAS
-  tstep: PT3H
-  variables:
+cost function:
+  cost type: 3D-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  geometry:
+    gridfname: "./restart.2018-04-15_00.00.00.nc"
+  model:
+    name: MPAS
+    tstep: PT3H
+    model variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+  analysis variables: &incvars
   - temperature
   - spechum
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
-cost_function:
-  cost_type: 3D-Var
-  window_begin: '2018-04-14T21:00:00Z'
-  window_length: PT6H
-  variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  varchange: Identity
-  Jb:
-    Background:
-      state:
-      - variables: *incvars
-        filename: "./restart.2018-04-15_00.00.00.nc"
-        date: &adate '2018-04-15T00:00:00Z'
-    Covariance:
-      covariance: ensemble
+  variable change: Identity
+  background:
+    state variables: *incvars
+    filename: "./restart.2018-04-15_00.00.00.nc"
+    date: &adate '2018-04-15T00:00:00Z'
+  background error:
+    covariance model: ensemble
+    date: *adate
+    localization:
+      localization method: BUMP
+      timeslots:
+      - *adate
+      localization variables: *incvars
+      bump:
+        prefix: Data/bump/mpas_parametersbump_loc
+        default_seed: 1
+        method: loc 
+        strategy: common  #specific_univariate
+        new_hdiag: 0
+        new_nicas: 0
+        load_nicas: 1
+        mask_type: none
+        draw_type: random_uniform
+        nc1: 1024
+        ntry: 3
+        nrep: 2
+        nc3: 10
+        dc: 1000000
+        nl0r: 1  #15
+        ne: 5
+        minim_algo: hooke
+        rvflt: 0
+        lsqrt: 1
+        resol: 4
+        nicas_interp: bilin
+        network: 0
+        mpicom: 2
+        advmode: 0
+        diag_interp: bilin
+        grid_output: 0
+        ##########
+        # Can comment 'bump' section above and uncomment the
+        # section below to create BUMP instead of re-using
+        # BUMP from parametersbump_loc. (Previously tested as
+        # separate 3denvar_bumploc_specified test.)
+        ##########
+        # prefix: mpas_bumploc_specified
+        # default_seed: 1
+        # method: loc
+        # strategy: common  #specific_univariate
+        # new_hdiag: 0
+        # new_nicas: 1
+        # load_nicas: 0
+        # mask_type: none
+        # draw_type: random_uniform
+        # nc1: 1024
+        # ntry: 3
+        # nrep: 2
+        # nc3: 10
+        # dc: 1000000
+        # nl0r: 1  #15
+        # ne: 5
+        # minim_algo: hooke
+        # rvflt: 0
+        # lsqrt: 1
+        # resol: 4
+        # nicas_interp: bilin
+        # network: 0
+        # mpicom: 2
+        # advmode: 0
+        # diag_interp: bilin
+        # grid_output: 0
+        # forced_radii: 1
+        # rh: 2000000
+        # rv: 1
+        # write_grids: 1
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
       date: *adate
-      localization:
-        localization: BUMP
-        timeslots:
-        - *adate
-        variables: *incvars
-        bump:
-          prefix: Data/bump/mpas_parametersbump_loc
-          default_seed: 1
-          method: loc 
-          strategy: common  #specific_univariate
-          new_hdiag: 0
-          new_nicas: 0
-          load_nicas: 1
-          mask_type: none
-          draw_type: random_uniform
-          nc1: 1024
-          ntry: 3
-          nrep: 2
-          nc3: 10
-          dc: 1000000
-          nl0r: 1  #15
-          ne: 5
-          minim_algo: hooke
-          rvflt: 0
-          lsqrt: 1
-          resol: 4
-          nicas_interp: bilin
-          network: 0
-          mpicom: 2
-          advmode: 0
-          diag_interp: bilin
-          grid_output: 0
-          ##########
-          # Can comment 'bump' section above and uncomment the
-          # section below to create BUMP instead of re-using
-          # BUMP from parametersbump_loc. (Previously tested as
-          # separate 3denvar_bumploc_specified test.)
-          ##########
-          # prefix: mpas_bumploc_specified
-          # default_seed: 1
-          # method: loc
-          # strategy: common  #specific_univariate
-          # new_hdiag: 0
-          # new_nicas: 1
-          # load_nicas: 0
-          # mask_type: none
-          # draw_type: random_uniform
-          # nc1: 1024
-          # ntry: 3
-          # nrep: 2
-          # nc3: 10
-          # dc: 1000000
-          # nl0r: 1  #15
-          # ne: 5
-          # minim_algo: hooke
-          # rvflt: 0
-          # lsqrt: 1
-          # resol: 4
-          # nicas_interp: bilin
-          # network: 0
-          # mpicom: 2
-          # advmode: 0
-          # diag_interp: bilin
-          # grid_output: 0
-          # forced_radii: 1
-          # rh: 2000000
-          # rv: 1
-          # write_grids: 1
-      members:
-      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-      variables: *incvars
-  Jo:
-    ObsTypes:
-    - ObsSpace:
-        name: Radiosonde
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
-        simulate:
-          variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
-        name: Satwind
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
-        simulate:
-          variables: [eastward_wind, northward_wind]
-      ObsOperator:
-        name: VertInterp
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Background Check
-        threshold: 3
-    - ObsSpace:
-        name: GnssroRef
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
-        simulate:
-          variables: [refractivity]
-      ObsOperator:
-        name: GnssroRef
-        ObsOptions:
-          use_compress: 0
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Domain Check
-        where:
-        - variable:
-            name: altitude@MetaData
-          minvalue: 0
-          maxvalue: 30000
-        - variable:
-            name: earth_radius_of_curvature@MetaData
-          minvalue: 6250000
-          maxvalue: 6450000
-        - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
-          minvalue: -200
-          maxvalue: 200
-      - Filter: Background Check
-        threshold: 3
-      - Filter: ROobserror
-        variable: refractivity
-        errmodel: NBAM
-    - ObsSpace:
-        name: GnssroBndROPP1D
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
-        simulate:
-          variables: [bending_angle]
-      ObsOperator:
-        name: GnssroBndROPP1D
-        ObsOptions:
-          use_compress: 0
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: Domain Check
-        where:
-        - variable:
-            name: altitude@MetaData
-          minvalue: 0
-          maxvalue: 50000
-        - variable:
-            name: earth_radius_of_curvature@MetaData
-          minvalue: 6250000
-          maxvalue: 6450000
-        - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
-          minvalue: -200
-          maxvalue: 200
-      - Filter: Background Check
-        threshold: 3
-      - Filter: ROobserror
-        variable: bending_angle
-        errmodel: ECMWF
-    - ObsSpace:
-        name: SfcPCorrected
-        ObsDataIn:
-          obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
-        ObsDataOut:
-          obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
-        simulate:
-          variables: [surface_pressure]
-      ObsOperator:
-        name: SfcPCorrected
-        da_psfc_scheme: UKMO   # or WRFDA
-      LinearObsOperator:
-        name: Identity
-      Covariance:
-        covariance: diagonal
-      ObsFilters:
-      - Filter: PreQC
-        maxvalue: 3
-        apply_at_iterations: 0
-      - Filter: Difference Check
-        reference: station_elevation@MetaData
-        value: surface_altitude@GeoVaLs
-        threshold: 500
-      - Filter: Background Check
-        threshold: 10
-minimizer:
-  algorithm: DRIPCG
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    variables: *incvars
+  observations:
+  - obs space:
+      name: Radiosonde
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Background Check
+      threshold: 3
+  - obs space:
+      name: Satwind
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
+      simulated variables: [eastward_wind, northward_wind]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Background Check
+      threshold: 3
+  - obs space:
+      name: GnssroRef
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
+      simulated variables: [refractivity]
+    obs operator:
+      name: GnssroRef
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 30000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      threshold: 3
+    - filter: ROobserror
+      variable: refractivity
+      errmodel: NBAM
+  - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 50000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      threshold: 3
+    - filter: ROobserror
+      variable: bending_angle
+      errmodel: ECMWF
+  - obs space:
+      name: SfcPCorrected
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
+      simulated variables: [surface_pressure]
+    obs operator:
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
+    linear obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Difference Check
+      reference: station_elevation@MetaData
+      value: surface_altitude@GeoVaLs
+      threshold: 500
+    - filter: Background Check
+      threshold: 10
 output:
   filename: "Data/states/mpas.3denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
-  iteration:
-  - resolution:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linearmodel:
-      varchange: Identity
-      version: MPASIdTLM
+    linear model:
+      name: MPASIdTLM
+      variable change: Identity
       tstep: PT3H
       trajectory:
         tstep: PT3H
-      variables: *incvars
+      tlm variables: *incvars
     ninner: '10'
-    gradient_norm_reduction: 1e-10
+    gradient norm reduction: 1e-10
     test: 'on'
     diagnostics:
       departures: depbg
-  - resolution:
+  - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linearmodel:
-      varchange: Identity
-      version: MPASIdTLM
+    linear model:
+      name: MPASIdTLM
+      variable change: Identity
       tstep: PT3H
       trajectory:
         tstep: PT3H
-      variables: *incvars
+      tlm variables: *incvars
     ninner: '10'
-    gradient_norm_reduction: 1e-10
+    gradient norm reduction: 1e-10
     test: 'on'
 final:
   diagnostics:

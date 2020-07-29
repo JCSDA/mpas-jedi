@@ -1,39 +1,53 @@
-Geometry:
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-GeoVaLsVariables:
-  variables:
-  - eastward_wind
-  - northward_wind
-  - air_temperature
-  - specific_humidity
-  - virtual_temperature
-  - mole_fraction_of_ozone_in_air
-  - humidity_mixing_ratio
-  - surface_pressure
-LinearGetValuesTest:
+state variables:
+- eastward_wind
+- northward_wind
+- air_temperature
+- specific_humidity
+- virtual_temperature
+- mole_fraction_of_ozone_in_air
+- humidity_mixing_ratio
+- surface_pressure
+linear getvalues test:
   toleranceLinearity: 1.0e-11
   numiterTL: 10
   firstmulTL: 1.0
   toleranceTL: 1.0e-11
   toleranceAD: 1.0e-11
-Locations:
-  window_begin: 2018-04-14T21:00:00Z
-  window_end: 2018-04-15T03:00:00Z
-  ObsSpace:
+locations:
+  window begin: 2018-04-14T21:00:00Z
+  window end: 2018-04-15T03:00:00Z
+  obs space:
     name: Random Locations
-    simulate:
-      variables: []
-    Generate:
-      Random:
+    simulated variables:
+    - eastward_wind
+    - northward_wind
+    - air_temperature
+    - specific_humidity
+    - virtual_temperature
+    - mole_fraction_of_ozone_in_air
+    - humidity_mixing_ratio
+    - surface_pressure
+    generate:
+      random:
         nobs: 10
         lat1: -90
         lat2: 90
         lon1: 0
         lon2: 360
         random_seed: 560921
-      obs_errors: []
-State:
-  variables:
+      obs errors:
+      - 0.1
+      - 0.3
+      - 0.2
+      - 0.4
+      - 0.5
+      - 0.8
+      - 1.1
+      - 0.1
+background:
+  state variables:
   - temperature
   - spechum
   - uReconstructZonal

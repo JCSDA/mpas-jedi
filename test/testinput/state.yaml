@@ -1,9 +1,9 @@
 nml_file: namelist.atmosphere_2018041500
-Geometry:
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-StateTest:
-  StateFile:
-    variables:
+state test:
+  statefile:
+    state variables:
     - temperature
     - spechum
     - uReconstructZonal
@@ -12,10 +12,10 @@ StateTest:
     filename: "./restart.2018-04-15_00.00.00.nc"
     date: &date '2018-04-15T00:00:00Z'
   date: *date
-  norm-file: '19735.265702001503'
-  StateGenerate:
+  norm file: '19735.265702001503'
+  stategenerate:
     analytic_init: dcmip-test-4-0
-    variables:
+    state variables:
     - temperature
     - spechum
     - uReconstructZonal
@@ -24,28 +24,27 @@ StateTest:
     date: *date
     mean: 8
     sinus: 2
-  InterpTest:
+  interptest:
     variables:
     - air_temperature
     - air_pressure
-  norm-gen: '20000.378266179847'
+  norm generated state: '20000.378266179847'
   tolerance:
   - 1.0e-08
-  interp_tolerance:
+  interpolation tolerance:
   - 0.0001
-  Locations:
-    window_begin: 2018-04-14T21:00:00Z
-    window_end: 2018-04-15T03:00:00Z
-    ObsSpace:
+  locations:
+    window begin: 2018-04-14T21:00:00Z
+    window end: 2018-04-15T03:00:00Z
+    obsspace:
       name: Random Locations
-      simulate:
-        variables: []
-      Generate:
-        Random:
+      simulated variables: []
+      generate:
+        random:
           nobs: 10
           lat1: -90
           lat2: 90
           lon1: 0
           lon2: 360
           random_seed: 560921
-        obs_errors: []
+        obs errors: []

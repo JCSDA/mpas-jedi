@@ -1,9 +1,9 @@
 ---
-resolution:
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
 nml_file: namelist.atmosphere_2018041500
-initial:
-  variables:
+initial condition:
+  state variables:
   - temperature
   - spechum
   - uReconstructZonal
@@ -11,11 +11,11 @@ initial:
   - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
-forecast_length: PT6H
+forecast length: PT6H
 model:
   name: MPAS
   tstep: PT30M
-  variables:
+  model variables:
   - temperature
   - spechum
   - uReconstructZonal

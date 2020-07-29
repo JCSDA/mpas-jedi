@@ -27,7 +27,7 @@ static oops::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)
   : keyModel_(0), tstep_(0), geom_(resol),
-    vars_(model)
+    vars_(model, "model variables")
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
   tstep_ = util::Duration(model.getString("tstep"));

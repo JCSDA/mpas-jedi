@@ -1,7 +1,7 @@
 nml_file: namelist.atmosphere_2018041500
-resolution:
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-variables: &vars
+input variables: &vars
 - temperature
 - spechum
 - uReconstructZonal
@@ -9,24 +9,28 @@ variables: &vars
 - surface_pressure
 date: &date '2018-04-15T00:00:00Z'
 background:
-  variables: *vars
+  state variables: *vars
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: *date
 ensemble:
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
+    state variables: *vars
   - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
+    state variables: *vars
   - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
+    state variables: *vars
   - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
+    state variables: *vars
   - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
-  variables: *vars
+    state variables: *vars
 covariance:
-  covariance: MPASstatic
+  covariance model: MPASstatic
   date: *date
   pseudoens_size: 10
 bump:

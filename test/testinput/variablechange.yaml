@@ -1,7 +1,7 @@
 ---
 nml_file: namelist.atmosphere_2018041500
 LinearVariableChangeTests:
-- varchange: StatsVariableChange
+- variable change: StatsVariableChange
   toleranceInverse: '1.0e-8'
   testinverse: '0'
   variables:
@@ -29,41 +29,37 @@ LinearVariableChangeTests:
     - 0
     vbal_rad: 3000.0e3
     verbosity: 'none'
-  inputVariables:
-    variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-  outputVariables:
-    variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-- varchange: Control2Model
+  input variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  output variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+- variable change: Control2Model
   toleranceInverse: '1.0e-8'
   testinverse: '0'
-  inputVariables:
-    variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-  outputVariables:
-    variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-Geometry:
+  input variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  output variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-State:
-  variables:
+background:
+  state variables:
   - temperature
   - spechum
   - uReconstructZonal
@@ -71,10 +67,9 @@ State:
   - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
-Variables:
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+tlm variables:
+- temperature
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
+- surface_pressure

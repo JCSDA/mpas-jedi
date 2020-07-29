@@ -1,16 +1,15 @@
 nml_file: namelist.atmosphere_2018041500
-Geometry:
+geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-Variables:
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-TestDate: '2018-04-15T00:00:00Z'
-State:
-  variables:
+inc variables:
+- temperature
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
+- surface_pressure
+test date: '2018-04-15T00:00:00Z'
+state:
+  state variables:
   - temperature
   - spechum
   - uReconstructZonal
@@ -18,25 +17,24 @@ State:
   - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
-_InterpTest:
+_interptest:
   tolerance: 1.0e-10
-  GeoVaLs:
+  geovals:
     variables:
     - air_temperature
     - air_pressure
-  Locations:
-    window_begin: 2018-04-14T21:00:00Z
-    window_end: 2018-04-15T03:00:00Z
-    ObsSpace:
+  locations:
+    window begin: 2018-04-14T21:00:00Z
+    window end: 2018-04-15T03:00:00Z
+    obsspace:
       name: Random Locations
-      simulate:
-        variables: []
-      Generate:
-        Random:
+      simulated variables: []
+      generate:
+        random:
           nobs: 10
           lat1: -90
           lat2: 90
           lon1: 0
           lon2: 360
           random_seed: 560921
-        obs_errors: []
+        obs errors: []
