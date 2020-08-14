@@ -5,7 +5,7 @@
 
 module mpas_increment_mod
 
-use atlas_module
+use atlas_module, only: atlas_geometry, atlas_field, atlas_fieldset, atlas_real
 use fckit_configuration_module, only: fckit_configuration
 
 !oops

@@ -7,7 +7,7 @@
 
 module mpas_increment_interface_mod
 
-use atlas_module
+use atlas_module, only: atlas_fieldset
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 use kinds, only: kind_real

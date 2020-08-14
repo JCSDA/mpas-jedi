@@ -61,7 +61,7 @@ end subroutine c_mpas_geo_delete
 ! --------------------------------------------------------------------------------------------------
 
 subroutine c_mpas_geo_set_atlas_lonlat(c_key_self, c_afieldset)  bind(c,name='mpas_geo_set_atlas_lonlat_f90')
-use atlas_module
+use atlas_module, only: atlas_fieldset
 use iso_c_binding
 use mpas_geom_mod
 implicit none
@@ -81,7 +81,7 @@ end subroutine c_mpas_geo_set_atlas_lonlat
 
 subroutine c_mpas_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace) &
  & bind(c,name='mpas_geo_set_atlas_functionspace_pointer_f90')
-use atlas_module
+use atlas_module, only: atlas_functionspace_pointcloud
 use iso_c_binding
 use mpas_geom_mod
 implicit none
@@ -91,7 +91,7 @@ type(mpas_geom),pointer :: self
 
 call mpas_geom_registry%get(c_key_self, self)
 
-self%afunctionspace = atlas_functionspace_nodecolumns(c_afunctionspace)
+self%afunctionspace = atlas_functionspace_pointcloud(c_afunctionspace)
 
 end subroutine c_mpas_geo_set_atlas_functionspace_pointer
 
@@ -99,7 +99,7 @@ end subroutine c_mpas_geo_set_atlas_functionspace_pointer
 
 subroutine c_mpas_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
  & bind(c,name='mpas_geo_fill_atlas_fieldset_f90')
-use atlas_module
+use atlas_module, only: atlas_fieldset
 use iso_c_binding
 use mpas_geom_mod
 implicit none

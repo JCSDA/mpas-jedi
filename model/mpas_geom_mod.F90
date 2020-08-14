@@ -5,7 +5,7 @@
 
 module mpas_geom_mod
 
-use atlas_module
+use atlas_module, only: atlas_functionspace, atlas_fieldset, atlas_field, atlas_real
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 
@@ -61,7 +61,6 @@ type :: mpas_geom
    type (domain_type), pointer :: domain => null() 
    type (core_type), pointer :: corelist => null()
    type(atlas_functionspace) :: afunctionspace
-   type(atlas_fieldset) :: afieldset
 end type mpas_geom
 
 #define LISTED_TYPE mpas_geom
