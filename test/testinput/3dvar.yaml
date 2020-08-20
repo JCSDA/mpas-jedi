@@ -5,20 +5,6 @@ cost function:
   window length: PT6H
   geometry:
     gridfname: "./restart.2018-04-15_00.00.00.nc"
-  model:
-    name: MPAS
-    tstep: PT6H
-    model variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-    - index_qc
-    - index_qi
-    - index_qr
-    - index_qs
-    - index_qg
   analysis variables: &incvars
   - temperature
   - spechum
@@ -30,7 +16,6 @@ cost function:
   - index_qr
   - index_qs
   - index_qg
-  variable change: Identity
   background:
     state variables: *incvars
     filename: "./restart.2018-04-15_00.00.00.nc"
@@ -220,13 +205,6 @@ variational:
   iterations:
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linear model:
-      name: MPASIdTLM
-      variable change: Identity
-      tstep: PT6H
-      trajectory:
-        tstep: PT6H
-      tlm variables: *incvars
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -234,13 +212,6 @@ variational:
       departures: depbg
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
-    linear model:
-      name: MPASIdTLM
-      variable change: Identity
-      tstep: PT6H
-      trajectory:
-        tstep: PT6H
-      tlm variables: *incvars
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
