@@ -431,7 +431,8 @@ subroutine write_field(self, f_conf, vdate)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
 !   write(*,*)'--> write_field: writing ',trim(filename)
-   call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, forceWriteNow=.true., ierr=ierr)
+   call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, &
+        forceWriteNow=.true., writeTime=dateTimeString, ierr=ierr)
    if ( ierr .ne. 0  ) then
      write(buf,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr
      call abor1_ftn(buf)
