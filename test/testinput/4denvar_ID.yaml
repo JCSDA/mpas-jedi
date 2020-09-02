@@ -206,7 +206,6 @@ cost function:
       threshold: 10
 output:
   filename: "Data/states/mpas.4denvar_ID.$Y-$M-$D_$h.$m.$s.nc"
-  SkipMPASTimeCheck: 1
 variational:
   minimizer:
     algorithm: DRIPCG

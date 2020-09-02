@@ -237,6 +237,8 @@ subroutine copy_field(self,rhs)
    implicit none
    class(mpas_field), intent(inout) :: self
    class(mpas_field), intent(in)    :: rhs
+   type (MPAS_Time_type)   :: rhs_time
+   integer :: ierr
 
 !   write(*,*)'--> copy_field: copy subFields Pool'
 
@@ -249,6 +251,9 @@ subroutine copy_field(self,rhs)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
    allocate(self % fldnames_ci(self % nf_ci))
    self % fldnames_ci(:) = rhs % fldnames_ci(:)
+
+   rhs_time = mpas_get_clock_time(rhs % clock, MPAS_NOW, ierr)
+   call mpas_set_clock_time(self % clock, rhs_time, MPAS_NOW)
 
    call copy_pool(rhs % subFields, self % subFields)
 
@@ -312,7 +317,7 @@ subroutine read_field(self, f_conf, vdate)
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
 !   write(*,*)'--> read_field: dateTimeString: ',trim(dateTimeString)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
-   !call mpas_set_clock_time(self % clock, local_time, MPAS_START_TIME)
+   call mpas_set_clock_time(self % clock, local_time, MPAS_NOW)
    call mpas_set_clock_time(self % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
@@ -383,7 +388,7 @@ subroutine write_field(self, f_conf, vdate)
    type(datetime),            intent(in)    :: vdate  !< DateTime
    character(len=:), allocatable :: str
    character(len=20)       :: validitydate
-   integer                 :: ierr, iskip
+   integer                 :: ierr
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
    character(len=1024)     :: buf
@@ -405,16 +410,7 @@ subroutine write_field(self, f_conf, vdate)
    call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
-   iskip = 0
-   if (f_conf%has("SkipMPASTimeCheck")) then
-     call f_conf%get_or_die("SkipMPASTimeCheck",iskip)
-   end if
-   if(iskip.ne.1) then
-     if ( fld_time .NE. write_time ) then
-        write(*,*)'--> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
-        call abor1_ftn('Different times MPAS_stream_mgr_write failed ')
-     end if
-   end if
+   ! write(*,*)'check time --> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
    ! Filename for writing out ensembles
    if (f_conf%has("member")) then
