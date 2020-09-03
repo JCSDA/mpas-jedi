@@ -72,8 +72,9 @@ subroutine add_incr(self,rhs)
 
    integer :: ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
-   type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_sh, fld2d_uRz, fld2d_uRm, &
-                                  fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc
+   type (field2DReal), pointer :: fld2d_t, fld2d_sh, fld2d_p, fld2d_pp, fld2d_pb, &
+                                  fld2d_uRz, fld2d_uRm, fld2d_u, fld2d_u_inc &
+                                  fld2d_th, fld2d_qv, fld2d_rho
    type (field1DReal), pointer :: fld1d_ps
 
    ! GD: I don''t see any difference than for self_add other than subFields can contain
@@ -135,6 +136,11 @@ subroutine add_incr(self,rhs)
       ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
 
       call mpas_deallocate_field( fld2d_u_inc )
+
+      ! Update pressure_p (pressure perturbation) , which is a diagnostic variable
+      call mpas_pool_get_field(self % subFields, 'pressure_p', fld2d_pp)
+      call mpas_pool_get_field(self % geom % domain % blocklist % allFields, 'pressure_base', fld2d_pb)
+      fld2d_pp % array(:,1:ngrid) = fld2d_p % array(:,1:ngrid) - fld2d_pb % array(:,1:ngrid)
    else
       call abor1_ftn("mpas_state:add_incr: dimension mismatch")
    endif
