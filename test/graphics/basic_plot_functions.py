@@ -251,6 +251,7 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
     plt.savefig(VarName+'_TS_2d.png',dpi=200,bbox_inches='tight')
     plt.close()
 
+maxLegendEntries = 8
 
 ###############################################################################
 lenWarnSer = 0
@@ -318,14 +319,14 @@ def plotSeries(fig, \
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColors[iline+lineAttribOffset]
+        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals, \
                 color=pColor, \
                 label=linesLabel[iline], \
-                ls=pu.plotLineStyles[iline+lineAttribOffset], \
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
-        nLines = nLines + 1
+        nLines += 1
         plotVals.append(lineVals)
 
         # Add shaded error regions if specified
@@ -421,15 +422,16 @@ def plotSeries(fig, \
         ax.set_ylabel(dataLabel,fontsize=4)
 
     #legend
-    if legend_inside:
-        #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
-                       framealpha=0.4,ncol=1)
-        lh.get_frame().set_linewidth(0.0)
-    elif ix==nx-1 or iplot==nplots-1:
-        #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False, \
-                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    if nLines <= maxLegendEntries:
+        if legend_inside:
+            #INSIDE AXES
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+                           framealpha=0.4,ncol=1)
+            lh.get_frame().set_linewidth(0.0)
+        elif ix==nx-1 or iplot==nplots-1:
+            #OUTSIDE AXES
+            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+                      bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     if invert_ind_axis:
         ax.invert_xaxis()
@@ -504,14 +506,14 @@ def plotProfile(fig, \
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColors[iline+lineAttribOffset]
+        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
         ax.plot(lineVals, yVals, \
                 color=pColor, \
                 label=linesLabel[iline], \
-                ls=pu.plotLineStyles[iline+lineAttribOffset], \
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
-        nLines = nLines + 1
+        nLines += 1
         plotVals.append(lineVals)
 
         # Add shaded error regions if specified
@@ -607,15 +609,16 @@ def plotProfile(fig, \
         ax.set_ylabel(indepLabel,fontsize=4)
 
     #legend
-    if legend_inside:
-        #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
-                       framealpha=0.4,ncol=1)
-        lh.get_frame().set_linewidth(0.0)
-    elif ix==nx-1 or iplot==nplots-1:
-        #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False, \
-                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    if nLines <= maxLegendEntries:
+        if legend_inside:
+            #INSIDE AXES
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+                           framealpha=0.4,ncol=1)
+            lh.get_frame().set_linewidth(0.0)
+        elif ix==nx-1 or iplot==nplots-1:
+            #OUTSIDE AXES
+            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+                      bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     if invert_ind_axis:
         ax.invert_yaxis()
@@ -703,14 +706,14 @@ def plotTimeSeries(fig, \
             maxX = max([xVals[-1], maxX])
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColors[iline+lineAttribOffset]
+        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals, \
                 label=linesLabel[iline], \
                 color=pColor, \
-                ls=pu.plotLineStyles[iline+lineAttribOffset], \
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
-        nLines = nLines + 1
+        nLines += 1
         plotVals.append(lineVals)
 
         # Add shaded CI regions if specified
@@ -807,16 +810,17 @@ def plotTimeSeries(fig, \
         ax.set_ylabel(ylabel,fontsize=4)
 
     #legend
-    if legend_inside:
-        #INSIDE AXES
-        nlcol = np.int(np.ceil(np.sqrt(nLines)))
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
-                       framealpha=0.4,ncol=nlcol)
-        lh.get_frame().set_linewidth(0.0)
-    elif ix==nx-1 or iplot==nplots-1:
-        #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False, \
-                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    if nLines <= maxLegendEntries:
+        if legend_inside:
+            #INSIDE AXES
+            nlcol = np.int(np.ceil(np.sqrt(nLines)))
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+                           framealpha=0.4,ncol=nlcol)
+            lh.get_frame().set_linewidth(0.0)
+        elif ix==nx-1 or iplot==nplots-1:
+            #OUTSIDE AXES
+            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+                      bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
 
     return
@@ -879,12 +883,9 @@ def plotTimeSeries2D(fig, \
     cmap = plt.get_cmap(cmapName)
     cmap.set_bad(color = 'k', alpha = 1.0)
     norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
-    if (type(xVals[0]) == float):
-        xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
-        cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm = norm)
-    else:
-        cp = ax.pcolormesh(xVals, yVals, contourVals, cmap=cmap, norm = norm)
-        ax.xaxis.set_tick_params(rotation=90)
+    xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
+    cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm = norm)
+
     #title
     ax.set_title(title,fontsize=5)
 
@@ -1020,9 +1021,9 @@ def plotPDF(fig,
         dx = xVals[1] - xVals[0]
 
         ax.plot(xVals, np.divide(countVals,np.sum(countVals)*dx),
-                color=pu.plotColors[ihist+lineAttribOffset],
+                color=pu.plotColor(len(countsVals),ihist+lineAttribOffset),
                 label=countsLabel[ihist],
-                ls=pu.plotLineStyles[ihist+lineAttribOffset],
+                ls=pu.plotLineStyle(len(countsVals),ihist+lineAttribOffset),
                 linewidth=0.5)
         nPDFs = nPDFs + 1
         plotVals.append(countVals)
@@ -1138,14 +1139,14 @@ def plotfitRampComposite(fig,
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColors[iline+lineAttribOffset]
+        pColor = pu.plotColor(4,iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals,
                 color=pColor,
                 label=linesLabel[iline],
-                ls=pu.plotLineStyles[iline+lineAttribOffset],
+                ls=pu.plotLineStyle(4,iline+lineAttribOffset),
                 linewidth=0.6)
-        nLines = nLines + 1
+        nLines += 1
         plotVals.append(lineVals)
 
     if nLines == 0:
@@ -1203,7 +1204,7 @@ def plotfitRampComposite(fig,
 
     plotVals.append(fitERR)
 
-    pColor = pu.plotColors[1+lineAttribOffset]
+    pColor = pu.plotColor(4,1+lineAttribOffset)
 
     ax.plot(fitX, fitERR,
             color=pColor,

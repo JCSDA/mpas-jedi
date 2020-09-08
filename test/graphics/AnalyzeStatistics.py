@@ -150,7 +150,7 @@ class AnalyzeStatisticsBase():
 
         #This only applies to the unbounded quantities (omb, oma, ana/bak for velocity)
         signDefinite = True
-        fcstatDiagDiffLabel = statName+'('+fcDiagName+'): [EXP - '+self.cntrlExpName+']',
+        fcstatDiagDiffLabel = statName+'('+fcDiagName+'): [EXP - '+self.cntrlExpName+']'
         if statName == 'Mean':
             if ('omb' in diagName or 'oma' in diagName):
                 signDefinite = False

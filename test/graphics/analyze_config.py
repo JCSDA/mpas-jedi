@@ -4,7 +4,6 @@ import datetime as dt
 import os
 import StatisticsDatabase as sdb
 
-
 ########################################################################
 '''
 This module is used to configure statistical analyses.  Those analyses
@@ -57,17 +56,19 @@ Job-submission examples:
 ## Configure the sdb.StatsDB objects
 dbConf = {}
 
-## How many forecast lengths are included?
-## one: sdb.singleFCLen
-## more: sdb.multiFCLen
-## - use these as templates
-dbConf['plotGroup'] = sdb.multiFCLen
+## hasFCLenDir whether directory structure includes forecast length
+## note: overridden when fcTDeltaLast > fcTDeltaFirst
+dbConf['hasFCLenDir'] = False
 
 ## expDirectory is the top-level directory that contains data
 #  from all experiments.  The environment variable, EXP_DIR, can be used
 #  to specify its value externally if desired.
 user = 'guerrett'
-dbConf['expDirectory'] = os.getenv('EXP_DIR','/glade/scratch/'+user+'/pandac/')
+dbConf['expDirectory'] = os.getenv('EXP_DIR','/glade/scratch/'+user+'/pandac')
+
+## cntrlExpIndex is the index of the control experiment (used for DiffCI analyses)
+#  in the expNames list
+dbConf['cntrlExpIndex'] = 0
 
 ## expLongNames is a list of directories within expDirectory that contains
 #  data from individual experiments
@@ -84,65 +85,49 @@ dbConf['expNames'] = []
 #  label for each experiment.  DAMethods is only important for file naming and is
 #  not used in the analyses
 dbConf['DAMethods'] = []
-
 ## Note: refer to the sdb.StatsDB class for more details
 
-## cntrlExpIndex is the index of the control experiment (used for DiffCI analyses)
-#  in the expNames list
-dbConf['cntrlExpIndex'] = 0
+## -------------------------------------------
+## Append to expLongNames, expNames, DAMethods
+## -------------------------------------------
+## EDA w/ baseline config
+#nEnsDAMembers = 20
+#for mem in list(range(1,nEnsDAMembers+1)):
+#  member = '{:03d}'.format(mem)
+#  dbConf['expLongNames'].append(
+#    'guerrett_eda_3denvar_conv_clramsua_NMEM20_120km/Verification/bg/mem'+member)
+#  dbConf['expNames'].append('EDA'+member)
+#  dbConf['DAMethods'].append('omm')
+#dbConf['cntrlExpIndex'] = nEnsDAMembers
 
-if dbConf['plotGroup'] == sdb.singleFCLen:
-# Warm start from PANDA-C baseline, April 2020 (Yali)
-    dbConf['expLongNames'].append('OLDCODE/120km_3denvar_conv_clramsua/VF/fc-6hr-MPAS_conv_clramsua_YW')
-    dbConf['expNames'].append('CNTRL')
-    dbConf['DAMethods'].append('omb-6hr-MPAS_conv_clramsua')
+## 3denvar baseline (conventional + clear-sky AMSUA)
+#dbConf['expLongNames'].append('guerrett_3denvar_conv_clramsua_NMEM1_120km/Verification/bg')
+dbConf['expLongNames'].append('guerrett_3denvar_conv_clramsua_NMEM1_120km/Verification/fc/mean')
+dbConf['expNames'].append('deterministic')
+dbConf['DAMethods'].append('omm')
 
-## Clear-sky ABI + PANDA-C baseline
-    dbConf['expLongNames'].append('OLDCODE/120km_3denvar_conv_clramsua_clrabi/VF/bg')
-    dbConf['expNames'].append('CLRABI')
-    dbConf['DAMethods'].append('omm')
+## eda-3denvar mean
+dbConf['expLongNames'].append('guerrett_eda_3denvar_conv_clramsua_NMEM20_120km/Verification/fc/mean')
+dbConf['expNames'].append('eda')
+dbConf['DAMethods'].append('omm')
 
-## All-sky ABI + PANDA-C baseline
-    dbConf['expLongNames'].append('OLDCODE/120km_3denvar_conv_clramsua_cldabi/VF/bg')
-    dbConf['expNames'].append('ALLABI')
-    dbConf['DAMethods'].append('omm')
+## eda-3denvar RTPP0.5 mean
+dbConf['expLongNames'].append('guerrett_eda_3denvar_conv_clramsua_NMEM20_RTPP0.5_120km/Verification/fc/mean')
+dbConf['expNames'].append('eda-RTPP0.5')
+dbConf['DAMethods'].append('omm')
 
-    #First and Last CYCLE dates
-    dbConf['firstCycleDTime'] = dt.datetime(2018,4,15,0,0,0)
-    dbConf['lastCycleDTime'] = dt.datetime(2018,5,14,12,0,0)
-    dbConf['cyTimeInc'] = dt.timedelta(hours=6)
+## -------------------------------
+## Cycle times and forecast length
+## -------------------------------
+#First and Last CYCLE dates and increment
+dbConf['firstCycleDTime'] = dt.datetime(2018,4,15,0,0,0)
+dbConf['lastCycleDTime'] = dt.datetime(2018,4,18,0,0,0)
+dbConf['cyTimeInc'] = dt.timedelta(hours=12)
 
-    #First and Last FORECAST durations
-    dbConf['fcTDeltaFirst'] = dt.timedelta(days=0)
-    dbConf['fcTDeltaLast'] = dt.timedelta(days=0)
-    dbConf['fcTimeInc'] = dt.timedelta(hours=24)
-
-if dbConf['plotGroup'] == sdb.multiFCLen:
-## PANDA-C baseline, April 2020 (Yali)
-    dbConf['expLongNames'].append('OLDCODE/120km_omf_conv_clramsua/VF/fc-ANA_conv_clramsua_YW')
-    dbConf['expNames'].append('CNTRL')
-    dbConf['DAMethods'].append('omm')
-
-## Clear-sky ABI + PANDA-C baseline
-    dbConf['expLongNames'].append('OLDCODE/120km_3denvar_conv_clramsua_clrabi/VF/fc')
-    dbConf['expNames'].append('CLRABI')
-    dbConf['DAMethods'].append('omm')
-
-## All-sky ABI + PANDA-C baseline
-    dbConf['expLongNames'].append('OLDCODE/120km_3denvar_conv_clramsua_cldabi/VF/fc')
-    dbConf['expNames'].append('ALLABI')
-    dbConf['DAMethods'].append('omm')
-
-    #First and Last CYCLE dates
-    dbConf['firstCycleDTime'] = dt.datetime(2018,4,15,0,0,0)
-    dbConf['lastCycleDTime'] = dt.datetime(2018,5,11,12,0,0)
-    dbConf['cyTimeInc'] = dt.timedelta(hours=12)
-
-    #First and Last FORECAST durations
-    dbConf['fcTDeltaFirst'] = dt.timedelta(hours=0)
-    dbConf['fcTDeltaLast'] = dt.timedelta(days=3, hours=0)
-    dbConf['fcTimeInc'] = dt.timedelta(hours=6)
-
+#First and Last FORECAST durations and increment
+dbConf['fcTDeltaFirst'] = dt.timedelta(days=0)
+dbConf['fcTDeltaLast'] = dt.timedelta(days=0,hours=6)
+dbConf['fcTimeInc'] = dt.timedelta(hours=6)
 
 ## fcDirFormats is used to declare the directory string format
 #  for forecast lengths. Can include any combination of substrings
@@ -159,6 +144,15 @@ if dbConf['plotGroup'] == sdb.multiFCLen:
 commonFCDirFormat = "%hhr"
 dbConf['fcDirFormats'] = [commonFCDirFormat]*len(dbConf['expNames'])
 
+## statsFileSubDirs is the subdirectory within the date directory(ies)
+#  that contains the statstics files for constructing the StatsDB object
+# examples:
+#TODO: make StatsDB search for the correct subdirectory for each experiment
+# 'diagnostic_stats'
+# 'diagnostic_stats/obs'
+# 'diagnostic_stats/model'
+commonStatsFileSubDir = 'diagnostic_stats/obs'
+dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 
 ########################################################################
 ## Configure the analysisTypes to apply to the statistics
@@ -174,8 +168,8 @@ if dbConf['fcTDeltaFirst'] == dbConf['fcTDeltaLast']:
     analysisTypes.append('CYAxisExpLines')
 
     ## potentially useful
-    # analysisTypes.append('CYAxisBinValLines')
-    # analysisTypes.append('CYandBinValAxes2D')
+    analysisTypes.append('CYAxisBinValLines')
+    analysisTypes.append('CYandBinValAxes2D')
 
 else:
     ## gross error analysisTypes for multiple forecast lengths
@@ -185,9 +179,10 @@ else:
     if len(dbConf['expNames']) > 1: analysisTypes.append('FCAxisExpLinesDiffCI')
 
     ## potentially useful
-    # analysisTypes.append('FCandBinValAxes2D')
-    # analysisTypes.append('CYAxisExpLines')
-    # analysisTypes.append('CYAxisFCLines')
+    analysisTypes.append('CYandBinValAxes2D')
+    analysisTypes.append('FCandBinValAxes2D')
+    analysisTypes.append('CYAxisExpLines')
+    analysisTypes.append('CYAxisFCLines')
 
 ## used to dissect gross errors in more detail
 analysisTypes.append('BinValAxisProfile')

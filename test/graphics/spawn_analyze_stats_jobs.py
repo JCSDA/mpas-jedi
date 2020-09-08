@@ -43,6 +43,13 @@ end
 # make plots:
 # ===========
 python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE >& an.log
+grep 'Finished main() successfully' an.log
+if ( $status != 0 ) then
+  touch ./FAIL
+  exit 1
+endif
+
+rm ./*.py
 
 date
 
@@ -65,10 +72,10 @@ def main():
 
     # Parse command line
     ap = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument('-d', '--diagSpace',
+    ap.add_argument('-d', '--diagSpaces',
                     help=textwrap.dedent(
                        '''
-                       Select DiagSpaces with non-conservative matching
+                       Comma-separated list of DiagSpaces with non-conservative matching
                           e.g., amsua selects amsua_metop-a, amsua_n19, etc.
                           default behavior is to select all DiagSpaces in config
                           Current options:
@@ -85,14 +92,17 @@ def main():
     MyArgs = ap.parse_args()
 
     ## process DiagSpace command-line selection
-    selectDiagSpace = None
-    if MyArgs.diagSpace:
-        selectDiagSpace = MyArgs.diagSpace
+    selectDiagSpaces = None
+    if MyArgs.diagSpaces:
+        selectDiagSpaces = str(MyArgs.diagSpaces).split(',')
 
     ## remove DiagSpaces that are not selected
     for key in sorted(DiagSpaceConfig):
-        if selectDiagSpace is not None and selectDiagSpace not in key:
-            del DiagSpaceConfig[key]
+        if selectDiagSpaces is not None:
+            match = False
+            for space in selectDiagSpaces:
+                if space in key: match = True
+            if not match: del DiagSpaceConfig[key]
 
     ## set python source directory
     if MyArgs.scriptdir:

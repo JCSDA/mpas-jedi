@@ -128,12 +128,53 @@ class PBSProCheyenne(JobScriptBase):
         self.command = 'qsub '
 
 
+class SLURMCasper(JobScriptBase):
+    '''
+    SLURM job script on Casper
+    unique config elements compared to base class:
+        account - casper account for charging
+        partition - name of casper partition (see pavail)
+        memory  - amount of memory requested per node (see maxmemory)
+
+    NOTE: Casper has a maximum of 36 processors available per node
+    '''
+    pavail = ['dav']
+    maxnppernode = 36
+    maxmemory = 1100
+    def __init__(self, conf):
+        # Initialize derived config settings
+        super().__init__(conf)
+
+        # Initialize config settings that are specific to SLURMCasper
+        self.account = conf.get('account','NMMM0015')
+        self.partition = conf.get('partition','dav')
+        assert self.partition in self.pavail, ("ERROR: SLURMCasper requires partition to be any of ",self.pavail)
+        self.memory = conf.get('memory',300)
+        assert self.memory <= self.maxmemory, ("ERROR: SLURMCasper requires memory (in GB) to be <= ", self.maxmemory)
+
+        assert self.nppernode <= self.maxnppernode, ("ERROR: SLURMCasper requires nppernode <= ", self.maxnppernode)
+
+        self.header = [
+            '#SBATCH --job-name='+self.name,
+            '#SBATCH --account='+self.account,
+            '#SBATCH --ntasks='+str(self.nnode),
+            '#SBATCH --cpus-per-task='+str(self.nppernode),
+            '#SBATCH --mem='+str(self.memory)+'G',
+            '#SBATCH --time='+self.walltime,
+            '#SBATCH --partition='+self.partition,
+            '#SBATCH --output='+self.olog,
+        ]
+
+        self.command = 'sbatch '
+
 JobScriptDict = {
     ## cheyenne
     # login nodes
     'cheyenne': PBSProCheyenne,
     # cron jobs
     'chadmin': PBSProCheyenne,
+    ## casper
+    'casper': SLURMCasper
 }
 
 

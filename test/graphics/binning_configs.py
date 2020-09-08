@@ -191,13 +191,10 @@ badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
 #     filters: list of filters that will blacklist locations for each method
 #     for each filter:
 #         where: logical function that determines locations that are blacklisted
-#         variable (optional): variable that is used to initialize the IdObsFunction class
-#         function (optional): the where test is applied to function.values. defaults to None
+#         variable: string or class that is used to initialize the IdObsFunction or ObsFunction class
 #         bounds: numerical value(s) used in the where test (scalar or Iterable same length as values). At least one filter must have len(bounds)==len(values).
 #         except_diags (optional): list of diagnostics for which a particular filter does not apply
 #     values (string): list of values associated with each bin
-#
-# Note: either variable or function must be provided to each filter
 #
 #TODO: classify each binmethod as 1D, 2D, etc. to indicate which types of figures apply to it
 
@@ -592,26 +589,26 @@ binVarConfigs = {
 
 # Add bu.identityBinMethod for identity ranged binning variables
 identityRangeBinVars = {
-    vu.obsVarAlt: ['variable', vu.altMeta, []],
-    vu.obsVarACI: ['variable', bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
-    vu.obsVarCldFrac: ['variable', vu.cldfracMeta, ['obs','bak','ana','SCI']],
-    vu.obsVarGlint: ['variable', bu.GlintAngle, ['obs','bak','ana','SCI']],
-    vu.obsVarLandFrac: ['variable', vu.landfracGeo, ['obs','bak','ana','SCI']],
-    vu.obsVarLat: ['variable', vu.latMeta, ['obs','bak','ana','SCI']],
-    vu.obsVarLT: ['variable', bu.LocalHour, ['obs','bak','ana','SCI']],
-    vu.obsVarNormErr: ['variable', bu.NormalizedError, []],
-    vu.obsVarPrs: ['variable', vu.prsMeta, []],
-    vu.obsVarSenZen: ['variable', vu.senzenMeta, ['obs','bak','ana','SCI']],
+    vu.obsVarAlt: [vu.altMeta, []],
+    vu.obsVarACI: [bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
+    vu.obsVarCldFrac: [vu.cldfracMeta, ['obs','bak','ana','SCI']],
+    vu.obsVarGlint: [bu.GlintAngle, ['obs','bak','ana','SCI']],
+    vu.obsVarLandFrac: [vu.landfracGeo, ['obs','bak','ana','SCI']],
+    vu.obsVarLat: [vu.latMeta, ['obs','bak','ana','SCI']],
+    vu.obsVarLT: [bu.LocalHour, ['obs','bak','ana','SCI']],
+    vu.obsVarNormErr: [bu.NormalizedError, []],
+    vu.obsVarPrs: [vu.prsMeta, []],
+    vu.obsVarSenZen: [vu.senzenMeta, ['obs','bak','ana','SCI']],
 }
 for binVar, rangeVar in identityRangeBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
     binVarConfigs[binVar][bu.identityBinMethod] = {
         'filters': [
             {'where': bu.lessBound,
-             rangeVar[0]: rangeVar[1],
+             'variable': rangeVar[0],
              'bounds': binLims[binVar]['minBounds']},
             {'where': bu.greatEqualBound,
-             rangeVar[0]: rangeVar[1],
+             'variable': rangeVar[0],
              'bounds': binLims[binVar]['maxBounds']},
             {'where': bu.notEqualBound,
              'variable': vu.selfQCValue,
@@ -619,13 +616,13 @@ for binVar, rangeVar in identityRangeBinVars.items():
              'except_diags': du.nonQCedDiags},
         ],
         'values': binLims[binVar]['values'],
-        'override_exclusiveDiags': rangeVar[2],
+        'override_exclusiveDiags': rangeVar[1],
     }
 
 # Add named latitude-band-specific bins for applicable ranged variables
 latBinVars = {
-    vu.obsVarAlt: ['variable', vu.altMeta, []],
-    vu.obsVarPrs: ['variable', vu.prsMeta, []],
+    vu.obsVarAlt: [vu.altMeta, []],
+    vu.obsVarPrs: [vu.prsMeta, []],
 }
 for binVar, rangeVar in latBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
@@ -633,10 +630,10 @@ for binVar, rangeVar in latBinVars.items():
         binVarConfigs[binVar][latBand] = {
             'filters': [
                 {'where': bu.lessBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['minBounds']},
                 {'where': bu.greatEqualBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['maxBounds']},
                 {'where': bu.lessBound,
                  'variable': vu.latMeta,
@@ -650,13 +647,13 @@ for binVar, rangeVar in latBinVars.items():
                  'except_diags': du.nonQCedDiags},
             ],
             'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[2],
+            'override_exclusiveDiags': rangeVar[1],
         }
 
 # Add named latitude-band-specific bins for clear-sky ranged variables
 clrlatBinVars = {
-#    vu.obsVarGlint: ['variable', bu.GlintAngle, []],
-    vu.obsVarSenZen: ['variable', vu.senzenMeta, []],
+#    vu.obsVarGlint: [bu.GlintAngle, []],
+    vu.obsVarSenZen: [vu.senzenMeta, []],
 }
 clrband = namedCldFracBands['values'].index(bu.clrskyMethod)
 clrlatMethods = {}
@@ -667,10 +664,10 @@ for binVar, rangeVar in clrlatBinVars.items():
         binVarConfigs[binVar][clrlatMethods[latBand]] = {
             'filters': [
                 {'where': bu.lessBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['minBounds']},
                 {'where': bu.greatEqualBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['maxBounds']},
                 {'where': bu.lessBound,
                  'variable': vu.latMeta,
@@ -690,17 +687,17 @@ for binVar, rangeVar in clrlatBinVars.items():
                  'except_diags': du.nonQCedDiags},
             ],
             'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[2],
+            'override_exclusiveDiags': rangeVar[1],
         }
 
 # Add named cloud fraction-band-specific bins for applicable ranged variables
 cldfracBinVars = {
-    vu.obsVarACI: ['variable', bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
-    vu.obsVarGlint: ['variable', bu.GlintAngle, ['obs','bak','ana','SCI']],
-    vu.obsVarLandFrac: ['variable', vu.landfracGeo, ['obs','bak','ana','SCI']],
-    vu.obsVarLat: ['variable', vu.latMeta, ['obs','bak','ana','SCI']],
-    vu.obsVarLT: ['variable', bu.LocalHour, ['obs','bak','ana','SCI']],
-    vu.obsVarSenZen: ['variable', vu.senzenMeta, ['obs','bak','ana','SCI']],
+    vu.obsVarACI: [bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
+    vu.obsVarGlint: [bu.GlintAngle, ['obs','bak','ana','SCI']],
+    vu.obsVarLandFrac: [vu.landfracGeo, ['obs','bak','ana','SCI']],
+    vu.obsVarLat: [vu.latMeta, ['obs','bak','ana','SCI']],
+    vu.obsVarLT: [bu.LocalHour, ['obs','bak','ana','SCI']],
+    vu.obsVarSenZen: [vu.senzenMeta, ['obs','bak','ana','SCI']],
 }
 for binVar, rangeVar in cldfracBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
@@ -708,10 +705,10 @@ for binVar, rangeVar in cldfracBinVars.items():
         binVarConfigs[binVar][cldBand] = {
             'filters': [
                 {'where': bu.lessBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['minBounds']},
                 {'where': bu.greatEqualBound,
-                 rangeVar[0]: rangeVar[1],
+                 'variable': rangeVar[0],
                  'bounds': binLims[binVar]['maxBounds']},
                 {'where': bu.lessBound,
                  'variable': vu.cldfracMeta,
@@ -725,5 +722,36 @@ for binVar, rangeVar in cldfracBinVars.items():
                  'except_diags': du.nonQCedDiags},
             ],
             'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[2],
+            'override_exclusiveDiags': rangeVar[1],
+    }
+
+# Add named land fraction-band-specific bins for applicable ranged variables
+landfracBinVars = {
+    vu.obsVarSCI: [bu.SCIOkamoto, ['obs','bak','ana','SCI']],
+
+}
+for binVar, rangeVar in landfracBinVars.items():
+    if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
+    for iband, surfBand in enumerate(namedLandFracBands['values']):
+        binVarConfigs[binVar][surfBand] = {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': rangeVar[0],
+                 'bounds': binLims[binVar]['minBounds']},
+                {'where': bu.greatEqualBound,
+                 'variable': rangeVar[0],
+                 'bounds': binLims[binVar]['maxBounds']},
+                {'where': bu.lessBound,
+                 'variable': vu.landfracGeo,
+                 'bounds': namedLandFracBands['minBounds'][iband]},
+                {'where': bu.greatBound,
+                 'variable': vu.landfracGeo,
+                 'bounds': namedLandFracBands['maxBounds'][iband]},
+                {'where': bu.notEqualBound,
+                 'variable': vu.selfQCValue,
+                 'bounds': goodFlag,
+                 'except_diags': du.nonQCedDiags},
+            ],
+            'values': binLims[binVar]['values'],
+            'override_exclusiveDiags': rangeVar[1],
     }

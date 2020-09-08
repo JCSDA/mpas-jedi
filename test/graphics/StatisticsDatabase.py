@@ -17,9 +17,6 @@ import stat_utils as su
 from typing import List
 import var_utils as vu
 
-singleFCLen = "singleFCLen"
-multiFCLen = "multiFCLen"
-
 class DiagSpaceDict():
     def __init__(self, nrows):
         self.nrows = nrows
@@ -91,17 +88,18 @@ class StatsDB:
 #        self.conf = conf
     ## Examples of directory structures from which this container can extract statistics.
     ## The stats*.nc files are produced by writediagstats_obsspace.py during cycling experiments.
-    # multiFCLen ASCII statistics file example for cycling run (on cheyenne):
+    # ASCII statistics file examples for cycling runs (on cheyenne):
+    # (hasFCLenDir == True or self.fcTDeltas[-1] > self.fcTDeltas[0]):
     #statFile = '/glade/scratch/user/pandac/FC/3dvar/2018041500/{fcDirFormats}/diagnostic_stats/stats_omb_amsua_n19.nc'
-    #            |                         |        |          |              |                      |   |         |
-    #                       ^                   ^        ^             ^                   ^           ^        ^
-    #                  expDirectory       expLongName  cyDTime      fcTDelta       statsFilePrefix DAMethod DiagSpaceName
+    #            |                         |        |          |              |                |     |   |         |
+    #                       ^                   ^      ^         ^              ^                 ^    ^        ^
+    #                expDirectory       expLongName cyDTime  fcTDelta statsFileSubDir statsFilePrefix DAMethod DiagSpaceName
 
-    # singleFCLen ASCII statistics file example for cycling run (on cheyenne):
+    # (hasFCLenDir == False and self.fcTDeltas[-1] == self.fcTDeltas[0]):
     #statFile = '/glade/scratch/user/pandac/DA/3dvar/2018041500/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.nc'
-    #            |                         |        |          |                      |             |         |
-    #                       ^                   ^        ^                ^                  ^           ^
-    #                  expDirectory       expLongName  cyDTime      statsFilePrefix     DAMethod   DiagSpaceName
+    #            |                         |        |          |                |     |             |         |
+    #                       ^                   ^        ^       ^                 ^              ^        ^
+    #                  expDirectory       expLongName  cyDTime statsFileSubDir statsFilePrefix  DAMethod  DiagSpaceName
         self.available = False
 
         # selected DiagSpace (ObsSpace name or ModelSpace name)
@@ -133,10 +131,7 @@ class StatsDB:
         self.DAMethods = conf['DAMethods']
         self.diagNames = conf['diagNames']
 
-        # group of selected plots (single/multi)
-        self.plotGroup = conf['plotGroup']
-
-        self.statsFilePrefix = 'diagnostic_stats/'+su.statsFilePrefix
+        self.statsFileSubDirs = conf['statsFileSubDirs']
 
         fcDirFormats = conf['fcDirFormats']
 
@@ -152,6 +147,10 @@ class StatsDB:
 
             self.fcTDeltas.append(dumTimeDelta)
             dumTimeDelta = dumTimeDelta + fcTimeInc
+
+        # whether directory structure includes forecast length
+        self.hasFCLenDir = conf['hasFCLenDir']
+        if self.fcTDeltas[-1] > self.fcTDeltas[0]: self.hasFCLenDir = True
 
         self.cyDTimes_dir = []
         self.cyDTimes = []
@@ -174,13 +173,14 @@ class StatsDB:
         # TODO: add the capability to calculate the stats when files are missing/incomplete
         #       and then output to correct file name
         expsDiagSpaceNames = []
-        for expName, expLongName in list(zip(self.expNames, self.expLongNames)):
+        for expName, expLongName, statsFileSubDir, DAMethod in list(zip(
+            self.expNames, self.expLongNames, self.statsFileSubDirs, self.DAMethods)):
             dateDir = self.cyDTimes_dir[0]
-            if self.plotGroup == multiFCLen or self.fcTDeltas[-1] > self.fcTDeltas[0]:
+            if self.hasFCLenDir:
                 dateDir = dateDir+'/'+self.fcTDeltas_dir[expName][0]
 
-            FILEPREFIX0 = self.expDirectory + expLongName +'/'+dateDir+'/' \
-                          +self.statsFilePrefix+self.DAMethods[0]+"_"
+            FILEPREFIX0 = self.expDirectory+'/'+expLongName +'/'+dateDir+'/' \
+                          +statsFileSubDir+'/'+su.statsFilePrefix+DAMethod+"_"
 
             DiagSpaceNames = []
             for File in glob.glob(FILEPREFIX0+'*.nc'):
@@ -225,17 +225,18 @@ class StatsDB:
             self.logger.info("  Working on cycle time "+str(cyDTime))
             missingFiles = []
 
-            for iexp, expName in enumerate(self.expNames):
-                expPrefix = self.expDirectory + self.expLongNames[iexp] +'/'
-                ncStatsFile = self.statsFilePrefix+self.DAMethods[iexp]+'_'+self.DiagSpaceName+'.nc'
+            for expName, expLongName, statsFileSubDir, DAMethod in list(zip(
+                self.expNames, self.expLongNames, self.statsFileSubDirs, self.DAMethods)):
+                expPrefix = self.expDirectory+'/'+expLongName
+                ncStatsFile = statsFileSubDir+'/'+su.statsFilePrefix+DAMethod+'_'+self.DiagSpaceName+'.nc'
                 for fcTDelta, fcTDelta_dir in list(zip(
                     self.fcTDeltas, self.fcTDeltas_dir[expName])):
 
                     #Read all stats/attributes from NC file for ExpName, fcTDelta, cyDTime
                     dateDir = cyDTime_dir
-                    if self.plotGroup == multiFCLen or self.fcTDeltas[-1] > self.fcTDeltas[0]:
+                    if self.hasFCLenDir:
                         dateDir = dateDir+'/'+fcTDelta_dir
-                    cyStatsFile = expPrefix+dateDir+'/'+ncStatsFile
+                    cyStatsFile = expPrefix+'/'+dateDir+'/'+ncStatsFile
 
                     if os.path.exists(cyStatsFile):
                         dsDictParts.append(workers.apply_async(DiagSpaceDict.read,

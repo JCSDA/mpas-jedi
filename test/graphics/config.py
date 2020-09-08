@@ -103,6 +103,12 @@ for var in bcs.cldfracBinVars.keys():
         geoirBinVars[var] += [bu.clrskyMethod]
         geoirBinVars[var] += [bu.cldskyMethod]
 
+# Binning variables with land category methods
+if binBYLandFrac:
+    for var in bcs.landfracBinVars.keys():
+        for surfBand in bcs.namedLandFracBands['values']:
+            geoirBinVars[var] += [surfBand]
+
 # symmetric cloud impact (expensive)
 geoirSCIMethods = [
     bu.OkamotoMethod,
@@ -227,7 +233,6 @@ DiagSpaceConfig = {
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
-        'one_pe_per_figure': True
     },
     'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
@@ -237,7 +242,24 @@ DiagSpaceConfig = {
         'diagNames': defaultDiags,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
-        'one_pe_per_figure': True
+    },
+    'abi-clr_g16': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': geoirBinVars,
+        'diagNames': defaultDiags,
+#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'channels': [8,9,10,11,13,14,15,16],
+    },
+    'ahi-clr_himawari8': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': ahiGrp,
+        'binVarConfigs': geoirBinVars,
+        'diagNames': defaultDiags,
+#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'channels': [8,9,10,11,13,14,15,16],
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,

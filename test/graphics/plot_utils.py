@@ -14,15 +14,32 @@ import pandas as pd
 # figure/plotting definitions
 #============================
 
+defaultPColors = ['k','b','g','r','c','m',
+                  'k','b','g','r','c','m']
+
+defaultPLineStyles = ['-', '-', '-', '-', '-', '-',
+                      '--','--','--','--','--','--']
+
+def plotColor(nLines = 1, index = 0, nEnsDAMembers = 20):
+  if nLines >= nEnsDAMembers:
+    pColors = ['0.45']*nEnsDAMembers
+    for i in list(range(0, nLines - nEnsDAMembers + 1)):
+      pColors += defaultPColors[i]
+    return pColors[index]
+  else:
+    return defaultPColors[index]
+
+def plotLineStyle(nLines = 1, index = 0, nEnsDAMembers = 20):
+  if nLines >= nEnsDAMembers:
+    pLineStyles = ['--']*nEnsDAMembers
+    for i in list(range(0, nLines - nEnsDAMembers + 1)):
+      pLineStyles += defaultPLineStyles[i]
+    return pLineStyles[index]
+  else:
+    return defaultPLineStyles[index]
+
 plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*',
              'k--+','b--+','g--+','r--+','c--+','m--+']
-
-plotLineStyles = ['-', '-', '-', '-', '-', '-',
-                  '--','--','--','--','--','--']
-
-plotColors = ['k','b','g','r','c','m',
-              'k','b','g','r','c','m']
-
 plotMarkers = ['*','*','*','*','*','*',
                '+','+','+','+','+','+']
 
