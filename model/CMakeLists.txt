@@ -8,6 +8,8 @@ IncrementMPAS.cc
 IncrementMPAS.h
 IncrementMPASFortran.h
 MPASTraits.h
+LinVarChaC2AMPAS.cc
+LinVarChaC2AMPAS.h
 LocalizationMatrixMPAS.cc
 LocalizationMatrixMPAS.h
 ModelBiasCovarianceMPAS.h
@@ -34,6 +36,8 @@ mpas_geom_interface.F90
 mpas_geom_mod.F90
 mpas_increment_interface_mod.F90
 mpas_increment_mod.F90
+mpas_linvarcha_c2a_interface.F90
+mpas_linvarcha_c2a_mod.F90
 mpas_model_interface.F90
 mpas_model_mod.F90
 mpas_run_mod.F90

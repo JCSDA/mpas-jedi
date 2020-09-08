@@ -6,6 +6,7 @@
 module mpas_field_utils_mod
 
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only : fckit_log
 
 !oops
 use datetime_mod
@@ -103,6 +104,9 @@ public :: mpas_field, mpas_field_registry, &
       [ character(len=MAXVARLEN) :: &
       "re_cloud", "re_ice  ", "re_snow " ]
 
+   integer, parameter    :: max_string=8000
+   character(max_string) :: err_msg
+
 #define LISTED_TYPE mpas_field
 
 !> Linked list interface - defines registry_t type
@@ -144,8 +148,8 @@ subroutine create_field(self, geom, vars, vars_ci)
        self % fldnames_ci(ivar) = trim(vars_ci % variable(ivar))
     end do
 
-!    write(*,*)'--> create_field: self % nf =',self % nf
-!    write(*,*)'--> create_field: allocate ::',self % fldnames(:)
+    write(err_msg,*) "DEBUG: create_field: self % fldnames(:) =",self % fldnames(:)
+    call fckit_log%debug(trim(err_msg))
  
     ! link geom
     if (associated(geom)) then
@@ -328,6 +332,16 @@ subroutine read_field(self, f_conf, vdate)
       call abor1_ftn(buf)
       write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
    end if
+
+   !==TODO: Speific part when reading parameterEst. for BUMP.	
+   !      : They write/read a list of variables directly.	
+   if (f_conf%has("no_transf")) then
+      call f_conf%get_or_die("no_transf",ierr)
+      if(ierr .eq. 1) then
+         call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
+        return
+      endif
+   endif
 
    !(1) diagnose pressure
    call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)

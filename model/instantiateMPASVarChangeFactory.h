@@ -8,16 +8,22 @@
 #ifndef MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
 #define MODEL_INSTANTIATEMPASVARCHANGEFACTORY_H_
 
-#include "model/VarChangeMPAS.h"
 #include "model/MPASTraits.h"
+#include "model/VarChangeMPAS.h"
+#include "model/LinVarChaC2AMPAS.h"
+
+#include "oops/interface/VariableChange.h"
 #include "oops/interface/LinearVariableChange.h"
 
 namespace mpas {
 
 void instantiateMPASVarChangeFactory() {
   static oops::LinearVariableChangeMaker<mpas::MPASTraits,
-         oops::LinearVariableChange<mpas::MPASTraits, mpas::VarChangeMPAS> >
-         makerVarChangeMPAS_("Control2Model");
+         oops::LinearVariableChange<mpas::MPASTraits, mpas::LinVarChaC2AMPAS> >
+         makerVarChangeMPAS_("Control2Analysis");
+//  static oops::VariableChangeMaker<mpas::MPASTraits,
+//         oops::VariableChange<mpas::MPASTraits, mpas::VarChangeMPAS> >
+//         makerVarChangeMPAS_("Analysis2Model");
 }
 
 }  // namespace mpas

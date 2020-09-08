@@ -9,6 +9,8 @@
  */
 
 #include "MPASTraits.h"
+#include "instantiateMPASVarChangeFactory.h"
+#include "oops/generic/instantiateVariableChangeFactory.h"
 #include "oops/runs/Dirac.h"
 #include "saber/oops/instantiateCovarFactory.h"
 #include "saber/oops/instantiateLocalizationFactory.h"
@@ -16,6 +18,7 @@
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);
+  mpas::instantiateMPASVarChangeFactory();
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   oops::Dirac<mpas::MPASTraits> dir;

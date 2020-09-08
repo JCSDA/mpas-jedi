@@ -64,7 +64,8 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & config)
-  : geom_(new GeometryMPAS(resol)), vars_(config, "state variables"), time_(util::DateTime())
+  : geom_(new GeometryMPAS(resol)), vars_(config, "state variables"),
+    time_(util::DateTime())
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
 

@@ -46,8 +46,7 @@ class GeometryMPAS : public util::Printable,
   atlas::FunctionSpace * atlasFunctionSpace() const
     {return atlasFunctionSpace_.get();}
   atlas::FieldSet * atlasFieldSet() const
-   {return atlasFieldSet_.get();}
-
+    {return atlasFieldSet_.get();}
 
  private:
   GeometryMPAS & operator=(const GeometryMPAS &);

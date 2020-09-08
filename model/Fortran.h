@@ -49,6 +49,8 @@ typedef int F90hop;
 typedef int F90odb;
 // Localization matrix
 typedef int F90lclz;
+// LinearVariableChange key
+typedef int F90lvcc2a;
 // VarChange key
 typedef int F90vc;
 // GetValues key
@@ -134,6 +136,21 @@ extern "C" {
   void mpas_varchange_multiplyinverse_f90(const F90vc &, const F90inc &,
                                       const F90inc &);
   void mpas_varchange_multiplyinverseadjoint_f90(const F90vc &,
+                                              const F90inc &, const F90inc &);
+// -----------------------------------------------------------------------------
+//  LinearVariableChange (Linear variable Change for Background error matrix)
+// -----------------------------------------------------------------------------
+  void mpas_linvarcha_c2a_setup_f90(const F90lvcc2a &, const F90state &,
+                                   const F90state &, const F90geom &,
+                                   const eckit::Configuration &);
+  void mpas_linvarcha_c2a_delete_f90(F90lvcc2a &);
+  void mpas_linvarcha_c2a_multiply_f90(const F90lvcc2a &, const F90inc &,
+                                      const F90inc &);
+  void mpas_linvarcha_c2a_multiplyadjoint_f90(const F90lvcc2a &, const F90inc &,
+                                      const F90inc &);
+  void mpas_linvarcha_c2a_multiplyinverse_f90(const F90lvcc2a &, const F90inc &,
+                                      const F90inc &);
+  void mpas_linvarcha_c2a_multiplyinverseadjoint_f90(const F90lvcc2a &,
                                               const F90inc &, const F90inc &);
 // -----------------------------------------------------------------------------
 //  LocalizationMatrix

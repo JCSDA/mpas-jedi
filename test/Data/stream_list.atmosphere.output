@@ -27,3 +27,5 @@ re_ice
 re_snow
 cldfrac
 surface_pressure
+stream_function
+velocity_potential

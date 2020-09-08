@@ -22,15 +22,15 @@ VarChangeMPAS::VarChangeMPAS(const StateMPAS & bg,
                              const StateMPAS & fg,
                              const GeometryMPAS & resol,
                              const eckit::Configuration & config) {
-    mpas_varchange_setup_f90(keyVarChange_, bg.toFortran(),
-                             fg.toFortran(), resol.toFortran(),
-                             config);
-    oops::Log::trace() << "VarChangeMPAS created" << std::endl;
+  mpas_varchange_setup_f90(keyVarChange_, bg.toFortran(),
+                           fg.toFortran(), resol.toFortran(),
+                           config);
+  oops::Log::trace() << "VarChangeMPAS created" << std::endl;
 }
 // -----------------------------------------------------------------------------
 VarChangeMPAS::~VarChangeMPAS() {
-    mpas_varchange_delete_f90(keyVarChange_);
-    oops::Log::trace() << "VarChangeMPAS destructed" << std::endl;
+  mpas_varchange_delete_f90(keyVarChange_);
+  oops::Log::trace() << "VarChangeMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
 void VarChangeMPAS::multiply(const IncrementMPAS & dxa,

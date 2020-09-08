@@ -57,6 +57,12 @@ type :: mpas_geom
    integer, allocatable :: nEdgesOnCell(:)
    integer, allocatable :: cellsOnCell(:,:)
    integer, allocatable :: edgesOnCell(:,:)
+   integer, allocatable :: cellsOnVertex(:,:)
+   integer, allocatable :: cellsOnEdge(:,:)
+   integer, allocatable :: verticesOnEdge(:,:)
+   real(kind=kind_real), DIMENSION(:), ALLOCATABLE :: dcEdge, dvEdge
+   real(kind=kind_real), DIMENSION(:), ALLOCATABLE :: areaTriangle, angleEdge
+   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: kiteAreasOnVertex, edgesOnCell_sign
 
    type (domain_type), pointer :: domain => null() 
    type (core_type), pointer :: corelist => null()
@@ -157,6 +163,15 @@ subroutine geo_setup(self, f_conf)
    allocate ( self % nEdgesOnCell ( self % nCells ) )
    allocate ( self % edgesOnCell ( self % maxEdges, self % nCells ) )
    allocate ( self % cellsOnCell ( self % maxEdges, self % nCells ) )
+   allocate ( self % cellsOnVertex ( self % vertexDegree, self % nVertices ) )
+   allocate ( self % cellsOnEdge ( 2, self % nEdges ) )
+   allocate ( self % verticesOnEdge ( 2, self % nEdges ) )
+   allocate ( self % dcEdge ( self % nEdges ) )
+   allocate ( self % dvEdge ( self % nEdges ) )
+   allocate ( self % kiteAreasOnVertex ( self % vertexDegree, self % nVertices ) )
+   allocate ( self % edgesOnCell_sign ( self % maxEdges, self % nCells ) )
+   allocate ( self % areaTriangle ( self % nVertices ) )
+   allocate ( self % angleEdge ( self % nEdges ) )
 
    call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )           
    self % latCell = r1d_ptr(1:self % nCells)
@@ -183,6 +198,24 @@ subroutine geo_setup(self, f_conf)
    self % edgesOnCell = i2d_ptr ( 1:self % maxEdges, 1:self % nCells )
    call mpas_pool_get_array ( meshPool, 'cellsOnCell', i2d_ptr )
    self % cellsOnCell = i2d_ptr( 1:self % maxEdges, 1:self % nCells )
+   call mpas_pool_get_array ( meshPool, 'cellsOnVertex', i2d_ptr )
+   self % cellsOnVertex = i2d_ptr( 1:self % vertexDegree, 1:self % nVertices )
+   call mpas_pool_get_array ( meshPool, 'cellsOnEdge', i2d_ptr )
+   self % cellsOnEdge = i2d_ptr( 1:2, 1:self % nEdges )
+   call mpas_pool_get_array ( meshPool, 'verticesOnEdge', i2d_ptr )
+   self % verticesOnEdge = i2d_ptr( 1:2, 1:self % nEdges )
+   call mpas_pool_get_array ( meshPool, 'dcEdge', r1d_ptr )           
+   self % dcEdge = r1d_ptr(1:self % nEdges)
+   call mpas_pool_get_array ( meshPool, 'dvEdge', r1d_ptr )           
+   self % dvEdge = r1d_ptr(1:self % nEdges)
+   call mpas_pool_get_array ( meshPool, 'kiteAreasOnVertex', r2d_ptr )             
+   self % kiteAreasOnVertex = r2d_ptr ( 1:self % vertexDegree, 1:self % nVertices )
+   call mpas_pool_get_array ( meshPool, 'edgesOnCell_sign', r2d_ptr )             
+   self % edgesOnCell_sign = r2d_ptr ( 1:self % maxEdges, 1:self % nCells )
+   call mpas_pool_get_array ( meshPool, 'areaTriangle', r1d_ptr )           
+   self % areaTriangle = r1d_ptr(1:self % nVertices)
+   call mpas_pool_get_array ( meshPool, 'angleEdge', r1d_ptr )           
+   self % angleEdge = r1d_ptr(1:self % nEdges)
 
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )             
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
@@ -237,6 +270,14 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
    call afield%data(real_ptr_2)
    do jz=1,self%nVertLevels
       real_ptr_2(jz,:) = real(jz, kind_real)
+      ! Try different vertical coordinate
+      !--For height
+      !real_ptr_2(jz,1:self%nCellsSolve) = MPAS_JEDI_HALF_kr * &
+      !   ( self%zgrid(jz,1:self%nCellsSolve) + self%zgrid(jz+1,1:self%nCellsSolve) )
+      !--Similarly for ln of pressure_base. I don't know if we can access to "total pressure" here.
+      !real (kind=kind_real), dimension(:,:), pointer :: pressure_base
+      !call mpas_pool_get_array(self%domain%blocklist%allFields,'pressure_base', pressure_base)
+      !real_ptr_2(jz,1:self%nCellsSolve) = log( pressure_base(jz,1:self%nCellsSolve) )
    end do
    call afieldset%add(afield)
    call afield%final()
@@ -287,6 +328,16 @@ subroutine geo_clone(self, other)
    if (.not.allocated(other % nEdgesOnCell)) allocate(other % nEdgesOnCell(self % nCells))
    if (.not.allocated(other % edgesOnCell)) allocate(other % edgesOnCell(self % maxEdges, self % nCells))
    if (.not.allocated(other % cellsOnCell)) allocate (other % cellsOnCell ( self % maxEdges, self % nCells ) )
+   if (.not.allocated(other % cellsOnCell)) allocate (other % cellsOnCell(self % maxEdges, self % nCells))
+   if (.not.allocated(other % cellsOnVertex)) allocate (other % cellsOnVertex(self % vertexDegree, self % nVertices))
+   if (.not.allocated(other % cellsOnEdge)) allocate ( other % cellsOnEdge ( 2, self % nEdges ) )
+   if (.not.allocated(other % verticesOnEdge)) allocate ( other % verticesOnEdge ( 2, self % nEdges ) )
+   if (.not.allocated(other % dcEdge)) allocate ( other % dcEdge ( self % nEdges ) )
+   if (.not.allocated(other % dvEdge)) allocate ( other % dvEdge ( self % nEdges ) )
+   if (.not.allocated(other % kiteAreasOnVertex)) allocate (other % kiteAreasOnVertex(self % vertexDegree, self % nVertices))
+   if (.not.allocated(other % edgesOnCell_sign)) allocate (other % edgesOnCell_sign(self % maxEdges, self % nCells))
+   if (.not.allocated(other % areaTriangle)) allocate (other % areaTriangle(self % nVertices))
+   if (.not.allocated(other % angleEdge)) allocate (other % angleEdge(self % nEdges))
 
    other % latCell           = self % latCell
    other % lonCell           = self % lonCell
@@ -298,6 +349,15 @@ subroutine geo_clone(self, other)
    other % nEdgesOnCell      = self % nEdgesOnCell
    other % edgesOnCell       = self % edgesOnCell
    other % cellsOnCell       = self % cellsOnCell
+   other % cellsOnVertex     = self % cellsOnVertex
+   other % cellsOnEdge       = self % cellsOnEdge
+   other % verticesOnEdge    = self % verticesOnEdge
+   other % dcEdge            = self % dcEdge
+   other % dvEdge            = self % dvEdge
+   other % kiteAreasOnVertex = self % kiteAreasOnVertex
+   other % edgesOnCell_sign  = self % edgesOnCell_sign
+   other % areaTriangle      = self % areaTriangle
+   other % angleEdge         = self % angleEdge
 
 !   write(*,*)'====> copy of geom corelist and domain'
 
@@ -333,6 +393,15 @@ subroutine geo_delete(self)
    if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
    if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
    if (allocated(self%cellsOnCell)) deallocate(self%cellsOnCell)
+   if (allocated(self%cellsOnVertex)) deallocate(self%cellsOnVertex)
+   if (allocated(self%cellsOnEdge)) deallocate(self%cellsOnEdge)
+   if (allocated(self%verticesOnEdge)) deallocate(self%verticesOnEdge)
+   if (allocated(self%dcEdge)) deallocate(self%dcEdge)
+   if (allocated(self%dvEdge)) deallocate(self%dvEdge)
+   if (allocated(self%kiteAreasOnVertex)) deallocate(self%kiteAreasOnVertex)
+   if (allocated(self%edgesOnCell_sign)) deallocate(self%edgesOnCell_sign)
+   if (allocated(self%areaTriangle)) deallocate(self%areaTriangle)
+   if (allocated(self%angleEdge)) deallocate(self%angleEdge)
 
    !call mpas_timer_set_context( self % domain )
    if ((associated(self % corelist)).and.(associated(self % domain))) then
