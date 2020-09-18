@@ -58,8 +58,8 @@ cost function:
     obs filters:
     - filter: PreQC
       maxvalue: 3
-      apply at iterations: 0
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 3
   - obs space:
       name: GnssroRef
@@ -90,9 +90,12 @@ cost function:
         minvalue: -200
         maxvalue: 200
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 3
     - filter: ROobserror
+      apply at iterations: 0,1
       variable: refractivity
+      apply at iterations: 0,1
       errmodel: NBAM
   - obs space:
       name: GnssroBndROPP1D
@@ -123,8 +126,10 @@ cost function:
         minvalue: -200
         maxvalue: 200
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 3
     - filter: ROobserror
+      apply at iterations: 0,1
       variable: bending_angle
       errmodel: ECMWF
   - obs space:
@@ -144,12 +149,13 @@ cost function:
     obs filters:
     - filter: PreQC
       maxvalue: 3
-      apply at iterations: 0
     - filter: Difference Check
+      apply at iterations: 0,1
       reference: station_elevation@MetaData
       value: surface_altitude@GeoVaLs
       threshold: 500
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 10
   #NOTES for amsua channels:
   # + 1-3,15 very sensitive to Qv, req. AD/TL (lesser degree ch. 4)
@@ -168,6 +174,7 @@ cost function:
       covariance model: diagonal
     obs filters:
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 10
     obs operator:
       name: CRTM
