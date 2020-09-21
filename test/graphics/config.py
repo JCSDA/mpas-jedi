@@ -148,6 +148,7 @@ nullDiagSpaceInfo = {
 }
 
 profile_s  = 'profile'
+sfc_s      = 'surface'
 radiance_s = 'radiance'
 model_s    = 'MPAS'
 
@@ -215,6 +216,13 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
+        'diagNames': defaultDiags,
+    },
+    'sfc': {
+        'DiagSpaceGrp': sfc_s,
+        'process': True,
+        'anGrp': convGrp,
+        'binVarConfigs': surfBinVars,
         'diagNames': defaultDiags,
     },
     'sondes': {
