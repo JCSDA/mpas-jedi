@@ -4,13 +4,15 @@
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
 ! ------------------------------------------------------------------------------
-subroutine c_mpas_geo_setup(c_key_self, c_conf) bind(c,name='mpas_geo_setup_f90')
+subroutine c_mpas_geo_setup(c_key_self, c_conf, c_comm) bind(c,name='mpas_geo_setup_f90')
 use fckit_configuration_module, only: fckit_configuration
+use fckit_mpi_module,           only: fckit_mpi_comm
 use iso_c_binding
 use mpas_geom_mod
 implicit none
 integer(c_int), intent(inout) :: c_key_self
 type(c_ptr), value, intent(in) :: c_conf
+type(c_ptr), value, intent(in) :: c_comm
 
 type(mpas_geom), pointer :: self
 type(fckit_configuration) :: f_conf
@@ -20,7 +22,7 @@ call mpas_geom_registry%add(c_key_self)
 call mpas_geom_registry%get(c_key_self, self)
 
 f_conf = fckit_configuration(c_conf)
-call geo_setup(self, f_conf)
+call geo_setup(self, f_conf, fckit_mpi_comm(c_comm))
 
 end subroutine c_mpas_geo_setup
 
@@ -30,14 +32,14 @@ subroutine c_mpas_geo_clone(c_key_self, c_key_other) bind(c,name='mpas_geo_clone
 use iso_c_binding
 use mpas_geom_mod
 implicit none
-integer(c_int), intent(in)    :: c_key_self
-integer(c_int), intent(inout) :: c_key_other
+integer(c_int), intent(inout)    :: c_key_self
+integer(c_int), intent(in) :: c_key_other
 
 type(mpas_geom), pointer :: self, other
 
-call mpas_geom_registry%add(c_key_other)
-call mpas_geom_registry%get(c_key_other, other)
+call mpas_geom_registry%add(c_key_self)
 call mpas_geom_registry%get(c_key_self, self)
+call mpas_geom_registry%get(c_key_other, other)
 
 call geo_clone(self, other)
 

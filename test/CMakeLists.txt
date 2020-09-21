@@ -15,6 +15,9 @@ list( APPEND mpas_test_input
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
+  testinput/eda_3dhybrid.yaml
+#  testinput/eda_3dvar.yaml
+#  testinput/eda_3denvar.yaml
   testinput/enshofx.yaml
   testinput/errorcovariance.yaml
   testinput/forecast.yaml
@@ -52,6 +55,9 @@ list( APPEND mpas_testoutput
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
+  testoutput/eda_3dhybrid.ref
+#  testoutput/eda_3denvar.ref
+#  testoutput/eda_3dvar.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
   testoutput/gen_ens_pert_B.ref
@@ -323,6 +329,15 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os)
 #model states
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states)
+# EDA member directory names standardized by
+# oops/utils/string_utils::swap_name_member
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/eda)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/eda)
+set(edamembers mem001;mem002;mem003;mem004)
+foreach(MEM IN LISTS edamembers)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/eda/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/eda/${MEM})
+endforeach(MEM)
 
 ######################################################################
 #
@@ -631,6 +646,10 @@ jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${RE
 jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${REFTYPE} )
 jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${REFTYPE}
                            DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${REFTYPE}
+                           NPE 4 NMEM 4
+                           DEPENDS parameters_bumpcov
+                                   parameters_bumploc )
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------

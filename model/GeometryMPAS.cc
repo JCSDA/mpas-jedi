@@ -22,7 +22,7 @@ GeometryMPAS::GeometryMPAS(const eckit::Configuration & config,
                            const eckit::mpi::Comm & comm) : comm_(comm) {
   oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 1 =========="
                      << std::endl;
-  mpas_geo_setup_f90(keyGeom_, config);
+  mpas_geo_setup_f90(keyGeom_, config, &comm);
 
   // Set ATLAS lon/lat field
   atlasFieldSet_.reset(new atlas::FieldSet());
@@ -45,10 +45,9 @@ GeometryMPAS::GeometryMPAS(const eckit::Configuration & config,
 }
 // -----------------------------------------------------------------------------
 GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) : comm_(other.comm_) {
-  const int key_geo = other.keyGeom_;
   oops::Log::trace() << "========= GeometryMPAS mpas_geo_clone_f90   =========="
                      << std::endl;
-  mpas_geo_clone_f90(key_geo, keyGeom_);
+  mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
   atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
                               other.atlasFunctionSpace_->lonlat()));
   mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_,

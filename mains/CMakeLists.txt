@@ -1,8 +1,28 @@
+ecbuild_add_executable( TARGET  mpas_dirac.x
+                        SOURCES mpasDirac.cc
+                        LIBS	mpas
+                      )
+
+ecbuild_add_executable( TARGET  mpas_enshofx.x
+                        SOURCES mpasEnsHofX.cc
+                        LIBS    mpas
+                      )
+
+ecbuild_add_executable( TARGET  mpas_eda.x
+                        SOURCES mpasEDA.cc
+                        LIBS    mpas
+                                saber
+                      )
 
 ecbuild_add_executable( TARGET  mpas_forecast.x
                         SOURCES mpasForecast.cc
                         LIBS    mpas
                        )
+
+ecbuild_add_executable( TARGET  mpas_gen_ens_pert_B.x
+                        SOURCES mpasGenEnsPertB.cc
+                        LIBS    mpas
+                      )
 
 ecbuild_add_executable( TARGET  mpas_hofx.x
                         SOURCES mpasHofX.cc
@@ -12,27 +32,6 @@ ecbuild_add_executable( TARGET  mpas_hofx.x
 ecbuild_add_executable( TARGET  mpas_hofx_nomodel.x
                         SOURCES mpasHofXNoModel.cc
                         LIBS    mpas
-                      )
-
-ecbuild_add_executable( TARGET  mpas_enshofx.x
-                        SOURCES mpasEnsHofX.cc
-                        LIBS    mpas
-                      )
-
-#ecbuild_add_executable( TARGET  mpas_4dvar.x
-#                        SOURCES mpas4DVar.cc
-#                        LIBS    mpas
-#                      )
-
-ecbuild_add_executable( TARGET  mpas_dirac.x
-                        SOURCES mpasDirac.cc
-                        LIBS	mpas
-                      )
-
-ecbuild_add_executable( TARGET  mpas_variational.x
-                        SOURCES mpasVariational.cc
-                        LIBS    mpas
-                                saber
                       )
 
 ecbuild_add_executable( TARGET  mpas_parameters.x
@@ -46,8 +45,8 @@ ecbuild_add_executable( TARGET  mpas_staticbinit.x
                         LIBS    mpas
                       )
 
-ecbuild_add_executable( TARGET  mpas_gen_ens_pert_B.x
-                        SOURCES mpasGenEnsPertB.cc
+ecbuild_add_executable( TARGET  mpas_variational.x
+                        SOURCES mpasVariational.cc
                         LIBS    mpas
+                                saber
                       )
-

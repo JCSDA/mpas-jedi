@@ -1,12 +1,13 @@
 ! (C) Copyright 2017 UCAR
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module mpas_geom_mod
 
 use atlas_module, only: atlas_functionspace, atlas_fieldset, atlas_field, atlas_real
 use fckit_configuration_module, only: fckit_configuration
+use fckit_mpi_module, only: fckit_mpi_comm
 use iso_c_binding
 
 !MPAS-Model
@@ -18,7 +19,6 @@ use mpas_dmpar, only: mpas_dmpar_sum_int
 use mpas_subdriver
 use atm_core
 use mpas_pool_routines
-use mpas_run_mod, only : run_corelist=>corelist, run_domain=>domain
 
 !mpas_jedi
 use mpas_constants_mod
@@ -49,11 +49,11 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    character(len=StrKIND) :: gridfname
-   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latCell, lonCell
-   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: areaCell
-   real(kind=kind_real), DIMENSION(:),   ALLOCATABLE :: latEdge, lonEdge
-   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: edgeNormalVectors
-   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: zgrid
+   real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
+   real(kind=kind_real), dimension(:),   allocatable :: areaCell
+   real(kind=kind_real), dimension(:),   allocatable :: latEdge, lonEdge
+   real(kind=kind_real), dimension(:,:), allocatable :: edgeNormalVectors
+   real(kind=kind_real), dimension(:,:), allocatable :: zgrid
    integer, allocatable :: nEdgesOnCell(:)
    integer, allocatable :: cellsOnCell(:,:)
    integer, allocatable :: edgesOnCell(:,:)
@@ -64,10 +64,19 @@ type :: mpas_geom
    real(kind=kind_real), DIMENSION(:), ALLOCATABLE :: areaTriangle, angleEdge
    real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: kiteAreasOnVertex, edgesOnCell_sign
 
-   type (domain_type), pointer :: domain => null() 
+   type (domain_type), pointer :: domain => null()
    type (core_type), pointer :: corelist => null()
+
+   type(fckit_mpi_comm) :: f_comm
+
    type(atlas_functionspace) :: afunctionspace
 end type mpas_geom
+
+type :: idcounter
+   integer :: id, counter
+end type idcounter
+
+type(idcounter), allocatable :: geom_count(:)
 
 #define LISTED_TYPE mpas_geom
 
@@ -84,12 +93,13 @@ contains
 #include "oops/util/linkedList_c.f"
 
 ! ------------------------------------------------------------------------------
-subroutine geo_setup(self, f_conf)
+subroutine geo_setup(self, f_conf, f_comm)
 
    implicit none
 
    type(mpas_geom),           intent(inout) :: self
    type(fckit_configuration), intent(in)    :: f_conf
+   type(fckit_mpi_comm),   intent(in)    :: f_comm
 
    character(len=StrKIND) :: string1
    type (mpas_pool_type), pointer :: meshPool, fg
@@ -98,10 +108,35 @@ subroutine geo_setup(self, f_conf)
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
+   type(idcounter), allocatable :: prev_count(:)
+   integer :: ii, nprev
 !   write(*,*)' ==> create geom'
 
-   self % corelist => run_corelist
-   self % domain   => run_domain
+   ! MPI communicator
+   self%f_comm = f_comm
+
+   ! Domain decomposition and templates for state/increment variables
+   call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator() )
+
+   if (allocated(geom_count)) then
+      nprev = size(geom_count)
+      allocate(prev_count(nprev))
+      do ii = 1, nprev
+         prev_count(ii) = geom_count(ii)
+         if (prev_count(ii)%id == self%domain%domainID) then
+            call abor1_ftn("domainID already used")
+         end if
+      end do
+      deallocate(geom_count)
+   else
+      nprev = 0
+   end if
+   allocate(geom_count(nprev+1))
+   do ii = 1, nprev
+      geom_count(ii) = prev_count(ii)
+   end do
+   geom_count(nprev+1)%id = self%domain%domainID
+   geom_count(nprev+1)%counter = 1
 
 !   if (associated(self % domain)) then
 !       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
@@ -117,42 +152,38 @@ subroutine geo_setup(self, f_conf)
 
    call mpas_pool_get_subpool ( block_ptr % structs, 'mesh', meshPool )
 
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nCells', i0d_ptr )         
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nCells', i0d_ptr )
    self % nCells = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nCellsSolve', i0d_ptr )    
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nCellsSolve', i0d_ptr )
    self % nCellsSolve = i0d_ptr
    call mpas_dmpar_sum_int ( self % domain % dminfo, &
                              self % nCellsSolve, self % nCellsGlobal )
 
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nEdges', i0d_ptr )         
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nEdges', i0d_ptr )
    self % nEdges = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nEdgesSolve', i0d_ptr )    
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nEdgesSolve', i0d_ptr )
    self % nEdgesSolve = i0d_ptr
    call mpas_dmpar_sum_int ( self % domain % dminfo, &
                              self % nEdgesSolve, self % nEdgesGlobal )
 
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertices', i0d_ptr )      
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertices', i0d_ptr )
    self % nVertices = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVerticesSolve', i0d_ptr ) 
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVerticesSolve', i0d_ptr )
    self % nVerticesSolve = i0d_ptr
    call mpas_dmpar_sum_int ( self % domain % dminfo, &
                              self % nVerticesSolve, self % nVerticesGlobal )
 
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertLevels', i0d_ptr )    
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertLevels', i0d_ptr )
    self % nVertLevels = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertLevelsP1', i0d_ptr )  
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nVertLevelsP1', i0d_ptr )
    self % nVertLevelsP1 = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nSoilLevels', i0d_ptr )    
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'nSoilLevels', i0d_ptr )
    self % nSoilLevels = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'vertexDegree', i0d_ptr )   
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'vertexDegree', i0d_ptr )
    self % vertexDegree = i0d_ptr
-   call mpas_pool_get_dimension ( block_ptr % dimensions, 'maxEdges', i0d_ptr )       
+   call mpas_pool_get_dimension ( block_ptr % dimensions, 'maxEdges', i0d_ptr )
    self % maxEdges = i0d_ptr
 
-
-!  Could make this more flexible/clean by using pointers for array variables in mpas_geom 
-!  + any later value modifications need to be consistent with MPAS model (e.g., no unit conversions)
-!  + would need to nullify instead of allocate/dellocate
    allocate ( self % latCell ( self % nCells ) )
    allocate ( self % lonCell ( self % nCells ) )
    allocate ( self % latEdge ( self % nEdges ) )
@@ -173,7 +204,7 @@ subroutine geo_setup(self, f_conf)
    allocate ( self % areaTriangle ( self % nVertices ) )
    allocate ( self % angleEdge ( self % nEdges ) )
 
-   call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )           
+   call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )
    self % latCell = r1d_ptr(1:self % nCells)
    where (self % latCell > MPAS_JEDI_PIIo2_kr)
        self % latCell = MPAS_JEDI_PIIo2_kr
@@ -182,15 +213,15 @@ subroutine geo_setup(self, f_conf)
        self % latCell = - MPAS_JEDI_PIIo2_kr
    end where
 
-   call mpas_pool_get_array ( meshPool, 'lonCell', r1d_ptr )           
+   call mpas_pool_get_array ( meshPool, 'lonCell', r1d_ptr )
    self % lonCell = r1d_ptr(1:self % nCells)
-   call mpas_pool_get_array ( meshPool, 'areaCell', r1d_ptr )          
+   call mpas_pool_get_array ( meshPool, 'areaCell', r1d_ptr )
    self % areaCell = r1d_ptr(1:self % nCells)
-   call mpas_pool_get_array ( meshPool, 'latEdge', r1d_ptr )           
+   call mpas_pool_get_array ( meshPool, 'latEdge', r1d_ptr )
    self % latEdge = r1d_ptr(1:self % nEdges)
-   call mpas_pool_get_array ( meshPool, 'lonEdge', r1d_ptr )           
+   call mpas_pool_get_array ( meshPool, 'lonEdge', r1d_ptr )
    self % lonEdge = r1d_ptr(1:self % nEdges)
-   call mpas_pool_get_array ( meshPool, 'edgeNormalVectors', r2d_ptr ) 
+   call mpas_pool_get_array ( meshPool, 'edgeNormalVectors', r2d_ptr )
    self % edgeNormalVectors = r2d_ptr ( 1:3, 1:self % nEdges )
    call mpas_pool_get_array ( meshPool, 'nEdgesOnCell', i1d_ptr )
    self % nEdgesOnCell = i1d_ptr(1:self % nCells)
@@ -217,7 +248,7 @@ subroutine geo_setup(self, f_conf)
    call mpas_pool_get_array ( meshPool, 'angleEdge', r1d_ptr )           
    self % angleEdge = r1d_ptr(1:self % nEdges)
 
-   call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )             
+   call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
 !   write(*,*)'End of geo_setup'
@@ -290,85 +321,85 @@ subroutine geo_clone(self, other)
 
    implicit none
 
-   type(mpas_geom), intent(in) :: self
-   type(mpas_geom), intent(inout) :: other
+   type(mpas_geom), intent(inout) :: self
+   type(mpas_geom), intent(in) :: other
+
+   integer :: ii
+
+   ! Clone communicator
+   self%f_comm = other%f_comm
 
 !   write(*,*)'====> copy of geom array'
-!   if (allocated(other%latCell)) then 
-!      write(*,*)'Allocated array other%latCell'
-!   else
-!      write(*,*)'Not Allocated array other%latCell'
-!   end if   
 
-   other % nCellsGlobal  = self % nCellsGlobal
-   other % nCells        = self % nCells
-   other % nCellsSolve   = self % nCellsSolve
+   self % nCellsGlobal  = other % nCellsGlobal
+   self % nCells        = other % nCells
+   self % nCellsSolve   = other % nCellsSolve
 
-   other % nEdgesGlobal  = self % nEdgesGlobal
-   other % nEdges        = self % nEdges
-   other % nEdgesSolve   = self % nEdgesSolve
+   self % nEdgesGlobal  = other % nEdgesGlobal
+   self % nEdges        = other % nEdges
+   self % nEdgesSolve   = other % nEdgesSolve
 
-   other % nVerticesGlobal  = self % nVerticesGlobal
-   other % nVertices        = self % nVertices
-   other % nVerticesSolve   = self % nVerticesSolve
+   self % nVerticesGlobal  = other % nVerticesGlobal
+   self % nVertices        = other % nVertices
+   self % nVerticesSolve   = other % nVerticesSolve
 
-   other % nVertLevels   = self % nVertLevels
-   other % nVertLevelsP1 = self % nVertLevelsP1
-   other % nSoilLevels   = self % nSoilLevels 
-   other % vertexDegree  = self % vertexDegree
-   other % maxEdges      = self % maxEdges
+   self % nVertLevels   = other % nVertLevels
+   self % nVertLevelsP1 = other % nVertLevelsP1
+   self % nSoilLevels   = other % nSoilLevels
+   self % vertexDegree  = other % vertexDegree
+   self % maxEdges      = other % maxEdges
 
-   if (.not.allocated(other % latCell)) allocate(other % latCell(self % nCells))
-   if (.not.allocated(other % lonCell)) allocate(other % lonCell(self % nCells))
-   if (.not.allocated(other % latEdge)) allocate(other % latEdge(self % nEdges))
-   if (.not.allocated(other % lonEdge)) allocate(other % lonEdge(self % nEdges))
-   if (.not.allocated(other % areaCell)) allocate(other % areaCell(self % nCells))
-   if (.not.allocated(other % edgeNormalVectors)) allocate(other % edgeNormalVectors(3, self % nEdges))
-   if (.not.allocated(other % zgrid)) allocate(other % zgrid(self % nVertLevelsP1, self % nCells))
-   if (.not.allocated(other % nEdgesOnCell)) allocate(other % nEdgesOnCell(self % nCells))
-   if (.not.allocated(other % edgesOnCell)) allocate(other % edgesOnCell(self % maxEdges, self % nCells))
-   if (.not.allocated(other % cellsOnCell)) allocate (other % cellsOnCell ( self % maxEdges, self % nCells ) )
-   if (.not.allocated(other % cellsOnCell)) allocate (other % cellsOnCell(self % maxEdges, self % nCells))
-   if (.not.allocated(other % cellsOnVertex)) allocate (other % cellsOnVertex(self % vertexDegree, self % nVertices))
-   if (.not.allocated(other % cellsOnEdge)) allocate ( other % cellsOnEdge ( 2, self % nEdges ) )
-   if (.not.allocated(other % verticesOnEdge)) allocate ( other % verticesOnEdge ( 2, self % nEdges ) )
-   if (.not.allocated(other % dcEdge)) allocate ( other % dcEdge ( self % nEdges ) )
-   if (.not.allocated(other % dvEdge)) allocate ( other % dvEdge ( self % nEdges ) )
-   if (.not.allocated(other % kiteAreasOnVertex)) allocate (other % kiteAreasOnVertex(self % vertexDegree, self % nVertices))
-   if (.not.allocated(other % edgesOnCell_sign)) allocate (other % edgesOnCell_sign(self % maxEdges, self % nCells))
-   if (.not.allocated(other % areaTriangle)) allocate (other % areaTriangle(self % nVertices))
-   if (.not.allocated(other % angleEdge)) allocate (other % angleEdge(self % nEdges))
+   if (.not.allocated(self % latCell)) allocate(self % latCell(other % nCells))
+   if (.not.allocated(self % lonCell)) allocate(self % lonCell(other % nCells))
+   if (.not.allocated(self % latEdge)) allocate(self % latEdge(other % nEdges))
+   if (.not.allocated(self % lonEdge)) allocate(self % lonEdge(other % nEdges))
+   if (.not.allocated(self % areaCell)) allocate(self % areaCell(other % nCells))
+   if (.not.allocated(self % edgeNormalVectors)) allocate(self % edgeNormalVectors(3, other % nEdges))
+   if (.not.allocated(self % zgrid)) allocate(self % zgrid(other % nVertLevelsP1, other % nCells))
+   if (.not.allocated(self % nEdgesOnCell)) allocate(self % nEdgesOnCell(other % nCells))
+   if (.not.allocated(self % edgesOnCell)) allocate(self % edgesOnCell(other % maxEdges, other % nCells))
+   if (.not.allocated(self % cellsOnCell)) allocate(self % cellsOnCell (other % maxEdges, other % nCells))
+   if (.not.allocated(self % cellsOnVertex)) allocate(self % cellsOnVertex(self % vertexDegree, self % nVertices))
+   if (.not.allocated(self % cellsOnEdge)) allocate(self % cellsOnEdge (2, self % nEdges))
+   if (.not.allocated(self % verticesOnEdge)) allocate(self % verticesOnEdge (2, self % nEdges))
+   if (.not.allocated(self % dcEdge)) allocate(self % dcEdge (self % nEdges))
+   if (.not.allocated(self % dvEdge)) allocate(self % dvEdge (self % nEdges))
+   if (.not.allocated(self % kiteAreasOnVertex)) allocate(self % kiteAreasOnVertex(self % vertexDegree, self % nVertices))
+   if (.not.allocated(self % edgesOnCell_sign)) allocate(self % edgesOnCell_sign(self % maxEdges, self % nCells))
+   if (.not.allocated(self % areaTriangle)) allocate(self % areaTriangle(self % nVertices))
+   if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
 
-   other % latCell           = self % latCell
-   other % lonCell           = self % lonCell
-   other % areaCell          = self % areaCell
-   other % latEdge           = self % latEdge
-   other % lonEdge           = self % lonEdge
-   other % edgeNormalVectors = self % edgeNormalVectors
-   other % zgrid             = self % zgrid
-   other % nEdgesOnCell      = self % nEdgesOnCell
-   other % edgesOnCell       = self % edgesOnCell
-   other % cellsOnCell       = self % cellsOnCell
-   other % cellsOnVertex     = self % cellsOnVertex
-   other % cellsOnEdge       = self % cellsOnEdge
-   other % verticesOnEdge    = self % verticesOnEdge
-   other % dcEdge            = self % dcEdge
-   other % dvEdge            = self % dvEdge
-   other % kiteAreasOnVertex = self % kiteAreasOnVertex
-   other % edgesOnCell_sign  = self % edgesOnCell_sign
-   other % areaTriangle      = self % areaTriangle
-   other % angleEdge         = self % angleEdge
+   self % latCell           = other % latCell
+   self % lonCell           = other % lonCell
+   self % areaCell          = other % areaCell
+   self % latEdge           = other % latEdge
+   self % lonEdge           = other % lonEdge
+   self % edgeNormalVectors = other % edgeNormalVectors
+   self % zgrid             = other % zgrid
+   self % nEdgesOnCell      = other % nEdgesOnCell
+   self % edgesOnCell       = other % edgesOnCell
+   self % cellsOnCell       = other % cellsOnCell
+   self % cellsOnVertex     = other % cellsOnVertex
+   self % cellsOnEdge       = other % cellsOnEdge
+   self % verticesOnEdge    = other % verticesOnEdge
+   self % dcEdge            = other % dcEdge
+   self % dvEdge            = other % dvEdge
+   self % kiteAreasOnVertex = other % kiteAreasOnVertex
+   self % edgesOnCell_sign  = other % edgesOnCell_sign
+   self % areaTriangle      = other % areaTriangle
+   self % angleEdge         = other % angleEdge
 
 !   write(*,*)'====> copy of geom corelist and domain'
 
-   if ((associated(other % corelist)).and.(associated(other % domain))) then 
-!      write(*,*)'associated(other % corelist), associated(other % domain)'
-   else
-!      write(*,*)'not associated(other % corelist), associated(other % domain)'
-      other % corelist => run_corelist
-      other % domain   => run_domain
-   end if
+   self % corelist => other % corelist
+   self % domain   => other % domain
 !   write(*,*)'inside geo_clone: other % domain % domainID = ', other % domain % domainID
+
+   do ii = 1, size(geom_count)
+      if (geom_count(ii)%id == self%domain%domainID) then
+         geom_count(ii)%counter = geom_count(ii)%counter + 1
+      end if
+   end do
 
 !   write(*,*)'====> copy of geom done'
 
@@ -382,7 +413,8 @@ subroutine geo_delete(self)
 
    type(mpas_geom), intent(inout) :: self
 
-!   write(*,*)'==> delete geom array'
+   integer :: ii
+
    if (allocated(self%latCell)) deallocate(self%latCell)
    if (allocated(self%lonCell)) deallocate(self%lonCell)
    if (allocated(self%latEdge)) deallocate(self%latEdge)
@@ -403,13 +435,28 @@ subroutine geo_delete(self)
    if (allocated(self%areaTriangle)) deallocate(self%areaTriangle)
    if (allocated(self%angleEdge)) deallocate(self%angleEdge)
 
-   !call mpas_timer_set_context( self % domain )
-   if ((associated(self % corelist)).and.(associated(self % domain))) then
-      nullify(self % corelist)
-      nullify(self % domain)
-!      write(*,*)'==> nullify geom corelist and domain'
-   end if
-!   write(*,*)'==> delete geom done'
+   do ii = 1, size(geom_count)
+      if (geom_count(ii)%id == self%domain%domainID) then
+         geom_count(ii)%counter = geom_count(ii)%counter - 1
+         if ((associated(self % corelist)).and.(associated(self % domain))) then
+!            if (geom_count(ii)%counter == 0) then
+!               ! Completely destroy corelist and domain
+!               !  + can only do this if they are not used by another copy of self
+!               !  + otherwise the persistance of the underlying domain
+!               !    and corelist is a known memory leak
+!!               write(*,*)'==> delete model corelist and domain'
+!               call mpas_timer_set_context( self % domain )
+!               TODO(JJG): divide mpas_finalize into smaller components to avoid
+!               MPI finalize errors
+!               call mpas_finalize(self % corelist, self % domain)
+!            else
+               nullify(self % corelist)
+               nullify(self % domain)
+!            end if
+            exit
+         end if
+      end if
+   end do
 
 end subroutine geo_delete
 

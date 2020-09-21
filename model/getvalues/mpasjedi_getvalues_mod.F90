@@ -136,7 +136,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
   ! If no observations can early exit
   ! ---------------------------------
-  f_comm = fckit_mpi_comm()
+  f_comm = geom%f_comm
   call f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
   if (nlocsg == 0) then
     return
@@ -612,7 +612,7 @@ subroutine initialize_bump(self, grid, locs)
   ! ----------------
 
   !Important namelist options
-  f_comm = fckit_mpi_comm()
+  f_comm = grid%f_comm
   call self%bump%nam%init(f_comm%size())
 
   !Less important namelist options (should not be changed)

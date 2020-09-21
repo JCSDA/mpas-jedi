@@ -12,6 +12,7 @@ use fckit_log_module, only : fckit_log
 use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
+use string_utils, only: swap_name_member
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN
@@ -304,6 +305,7 @@ subroutine read_field(self, f_conf, vdate)
    call datetime_set(sdate, vdate)
 
    call f_conf%get_or_die("filename",str)
+   call swap_name_member(f_conf, str)
    temp_filename = str
 !   write(*,*)'--> read_field: Reading ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
@@ -412,6 +414,7 @@ subroutine write_field(self, f_conf, vdate)
    call datetime_to_string(vdate, validitydate)
 !   write(*,*)'--> write_field: ',trim(validitydate)
    call f_conf%get_or_die("filename",str)
+   call swap_name_member(f_conf, str)
    temp_filename = str
 !   write(*,*)'--> write_field: ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
@@ -426,12 +429,7 @@ subroutine write_field(self, f_conf, vdate)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
    ! write(*,*)'check time --> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
-   ! Filename for writing out ensembles
-   if (f_conf%has("member")) then
-     call f_conf%get_or_die("member",str)
-     temp_filename = str
-     filename=trim(filename) // '.' // trim(temp_filename)
-   endif
+
    self % manager => self % geom % domain % streamManager
    ! TODO: we can get streamID from yaml
    ! TODO: should we pick different stream lists for mpas_state and mpas_increment?
