@@ -5,9 +5,12 @@
 
 module mpasjedi_getvalues_mod
 
+! atlas
+use atlas_module,                   only: atlas_fieldset, atlas_field, atlas_real
+
 ! fckit
-use fckit_mpi_module,              only: fckit_mpi_comm
-use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
+use fckit_mpi_module,               only: fckit_mpi_comm
+use fckit_mpi_module,               only: fckit_mpi_comm, fckit_mpi_sum
 
 ! oops
 use datetime_mod,                   only: datetime
@@ -42,6 +45,7 @@ private
 public :: mpasjedi_getvalues, mpasjedi_getvalues_base
 public :: mpas_getvalues_registry
 public :: fill_geovals, initialize_bump
+public :: obsop_to_atlas, obsop_from_atlas
 
 type, abstract :: mpasjedi_getvalues_base
   type(bump_type) :: bump
@@ -110,6 +114,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   logical, allocatable :: time_mask(:)
   type(fckit_mpi_comm)     :: f_comm
   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
+  type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
   real(kind=kind_real), allocatable :: obs_field(:,:)
   real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
@@ -199,7 +204,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   ! Interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------
   maxlevels = geom%nVertLevelsP1
-  allocate(mod_field(ngrid,maxlevels))
+  allocate(mod_field(maxlevels,ngrid))
   allocate(obs_field(nlocs,maxlevels))
 
   call mpas_pool_begin_iteration(pool_ufo)
@@ -213,18 +218,18 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       if (poolItr % nDims == 1) then
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
-          mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
+          mod_field(1,:) = real( i1d_ptr_a(1:ngrid), kind_real)
         else if (poolItr % dataType == MPAS_POOL_REAL) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          mod_field(:,1) = r1d_ptr_a(1:ngrid)
+          mod_field(1,:) = r1d_ptr_a(1:ngrid)
         endif
       else if (poolItr % nDims == 2) then
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i2d_ptr_a)
-          mod_field(:,1:nlevels) = real( transpose(i2d_ptr_a(1:nlevels,1:ngrid)), kind_real )
+          mod_field(1:nlevels,:) = real( i2d_ptr_a(1:nlevels,1:ngrid), kind_real )
         else if (poolItr % dataType == MPAS_POOL_REAL) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          mod_field(:,1:nlevels) = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
+          mod_field(1:nlevels,:) = r2d_ptr_a(1:nlevels,1:ngrid)
         endif
       else
         write(buf,*) '--> fill_geovals: poolItr % nDims == ',poolItr % nDims,' not handled'
@@ -232,8 +237,8 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       endif
       !write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
       !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName), &
-      !           minval(mod_field(:,1:nlevels)), &
-      !           maxval(mod_field(:,1:nlevels))
+      !           minval(mod_field(1:nlevels,:)), &
+      !           maxval(mod_field(1:nlevels,:))
 
       !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
       ! + apply_obsop takes ~50% of wall-time of getvalues on cheyenne and
@@ -241,8 +246,10 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       !
       ! + initialize_bump takes other ~50% on cheyennne
       !
+      call obsop_to_atlas(geom, nlevels, afieldset, arr2d=mod_field(1:nlevels,1:ngrid))
       self%bump%geom%nl0 = nlevels
-      call self%bump%apply_obsop(mod_field(:,1:nlevels),obs_field(:,1:nlevels))
+      call self%bump%apply_obsop(afieldset, obs_field(:,1:nlevels))
+      call afieldset%final()
 
       do jlev = 1, nlevels
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -276,14 +283,16 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
     !- read/interp.
     call mpas_pool_get_array(fields % subFields, "u10", r1d_ptr_a)
-    mod_field(:,1) = r1d_ptr_a(1:ngrid)
     !write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call self%bump%apply_obsop(mod_field,obs_field)
+    call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
+    call self%bump%apply_obsop(afieldset, obs_field)
+    call afieldset%final()
     tmp_field(:,1)=obs_field(:,1)
     call mpas_pool_get_array(fields % subFields, "v10", r1d_ptr_a)
-    mod_field(:,1) = r1d_ptr_a(1:ngrid)
     !write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call self%bump%apply_obsop(mod_field,obs_field)
+    call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
+    call self%bump%apply_obsop(afieldset, obs_field)
+    call afieldset%final()
     tmp_field(:,2)=obs_field(:,1)
 
     !- allocate geoval & put values for var_sfc_wspeed
@@ -451,8 +460,9 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      mod_field(:,1) = real(i1d_ptr_a(1:ngrid))
-      call self%bump%apply_obsop(mod_field,obs_field)
+      call obsop_to_atlas(geom, 0, afieldset, arr1d=real(i1d_ptr_a(1:ngrid), kind=kind_real))
+      call self%bump%apply_obsop(afieldset, obs_field)
+      call afieldset%final()
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -465,8 +475,9 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      mod_field(:,1) = r1d_ptr_a(1:ngrid)
-      call self%bump%apply_obsop(mod_field,obs_field)
+      call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
+      call self%bump%apply_obsop(afieldset, obs_field)
+      call afieldset%final()
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -483,8 +494,9 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivarw)%nval = 1
         allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nlocs) )
       endif
-      mod_field(:,1) = r1d_ptr_b(1:ngrid)
-      call self%bump%apply_obsop(mod_field,obs_field)
+      call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_b(1:ngrid))
+      call self%bump%apply_obsop(afieldset, obs_field)
+      call afieldset%final()
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -580,11 +592,6 @@ subroutine initialize_bump(self, grid, locs)
   type(ufo_locs),           intent(in)  :: locs
 
   integer, save                     :: bumpid = 1000
-  integer                           :: mod_nz,mod_num
-  real(kind=kind_real), allocatable :: mod_lat(:), mod_lon(:)
-  real(kind=kind_real), allocatable :: area(:),vunit(:,:)
-  logical, allocatable              :: lmask(:,:)
-
   character(len=5)   :: cbumpcount
   character(len=255) :: bump_nam_prefix
 
@@ -595,18 +602,6 @@ subroutine initialize_bump(self, grid, locs)
   bumpid = bumpid + 1
   write(cbumpcount,"(I0.5)") bumpid
   bump_nam_prefix = 'mpas_bump_data_'//cbumpcount
-
-  ! Get the Solution dimensions
-  ! ---------------------------
-  mod_num = grid%nCellsSolve
-  !write(*,*)'initialize_bump mod_num,obs_num = ', mod_num, locs%nlocs
-
-  !Calculate interpolation weight using BUMP
-  !------------------------------------------
-  allocate( mod_lat(mod_num) )
-  allocate( mod_lon(mod_num) )
-  mod_lat(:) = grid%latCell( 1:mod_num ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-  mod_lon(:) = grid%lonCell( 1:mod_num ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
 
   ! Namelist options
   ! ----------------
@@ -621,21 +616,15 @@ subroutine initialize_bump(self, grid, locs)
   self%bump%nam%new_obsop    = .true.
   self%bump%nam%write_obsop  = .false.
   self%bump%nam%verbosity    = "none"
-
-  ! Initialize geometry
-  ! -------------------
-  allocate(area(mod_num))
-  allocate(vunit(mod_num,1))
-  allocate(lmask(mod_num,1))
-
-  area  = MPAS_JEDI_ONE_kr          ! Dummy area, unit [m^2]
-  vunit = MPAS_JEDI_ONE_kr          ! Dummy vertical unit
-  lmask = .true.       ! Mask
+  self%bump%nam%nl           = grid%nVertLevels
+  self%bump%nam%nv           = 1
+  self%bump%nam%variables(1) = "var"
+  self%bump%nam%nts          = 1
+  self%bump%nam%timeslots(1) = "0"
 
   ! Initialize BUMP
   ! ---------------
-  call self%bump%setup_online(f_comm,mod_num,1,1,1,mod_lon,mod_lat,area,vunit,lmask, &
-                              nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
+  call self%bump%setup(f_comm,grid%afunctionspace,nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
   ! Run BUMP drivers
   call self%bump%run_drivers
@@ -643,14 +632,75 @@ subroutine initialize_bump(self, grid, locs)
   ! Partial deallocate option
   call self%bump%partial_dealloc
 
-  ! Release memory
-  ! --------------
-  deallocate(area)
-  deallocate(vunit)
-  deallocate(lmask)
-  deallocate(mod_lat)
-  deallocate(mod_lon)
-
 end subroutine initialize_bump
+
+subroutine obsop_to_atlas(geom, nlevels, afieldset, arr1d, arr2d)
+
+  type(mpas_geom), intent(in) :: geom
+  integer, intent(in) :: nlevels
+  type(atlas_fieldset), intent(inout) :: afieldset
+  real(kind=kind_real), intent(in), optional :: arr1d(geom % nCellsSolve)
+  real(kind=kind_real), intent(in), optional :: arr2d(nlevels, geom % nCellsSolve)
+
+  real(kind=kind_real), pointer :: real_ptr_1d(:), real_ptr_2d(:,:)
+  type(atlas_field) :: afield
+
+  ! Create ATLAS fieldset
+  afieldset = atlas_fieldset()
+
+  ! Create field
+  afield = geom%afunctionspace%create_field(name='var_0',kind=atlas_real(kind_real),levels=nlevels)
+
+  ! Add field
+  call afieldset%add(afield)
+
+  ! Copy data
+  if (nlevels == 0) then
+    call afield%data(real_ptr_1d)
+    real_ptr_1d = MPAS_JEDI_ZERO_kr
+    if (present(arr1d)) real_ptr_1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve)
+    if (present(arr2d)) call abor1_ftn('obsop_to_atlas: wrong array')
+  else
+    call afield%data(real_ptr_2d)
+    real_ptr_2d = MPAS_JEDI_ZERO_kr
+    if (present(arr1d)) call abor1_ftn('obsop_to_atlas: wrong array')
+    if (present(arr2d)) real_ptr_2d(1:nlevels, 1:geom % nCellsSolve) = arr2d(1:nlevels, 1:geom % nCellsSolve)
+  end if
+
+  ! Release pointers
+  call afield%final()
+  
+end subroutine obsop_to_atlas
+
+subroutine obsop_from_atlas(geom, nlevels, afieldset, arr1d, arr2d)
+
+  type(mpas_geom), intent(in) :: geom
+  integer, intent(in) :: nlevels
+  type(atlas_fieldset), intent(in) :: afieldset
+  real(kind=kind_real), intent(inout), optional :: arr1d(geom % nCellsSolve)
+  real(kind=kind_real), intent(inout), optional :: arr2d(nlevels, geom % nCellsSolve)
+
+  real(kind=kind_real), pointer :: real_ptr_1d(:), real_ptr_2d(:,:)
+  type(atlas_field) :: afield
+
+  ! Get field
+  afield = afieldset%field('var_0')
+
+  ! Copy data
+  if (nlevels == 0) then
+    call afield%data(real_ptr_1d)
+    if (present(arr1d)) arr1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve) + real_ptr_1d(1:geom % nCellsSolve)
+    if (present(arr2d)) call abor1_ftn('obsop_from_atlas: wrong array')
+  else
+    call afield%data(real_ptr_2d)
+    if (present(arr1d)) call abor1_ftn('obsop_from_atlas: wrong array')
+    if (present(arr2d)) arr2d(1:nlevels, 1:geom % nCellsSolve) = arr2d(1:nlevels, 1:geom % nCellsSolve) &
+ & + real_ptr_2d(1:nlevels, 1:geom % nCellsSolve)
+  end if
+
+  ! Release pointers
+  call afield%final()
+  
+end subroutine obsop_from_atlas
 
 end module mpasjedi_getvalues_mod

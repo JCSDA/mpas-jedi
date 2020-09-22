@@ -5,9 +5,11 @@
 
 module mpasjedi_lineargetvalues_mod
 
+! atlas
+use atlas_module,                   only: atlas_fieldset
+
 ! oops
 use datetime_mod,                   only: datetime, datetime_to_string
-use type_bump,                      only: bump_type
 use kinds,                          only: kind_real
 
 ! ufo
@@ -162,7 +164,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   logical, allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs
-  real(kind=kind_real), allocatable :: mod_field(:,:)
+  type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: obs_field(:,:)
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
@@ -258,7 +260,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   ! TL of interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------------
   maxlevels = geom%nVertLevelsP1
-  allocate(mod_field(ngrid,maxlevels))
+  afieldset = atlas_fieldset()
   allocate(obs_field(nlocs,maxlevels))
 
   call mpas_pool_begin_iteration(pool_ufo)
@@ -269,28 +271,28 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
       !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
-      mod_field = MPAS_JEDI_ZERO_kr
       obs_field = MPAS_JEDI_ZERO_kr
 
       nlevels = gom%geovals(jvar)%nval
-      if (poolItr % dataType == MPAS_POOL_REAL) then
-        if (poolItr % nDims == 1) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          mod_field(:,1) = r1d_ptr_a(1:ngrid)
-        else if (poolItr % nDims == 2) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          do jlev = 1, nlevels
-            mod_field(:,jlev) = r2d_ptr_a(jlev,1:ngrid)
-          end do
-        endif
-      endif
 
       !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
       ! + apply_obsop takes ~99.9% of wall-time of getvalues_tl on cheyenne and
       !   scales with node count. Seems to have MPI-related issue.
       !
+      if (poolItr % dataType == MPAS_POOL_REAL) then
+        if (poolItr%nDims==1) then
+          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+          call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a)
+        else if (poolItr%nDims==2) then
+          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+          call obsop_to_atlas(geom, nlevels, afieldset, arr2d=r2d_ptr_a)
+        end if
+      else
+        call abor1_ftn('--> fill_geovals_tl: not a real field')
+      end if
       self%bump%geom%nl0 = nlevels
-      call self%bump%apply_obsop(mod_field(:,1:nlevels),obs_field(:,1:nlevels))
+      call self%bump%apply_obsop(afieldset,obs_field(:,1:nlevels))
+      call afieldset%final()
 
       do jlev = 1, nlevels
         ilev = nlevels - jlev + 1
@@ -301,7 +303,6 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
       end do
     endif
   end do
-  deallocate(mod_field)
   deallocate(obs_field)
 
   self%bump%geom%nl0 = 1
@@ -333,7 +334,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   logical, allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs
-  real(kind=kind_real), allocatable :: mod_field(:,:)
+  type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: obs_field(:,:)
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
@@ -376,7 +377,6 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   ! Adjoint of interpolate fields to obs locations using pre-calculated weights
   ! ---------------------------------------------------------------------------
   maxlevels = geom%nVertLevelsP1
-  allocate(mod_field(ngrid,maxlevels))
   allocate(obs_field(nlocs,maxlevels))
 
   call mpas_pool_begin_iteration(pool_ufo)
@@ -385,7 +385,6 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
       jvar = ufo_vars_getindex( gom%variables,trim(poolItr % memberName))
       if ( jvar < 1 ) cycle
 
-      mod_field = MPAS_JEDI_ZERO_kr
       obs_field = MPAS_JEDI_ZERO_kr
 
       !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
@@ -401,32 +400,37 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
         end do
       end do
 
+      ! Create fieldset
+      if (poolItr%nDims==1) then
+        call obsop_to_atlas(geom, 0, afieldset)
+      else if (poolItr%nDims==2) then
+        call obsop_to_atlas(geom, nlevels, afieldset)
+      end if
+
       !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
       ! + apply_obsop takes ~99.9% of wall-time of getvalues_ad on cheyenne and
       !   scales with node count. Seems to have MPI-related issue.
       !
       self%bump%geom%nl0 = nlevels
-      call self%bump%apply_obsop_ad(obs_field(:,1:nlevels),mod_field(:,1:nlevels))
+      call self%bump%apply_obsop_ad(obs_field(:,1:nlevels),afieldset)
 
+      ! Copy data
       if (poolItr % dataType == MPAS_POOL_REAL) then
-        if (poolItr % nDims == 1) then
+        if (poolItr%nDims==1) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          r1d_ptr_a=MPAS_JEDI_ZERO_kr
-          r1d_ptr_a(1:ngrid) = r1d_ptr_a(1:ngrid) + mod_field(:,1)
-        else if (poolItr % nDims == 2) then
-
+          r1d_ptr_a = MPAS_JEDI_ZERO_kr
+          call obsop_from_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
+        else if (poolItr%nDims==2) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          r2d_ptr_a=MPAS_JEDI_ZERO_kr
-          !write(*,*) "Interp. var=",trim(poolItr % memberName)
-          !write(*,*) "ufo_vars_getindex, jvar=",jvar
-          do jlev = 1, nlevels
-            r2d_ptr_a(jlev,1:ngrid) = r2d_ptr_a(jlev,1:ngrid) + mod_field(:,jlev)
-          end do
-        endif
-      endif
+          r2d_ptr_a = MPAS_JEDI_ZERO_kr
+          call obsop_from_atlas(geom, nlevels, afieldset, arr2d=r2d_ptr_a(1:nlevels,1:ngrid))
+        end if
+        call afieldset%final()
+      else
+        call abor1_ftn('--> fill_geovals_ad: not a real field')
+      end if
     endif
   end do
-  deallocate(mod_field)
   deallocate(obs_field)
 
   ! AD of variable conversion
