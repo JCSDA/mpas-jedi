@@ -158,6 +158,7 @@ abiGrp = 'abi'
 ahiGrp = 'ahi'
 amsuaGrp = 'amsua'
 amsuacldGrp = 'amsuacld'
+mhsGrp = 'mhs'
 
 anGroupConfig = {
     convGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:10:00'},
@@ -165,6 +166,7 @@ anGroupConfig = {
     ahiGrp: {'npwork': 12, 'npread': 36, 'analyze_walltime': '01:00:00'},
     amsuaGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
     amsuacldGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
+    mhsGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:08:00'},
 }
 
 # Each entry of DiagSpaceConfig is a key-value pair, with the following possible values:
@@ -407,9 +409,34 @@ DiagSpaceConfig = {
         'diagNames': defaultDiags,
         'channels': [16,29,32,35,38,41,44],
     },
+    'mhs_metop-a': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhsGrp,
+        'binVarConfigs': radianceBinVars,
+        'diagNames': defaultDiags,
+        'channels': range(1,6),
+    },
+    'mhs_metop-b': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhsGrp,
+        'binVarConfigs': radianceBinVars,
+        'diagNames': defaultDiags,
+        'channels': range(1,6),
+    },
+    'mhs_n18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': mhsGrp,
+        'binVarConfigs': radianceBinVars,
+        'diagNames': defaultDiags,
+        'channels': range(1,6),
+    },
     'mhs_n19': {
         'DiagSpaceGrp': radiance_s,
-        'process': False,
+        'process': True,
+        'anGrp': mhsGrp,
         'binVarConfigs': radianceBinVars,
         'diagNames': defaultDiags,
         'channels': range(1,6),
