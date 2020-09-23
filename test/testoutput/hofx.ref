@@ -27,8 +27,8 @@ Test     : Fld=10  Min=0, Max=0.000326583, RMS=5.13555e-06 : index_qg
 Test     : H(x): 
 Test     : Radiosonde nobs= 3896 Min=-29.879, Max=299.158, RMS=122.008
 Test     : Satwind nobs= 198 Min=-29.4177, Max=49.7966, RMS=11.0351
-Test     : GnssroRef nobs= 20 Min=0.206457, Max=355.325, RMS=132.933
-Test     : GnssroBndROPP1D nobs= 12 Min=0.000561713, Max=0.0131566, RMS=0.00762747
+Test     : GnssroRef nobs= 20 Min=0.206802, Max=355.173, RMS=132.883
+Test     : GnssroBndROPP1D nobs= 12 Min=0.000560439, Max=0.0131566, RMS=0.00762597
 Test     : AMSUA-NOAA19--nohydro nobs= 500 Min=208.371, Max=272.692, RMS=236.85
 Test     : AMSUA-NOAA19--hydro nobs= 400 Min=146.37, Max=290.372, RMS=224.795
 Test     : AIRS-AQUA nobs= 300 Min=210.903, Max=231.052, RMS=221.956
