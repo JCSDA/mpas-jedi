@@ -73,6 +73,11 @@ class StateMPAS : public util::Printable,
 /// Interactions with Increment
   StateMPAS & operator+=(const IncrementMPAS &);
 
+/// Serialization
+  size_t serialSize() const;
+  void serialize(std::vector<double> &) const;
+  void deserialize(const std::vector<double> &, size_t &);
+
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
   void analytic_init(const eckit::Configuration &, const GeometryMPAS &);

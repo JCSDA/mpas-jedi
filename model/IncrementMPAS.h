@@ -112,6 +112,11 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   int & toFortran() {return keyInc_;}
   const int & toFortran() const {return keyInc_;}
 
+/// Serialization
+  size_t serialSize() const;
+  void serialize(std::vector<double> &) const;
+  void deserialize(const std::vector<double> &, size_t &);
+
 /// Data
  private:
   void print(std::ostream &) const;

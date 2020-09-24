@@ -140,6 +140,54 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
+/// Serialization
+// -----------------------------------------------------------------------------
+size_t StateMPAS::serialSize() const {
+  // Field
+  size_t nn = 0;
+  int state_size;
+  mpas_state_serial_size_f90(keyState_, state_size);
+  nn += state_size;
+
+  // Magic factor
+  nn += 1;
+
+  // Date and time
+  nn += time_.serialSize();
+  return nn;
+}
+
+// -----------------------------------------------------------------------------
+constexpr double SerializeCheckValue = -54321.98765;
+void StateMPAS::serialize(std::vector<double> & vect) const {
+  // Serialize the field
+  int state_size;
+  size_t nn;
+  mpas_state_serial_size_f90(keyState_, state_size);
+  nn = state_size;
+  std::vector<double> vect_field(nn, 0);
+  mpas_state_serialize_f90(keyState_, nn, vect_field.data());
+  vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+
+  // Magic value placed in serialization; used to validate deserialization
+  vect.push_back(SerializeCheckValue);
+
+  // Serialize the date and time
+  time_.serialize(vect);
+}
+// -----------------------------------------------------------------------------
+void StateMPAS::deserialize(const std::vector<double> & vect, size_t & index) {
+  // Deserialize the field
+  mpas_state_deserialize_f90(keyState_, vect.size(), vect.data(), index);
+
+  // Use magic value to validate deserialization
+  ASSERT(vect.at(index) == SerializeCheckValue);
+  ++index;
+
+  // Deserialize the date and time
+  time_.deserialize(vect, index);
+}
+// -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void StateMPAS::read(const eckit::Configuration & config) {

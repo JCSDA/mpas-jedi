@@ -76,6 +76,10 @@ extern "C" {
   void mpas_increment_dirac_f90(const F90inc &,
                                 const eckit::Configuration &);
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);
+  void mpas_increment_serial_size_f90(const F90inc &, int &);
+  void mpas_increment_serialize_f90(const F90inc &, const std::size_t &, double[]);
+  void mpas_increment_deserialize_f90(const F90inc &, const std::size_t &, const double[],
+                                      const std::size_t &);
 
 };  // extern "C"
 // -----------------------------------------------------------------------------

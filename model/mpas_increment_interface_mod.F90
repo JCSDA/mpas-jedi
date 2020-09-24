@@ -492,7 +492,66 @@ nc = self%geom%nCellsGlobal
 
 end subroutine mpas_increment_sizes_c
 
-! ------------------------------------------------------------------------------   
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_increment_serial_size_c(c_key_self,c_vsize) &
+      bind(c,name='mpas_increment_serial_size_f90')
+
+implicit none
+
+! Passed variables
+integer(c_int),intent(in) :: c_key_self !< Increment
+integer(c_int),intent(out) :: c_vsize   !< Size
+
+type(mpas_field),pointer :: self
+
+call mpas_field_registry%get(c_key_self, self)
+call self%serial_size(c_vsize)
+
+end subroutine mpas_increment_serial_size_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_increment_serialize_c(c_key_self,c_vsize,c_vect_inc) &
+      bind(c,name='mpas_increment_serialize_f90')
+
+implicit none
+
+! Passed variables
+integer(c_int),intent(in) :: c_key_self           !< Increment
+integer(c_int),intent(in) :: c_vsize              !< Size
+real(c_double),intent(out) :: c_vect_inc(c_vsize) !< Vector
+
+type(mpas_field),pointer :: self
+
+call mpas_field_registry%get(c_key_self, self)
+! Call Fortran
+call self%serialize(c_vsize, c_vect_inc)
+
+end subroutine mpas_increment_serialize_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_increment_deserialize_c(c_key_self,c_vsize,c_vect_inc,c_index) &
+      bind(c,name='mpas_increment_deserialize_f90')
+
+implicit none
+
+! Passed variables
+integer(c_int),intent(in) :: c_key_self          !< Increment
+integer(c_int),intent(in) :: c_vsize             !< Size
+real(c_double),intent(in) :: c_vect_inc(c_vsize) !< Vector
+integer(c_int), intent(inout):: c_index          !< Index
+
+type(mpas_field),pointer :: self
+
+call mpas_field_registry%get(c_key_self, self)
+
+! Call Fortran
+call self%deserialize(c_vsize, c_vect_inc, c_index)
+
+end subroutine mpas_increment_deserialize_c
+! ------------------------------------------------------------------------------
 
 end module mpas_increment_interface_mod
 

@@ -50,7 +50,12 @@ class ModelBiasIncrementMPAS : public util::Printable {
   void write(const eckit::Configuration &) const {}
   double norm() const {return 0.0;}
 
- private:
+ /// Serialization
+  size_t serialSize() const { return 0; }
+  void serialize(std::vector<double> &) const {}
+  void deserialize(const std::vector<double> &, size_t &) {}
+
+private:
   explicit ModelBiasIncrementMPAS(const ModelBiasCovarianceMPAS &);
   void print(std::ostream & os) const {}
 };

@@ -181,6 +181,53 @@ void IncrementMPAS::write(const eckit::Configuration & config) const {
   mpas_increment_write_file_f90(keyInc_, config, time_);
 }
 // -----------------------------------------------------------------------------
+/// Serialization
+// -----------------------------------------------------------------------------
+size_t IncrementMPAS::serialSize() const {
+  // Field
+  size_t nn = 0;
+  int inc_size;
+  mpas_increment_serial_size_f90(keyInc_, inc_size);
+  nn += inc_size;
+
+  // Magic value
+  nn += 1;
+
+  // Date and time
+  nn += time_.serialSize();
+  return nn;
+}
+
+// -----------------------------------------------------------------------------
+constexpr double SerializeCheckValue = -54321.98765;
+void IncrementMPAS::serialize(std::vector<double> & vect) const {
+  // Serialize the field
+  int inc_size;
+
+  mpas_increment_serial_size_f90(keyInc_, inc_size);
+
+  std::vector<double> vect_field(inc_size, 0.0);
+
+  mpas_increment_serialize_f90(keyInc_, inc_size, vect_field.data());
+  vect.insert(vect.end(), vect_field.begin(), vect_field.end());
+
+  // Magic value placed in serialization; used to validate deserialization
+  vect.push_back(SerializeCheckValue);
+
+  // Serialize the date and time
+  time_.serialize(vect);
+}
+// -----------------------------------------------------------------------------
+void IncrementMPAS::deserialize(const std::vector<double> & vect, size_t & index) {
+  mpas_increment_deserialize_f90(keyInc_, vect.size(), vect.data(), index);
+
+  // Use magic value to validate deserialization
+  ASSERT(vect.at(index) == SerializeCheckValue);
+  ++index;
+
+  time_.deserialize(vect, index);
+}
+// -----------------------------------------------------------------------------
 double IncrementMPAS::norm() const {
   double zz = 0.0;
   mpas_increment_rms_f90(keyInc_, zz);
