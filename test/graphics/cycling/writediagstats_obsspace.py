@@ -1,0 +1,1 @@
+../writediagstats_obsspace.py

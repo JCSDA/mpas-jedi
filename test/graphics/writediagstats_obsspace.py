@@ -18,7 +18,7 @@ from netCDF4 import Dataset
 import numpy as np
 import os
 import stat_utils as su
-import ufo_file_utils as ufofu
+import JediDB
 import var_utils as vu
 
 #analysis outer iteration
@@ -26,27 +26,27 @@ anIter=str(du.NOUTER)
 
 _logger = logging.getLogger(__name__)
 
-def writediagstats_obsspace(database, osKey):
-    #  database - ufofu.FeedbackFiles object
-    #  osKey    - key of database members to reference
+def writediagstats_obsspace(jdb, osKey):
+    #  jdb   - JediDB object
+    #  osKey - key of jdb members to reference
 
     logger = logging.getLogger(__name__+'.'+osKey)
 
-    database.initHandles(osKey)
+    jdb.initHandles(osKey)
 
     ###############################################
     ## Extract constructor info about the ObsSpace
     ###############################################
 
-    ObsSpaceName  = database.ObsSpaceName[osKey]
+    ObsSpaceName  = jdb.ObsSpaceName[osKey]
     ObsSpaceInfo  = conf.DiagSpaceConfig[ObsSpaceName]
     ObsSpaceGrp   = ObsSpaceInfo['DiagSpaceGrp']
     binVarConfigs = ObsSpaceInfo.get('binVarConfigs',{})
     selectDiagNames = ObsSpaceInfo.get('diagNames',{})
 
     # create observed variable list by selecting those variables in the
-    # obs feedback files (ufofu.obsFKey) with the suffix vu.depbgGroup
-    obsVars = database.varList(osKey,ufofu.obsFKey,vu.depbgGroup)
+    # obs feedback files (JediDB.obsFKey) with the suffix vu.depbgGroup
+    obsVars = jdb.varList(osKey,JediDB.obsFKey,vu.depbgGroup)
 
 
     ########################################################
@@ -102,7 +102,7 @@ def writediagstats_obsspace(database, osKey):
 
     ############################################
     ## Generate comprehensive list of required
-    ## variables, then read from database
+    ## variables, then read from jdb
     ############################################
 
     dbVars = []
@@ -120,8 +120,8 @@ def writediagstats_obsspace(database, osKey):
                 varName, [vu.bgIter,anIter]):
                 dbVars.append(varGrp)
 
-    # read the database values into memory
-    dbVals = database.readVars(osKey,dbVars)
+    # read the jdb values into memory
+    dbVals = jdb.readVars(osKey,dbVars)
 
 
     ######################################
@@ -187,7 +187,7 @@ def writediagstats_obsspace(database, osKey):
     su.write_stats_nc(osKey,statsDict)
 
     ## Destroy UFO file handles
-    database.destroyHandles(osKey)
+    jdb.destroyHandles(osKey)
 
 
 #=========================================================================
@@ -205,7 +205,7 @@ def main():
                     help="Number of tasks/processors for multiprocessing")
     ap.add_argument("-p", "--data_path",
                     help="Path to UFO feedback files, default = "
-                         +ufofu.default_path)
+                         +JediDB.default_path)
     ap.add_argument("-o", "--oPrefix",
                     help="prefix for ObsSpace files")
     ap.add_argument("-g", "--gPrefix",
@@ -220,28 +220,28 @@ def main():
     else:
         nprocs = 1
 
-    data_path = ufofu.default_path
+    data_path = JediDB.default_path
     if MyArgs.data_path: data_path = MyArgs.data_path
 
     argfPrefixes = {
-        ufofu.obsFKey:  MyArgs.oPrefix,
-        ufofu.geoFKey:  MyArgs.gPrefix,
-        ufofu.diagFKey: MyArgs.dPrefix,
+        JediDB.obsFKey:  MyArgs.oPrefix,
+        JediDB.geoFKey:  MyArgs.gPrefix,
+        JediDB.diagFKey: MyArgs.dPrefix,
     }
-    for key, prefix in ufofu.default_fPrefixes.items():
+    for key, prefix in JediDB.default_fPrefixes.items():
         if not argfPrefixes.get(key,False):
-            argfPrefixes[key] = ufofu.default_fPrefixes[key]
+            argfPrefixes[key] = JediDB.default_fPrefixes[key]
 
-    database = ufofu.FeedbackFiles(data_path,'nc4',argfPrefixes)
+    jdb = JediDB.JediDB(data_path,'nc4',argfPrefixes)
 
     # Loop over all experiment+observation combinations (keys) alphabetically
     ospool = Pool(processes=nprocs)
 
-    for osKey in sorted(database.Files):
-        res = ospool.apply_async(writediagstats_obsspace, args=(database,osKey))
+    for osKey in sorted(jdb.Files):
+        res = ospool.apply_async(writediagstats_obsspace, args=(jdb,osKey))
 
         # FOR DEBUGGING
-#        writediagstats_obsspace(database,osKey)
+#        writediagstats_obsspace(jdb,osKey)
 
     ospool.close()
     ospool.join()

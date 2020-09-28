@@ -30,7 +30,7 @@ MAXDOUBLE = np.float64(1.e12)
 
 _logger = logging.getLogger(__name__)
 
-class FeedbackFiles:
+class JediDB:
     '''This class provides access to UFO feedback files.'''
     def __init__(self,data_path=default_path,fileExt='nc4'
         ,fPrefixes=default_fPrefixes
