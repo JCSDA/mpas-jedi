@@ -55,6 +55,10 @@ def calcStats(array_f):
 ###############################################################################
 def write_stats_nc(statSpace,statsDict):
 
+    # TODO: This data is hierarchical. Compare
+    #       memory/storage requirements when using
+    #       Pandas dataframe and hdf5 statistics files
+    #       instead of dict of lists and nc4
     statsFile = statsFilePrefix+statSpace+'.nc'
     if os.path.exists(statsFile):
         os.remove(statsFile)
@@ -111,8 +115,8 @@ def aggStatsDF(x):
 
 def aggStatsDict(x_): #, stats = aggregatableFileStats):
 #PURPOSE: aggregate Dictionary containing aggregatableFileStats
-# INPUT: x - dictionary containing the subpopulation stats
-# OUTPUT: y - dictionary containing aggregated stats
+# INPUT: x - dictionary containing the subpopulation statistics
+# OUTPUT: y - dictionary containing aggregated statistics
 
     # convert lists to np.array to enable math functions
     x = {}
@@ -123,26 +127,26 @@ def aggStatsDict(x_): #, stats = aggregatableFileStats):
 
     y = {}
 
-    y['Count'] = x['Count'].sum()
+    y['Count'] = np.nansum(x['Count'])
 
     for stat in aggregatableFileStats:
         if stat != 'Count': y[stat] = np.NaN
 
-    if y['Count'] > 0:
+    if y['Count'] > 0 and np.isfinite(y['Count']):
         y['Mean'] = ( np.nansum( np.multiply(x['Mean'], x['Count'].astype(float)) )
-                        / ( np.sum(x['Count']).astype(float) ) )
+                      / y['Count'].astype(float) )
 
         y['MS'] = ( np.nansum( np.multiply(x['MS'], x['Count'].astype(float)) )
-                       / np.sum(x['Count']).astype(float) )
+                      / y['Count'].astype(float) )
 
         y['RMS'] = np.sqrt( y['MS'] )
 
-        y['STD'] = ( np.sqrt( (
+        y['STD'] = np.sqrt( (
                        np.nansum( np.multiply(
                            (np.square(x['STD']) + np.square(x['Mean'])),
                            x['Count'].astype(float) ) )
-                              / np.sum(x['Count']).astype(float) )
-                            - np.square(y['Mean']) ) )
+                              / y['Count'].astype(float) )
+                            - np.square(y['Mean']) )
     # Pooled variance Formula as described here:
     #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
         y['Min'] = np.nanmin(x['Min'])

@@ -21,24 +21,24 @@ import stat_utils as su
 import JediDB
 import var_utils as vu
 
-#analysis outer iteration
-anIter=str(du.NOUTER)
-
 _logger = logging.getLogger(__name__)
 
-def writediagstats_obsspace(jdb, osKey):
-    #  jdb   - JediDB object
-    #  osKey - key of jdb members to reference
+def writediagstats_obsspace(jdbs, osKey):
+    #  jdbs  - list of JediDB objects
+    #  osKey - key of jdbs members to reference
 
     logger = logging.getLogger(__name__+'.'+osKey)
 
-    jdb.initHandles(osKey)
+    nMembers = len(jdbs)-1
+
+    # initialize mean db file handles
+    jdbs[vu.mean].initHandles(osKey)
 
     ###############################################
     ## Extract constructor info about the ObsSpace
     ###############################################
 
-    ObsSpaceName  = jdb.ObsSpaceName[osKey]
+    ObsSpaceName  = jdbs[vu.mean].ObsSpaceName[osKey]
     ObsSpaceInfo  = conf.DiagSpaceConfig[ObsSpaceName]
     ObsSpaceGrp   = ObsSpaceInfo['DiagSpaceGrp']
     binVarConfigs = ObsSpaceInfo.get('binVarConfigs',{})
@@ -46,7 +46,7 @@ def writediagstats_obsspace(jdb, osKey):
 
     # create observed variable list by selecting those variables in the
     # obs feedback files (JediDB.obsFKey) with the suffix vu.depbgGroup
-    obsVars = jdb.varList(osKey,JediDB.obsFKey,vu.depbgGroup)
+    obsVars = jdbs[vu.mean].varList(osKey,JediDB.obsFKey,vu.depbgGroup)
 
 
     ########################################################
@@ -67,61 +67,65 @@ def writediagstats_obsspace(jdb, osKey):
             binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
 
 
-    ##################################
-    ## Construct diagnostic functions
-    ##################################
+    ######################################
+    ## Construct diagnostic configurations
+    ######################################
 
-    diagFunctions = {}
-    for diagName in selectDiagNames:
-        config = deepcopy(du.availableDiagnostics.get(diagName,None))
-        if config is None:
-            logger.error('diagName is undefined: '+diagName)
+    diagnosticConfigs = du.diagnosticConfigs(
+        selectDiagNames, ObsSpaceName, nMembers)
 
-        osNames = config.get('osNames',[])
-        if (len(osNames) > 0 and
-            ObsSpaceName not in osNames): continue
 
-        config['osName'] = ObsSpaceName
+    #####################################################
+    ## Generate comprehensive dict of required variables
+    #####################################################
 
-        outerIter = '0'
-        outerIterStr = config.get('iter',None)
-        if outerIterStr is not None:
-            if outerIterStr == 'bg':
-                outerIter = vu.bgIter
-            elif outerIterStr == 'an':
-                outerIter = anIter
-            elif pu.isint(outerIterStr):
-                outerIter = outerIterStr
-            else:
-                logger.error('outerIter is undefined: '+outerIterStr)
-
-        diagFunctions[diagName] = {
-            'ObsFunction': bu.ObsFunctionWrapper(config),
-            'outerIter': outerIter,
-        }
-
-    ############################################
-    ## Generate comprehensive list of required
-    ## variables, then read from jdb
-    ############################################
-
-    dbVars = []
-
+    meanDBVars = []
+    ensDBVars = []
+    dbVars = {vu.mean: [], vu.ensemble: []}
     for varName in obsVars:
         # variables for diagnostics
-        for diagName, diagFunction in diagFunctions.items():
-            for varGrp in diagFunction['ObsFunction'].dbVars(
-                varName, diagFunction['outerIter']):
-                dbVars.append(varGrp)
+        for diagName, diagnosticConfig in diagnosticConfigs.items():
+            if 'ObsFunction' not in diagnosticConfig: continue
+            for varGrp in diagnosticConfig['ObsFunction'].dbVars(
+                varName, diagnosticConfig['outerIter']):
+                for memberType in dbVars.keys():
+                    if diagnosticConfig[memberType]:
+                        dbVars[memberType].append(varGrp)
 
         # variables for binning
+        # TODO: anIter varGrp's are not needed for all applications
+        #       can save some reading time+memory by checking all diagnosticConfigs
+        #       for required iterations before appending to dbVars[vu.mean] below
         for (binVarKey,binMethodKey), binMethod in binMethods.items():
             for varGrp in binMethod.dbVars(
-                varName, [vu.bgIter,anIter]):
-                dbVars.append(varGrp)
+                varName, [vu.bgIter, vu.anIter]):
+                dbVars[vu.mean].append(varGrp)
 
-    # read the jdb values into memory
-    dbVals = jdb.readVars(osKey,dbVars)
+
+    #####################################
+    ## Read required variables from jdbs
+    #####################################
+
+    # read mean database variable values into memory
+    dbVals = jdbs[vu.mean].readVars(osKey, dbVars[vu.mean])
+
+    # destroy mean file handles
+    jdbs[vu.mean].destroyHandles(osKey)
+
+    # now for ensemble members
+    for memStr, jdb in jdbs.items():
+        if memStr == vu.mean: continue
+
+        # initialize member db file handles
+        jdb.initHandles(osKey)
+
+        # read database variable values into memory
+        memberDBVals = jdb.readVars(osKey, dbVars[vu.ensemble])
+        for dbVar, vals in memberDBVals.items():
+            dbVals[dbVar+memStr] = vals.copy()
+
+        # destroy file handles
+        jdb.destroyHandles(osKey)
 
 
     ######################################
@@ -135,20 +139,25 @@ def writediagstats_obsspace(jdb, osKey):
     for statName in su.allFileStats:
         statsDict[statName] = []
 
-    logger.info('Calculating/writing diagnostic stats for:')
-    for varName in obsVars:
-        logger.info('VARIABLE = '+varName)
+    # collect stats for all diagnosticConfigs
+    for diagName, diagnosticConfig in diagnosticConfigs.items():
+        if 'ObsFunction' not in diagnosticConfig: continue
 
-        varShort, varUnits = vu.varAttributes(varName)
+        logger.info('Calculating/writing diagnostic stats for:')
+        logger.info('DIAG = '+diagName)
+        Diagnostic = diagnosticConfig['ObsFunction']
+        outerIter = diagnosticConfig['outerIter']
 
-        # collect stats for all diagFunctions
-        for diagName, diagFunction in diagFunctions.items():
-            logger.info('DIAG = '+diagName)
+        for varName in obsVars:
+            logger.info('VARIABLE = '+varName)
 
-            func = diagFunction['ObsFunction']
-            outerIter = diagFunction['outerIter']
-            func.evaluate(dbVals,varName,outerIter)
-            Diagnostic = func.result
+            varShort, varUnits = vu.varAttributes(varName)
+
+            Diagnostic.evaluate(dbVals, varName, outerIter)
+            diagValues = Diagnostic.result
+
+            if len(diagValues)-np.isnan(diagValues).sum() == 0:
+                logger.warning('All missing values for diagnostic: '+diagName)
 
             for (binVarKey,binMethodKey), binMethod in binMethods.items():
                 if diagName in binMethod.excludeDiags: continue
@@ -157,9 +166,20 @@ def writediagstats_obsspace(jdb, osKey):
                 binVarShort, binVarUnits = vu.varAttributes(binVarName)
 
                 # initialize binMethod filter function result
-                binMethod.evaluate(dbVals,varName,outerIter)
+                # NOTE: binning is performed using mean values
+                #       and not ensemble member values
+                binMethod.evaluate(dbVals, varName, outerIter)
 
                 for binVal in binMethod.values:
+                    # apply binMethod filters for binVal
+                    binnedDiagnostic = binMethod.apply(diagValues,diagName,binVal)
+
+                    # store value and statistics associated with this bin
+                    statsDict['binVal'].append(binVal)
+                    statsVal = su.calcStats(binnedDiagnostic)
+                    for statName in su.allFileStats:
+                        statsDict[statName].append(statsVal[statName])
+
                     # store metadata common to all bins
                     statsDict['DiagSpaceGrp'].append(ObsSpaceGrp)
                     statsDict['varName'].append(varShort)
@@ -169,25 +189,13 @@ def writediagstats_obsspace(jdb, osKey):
                     statsDict['binVar'].append(binVarShort)
                     statsDict['binUnits'].append(binVarUnits)
 
-                    # apply binMethod filters for binVal
-                    binnedDiagnostic = binMethod.apply(Diagnostic,diagName,binVal)
-
-                    # store value and statistics associated with this bin
-                    statsDict['binVal'].append(binVal)
-                    statsVal = su.calcStats(binnedDiagnostic)
-                    for statName in su.allFileStats:
-                        statsDict[statName].append(statsVal[statName])
-
                 #END binMethod.values LOOP
             #END binMethods tuple LOOP
-        #END selectDiagNames LOOP
-    #END obsVars LOOP
+        #END obsVars LOOP
+    #END diagnosticConfigs LOOP
 
     ## Create a new stats file for osKey
     su.write_stats_nc(osKey,statsDict)
-
-    ## Destroy UFO file handles
-    jdb.destroyHandles(osKey)
 
 
 #=========================================================================
@@ -201,47 +209,50 @@ def main():
 
     # Parse command line
     ap = argparse.ArgumentParser()
-    ap.add_argument("-n", "--nprocs",
+    ap.add_argument("-n", "--nprocs", default = 1, type=int,
                     help="Number of tasks/processors for multiprocessing")
-    ap.add_argument("-p", "--data_path",
-                    help="Path to UFO feedback files, default = "
+    ap.add_argument("-p", "--meanPath", default = JediDB.default_path,
+                    help="Path to deterministic or mean state UFO feedback files, default = "
                          +JediDB.default_path)
-    ap.add_argument("-o", "--oPrefix",
+    ap.add_argument("-o", "--oPrefix", default = JediDB.default_fPrefixes[JediDB.obsFKey],
                     help="prefix for ObsSpace files")
-    ap.add_argument("-g", "--gPrefix",
+    ap.add_argument("-g", "--gPrefix", default = JediDB.default_fPrefixes[JediDB.geoFKey],
                     help="prefix for GeoVaLs files")
-    ap.add_argument("-d", "--dPrefix",
+    ap.add_argument("-d", "--dPrefix", default = JediDB.default_fPrefixes[JediDB.diagFKey],
                     help="prefix for ObsDiagnostics files")
+    ap.add_argument("-m", "--nMembers", default = 0, type=int,
+                    help="number of ensemble members; must be >1 to produce ensemble diagnostic stats")
+    ap.add_argument("-e", "--ensemblePath", default = JediDB.default_path+"/mem{:03d}", type=str,
+                    help="Path to ensemble member UFO feedback files; must have substitution string for member integer, e.g., '{:03d}' for 001, 002, etc...")
 
     MyArgs = ap.parse_args()
 
-    if MyArgs.nprocs:
-        nprocs = int(MyArgs.nprocs)
-    else:
-        nprocs = 1
-
-    data_path = JediDB.default_path
-    if MyArgs.data_path: data_path = MyArgs.data_path
+    nprocs = MyArgs.nprocs
 
     argfPrefixes = {
         JediDB.obsFKey:  MyArgs.oPrefix,
         JediDB.geoFKey:  MyArgs.gPrefix,
         JediDB.diagFKey: MyArgs.dPrefix,
     }
-    for key, prefix in JediDB.default_fPrefixes.items():
-        if not argfPrefixes.get(key,False):
-            argfPrefixes[key] = JediDB.default_fPrefixes[key]
 
-    jdb = JediDB.JediDB(data_path,'nc4',argfPrefixes)
+    # construct mean into 0th member slot
+    _logger.info('mean database: '+MyArgs.meanPath)
+    jdbs = {vu.mean: JediDB.JediDB(MyArgs.meanPath, 'nc4', argfPrefixes)}
+
+    # construct ens members into subsequent slots (when available)
+    for member in list(range(1, MyArgs.nMembers+1)):
+        ensemblePath = str(MyArgs.ensemblePath).format(member)
+        _logger.info('adding member database: '+ensemblePath)
+        jdbs[vu.ensSuffix(member)] = JediDB.JediDB(ensemblePath, 'nc4', argfPrefixes)
 
     # Loop over all experiment+observation combinations (keys) alphabetically
     ospool = Pool(processes=nprocs)
 
-    for osKey in sorted(jdb.Files):
-        res = ospool.apply_async(writediagstats_obsspace, args=(jdb,osKey))
+    for osKey in sorted(jdbs[vu.mean].Files):
+        res = ospool.apply_async(writediagstats_obsspace, args=(jdbs, osKey))
 
         # FOR DEBUGGING
-#        writediagstats_obsspace(jdb,osKey)
+#        writediagstats_obsspace(jdbs, osKey)
 
     ospool.close()
     ospool.join()

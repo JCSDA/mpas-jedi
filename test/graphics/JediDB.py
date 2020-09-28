@@ -28,8 +28,6 @@ MAXINT32  = np.int32(1e9)
 MAXFLOAT  = np.float32(1.e12)
 MAXDOUBLE = np.float64(1.e12)
 
-_logger = logging.getLogger(__name__)
-
 class JediDB:
     '''This class provides access to UFO feedback files.'''
     def __init__(self,data_path=default_path,fileExt='nc4'
@@ -84,8 +82,11 @@ class JediDB:
         self.Files = {}
         for fileType, files in allFiles.items():
             for fileName in files:
+                # fileBase excludes the path
+                fileBase = fileName.split("/")[-1]
+
                 # osKey excludes everything outside the first/final '_'
-                osKey =  '_'.join(fileName.split("_")[1:][:-1])
+                osKey =  '_'.join(fileBase.split("_")[1:][:-1])
                 if osKey not in self.Files:
                     self.Files[osKey] = {}
                 if fileType not in self.Files[osKey]:

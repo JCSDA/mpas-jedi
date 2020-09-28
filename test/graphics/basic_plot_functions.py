@@ -303,7 +303,7 @@ def plotSeries(fig, \
     plotVals = []
     nLines = 0
     for iline, lineVals in enumerate(linesVals):
-        if all(np.isnan(lineVals)):
+        if np.all(np.isnan(lineVals)):
             global nanWarnSer
             if nanWarnSer==0:
                 _logger.warning("skipping all-NaN data")
@@ -490,7 +490,7 @@ def plotProfile(fig, \
     plotVals = []
     nLines = 0
     for iline, lineVals in enumerate(linesVals):
-        if all(np.isnan(lineVals)):
+        if np.all(np.isnan(lineVals)):
             global nanWarnProf
             if nanWarnProf==0:
                 _logger.warning("skipping all-NaN data")
@@ -675,8 +675,9 @@ def plotTimeSeries(fig, \
     #add lines
     plotVals = []
     nLines = 0
+    jline = 0
     for iline, lineVals in enumerate(linesVals):
-        if all(np.isnan(lineVals)):
+        if np.all(np.isnan(lineVals)):
             global nanWarnTS
             if nanWarnTS==0:
                 _logger.warning("skipping all-NaN data")
@@ -698,12 +699,13 @@ def plotTimeSeries(fig, \
             lenWarnTS=lenWarnTS+1
             continue
 
-        if iline == 0:
+        if jline == 0:
             minX = xVals[0]
             maxX = xVals[-1]
         else:
             minX = min([xVals[0], minX])
             maxX = max([xVals[-1], maxX])
+        jline += 1
 
         # Plot line for each lineVals that has non-missing data
         pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
@@ -1000,7 +1002,7 @@ def plotPDF(fig,
     plotVals = []
     nPDFs = 0
     for ihist, countVals in enumerate(countsVals):
-        if all(np.isnan(countVals)):
+        if np.all(np.isnan(countVals)):
             global nanWarnPDF
             if nanWarnPDF==0:
                 _logger.warning("skipping all-NaN data")
@@ -1123,7 +1125,7 @@ def plotfitRampComposite(fig,
     nLines = 0
     linesLabel = ['RMS','STD','Mean']
     for iline, lineVals in enumerate([rmsVals,stdVals,meanVals]):
-        if all(np.isnan(lineVals)):
+        if np.all(np.isnan(lineVals)):
             global nanWarnRamp
             if nanWarnRamp==0:
                 _logger.warning("skipping all-NaN data")

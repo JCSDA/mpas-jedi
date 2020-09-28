@@ -71,57 +71,57 @@ maxGlint = 90.0
 # binning where functions
 #========================
 
-# Note: NaN values have mask set to true by default
+# Note: NaN and Inf values have mask set to true by default
 
-def equalBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.equal(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def equalBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.equal(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def notEqualBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.not_equal(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def notEqualBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.not_equal(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def lessEqualBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.less_equal(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def lessEqualBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.less_equal(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def lessBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.less(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def lessBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.less(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def greatEqualBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.greater_equal(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def greatEqualBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.greater_equal(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def greatBound(x, bound, nanmask=True):
-    nanlocs = np.isnan(x)
-    mask = np.empty_like(x, dtype=bool)
-    mask[~nanlocs] = np.greater(x[~nanlocs], bound)
-    mask[nanlocs] = nanmask
+def greatBound(x, bound, missingValue=True):
+    finite = np.isfinite(x)
+    mask = np.empty_like(finite)
+    mask[finite] = np.greater(x[finite], bound)
+    mask[~finite] = missingValue
     return mask
 
-def betweenBounds(x, bound1, bound2, nanmask=True):
-    nanlocs = np.isnan(x)
+def betweenBounds(x, bound1, bound2, missingValue=True):
+    finite = np.isfinite(x)
     belowbounds = lessEqualBound(x, bound1)
     abovebounds = greatEqualBound(x, bound2)
     mask        = np.logical_not(np.logical_or(
                       belowbounds, abovebounds ))
-    mask[nanlocs] = nanmask
+    mask[~finite] = missingValue
     return mask
 
 
@@ -143,8 +143,9 @@ class GlintAngle:
         solazi = dbVals[vu.solaziMeta]
 
         relazi = np.abs(np.subtract(solazi,senazi))
-        relazi[relazi > 180.0] = np.subtract(360.0,relazi[relazi > 180.0])
-        relazi = np.multiply(np.subtract(180.0,relazi), vu.deg2rad)
+        p = greatBound(relazi, 180.0, False)
+        relazi[p] = np.subtract(360.0, relazi[p])
+        relazi = np.multiply(np.subtract(180.0, relazi), vu.deg2rad)
 
         senzen = np.multiply(dbVals[vu.senzenMeta], vu.deg2rad)
         solzen = np.multiply(dbVals[vu.solzenMeta], vu.deg2rad)
@@ -153,11 +154,11 @@ class GlintAngle:
                     np.multiply(np.sin(solzen),
                         np.multiply(np.sin(senzen), np.cos(relazi))))
 
-        glint[glint >  1.0] = np.NaN
-        glint[glint < -1.0] = np.NaN
+        glint[greatBound(glint, 1.0)] = np.NaN
+        glint[lessBound(glint, -1.0)] = np.NaN
 
         glint = np.multiply(np.arccos(glint), vu.rad2deg)
-        glint[glint > maxGlint] = maxGlint
+        glint[greatBound(glint, maxGlint, False)] = maxGlint
 
         return glint
 
@@ -170,9 +171,9 @@ class LocalHour:
 
     def evaluate(self, dbVals, caseParams):
         TimeStr = dbVals[vu.dtMeta]
-        tzOffset = np.divide(dbVals[vu.lonMeta],15.0)
+        tzOffset = np.divide(dbVals[vu.lonMeta], 15.0)
 
-        LH = np.full_like(tzOffset,0.0)
+        LH = np.full_like(tzOffset, 0.0)
         t0 = LH0
         t1 = LH1
         dt = LHDT
@@ -207,9 +208,10 @@ class AsymmetricCloudImpact:
         BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
         BTbak = np.add(BTdep,BTobs)
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
-        BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
-        ACE = np.subtract(np.abs(np.subtract(BTobs,BTclr)),
-                          np.abs(np.subtract(BTbak,BTclr)))
+        p = lessBound(BTclr, 1.0, False)
+        BTclr[p] = BTbak[p]
+        ACE = np.subtract(np.abs(np.subtract(BTobs, BTclr)),
+                          np.abs(np.subtract(BTbak, BTclr)))
         return ACE
 
 

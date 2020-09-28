@@ -105,6 +105,15 @@ landfracGeo = obsVarLandFrac+'@'+geoGroup
 
 clrskyBTDiag = 'brightness_temperature_assuming_clear_sky_'+vChanStr+'@'+diagGroup
 
+mean = 'mean'
+ensemble = 'ensemble'
+ensSuffixBase = "&&&mem"
+def ensSuffix(member):
+    if member == 0:
+        return ""
+    else:
+        return ensSuffixBase+str(member)
+
 # functions for extracting sub-parts of UFO variable names
 def splitObsVarGrp(varATgroup):
     if "@" in varATgroup:
@@ -152,8 +161,14 @@ def varAttributes(var):
 
 
 bgIter = '0'
-def base2dbVar(baseVar,varName,Iter):
-    iterStr = str(Iter)
+#analysis outer iteration
+#TODO: replace NOUTER with a command-line option or
+#      move to central work-flow configuration script
+nOuter = int(os.getenv('NOUTER',0)) #set equal to number of outer iterations
+anIter = str(nOuter)
+
+def base2dbVar(baseVar, varName, outerIter):
+    iterStr = str(outerIter)
     dictName, suf = splitIntSuffix(varName)
     dbVar = re.sub(vNameStr,varName,baseVar)
     dbVar = re.sub(vChanStr,suf,dbVar)

@@ -5,6 +5,7 @@ import analyze_config as anconf
 import argparse
 import config as conf
 from copy import deepcopy
+import diag_utils as du
 import logging
 import logsetup
 import multiprocessing as mp
@@ -104,7 +105,15 @@ def main():
         ## setup DiagSpaceName configuration
         myDBConf = deepcopy(anconf.dbConf)
         myDBConf['DiagSpaceName'] = DiagSpaceName
-        myDBConf['diagNames'] = deepcopy(DiagSpaceConfig[DiagSpaceName]['diagNames'])
+
+        availableDiagNames = []
+        for diag in DiagSpaceConfig[DiagSpaceName]['diagNames']:
+            if du.availableDiagnostics[diag].get('analyze',True):
+                availableDiagNames.append(diag)
+
+        myDBConf['diagnosticConfigs'] = du.diagnosticConfigs(
+            availableDiagNames, DiagSpaceName,
+            analysisStatistics = anconf.analysisStatistics)
 
         # Construct statistical database for each DiagSpace
         db = sdb.StatsDB(myDBConf)

@@ -190,7 +190,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': defaultDiags+du.sigmaDiagNames,
     },
     'gnssro': {
         'DiagSpaceGrp': profile_s,
@@ -232,7 +232,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': defaultDiags+du.sigmaDiagNames,
     },
 #radiances
     'abi_g16': {
@@ -240,7 +240,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': defaultDiags+du.sigmaDiagNames,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
     },
@@ -249,7 +249,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': defaultDiags+du.sigmaDiagNames,
 #        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
         'channels': [8,9,10,11,13,14,15,16],
     },

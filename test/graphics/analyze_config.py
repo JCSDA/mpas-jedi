@@ -53,6 +53,11 @@ Job-submission examples:
 
 '''
 ########################################################################
+#Select the statistics to be analyzed
+# options: see su.allFileStats
+# 'analysisStatistics' from individual diagnostics will override this setting
+analysisStatistics = ['Count','Mean','RMS','STD']
+
 ## Configure the sdb.StatsDB objects
 dbConf = {}
 

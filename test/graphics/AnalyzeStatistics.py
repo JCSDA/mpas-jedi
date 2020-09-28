@@ -8,6 +8,7 @@ from collections import defaultdict
 from copy import deepcopy
 import collections
 import datetime as dt
+import diag_utils as du
 import inspect
 import logging
 import multiprocessing as mp
@@ -24,10 +25,6 @@ bootStrapStats = []
 for x in su.sampleableAggStats:
     if x != 'Count': bootStrapStats.append(x)
 
-#Select the stats for plotting
-# options: see su.allFileStats
-statNames = ['Count','Mean','RMS','STD']
-
 ## plot settings
 figureFileType = 'pdf' #['pdf','png']
 
@@ -42,44 +39,43 @@ def anWorkingDir(DiagSpace):
 ###################################
 class AnalyzeStatisticsBase():
     def __init__(self, db, analysisType):
-        self.db = db
-        self.DiagSpaceName = db.DiagSpaceName
         self.analysisType = analysisType
+        self.DiagSpaceName = db.DiagSpaceName
 
         self.logger = logging.getLogger(__name__+'.'+self.DiagSpaceName+'.'+self.analysisType)
 
         ## Extract useful variables from the database
-        self.diagNames = db.diagNames
-        self.allDiagNames = db.allDiagNames
+        self.db = db
+        self.diagnosticConfigs = db.diagnosticConfigs
 
-        self.expNames = db.expNames
+        self.expNames = self.db.expNames
         self.nExp = len(self.expNames)
-        self.cntrlExpName = db.cntrlExpName
-        self.noncntrlExpNames = db.noncntrlExpNames
+        self.cntrlExpName = self.db.cntrlExpName
+        self.noncntrlExpNames = self.db.noncntrlExpNames
 
-        self.fcTDeltas = db.fcTDeltas
-        self.fcTDeltas_totmin = db.fcTDeltas_totmin
+        self.fcTDeltas = self.db.fcTDeltas
+        self.fcTDeltas_totmin = self.db.fcTDeltas_totmin
         self.fcMap = list(zip(self.fcTDeltas, self.fcTDeltas_totmin))
         self.nFC = len(self.fcTDeltas)
 
-        self.cyDTimes = db.cyDTimes
+        self.cyDTimes = self.db.cyDTimes
         self.nCY = len(self.cyDTimes)
 
-        self.varNames = db.varNames
+        self.varNames = self.db.varNames
         self.nVars = len(self.varNames)
 
         varLabels = []
-        for (varName, varUnits) in zip(self.varNames, db.varUnitss):
+        for (varName, varUnits) in zip(self.varNames, self.db.varUnitss):
             label = varName
             if varUnits != vu.miss_s:
                 label = label+' ('+varUnits+')'
             varLabels.append(label)
         self.varMap = list(zip(self.varNames, varLabels))
-        self.chlist = db.chlist
+        self.chlist = self.db.chlist
 
-        self.allBinVals = db.allBinVals
-        self.binNumVals = db.binNumVals
-        self.binNumVals2DasStr = db.binNumVals2DasStr
+        self.allBinVals = self.db.allBinVals
+        self.binNumVals = self.db.binNumVals
+        self.binNumVals2DasStr = self.db.binNumVals2DasStr
 
         ## Establish default configuration
         self.blocking = False
@@ -93,6 +89,7 @@ class AnalyzeStatisticsBase():
         # of multiprocessing Pool's.
         # self.nproc = nproc
 
+        self.requiredStatistics = []
         self.requestAggDFW = False
         self.blankBinMethodFile = bu.identityBinMethod
 
@@ -141,7 +138,7 @@ class AnalyzeStatisticsBase():
         Define plotting attributes for the combination of diagName and statName
         '''
         fcDiagName = self.fcName(diagName)
-        if statName == 'Count':
+        if statName in ['Count']+du.CRStatNames:
             statDiagLabel = statName
             fcstatDiagLabel = statName
         else:
@@ -199,14 +196,14 @@ class AnalyzeStatisticsBase():
 
     def analyze_(self, workers = None):
         '''
-        stub method
+        virtual method
         '''
-        pass
+        raise NotImplementedError()
 
 
 def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
     '''
-    Utility function for providing an ordered list of 
+    Utility function for providing an ordered list of
     pairs of binVals and associated labels for
     category binMethods in the context of a DFWrapper
     '''
@@ -295,48 +292,62 @@ class CategoryBinMethodBase(AnalyzeStatisticsBase):
     def analyze_(self, workers = None):
         useWorkers = (not self.blocking and self.parallelism and workers is not None)
 
-        # TODO(JJG): another category base class for multiple diagNames on same subplot
-        #      i.e., binVarDict has some attribute like 
-        #            diagNameGroups = [['omb','oma'],['obs','bak','ana']]
-        for diagName in self.db.diagNames:
-            if diagName not in self.db.allDiagNames: continue
+        # TODO(JJG): construct member Diagnostic objects (create new class) from
+        #            diagnosticConfigs instead of referencing dictionary
+        #            entries below.
+        # TODO(JJG): restructure base and derived classes to loop over lists of diagNames
+        #            instead of single diagName strings in order to put multiple diagNames
+        #            on the same subplot.  Will require some more configuration info for
+        #            line styles to vary between diagNames.
+        #            analyze_config.py and this class will have some attribute like
+        #            diagNameGroups = {'omm': ['omb','oma'], 'abs':['obs','bak','ana']}
+        for diagName, diagnosticConfig in self.diagnosticConfigs.items():
+            if diagName not in self.db.dfw.levels('diagName'): continue
+            analysisStatistics = diagnosticConfig['analysisStatistics']
+            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
 
             diagLoc = {'diagName': diagName}
             diagBinVars = self.db.dfw.levels('binVar', diagLoc)
             diagBinMethods = self.db.dfw.levels('binMethod', diagLoc)
-
             for (fullBinVar, binMethod), options in self.binVarDict.items():
                 binVar = vu.varDictObs[fullBinVar][1]
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
-                for statName in statNames:
-                    if statName not in options.get('onlyStatNames', statNames): continue
+                for statName in analysisStatistics:
+                    if statName not in options.get('onlyStatNames', analysisStatistics): continue
 
-                    self.logger.info(binVar+', '+binMethod+', '+statName)
+                    self.logger.info(diagName+', '+binVar+', '+binMethod+', '+statName)
 
                     if useWorkers:
                         workers.apply_async(self.innerloopsWrapper,
-                            args = (diagName, fullBinVar, binMethod, statName, options))
+                            args = (diagName, diagnosticConfig, fullBinVar, binMethod, statName, options))
                     else:
                         self.innerloopsWrapper(
-                            diagName, fullBinVar, binMethod, statName, options)
+                            diagName, diagnosticConfig, fullBinVar, binMethod, statName, options)
 
     def innerloopsWrapper(self,
-        diagName, fullBinVar, binMethod, statName, options):
+        diagName, diagnosticConfig, fullBinVar, binMethod, statName, options):
 
         binVar = vu.varDictObs[fullBinVar][1]
 
+        # narrow mydfwDict by binVar and binMethod to reduce run-time and memory
         myLoc = {}
-        myLoc['diagName'] = diagName
         myLoc['binVar'] = binVar
         myLoc['binMethod'] = binMethod
 
-        # reducing to mydfwDict speeds extractions in innerloops
         mydfwDict = {'dfw': self.db.loc(myLoc)}
 
-        # include aggregated statistics when requested
+        # aggregate statistics when requested
         if self.requestAggDFW:
-            mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
+            mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
+            sdb.createORreplaceDerivedDiagnostics(mydfwDict['agg'], {diagName: diagnosticConfig})
+
+        # further narrow mydfwDict by diagName
+        # NOTE: derived diagnostics may require multiple diagName values;
+        # can only narrow by diagName after aggregation
+        myLoc['diagName'] = diagName
+        for key in mydfwDict.keys():
+            mydfwDict[key] = sdb.DFWrapper.fromLoc(mydfwDict[key], myLoc)
 
         binValsMap = categoryBinValsAttributes(
             mydfwDict['dfw'], fullBinVar, binMethod, options)
@@ -797,7 +808,7 @@ class BinValLinesAnalysisType(CategoryBinMethodBase):
     def __init__(self, db, analysisType):
         super().__init__(db, analysisType)
 
-        # TODO(JJG): allow for multiple binMethods in one figure, such as 
+        # TODO(JJG): allow for multiple binMethods in one figure, such as
         #self.binVarDict = {
         #    (vu.obsVarQC, [bu.goodQCMethod, bu.badQCMethod]): {
         #        'onlyStatNames': ['Count'],
@@ -890,6 +901,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)
                             cyLoc['cyDTime'] = cyDTime
+#                            print(dfwDict['dfw'].loc(cyLoc, statName))
                             lineVals[icy] = dfwDict['dfw'].loc(cyLoc, statName)
 
                         linesVals.append(lineVals)
@@ -956,9 +968,10 @@ class OneDimBinMethodBase(AnalyzeStatisticsBase):
 
     def analyze_(self, workers = None):
         useWorkers = (not self.blocking and self.parallelism and workers is not None)
-
-        for diagName in self.db.diagNames:
-            if diagName not in self.db.allDiagNames: continue
+        for diagName, diagnosticConfig in self.diagnosticConfigs.items():
+            if diagName not in self.db.dfw.levels('diagName'): continue
+            analysisStatistics = diagnosticConfig['analysisStatistics']
+            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagName})
 
@@ -974,33 +987,41 @@ class OneDimBinMethodBase(AnalyzeStatisticsBase):
                 #Make figures for all binMethods
                 binMethods = self.db.dfw.levels('binMethod', binVarLoc)
                 for binMethod in binMethods:
-                    for statName in statNames:
-                        if statName not in options.get('onlyStatNames', statNames): continue
+                    for statName in analysisStatistics:
+                        if statName not in options.get('onlyStatNames', analysisStatistics): continue
 
-                        self.logger.info(binVar+', '+binMethod+', '+statName)
+                        self.logger.info(diagName+', '+binVar+', '+binMethod+', '+statName)
 
                         if useWorkers:
                             workers.apply_async(self.innerloopsWrapper,
-                                args = (diagName, binVar, binMethod, statName, options))
+                                args = (diagName, diagnosticConfig, binVar, binMethod, statName, options))
                         else:
                             self.innerloopsWrapper(
-                                diagName, binVar, binMethod, statName, options)
+                                diagName, diagnosticConfig, binVar, binMethod, statName, options)
 
     def innerloopsWrapper(self,
-        diagName, binVar, binMethod, statName, options):
+        diagName, diagnosticConfig, binVar, binMethod, statName, options):
 
         myLoc = {}
-        myLoc['diagName'] = diagName
+#        myLoc['diagName'] = diagName
         myLoc['binVar'] = binVar
         myLoc['binVal'] = self.binNumVals2DasStr
         myLoc['binMethod'] = binMethod
 
-        # reducing to mydfwDict speeds extractions in innerloops
+        # narrow mydfwDict by binVar, binVal, and binMethod to reduce run-time and memory
         mydfwDict = {'dfw': self.db.loc(myLoc)}
 
-        # include aggregated statistics when requested
+        # aggregate statistics when requested
         if self.requestAggDFW:
-            mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
+            mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
+            sdb.createORreplaceDerivedDiagnostics(mydfwDict['agg'], {diagName: diagnosticConfig})
+
+        # further narrow mydfwDict by diagName
+        # NOTE: derived diagnostics may require multiple diagName values;
+        # can only narrow by diagName after aggregation
+        myLoc['diagName'] = diagName
+        for key in mydfwDict.keys():
+            mydfwDict[key] = sdb.DFWrapper.fromLoc(mydfwDict[key], myLoc)
 
         ## Get all float/int binVals associated with binVar
         binVals = mydfwDict['dfw'].levels('binVal')
@@ -1475,7 +1496,7 @@ class BinValAxisPDF(AnalyzeStatisticsBase):
     '''
     def __init__(self, db, analysisType):
         super().__init__(db, analysisType)
-        # TODO(JJG): Make a generic version of bpf.plotPDF, which 
+        # TODO(JJG): Make a generic version of bpf.plotPDF, which
         # currently overlays a standard Gaussian model. That should
         # be a special case only for vu.obsVarNormErr.
         self.binVarDict = {
@@ -1487,9 +1508,13 @@ class BinValAxisPDF(AnalyzeStatisticsBase):
         self.subWidth = 1.2
         self.subAspect = 1.3
 
+        self.requiredStatistics = ['Count']
+
     def analyze_(self, workers = None):
-        for diagName in self.db.diagNames:
-            if diagName not in self.db.allDiagNames: continue
+        for diagName, diagnosticConfig in self.diagnosticConfigs.items():
+            if diagName not in self.db.dfw.levels('diagName'): continue
+            analysisStatistics = diagnosticConfig['analysisStatistics']
+            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagName})
 
@@ -1507,7 +1532,7 @@ class BinValAxisPDF(AnalyzeStatisticsBase):
 
                 # include aggregated statistics when requested
                 if self.requestAggDFW:
-                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
+                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
 
                 ## Get all float/int binVals associated with binVar
                 binMethods = mydfwDict['dfw'].levels('binMethod')
@@ -1631,7 +1656,7 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
     def __init__(self, db, analysisType):
         super().__init__(db, analysisType)
         self.binVarDict = {
-            # TODO(JJG): Make a generic version of bpf.plotComposite, because 
+            # TODO(JJG): Make a generic version of bpf.plotComposite, because
             # bpf.plotfitRampComposite also provides parameters for a ramp fitting
             # function that may not be useful for binVars besides vu.obsVarSCI.
             vu.obsVarSCI: {'statsfunc': bpf.plotfitRampComposite},
@@ -1642,9 +1667,13 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
         self.subWidth = 1.9
         self.subAspect = 0.9
 
+        self.requiredStatistics = ['Count', 'Mean', 'RMS', 'STD']
+
     def analyze_(self, workers = None):
-        for diagName in self.db.diagNames:
-            if diagName not in self.db.allDiagNames: continue
+        for diagName, diagnosticConfig in self.diagnosticConfigs.items():
+            if diagName not in self.db.dfw.levels('diagName'): continue
+            analysisStatistics = diagnosticConfig['analysisStatistics']
+            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagName})
 
@@ -1662,7 +1691,7 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
 
                 # include aggregated statistics when requested
                 if self.requestAggDFW:
-                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
+                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
 
                 ## Get all float/int binVals associated with binVar
                 binMethods = mydfwDict['dfw'].levels('binMethod')
@@ -1791,7 +1820,7 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
 #===========================
 class GrossValues(AnalyzeStatisticsBase):
     '''
-    Calculate gross statistics for specified category binMethods at first forecast length 
+    Calculate gross statistics for specified category binMethods at first forecast length
       NOTE: currently only calculates statistics at self.fcTDeltas[0]
             adjust minimum forecast length in order to calculate
             for non-zero forecast lengths, assuming those lengths
@@ -1812,8 +1841,10 @@ class GrossValues(AnalyzeStatisticsBase):
         }
 
     def analyze_(self, workers = None):
-        for diagName in self.db.diagNames:
-            if diagName not in self.db.allDiagNames: continue
+        for diagName, diagnosticConfig in self.diagnosticConfigs.items():
+            if diagName not in self.db.dfw.levels('diagName'): continue
+            analysisStatistics = diagnosticConfig['analysisStatistics']
+            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
 
             diagLoc = {'diagName': diagName}
             diagBinVars = self.db.dfw.levels('binVar', diagLoc)
@@ -1824,15 +1855,24 @@ class GrossValues(AnalyzeStatisticsBase):
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
 
+                # narrow mydfwDict by binVar and binVal to reduce run-time and memory
                 myLoc = {}
-                myLoc['diagName'] = diagName
                 myLoc['binVar'] = binVar
                 myLoc['binVal'] = self.binNumVals2DasStr
 
                 # reducing to mydfwDict speeds extractions in innerloops
                 mydfwDict = {'dfw': self.db.loc(myLoc)}
+
                 if self.requestAggDFW:
-                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'],['cyDTime'])
+                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
+                    sdb.createORreplaceDerivedDiagnostics(mydfwDict['agg'], {diagName: diagnosticConfig})
+
+                # further narrow mydfwDict by diagName
+                # NOTE: derived diagnostics may require multiple diagName values;
+                # can only narrow by diagName after aggregation
+                myLoc['diagName'] = diagName
+                for key in mydfwDict.keys():
+                    mydfwDict[key] = sdb.DFWrapper.fromLoc(mydfwDict[key], myLoc)
 
                 print(' Calculate gross statistics: binVar=>'+binVar+', binMethod=>'+binMethod)
 
@@ -1851,7 +1891,7 @@ class GrossValues(AnalyzeStatisticsBase):
                         for expName in self.expNames:
                             statsLoc['expName'] = expName
                             statsDFW = sdb.DFWrapper.fromLoc(mydfwDict['agg'], statsLoc)
-                            for statName in statNames:
+                            for statName in analysisStatistics:
                                 GrossValues[(statName, expName, varName)] = statsDFW.var(statName).to_numpy()
                     for expName in self.expNames:
                         print('Gross statistics for')
@@ -1860,7 +1900,7 @@ class GrossValues(AnalyzeStatisticsBase):
                             print('binVal=>'+binVal)
                         print(' variables: ', self.varNames)
 
-                        for statName in statNames:
+                        for statName in analysisStatistics:
                             print(statName)
                             tmp = np.asarray([])
                             for varName in self.varNames:

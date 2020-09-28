@@ -129,7 +129,8 @@ class StatsDB:
         self.logger.info(('Non-control Experiment(s): ', self.noncntrlExpNames))
 
         self.DAMethods = conf['DAMethods']
-        self.diagNames = conf['diagNames']
+
+        self.diagnosticConfigs = conf['diagnosticConfigs']
 
         self.statsFileSubDirs = conf['statsFileSubDirs']
 
@@ -277,8 +278,14 @@ class StatsDB:
         dsLoc = (slice(None), slice(None), slice(None), self.DiagSpaceGrp[0], slice(None), slice(None), slice(None), slice(None), slice(None))
         self.dfw = DFWrapper(dsDF.xs(dsLoc))
 
-        ## diagnostics
-        self.allDiagNames = self.dfw.levels('diagName')
+        self.initAttributes()
+
+        # add non-aggregated derived diagnostics as needed
+        createORreplaceDerivedDiagnostics(self.dfw, self.diagnosticConfigs)
+
+    def initAttributes(self):
+        ## diagnostics (currently unused)
+        #self.containedDiagNames = self.dfw.levels('diagName')
 
         ##  variables
         # get varNames and sort alphabetically
@@ -336,18 +343,37 @@ class StatsDB:
             else:
                 self.binNumVals.append(vu.miss_i)
 
+    def appendDF(self, newDiagDF):
+        self.dfw.append(newDiagDF)
+        self.initAttributes()
+
     def loc(self, locDict, var=None):
         return DFWrapper(self.dfw.loc(locDict, var))
+
 
     ## not used yet, but should work
     # def agg(self, aggovers=['cyDTime']):
     #     return DFWrapper(self.dfw.aggStats(groupby))
 
 
+def createORreplaceDerivedDiagnostics(dfw, diagnosticConfigs):
+    for diagName, diagnosticConfig in diagnosticConfigs.items():
+        if diagnosticConfig['derived']:
+            diagNames = dfw.levels('diagName')
+            if diagName in diagNames:
+                # drop derived diagName from dfw
+                dfw.df.drop(diagName, level='diagName', inplace=True)
+
+            # create then append DataFrame with derived diagName
+            derivedDiagDF = diagnosticConfig['DFWFunction'](
+                dfw, diagnosticConfig['staticArg'])
+            dfw.append(derivedDiagDF)
+
+
 class DFWrapper:
     def __init__(self, df):
         self.df = df
-        self.indexNames = list(df.index.names)
+        self.indexNames = list(self.df.index.names)
 
     @classmethod
     def fromLoc(cls, other, locDict, var=None):
@@ -356,6 +382,30 @@ class DFWrapper:
     @classmethod
     def fromAggStats(cls, other, aggovers):
         return cls(other.aggStats(aggovers))
+
+    def append(self, otherDF = None):
+        if otherDF is None: return
+
+        #Add otherDF (DataFrame object) to self.df
+        # adds new column names as needed
+        # adds meaningless NaN entries in columns that do not overlap between two DF's
+        # TODO: reduce memory footprint of NaN's via modifications to external data flows
+        appendDF = otherDF.copy(True)
+
+        selfColumns = list(self.df.columns)
+        appendColumns = list(appendDF.columns)
+
+        selfNRows = len(self.df.index)
+        for column in appendColumns:
+            if column not in selfColumns:
+                self.df.insert(len(list(self.df.columns)), column, [np.NaN]*selfNRows)
+
+        appendNRows = len(appendDF.index)
+        for column in selfColumns:
+            if column not in appendColumns:
+                appendDF.insert(len(list(appendDF.columns)), column, [np.NaN]*appendNRows)
+
+        self.df = self.df.append(appendDF, sort=True)
 
     def locTuple(self, locDict={}):
         Loc = ()
