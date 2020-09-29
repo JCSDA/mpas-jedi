@@ -5,6 +5,7 @@ cost function:
   window length: PT6H
   geometry:
     gridfname: "./restart.2018-04-15_00.00.00.nc"
+    deallocate non-da fields: true
   analysis variables: &incvars
   - temperature
   - spechum

@@ -1,6 +1,7 @@
 nml_file: namelist.atmosphere_2018041500
 geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
+  deallocate non-da fields: true
 input variables: &vars
 - temperature
 - spechum

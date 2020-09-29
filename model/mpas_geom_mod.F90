@@ -48,6 +48,7 @@ type :: mpas_geom
    integer :: nSoilLevels
    integer :: vertexDegree
    integer :: maxEdges
+   logical :: deallocate_nonda_fields
    character(len=StrKIND) :: gridfname
    real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
    real(kind=kind_real), dimension(:),   allocatable :: areaCell
@@ -110,6 +111,8 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    type(idcounter), allocatable :: prev_count(:)
    integer :: ii, nprev
+
+   logical :: deallocate_fields
 !   write(*,*)' ==> create geom'
 
    ! MPI communicator
@@ -117,6 +120,15 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator() )
+
+   !Deallocate not-used fields for memory reduction
+   if (f_conf%has("deallocate non-da fields")) then
+      call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
+      self % deallocate_nonda_fields = deallocate_fields
+   else
+      self % deallocate_nonda_fields = .False.
+   end if
+   if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (self % domain)
 
    if (allocated(geom_count)) then
       nprev = size(geom_count)
@@ -314,6 +326,129 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
    call afield%final()
 
 end subroutine geo_fill_atlas_fieldset
+
+! ------------------------------------------------------------------------------
+subroutine geo_deallocate_nonda_fields(domain)
+
+   implicit none
+   type (domain_type), pointer,    intent(inout) :: domain
+   type (mpas_pool_type), pointer                :: pool_a, pool_b
+   type (mpas_pool_data_type), pointer           :: mem
+   type (mpas_pool_iterator_type)                :: poolItr_b
+
+   type (field0DReal), pointer :: field0d
+   type (field1DReal), pointer :: field1d
+   type (field2DReal), pointer :: field2d
+
+   integer, parameter :: num_da_fields = 34
+   integer            :: i
+   character (len=22), allocatable :: poolname_a(:), poolname_b(:)
+   character (len=22), allocatable :: da_fieldnames(:)
+
+   allocate(poolname_a(3))
+   poolname_a(1)='tend'
+   poolname_a(2)='tend_physics'
+   poolname_a(3)='atm_input'
+
+   allocate(poolname_b(3))
+   poolname_b(1)='diag_physics'
+   poolname_b(2)='diag'
+   poolname_b(3)='sfc_input'
+
+   !TODO: remove the following list of fieldnames and read from a stream_list.atmosphere file
+   allocate(da_fieldnames(num_da_fields))
+   da_fieldnames(1)='re_cloud'
+   da_fieldnames(2)='re_ice'
+   da_fieldnames(3)='re_snow'
+   da_fieldnames(4)='cldfrac'
+   da_fieldnames(5)='lai'
+   da_fieldnames(6)='u10'
+   da_fieldnames(7)='v10'
+   da_fieldnames(8)='q2'
+   da_fieldnames(9)='t2m'
+   da_fieldnames(10)='pressure_p'
+   da_fieldnames(11)='pressure'
+   da_fieldnames(12)='pressure_base'
+   da_fieldnames(13)='surface_pressure'
+   da_fieldnames(14)='rho'
+   da_fieldnames(15)='theta'
+   da_fieldnames(16)='temperature'
+   da_fieldnames(17)='relhum'
+   da_fieldnames(18)='spechum'
+   da_fieldnames(19)='v'
+   da_fieldnames(20)='uReconstructZonal'
+   da_fieldnames(21)='uReconstructMeridional'
+   da_fieldnames(22)='stream_function'
+   da_fieldnames(23)='velocity_potential'
+   da_fieldnames(24)='landmask'
+   da_fieldnames(25)='xice'
+   da_fieldnames(26)='snowc'
+   da_fieldnames(27)='skintemp'
+   da_fieldnames(28)='ivgtyp'
+   da_fieldnames(29)='isltyp'
+   da_fieldnames(30)='snowh'
+   da_fieldnames(31)='vegfra'
+   da_fieldnames(32)='lai'
+   da_fieldnames(33)='smois'
+   da_fieldnames(34)='tslb'
+
+   do i=1,size(poolname_a)
+      mem => pool_get_member(domain % blocklist % structs, poolname_a(i), MPAS_POOL_SUBPOOL)
+      if (associated(mem)) then
+         call mpas_pool_get_subpool(domain % blocklist % structs, poolname_a(i), pool_a)
+         call mpas_pool_destroy_pool(pool_a)
+         call mpas_pool_remove_subpool(domain % blocklist % structs, poolname_a(i))
+      end if
+   end do
+
+   do i=1,size(poolname_b)
+
+      mem => pool_get_member(domain % blocklist % structs, poolname_b(i), MPAS_POOL_SUBPOOL)
+      if (associated(mem)) then
+         call mpas_pool_get_subpool(domain % blocklist % structs, poolname_b(i), pool_b)
+         call mpas_pool_begin_iteration(pool_b)
+
+         do while ( mpas_pool_get_next_member(pool_b, poolItr_b) )
+
+            if (poolItr_b % memberType == MPAS_POOL_FIELD .and. poolItr_b % dataType == MPAS_POOL_REAL .and. &
+               all(da_fieldnames .ne. trim(poolItr_b % memberName))) then
+
+               if (poolItr_b % nDims == 0) then
+                  call mpas_pool_get_field(pool_b,trim(poolItr_b % memberName),field0d)
+                  if (associated(field0d)) then
+                     call mpas_deallocate_field(field0d)
+                     call mpas_pool_remove_field(pool_b, trim(poolItr_b % memberName))
+                  end if
+                  nullify(field0d)
+               else if (poolItr_b % nDims == 1) then
+                  call mpas_pool_get_field(pool_b,trim(poolItr_b % memberName),field1d)
+                  if (associated(field1d)) then
+                     call mpas_deallocate_field(field1d)
+                     call mpas_pool_remove_field(pool_b, trim(poolItr_b % memberName))
+                  end if
+                  nullify(field1d)
+               else if (poolItr_b % nDims == 2) then
+                  call mpas_pool_get_field(pool_b,trim(poolItr_b % memberName),field2d)
+                  if (associated(field2d)) then
+                     call mpas_deallocate_field(field2d)
+                     call mpas_pool_remove_field(pool_b, trim(poolItr_b % memberName))
+                  end if
+                  nullify(field2d)
+               endif
+
+            end if
+
+         end do
+
+      end if
+
+   end do
+
+   deallocate(poolname_a)
+   deallocate(poolname_b)
+   deallocate(da_fieldnames)
+
+end subroutine geo_deallocate_nonda_fields
 
 ! ------------------------------------------------------------------------------
 

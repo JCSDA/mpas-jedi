@@ -1,3 +1,4 @@
 nml_file: namelist.atmosphere_2018041500
 geometry:
   gridfname: "./x1.2562.init.nc"
+  deallocate non-da fields: true
