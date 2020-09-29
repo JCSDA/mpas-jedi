@@ -20,6 +20,7 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -50,7 +51,8 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 class StateMPAS : public util::Printable,
-                private util::ObjectCounter<StateMPAS> {
+                  public util::Serializable,
+                  private util::ObjectCounter<StateMPAS> {
  public:
   static const std::string classname() {return "mpas::StateMPAS";}
 
@@ -74,9 +76,9 @@ class StateMPAS : public util::Printable,
   StateMPAS & operator+=(const IncrementMPAS &);
 
 /// Serialization
-  size_t serialSize() const;
-  void serialize(std::vector<double> &) const;
-  void deserialize(const std::vector<double> &, size_t &);
+  size_t serialSize() const override;
+  void serialize(std::vector<double> &) const override;
+  void deserialize(const std::vector<double> &, size_t &) override;
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
@@ -96,7 +98,7 @@ class StateMPAS : public util::Printable,
   const int & toFortran() const {return keyState_;}
 
  private:
-  void print(std::ostream &) const;
+  void print(std::ostream &) const override;
   F90state keyState_;
   boost::shared_ptr<const GeometryMPAS> geom_;
   oops::Variables vars_;

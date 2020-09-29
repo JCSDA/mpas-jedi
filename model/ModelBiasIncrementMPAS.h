@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 namespace eckit {
   class Configuration;
@@ -23,7 +24,8 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-class ModelBiasIncrementMPAS : public util::Printable {
+class ModelBiasIncrementMPAS : public util::Printable,
+                               public util::Serializable {
  public:
 /// Constructor, destructor
   ModelBiasIncrementMPAS(const GeometryMPAS &, const eckit::Configuration &) {}
@@ -51,13 +53,13 @@ class ModelBiasIncrementMPAS : public util::Printable {
   double norm() const {return 0.0;}
 
  /// Serialization
-  size_t serialSize() const { return 0; }
-  void serialize(std::vector<double> &) const {}
-  void deserialize(const std::vector<double> &, size_t &) {}
+  size_t serialSize() const override { return 0; }
+  void serialize(std::vector<double> &) const override {}
+  void deserialize(const std::vector<double> &, size_t &) override {}
 
 private:
   explicit ModelBiasIncrementMPAS(const ModelBiasCovarianceMPAS &);
-  void print(std::ostream & os) const {}
+  void print(std::ostream & os) const override {}
 };
 
 // -----------------------------------------------------------------------------

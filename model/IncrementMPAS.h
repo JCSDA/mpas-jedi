@@ -26,6 +26,7 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 #include "oops/util/dot_product.h"
+#include "oops/util/Serializable.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
@@ -60,6 +61,7 @@ namespace mpas {
 
 class IncrementMPAS : public oops::GeneralizedDepartures,
                        public util::Printable,
+                       public util::Serializable,
                        private util::ObjectCounter<IncrementMPAS> {
  public:
   static const std::string classname() {return "mpas::IncrementMPAS";}
@@ -113,13 +115,13 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   const int & toFortran() const {return keyInc_;}
 
 /// Serialization
-  size_t serialSize() const;
-  void serialize(std::vector<double> &) const;
-  void deserialize(const std::vector<double> &, size_t &);
+  size_t serialSize() const override;
+  void serialize(std::vector<double> &) const override;
+  void deserialize(const std::vector<double> &, size_t &) override;
 
 /// Data
  private:
-  void print(std::ostream &) const;
+  void print(std::ostream &) const override;
   F90inc keyInc_;
   boost::shared_ptr<const GeometryMPAS> geom_;
   oops::Variables vars_;
