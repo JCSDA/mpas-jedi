@@ -2,6 +2,7 @@ nml_file: namelist.atmosphere_2018041500
 geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
   deallocate non-da fields: true
+  bump vunit: "modellevel" # modellevel, height
 input variables: &vars
 - temperature
 - spechum

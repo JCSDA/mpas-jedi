@@ -50,6 +50,7 @@ type :: mpas_geom
    integer :: maxEdges
    logical :: deallocate_nonda_fields
    character(len=StrKIND) :: gridfname
+   character(len=StrKIND) :: bump_vunit
    real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
    real(kind=kind_real), dimension(:),   allocatable :: areaCell
    real(kind=kind_real), dimension(:),   allocatable :: latEdge, lonEdge
@@ -112,6 +113,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    type(idcounter), allocatable :: prev_count(:)
    integer :: ii, nprev
 
+   character(len=:), allocatable :: str
    logical :: deallocate_fields
 !   write(*,*)' ==> create geom'
 
@@ -129,6 +131,14 @@ subroutine geo_setup(self, f_conf, f_comm)
       self % deallocate_nonda_fields = .False.
    end if
    if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (self % domain)
+
+   ! Set up the vertical coordinate for bump
+   if (f_conf%has("bump vunit")) then
+      call f_conf%get_or_die("bump vunit",str)
+      self % bump_vunit = str
+   else
+      self % bump_vunit = 'modellevel'
+   end if
 
    if (allocated(geom_count)) then
       nprev = size(geom_count)
@@ -312,11 +322,12 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
    afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
    call afield%data(real_ptr_2)
    do jz=1,self%nVertLevels
-      real_ptr_2(jz,:) = real(jz, kind_real)
-      ! Try different vertical coordinate
-      !--For height
-      !real_ptr_2(jz,1:self%nCellsSolve) = MPAS_JEDI_HALF_kr * &
-      !   ( self%zgrid(jz,1:self%nCellsSolve) + self%zgrid(jz+1,1:self%nCellsSolve) )
+      if (trim(self % bump_vunit) .eq. 'modellevel') then
+         real_ptr_2(jz,:) = real(jz, kind_real)
+      else if (trim(self % bump_vunit) .eq. 'height') then
+         real_ptr_2(jz,1:self%nCellsSolve) = MPAS_JEDI_HALF_kr * &
+         ( self%zgrid(jz,1:self%nCellsSolve) + self%zgrid(jz+1,1:self%nCellsSolve) )
+      end if
       !--Similarly for ln of pressure_base. I don't know if we can access to "total pressure" here.
       !real (kind=kind_real), dimension(:,:), pointer :: pressure_base
       !call mpas_pool_get_array(self%domain%blocklist%allFields,'pressure_base', pressure_base)
