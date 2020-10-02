@@ -240,41 +240,35 @@ end function nearest_cell
 
 ! ------------------------------------------------------------------------------
 
-subroutine set_atlas(self, geom, vars, vdate, afieldset)
+subroutine set_atlas(self, geom, vars, afieldset)
 
    implicit none
 
    type(mpas_field),     intent(in)    :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
-   type(datetime),       intent(in)    :: vdate
    type(atlas_fieldset), intent(inout) :: afieldset
 
-   integer :: jvar
+   integer :: jvar, nlevels
    logical :: var_found
-   character(len=20) :: sdate
-   character(len=1024) :: fieldname
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
-
-   ! Set date
-   call datetime_to_string(vdate,sdate)
 
    do jvar = 1,vars%nvars()
       var_found = .false.
       call mpas_pool_begin_iteration(self%subFields)
       do while (mpas_pool_get_next_member(self%subFields, poolItr))
          if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
-            fieldname = trim(vars%variable(jvar))//'_'//sdate
-            if (.not.afieldset%has_field(trim(fieldname))) then
+            if (.not.afieldset%has_field(vars%variable(jvar))) then
                ! Create field
                if (poolItr%nDims==1) then
-                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+                  nlevels = 0
                else if (poolItr%nDims==2) then
-                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=geom%nVertLevels)
+                  nlevels = geom%nVertLevels
                else if (poolItr%nDims==3) then
                   call abor1_ftn('not implemented yet')
                end if
+               afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
 
                ! Add field
                call afieldset%add(afield)
@@ -295,46 +289,40 @@ end subroutine set_atlas
 
 ! ------------------------------------------------------------------------------
 
-subroutine to_atlas(self, geom, vars, vdate, afieldset)
+subroutine to_atlas(self, geom, vars, afieldset)
 
    implicit none
 
    type(mpas_field),     intent(in)    :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
-   type(datetime),       intent(in)    :: vdate
    type(atlas_fieldset), intent(inout) :: afieldset
 
-   integer :: jvar
+   integer :: jvar, nlevels
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
    real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
-   character(len=20) :: sdate
-   character(len=1024) :: fieldname
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
-
-   ! Set date
-   call datetime_to_string(vdate,sdate)
 
    do jvar = 1,vars%nvars()
       var_found = .false.
       call mpas_pool_begin_iteration(self%subFields)
       do while (mpas_pool_get_next_member(self%subFields, poolItr))
          if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
-            fieldname = trim(vars%variable(jvar))//'_'//sdate
-            if (afieldset%has_field(trim(fieldname))) then
+            if (afieldset%has_field(vars%variable(jvar))) then
                ! Get field
-               afield = afieldset%field(trim(fieldname))
+               afield = afieldset%field(vars%variable(jvar))
             else
                ! Create field
                if (poolItr%nDims==1) then
-                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=0)
+                  nlevels = 0
                else if (poolItr%nDims==2) then
-                  afield = geom%afunctionspace%create_field(name=trim(fieldname),kind=atlas_real(kind_real),levels=geom%nVertLevels)
+                  nlevels = geom%nVertLevels
                else if (poolItr%nDims==3) then
                   call abor1_ftn('not implemented yet')
                end if
+               afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
 
                ! Add field
                call afieldset%add(afield)
@@ -366,27 +354,21 @@ end subroutine to_atlas
 
 ! ------------------------------------------------------------------------------
 
-subroutine from_atlas(self, geom, vars, vdate, afieldset)
+subroutine from_atlas(self, geom, vars, afieldset)
 
    implicit none
 
    type(mpas_field),     intent(inout) :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
-   type(datetime),       intent(in)    :: vdate
    type(atlas_fieldset), intent(in)    :: afieldset
 
    integer :: jvar
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
    real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
-   character(len=20) :: sdate
-   character(len=1024) :: fieldname
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
-
-   ! Set date
-   call datetime_to_string(vdate,sdate)
 
    do jvar = 1,vars%nvars()
       var_found = .false.
@@ -394,8 +376,7 @@ subroutine from_atlas(self, geom, vars, vdate, afieldset)
       do while (mpas_pool_get_next_member(self%subFields, poolItr))
          if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
             ! Get field
-            fieldname = trim(vars%variable(jvar))//'_'//sdate
-            afield = afieldset%field(trim(fieldname))
+            afield = afieldset%field(vars%variable(jvar))
 
             ! Copy data
             if (poolItr%nDims==1) then

@@ -8,6 +8,9 @@ module mpasjedi_lineargetvalues_mod
 ! atlas
 use atlas_module,                   only: atlas_fieldset
 
+! fckit
+use fckit_mpi_module,               only: fckit_mpi_sum
+
 ! oops
 use datetime_mod,                   only: datetime, datetime_to_string
 use kinds,                          only: kind_real
@@ -163,7 +166,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   character(len=*), parameter :: myname = 'fill_geovals_tl'
 
   logical, allocatable :: time_mask(:)
-  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs
+  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
   type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: obs_field(:,:)
 
@@ -187,6 +190,13 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   !write(*,*)'fill_geovals_tl: ngrid, nlocs = : ',ngrid, nlocs
   !call interp_checks("tl", inc, locs, vars, gom)
+
+  ! If no observations can early exit
+  ! ---------------------------------
+  call geom%f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
+  if (nlocsg == 0) then
+    return
+  endif
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
@@ -333,7 +343,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   character(len=*), parameter :: myname = 'fill_geovals_ad'
 
   logical, allocatable :: time_mask(:)
-  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs
+  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
   type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: obs_field(:,:)
 
@@ -363,6 +373,12 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   nlocs = locs % nlocs ! # of location for entire window
   !write(0,*)'getvalues_ad: nlocs        : ',nlocs
 
+  ! If no observations can early exit
+  ! ---------------------------------
+  call geom%f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
+  if (nlocsg == 0) then
+    return
+  endif
 
   ! Allocate intermediate pool of fields w/ geovals vars
   ! ----------------------------------------------------

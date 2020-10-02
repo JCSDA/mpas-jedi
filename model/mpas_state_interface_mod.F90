@@ -316,7 +316,7 @@ nc = self%geom%nCellsGlobal
 
 end subroutine mpas_state_sizes_c
 
-! ------------------------------------------------------------------------------   
+! --------------------------------------------------------------------------------------------------
 
 subroutine mpas_state_serial_size_c(c_key_self,c_vsize) &
       bind(c,name='mpas_state_serial_size_f90')

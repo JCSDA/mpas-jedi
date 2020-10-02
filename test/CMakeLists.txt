@@ -643,8 +643,8 @@ jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${RE
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${REFTYPE}
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${REFTYPE} NPE 3 )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${REFTYPE} NPE 3
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${REFTYPE}
                            NPE 4 NMEM 4

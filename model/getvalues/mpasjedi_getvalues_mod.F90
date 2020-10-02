@@ -9,8 +9,7 @@ module mpasjedi_getvalues_mod
 use atlas_module,                   only: atlas_fieldset, atlas_field, atlas_real
 
 ! fckit
-use fckit_mpi_module,               only: fckit_mpi_comm
-use fckit_mpi_module,               only: fckit_mpi_comm, fckit_mpi_sum
+use fckit_mpi_module,               only: fckit_mpi_sum
 
 ! oops
 use datetime_mod,                   only: datetime
@@ -112,7 +111,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   type(ufo_geovals),              intent(inout) :: gom
 
   logical, allocatable :: time_mask(:)
-  type(fckit_mpi_comm)     :: f_comm
   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
   type(atlas_fieldset) :: afieldset
   real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
@@ -141,8 +139,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
   ! If no observations can early exit
   ! ---------------------------------
-  f_comm = geom%f_comm
-  call f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
+  call geom%f_comm%allreduce(nlocs,nlocsg,fckit_mpi_sum())
   if (nlocsg == 0) then
     return
   endif
@@ -595,8 +592,6 @@ subroutine initialize_bump(self, grid, locs)
   character(len=5)   :: cbumpcount
   character(len=255) :: bump_nam_prefix
 
-  type(fckit_mpi_comm) :: f_comm
-
   ! Each bump%nam%prefix must be distinct
   ! -------------------------------------
   bumpid = bumpid + 1
@@ -607,8 +602,7 @@ subroutine initialize_bump(self, grid, locs)
   ! ----------------
 
   !Important namelist options
-  f_comm = grid%f_comm
-  call self%bump%nam%init(f_comm%size())
+  call self%bump%nam%init(grid%f_comm%size())
 
   !Less important namelist options (should not be changed)
   self%bump%nam%prefix       = trim(bump_nam_prefix)  ! Prefix for files output
@@ -619,12 +613,10 @@ subroutine initialize_bump(self, grid, locs)
   self%bump%nam%nl           = grid%nVertLevels
   self%bump%nam%nv           = 1
   self%bump%nam%variables(1) = "var"
-  self%bump%nam%nts          = 1
-  self%bump%nam%timeslots(1) = "0"
 
   ! Initialize BUMP
   ! ---------------
-  call self%bump%setup(f_comm,grid%afunctionspace,nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
+  call self%bump%setup(grid%f_comm,grid%afunctionspace,nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
 
   ! Run BUMP drivers
   call self%bump%run_drivers
@@ -649,7 +641,7 @@ subroutine obsop_to_atlas(geom, nlevels, afieldset, arr1d, arr2d)
   afieldset = atlas_fieldset()
 
   ! Create field
-  afield = geom%afunctionspace%create_field(name='var_0',kind=atlas_real(kind_real),levels=nlevels)
+  afield = geom%afunctionspace%create_field(name='var',kind=atlas_real(kind_real),levels=nlevels)
 
   ! Add field
   call afieldset%add(afield)
@@ -659,7 +651,6 @@ subroutine obsop_to_atlas(geom, nlevels, afieldset, arr1d, arr2d)
     call afield%data(real_ptr_1d)
     real_ptr_1d = MPAS_JEDI_ZERO_kr
     if (present(arr1d)) real_ptr_1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve)
-    if (present(arr2d)) call abor1_ftn('obsop_to_atlas: wrong array')
   else
     call afield%data(real_ptr_2d)
     real_ptr_2d = MPAS_JEDI_ZERO_kr
@@ -684,13 +675,12 @@ subroutine obsop_from_atlas(geom, nlevels, afieldset, arr1d, arr2d)
   type(atlas_field) :: afield
 
   ! Get field
-  afield = afieldset%field('var_0')
+  afield = afieldset%field('var')
 
   ! Copy data
   if (nlevels == 0) then
     call afield%data(real_ptr_1d)
     if (present(arr1d)) arr1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve) + real_ptr_1d(1:geom % nCellsSolve)
-    if (present(arr2d)) call abor1_ftn('obsop_from_atlas: wrong array')
   else
     call afield%data(real_ptr_2d)
     if (present(arr1d)) call abor1_ftn('obsop_from_atlas: wrong array')

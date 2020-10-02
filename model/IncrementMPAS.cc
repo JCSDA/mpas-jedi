@@ -154,21 +154,15 @@ void IncrementMPAS::random() {
 /// ATLAS
 // -----------------------------------------------------------------------------
 void IncrementMPAS::setAtlas(atlas::FieldSet * afieldset) const {
-  const util::DateTime * dtp = &time_;
-  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                               afieldset->get());
+  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::toAtlas(atlas::FieldSet * afieldset) const {
-  const util::DateTime * dtp = &time_;
-  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                              afieldset->get());
+  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
-  const util::DateTime * dtp = &time_;
-  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, &dtp,
-                                afieldset->get());
+  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

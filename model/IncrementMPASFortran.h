@@ -61,17 +61,14 @@ extern "C" {
   void mpas_increment_set_atlas_f90(const F90inc &,
                                     const F90geom &,
                                     const oops::Variables &,
-                                    const util::DateTime * const *,
                                     atlas::field::FieldSetImpl *);
   void mpas_increment_to_atlas_f90(const F90inc &,
                                    const F90geom &,
                                    const oops::Variables &,
-                                   const util::DateTime * const *,
                                    atlas::field::FieldSetImpl *);
   void mpas_increment_from_atlas_f90(const F90inc &,
                                      const F90geom &,
                                      const oops::Variables &,
-                                     const util::DateTime * const *,
                                      atlas::field::FieldSetImpl *);
   void mpas_increment_dirac_f90(const F90inc &,
                                 const eckit::Configuration &);
