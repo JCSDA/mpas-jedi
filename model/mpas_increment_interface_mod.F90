@@ -89,6 +89,19 @@ end subroutine mpas_increment_zero_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_increment_ones_c(c_key_self) &
+      bind(c,name='mpas_increment_ones_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(mpas_field), pointer :: self
+
+call mpas_field_registry%get(c_key_self,self)
+call self%ones()
+
+end subroutine mpas_increment_ones_c
+
+! ------------------------------------------------------------------------------
+
 subroutine mpas_increment_dirac_c(c_key_self,c_conf) &
       bind(c,name='mpas_increment_dirac_f90')
 implicit none

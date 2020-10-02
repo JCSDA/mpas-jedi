@@ -915,19 +915,20 @@ use mpas_constants_mod
    
    !***********************************************************************
    !
-   !  subroutine da_zeros
+   !  subroutine da_constant
    !
-   !> \brief   Performs A = 0. for pool A
+   !> \brief   Performs A = constant. for pool A
    !> \author  Gael Descombes
    !> \date    22 December 2017
    !> \details
    !
    !-----------------------------------------------------------------------
-   subroutine da_zeros(pool_a, fld_select)
+   subroutine da_constant(pool_a, realvalue, fld_select)
 
       implicit none
 
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
+      real (kind=kind_real),          intent(in)    :: realvalue
       character (len=*), optional,    intent(in)    :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
@@ -936,10 +937,6 @@ use mpas_constants_mod
       real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
       real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
 
-      !
-      ! Iterate over all fields in pool_b, adding them to fields of the same
-      ! name in pool_a
-      !
       call mpas_pool_begin_iteration(pool_a)
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
@@ -959,23 +956,23 @@ use mpas_constants_mod
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  r0d_ptr_a = MPAS_JEDI_ZERO_kr
+                  r0d_ptr_a = realvalue
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  r1d_ptr_a = MPAS_JEDI_ZERO_kr
+                  r1d_ptr_a = realvalue
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  r2d_ptr_a = MPAS_JEDI_ZERO_kr
+                  r2d_ptr_a = realvalue
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  r3d_ptr_a = MPAS_JEDI_ZERO_kr
+                  r3d_ptr_a = realvalue
                end if
 
             end if
          end if
       end do
 
-   end subroutine da_zeros
+   end subroutine da_constant
 
    !***********************************************************************
    !

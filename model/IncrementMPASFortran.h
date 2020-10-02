@@ -36,6 +36,7 @@ extern "C" {
   void mpas_increment_delete_f90(F90inc &);
   void mpas_increment_copy_f90(const F90inc &, const F90inc &);
   void mpas_increment_zero_f90(const F90inc &);
+  void mpas_increment_ones_f90(const F90inc &);
   void mpas_increment_axpy_inc_f90(const F90inc &, const double &,
                                    const F90inc &);
   void mpas_increment_axpy_state_f90(const F90inc &, const double &,

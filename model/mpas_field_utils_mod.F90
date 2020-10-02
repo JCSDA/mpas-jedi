@@ -71,6 +71,7 @@ public :: mpas_field, mpas_field_registry, &
      procedure :: self_mult    => self_mult_
      procedure :: self_sub     => self_sub_
      procedure :: zeros        => zeros_
+     procedure :: ones         => ones_
 
      procedure :: change_resol => change_resol_field
      procedure :: copy         => copy_field
@@ -476,9 +477,20 @@ subroutine zeros_(self)
    implicit none
    class(mpas_field), intent(inout) :: self
 
-   call da_zeros(self % subFields, fld_select = self % fldnames_ci)
+   call da_constant(self % subFields, MPAS_JEDI_ZERO_kr, fld_select = self % fldnames_ci)
 
 end subroutine zeros_
+
+! ------------------------------------------------------------------------------
+
+subroutine ones_(self)
+
+   implicit none
+   class(mpas_field), intent(inout) :: self
+
+   call da_constant(self % subFields, MPAS_JEDI_ONE_kr, fld_select = self % fldnames_ci)
+
+end subroutine ones_
 
 ! ------------------------------------------------------------------------------
 

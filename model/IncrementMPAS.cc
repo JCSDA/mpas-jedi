@@ -120,6 +120,10 @@ void IncrementMPAS::zero(const util::DateTime & vt) {
   mpas_increment_zero_f90(keyInc_);
   time_ = vt;
 }
+// ------------------------------------------------------------------------------
+void IncrementMPAS::ones() {
+  mpas_increment_ones_f90(keyInc_);
+}
 // -----------------------------------------------------------------------------
 void IncrementMPAS::axpy(const double & zz, const IncrementMPAS & dx,
                        const bool check) {

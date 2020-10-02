@@ -78,6 +78,7 @@ class IncrementMPAS : public oops::GeneralizedDepartures,
   void diff(const StateMPAS &, const StateMPAS &);
   void zero();
   void zero(const util::DateTime &);
+  void ones();
   IncrementMPAS & operator =(const IncrementMPAS &);
   IncrementMPAS & operator+=(const IncrementMPAS &);
   IncrementMPAS & operator-=(const IncrementMPAS &);
