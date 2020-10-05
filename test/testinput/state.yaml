@@ -13,7 +13,7 @@ state test:
     date: &date '2018-04-15T00:00:00Z'
   date: *date
   norm file: '19735.265702001503'
-  stategenerate:
+  state generate:
     analytic_init: dcmip-test-4-0
     state variables:
     - temperature
@@ -24,7 +24,7 @@ state test:
     date: *date
     mean: 8
     sinus: 2
-  interptest:
+  interpolation test:
     variables:
     - air_temperature
     - air_pressure
@@ -48,3 +48,14 @@ state test:
           lon2: 360
           random_seed: 560921
         obs errors: []
+  statefileout:
+    state variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+    filename: "Data/states/out.2018-04-15_00.00.00.nc"
+    date: &date '2018-04-15T00:00:00Z'
+    no_transf: 1 # Prevents variable change logic in read routine
+

@@ -1,8 +1,8 @@
 /*
  * (C) Copyright 2017 UCAR
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
 #ifndef MODEL_STATEMPAS_H_
@@ -93,6 +93,7 @@ class StateMPAS : public util::Printable,
   const util::DateTime & validTime() const {return time_;}
   util::DateTime & validTime() {return time_;}
   const oops::Variables & variables() const {return vars_;}
+  void updateTime(const util::Duration & dt) {time_ += dt;}
 
   int & toFortran() {return keyState_;}
   const int & toFortran() const {return keyState_;}
