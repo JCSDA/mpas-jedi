@@ -1,6 +1,6 @@
 Test     : Initial state: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 28
 Test     : Fld=1  Min=203.98, Max=306.479, RMS=244.052 : temperature
 Test     : Fld=2  Min=0, Max=0.0183791, RMS=0.00452795 : spechum
 Test     : Fld=3  Min=-40.4961, Max=80.4605, RMS=16.645 : uReconstructZonal
@@ -11,9 +11,27 @@ Test     : Fld=7  Min=0, Max=0.000150757, RMS=6.34561e-06 : index_qi
 Test     : Fld=8  Min=0, Max=0.000217494, RMS=4.42344e-06 : index_qr
 Test     : Fld=9  Min=0, Max=0.000826256, RMS=1.62665e-05 : index_qs
 Test     : Fld=10  Min=0, Max=0.000209845, RMS=3.58075e-06 : index_qg
+Test     : Fld=11  Min=251.556, Max=725.293, RMS=441.043 : theta
+Test     : Fld=12  Min=0.0252689, Max=1.33313, RMS=0.619769 : rho
+Test     : Fld=13  Min=-78.2873, Max=78.7884, RMS=13.7406 : u
+Test     : Fld=14  Min=0, Max=0.0187232, RMS=0.00458755 : index_qv
+Test     : Fld=15  Min=1507.23, Max=97512.7, RMS=49310.7 : pressure
+Test     : Fld=16  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=17  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=18  Min=0, Max=1, RMS=0.334279 : snowc
+Test     : Fld=19  Min=212.215, Max=333.711, RMS=288.495 : skintemp
+Test     : Fld=20  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=21  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=22  Min=0, Max=1.96566, RMS=0.225298 : snowh
+Test     : Fld=23  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=24  Min=-16.2378, Max=22.1192, RMS=5.79069 : u10
+Test     : Fld=25  Min=-18.6292, Max=20.7823, RMS=4.74131 : v10
+Test     : Fld=26  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=27  Min=0.02, Max=1, RMS=0.890416 : smois
+Test     : Fld=28  Min=218.27, Max=315.109, RMS=275.269 : tslb
 Test     : Final state: 
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 10
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 28
 Test     : Fld=1  Min=194.347, Max=304.711, RMS=243.802 : temperature
 Test     : Fld=2  Min=0, Max=0.0199278, RMS=0.00470932 : spechum
 Test     : Fld=3  Min=-40.057, Max=83.3072, RMS=16.7062 : uReconstructZonal
@@ -24,6 +42,24 @@ Test     : Fld=7  Min=0, Max=0.000145323, RMS=8.01482e-06 : index_qi
 Test     : Fld=8  Min=0, Max=0.000291226, RMS=7.82092e-06 : index_qr
 Test     : Fld=9  Min=0, Max=0.00089417, RMS=2.49829e-05 : index_qs
 Test     : Fld=10  Min=0, Max=0.000326583, RMS=5.13555e-06 : index_qg
+Test     : Fld=11  Min=252.111, Max=727.986, RMS=440.686 : theta
+Test     : Fld=12  Min=0.0246786, Max=1.3266, RMS=0.620098 : rho
+Test     : Fld=13  Min=-85.9454, Max=86.454, RMS=13.6759 : u
+Test     : Fld=14  Min=0, Max=0.020333, RMS=0.00477488 : index_qv
+Test     : Fld=15  Min=1457.89, Max=97480.3, RMS=49313.1 : pressure
+Test     : Fld=16  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=17  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=18  Min=0, Max=1, RMS=0.333238 : snowc
+Test     : Fld=19  Min=210.055, Max=325.262, RMS=289.063 : skintemp
+Test     : Fld=20  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=21  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=22  Min=0, Max=1.96511, RMS=0.224959 : snowh
+Test     : Fld=23  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=24  Min=-25.3522, Max=21.3062, RMS=6.38841 : u10
+Test     : Fld=25  Min=-20.9406, Max=17.3749, RMS=5.26963 : v10
+Test     : Fld=26  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=27  Min=0.02, Max=1, RMS=0.890372 : smois
+Test     : Fld=28  Min=218.826, Max=311.03, RMS=275.194 : tslb
 Test     : H(x): 
 Test     : Radiosonde nobs= 3896 Min=-29.879, Max=299.158, RMS=122.008
 Test     : Satwind nobs= 198 Min=-29.4177, Max=49.7966, RMS=11.0351

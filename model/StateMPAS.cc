@@ -32,20 +32,10 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Temporary Auxilliary Variable Definitions
 // -----------------------------------------------------------------------------
-//--- TODO: theta, rho, u should come from "State" variables in YAML
-//          + var list for oops::State4D previously came from
-//            cost_function/variables YAML, but needs to come from
-//            cost_function/Jb/Background/state/variables
-//          + vars_ initialized in ModelMPAS, TlmMPAS, and TlmIdMPAS
-//            from YAML will need updating to reflect any changes
-//          + Note: it may be possible to merge State and Increment back
-//            into Fields class once YAML definitions used correctly
-//--- TODO: all other aux variables should come from "VariableChange"
-//          variables in YAML
+//--- TODO: "w" is still here to duplicate a pool field 
+//              for geoval variable "var_prsi", which has nVertLevelsP1 levels.
 const oops::Variables
-    StateMPAS::auxvars_({ "theta", "rho", "u", "index_qv", "pressure",
-        "landmask", "xice", "snowc", "skintemp", "ivgtyp", "isltyp",
-        "snowh", "vegfra", "u10", "v10", "lai", "smois", "tslb", "w"});
+    StateMPAS::auxvars_({ "w" });
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor

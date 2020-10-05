@@ -7,12 +7,30 @@ Test     : CostFunction: Nonlinear J = 1591.43
 Test     : DRIPCGMinimizer: reduction in residual norm = 1.83884e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.634, Max=305.472, RMS=243.966 : temperature
 Test     : Fld=2  Min=0, Max=0.0197115, RMS=0.00462927 : spechum
 Test     : Fld=3  Min=-44.0299, Max=83.1261, RMS=17.6533 : uReconstructZonal
 Test     : Fld=4  Min=-45.5358, Max=58.6079, RMS=9.00403 : uReconstructMeridional
 Test     : Fld=5  Min=57115.7, Max=104676, RMS=98694 : surface_pressure
+Test     : Fld=6  Min=251.727, Max=725.636, RMS=441.053 : theta
+Test     : Fld=7  Min=0.0256562, Max=1.33314, RMS=0.61435 : rho
+Test     : Fld=8  Min=-90.3741, Max=80.7124, RMS=14.3455 : u
+Test     : Fld=9  Min=0, Max=0.0201079, RMS=0.00469207 : index_qv
+Test     : Fld=10  Min=1514.86, Max=98007.8, RMS=48913.6 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     : CostJb   : Nonlinear Jb = 108.118
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 726.946, nobs = 962, Jo/n = 0.755662, err = 1.98961
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 0.0116022, nobs = 1, Jo/n = 0.0116022, err = 3.35131
@@ -22,12 +40,30 @@ Test     : CostFunction: Nonlinear J = 1002.96
 Test     : DRIPCGMinimizer: reduction in residual norm = 1.01259e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.662, Max=305.471, RMS=243.966 : temperature
 Test     : Fld=2  Min=0, Max=0.0197197, RMS=0.00462881 : spechum
 Test     : Fld=3  Min=-44.0277, Max=83.1286, RMS=17.6531 : uReconstructZonal
 Test     : Fld=4  Min=-45.5358, Max=58.6079, RMS=9.00407 : uReconstructMeridional
 Test     : Fld=5  Min=57113.9, Max=104676, RMS=98694 : surface_pressure
+Test     : Fld=6  Min=251.724, Max=725.636, RMS=441.053 : theta
+Test     : Fld=7  Min=0.0256562, Max=1.33313, RMS=0.614352 : rho
+Test     : Fld=8  Min=-90.3749, Max=80.7135, RMS=14.3454 : u
+Test     : Fld=9  Min=0, Max=0.0201164, RMS=0.00469161 : index_qv
+Test     : Fld=10  Min=1514.86, Max=98007.8, RMS=48913.6 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     : CostJb   : Nonlinear Jb = 107.85
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 717.895, nobs = 962, Jo/n = 0.746253, err = 1.98961
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 5.4163e-05, nobs = 1, Jo/n = 5.4163e-05, err = 3.35131

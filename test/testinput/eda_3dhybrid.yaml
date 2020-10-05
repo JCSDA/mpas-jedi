@@ -14,7 +14,10 @@ cost function:
   - uReconstructMeridional
   - surface_pressure
   background:
-    state variables: *incvars
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
+#                      index_qc, index_qi, index_qr, index_qs, index_qg,
+                      theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+                      snowh, vegfra, u10, v10, lai, smois, tslb]
     filename: "./restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'
   background error:

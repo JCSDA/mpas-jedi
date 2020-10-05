@@ -7,6 +7,7 @@ getvalues test:
     - uReconstructZonal
     - uReconstructMeridional
     - surface_pressure
+    - pressure # this is required in "ufo_geovals_analytic_init" for interpolation test
     date: '2018-04-15T00:00:00Z'
     mean: 8
     sinus: 2

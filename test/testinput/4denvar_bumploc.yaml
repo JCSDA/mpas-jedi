@@ -14,13 +14,16 @@ cost function:
   - surface_pressure
   background:
     states:
-    - state variables: *incvars
+    - state variables: &stvars
+                      [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
+                      theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+                      snowh, vegfra, u10, v10, lai, smois, tslb]
       filename: "./restart.2018-04-14_21.00.00.nc"
       date: &date1 '2018-04-14T21:00:00Z'
-    - state variables: *incvars
+    - state variables: *stvars
       filename: "./restart.2018-04-15_00.00.00.nc"
       date: &date2 '2018-04-15T00:00:00Z'
-    - state variables: *incvars
+    - state variables: *stvars
       filename: "./restart.2018-04-15_03.00.00.nc"
       date: &date3 '2018-04-15T03:00:00Z'
   background error:

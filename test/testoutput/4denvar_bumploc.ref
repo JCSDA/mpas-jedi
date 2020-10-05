@@ -8,26 +8,80 @@ Test     : CostFunction: Nonlinear J = 1422.79
 Test     : DRIPCGMinimizer: reduction in residual norm = 3.67946e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=203.969, Max=306.478, RMS=244.053 : temperature
 Test     : Fld=2  Min=0, Max=0.0197549, RMS=0.0045269 : spechum
 Test     : Fld=3  Min=-40.5631, Max=80.5073, RMS=16.6565 : uReconstructZonal
 Test     : Fld=4  Min=-46.8728, Max=52.9302, RMS=9.09418 : uReconstructMeridional
 Test     : Fld=5  Min=57168.4, Max=104353, RMS=98647.8 : surface_pressure
+Test     : Fld=6  Min=251.652, Max=721.841, RMS=441.124 : theta
+Test     : Fld=7  Min=0.0260302, Max=1.33147, RMS=0.61381 : rho
+Test     : Fld=8  Min=-78.5374, Max=78.7471, RMS=13.7507 : u
+Test     : Fld=9  Min=0, Max=0.020153, RMS=0.00458652 : index_qv
+Test     : Fld=10  Min=1554.25, Max=97318.6, RMS=48900.6 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.334279 : snowc
+Test     : Fld=14  Min=212.215, Max=333.711, RMS=288.495 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96566, RMS=0.225298 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-16.2378, Max=22.1192, RMS=5.79069 : u10
+Test     : Fld=20  Min=-18.6292, Max=20.7823, RMS=4.74131 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890416 : smois
+Test     : Fld=23  Min=218.27, Max=315.109, RMS=275.269 : tslb
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.642, Max=305.55, RMS=243.969 : temperature
 Test     : Fld=2  Min=0, Max=0.0214745, RMS=0.00463059 : spechum
 Test     : Fld=3  Min=-43.9381, Max=83.2317, RMS=17.6588 : uReconstructZonal
 Test     : Fld=4  Min=-45.5363, Max=58.6056, RMS=9.01187 : uReconstructMeridional
 Test     : Fld=5  Min=57051.2, Max=104667, RMS=98685 : surface_pressure
+Test     : Fld=6  Min=251.66, Max=725.75, RMS=441.064 : theta
+Test     : Fld=7  Min=0.0256582, Max=1.33307, RMS=0.614287 : rho
+Test     : Fld=8  Min=-90.4973, Max=80.8561, RMS=14.3504 : u
+Test     : Fld=9  Min=0, Max=0.0219458, RMS=0.00469349 : index_qv
+Test     : Fld=10  Min=1514.93, Max=98000, RMS=48909.3 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=194.278, Max=304.899, RMS=243.903 : temperature
 Test     : Fld=2  Min=0, Max=0.0203008, RMS=0.00471039 : spechum
 Test     : Fld=3  Min=-39.7957, Max=85.0639, RMS=16.7849 : uReconstructZonal
 Test     : Fld=4  Min=-43.8431, Max=58.6003, RMS=8.85632 : uReconstructMeridional
 Test     : Fld=5  Min=56758.6, Max=104165, RMS=98694.7 : surface_pressure
+Test     : Fld=6  Min=251.259, Max=728.085, RMS=440.993 : theta
+Test     : Fld=7  Min=0.0248033, Max=1.33009, RMS=0.61433 : rho
+Test     : Fld=8  Min=-87.6701, Max=88.4886, RMS=13.7494 : u
+Test     : Fld=9  Min=0, Max=0.0207214, RMS=0.00477608 : index_qv
+Test     : Fld=10  Min=1487.22, Max=97407.2, RMS=48913.7 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333279 : snowc
+Test     : Fld=14  Min=210.895, Max=324.661, RMS=288.78 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.9651, RMS=0.224977 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-23.2134, Max=20.8637, RMS=6.34258 : u10
+Test     : Fld=20  Min=-21.2447, Max=17.4065, RMS=5.32912 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890373 : smois
+Test     : Fld=23  Min=218.87, Max=311.036, RMS=275.189 : tslb
 Test     : CostJb   : Nonlinear Jb = 78.833
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 750.48, nobs = 959, Jo/n = 0.782565, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.8381, nobs = 63, Jo/n = 0.346636, err = 7.97005
@@ -38,26 +92,80 @@ Test     : CostFunction: Nonlinear J = 1023.72
 Test     : DRIPCGMinimizer: reduction in residual norm = 1.33261e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-14T21:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=203.966, Max=306.476, RMS=244.053 : temperature
 Test     : Fld=2  Min=0, Max=0.0197863, RMS=0.00452658 : spechum
 Test     : Fld=3  Min=-40.568, Max=80.4964, RMS=16.6555 : uReconstructZonal
 Test     : Fld=4  Min=-46.8597, Max=52.9302, RMS=9.0943 : uReconstructMeridional
 Test     : Fld=5  Min=57165.7, Max=104353, RMS=98647.9 : surface_pressure
+Test     : Fld=6  Min=251.656, Max=721.886, RMS=441.125 : theta
+Test     : Fld=7  Min=0.0260301, Max=1.33145, RMS=0.613812 : rho
+Test     : Fld=8  Min=-78.5247, Max=78.7385, RMS=13.7501 : u
+Test     : Fld=9  Min=0, Max=0.0201857, RMS=0.0045862 : index_qv
+Test     : Fld=10  Min=1554.27, Max=97318.7, RMS=48900.6 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.334279 : snowc
+Test     : Fld=14  Min=212.215, Max=333.711, RMS=288.495 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96566, RMS=0.225298 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-16.2378, Max=22.1192, RMS=5.79069 : u10
+Test     : Fld=20  Min=-18.6292, Max=20.7823, RMS=4.74131 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890416 : smois
+Test     : Fld=23  Min=218.27, Max=315.109, RMS=275.269 : tslb
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.696, Max=305.549, RMS=243.969 : temperature
 Test     : Fld=2  Min=0, Max=0.0215346, RMS=0.00463024 : spechum
 Test     : Fld=3  Min=-43.9347, Max=83.2292, RMS=17.6572 : uReconstructZonal
 Test     : Fld=4  Min=-45.5363, Max=58.6056, RMS=9.01268 : uReconstructMeridional
 Test     : Fld=5  Min=57048.7, Max=104667, RMS=98685 : surface_pressure
+Test     : Fld=6  Min=251.64, Max=725.752, RMS=441.065 : theta
+Test     : Fld=7  Min=0.0256581, Max=1.33306, RMS=0.614288 : rho
+Test     : Fld=8  Min=-90.4864, Max=80.8386, RMS=14.3497 : u
+Test     : Fld=9  Min=0, Max=0.0220086, RMS=0.00469314 : index_qv
+Test     : Fld=10  Min=1514.92, Max=98000.1, RMS=48909.3 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     :   Valid time: 2018-04-15T03:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=194.282, Max=304.898, RMS=243.903 : temperature
 Test     : Fld=2  Min=0, Max=0.0203301, RMS=0.00471019 : spechum
 Test     : Fld=3  Min=-39.8001, Max=85.0802, RMS=16.7845 : uReconstructZonal
 Test     : Fld=4  Min=-43.81, Max=58.6003, RMS=8.85714 : uReconstructMeridional
 Test     : Fld=5  Min=56755.6, Max=104165, RMS=98694.6 : surface_pressure
+Test     : Fld=6  Min=251.249, Max=728.081, RMS=440.994 : theta
+Test     : Fld=7  Min=0.0248038, Max=1.33009, RMS=0.614331 : rho
+Test     : Fld=8  Min=-87.6796, Max=88.4944, RMS=13.7494 : u
+Test     : Fld=9  Min=0, Max=0.020752, RMS=0.00477587 : index_qv
+Test     : Fld=10  Min=1487.23, Max=97406.9, RMS=48913.6 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333279 : snowc
+Test     : Fld=14  Min=210.895, Max=324.661, RMS=288.78 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.9651, RMS=0.224977 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-23.2134, Max=20.8637, RMS=6.34258 : u10
+Test     : Fld=20  Min=-21.2447, Max=17.4065, RMS=5.32912 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890373 : smois
+Test     : Fld=23  Min=218.87, Max=311.036, RMS=275.189 : tslb
 Test     : CostJb   : Nonlinear Jb = 78.6447
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 745.626, nobs = 959, Jo/n = 0.777503, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 21.8658, nobs = 63, Jo/n = 0.347076, err = 7.97005

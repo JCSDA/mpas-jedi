@@ -9,29 +9,15 @@ model:
   tstep: PT30M
   final norm: 0.020383
   tolerance: 0.005
-  model variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  - index_qc
-  - index_qi
-  - index_qr
-  - index_qs
-  - index_qg
+  model variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                    index_qc, index_qi, index_qr, index_qs, index_qg,
+                    theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                    snowh, vegfra, u10, v10, lai, smois, tslb]
 initial condition:
-  state variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  - index_qc
-  - index_qi
-  - index_qr
-  - index_qs
-  - index_qg
+  state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                    index_qc, index_qi, index_qr, index_qs, index_qg,
+                    theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                    snowh, vegfra, u10, v10, lai, smois, tslb]
   filename: "./restart.2018-04-14_21.00.00.nc"
   date: '2018-04-14T21:00:00Z'
 observations:

@@ -8,12 +8,30 @@ Test     : CostFunction: Nonlinear J = 1613.28
 Test     : DRIPCGMinimizer: reduction in residual norm = 3.74169e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.641, Max=305.645, RMS=243.968 : temperature
 Test     : Fld=2  Min=0, Max=0.0215679, RMS=0.00463051 : spechum
 Test     : Fld=3  Min=-43.9324, Max=83.2601, RMS=17.6597 : uReconstructZonal
 Test     : Fld=4  Min=-45.5365, Max=58.6076, RMS=9.01549 : uReconstructMeridional
 Test     : Fld=5  Min=57016.6, Max=104651, RMS=98679 : surface_pressure
+Test     : Fld=6  Min=251.633, Max=725.792, RMS=441.072 : theta
+Test     : Fld=7  Min=0.0256573, Max=1.33302, RMS=0.614253 : rho
+Test     : Fld=8  Min=-90.5069, Max=80.8649, RMS=14.3516 : u
+Test     : Fld=9  Min=0, Max=0.0220433, RMS=0.00469342 : index_qv
+Test     : Fld=10  Min=1514.88, Max=97983.7, RMS=48906.3 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     : CostJb   : Nonlinear Jb = 110.044
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 748.327, nobs = 959, Jo/n = 0.78032, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 22.3238, nobs = 63, Jo/n = 0.354346, err = 7.97005
@@ -24,12 +42,30 @@ Test     : CostFunction: Nonlinear J = 1052.45
 Test     : DRIPCGMinimizer: reduction in residual norm = 1.9711e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
 Test     : Fld=1  Min=199.696, Max=305.643, RMS=243.968 : temperature
 Test     : Fld=2  Min=0, Max=0.0216257, RMS=0.00463013 : spechum
 Test     : Fld=3  Min=-43.929, Max=83.2624, RMS=17.6584 : uReconstructZonal
 Test     : Fld=4  Min=-45.5365, Max=58.6073, RMS=9.01659 : uReconstructMeridional
 Test     : Fld=5  Min=57014.2, Max=104650, RMS=98679 : surface_pressure
+Test     : Fld=6  Min=251.613, Max=725.792, RMS=441.073 : theta
+Test     : Fld=7  Min=0.0256572, Max=1.333, RMS=0.614255 : rho
+Test     : Fld=8  Min=-90.5048, Max=80.8649, RMS=14.3512 : u
+Test     : Fld=9  Min=0, Max=0.0221037, RMS=0.00469302 : index_qv
+Test     : Fld=10  Min=1514.87, Max=97983.3, RMS=48906.2 : pressure
+Test     : Fld=11  Min=0, Max=0, RMS=0 : landmask
+Test     : Fld=12  Min=0, Max=1, RMS=0.221766 : xice
+Test     : Fld=13  Min=0, Max=1, RMS=0.333699 : snowc
+Test     : Fld=14  Min=212.257, Max=315.571, RMS=288.414 : skintemp
+Test     : Fld=15  Min=0, Max=0, RMS=0 : ivgtyp
+Test     : Fld=16  Min=0, Max=0, RMS=0 : isltyp
+Test     : Fld=17  Min=0, Max=1.96529, RMS=0.225099 : snowh
+Test     : Fld=18  Min=0, Max=87.8476, RMS=17.4287 : vegfra
+Test     : Fld=19  Min=-26.2606, Max=21.0627, RMS=6.06951 : u10
+Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
+Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
+Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
+Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
 Test     : CostJb   : Nonlinear Jb = 109.486
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 743.924, nobs = 959, Jo/n = 0.775729, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 22.3509, nobs = 63, Jo/n = 0.354776, err = 7.97005
