@@ -1,0 +1,122 @@
+nml_file: namelist.atmosphere_2018041421
+window begin: &date '2018-04-14T21:00:00Z'
+window length: PT6H
+geometry:
+  gridfname: "./restart.2018-04-14_21.00.00.nc"
+model:
+  name: MPAS
+  tstep: PT30M
+  finalnorm: 0.020383
+  tolerance: 0.005
+  variables: &vars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+initial condition:
+  variables: *vars
+  filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
+  date: *date
+observations:
+  - obs space:
+      name: Radiosonde
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_sondes.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: Aircraft
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_aircraft.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: Satwind
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_satwind.nc4
+      simulated variables: [eastward_wind, northward_wind]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: GnssroRef
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssroref.nc4
+      simulated variables: [refractivity]
+    obs operator:
+      name: GnssroRef
+      obs options:
+        ro_top_meter: 30000
+        use_compress: 0
+    obs bias: {}
+  - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs bias: {}
+  - obs operator:
+      name: CRTM
+      Absorbers: [H2O,O3]
+      Clouds: [Water, Ice, Rain, Snow, Graupel]
+      Cloud_Fraction: 1.0
+      obs options:
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
+    obs space:
+      name: CRTM
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/ensemble/mem004/obsout_enshofx_amsua.nc4
+      simulated variables: [brightness_temperature]
+      channels: 1-15
+    obs bias: {}
+  - obs space:
+        name: SfcPCorrected
+        obsdatain:
+          obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsdataout:
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_sfc.nc4
+        simulated variables: [surface_pressure]
+      obs operator:
+        name: SfcPCorrected
+        da_psfc_scheme: UKMO   # or WRFDA
+      linear obs operator:
+        name: Identity
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+        apply at iterations: 0
+      - filter: Difference Check
+        reference: station_elevation@MetaData
+        value: surface_altitude@GeoVaLs
+        threshold: 500
+      - filter: Background Check
+        filter variables:
+        - name: surface_pressure
+        threshold: 10
+prints:
+  frequency: PT3H

@@ -16,9 +16,16 @@ list( APPEND mpas_test_input
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
   testinput/eda_3dhybrid.yaml
-#  testinput/eda_3dvar.yaml
-#  testinput/eda_3denvar.yaml
+  testinput/eda_3dhybrid_1.yaml
+  testinput/eda_3dhybrid_2.yaml
+  testinput/eda_3dhybrid_3.yaml
+  testinput/eda_3dhybrid_4.yaml
   testinput/enshofx.yaml
+  testinput/enshofx_1.yaml
+  testinput/enshofx_2.yaml
+  testinput/enshofx_3.yaml
+  testinput/enshofx_4.yaml
+  testinput/enshofx_5.yaml
   testinput/errorcovariance.yaml
   testinput/forecast.yaml
   testinput/gen_ens_pert_B.yaml
@@ -184,7 +191,7 @@ if (DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
     set(LOCAL_PATH_TESTFILES_IODA "$ENV{LOCAL_PATH_TESTFILES_IODA}")
 endif()
 
-# If it is not defined then download to build bundle 
+# If it is not defined then download to build bundle
 # in `test_data` directory
 # If local path to testfiles is defined don't download
 
@@ -194,8 +201,8 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
   # data does not exist, it will use default (develop) data
 
   if( NOT DEFINED MPAS_IODA_TESTFILES_BRANCH)
-    # MPAS_IODA_TESTFILES_BRANCH can be used when building 
-    # to set a specific branch name for testing. 
+    # MPAS_IODA_TESTFILES_BRANCH can be used when building
+    # to set a specific branch name for testing.
 
     execute_process(
       COMMAND git rev-parse --abbrev-ref HEAD
@@ -232,7 +239,7 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
   message(STATUS "Save data to " ${MPAS_IODA_TESTFILES_PATH})
   file(MAKE_DIRECTORY ${MPAS_IODA_TESTFILES_PATH})
 
-  # Create download script for get_ioda_test_data test 
+  # Create download script for get_ioda_test_data test
   set ( FILENAME mpas_ioda_data_downloader.py)
   set ( SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME} )
   set ( DEST_FILE ${CMAKE_BINARY_DIR}/bin/${FILENAME} )
@@ -243,7 +250,7 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
   else()
     configure_file( ${SOURCE_FILE}    ${DEST_FILE} @ONLY )
   endif()
- 
+
   add_custom_target( bin_mpas_ioda_test_download_scripts ALL
       COMMAND chmod +x ${bin_mpas_ioda_test_download_scripts_deps}
       DEPENDS ${bin_mpas_ioda_test_download_scripts_deps})
@@ -258,7 +265,7 @@ else()
   message (STATUS "LOCAL_PATH_TESTFILES_IODA set to : " ${LOCAL_PATH_TESTFILES_IODA})
 endif()
 
-# Link test files 
+# Link test files
 execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
                  ${MPAS_IODA_TESTFILES_PATH}
                  ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda )
@@ -331,12 +338,12 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states)
 # EDA member directory names standardized by
 # oops/utils/string_utils::swap_name_member
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/eda)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/eda)
-set(edamembers mem001;mem002;mem003;mem004)
-foreach(MEM IN LISTS edamembers)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/eda/${MEM})
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/eda/${MEM})
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/ensemble)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/ensemble)
+set(ensemblemembers mem001;mem002;mem003;mem004;mem005)
+foreach(MEM IN LISTS ensemblemembers)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/ensemble/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/ensemble/${MEM})
 endforeach(MEM)
 
 ######################################################################
@@ -348,7 +355,7 @@ endforeach(MEM)
 #   jedi_unit_test( [ CLASS <name> ]
 #                   [ YAMLFILE <filename.yaml> ]
 #                   [ ID <id> ]
-#                   [ NPE <number-of-processor-elements> ] 
+#                   [ NPE <number-of-processor-elements> ]
 #                   [ TESTTIER <tier-of-test> ])
 #
 # Options
@@ -388,7 +395,7 @@ function(jedi_unit_test)
 
     if( NOT DEFINED TEST_ID )
         set( TEST_ID "${TEST_YAMLFILE}" )
-    endif() 
+    endif()
 
     set( MPI_SUFFIX "" )
     if( DEFINED TEST_NPE )
@@ -398,7 +405,7 @@ function(jedi_unit_test)
     else()
         set( TEST_NPE 1 )
     endif()
-    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_ID}${MPI_SUFFIX}" ) 
+    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_ID}${MPI_SUFFIX}" )
 
 
     ecbuild_add_test( TARGET  test_${TARGET_NAME}
@@ -495,7 +502,7 @@ function(jedi_app_ref_test_compare)
     set( TEST_NAME "${TEST_APP}" )
     if( DEFINED TEST_ID )
         set( TEST_NAME "${TEST_ID}" )
-    endif() 
+    endif()
 
     set( MPI_SUFFIX "" )
     if( NOT DEFINED TEST_NPE )
@@ -513,7 +520,7 @@ function(jedi_app_ref_test_compare)
         set( MPI_SUFFIX "_${NPE_PER_MEMBER}pe" )
     endif()
 
-    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}" ) 
+    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}" )
 
     set( TARGET_PREFIX "test" )
     set( TEST_TYPE "run" )
@@ -533,7 +540,7 @@ function(jedi_app_ref_test_compare)
                           COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
                           ARGS    testinput/${TEST_NAME}.yaml
                                   testoutput/${TEST_NAME}${MPI_SUFFIX}.${TEST_TYPE}
-                          MPI     ${TEST_NPE} 
+                          MPI     ${TEST_NPE}
                           TEST_DEPENDS "${TEST_DEPENDS}" )
     else()
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
@@ -667,4 +674,3 @@ if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
         endif()
     endforeach(THIS_NPE)
 endif()
-
