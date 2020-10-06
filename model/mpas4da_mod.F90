@@ -1203,14 +1203,93 @@ use mpas_constants_mod
        isDecomposed = .false.
        return
     end if
-!    if ( isDecomposed ) then 
+!    if ( isDecomposed ) then
 !       write(*,*)'is Decomposed ',trim(dimName)
 !    else
 !       write(*,*)'is not Decomposed ',trim(dimName)
 !    end if
 
     end function isDecomposed
-   
+
+
+   !***********************************************************************
+   !
+   !  function getSolveDimensions
+   !
+   !> \brief   Returns an array with the dimensions of a pool iterator
+   !
+   !-----------------------------------------------------------------------
+
+   function getSolveDimensions(pool, poolItr) result(solveDims)
+
+   implicit none
+
+   ! Passed variables
+   type (mpas_pool_type), intent(in) :: pool
+   type (mpas_pool_iterator_type), intent(in) :: poolItr
+
+   ! Local variables
+   character(len=1024) :: buf
+
+   type (field1DReal), pointer :: field1dr
+   type (field2DReal), pointer :: field2dr
+   type (field3DReal), pointer :: field3dr
+   type (field1DInteger), pointer :: field1di
+   type (field2DInteger), pointer :: field2di
+   type (field3DInteger), pointer :: field3di
+
+   integer, pointer :: solveDim
+   integer, allocatable :: solveDims(:)
+   character (len=StrKIND) :: dimName
+   integer :: ndims, id
+
+   if (poolItr % memberType /= MPAS_POOL_FIELD) then
+      write(buf,*) '--> getSolveDimensions: poolItr % memberType == ',poolItr % memberType,' not handled'
+      call abor1_ftn(buf)
+   end if
+
+   ndims = poolItr % nDims
+   allocate(solveDims(ndims))
+
+   do id = 1, ndims
+      if (ndims == 1) then
+         if (poolItr % dataType == MPAS_POOL_INTEGER) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field1di)
+            dimName = field1di % dimNames(id)
+         else if (poolItr % dataType == MPAS_POOL_REAL) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field1dr)
+            dimName = field1dr % dimNames(id)
+         endif
+      elseif (ndims == 2) then
+         if (poolItr % dataType == MPAS_POOL_INTEGER) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field2di)
+            dimName = field2di % dimNames(id)
+         else if (poolItr % dataType == MPAS_POOL_REAL) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field2dr)
+            dimName = field2dr % dimNames(id)
+         endif
+      elseif (ndims == 3) then
+         if (poolItr % dataType == MPAS_POOL_INTEGER) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field3di)
+            dimName = field3di % dimNames(id)
+         else if (poolItr % dataType == MPAS_POOL_REAL) then
+            call mpas_pool_get_field(pool, trim(poolItr % memberName), field3dr)
+            dimName = field3dr % dimNames(id)
+         endif
+      else
+         write(buf,*) '--> getSolveDimensions: poolItr % nDims == ',ndims,' not handled'
+         call abor1_ftn(buf)
+      endif
+      if (isDecomposed(dimName)) then
+         call mpas_pool_get_dimension(pool, trim(dimName)//'Solve', solveDim)
+      else
+         call mpas_pool_get_dimension(pool, trim(dimName), solveDim)
+      end if
+      solveDims(id) = solveDim
+   end do
+
+   end function getSolveDimensions
+
 
    !***********************************************************************
    !
@@ -1223,7 +1302,7 @@ use mpas_constants_mod
    !>  Given a pool of fields, return min/max/norm array
    !
    !-----------------------------------------------------------------------
-   
+
    subroutine da_gpnorm(pool_a, dminfo, nf, pstat, fld_select)
 
    implicit none
@@ -1240,8 +1319,8 @@ use mpas_constants_mod
    real(kind=kind_real) :: globalSum, globalMin, globalMax, dimtot, dimtot_global, prodtot
 
    integer :: jj, ndims
-   integer, pointer :: solveDim1, solveDim2, solveDim3
-   !integer, pointer :: solveDim(:)
+   integer :: solveDim1, solveDim2, solveDim3
+   integer, allocatable :: solveDims(:)
 
    pstat = MPAS_JEDI_ZERO_kr
 
@@ -1251,101 +1330,65 @@ use mpas_constants_mod
    !
    call mpas_pool_begin_iteration(pool_a)
 
-      do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-         jj = ufo_vars_getindex(fld_select,trim(poolItr % memberName))
-         if ( jj < 0 .or. jj > nf ) cycle
+   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+      jj = ufo_vars_getindex(fld_select,trim(poolItr % memberName))
+      if ( jj < 0 .or. jj > nf ) cycle
 
-         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-         ! so we select only those members of the pool that are fields
-         if (poolItr % memberType == MPAS_POOL_FIELD) then
+      ! Pools may in general contain dimensions, namelist options, fields, or other pools,
+      ! so we select only those members of the pool that are fields
+      if (poolItr % memberType == MPAS_POOL_FIELD) then
 
-            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-            if (poolItr % dataType == MPAS_POOL_REAL) then
+         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+         if (poolItr % dataType == MPAS_POOL_REAL) then
 
-               ! Depending on the dimensionality of the field, we need to set pointers of
-               ! the correct type
-               ndims = poolItr % nDims
-
-               !write(*,*)'gpnorm variable: ',trim(poolItr % memberName), ndims
-
-               if (ndims == 1) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
-                  if ( isDecomposed(field1d % dimNames(ndims)) ) then
-                     call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims)), solveDim1)
-                  end if
-                  dimtot = real(solveDim1,kind_real)
-                  prodtot = sum(field1d % array(1:solveDim1)**2 )
-                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
-                  call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-                  call mpas_dmpar_min_real(dminfo, minval(field1d % array(1:solveDim1)), globalMin)
-                  call mpas_dmpar_max_real(dminfo, maxval(field1d % array(1:solveDim1)), globalMax)
-                  pstat(1,jj) = globalMin
-                  pstat(2,jj) = globalMax
-                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
-
-               else if (ndims == 2) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
-                  if (isDecomposed(field2d % dimNames(ndims))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field2d % dimNames(ndims-1))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1)), solveDim2)
-                  end if
-                  dimtot  = real(solveDim1*solveDim2,kind_real)
-                  prodtot = sum(field2d % array(1:solveDim2,1:solveDim1)**2 )
-                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
-                  !BJJ ?? call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
-                  call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-                  call mpas_dmpar_min_real(dminfo, minval(field2d % array(1:solveDim2,1:solveDim1)), globalMin)
-                  call mpas_dmpar_max_real(dminfo, maxval(field2d % array(1:solveDim2,1:solveDim1)), globalMax)
-!                  write(*,*)'gpnorm prodtot: ',prodtot, dimtot
-                  pstat(1,jj) = globalMin
-                  pstat(2,jj) = globalMax
-                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
-
-               else if (ndims == 3) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                  if (isDecomposed(field3d % dimNames(ndims))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field3d % dimNames(ndims-1))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-1)), solveDim2)
-                  end if
-                  if (isDecomposed(field3d % dimNames(ndims-2))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2))//'Solve', solveDim3)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2)), solveDim3)
-                  end if
-                  dimtot  = real(solveDim1*solveDim2*solveDim3,kind_real)
-                  prodtot = sum(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)**2 )
-                  call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
-                  !BJJ ?? call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-                  call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-                  call mpas_dmpar_min_real(dminfo, minval(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)), globalMin)
-                  call mpas_dmpar_max_real(dminfo, maxval(field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)), globalMax)
-                  pstat(1,jj) = globalMin
-                  pstat(2,jj) = globalMax
-                  pstat(3,jj) = sqrt( globalSum / dimtot_global )
-               end if
-
-!               write(0,*)'Variable: ',trim(poolItr % memberName),jj
-!               write(0,*)'Min/Max stat: ',pstat(1,jj),pstat(2,jj),pstat(3,jj)
-!               write(0,*)'' 
-
+            ! Depending on the dimensionality of the field, we need to set pointers of
+            ! the correct type
+            ndims = poolItr % nDims
+            solveDims = getSolveDimensions(pool_a, poolItr)
+            if (ndims == 1) then
+               solveDim1 = solveDims(1)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
+               dimtot = real(solveDim1,kind_real)
+               prodtot = sum(field1d % array(1:solveDim1)**2 )
+               call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+               call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
+               call mpas_dmpar_min_real(dminfo, minval(field1d % array(1:solveDim1)), globalMin)
+               call mpas_dmpar_max_real(dminfo, maxval(field1d % array(1:solveDim1)), globalMax)
+               pstat(1,jj) = globalMin
+               pstat(2,jj) = globalMax
+               pstat(3,jj) = sqrt( globalSum / dimtot_global )
+            else if (ndims == 2) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
+               dimtot  = real(solveDim1*solveDim2,kind_real)
+               prodtot = sum(field2d % array(1:solveDim1,1:solveDim2)**2 )
+               call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+               call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
+               call mpas_dmpar_min_real(dminfo, minval(field2d % array(1:solveDim1,1:solveDim2)), globalMin)
+               call mpas_dmpar_max_real(dminfo, maxval(field2d % array(1:solveDim1,1:solveDim2)), globalMax)
+               pstat(1,jj) = globalMin
+               pstat(2,jj) = globalMax
+               pstat(3,jj) = sqrt( globalSum / dimtot_global )
+            else if (ndims == 3) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               solveDim3 = solveDims(3)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
+               dimtot  = real(solveDim1*solveDim2*solveDim3,kind_real)
+               prodtot = sum(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)**2 )
+               call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+               call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
+               call mpas_dmpar_min_real(dminfo, minval(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)), globalMin)
+               call mpas_dmpar_max_real(dminfo, maxval(field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)), globalMax)
+               pstat(1,jj) = globalMin
+               pstat(2,jj) = globalMax
+               pstat(3,jj) = sqrt( globalSum / dimtot_global )
             end if
+            deallocate(solveDims)
          end if
-
-      end do
+      end if
+   end do
 
    end subroutine da_gpnorm
 
@@ -1374,10 +1417,11 @@ use mpas_constants_mod
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
-   real(kind=kind_real) :: dimtot, dimtot_global, prodtot, prodtot_global 
+   real(kind=kind_real) :: dimtot, dimtot_global, prodtot, prodtot_global
 
-   integer :: jj, ndims
-   integer, pointer :: solveDim1, solveDim2, solveDim3
+   integer :: ndims
+   integer :: solveDim1, solveDim2, solveDim3
+   integer, allocatable :: solveDims(:)
 
    prodtot = MPAS_JEDI_ZERO_kr
    dimtot  = MPAS_JEDI_ZERO_kr
@@ -1387,82 +1431,44 @@ use mpas_constants_mod
    ! named in pool_a
    !
    call mpas_pool_begin_iteration(pool_a)
-   jj = 1
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-         if (present(fld_select)) then
-            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
-         end if
-
-         if (poolItr % dataType == MPAS_POOL_REAL) then
-            if (poolItr % memberType == MPAS_POOL_FIELD) then
-            
-               ndims = poolItr % nDims
-!               write(*,*)'fldrms variable: ',trim(poolItr % memberName),ndims
-
-               if (ndims == 1) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
-                  if (isDecomposed(field1d % dimNames(ndims))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field1d % dimNames(ndims)), solveDim1)
-                  end if
-                  dimtot  = dimtot + real(solveDim1,kind_real)
-                  prodtot = prodtot + sum( field1d % array(1:solveDim1)**2 )
-
-               else if (ndims == 2) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
-                  if (isDecomposed(field2d % dimNames(ndims))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field2d % dimNames(ndims-1))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d % dimNames(ndims-1)), solveDim2)
-                  end if
-                  dimtot  = dimtot + real(solveDim1*solveDim2,kind_real)
-                  prodtot = prodtot + sum( field2d % array(1:solveDim2,1:solveDim1)**2 )
-
-!                  write(*,*)'fldrms dims: ',solveDim1, solveDim2
-!                  write(*,*)'fldrms, dimtot, prodtot: ', dimtot, prodtot
-
-                else if (ndims == 3) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
-!                  write(*,*)'dimNames ',trim(field3d % dimNames(ndims))
-                  if (isDecomposed(field3d % dimNames(ndims))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field3d % dimNames(ndims-1))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-1)), solveDim2)
-                  end if
-                  if (isDecomposed(field3d % dimNames(ndims-2))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2))//'Solve', solveDim3)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d % dimNames(ndims-2)), solveDim3)
-                  end if
-                  dimtot  = dimtot + real(solveDim1*solveDim2*solveDim3,kind_real)
-                  prodtot = prodtot + sum( field3d % array(1:solveDim3,1:solveDim2,1:solveDim1)**2 )
-
-               end if
+      if (present(fld_select)) then
+         if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
+      end if
+      if (poolItr % dataType == MPAS_POOL_REAL) then
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+            ndims = poolItr % nDims
+            solveDims = getSolveDimensions(pool_a, poolItr)
+            if (ndims == 1) then
+               solveDim1 = solveDims(1)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
+               dimtot  = dimtot + real(solveDim1,kind_real)
+               prodtot = prodtot + sum( field1d % array(1:solveDim1)**2 )
+            else if (ndims == 2) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d)
+               dimtot  = dimtot + real(solveDim1*solveDim2,kind_real)
+               prodtot = prodtot + sum( field2d % array(1:solveDim1,1:solveDim2)**2 )
+            else if (ndims == 3) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               solveDim3 = solveDims(3)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d)
+               dimtot  = dimtot + real(solveDim1*solveDim2*solveDim3,kind_real)
+               prodtot = prodtot + sum( field3d % array(1:solveDim1,1:solveDim2,1:solveDim3)**2 )
             end if
+            deallocate(solveDims)
          end if
-         jj = jj + 1
+      end if
+   end do
 
-      end do
+   call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+   call mpas_dmpar_sum_real(dminfo, prodtot, prodtot_global)
+   fldrms = sqrt(prodtot_global / dimtot_global)
 
-      call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
-      call mpas_dmpar_sum_real(dminfo, prodtot, prodtot_global)
-      fldrms = sqrt(prodtot_global / dimtot_global)
-!      write(*,*)'fldrms = sqrt( prodtot_global / dimtot_global) : ', fldrms, prodtot_global, dimtot_global
-      
-
-  end subroutine da_fldrms
+   end subroutine da_fldrms
 
 
    !***********************************************************************
@@ -1490,8 +1496,9 @@ use mpas_constants_mod
    type (field3DReal), pointer :: field3d_a, field3d_b
    real(kind=kind_real) :: fieldSum_local, zprod_local
 
-   integer :: jj, ndims
-   integer, pointer :: solveDim1, solveDim2, solveDim3
+   integer :: ndims
+   integer :: solveDim1, solveDim2, solveDim3
+   integer, allocatable :: solveDims(:)
 
    !
    ! Iterate over all fields in pool_a
@@ -1502,80 +1509,43 @@ use mpas_constants_mod
    zprod_local = MPAS_JEDI_ZERO_kr
 
    do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-
-         if (poolItr % dataType == MPAS_POOL_REAL) then
-            if (poolItr % memberType == MPAS_POOL_FIELD) then
-
-!               write(*,*)'variable: ',trim(poolItr % memberName)
-               ndims = poolItr % nDims 
-
-               if (ndims == 1) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d_a)
-                  if ( isDecomposed(field1d_a % dimNames(ndims)) ) then
-                     call mpas_pool_get_dimension(pool_a, trim(field1d_a % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field1d_a % dimNames(ndims)), solveDim1)
-                  end if
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d_a)
-                  call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field1d_b)
-                  fieldSum_local = sum(field1d_a % array(1:solveDim1) * field1d_b % array(1:solveDim1))
-                  zprod_local = zprod_local + fieldSum_local
-!                  write(*,*)'dotprod: ',trim(field1d_a % dimNames(ndims)), zprod_local
-
-               else if (ndims == 2) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d_a)
-                  if (isDecomposed(field2d_a % dimNames(ndims))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d_a % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d_a % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field2d_a % dimNames(ndims-1))) then
-                      call mpas_pool_get_dimension(pool_a, trim(field2d_a % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                      call mpas_pool_get_dimension(pool_a, trim(field2d_a % dimNames(ndims-1)), solveDim2)
-                  end if
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d_a)
-                  call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field2d_b)
-                  fieldSum_local = sum(field2d_a % array(1:solveDim2,1:solveDim1) * field2d_b % array(1:solveDim2,1:solveDim1))
-                  zprod_local = zprod_local + fieldSum_local
-!                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
-
-               else if (ndims == 3) then
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
-!                  write(*,*)'dimNames ',trim(field3d_a % dimNames(ndims))
-                  if (isDecomposed(field3d_a % dimNames(ndims))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims))//'Solve', solveDim1)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims)), solveDim1)
-                  end if
-                  if (isDecomposed(field3d_a % dimNames(ndims-1))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims-1))//'Solve', solveDim2)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims-1)), solveDim2)
-                  end if
-                  if (isDecomposed(field3d_a % dimNames(ndims-2))) then
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims-2))//'Solve', solveDim3)
-                  else
-                     call mpas_pool_get_dimension(pool_a, trim(field3d_a % dimNames(ndims-2)), solveDim3)
-                  end if
-                  call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
-                  call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field3d_b)
-                  fieldSum_local = sum(field3d_a % array(1:solveDim3,1:solveDim2,1:solveDim1) &
-                                    * field3d_b % array(1:solveDim3,1:solveDim2,1:solveDim1))
-                  zprod_local = zprod_local + fieldSum_local
-!                  write(*,*)'dotprod: ',trim(field2d_a % dimNames(ndims)), zprod_local
-
-               end if
-
+      if (poolItr % dataType == MPAS_POOL_REAL) then
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+            ndims = poolItr % nDims
+            solveDims = getSolveDimensions(pool_a, poolItr)
+            !TODO: add check that solveDims are the same between pool_a and pool_b for poolItr
+            if (ndims == 1) then
+               solveDim1 = solveDims(1)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d_a)
+               call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field1d_b)
+               fieldSum_local = sum(field1d_a % array(1:solveDim1) * field1d_b % array(1:solveDim1))
+               zprod_local = zprod_local + fieldSum_local
+            else if (ndims == 2) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d_a)
+               call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field2d_b)
+               fieldSum_local = sum(field2d_a % array(1:solveDim1,1:solveDim2) &
+                                 * field2d_b % array(1:solveDim1,1:solveDim2))
+               zprod_local = zprod_local + fieldSum_local
+            else if (ndims == 3) then
+               solveDim1 = solveDims(1)
+               solveDim2 = solveDims(2)
+               solveDim3 = solveDims(3)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
+               call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field3d_b)
+               fieldSum_local = sum(field3d_a % array(1:solveDim1,1:solveDim2,1:solveDim3) &
+                                 * field3d_b % array(1:solveDim1,1:solveDim2,1:solveDim3))
+               zprod_local = zprod_local + fieldSum_local
             end if
+            deallocate(solveDims)
          end if
+      end if
+   end do
 
-      end do
+   call mpas_dmpar_sum_real(dminfo, zprod_local, zprod)
 
-      call mpas_dmpar_sum_real(dminfo, zprod_local, zprod)
-!      write(*,*)'dotprod: Final result = ',zprod
-
-  end subroutine da_dot_product
+   end subroutine da_dot_product
 
 
   subroutine cvt_oopsmpas_date(inString2,outString2,iconv)

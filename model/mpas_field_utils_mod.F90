@@ -676,42 +676,24 @@ subroutine serial_size(self, vsize)
    implicit none
 
    ! Passed variables
-   class(mpas_field),intent(in) :: self             !< Increment
-   integer,intent(out) :: vsize                     !< Size
+   class(mpas_field),intent(in) :: self
+   integer,intent(out) :: vsize !< Size
 
    ! Local variables
-   integer :: nlevels, ngrid, level, cell
    type (mpas_pool_iterator_type) :: poolItr
-   character(len=1024) :: buf
-
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-   integer, dimension(:,:), pointer :: i2d_ptr_a
+   integer, allocatable :: solveDims(:)
 
    ! Initialize
    vsize = 0
-   ngrid = self%geom%nCellsSolve
 
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
-         if (poolItr % nDims == 1) then
-            vsize = vsize + ngrid
-         elseif (poolItr % nDims == 2) then
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-               call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
-               nlevels = size(i2d_ptr_a, 1)
-            else if (poolItr % dataType == MPAS_POOL_REAL) then
-               call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr_a)
-               nlevels = size(r2d_ptr_a, 1)
-            endif
-            vsize = vsize + ngrid*nlevels
-         else
-            write(buf,*) '--> serialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
-            call abor1_ftn(buf)
-         endif
+         solveDims = getSolveDimensions(self%subFields, poolItr)
+         vsize = vsize + product(solveDims)
+         deallocate(solveDims)
       endif
    enddo
-
 
 end subroutine serial_size
 
@@ -727,9 +709,10 @@ subroutine serialize_field(self, vsize, vect_inc)
    real(kind_real),intent(out) :: vect_inc(vsize)   !< Vector
 
    ! Local variables
-   integer :: index, nlevels, ngrid, level, cell
+   integer :: index, nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
    character(len=1024) :: buf
+   integer, allocatable :: solveDims(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
@@ -738,41 +721,42 @@ subroutine serialize_field(self, vsize, vect_inc)
  
    ! Initialize
    index = 0
-   ngrid = self%geom%nCellsSolve
 
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
+         solveDims = getSolveDimensions(self%subFields, poolItr)
          if (poolItr % nDims == 1) then
+            nhoriz = solveDims(1)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
-               do cell = 1, ngrid
-                  vect_inc(index + 1) = real(i1d_ptr_a(cell), kind=kind_real)
+               do hh = 1, nhoriz
+                  vect_inc(index + 1) = real(i1d_ptr_a(hh), kind=kind_real)
                   index = index + 1
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr_a)
-               do cell = 1, ngrid
-                  vect_inc(index + 1) = r1d_ptr_a(cell)
+               do hh = 1, nhoriz
+                  vect_inc(index + 1) = r1d_ptr_a(hh)
                   index = index + 1
                enddo
             endif
          elseif (poolItr % nDims == 2) then
+            nvert = solveDims(1)
+            nhoriz = solveDims(2)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
-               nlevels = size(i2d_ptr_a, 1)
-               do level = 1, nlevels
-                  do cell = 1, ngrid
-                     vect_inc(index + 1) = real(i2d_ptr_a(level, cell), kind=kind_real)
+               do vv = 1, nvert
+                  do hh = 1, nhoriz
+                     vect_inc(index + 1) = real(i2d_ptr_a(vv, hh), kind=kind_real)
                      index = index + 1
                   enddo
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr_a)
-               nlevels = size(r2d_ptr_a, 1)
-               do level = 1, nlevels
-                  do cell = 1, ngrid
-                     vect_inc(index + 1) = r2d_ptr_a(level, cell)
+               do vv = 1, nvert
+                  do hh = 1, nhoriz
+                     vect_inc(index + 1) = r2d_ptr_a(vv, hh)
                      index = index + 1
                   enddo
                enddo
@@ -781,6 +765,7 @@ subroutine serialize_field(self, vsize, vect_inc)
             write(buf,*) '--> serialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(buf)
          endif
+         deallocate(solveDims)
       endif
    enddo
 
@@ -799,51 +784,51 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
    integer,intent(inout) :: index                        !< Index
 
    ! Local variables
-   integer :: nlevels, ngrid, level, cell
+   integer :: nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
    character(len=1024) :: buf
+   integer, allocatable :: solveDims(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
    integer, dimension(:), pointer :: i1d_ptr_a
    integer, dimension(:,:), pointer :: i2d_ptr_a
 
-   ! Initialize
-   ngrid = self%geom%nCellsSolve
-
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
+         solveDims = getSolveDimensions(self%subFields, poolItr)
          if (poolItr % nDims == 1) then
+            nhoriz = solveDims(1)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
-               do cell = 1, ngrid
-                  i1d_ptr_a(cell) = int ( vect_inc(index + 1) )
+               do hh = 1, nhoriz
+                  i1d_ptr_a(hh) = int ( vect_inc(index + 1) )
                   index = index + 1
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr_a)
-               do cell = 1, ngrid
-                  r1d_ptr_a(cell) = vect_inc(index + 1)
+               do hh = 1, nhoriz
+                  r1d_ptr_a(hh) = vect_inc(index + 1)
                   index = index + 1
                enddo
             endif
          elseif (poolItr % nDims == 2) then
+            nvert = solveDims(1)
+            nhoriz = solveDims(2)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
-               nlevels = size(i2d_ptr_a, 1)
-               do level = 1, nlevels
-                  do cell = 1, ngrid
-                     i2d_ptr_a(level, cell) = int ( vect_inc(index + 1) )
+               do vv = 1, nvert
+                  do hh = 1, nhoriz
+                     i2d_ptr_a(vv, hh) = int ( vect_inc(index + 1) )
                      index = index + 1
                   enddo
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr_a)
-               nlevels = size(r2d_ptr_a, 1)
-               do level = 1, nlevels
-                  do cell = 1, ngrid
-                     r2d_ptr_a(level, cell) = vect_inc(index + 1)
+               do vv = 1, nvert
+                  do hh = 1, nhoriz
+                     r2d_ptr_a(vv, hh) = vect_inc(index + 1)
                      index = index + 1
                   enddo
                enddo
@@ -852,6 +837,7 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
             write(buf,*) '--> deserialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(buf)
          endif
+         deallocate(solveDims)
       endif
    enddo
 

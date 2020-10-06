@@ -5,7 +5,7 @@ geometry:
 # + same variables in inc and state
 # + only linear transformations between inc and state in add increment method (+=)
 # + above excludes positive-definite checks for moisture/hydrometeors/tracers
-# + all fields must be serializable (TODO: make u serializable, nEdgesSolve)
+# + all fields must be serializable
 # TODO: why do pressure, rho, and theta fail?
 inc variables:
 - temperature
@@ -15,7 +15,7 @@ inc variables:
 #- pressure
 #- rho
 #- theta
-#- u
+- u
 increment test:
   date: '2018-04-15T00:00:00Z'
 state:
@@ -27,7 +27,7 @@ state:
 #  - pressure
 #  - rho
 #  - theta
-#  - u
+  - u
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 _interptest:
