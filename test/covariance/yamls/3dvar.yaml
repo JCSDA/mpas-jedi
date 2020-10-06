@@ -89,8 +89,8 @@ cost function:
       toleranceInverse: '1.0e-8'
       testinverse: '0'
       wind_cvt_method: 1
-      input variables: *incvars
-      output variables: *ctlvars
+      input variables: *ctlvars
+      output variables: *incvars
   observations:
   - obs space:
       name: Radiosonde
