@@ -15,7 +15,7 @@ use oops_variables_mod, only: oops_variables
 use string_utils, only: swap_name_member
 
 !ufo
-use ufo_vars_mod, only: MAXVARLEN
+use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
 use ufo_locs_mod, only: ufo_locs
 use ufo_geovals_mod, only: ufo_geovals
 
@@ -42,7 +42,11 @@ public :: mpas_field, mpas_field_registry, &
           copy_field, copy_pool, &
           update_diagnostic_fields, &
           mpas_hydrometeor_fields,  &
-          mpas_re_fields
+          mpas_re_fields, &
+          cellCenteredWindFields, &
+          moistureFields, &
+          analysisThermoFields, &
+          modelThermoFields
 
 ! ------------------------------------------------------------------------------
 
@@ -83,6 +87,10 @@ public :: mpas_field, mpas_field_registry, &
      procedure :: serialize    => serialize_field
      procedure :: deserialize   => deserialize_field
 
+     generic :: has => has_field, has_fields
+     procedure :: has_field
+     procedure :: has_fields
+
    end type mpas_field
 
 !   abstract interface
@@ -108,6 +116,19 @@ public :: mpas_field, mpas_field_registry, &
    character(len=MAXVARLEN) :: mpas_re_fields(3) = &
       [ character(len=MAXVARLEN) :: &
       "re_cloud", "re_ice  ", "re_snow " ]
+   character(len=MAXVARLEN), parameter :: cellCenteredWindFields(2) = &
+      [character(len=MAXVARLEN) :: &
+       'uReconstructZonal', 'uReconstructMeridional']
+   character(len=MAXVARLEN), parameter :: moistureFields(2) = &
+      [character(len=MAXVARLEN) :: &
+       'index_qv', 'spechum']
+   character(len=MAXVARLEN), parameter :: analysisThermoFields(2) = &
+      [character(len=MAXVARLEN) :: &
+       'surface_pressure', 'temperature']
+   character(len=MAXVARLEN), parameter :: modelThermoFields(4) = &
+      [character(len=MAXVARLEN) :: &
+       'index_qv', 'pressure', 'rho', 'theta']
+
 
    integer, parameter    :: max_string=8000
    character(max_string) :: err_msg
@@ -835,5 +856,23 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
    enddo
 
 end subroutine deserialize_field
+
+function has_field(self, fieldname) result(has)
+   class(mpas_field), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   logical :: has
+   has = (ufo_vars_getindex(self % fldnames, fieldname) > 0)
+end function has_field
+
+function has_fields(self, fieldnames) result(has)
+   class(mpas_field), intent(in) :: self
+   character(len=*), intent(in) :: fieldnames(:)
+   integer :: i
+   logical :: has
+   has = .true.
+   do i = 1, size(fieldnames)
+      has = has .and. self%has(fieldnames(i))
+   end do
+end function has_fields
 
 end module mpas_field_utils_mod

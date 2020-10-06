@@ -1,7 +1,7 @@
 ! (C) Copyright 2017 UCAR
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module mpas_state_mod
 
@@ -57,17 +57,17 @@ contains
 !! \details **add_incr()** adds "increment" to "state", such as
 !!          state (containing analysis) = state (containing guess) + increment
 !!          Here, we also update "theta", "rho", and "u" (edge-normal wind), which are
-!!          close to MPAS prognostic variable. 
+!!          close to MPAS prognostic variable.
 !!          Intermediate 3D pressure is diagnosed with hydrostatic balance.
 !!          While conversion to "theta" and "rho" uses full state variables,
-!!          conversion to "u" from cell center winds uses their increment to reduce 
+!!          conversion to "u" from cell center winds uses their increment to reduce
 !!          the smoothing effect.
 !!
-subroutine add_incr(self,rhs)
+subroutine add_incr(self, increment)
 
    implicit none
    class(mpas_field), intent(inout) :: self !< state
-   class(mpas_field), intent(in)    :: rhs  !< increment
+   class(mpas_field), intent(in)    :: increment
    character(len=StrKIND) :: kind_op
 
    integer :: ngrid
@@ -76,65 +76,74 @@ subroutine add_incr(self,rhs)
                                   fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc
    type (field1DReal), pointer :: fld1d_ps
 
-   ! GD: I don''t see any difference than for self_add other than subFields can contain
-   ! different variables than mpas_field and the resolution of incr can be different. 
+   ! Difference with self_add other is that self%subFields can contain extra fields
+   ! beyond increment%subFields and the resolution of increment can be different.
 
-   if (self%geom%nCells==rhs%geom%nCells .and. self%geom%nVertLevels==rhs%geom%nVertLevels) then
-      !NOTE: first, get full state of "subFields" variables
+   if (self%geom%nCells==increment%geom%nCells .and. self%geom%nVertLevels==increment%geom%nVertLevels) then
+      ! First, update subFields that are common between self and increment
       kind_op = 'add'
-      call da_operator(trim(kind_op), self % subFields, rhs % subFields, fld_select = rhs % fldnames_ci)
+      call da_operator(trim(kind_op), self%subFields, increment%subFields, fld_select = increment%fldnames_ci)
 
-      ! Impose positive-definite limits on hydrometeors
-      call da_posdef( self % subFields, mpas_hydrometeor_fields)
+      ! Impose positive-definite limits on hydrometeors and moistureFields
+      ! note: nonlinear COV (change of variables) from increment to state
+      call da_posdef( self%subFields, mpas_hydrometeor_fields)
+      call da_posdef( self%subFields, moistureFields)
 
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
-      call mpas_pool_get_field(self % subFields,      'temperature', fld2d_t)
-      call mpas_pool_get_field(self % subFields,          'spechum', fld2d_sh)
-      call mpas_pool_get_field(self % subFields, 'surface_pressure', fld1d_ps)
-      call mpas_pool_get_field(self % subFields,         'index_qv', fld2d_qv)
-      call mpas_pool_get_field(self % subFields,         'pressure', fld2d_p)
-      call mpas_pool_get_field(self % subFields,              'rho', fld2d_rho)
-      call mpas_pool_get_field(self % subFields,            'theta', fld2d_th)
-
-      ! Ensure positive sh
-      call da_posdef( self % subFields, (/'spechum'/))
-
       ngrid = self%geom%nCellsSolve
-      ! Update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
-      call q_to_w( fld2d_sh % array(:,1:ngrid), fld2d_qv % array(:,1:ngrid) )
-!      write(*,*) 'add_inc: index_qv min/max = ', minval(fld2d_sh % array), maxval(fld2d_sh % array)
 
-      ! Diagnose 3D pressure and update full state theta and rho
-      call hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
-                fld2d_t%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid), &
-                fld1d_ps%array(1:ngrid), fld2d_p%array(:,1:ngrid), &
-                fld2d_rho%array(:,1:ngrid), fld2d_th%array(:,1:ngrid) )
+      ! Update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
+      ! note: nonlinear COV
+      if ( self%has(moistureFields) .and. &
+           increment%has('spechum') .and. .not.increment%has('index_qv')) then
+         call mpas_pool_get_field(self%subFields, 'index_qv', fld2d_qv)
+         call mpas_pool_get_field(self%subFields, 'spechum', fld2d_sh)
+         call q_to_w( fld2d_sh%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid) )
+      endif
+
+      ! Enforce a hydrostatic balance to diagnose 3D pressure,
+      ! plus update full state theta and rho
+      ! note: nonlinear COV
+      if ( self%has(analysisThermoFields) .and. &
+           self%has(modelThermoFields) .and. &
+           increment%has(analysisThermoFields) .and. &
+           .not. increment%has(modelThermoFields) ) then
+         call mpas_pool_get_field(self%subFields, 'index_qv', fld2d_qv)
+         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
+         call mpas_pool_get_field(self%subFields, 'rho', fld2d_rho)
+         call mpas_pool_get_field(self%subFields, 'surface_pressure', fld1d_ps)
+         call mpas_pool_get_field(self%subFields, 'temperature', fld2d_t)
+         call mpas_pool_get_field(self%subFields, 'theta', fld2d_th)
+
+         call hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
+                   fld2d_t%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid), &
+                   fld1d_ps%array(1:ngrid), fld2d_p%array(:,1:ngrid), &
+                   fld2d_rho%array(:,1:ngrid), fld2d_th%array(:,1:ngrid) )
+      endif
 
       ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
-      call mpas_pool_get_field(self % subFields,                      'u', fld2d_u)
-      call mpas_pool_get_field( rhs % subFields,      'uReconstructZonal', fld2d_uRz)
-      call mpas_pool_get_field( rhs % subFields, 'uReconstructMeridional', fld2d_uRm)
+      ! note: linear COV
+      if ( self%has('u') .and. &
+           increment%has(cellCenteredWindFields) .and. &
+           .not.increment%has('u') ) then
+         call mpas_pool_get_field(self%subFields, 'u', fld2d_u)
+         call mpas_pool_get_field(increment%subFields, 'uReconstructMeridional', fld2d_uRm)
+         call mpas_pool_get_field(increment%subFields, 'uReconstructZonal', fld2d_uRz)
 
-      call mpas_duplicate_field(fld2d_u, fld2d_u_inc)
+         call mpas_duplicate_field(fld2d_u, fld2d_u_inc)
 
-!      write(*,*) 'add_inc: u_inc min/max = ', minval(fld2d_uRz % array), maxval(fld2d_uRz % array)
-!      write(*,*) 'add_inc: v_inc min/max = ', minval(fld2d_uRm % array), maxval(fld2d_uRm % array)
+         call mpas_dmpar_exch_halo_field(fld2d_uRz)
+         call mpas_dmpar_exch_halo_field(fld2d_uRm)
+         call uv_cell_to_edges(self%geom%domain, fld2d_uRz, fld2d_uRm, fld2d_u_inc, &
+                    self%geom%lonCell, self%geom%latCell, self%geom%nCells, &
+                    self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
+                    self%geom%nVertLevels)
+         ngrid = self%geom%nEdgesSolve
+         fld2d_u%array(:,1:ngrid) = fld2d_u%array(:,1:ngrid) + fld2d_u_inc%array(:,1:ngrid)
 
-      call mpas_dmpar_exch_halo_field(fld2d_uRz)
-      call mpas_dmpar_exch_halo_field(fld2d_uRm)
-      call uv_cell_to_edges(self % geom % domain, fld2d_uRz, fld2d_uRm, fld2d_u_inc, &
-                 self%geom%lonCell, self%geom%latCell, self%geom%nCells, &
-                 self%geom%edgeNormalVectors, self%geom%nEdgesOnCell, self%geom%edgesOnCell, &
-                 self%geom%nVertLevels)
-!      write(*,*) 'add_inc: u_guess min/max = ', minval(fld2d_u % array), maxval(fld2d_u % array)
-!      write(*,*) 'add_inc: u_inc min/max = ', minval(fld2d_u_inc % array), maxval(fld2d_u_inc % array)
-      ngrid = self%geom%nEdgesSolve
-      fld2d_u % array(:,1:ngrid) = fld2d_u % array(:,1:ngrid) + fld2d_u_inc % array(:,1:ngrid)
-!      write(*,*) 'add_inc: u_analy min/max = ', minval(fld2d_u % array), maxval(fld2d_u % array)
-
-      ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
-
-      call mpas_deallocate_field( fld2d_u_inc )
+         ! TODO: DO we need HALO exchange here or in ModelMPAS::initialize for model integration?
+         call mpas_deallocate_field( fld2d_u_inc )
+      endif
    else
       call abor1_ftn("mpas_state:add_incr: dimension mismatch")
    endif
@@ -169,14 +178,14 @@ end subroutine add_incr
 subroutine analytic_IC(self, geom, f_conf, vdate)
 
 !  !MPAS Test Cases
-!  !JJG: This initialization requires the init_atmospher_core core_type 
+!  !JJG: This initialization requires the init_atmospher_core core_type
 !  !      in the MPAS library for OOPS, but currently it is not included
 !  use init_atm_core, only: init_atm_core_run!, init_atm_core_finalize (could be used for cleanup...)
 
   implicit none
 
   class(mpas_field),         intent(inout) :: self   !< State
-  type(mpas_geom), target,   intent(in)    :: geom   !< Geometry 
+  type(mpas_geom), target,   intent(in)    :: geom   !< Geometry
   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
   type(datetime),            intent(inout) :: vdate  !< DateTime
 
@@ -185,7 +194,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
   character(len=20) :: sdate
   character(len=1024) :: buf
   Integer :: jlev,ii
-  integer :: ierr = 0 
+  integer :: ierr = 0
   real(kind=kind_real) :: rlat, rlon, z
   real(kind=kind_real) :: pk,pe1,pe2,ps
   real(kind=kind_real) :: u0,v0,w0,t0,phis0,ps0,rho0,hum0,q1,q2,q3,q4
@@ -226,7 +235,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
   call datetime_set(sdate, vdate)
 
    ! Need to initialize variables that are used in interpolation/getVals
-   ! In "create" and "read" subroutines, subFields are 
+   ! In "create" and "read" subroutines, subFields are
    ! initialized from geom % domain % blocklist % allFields, zeroed,
    ! reread from file into allFields, then values copied to subFields
    ! -> must initialize allFields here and copy to subFields
@@ -274,16 +283,16 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
         call invent_state(self,f_conf)
 
 
-!     !TODO: This case requires the init_atmospher_core core_type to be 
+!     !TODO: This case requires the init_atmospher_core core_type to be
 !     !      built as part of the MPAS library.
-!     Case("mpas_init_case") 
+!     Case("mpas_init_case")
 !
 !!Would use init_atm_setup_case in MPAS-Release/src/core_init_atmosphere/mpas_init_atm_cases.F
 !!mpas_init has already been called at this point from geo_setup
 !
 !!init_atms_setup_case is normally called from the following set of subroutines:
 !!mpas_run => core_run [init_atm_core_run] => init_atm_setup_case => [select from preset cases]
-!!Can we bypass the first two somehow?  
+!!Can we bypass the first two somehow?
 !!Would use "config_init_case" in the yaml file, then check for matching with one of the ideal cases below... (not 7 or 8)
 !
 !!if ((config_init_case == 1) .or. (config_init_case == 2) .or. (config_init_case == 3)) then
@@ -321,13 +330,13 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
               p_ptr(jlev,ii) = pk
 
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
-              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model
                                   ! with A grid winds
               if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
               if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
               if (index_qi.gt.0) qi_ptr(jlev,ii) = q2
               if (index_qr.gt.0) qr_ptr(jlev,ii) = q3
-              if (index_qs.gt.0) qs_ptr(jlev,ii) = q4 
+              if (index_qs.gt.0) qs_ptr(jlev,ii) = q4
 
               temperature_ptr(jlev,ii) = t0
            enddo
@@ -349,7 +358,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
               p_ptr(jlev,ii) = pk
 
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
-              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model
                                   ! with A grid winds
               if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
               if (index_qc.gt.0) qc_ptr(jlev,ii) = q1
@@ -378,7 +387,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
 
               p_ptr(jlev,ii) = pk
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
-              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model
                                   ! with A grid winds
 
               if (index_qv.gt.0) qv_ptr (jlev,ii) = hum0 !set to zero for this test
@@ -409,7 +418,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
 
               u_ptr(jlev,ii) = u0 !MMiesch: ATTN Not going to necessary keep a-grid winds, u can be either a-
 
-              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model 
+              v_ptr(jlev,ii) = v0 ! or staggered-grid so this needs to be generic. You cannot drive the model
                                   ! with A grid winds
 
               if (index_qv.gt.0) qv_ptr(jlev,ii) = hum0 !set to zero for this test
@@ -429,7 +438,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
 
      End Select int_option
 
-     call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
+     call da_copy_all2sub_fields(self % geom % domain, self % subFields)
 
 !   write(*,*)'==> end mpas_state:analytic_init'
 
