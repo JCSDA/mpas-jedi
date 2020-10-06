@@ -161,11 +161,6 @@ def varAttributes(var):
 
 
 bgIter = '0'
-#analysis outer iteration
-#TODO: replace NOUTER with a command-line option or
-#      move to central work-flow configuration script
-nOuter = int(os.getenv('NOUTER',0)) #set equal to number of outer iterations
-anIter = str(nOuter)
 
 def base2dbVar(baseVar, varName, outerIter):
     iterStr = str(outerIter)

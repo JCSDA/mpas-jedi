@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
 import binning_utils as bu
-import binning_configs as bcs
+import predefined_configs as pconf
 from collections import defaultdict
 from copy import deepcopy
-import diag_utils as du
 import os
 import var_utils as vu
 
-
-#========================================================================
-# Sub-selections of binning_configs.binVarConfigs for specific DiagSpaces
-#========================================================================
+#==============================================================
+# Sub-selections of pconf.binVarConfigs for specific DiagSpaces
+#==============================================================
 
 #################################################################
 ## Generic binVarConfigs that apply to all observation categories
@@ -38,7 +36,7 @@ profPressBinVars[vu.obsVarPrs] += [bu.identityBinMethod, bu.PjetMethod]
 profPressBinVars[vu.obsVarLat] += [bu.PjetMethod]
 
 # 2D pressure bins with named latitude-band methods
-for latBand in bcs.namedLatBands['values']:
+for latBand in pconf.namedLatBands['values']:
     profPressBinVars[vu.obsVarPrs] += [latBand]
 
 
@@ -50,7 +48,7 @@ profAltBinVars[vu.obsVarAlt] += [bu.identityBinMethod, bu.altjetMethod]
 profAltBinVars[vu.obsVarLat] += [bu.altjetMethod]
 
 # 2D altitude bins with named latitude-band methods
-for latBand in bcs.namedLatBands['values']:
+for latBand in pconf.namedLatBands['values']:
     profAltBinVars[vu.obsVarAlt] += [latBand]
 
 
@@ -92,21 +90,21 @@ geoirBinVars[vu.obsVarCldFrac] += [bu.identityBinMethod,
 
 
 # 2D bins for named latitude-band methods and clear profiles
-for var in bcs.clrlatBinVars.keys():
+for var in pconf.clrlatBinVars.keys():
     if var != vu.obsVarLandFrac or binBYLandFrac:
-        for latBand in bcs.namedLatBands['values']:
-            geoirBinVars[var] += [bcs.clrlatMethods[latBand]]
+        for latBand in pconf.namedLatBands['values']:
+            geoirBinVars[var] += [pconf.clrlatMethods[latBand]]
 
 # Binning variables with clr-/cld-sky methods
-for var in bcs.cldfracBinVars.keys():
+for var in pconf.cldfracBinVars.keys():
     if var != vu.obsVarLandFrac or binBYLandFrac:
         geoirBinVars[var] += [bu.clrskyMethod]
         geoirBinVars[var] += [bu.cldskyMethod]
 
 # Binning variables with land category methods
 if binBYLandFrac:
-    for var in bcs.landfracBinVars.keys():
-        for surfBand in bcs.namedLandFracBands['values']:
+    for var in pconf.landfracBinVars.keys():
+        for surfBand in pconf.namedLandFracBands['values']:
             geoirBinVars[var] += [surfBand]
 
 # symmetric cloud impact (expensive)
@@ -176,12 +174,10 @@ anGroupConfig = {
 #    'anGrp': used to configure statistical analysis jobs and scripts
 #    'binVarConfigs': binning variable configurations used when calculating statistics on diagnostics
 #    'diagNames': list of selected diagnostic names,
-#                 e.g., du.diffDiagNames[+du.absDiagNames][+du.cloudyRadDiagNames]
+#                 e.g., pconf.diffDiagnostics[+pconf.absDiagnostics][+pconf.cloudyRadDiagnostics]
 #                 new diagNames should be defined in diag_utils
 #    'channels': channel selection for plot_obs_nc_loc
 #}
-
-defaultDiags = du.diffDiagNames
 
 DiagSpaceConfig = {
 #conventional
@@ -190,49 +186,49 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
-        'diagNames': defaultDiags+du.sigmaDiagNames,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
     'gnssro': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
-        'diagNames': du.relDiagNames,
+        'diagNames': pconf.relativeDiagnostics,
     },
     'gnssrobndropp1d': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
-        'diagNames': du.relDiagNames,
+        'diagNames': pconf.relativeDiagnostics,
     },
     'gnssroref': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profAltBinVars,
-        'diagNames': du.relDiagNames,
+        'diagNames': pconf.relativeDiagnostics,
     },
     'satwind': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
     },
     'sfc': {
         'DiagSpaceGrp': sfc_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': surfBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
     },
     'sondes': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
         'binVarConfigs': profPressBinVars,
-        'diagNames': defaultDiags+du.sigmaDiagNames,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
 #radiances
     'abi_g16': {
@@ -240,8 +236,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags+du.sigmaDiagNames,
-#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
     'ahi_himawari8': {
@@ -249,8 +244,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags+du.sigmaDiagNames,
-#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
     'abi-clr_g16': {
@@ -258,8 +252,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags,
-#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
     'ahi-clr_himawari8': {
@@ -267,15 +260,14 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': geoirBinVars,
-        'diagNames': defaultDiags,
-#        'diagNames': du.diffDiagNames+du.absDiagNames+du.cloudyRadDiagNames,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,6,7],
     },
     'amsua_aqua': {
@@ -283,7 +275,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [8,9],
     },
     'amsua_metop-a': {
@@ -291,7 +283,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [5,6,9],
     },
     'amsua_metop-b': {
@@ -299,7 +291,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [],
     },
     'amsua_n15': {
@@ -307,7 +299,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [5,6,7,8,9],
     },
     'amsua_n18': {
@@ -315,7 +307,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [5,6,7,8,9],
     },
     'amsua_n19': {
@@ -323,21 +315,21 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [5,6,7,9],
     },
     'amsua_n19--hydro': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,15],
     },
     'amsua_n19--nohydro': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [4,5,6,7,9,10,11,12,13,14],
     },
     'amsua-cld_aqua': {
@@ -345,7 +337,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'amsua-cld_metop-a': {
@@ -353,7 +345,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'amsua-cld_metop-b': {
@@ -361,7 +353,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'amsua-cld_n15': {
@@ -369,7 +361,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'amsua-cld_n18': {
@@ -377,7 +369,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'amsua-cld_n19': {
@@ -385,28 +377,28 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuacldGrp,
         'binVarConfigs': polmwBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'cris-fsr_npp': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [24,26,28,32,37,39],
     },
     'hirs4_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
     'iasi_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [16,29,32,35,38,41,44],
     },
     'mhs_metop-a': {
@@ -414,7 +406,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,6),
     },
     'mhs_metop-b': {
@@ -422,7 +414,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,6),
     },
     'mhs_n18': {
@@ -430,7 +422,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,6),
     },
     'mhs_n19': {
@@ -438,42 +430,42 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,6),
     },
     'seviri_m08': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': [5],
     },
     'sndrd1_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
     'sndrd2_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
     'sndrd3_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
     'sndrd4_g15': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
         'binVarConfigs': radianceBinVars,
-        'diagNames': defaultDiags,
+        'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
 #models

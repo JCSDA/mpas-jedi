@@ -5,6 +5,7 @@ import analyze_stats as mainScript
 from AnalyzeStatistics import anWorkingDir
 import argparse
 import config as conf
+from predefined_configs import outerIter
 from copy import deepcopy
 import JobScript as js
 import os
@@ -38,6 +39,8 @@ jobbody += [''')
 foreach pySource ($pyDepends)
   ln -sf ${pySourceDir}/${pySource}.py ./
 end
+
+setenv NOUTER '''+outerIter+'''
 
 #
 # make plots:

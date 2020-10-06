@@ -2,7 +2,7 @@
 
 import argparse
 import binning_utils as bu
-import binning_configs as bcs
+import predefined_configs as pconf
 import config as conf
 from copy import deepcopy
 import diag_utils as du
@@ -56,9 +56,9 @@ def writediagstats_obsspace(jdbs, osKey):
     binMethods = {}
 
     for binVarKey, binMethodKeys in binVarConfigs.items():
-        binVarConfig = bcs.binVarConfigs.get(binVarKey,bcs.nullBinVarConfig)
+        binVarConfig = pconf.binVarConfigs.get(binVarKey,pconf.nullBinVarConfig)
         for binMethodKey in binMethodKeys:
-            config = binVarConfig.get(binMethodKey,bcs.nullBinMethod).copy()
+            config = binVarConfig.get(binMethodKey,pconf.nullBinMethod).copy()
 
             if (len(config['values']) < 1 or
                 len(config['filters']) < 1): continue
@@ -98,7 +98,7 @@ def writediagstats_obsspace(jdbs, osKey):
         #       for required iterations before appending to dbVars[vu.mean] below
         for (binVarKey,binMethodKey), binMethod in binMethods.items():
             for varGrp in binMethod.dbVars(
-                varName, [vu.bgIter, vu.anIter]):
+                varName, [vu.bgIter, pconf.anIter]):
                 dbVars[vu.mean].append(varGrp)
 
 

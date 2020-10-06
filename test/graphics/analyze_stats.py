@@ -19,7 +19,7 @@ depends_on = [
   'analyze_config',
   'AnalyzeStatistics',
   'basic_plot_functions',
-  'binning_configs',
+  'predefined_configs',
   'binning_params',
   'binning_utils',
   'config',
@@ -106,14 +106,12 @@ def main():
         myDBConf = deepcopy(anconf.dbConf)
         myDBConf['DiagSpaceName'] = DiagSpaceName
 
-        availableDiagNames = []
-        for diag in DiagSpaceConfig[DiagSpaceName]['diagNames']:
-            if du.availableDiagnostics[diag].get('analyze',True):
-                availableDiagNames.append(diag)
-
         myDBConf['diagnosticConfigs'] = du.diagnosticConfigs(
-            availableDiagNames, DiagSpaceName,
+            DiagSpaceConfig[DiagSpaceName]['diagNames'], DiagSpaceName,
             analysisStatistics = anconf.analysisStatistics)
+        for diag in list(myDBConf['diagnosticConfigs'].keys()):
+            if not myDBConf['diagnosticConfigs'][diag]['analyze']:
+                del myDBConf['diagnosticConfigs'][diag]
 
         # Construct statistical database for each DiagSpace
         db = sdb.StatsDB(myDBConf)
@@ -125,7 +123,7 @@ def main():
             ## Initialize the database
             db.read(npread)
 
-            analyses = AS.Analyses(db, analysisTypes, npan)
+            analyses = AS.Analyses(db, analysisTypes, anconf.diagnosticGroupings, npan)
 
             analyses.analyze()
 

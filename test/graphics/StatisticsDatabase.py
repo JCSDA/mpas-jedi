@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import binning_utils as bu
-import binning_configs as bcs
+import predefined_configs as pconf
 from collections.abc import Iterable
 from collections import defaultdict
 from copy import deepcopy
@@ -315,7 +315,7 @@ class StatsDB:
         varLoc['fcTDelta'] = self.fcTDeltas[0]
         varLoc['cyDTime'] = self.cyDTimes[0]
         varLoc['binVar'] = vu.obsVarQC
-        varLoc['binVal'] = bcs.goodFlagName
+        varLoc['binVal'] = pconf.goodFlagName
         varLoc['binMethod'] = bu.goodQCMethod
         goodDiags = self.dfw.levels('diagName', varLoc)
         varLoc['diagName'] = goodDiags[0]

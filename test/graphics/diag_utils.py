@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import binning_utils as bu
+from predefined_configs import anIter
 from copy import deepcopy
 import logging
 import numpy as np
-import os
 import pandas as pd
 import stat_utils as su
 import var_utils as vu
@@ -292,10 +292,15 @@ availableDiagnostics = {
         vu.mean: False,
         vu.ensemble: True,
     },
+#TODO: replace 'derived' bool with 'derivedFrom' list.  E.g., for 'CRyb',
+#      that would include 'sigmao' and 'sigmab'.  Update writediagstats_obsspace.
+#TODO: then only add the derived diagnostic (e.g., CRyb) to conf.DiagSpaceConfig[:]['diagNames']
+#      and remove the 'analyze' config entry under availableDiagnostics
     'CRyb': {
         'iter': 'bg',
         'DFWFunction': ConsistencyRatioFromDFW,
         'derived': True,
+#        'derivedFrom': ['sigmao','sigmab']
         'staticArg': 'b',
         'analysisStatistics': CRStatNames,
     },
@@ -303,6 +308,7 @@ availableDiagnostics = {
         'iter': 'an',
         'DFWFunction': ConsistencyRatioFromDFW,
         'derived': True,
+#        'derivedFrom': ['sigmao','sigmaa']
         'staticArg': 'a',
         'analysisStatistics': CRStatNames,
     },
@@ -312,32 +318,6 @@ availableDiagnostics = {
         'onlyObsSpaces': ['abi_g16'],
     },
 }
-
-## groups of diagnostics for which statistics are calculated
-
-## diagnostics for which QC is irrelevant
-nonQCedDiags = ['obs']
-
-## difference diagnostics
-diffDiagNames = ['omb']
-
-## relative difference diagnostics
-relDiagNames = ['rltv_omb']
-
-## absolute diagnostics
-absDiagNames = ['obs','bak']
-
-cloudyRadDiagNames = ['SCI']
-
-## STD diagnostics
-sigmaDiagNames = ['sigmao','sigmab','CRyb']
-
-# analysis diagnostics
-if vu.nOuter > 0:
-    diffDiagNames.append('oma')
-    relDiagNames.append('rltv_oma')
-    absDiagNames.append('ana')
-    sigmaDiagNames += ['sigmaa','CRya']
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
@@ -375,7 +355,7 @@ def diagnosticConfigs(diagnosticNames, ObsSpaceName, nMembers=0, analysisStatist
             if outerIterStr == 'bg':
                 outerIter = vu.bgIter
             elif outerIterStr == 'an':
-                outerIter = vu.anIter
+                outerIter = anIter
             elif pu.isint(outerIterStr):
                 outerIter = outerIterStr
             else:

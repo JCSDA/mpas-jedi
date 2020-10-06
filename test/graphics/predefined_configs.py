@@ -1,9 +1,48 @@
 #!/usr/bin/env python3
 
 import binning_utils as bu
-import diag_utils as du
 import numpy as np
+import os
 import var_utils as vu
+
+#======================================================
+# outer iteration settings for Variational applications
+#======================================================
+
+nOuter = int(os.getenv('NOUTER',0))
+outerIter = str(nOuter)
+anIter = str(nOuter)
+
+
+#=============================================================
+# groups of diagnostics for which statistics can be calculated
+#=============================================================
+
+## diagnostics for which QC is irrelevant
+nonQCedDiagnostics = ['obs']
+
+## difference diagnostics
+diffDiagnostics = ['omb']
+
+## relative difference diagnostics
+relativeDiagnostics = ['rltv_omb']
+
+## absolute diagnostics
+absoluteDiagnostics = ['obs','bak']
+
+cloudyRadDiagnostics = ['SCI']
+
+## STD diagnostics
+sigmaDiagnostics = ['sigmao','sigmab','CRyb']
+
+# analysis diagnostics
+if int(anIter) > 0:
+    diffDiagnostics.append('oma')
+    relativeDiagnostics.append('rltv_oma')
+    absoluteDiagnostics.append('ana')
+    sigmaDiagnostics += ['sigmaa','CRya']
+
+defaultDiagnostics = diffDiagnostics
 
 #==========================
 # names and values of bins
@@ -208,7 +247,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': goodFlagName,
         },
@@ -217,11 +256,11 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': badFlags,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
                 {'where': bu.equalBound,
                  'variable': vu.selfQCValue,
                  'bounds': badFlags,
-                 'except_diags': du.nonQCedDiags,
+                 'except_diags': nonQCedDiagnostics,
                  'mask_value': 0.0},
             ],
             'values': badFlagNames,
@@ -240,7 +279,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': bu.P_jet_val,
         },
@@ -258,7 +297,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': bu.alt_jet_val,
         },
@@ -275,7 +314,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': namedLatBands['values'],
         },
@@ -296,7 +335,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[vu.obsVarLat]['values'],
         },
@@ -317,7 +356,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[vu.obsVarLat]['values'],
         },
@@ -334,7 +373,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': namedLandFracBands['values'],
         },
@@ -351,7 +390,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': namedCldFracBands['values'],
         },
@@ -469,7 +508,7 @@ binVarConfigs = {
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': ['CONUS'],
         },
@@ -613,7 +652,7 @@ for binVar, rangeVar in identityRangeBinVars.items():
             {'where': bu.notEqualBound,
              'variable': vu.selfQCValue,
              'bounds': goodFlag,
-             'except_diags': du.nonQCedDiags},
+             'except_diags': nonQCedDiagnostics},
         ],
         'values': binLims[binVar]['values'],
         'override_exclusiveDiags': rangeVar[1],
@@ -644,7 +683,7 @@ for binVar, rangeVar in latBinVars.items():
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': rangeVar[1],
@@ -684,7 +723,7 @@ for binVar, rangeVar in clrlatBinVars.items():
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': rangeVar[1],
@@ -719,7 +758,7 @@ for binVar, rangeVar in cldfracBinVars.items():
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': rangeVar[1],
@@ -750,7 +789,7 @@ for binVar, rangeVar in landfracBinVars.items():
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
                  'bounds': goodFlag,
-                 'except_diags': du.nonQCedDiags},
+                 'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': rangeVar[1],

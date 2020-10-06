@@ -2,13 +2,12 @@
 
 import datetime as dt
 import os
-import StatisticsDatabase as sdb
 
 ########################################################################
 '''
 This module is used to configure statistical analyses.  Those analyses
 can be intialized either by directly executing analyze_stats.py or
-by submitting a series of jobs for multiple DiagSpaces using 
+by submitting a series of jobs for multiple DiagSpaces using
 spawn_analyze_stats_jobs.py and analyze_stats_job.csh.
 
 Command-line examples:
@@ -18,7 +17,7 @@ Command-line examples:
     python analyze_stats.py -d amsua
 
 + Use 12 processes to carry out analyses for all
-  DiagSpaces with anGroup == "conv" 
+  DiagSpaces with anGroup == "conv"
 
     python analyze_stats.py -n 12 -g conv
 
@@ -58,7 +57,21 @@ Job-submission examples:
 # 'analysisStatistics' from individual diagnostics will override this setting
 analysisStatistics = ['Count','Mean','RMS','STD']
 
-## Configure the sdb.StatsDB objects
+#Select diagnostic groupings
+# + each entry in the dictionary should be of the format:
+#   diagnosticGroup: diagnosticNames
+# + diagnosticNames is a list of diagnostics, such as
+#   [diagnosticName1, diagnosticName2, etc...]
+# + diagnosticGroup is up to the user, but it is best to have it match
+#   the strings used for axis labeling in AnalyzeStatistics
+# + the default behavior is to plot each diagnostic on an independent axis,
+#   which will still be done for any analysis type that does not use
+#   diagnosticGroupings or has maxDiagnosticsPerAnalysis < len(diagnosticNames)
+diagnosticGroupings = {}
+diagnosticGroupings['omm'] = ['omb', 'oma']
+diagnosticGroupings['rltv_omm'] = ['rltv_omb', 'rltv_oma']
+
+## Configure the StatisticsDatabase.StatsDB objects
 dbConf = {}
 
 ## hasFCLenDir whether directory structure includes forecast length
@@ -79,7 +92,7 @@ dbConf['cntrlExpIndex'] = 0
 #  data from individual experiments
 dbConf['expLongNames'] = []
 
-## expNames is a list of experiment names used for database lookups and 
+## expNames is a list of experiment names used for database lookups and
 #  analysis labels, e.g., on figures.  Make these names concise and
 #  exclude spaces.
 dbConf['expNames'] = []
@@ -90,7 +103,7 @@ dbConf['expNames'] = []
 #  label for each experiment.  DAMethods is only important for file naming and is
 #  not used in the analyses
 dbConf['DAMethods'] = []
-## Note: refer to the sdb.StatsDB class for more details
+## Note: refer to the StatisticsDatabase.StatsDB class for more details
 
 ## -------------------------------------------
 ## Append to expLongNames, expNames, DAMethods
@@ -162,7 +175,7 @@ dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 ########################################################################
 ## Configure the analysisTypes to apply to the statistics
 #  - below are recommendations for single/multiple forecast lengths
-#  - analysisTypes can be mixed and matched as desired, 
+#  - analysisTypes can be mixed and matched as desired,
 #    however some of them require nCY, nFC, or nExp > 1
 #  - see the individual classes for more details (AnalyzeStatistics.py)
 analysisTypes = []
