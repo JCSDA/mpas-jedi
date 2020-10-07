@@ -6,6 +6,7 @@ cost function:
   window length: PT6H
   geometry:
     gridfname: "./restart.2018-04-15_00.00.00.nc"
+    deallocate non-da fields: true
   analysis variables: &incvars
   - temperature
   - spechum
@@ -224,6 +225,7 @@ variational:
   iterations:
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -232,6 +234,7 @@ variational:
     obs perturbations: true
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'

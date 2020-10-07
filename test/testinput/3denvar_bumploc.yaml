@@ -240,6 +240,7 @@ variational:
   iterations:
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -247,6 +248,7 @@ variational:
       departures: depbg
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
