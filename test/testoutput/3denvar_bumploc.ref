@@ -8,7 +8,7 @@ Test     : CostFunction: Nonlinear J = 1613.28
 Test     : DRIPCGMinimizer: reduction in residual norm = 3.74169e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 24
 Test     : Fld=1  Min=199.641, Max=305.645, RMS=243.968 : temperature
 Test     : Fld=2  Min=0, Max=0.0215679, RMS=0.00463051 : spechum
 Test     : Fld=3  Min=-43.9324, Max=83.2601, RMS=17.6597 : uReconstructZonal
@@ -32,6 +32,7 @@ Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
 Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
 Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
 Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
+Test     : Fld=24  Min=-4199.26, Max=6118.42, RMS=2429.37 : pressure_p
 Test     : CostJb   : Nonlinear Jb = 110.044
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 748.327, nobs = 959, Jo/n = 0.78032, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 22.3238, nobs = 63, Jo/n = 0.354346, err = 7.97005
@@ -42,7 +43,7 @@ Test     : CostFunction: Nonlinear J = 1052.45
 Test     : DRIPCGMinimizer: reduction in residual norm = 1.9711e-05
 Test     : CostFunction::addIncrement: Analysis: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
-Test     :   Resolution: nCellsGlobal = 2562, nFields = 23
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 24
 Test     : Fld=1  Min=199.696, Max=305.643, RMS=243.968 : temperature
 Test     : Fld=2  Min=0, Max=0.0216257, RMS=0.00463013 : spechum
 Test     : Fld=3  Min=-43.929, Max=83.2624, RMS=17.6584 : uReconstructZonal
@@ -66,6 +67,7 @@ Test     : Fld=20  Min=-20.2207, Max=22.3142, RMS=5.237 : v10
 Test     : Fld=21  Min=0, Max=6.47993, RMS=1.33387 : lai
 Test     : Fld=22  Min=0.02, Max=1, RMS=0.890391 : smois
 Test     : Fld=23  Min=218.62, Max=314.508, RMS=275.196 : tslb
+Test     : Fld=24  Min=-4199.28, Max=6119.24, RMS=2429.35 : pressure_p
 Test     : CostJb   : Nonlinear Jb = 109.486
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 743.924, nobs = 959, Jo/n = 0.775729, err = 1.99272
 Test     : CostJo   : Nonlinear Jo(Satwind) = 22.3509, nobs = 63, Jo/n = 0.354776, err = 7.97005

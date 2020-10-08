@@ -73,7 +73,8 @@ subroutine add_incr(self, increment)
    integer :: ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_sh, fld2d_uRz, fld2d_uRm, &
-                                  fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc
+                                  fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc, &
+                                  fld2d_pb, fld2d_pp
    type (field1DReal), pointer :: fld1d_ps
 
    ! Difference with self_add other is that self%subFields can contain extra fields
@@ -119,6 +120,15 @@ subroutine add_incr(self, increment)
                    fld2d_t%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid), &
                    fld1d_ps%array(1:ngrid), fld2d_p%array(:,1:ngrid), &
                    fld2d_rho%array(:,1:ngrid), fld2d_th%array(:,1:ngrid) )
+      endif
+
+      ! Update pressure_p (pressure perturbation) , which is a diagnostic variable
+      if ( self%has('pressure_p') .and. self%has('pressure') .and. &
+           .not.increment%has('pressure_p') ) then
+         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
+         call mpas_pool_get_field(self%subFields, 'pressure_p', fld2d_pp)
+         call mpas_pool_get_field(self%geom%domain%blocklist%allFields, 'pressure_base', fld2d_pb)
+         fld2d_pp%array(:,1:ngrid) = fld2d_p%array(:,1:ngrid) - fld2d_pb%array(:,1:ngrid)
       endif
 
       ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
