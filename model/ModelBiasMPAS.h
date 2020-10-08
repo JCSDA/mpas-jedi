@@ -10,7 +10,8 @@
 
 #include <iostream>
 #include <string>
-#include <boost/noncopyable.hpp>
+
+#include "eckit/memory/NonCopyable.h"
 
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -36,7 +37,7 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 
 class ModelBiasMPAS : public util::Printable,
-                       private boost::noncopyable,
+                       private eckit::NonCopyable,
                        private util::ObjectCounter<ModelBiasMPAS> {
  public:
   static const std::string classname() {return "mpas::ModelBiasMPAS";}

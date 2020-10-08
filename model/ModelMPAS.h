@@ -11,9 +11,6 @@
 #include <ostream>
 #include <string>
 
-#include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
-
 #include "model/GeometryMPAS.h"
 #include "model/MPASTraits.h"
 

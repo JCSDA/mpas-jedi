@@ -10,9 +10,7 @@
 
 #include <ostream>
 #include <string>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "model/StateMPASFortran.h"
 
@@ -86,7 +84,7 @@ class StateMPAS : public util::Printable,
   void write(const eckit::Configuration &) const;
   double norm() const;
 
-  boost::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
+  std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
 
   const util::DateTime & time() const {return time_;}
   util::DateTime & time() {return time_;}
@@ -101,7 +99,7 @@ class StateMPAS : public util::Printable,
  private:
   void print(std::ostream &) const override;
   F90state keyState_;
-  boost::shared_ptr<const GeometryMPAS> geom_;
+  std::shared_ptr<const GeometryMPAS> geom_;
   oops::Variables vars_;
   util::DateTime time_;
 

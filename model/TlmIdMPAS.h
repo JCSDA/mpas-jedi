@@ -10,8 +10,6 @@
 
 #include <string>
 
-#include <boost/noncopyable.hpp>
-
 #include "oops/base/LinearModelBase.h"
 #include "oops/base/Variables.h"
 

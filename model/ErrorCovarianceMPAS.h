@@ -10,12 +10,12 @@
 
 #include <ostream>
 #include <string>
-#include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "Fortran.h"
 #include "GeometryMPAS.h"
 #include "eckit/config/Configuration.h"
+#include "eckit/memory/NonCopyable.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -33,7 +33,7 @@ namespace mpas {
 /// Background error covariance matrix for LFRic
 
 class ErrorCovarianceMPAS : public util::Printable,
-                             private boost::noncopyable,
+                             private eckit::NonCopyable,
                              private util::ObjectCounter<ErrorCovarianceMPAS> {
  public:
   static const std::string classname() {return "mpas::ErrorCovarianceMPAS";}
@@ -51,7 +51,7 @@ class ErrorCovarianceMPAS : public util::Printable,
  private:
   void print(std::ostream &) const;
   F90bmat keyErrCov_;
-  boost::scoped_ptr<const GeometryMPAS> geom_;
+  std::unique_ptr<const GeometryMPAS> geom_;
   util::DateTime time_;
 };
 // -----------------------------------------------------------------------------
