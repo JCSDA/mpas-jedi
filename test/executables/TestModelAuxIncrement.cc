@@ -5,9 +5,10 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "MPASTraits.h"
-#include "RunMPAS.h"
-#include "test/interface/ModelAuxIncrement.h"
+#include <oops/test/interface/ModelAuxIncrement.h>
+
+#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/RunMPAS.h"
 
 int main(const int argc, const char ** argv) {
   mpas::RunMPAS run(argc, argv);

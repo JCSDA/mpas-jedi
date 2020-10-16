@@ -183,7 +183,7 @@ cost function:
       obs options: &crtmobsopts
         Sensor_ID: amsua_n19
         EndianType: little_endian
-        CoefficientPath: Data/
+        CoefficientPath: Data/UFOCoeff/
   - obs space:
       name: AMSUA-NOAA19--hydro
       obsdatain:

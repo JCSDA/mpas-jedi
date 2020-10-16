@@ -5,9 +5,10 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "MPASTraits.h"
-#include "RunMPAS.h"
-#include "test/interface/ErrorCovariance.h"
+#include <oops/test/interface/ErrorCovariance.h>
+
+#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
   mpas::RunMPAS run(argc, argv);

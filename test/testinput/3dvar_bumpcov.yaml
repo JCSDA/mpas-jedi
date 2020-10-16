@@ -186,7 +186,7 @@ cost function:
       obs options:
         Sensor_ID: amsua_n19
         EndianType: little_endian
-        CoefficientPath: Data/
+        CoefficientPath: Data/UFOCoeff/
 output:
   filename: "Data/states/mpas.3dvar_bumpcov.$Y-$M-$D_$h.$m.$s.nc"
 variational:

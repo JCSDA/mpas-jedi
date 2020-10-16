@@ -1,0 +1,30 @@
+# mpas-jedi-import.cmake
+
+include(CMakeFindDependencyMacro)
+
+if(@OpenMP_FOUND@ AND NOT (OpenMP_CXX_FOUND AND OpenMP_Fortran_FOUND))
+    find_package( OpenMP REQUIRED COMPONENTS CXX Fortran )
+endif()
+
+find_package( MPI REQUIRED COMPONENTS CXX Fortran )
+find_dependency( Boost REQUIRED )
+find_package( MPAS REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
+
+if(@OpenMP_FOUND@) #OpenMP_FOUND
+    find_package( atlas REQUIRED COMPONENTS OMP OMP_Fortran )
+else()
+    find_dependency( atlas REQUIRED )
+endif()
+find_dependency( oops )
+find_dependency( saber )
+find_dependency( ufo )
+
+#Export Fortran compiler version for checking module compatibility
+set(@PROJECT_NAME@_MODULES_Fortran_COMPILER_ID @CMAKE_Fortran_COMPILER_ID@)
+set(@PROJECT_NAME@_MODULES_Fortran_COMPILER_VERSION @CMAKE_Fortran_COMPILER_VERSION@)
+if(NOT @PROJECT_NAME@_MODULES_Fortran_COMPILER_ID STREQUAL CMAKE_Fortran_COMPILER_ID
+   OR NOT @PROJECT_NAME@_MODULES_Fortran_COMPILER_VERSION VERSION_EQUAL CMAKE_Fortran_COMPILER_VERSION)
+    message(SEND_ERROR "Package mpasjedi provides Fortran modules built with "
+            "${@PROJECT_NAME@_MODULES_Fortran_COMPILER_ID}-${@PROJECT_NAME@_MODULES_Fortran_COMPILER_VERSION} "
+            "but this build for ${PROJECT_NAME} uses incompatible compiler ${CMAKE_Fortran_COMPILER_ID}-${CMAKE_Fortran_COMPILER_VERSION}")
+endif()

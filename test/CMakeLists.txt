@@ -3,8 +3,38 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+#link_files(src_dir dest_dir files..) -Link selected files from source dir to build dir
+# Args:
+#  src_dir: Full path to source directory
+#  dest_dir: Full path to target directory
+#  files: A list of file names to link relative to this source dir
+macro(link_files src_dir dest_dir)
+    foreach(_f IN ITEMS ${ARGN})
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+    endforeach()
+endmacro()
+
+#copy_all_files(src_dir dest_dir) - Link all files from source dir to build dir
+# Args:
+#  src_dir: Full path to source directory
+#  dest_dir: Full path to target directory
+macro(copy_all_files src_dir dest_dir)
+    file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
+    foreach(_f IN LISTS _all)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${src_dir}/${_f} ${dest_dir}/)
+    endforeach()
+endmacro()
+
+#link_dir(src_dir dest_dir) - Link a full directory
+# Args:
+#  src_dir: Full path to source directory
+#  dest_dir: Full path to target directory link name
+macro(link_dir src_dir dest_dir)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir} ${dest_dir})
+endmacro()
+
 ## test yamls
-list( APPEND mpas_test_input
+list( APPEND mpas_testinput
   testinput/3denvar_bumploc.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
@@ -43,11 +73,7 @@ list( APPEND mpas_test_input
 )
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
-foreach(FILENAME ${mpas_test_input})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
+link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testinput})
 
 ## reference outputs
 list( APPEND mpas_testoutput
@@ -75,11 +101,7 @@ list( APPEND mpas_testoutput
 )
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
-foreach(FILENAME ${mpas_testoutput})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
+link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testoutput})
 
 ## graphical scripts
 # TODO(JJG): re-organize
@@ -101,65 +123,57 @@ list( APPEND mpas_graphics
 
 # Create directory for graphics and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
-foreach(FILENAME ${mpas_graphics})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-endforeach(FILENAME)
+link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_graphics})
 
-ecbuild_add_resources( TARGET   mpas_test_scripts
-                       SOURCES_PACK
-                       ${mpas_test_input}
-                     )
+ecbuild_add_resources(TARGET mpas_test_scripts SOURCES_PACK ${mpas_testinput})
+
 ############
 ## Test Data
 ############
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
 
-## MPAS static stream lists
-list( APPEND mpas_test_config_base
-  Data/stream_list.atmosphere.output
-  Data/stream_list.atmosphere.surface
-  Data/stream_list.atmosphere.diagnostics
-)
-CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
-                         ${CMAKE_CURRENT_BINARY_DIR}
-                         ${mpas_test_config_base} )
+#MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
+copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+
+# MPAS static stream lists (modified from model-generated streams)
+list( APPEND mpas_test_config_base
+  stream_list.atmosphere.output
+  stream_list.atmosphere.surface
+  stream_list.atmosphere.diagnostics
+)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data  ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_base})
 
 ## Test files specific to the 480km mesh
 # Add or remove values from multi_pe_480 to select multi-PE tests
 # 480km options: 2, 4, 6, 8, 12, 16
+# streams.atmosphere is modified from the model-generated version for lower resolution
 list(APPEND multi_pe_480 2 )
 # namelists/streams
 list( APPEND mpas_test_config_480
-  Data/480km/namelist.atmosphere_2018041421
-  Data/480km/namelist.atmosphere_2018041500
-  Data/480km/streams.atmosphere
+  namelist.atmosphere_2018041421
+  namelist.atmosphere_2018041500
+  streams.atmosphere
 )
 # static mesh descriptions
 list( APPEND mpas_test_config_480
-  Data/480km/x1.2562.graph.info
+  x1.2562.graph.info
 )
 foreach(THIS_NPE ${multi_pe_480})
     if( THIS_NPE GREATER 1 )
-        list( APPEND mpas_test_config_480
-          Data/480km/x1.2562.graph.info.part.${THIS_NPE}
-        )
+        list( APPEND mpas_test_config_480 x1.2562.graph.info.part.${THIS_NPE})
     endif()
-endforeach(THIS_NPE)
-CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
-                         ${CMAKE_CURRENT_BINARY_DIR}
-                         ${mpas_test_config_480} )
+endforeach()
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data/480km ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_480})
+
 # backgrounds
 list( APPEND mpas_test_bg_480
-  Data/480km/bg/restart.2018-04-14_21.00.00.nc
-  Data/480km/bg/restart.2018-04-15_00.00.00.nc
-  Data/480km/bg/restart.2018-04-15_03.00.00.nc
+  restart.2018-04-14_21.00.00.nc
+  restart.2018-04-15_00.00.00.nc
+  restart.2018-04-15_03.00.00.nc
 )
-CREATE_SYMLINK_FILENAME( ${CMAKE_CURRENT_SOURCE_DIR}
-                         ${CMAKE_CURRENT_BINARY_DIR}
-                         ${mpas_test_bg_480} )
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data/480km/bg ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_bg_480})
+
 # ensemble
 set( BASE_ENSDIR_480 480km/bg/ensemble )
 set(ensmembers mem01;mem02;mem03;mem04;mem05)
@@ -172,11 +186,9 @@ foreach(MEM IN LISTS ensmembers)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/${BASE_ENSDIR_480}/${MEM})
   foreach(DATE ${mpas_test_ensemble_dates})
     set( FILENAME Data/${BASE_ENSDIR_480}/${MEM}/x1.2562.init.${DATE}.nc )
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
-  endforeach(DATE)
-endforeach(MEM)
+    link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FILENAME})
+  endforeach()
+endforeach()
 
 
 ## IODA observation files
@@ -187,7 +199,7 @@ list( APPEND mpas_ioda_test_data
 set( MPAS_IODA_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
 
 # Use `LOCAL_PATH_TESTFILES_IODA` to pass path to local test files
-if (DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
+if( DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
     set(LOCAL_PATH_TESTFILES_IODA "$ENV{LOCAL_PATH_TESTFILES_IODA}")
 endif()
 
@@ -230,13 +242,13 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
     # Download and extract develop test files (distant directory = develop)
     set(DIRNAME "develop")
   endif()
-  message(STATUS "Test data will be downloaded from: " ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME})
+  message(STATUS "Test data will be downloaded from: ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME}")
 
   set(MPAS_IODA_REP_NAME ioda)
   set(MPAS_IODA_TESTFILES_NAME ${mpas_ioda_test_data})
   set(MPAS_IODA_BRANCH_NAME ${DIRNAME})
   set(MPAS_IODA_TESTFILES_PATH ${CMAKE_BINARY_DIR}/test_data/ioda/${DIRNAME})
-  message(STATUS "Save data to " ${MPAS_IODA_TESTFILES_PATH})
+  message(STATUS "Save data to: ${MPAS_IODA_TESTFILES_PATH}")
   file(MAKE_DIRECTORY ${MPAS_IODA_TESTFILES_PATH})
 
   # Create download script for get_ioda_test_data test
@@ -262,72 +274,13 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
 
 else()
   set(MPAS_IODA_TESTFILES_PATH ${LOCAL_PATH_TESTFILES_IODA})
-  message (STATUS "LOCAL_PATH_TESTFILES_IODA set to : " ${LOCAL_PATH_TESTFILES_IODA})
+  message(STATUS "LOCAL_PATH_TESTFILES_IODA set to: ${LOCAL_PATH_TESTFILES_IODA}")
 endif()
 
-# Link test files
-execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-                 ${MPAS_IODA_TESTFILES_PATH}
-                 ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda )
+link_dir(${MPAS_IODA_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda)
 
-
-## CRTM coefficient files
-list( APPEND crtm_test_input
-  AerosolCoeff/Little_Endian/AerosolCoeff.bin
-  CloudCoeff/Little_Endian/CloudCoeff.bin
-  EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
-  EmisCoeff/IR_Ice/SEcategory/Little_Endian/NPOESS.IRice.EmisCoeff.bin
-  EmisCoeff/IR_Land/SEcategory/Little_Endian/NPOESS.IRland.EmisCoeff.bin
-  EmisCoeff/IR_Snow/SEcategory/Little_Endian/NPOESS.IRsnow.EmisCoeff.bin
-  EmisCoeff/VIS_Ice/SEcategory/Little_Endian/NPOESS.VISice.EmisCoeff.bin
-  EmisCoeff/VIS_Land/SEcategory/Little_Endian/NPOESS.VISland.EmisCoeff.bin
-  EmisCoeff/VIS_Snow/SEcategory/Little_Endian/NPOESS.VISsnow.EmisCoeff.bin
-  EmisCoeff/VIS_Water/SEcategory/Little_Endian/NPOESS.VISwater.EmisCoeff.bin
-  EmisCoeff/IR_Water/Little_Endian/Nalli.IRwater.EmisCoeff.bin
-  EmisCoeff/IR_Land/SEcategory/Little_Endian/USGS.IRland.EmisCoeff.bin
-  EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
-  SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_n15.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_n15.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_n18.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_n18.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_n19.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_n19.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_aqua.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_aqua.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_metop-a.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_metop-a.TauCoeff.bin
-  SpcCoeff/Little_Endian/amsua_metop-b.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/amsua_metop-b.TauCoeff.bin
-  SpcCoeff/Little_Endian/cris-fsr_npp.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/cris-fsr_npp.TauCoeff.bin
-#  SpcCoeff/Little_Endian/gmi_gpm.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/gmi_gpm.TauCoeff.bin
-#  SpcCoeff/Little_Endian/hirs4_metop-a.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/hirs4_metop-a.TauCoeff.bin
-  SpcCoeff/Little_Endian/iasi_metop-a.SpcCoeff.bin
-  TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
-#  SpcCoeff/Little_Endian/mhs_n19.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/mhs_n19.TauCoeff.bin
-#  SpcCoeff/Little_Endian/seviri_m08.SpcCoeff.bin
-#  TauCoeff/ODAS/Little_Endian/seviri_m08.TauCoeff.bin
-#  SpcCoeff/Little_Endian/sndrD1_g15.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/sndrD1_g15.TauCoeff.bin
-#  SpcCoeff/Little_Endian/sndrD2_g15.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/sndrD2_g15.TauCoeff.bin
-#  SpcCoeff/Little_Endian/sndrD3_g15.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/sndrD3_g15.TauCoeff.bin
-#  SpcCoeff/Little_Endian/sndrD4_g15.SpcCoeff.bin
-#  TauCoeff/ODPS/Little_Endian/sndrD4_g15.TauCoeff.bin
-#  SpcCoeff/Little_Endian/v.viirs-m_npp.SpcCoeff.bin
-#  TauCoeff/ODAS/Little_Endian/v.viirs-m_npp.TauCoeff.bin
-)
-CREATE_SYMLINK_FILENAME( ${crtm_SOURCE_DIR}/fix
-                         ${CMAKE_CURRENT_BINARY_DIR}/Data
-                         ${crtm_test_input} )
-
-#####################################################################
+# Link CRTM coefficient files
+link_dir(${crtm_UFO_COEFFICIENT_DIR} ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff)
 
 # Make directories for output test data
 #bump outputs
@@ -345,6 +298,24 @@ foreach(MEM IN LISTS ensemblemembers)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/ensemble/${MEM})
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/ensemble/${MEM})
 endforeach(MEM)
+
+
+## Configure environment variables necessary for running test executables
+
+# The Fortran IO units 101-200 are used by MPAS-Model for unformatted I/O to big_endian binary files
+# The MPAS::core::atmosphere target exports the appropriate conversion flags for both gnu and intel,
+# Unfortunately the GFortran flag -fconvert only applies when compiling the main program which for
+# mpasjedi is a CXX main program which cannot accept the -fconvert flag.  This means the only way to
+# instrument the formatting for is via the environment variable GFORTRAN_CONVERT_UNIT which must
+# be set for all test executables reading in unformatted data files.
+#
+# The intel compiler is apparently smarter and the propagated flag `-convert big_endian` from the
+# MPAS::core::atmosphere target sets the desired effect on each compiled object file individually,
+# so there is no need to use the runtime environment flags.
+if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+    set(TEST_ENVIRONMENT ENVIRONMENT GFORTRAN_CONVERT_UNIT=native\\$<SEMICOLON>big_endian:101-200)
+endif()
+
 
 ######################################################################
 #
@@ -407,12 +378,19 @@ function(jedi_unit_test)
     endif()
     set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_ID}${MPI_SUFFIX}" )
 
+    #Configure environment variables
+    if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+        set(_env ENVIRONMENT GFORTRAN_CONVERT_UNIT=native\\$<SEMICOLON>big_endian:101-200)
+    elseif(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+        set(_env ENVIRONMENT F_UFMTENDIAN=little\\$<SEMICOLON>big:101-200)
+    endif()
 
     ecbuild_add_test( TARGET  test_${TARGET_NAME}
+                      ${TEST_ENVIRONMENT}
                       SOURCES executables/Test${TEST_CLASS}.cc
                       ARGS    "testinput/${TEST_YAMLFILE}.yaml"
                       MPI     ${TEST_NPE}
-                      LIBS    ${PROJECT_NAME_LOWCASE} )
+                      LIBS    ${PROJECT_NAME})
 endfunction()
 
 ####################################################################################
@@ -536,6 +514,7 @@ function(jedi_app_ref_test_compare)
         endforeach(previous_test_ID)
         set(TEST_DEPENDS "${templist}")
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
                           TYPE    EXE
                           COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
                           ARGS    testinput/${TEST_NAME}.yaml
@@ -544,6 +523,7 @@ function(jedi_app_ref_test_compare)
                           TEST_DEPENDS "${TEST_DEPENDS}" )
     else()
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
                           TYPE    EXE
                           COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
                           ARGS    testinput/${TEST_NAME}.yaml
