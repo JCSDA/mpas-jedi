@@ -82,9 +82,6 @@ target_link_libraries( ${PROJECT_NAME} PUBLIC ufo )
 #Configure include directory layout for build-tree to match install-tree
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
 
-#Common configuration options
-target_compile_definitions(${PROJECT_NAME} PUBLIC ATLASIFIED=1)
-
 #Fortran module output directory for build and install interfaces
 set(MODULE_DIR module/${PROJECT_NAME}/${CMAKE_Fortran_COMPILER_ID}/${CMAKE_Fortran_COMPILER_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/${MODULE_DIR})
