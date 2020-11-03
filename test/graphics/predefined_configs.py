@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import binning_utils as bu
+from collections import defaultdict
+from jediApplicationArgs import jediAppName, nOuterIter
 import numpy as np
 import os
 import var_utils as vu
@@ -9,40 +11,53 @@ import var_utils as vu
 # outer iteration settings for Variational applications
 #======================================================
 
-nOuter = int(os.getenv('NOUTER',0))
-outerIter = str(nOuter)
-anIter = str(nOuter)
+outerIter = str(nOuterIter)
+anIter = str(nOuterIter)
 
 
 #=============================================================
 # groups of diagnostics for which statistics can be calculated
 #=============================================================
 
-## diagnostics for which QC is irrelevant
-nonQCedDiagnostics = ['obs']
-
 ## difference diagnostics
-diffDiagnostics = ['omb']
+diffDiagnostics_ = defaultdict(list)
+diffDiagnostics_['variational'] += ['omb']
+diffDiagnostics_['hofx'] += ['omf']
 
 ## relative difference diagnostics
-relativeDiagnostics = ['rltv_omb']
+relativeDiagnostics_ = defaultdict(list)
+relativeDiagnostics_['variational'] += ['rltv_omb']
+relativeDiagnostics_['hofx'] += ['rltv_omf']
 
 ## absolute diagnostics
-absoluteDiagnostics = ['obs','bak']
+absoluteDiagnostics_ = defaultdict(list)
+absoluteDiagnostics_['variational'] += ['obs', 'bak']
+absoluteDiagnostics_['hofx'] += ['obs', 'h(x)']
 
+## cloudy radiance diagnostics
 cloudyRadDiagnostics = ['SCI']
 
 ## STD diagnostics
-sigmaDiagnostics = ['sigmao','sigmab','CRyb']
+sigmaDiagnostics_ = defaultdict(list)
+sigmaDiagnostics_['variational'] = ['sigmaob', 'sigmab', 'CRyb']
+sigmaDiagnostics_['hofx'] = ['sigmaof', 'sigmaf', 'CRyf']
 
-# analysis diagnostics
-if int(anIter) > 0:
-    diffDiagnostics.append('oma')
-    relativeDiagnostics.append('rltv_oma')
-    absoluteDiagnostics.append('ana')
-    sigmaDiagnostics += ['sigmaa','CRya']
+# variational analysis diagnostics
+if nOuterIter > 0:
+    diffDiagnostics_['variational'] += ['oma']
+    relativeDiagnostics_['variational'] += ['rltv_oma']
+    absoluteDiagnostics_['variational'] += ['ana']
+    sigmaDiagnostics_['variational'] += ['sigmaoa','sigmaa', 'CRya']
+
+diffDiagnostics = diffDiagnostics_[jediAppName]
+relativeDiagnostics = relativeDiagnostics_[jediAppName]
+absoluteDiagnostics = absoluteDiagnostics_[jediAppName]
+sigmaDiagnostics = sigmaDiagnostics_[jediAppName]
 
 defaultDiagnostics = diffDiagnostics
+
+## diagnostics for which QC is irrelevant
+nonQCedDiagnostics = ['obs']
 
 #==========================
 # names and values of bins

@@ -37,7 +37,7 @@ def anWorkingDir(DiagSpace):
 ###################################
 ## Base class for all analysisTypes
 ###################################
-class AnalyzeStatisticsBase():
+class AnalysisBase():
     def __init__(self, db, analysisType, diagnosticGroupings = {}):
         self.analysisType = analysisType
         self.DiagSpaceName = db.DiagSpaceName
@@ -134,6 +134,7 @@ class AnalyzeStatisticsBase():
             fcDiagName = fcDiagName.replace('omb','omf')
             fcDiagName = fcDiagName.replace('bmo','fmo')
             fcDiagName = fcDiagName.replace('mmo','fmo')
+            fcDiagName = fcDiagName.replace('hmo','fmo')
             fcDiagName = fcDiagName.replace('bak','fc')
         return fcDiagName
 
@@ -142,8 +143,8 @@ class AnalyzeStatisticsBase():
         '''
         Define plotting attributes for the combination of diagnosticGroup and statName
         '''
-        ommDiagnostics = ['omb', 'oma', 'omm']
-        mmoDiagnostics = ['bmo', 'amo', 'mmo']
+        ommDiagnostics = ['omb', 'oma', 'omm', 'omf']
+        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo']
         truncateDiagnostics = ommDiagnostics+mmoDiagnostics
         diagnosticGroup_ = diagnosticGroup
         for diag in truncateDiagnostics:
@@ -292,7 +293,7 @@ def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
 #=============
 # 1-D figures
 #=============
-class CategoryBinMethodBase(AnalyzeStatisticsBase):
+class CategoryBinMethodBase(AnalysisBase):
     '''
     Base class used to analyze statistics across binMethods with zero-dimensioned or
       category binValues, e.g., QC flag, named latitude band, cloudiness regime, surface type
@@ -1032,7 +1033,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
 #########################################################
 ## Figures with binVal on one axis, i.e., 2D and profiles
 #########################################################
-class OneDimBinMethodBase(AnalyzeStatisticsBase):
+class OneDimBinMethodBase(AnalysisBase):
     '''
     Base class used to analyze statistics across binMethods with one-dimensional binValues
       that are assigned numerical values, e.g., altitude, pressure, latitude, cloud fraction
@@ -1624,7 +1625,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
 
-class BinValAxisPDF(AnalyzeStatisticsBase):
+class BinValAxisPDF(AnalysisBase):
     '''
     Similar to BinValAxisProfile, except
       uses Count statistic to analyze a PDF across binVals
@@ -1783,7 +1784,7 @@ class BinValAxisPDF(AnalyzeStatisticsBase):
 
 
 # TODO: generalize as a sub-class of OneDimBinMethodBase
-class BinValAxisStatsComposite(AnalyzeStatisticsBase):
+class BinValAxisStatsComposite(AnalysisBase):
     '''
     Similar to BinValAxisProfile, except
       all statistics (Count, Mean, RMS, STD) are placed on the same axis
@@ -1957,7 +1958,7 @@ class BinValAxisStatsComposite(AnalyzeStatisticsBase):
 #===========================
 # Calculate gross statistics
 #===========================
-class GrossValues(AnalyzeStatisticsBase):
+class GrossValues(AnalysisBase):
     '''
     Calculate gross statistics for specified category binMethods at first forecast length
       NOTE: currently only calculates statistics at self.fcTDeltas[0]
@@ -2047,20 +2048,20 @@ class GrossValues(AnalyzeStatisticsBase):
                             print(tmp)
 
 AnalysisTypeDict = {
-    #Derived from CategoryBinMethodBase(AnalyzeStatisticsBase)
+    #Derived from CategoryBinMethodBase(AnalysisBase)
     'CYAxisExpLines': CYAxisExpLines,
     'FCAxisExpLines': FCAxisExpLines,
     'FCAxisExpLinesDiffCI': FCAxisExpLinesDiffCI,
     'CYAxisFCLines': CYAxisFCLines,
     'CYAxisBinValLines': CYAxisBinValLines,
-    #Derived from OneDimBinMethodBase(AnalyzeStatisticsBase)
+    #Derived from OneDimBinMethodBase(AnalysisBase)
     'CYandBinValAxes2D': CYandBinValAxes2D,
     'FCandBinValAxes2D': FCandBinValAxes2D,
     'BinValAxisProfile': BinValAxisProfile,
     'BinValAxisProfileDiffCI': BinValAxisProfileDiffCI,
-    # TODO(JJG): TwoDimBinMethodBase(AnalyzeStatisticsBase)
+    # TODO(JJG): TwoDimBinMethodBase(AnalysisBase)
     #'BinValAxes2D': BinValAxes2D,
-    #Derived from AnalyzeStatisticsBase
+    #Derived from AnalysisBase
     'BinValAxisPDF': BinValAxisPDF,
     'BinValAxisStatsComposite': BinValAxisStatsComposite,
     'GrossValues': GrossValues,

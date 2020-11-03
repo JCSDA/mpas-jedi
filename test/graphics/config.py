@@ -150,7 +150,7 @@ sfc_s      = 'surface'
 radiance_s = 'radiance'
 model_s    = 'MPAS'
 
-## analysis groups for configuring analyze_stats + AnalyzeStatistics
+## analysis groups for configuring AnalyzeStats + Analyses
 convGrp = 'conv'
 abiGrp = 'abi'
 ahiGrp = 'ahi'

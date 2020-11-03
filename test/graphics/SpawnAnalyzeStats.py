@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-#from analyze_config import analysisTypes
-import analyze_stats as mainScript
-from AnalyzeStatistics import anWorkingDir
+from SpawnAnalyzeStatsArgs import args
+import AnalyzeStats as mainScript
+from Analyses import anWorkingDir
 import argparse
 import config as conf
 from predefined_configs import outerIter
@@ -40,12 +40,10 @@ foreach pySource ($pyDepends)
   ln -sf ${pySourceDir}/${pySource}.py ./
 end
 
-setenv NOUTER '''+outerIter+'''
-
 #
 # make plots:
 # ===========
-python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE >& an.log
+python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE -app JEDIAPP -nout NOUTER >& an.log
 grep 'Finished main() successfully' an.log
 if ( $status != 0 ) then
   touch ./FAIL
@@ -61,43 +59,19 @@ exit''']
 def main():
     '''
     Main function that sequentially
-    () collates command-line agruments and static configuration modules
+    () collates command-line agruments (SpawnAnalyzeStatsArgs) and static
+       configuration module (config)
     () loops over selected DiagSpaces, and for each
-       - initializes StatisticsDatabase object (internal multiprocessing)
-       - analyzes the statistics for all selectd analysisTypes (internal multiprocessing)
+       - spawns a job that executes AnalyzeStats on multiple processors
     '''
-
     DiagSpaceConfig = deepcopy(conf.DiagSpaceConfig)
     for key in sorted(DiagSpaceConfig):
         if not DiagSpaceConfig[key]['process']: del DiagSpaceConfig[key]
 
-    optionalDS = [key for key in sorted(DiagSpaceConfig)]
-
-    # Parse command line
-    ap = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument('-d', '--diagSpaces',
-                    help=textwrap.dedent(
-                       '''
-                       Comma-separated list of DiagSpaces with non-conservative matching
-                          e.g., amsua selects amsua_metop-a, amsua_n19, etc.
-                          default behavior is to select all DiagSpaces in config
-                          Current options:
-                       ''')+str(optionalDS))
-    ap.add_argument('-a', '--account',
-                    help='JobScript account number')
-    ap.add_argument('-q', '--queue',
-                    help='JobScript submission queue')
-    ap.add_argument('-m', '--memory',
-                    help='JobScript requested memory per node')
-    ap.add_argument('-s', '--scriptdir',
-                    help='Location of scripts')
-
-    MyArgs = ap.parse_args()
-
     ## process DiagSpace command-line selection
     selectDiagSpaces = None
-    if MyArgs.diagSpaces:
-        selectDiagSpaces = str(MyArgs.diagSpaces).split(',')
+    if args.diagSpaces:
+        selectDiagSpaces = str(args.diagSpaces).split(',')
 
     ## remove DiagSpaces that are not selected
     for key in sorted(DiagSpaceConfig):
@@ -108,9 +82,9 @@ def main():
             if not match: del DiagSpaceConfig[key]
 
     ## set python source directory
-    if MyArgs.scriptdir:
+    if args.scriptdir:
         ## from command-line argument, if provided
-        scriptDir = Path(MyArgs.scriptdir)
+        scriptDir = Path(args.scriptdir)
     else:
         ## otherwise, use current directory
         scriptDir = Path(os.getcwd())
@@ -118,9 +92,9 @@ def main():
     jobConf = {}
 
     ## get job configuration command-line arguments
-    if MyArgs.account: jobConf['account'] = MyArgs.account
-    if MyArgs.queue: jobConf['queue'] = MyArgs.queue
-    if MyArgs.memory: jobConf['memory'] = MyArgs.memory
+    if args.account: jobConf['account'] = args.account
+    if args.queue: jobConf['queue'] = args.queue
+    if args.memory: jobConf['memory'] = args.memory
 
     jobConf['env'] = jobenv
 
@@ -145,6 +119,8 @@ def main():
             'PYSOURCE': str(scriptDir),
             'NPWORK': str(npwork),
             'NPREAD': str(npread),
+            'JEDIAPP': args.jediAppName,
+            'NOUTER': str(args.nOuterIter),
         }
         for line in jobbody:
             newline = line

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
+from jediApplicationArgs import depbgGroup, depanGroup
 import numpy as np
 import os
 import re
@@ -70,8 +71,6 @@ vChanStr = 'varCHAN'
 
 # MPAS-JEDI suffixes for observation-type variables
 hofxGroup   = 'hofx'
-depbgGroup  = 'depbg'
-depanGroup  = 'depan'
 depGroup    = 'depIter'
 diagGroup   = 'ObsDiag'
 geoGroup    = 'GeoVaLs'

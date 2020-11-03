@@ -6,49 +6,53 @@ import os
 ########################################################################
 '''
 This module is used to configure statistical analyses.  Those analyses
-can be intialized either by directly executing analyze_stats.py or
+can be intialized either by directly executing AnalyzeStats.py or
 by submitting a series of jobs for multiple DiagSpaces using
-spawn_analyze_stats_jobs.py and analyze_stats_job.csh.
+SpawnAnalyzeStats.py and AnalyzeStats.csh.
 
 Command-line examples:
 ----------------------
 + Carry out analyses for all DiagSpaces that contain "amsua"
 
-    python analyze_stats.py -d amsua
+    python AnalyzeStats.py -d amsua
 
 + Use 12 processes to carry out analyses for all
   DiagSpaces with anGroup == "conv"
 
-    python analyze_stats.py -n 12 -g conv
+    python AnalyzeStats.py -n 12 -g conv
 
 + Use 12 processes to carry out analyses for all
   DiagSpaces that contain "abi", and use 30 processes
   for reading the StatisticsDatabase
 
-    python analyze_stats.py -n 12 -r 30 -d abi
+    python AnalyzeStats.py -n 12 -r 30 -d abi
 
 + Get info about more options
 
-    python analyze_stats.py --help
+    python AnalyzeStats.py --help
 
 Job-submission examples:
 ------------------------
 + Spawn one job for each DiagSpace that is enabled in config
   using the anGroupConfig specified therein
 
-    python spawn_analyze_stats_jobs.py
+    python SpawnAnalyzeStats.py
+
++ Specify that statistics files come from a JEDI hofx application
+
+    python SpawnAnalyzeStats.py -app hofx
 
 + Spawn one job for each DiagSpace that contains "amsua"
 
-    python spawn_analyze_stats_jobs.py -d amsua
+    python SpawnAnalyzeStats.py -d amsua
 
 + Choose a unique job account number
 
-    python spawn_analyze_stats_jobs.py -a NMMM0043
+    python SpawnAnalyzeStats.py -a NMMM0043
 
 + Get info about more options
 
-    python spawn_analyze_stats_jobs.py --help
+    python SpawnAnalyzeStats.py --help
 
 '''
 ########################################################################
@@ -63,7 +67,7 @@ analysisStatistics = ['Count','Mean','RMS','STD']
 # + diagnosticNames is a list of diagnostics, such as
 #   [diagnosticName1, diagnosticName2, etc...]
 # + diagnosticGroup is up to the user, but it is best to have it match
-#   the strings used for axis labeling in AnalyzeStatistics
+#   the strings used for axis labeling in Analyses
 # + the default behavior is to plot each diagnostic on an independent axis,
 #   which will still be done for any analysis type that does not use
 #   diagnosticGroupings or has maxDiagnosticsPerAnalysis < len(diagnosticNames)
@@ -177,7 +181,7 @@ dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 #  - below are recommendations for single/multiple forecast lengths
 #  - analysisTypes can be mixed and matched as desired,
 #    however some of them require nCY, nFC, or nExp > 1
-#  - see the individual classes for more details (AnalyzeStatistics.py)
+#  - see the individual classes for more details (Analyses.py)
 analysisTypes = []
 if dbConf['fcTDeltaFirst'] == dbConf['fcTDeltaLast']:
     ## gross error analysisTypes for single forecast length

@@ -3,6 +3,8 @@
 import config as conf
 from copy import deepcopy
 import glob
+from JediDBArgs import \
+  obsFKey, geoFKey, diagFKey, default_path, fPrefixes
 import logging
 from netCDF4 import Dataset
 import numpy as np
@@ -13,17 +15,6 @@ import sys
 
 _logger = logging.getLogger(__name__)
 
-default_path='../Data'
-
-obsFKey  = 'ObsSpace'
-geoFKey  = 'geoval'
-diagFKey = 'ObsDiag'
-default_fPrefixes = {
-    obsFKey:  'obsout',
-    geoFKey:  'geoval',
-    diagFKey: 'ydiags',
-}
-
 MAXINT32  = np.int32(1e9)
 MAXFLOAT  = np.float32(1.e12)
 MAXDOUBLE = np.float64(1.e12)
@@ -31,12 +22,10 @@ MAXDOUBLE = np.float64(1.e12)
 class JediDB:
     '''This class provides access to UFO feedback files.'''
     def __init__(self,data_path=default_path,fileExt='nc4'
-        ,fPrefixes=default_fPrefixes
         ,osKeySelect=[]
         ):
         # data_path: location of feedback files
         # fileExt: extention of feedback files
-        # fPrefixes (optional): user-defined prefixes for all file keys
         # osKeySelect (optional): allows for the selection of particular osKey's
 
         if 'nc' in fileExt:

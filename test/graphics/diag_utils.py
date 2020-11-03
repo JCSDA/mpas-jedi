@@ -6,6 +6,7 @@ from copy import deepcopy
 import logging
 import numpy as np
 import pandas as pd
+import plot_utils as pu
 import stat_utils as su
 import var_utils as vu
 
@@ -126,8 +127,8 @@ def ConsistencyRatioFromDFW(dfw, stateType):
 # INPUTS:
 # dfw - StatisticsDatabase.DFWrapper object containing
 #       a pandas DataFrame with basic statistics for (at least)
-#       'om'+stateType, 'sigma'+stateType, and 'sigmao'
-# stateType - model state diagnostic type (either 'b' for background or 'a' for analysis)
+#       'om'+stateType, 'sigma'+stateType, and 'sigmao'+stateType
+# stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'h' for hofx)
 
 #OUTPUT: pandas DataFrame containing only 'CRy'+stateType diagName and CRStatNames statistic columns
 
@@ -155,7 +156,7 @@ def ConsistencyRatioFromDFW(dfw, stateType):
 
     ommStr = 'om'+stateType
     sigmamStr = 'sigma'+stateType
-    sigmaoStr = 'sigmao'
+    sigmaoStr = 'sigmao'+stateType
 
     # get the three variables needed as numpy arrays
     availableDiagNames = dfw.levels('diagName')
@@ -208,7 +209,7 @@ def ConsistencyRatioFromDFW(dfw, stateType):
 # format of each entry:
 #    diagName: {
 #        variable: variable name or class used to calculate this diag
-#        iter: iteration of "self" type variables ['bg','an',int]
+#        iter: iteration of "self" type variables ['bg', 'an', int, '', default: None=='0']
 #        vu.mean (optional): whether to apply this diagnostic to the mean state (default: True)
 #        vu.ensemble (optional): whether this diagnostic requires variables from ensemble IODA files (default: False)
 #        onlyObsSpaces (optional): list of ObsSpaces for which this diag applies
@@ -220,63 +221,93 @@ def ConsistencyRatioFromDFW(dfw, stateType):
 #        function (optional): if derived, the python function used to calculate this diagnostic
 #                             there will be 2 arguments to this function (1) a StatisticsDatabase.DFWrapper object and (2) 'staticArg' below
 #        staticArg (optional): a static argument to function  (default: None)
-#        analysisStatistics (optional): statistics selected for this diagnostic (default: application dependent, see AnalyzeStatistics module)
+#        analysisStatistics (optional): statistics selected for this diagnostic (default: application dependent, see Analyses module)
+#        label (optional): label for plot axes (TODO: hookup in Analyses.py)
 #}
 availableDiagnostics = {
     'bc': {
         'variable': BiasCorrection,
         'iter': 'an',
+        'label': '$y_{bias}$',
     },
     'omb': {
         'variable': BiasCorrectedObsMinusModel,
         'iter': 'bg',
+        'label': '$y - x_b$',
+
     },
     'oma': {
         'variable': BiasCorrectedObsMinusModel,
         'iter': 'an',
+        'label': '$y - x_a$',
+    },
+    'omf': {
+        'variable': ObsMinusModel,
+        'iter': '',
+        'label': '$y - x_f$',
     },
     'omb_nobc': {
         'variable': ObsMinusModel,
         'iter': 'bg',
+        'label': '$y - x_b$',
     },
     'oma_nobc': {
         'variable': ObsMinusModel,
         'iter': 'an',
+        'label': '$y - x_a$',
     },
     'rltv_omb': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'bg',
+        'label': '$y - x_b$',
     },
     'rltv_oma': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'an',
+        'label': '$y - x_a$',
+    },
+    'rltv_omf': {
+        'variable': RelativeObsMinusModel,
+        'iter': '',
+        'label': '$y - x_f$',
     },
     'rltv_omb_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'bg',
+        'label': '$y - x_b$',
     },
     'rltv_oma_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'an',
+        'label': '$y - x_a$',
     },
     'obs': {
         'variable': vu.selfObsValue,
     },
     'obs_bc': {
         'variable': BiasCorrectedObs,
+        'label': '$y$',
+    },
+    'h(x)': {
+        'variable': vu.selfHofXValue,
+        'iter': '',
+        'label': '$h(x_f)$',
     },
     'bak': {
         'variable': vu.selfHofXValue,
         'iter': 'bg',
+        'label': '$h(x_b)$',
     },
     'ana': {
         'variable': vu.selfHofXValue,
         'iter': 'an',
+        'label': '$h(x_a)$',
     },
-    'sigmao': {
+    'sigmaob': {
         'variable': vu.selfErrorValue,
         'iter': 'bg',
         'analyze': False,
+        'label': '$\sigma_o$',
     },
     'sigmab': {
         'variable': STDofHofX,
@@ -284,6 +315,13 @@ availableDiagnostics = {
         'analyze': False,
         vu.mean: False,
         vu.ensemble: True,
+        'label': '$\sigma_{h_b}$',
+    },
+    'sigmaoa': {
+        'variable': vu.selfErrorValue,
+        'iter': 'an',
+        'analyze': False,
+        'label': '$\sigma_o$',
     },
     'sigmaa': {
         'variable': STDofHofX,
@@ -291,6 +329,21 @@ availableDiagnostics = {
         'analyze': False,
         vu.mean: False,
         vu.ensemble: True,
+        'label': '$\sigma_{h_a}$',
+    },
+    'sigmaof': {
+        'variable': vu.selfErrorValue,
+        'iter': '',
+        'analyze': False,
+        'label': '$\sigma_o$',
+    },
+    'sigmaf': {
+        'variable': STDofHofX,
+        'iter': '',
+        'analyze': False,
+        vu.mean: False,
+        vu.ensemble: True,
+        'label': '$\sigma_{h_f}$',
     },
 #TODO: replace 'derived' bool with 'derivedFrom' list.  E.g., for 'CRyb',
 #      that would include 'sigmao' and 'sigmab'.  Update writediagstats_obsspace.
@@ -303,6 +356,7 @@ availableDiagnostics = {
 #        'derivedFrom': ['sigmao','sigmab']
         'staticArg': 'b',
         'analysisStatistics': CRStatNames,
+        'label': '$CR_{y,b}$',
     },
     'CRya': {
         'iter': 'an',
@@ -311,6 +365,16 @@ availableDiagnostics = {
 #        'derivedFrom': ['sigmao','sigmaa']
         'staticArg': 'a',
         'analysisStatistics': CRStatNames,
+        'label': '$CR_{y,a}$',
+    },
+    'CRyf': {
+        'iter': '',
+        'DFWFunction': ConsistencyRatioFromDFW,
+        'derived': True,
+#        'derivedFrom': ['sigmaof','sigmaf']
+        'staticArg': 'f',
+        'analysisStatistics': CRStatNames,
+        'label': '$CR_{y,f}$',
     },
     'SCI': {
         'variable': bu.SCIOkamoto,
@@ -321,9 +385,10 @@ availableDiagnostics = {
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
-def diagnosticConfigs(diagnosticNames, ObsSpaceName, nMembers=0, analysisStatistics = su.allFileStats):
+def diagnosticConfigs(diagnosticNames_, ObsSpaceName, nMembers=0, analysisStatistics = su.allFileStats):
 
     diagnosticConfigs = {}
+    diagnosticNames = list(set(diagnosticNames_))
 
     for diagnosticName in diagnosticNames:
         if diagnosticName in availableDiagnostics:
@@ -338,6 +403,7 @@ def diagnosticConfigs(diagnosticNames, ObsSpaceName, nMembers=0, analysisStatist
         config['onlyObsSpaces'] = config.get('onlyObsSpaces',[])
         config['analysisStatistics'] = config.get('analysisStatistics', analysisStatistics)
         config['staticArg'] = config.get('staticArg', None)
+        config['label'] = config.get('label',diagnosticName)
 
         # diagnosticConfig is undefined for the following cases
         if (not config[vu.mean] and not config[vu.ensemble]): continue
@@ -356,7 +422,7 @@ def diagnosticConfigs(diagnosticNames, ObsSpaceName, nMembers=0, analysisStatist
                 outerIter = vu.bgIter
             elif outerIterStr == 'an':
                 outerIter = anIter
-            elif pu.isint(outerIterStr):
+            elif pu.isint(outerIterStr) or outerIterStr == '':
                 outerIter = outerIterStr
             else:
                 _logger.error('outerIter is undefined: '+outerIterStr)

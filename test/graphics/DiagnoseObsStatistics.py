@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import argparse
+import DiagnoseObsStatisticsArgs
+
 import binning_utils as bu
 import predefined_configs as pconf
 import config as conf
@@ -8,27 +9,57 @@ from copy import deepcopy
 import diag_utils as du
 import fnmatch
 import glob
-#import math
+from JediDB import JediDB
+from JediDBArgs import obsFKey
 import logging
 import logsetup
-import matplotlib.pyplot as plt
-import matplotlib.axes as maxes
-from multiprocessing import Pool
+import multiprocessing as mp
 from netCDF4 import Dataset
 import numpy as np
 import os
 import stat_utils as su
-import JediDB
 import var_utils as vu
 
 _logger = logging.getLogger(__name__)
 
-def writediagstats_obsspace(jdbs, osKey):
-    #  jdbs  - list of JediDB objects
+class DiagnoseObsStatistics:
+  '''
+  Diagnose observation-space statistics
+  Driven by
+    - static selections in conf
+    - command-line arguments in DiagnoseObsStatisticsArgs
+  '''
+  def __init__(self):
+    self.name = 'DiagnoseObsStatistics'
+    self.args = DiagnoseObsStatisticsArgs.args
+    self.logger = logging.getLogger(self.name)
+
+    # construct mean DB into 0th member slot
+    self.logger.info('mean database: '+self.args.meanPath)
+    self.jdbs = {vu.mean: JediDB(self.args.meanPath, 'nc4')}
+    self.osKeys = sorted(self.jdbs[vu.mean].Files.keys())
+
+    # construct ens member DBs into subsequent slots (when available)
+    for member in list(range(1, self.args.nMembers+1)):
+        ensemblePath = str(self.args.ensemblePath).format(member)
+        self.logger.info('adding member database: '+ensemblePath)
+        self.jdbs[vu.ensSuffix(member)] = JediDB(ensemblePath, 'nc4')
+
+  def diagnose(self, workers = None):
+    '''
+    conducts diagnoseObsSpace across multiple ObsSpaces in parallel
+    '''
+    # Loop over all experiment+observation combinations (keys) alphabetically
+    for osKey in self.osKeys:
+      self.logger.info(osKey)
+      if workers is None:
+        self.diagnoseObsSpace(self.jdbs, osKey)
+      else:
+        res = workers.apply_async(self.diagnoseObsSpace, args=(self.jdbs, osKey))
+
+  def diagnoseObsSpace(self, jdbs, osKey):
     #  osKey - key of jdbs members to reference
-
-    logger = logging.getLogger(__name__+'.'+osKey)
-
+    logger = logging.getLogger(self.name+'.diagnoseObsSpace('+osKey+')')
     nMembers = len(jdbs)-1
 
     # initialize mean db file handles
@@ -45,9 +76,14 @@ def writediagstats_obsspace(jdbs, osKey):
     selectDiagNames = ObsSpaceInfo.get('diagNames',{})
 
     # create observed variable list by selecting those variables in the
-    # obs feedback files (JediDB.obsFKey) with the suffix vu.depbgGroup
-    obsVars = jdbs[vu.mean].varList(osKey,JediDB.obsFKey,vu.depbgGroup)
-
+    # obs feedback files (obsFKey) with the proper suffix
+    if self.args.jediAppName == 'variational':
+        markerSuffix = vu.depbgGroup
+    elif self.args.jediAppName == 'hofx':
+        markerSuffix = vu.hofxGroup
+    else:
+        logger.error('JEDI Application is not supported:: '+self.args.jediAppName)
+    obsVars = jdbs[vu.mean].varList(osKey, obsFKey, markerSuffix)
 
     ########################################################
     ## Construct dictionary of binMethods for this ObsSpace
@@ -83,23 +119,24 @@ def writediagstats_obsspace(jdbs, osKey):
     ensDBVars = []
     dbVars = {vu.mean: [], vu.ensemble: []}
     for varName in obsVars:
-        # variables for diagnostics
         for diagName, diagnosticConfig in diagnosticConfigs.items():
             if 'ObsFunction' not in diagnosticConfig: continue
+
+            # variables for diagnostics
             for varGrp in diagnosticConfig['ObsFunction'].dbVars(
                 varName, diagnosticConfig['outerIter']):
                 for memberType in dbVars.keys():
                     if diagnosticConfig[memberType]:
                         dbVars[memberType].append(varGrp)
 
-        # variables for binning
-        # TODO: anIter varGrp's are not needed for all applications
-        #       can save some reading time+memory by checking all diagnosticConfigs
-        #       for required iterations before appending to dbVars[vu.mean] below
-        for (binVarKey,binMethodKey), binMethod in binMethods.items():
-            for varGrp in binMethod.dbVars(
-                varName, [vu.bgIter, pconf.anIter]):
-                dbVars[vu.mean].append(varGrp)
+            # variables for binning
+            # TODO: anIter varGrp's are not needed for all applications
+            #       can save some reading time+memory by checking all diagnosticConfigs
+            #       for required iterations before appending to dbVars[vu.mean] below
+            for (binVarKey,binMethodKey), binMethod in binMethods.items():
+                for varGrp in binMethod.dbVars(
+                    varName, diagnosticConfig['outerIter']):
+                    dbVars[vu.mean].append(varGrp)
 
 
     #####################################
@@ -197,66 +234,23 @@ def writediagstats_obsspace(jdbs, osKey):
     ## Create a new stats file for osKey
     su.write_stats_nc(osKey,statsDict)
 
-
 #=========================================================================
-#=========================================================================
-
+# main program
 def main():
-    '''
-    Wrapper that conducts writediagstats_obsspace across multiple ObsSpaces
-    '''
-    _logger.info('Starting '+__name__)
+  _logger.info('Starting '+__name__)
 
-    # Parse command line
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-n", "--nprocs", default = 1, type=int,
-                    help="Number of tasks/processors for multiprocessing")
-    ap.add_argument("-p", "--meanPath", default = JediDB.default_path,
-                    help="Path to deterministic or mean state UFO feedback files, default = "
-                         +JediDB.default_path)
-    ap.add_argument("-o", "--oPrefix", default = JediDB.default_fPrefixes[JediDB.obsFKey],
-                    help="prefix for ObsSpace files")
-    ap.add_argument("-g", "--gPrefix", default = JediDB.default_fPrefixes[JediDB.geoFKey],
-                    help="prefix for GeoVaLs files")
-    ap.add_argument("-d", "--dPrefix", default = JediDB.default_fPrefixes[JediDB.diagFKey],
-                    help="prefix for ObsDiagnostics files")
-    ap.add_argument("-m", "--nMembers", default = 0, type=int,
-                    help="number of ensemble members; must be >1 to produce ensemble diagnostic stats")
-    ap.add_argument("-e", "--ensemblePath", default = JediDB.default_path+"/mem{:03d}", type=str,
-                    help="Path to ensemble member UFO feedback files; must have substitution string for member integer, e.g., '{:03d}' for 001, 002, etc...")
+  statistics = DiagnoseObsStatistics()
 
-    MyArgs = ap.parse_args()
+  # create pool of workers
+  workers = mp.Pool(processes = statistics.args.nprocs)
 
-    nprocs = MyArgs.nprocs
+  # diagnose statistics
+  statistics.diagnose(workers)
 
-    argfPrefixes = {
-        JediDB.obsFKey:  MyArgs.oPrefix,
-        JediDB.geoFKey:  MyArgs.gPrefix,
-        JediDB.diagFKey: MyArgs.dPrefix,
-    }
+  # wait for workers to finish
+  workers.close()
+  workers.join()
 
-    # construct mean into 0th member slot
-    _logger.info('mean database: '+MyArgs.meanPath)
-    jdbs = {vu.mean: JediDB.JediDB(MyArgs.meanPath, 'nc4', argfPrefixes)}
-
-    # construct ens members into subsequent slots (when available)
-    for member in list(range(1, MyArgs.nMembers+1)):
-        ensemblePath = str(MyArgs.ensemblePath).format(member)
-        _logger.info('adding member database: '+ensemblePath)
-        jdbs[vu.ensSuffix(member)] = JediDB.JediDB(ensemblePath, 'nc4', argfPrefixes)
-
-    # Loop over all experiment+observation combinations (keys) alphabetically
-    ospool = Pool(processes=nprocs)
-
-    for osKey in sorted(jdbs[vu.mean].Files):
-        res = ospool.apply_async(writediagstats_obsspace, args=(jdbs, osKey))
-
-        # FOR DEBUGGING
-#        writediagstats_obsspace(jdbs, osKey)
-
-    ospool.close()
-    ospool.join()
-
-    _logger.info('Finished '+__name__+' successfully')
+  _logger.info('Finished '+__name__+' successfully')
 
 if __name__ == '__main__': main()

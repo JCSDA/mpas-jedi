@@ -199,14 +199,16 @@ class AsymmetricCloudImpact:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.selfDepValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
     def evaluate(self,dbVals,caseParams):
         # Minamide and Zhang, 2018
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep,BTobs)
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTbak = np.add(BTdep,BTobs)
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         p = lessBound(BTclr, 1.0, False)
         BTclr[p] = BTbak[p]
@@ -220,7 +222,8 @@ class SCIOkamoto:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.selfDepValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
     def evaluate(self, dbVals, caseParams):
@@ -229,8 +232,9 @@ class SCIOkamoto:
         # Cm = abs(BTbak - BTclr)
 
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep, BTobs)
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTbak = np.add(BTdep, BTobs)
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         SCI = np.multiply( 0.5,
@@ -243,14 +247,16 @@ class ScaledSCIOkamoto:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.selfDepValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
     def evaluate(self, dbVals, caseParams):
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep, BTobs)
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTbak = np.add(BTdep, BTobs)
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
@@ -275,14 +281,16 @@ class SCIModHarnisch:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.selfDepValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
     def evaluate(self, dbVals, caseParams):
         # Modified Harnisch, et al.
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep, BTobs)
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTbak = np.add(BTdep, BTobs)
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         zeros = np.full_like(BTbak,0.0)
@@ -296,15 +304,17 @@ class ScaledSCIModHarnisch:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.selfDepValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
     def evaluate(self, dbVals, caseParams):
         # Modified Harnisch, et al.
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTbak = np.add(BTdep, BTobs)
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTbak = np.add(BTdep, BTobs)
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
@@ -320,13 +330,18 @@ class ScaledSCIModHarnisch:
 class NormalizedError:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfObsValue)
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfErrorValue)
 
     def evaluate(self, dbVals, caseParams):
         BTerr = dbVals[caseParams['base2db'][vu.selfErrorValue]]
         BTerr[BTerr==0.0] = np.NaN
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        BTdep = np.subtract(BTbak, BTobs)
 
         return np.divide(BTdep, BTerr)
 
@@ -338,7 +353,10 @@ biasCorrectType['ahi_himawari8'] = None
 
 class SCINormalizedError:
     def __init__(self):
-        pass
+        self.baseVars = []
+        # self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfObsValue)
+        self.baseVars.append(vu.selfHofXValue)
 
     def evaluate(self, dbVals, caseParams, SCISTDName, SCI):
         # Parameterize BTerr as a ramped step function
@@ -360,7 +378,8 @@ class SCINormalizedError:
             _logger.error('osName not available in SCIErrParams => '+osName)
             os._exit(1)
 
-        varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
+        # varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
+        varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfHofXValue])
         STD0 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][0]
         STD1 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][1]
         SCI0  = SCIErrParams[osName][(int(ch), SCISTDName)]['X'][0]
@@ -376,7 +395,10 @@ class SCINormalizedError:
         BTerr[onramp]    = STD0 + slope * (SCI[onramp] - SCI0)
         BTerr[aboveramp] = STD1
 
-        BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        BTdep = np.subtract(BTbak, BTobs)
 
         return np.divide(BTdep, BTerr)
 
@@ -384,8 +406,6 @@ class SCINormalizedError:
 class OkamotoNormalizedError(SCINormalizedError):
     def __init__(self):
         super().__init__()
-        self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
         self.SCI = SCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
@@ -397,8 +417,6 @@ class OkamotoNormalizedError(SCINormalizedError):
 class ScaledOkamotoNormalizedError(SCINormalizedError):
     def __init__(self):
         super().__init__()
-        self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
         self.SCI = ScaledSCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
@@ -410,8 +428,6 @@ class ScaledOkamotoNormalizedError(SCINormalizedError):
 class ModHarnischNormalizedError(SCINormalizedError):
     def __init__(self):
         super().__init__()
-        self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
         self.SCI = SCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
@@ -423,8 +439,6 @@ class ModHarnischNormalizedError(SCINormalizedError):
 class ScaledModHarnischNormalizedError(SCINormalizedError):
     def __init__(self):
         super().__init__()
-        self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
         self.SCI = ScaledSCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
@@ -455,7 +469,8 @@ class BaseObsFunction:
     def dbVars(self, varName, outerIters_):
         dbVars = []
 
-        if not isinstance(outerIters_, Iterable):
+        if (not isinstance(outerIters_, Iterable)
+           or isinstance(outerIters_,str)):
             outerIters = [outerIters_]
         else:
             outerIters = outerIters_
