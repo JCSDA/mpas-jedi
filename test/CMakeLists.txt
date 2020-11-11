@@ -33,6 +33,16 @@ macro(link_dir src_dir dest_dir)
     execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir} ${dest_dir})
 endmacro()
 
+# macro to create a symlink from src to dst with just filename
+function(CREATE_SYMLINK_FILENAME src dst)
+    foreach (FILENAME ${ARGN})
+        get_filename_component(filename ${FILENAME} NAME )
+        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+            ${src}/${FILENAME}
+            ${dst}/${filename} )
+        endforeach(FILENAME)
+endfunction(CREATE_SYMLINK_FILENAME)
+
 ## test yamls
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc.yaml
@@ -190,72 +200,144 @@ foreach(MEM IN LISTS ensmembers)
   endforeach()
 endforeach()
 
+# CRTM coefficient files
+list( APPEND crtm_test_input
+  AerosolCoeff/Little_Endian/AerosolCoeff.bin
+  CloudCoeff/Little_Endian/CloudCoeff.bin
+  EmisCoeff/MW_Water/Little_Endian/FASTEM6.MWwater.EmisCoeff.bin
+  EmisCoeff/IR_Ice/SEcategory/Little_Endian/NPOESS.IRice.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/NPOESS.IRland.EmisCoeff.bin
+  EmisCoeff/IR_Snow/SEcategory/Little_Endian/NPOESS.IRsnow.EmisCoeff.bin
+  EmisCoeff/VIS_Ice/SEcategory/Little_Endian/NPOESS.VISice.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/NPOESS.VISland.EmisCoeff.bin
+  EmisCoeff/VIS_Snow/SEcategory/Little_Endian/NPOESS.VISsnow.EmisCoeff.bin
+  EmisCoeff/VIS_Water/SEcategory/Little_Endian/NPOESS.VISwater.EmisCoeff.bin
+  EmisCoeff/IR_Water/Little_Endian/Nalli.IRwater.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/USGS.IRland.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
+  SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n15.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n15.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n18.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n18.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_n19.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_n19.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_aqua.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_aqua.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_metop-a.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_metop-a.TauCoeff.bin
+  SpcCoeff/Little_Endian/amsua_metop-b.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/amsua_metop-b.TauCoeff.bin
+  SpcCoeff/Little_Endian/cris-fsr_npp.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/cris-fsr_npp.TauCoeff.bin
+  SpcCoeff/Little_Endian/iasi_metop-a.SpcCoeff.bin
+  TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
+)
 
-## IODA observation files
-list( APPEND mpas_ioda_test_data
-     testinput_tier_1.tar.gz
-     )
-# Set URL for IODA test files
-set( MPAS_IODA_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff)
 
-# Use `LOCAL_PATH_TESTFILES_IODA` to pass path to local test files
-if( DEFINED ENV{LOCAL_PATH_TESTFILES_IODA})
-    set(LOCAL_PATH_TESTFILES_IODA "$ENV{LOCAL_PATH_TESTFILES_IODA}")
+## Create tests to download IODA, UFO, and CRTM test files
+
+# Test data filenames
+set(ioda_test_data ioda_testinput_tier_1.tar.gz)
+set(crtm_test_data crtm_coefficients.tar.gz)
+
+# Determine the branch name
+# Deafult is to use the name corresponding to the currently checked out branch or tag
+# User can override through the MPAS_TESTFILES_BRANCH environment variable
+
+###set( MPAS_TESTFILES_BRANCH "$ENV{MPAS_TESTFILES_BRANCH}")
+if (DEFINED ENV{MPAS_TESTFILES_BRANCH})
+  message(STATUS "Branch name provided by user: ${MPAS_TESTFILES_BRANCH}")
+  set(GIT_BRANCH_MPAS "ENV${MPAS_TESTFILES_BRANCH}")
+else()
+  # Get the current git branch or tag of mpas repo
+  execute_process(
+  COMMAND bash "-c" "git symbolic-ref -q --short HEAD || git describe --tags --exact-match"
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_BRANCH_MPAS
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "MPAS is in branch: ${GIT_BRANCH_MPAS}")
 endif()
 
-# If it is not defined then download to build bundle
-# in `test_data` directory
-# If local path to testfiles is defined don't download
-
-if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
-  # Get the current git branch of mpas-jedi and use it to
-  # download specific data for this branch on S3. If specific
-  # data does not exist, it will use default (develop) data
-
-  if( NOT DEFINED MPAS_IODA_TESTFILES_BRANCH)
-    # MPAS_IODA_TESTFILES_BRANCH can be used when building
-    # to set a specific branch name for testing.
-
-    execute_process(
-      COMMAND git rev-parse --abbrev-ref HEAD
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      OUTPUT_VARIABLE GIT_BRANCH_MPAS
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
+# macro for downloading test data
+# options:
+# - tag 1.0.0: download from UCAR ftp, flat directory
+#   Note: when we change the tag, this will have to be updated somehow.
+# - anything else: download from AWS, either from branch directory
+#   if available, or from develop directory
+# input: repo (e.g. ioda or ufo)
+#        test_data: test data filename (archive)
+# output: output_data_path: path to data on local machine after download
+# uses ${GIT_BRANCH_MPAS}
+function(ADD_DOWNLOAD_TEST repo test_data output_data_path)
+  # for 1.0.0 release always download from UCAR ftp, flat directory
+  if(${GIT_BRANCH_MPAS} STREQUAL "1.0.0")
+    set(ECBUILD_DOWNLOAD_BASE_URL https://dashrepo.ucar.edu/dataset/147_miesch/file)
+    set(download_data_name ${test_data})
+    set(data_path ${CMAKE_BINARY_DIR}/test_data/${repo}/1.0.0)
+    set(checksum "0")
+  # for all other branches/tags download from AWS
   else()
-    message( STATUS "Branch name provided by user")
-    set( GIT_BRANCH_MPAS ${MPAS_IODA_TESTFILES_BRANCH})
+    set(ECBUILD_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
+    # if branch-specific files exist, download them
+    ecbuild_check_urls(NAMES ${repo}/${GIT_BRANCH_MPAS}/${test_data}
+                       RESULT MPAS_SPECIFIC_TEST_FILES)
+    if(${MPAS_SPECIFIC_TEST_FILES} MATCHES 0)
+      set(download_data_name ${repo}/${GIT_BRANCH_MPAS}/${test_data})
+      set(data_path ${CMAKE_BINARY_DIR}/test_data/${repo}/${GIT_BRANCH_MPAS})
+    # if there are no branch-specific files, download develop files by default
+    else()
+      set(download_data_name ${repo}/develop/${test_data})
+      set(data_path ${CMAKE_BINARY_DIR}/test_data/${repo}/develop)
+    endif()
+    # only compare checksum if using AWS and not ucar ftp
+    set(checksum "1")
   endif()
+  message(STATUS "${repo} test data will be downloaded from ${ECBUILD_DOWNLOAD_BASE_URL}/${download_data_name}")
+  file(MAKE_DIRECTORY ${data_path})
 
-   # Check whether the URLs exist or not
-  set( ECBUILD_DOWNLOAD_BASE_URL ${MPAS_IODA_DOWNLOAD_BASE_URL}/ioda)
-   foreach (mpas_ioda_tar_name ${mpas_ioda_test_data})
-       list(APPEND url_names_data ${GIT_BRANCH_MPAS}/${mpas_ioda_tar_name})
-   endforeach()
-   ecbuild_check_urls(NAMES  ${url_names_data}
-                      RESULT MPAS_SPECIFIC_TEST_FILES)
+  # add test for downloading data
+  set(testname "mpas_get_${repo}_test_data")
+  ecbuild_add_test( TARGET    ${testname}
+                    TYPE      SCRIPT
+                    COMMAND   ${CMAKE_BINARY_DIR}/bin/mpas_data_downloader.py
+                    ARGS      ${download_data_name} ${test_data} ${data_path} ${ECBUILD_DOWNLOAD_BASE_URL} ${checksum})
 
-  # Set distant directory
-  if(${MPAS_SPECIFIC_TEST_FILES} MATCHES 0)
-    # Download and extract new test files (distant directory = git branch)
-    set(DIRNAME ${GIT_BRANCH_MPAS})
+  # pass output data path back to calling code
+  set(${output_data_path} ${data_path} PARENT_SCOPE)
+endfunction()
+
+# Currently only use 2.3.0 CRTM coefficients
+set( CRTM_COEFFS_BRANCH "2.3.0" )
+
+if( DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES})
+    set(LOCAL_PATH_JEDI_TESTFILES "$ENV{LOCAL_PATH_JEDI_TESTFILES}")
+endif()
+
+# If local path to testfiles is defined by user don't download
+if( DEFINED LOCAL_PATH_JEDI_TESTFILES )
+  # Check IODA directory
+  if(EXISTS ${LOCAL_PATH_JEDI_TESTFILES}/ioda/${GIT_BRANCH_MPAS})
+    set(MPAS_IODA_TESTFILES_PATH ${LOCAL_PATH_JEDI_TESTFILES}/ioda/${GIT_BRANCH_MPAS})
   else()
-    # Download and extract develop test files (distant directory = develop)
-    set(DIRNAME "develop")
+    set(MPAS_IODA_TESTFILES_PATH ${LOCAL_PATH_JEDI_TESTFILES}/ioda/develop)
   endif()
-  message(STATUS "Test data will be downloaded from: ${ECBUILD_DOWNLOAD_BASE_URL}/${DIRNAME}")
+  message(STATUS "use LOCAL_PATH_JEDI_TESTFILES, ioda files path: ${MPAS_IODA_TESTFILES_PATH}")
 
-  set(MPAS_IODA_REP_NAME ioda)
-  set(MPAS_IODA_TESTFILES_NAME ${mpas_ioda_test_data})
-  set(MPAS_IODA_BRANCH_NAME ${DIRNAME})
-  set(MPAS_IODA_TESTFILES_PATH ${CMAKE_BINARY_DIR}/test_data/ioda/${DIRNAME})
-  message(STATUS "Save data to: ${MPAS_IODA_TESTFILES_PATH}")
-  file(MAKE_DIRECTORY ${MPAS_IODA_TESTFILES_PATH})
+  # For CRTM use data with tag 2.3.0
+  set(MPAS_CRTM_COEFFS_PATH ${LOCAL_PATH_JEDI_TESTFILES}/crtm/${CRTM_COEFFS_BRANCH})
+  message(STATUS "use LOCAL_PATH_JEDI_TESTFILES, crtm coeffs path: ${MPAS_CRTM_COEFFS_PATH}")
 
+# otherwise download the data
+else()
+  message(STATUS "LOCAL_PATH_JEDI_TESTFILES is not defined, download test files")
   # Create download script for get_ioda_test_data test
-  set ( FILENAME mpas_ioda_data_downloader.py)
+  set ( FILENAME mpas_data_downloader.py)
   set ( SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME} )
   set ( DEST_FILE ${CMAKE_BINARY_DIR}/bin/${FILENAME} )
-  list( APPEND bin_mpas_ioda_test_download_scripts_deps ${DEST_FILE} )
+  list( APPEND bin_mpas_test_download_scripts_deps ${DEST_FILE} )
 
   if( EXISTS "${SOURCE_FILE}.in" )
     configure_file( ${SOURCE_FILE}.in ${DEST_FILE} @ONLY )
@@ -263,24 +345,44 @@ if( NOT DEFINED LOCAL_PATH_TESTFILES_IODA )
     configure_file( ${SOURCE_FILE}    ${DEST_FILE} @ONLY )
   endif()
 
-  add_custom_target( bin_mpas_ioda_test_download_scripts ALL
-      COMMAND chmod +x ${bin_mpas_ioda_test_download_scripts_deps}
-      DEPENDS ${bin_mpas_ioda_test_download_scripts_deps})
+  add_custom_target( bin_mpas_test_download_scripts ALL
+      COMMAND chmod +x ${bin_mpas_test_download_scripts_deps}
+      DEPENDS ${bin_mpas_test_download_scripts_deps})
 
-  ecbuild_add_test( TARGET    mpas_get_ioda_test_data
-                    TYPE      SCRIPT
-                    COMMAND    ${CMAKE_BINARY_DIR}/bin/${FILENAME}
-                    ARGS      testoutput/download_test_mpas.log)
+  # add tests to download ioda data using ADD_DOWNLOAD_TEST  function
+  ADD_DOWNLOAD_TEST( "ioda" ${ioda_test_data} MPAS_IODA_TESTFILES_PATH )
 
-else()
-  set(MPAS_IODA_TESTFILES_PATH ${LOCAL_PATH_TESTFILES_IODA})
-  message(STATUS "LOCAL_PATH_TESTFILES_IODA set to: ${LOCAL_PATH_TESTFILES_IODA}")
+  # download CRTM coefficients
+  if( crtm_FOUND )
+    set(MPAS_CRTM_COEFFS_PATH ${CMAKE_BINARY_DIR}/test_data/crtm/${CRTM_COEFFS_BRANCH})
+    file(MAKE_DIRECTORY ${MPAS_CRTM_COEFFS_PATH})
+    # set filenames for downloading: flat directory for release (from UCAR ftp)
+    if(${GIT_BRANCH_MPAS} STREQUAL "1.0.0")
+      set(ECBUILD_DOWNLOAD_BASE_URL https://dashrepo.ucar.edu/dataset/147_miesch/file)
+      set(crtm_download_data_name ${crtm_test_data})
+      set(checksum_crtm "0")
+    # set filenames for downloading: use directories and branch names for everything else (AWS)
+    else()
+      set(ECBUILD_DOWNLOAD_BASE_URL https://jedi-test-files.s3.amazonaws.com)
+      set(crtm_download_data_name crtm/${CRTM_COEFFS_BRANCH}/${crtm_test_data})
+      set(checksum_crtm "1")
+    endif()
+    ecbuild_add_test( TARGET    mpas_get_crtm_test_data
+                      TYPE      SCRIPT
+                      COMMAND   ${CMAKE_BINARY_DIR}/bin/mpas_data_downloader.py
+                      ARGS      ${crtm_download_data_name} ${crtm_test_data}  ${MPAS_CRTM_COEFFS_PATH} ${ECBUILD_DOWNLOAD_BASE_URL} ${checksum_crtm})
+
+  endif( crtm_FOUND )
 endif()
 
 link_dir(${MPAS_IODA_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda)
 
-# Link CRTM coefficient files
-link_dir(${crtm_UFO_COEFFICIENT_DIR} ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff)
+
+if( crtm_FOUND )
+  create_symlink_filename( ${MPAS_CRTM_COEFFS_PATH}
+                           ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff 
+                           ${crtm_test_input} )
+endif ( crtm_FOUND )
 
 # Make directories for output test data
 #bump outputs
