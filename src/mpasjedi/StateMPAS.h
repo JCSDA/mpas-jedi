@@ -100,7 +100,7 @@ class StateMPAS : public util::Printable,
   oops::Variables vars_;
   util::DateTime time_;
 
-  static const oops::Variables auxvars_;
+  oops::Variables stateVars();
 };
 
 // -----------------------------------------------------------------------------

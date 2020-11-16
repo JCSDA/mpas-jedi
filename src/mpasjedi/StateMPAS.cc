@@ -23,13 +23,6 @@
 
 namespace mpas {
 
-// -----------------------------------------------------------------------------
-/// Temporary Auxilliary Variable Definitions
-// -----------------------------------------------------------------------------
-//--- TODO: "w" is still here to duplicate a pool field 
-//              for geoval variable "var_prsi", which has nVertLevelsP1 levels.
-const oops::Variables
-    StateMPAS::auxvars_({ "w" });
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
@@ -40,9 +33,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
   : geom_(new GeometryMPAS(geom)), vars_(incvars), time_(time)
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create." << std::endl;
-  oops::Variables statevars(vars_);
-  statevars += auxvars_;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
+  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -53,9 +44,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
 
-  oops::Variables statevars(vars_);
-  statevars += auxvars_;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
+  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
 
   if (config.has("analytic_init")) {
     mpas_state_analytic_init_f90(keyState_, resol.toFortran(), config, time_);
@@ -74,9 +63,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
   oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation."
                      << std::endl;
 
-  oops::Variables statevars(vars_);
-  statevars += auxvars_;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
+  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
   mpas_state_change_resol_f90(keyState_, other.keyState_);
   oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation."
                      << std::endl;
@@ -87,9 +74,7 @@ StateMPAS::StateMPAS(const StateMPAS & other)
 {
   oops::Log::trace() << "StateMPAS::StateMPAS before copied." << std::endl;
 
-  oops::Variables statevars(vars_);
-  statevars += auxvars_;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), statevars, vars_);
+  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
   mpas_state_copy_f90(keyState_, other.keyState_);
   oops::Log::trace() << "StateMPAS::StateMPAS copied." << std::endl;
 }
@@ -219,6 +204,20 @@ double StateMPAS::norm() const {
   double zz = 0.0;
   mpas_state_rms_f90(keyState_, zz);
   return zz;
+}
+// -----------------------------------------------------------------------------
+
+oops::Variables StateMPAS::stateVars()
+{
+  // -----------------------------------------------------------------------------
+  /// Temporary Auxilliary Variable Definitions
+  // -----------------------------------------------------------------------------
+  //--- TODO: "w" is still here to duplicate a pool field
+  //              for geoval variable "var_prsi", which has nVertLevelsP1 levels.
+  const oops::Variables auxvars_({ "w" });
+  oops::Variables statevars(vars_);
+  statevars += auxvars_;
+  return statevars;
 }
 // -----------------------------------------------------------------------------
 
