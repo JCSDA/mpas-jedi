@@ -121,38 +121,17 @@ class STDofHofX:
             std = np.full(nLocs, np.NaN)
         return std
 
-CRStatNames = ['d:(Sh+So)','(d-So):Sh','(d-Sh):So']
+CRStatNames = ['CRd','CRh','CRo']
 
 def ConsistencyRatioFromDFW(dfw, stateType):
 # INPUTS:
 # dfw - StatisticsDatabase.DFWrapper object containing
 #       a pandas DataFrame with basic statistics for (at least)
 #       'om'+stateType, 'sigma'+stateType, and 'sigmao'+stateType
-# stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'h' for hofx)
+# stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
+    assert stateType in ['b', 'a', 'f'], 'ConsistencyRatioFromDFW: wrong stateType: '+stateType
 
-#OUTPUT: pandas DataFrame containing only 'CRy'+stateType diagName and CRStatNames statistic columns
-
-#For each subpopulation, the consistency ratio can be written differently,
-# depending on the quantity of interest in the analysis.  For example:
-#(1)
-#    CR = SQRT( MS(OBS-MODEL) / [ MS(SIGMAMOD) + MS(SIGMAOBS) ] )
-#
-# benefit: ensures positive-definite numerator and denominator
-#
-#(2) Minamide and Zhang, 2019
-#    CR = SQRT( [MS(OBS-MODEL) - MS(SIGMAOBS) ] / MS(SIGMAMOD) )
-#
-# benefit: directly measures the spread of the forecast in observation space
-#
-#(3)
-#    CR = SQRT( [MS(OBS-MODEL) - MS(SIGMAMOD) ] / MS(SIGMAOBS) )
-#
-# benefit: directly measures the specified ObsError
-#
-# where MS ≡ Mean Squared Value
-
-    import sys
-    np.set_printoptions(threshold=sys.maxsize)
+#OUTPUT: pandas DataFrame containing only diagName == 'CRy'+stateType and CRStatNames data columns
 
     ommStr = 'om'+stateType
     sigmamStr = 'sigma'+stateType
@@ -175,21 +154,33 @@ def ConsistencyRatioFromDFW(dfw, stateType):
     p = np.logical_and(np.isfinite(omm),
           np.logical_and(np.isfinite(sigmam), np.isfinite(sigmao)))
     if p.sum() > 0:
-        # perform math operations
-        #(1)
-        q = np.logical_and(bu.greatBound(np.absolute(sigmam + sigmao), 0.0), p)
-        CRStats['d:(Sh+So)'][q] = omm[q] / (sigmam[q] + sigmao[q])
-        #(2)
-        q = np.logical_and(bu.greatBound(np.absolute(sigmam), 0.0), p)
-        CRStats['(d-So):Sh'][q] = (omm[q] - sigmao[q]) / sigmam[q]
-        #(3)
-        q = np.logical_and(bu.greatBound(np.absolute(sigmao), 0.0), p)
-        CRStats['(d-Sh):So'][q] = (omm[q] - sigmam[q]) / sigmao[q]
+        #For each subpopulation, the consistency ratio can be written three different
+        # ways, depending on the quantity of interest in the analysis. In the
+        # following formulae, MS ≡ Mean Squared Value.
 
-    # create an abbreviated dictionary with only the new diagName and CR statistic
+        #(1) CRd = SQRT( [MS(SIGMAMOD) + MS(SIGMAOBS)] / MS(OBS-MODEL) )
+        # denominator zero check, q
+        q = np.logical_and(bu.greatBound(np.absolute(omm), 0.0), p)
+        CRStats[CRStatNames[0]][q] = (sigmam[q] + sigmao[q]) / omm[q]
+        # benefit: ensures positive-definite numerator and denominator
+
+        #(2) CRh = SQRT( MS(SIGMAMOD) / [MS(OBS-MODEL) - MS(SIGMAOBS)] )
+        q = np.logical_and(bu.greatBound(np.absolute(omm - sigmao), 0.0), p)
+        CRStats[CRStatNames[1]][q] = sigmam[q] / (omm[q] - sigmao[q])
+        # benefit: directly measures the spread of the forecast in observation space
+
+        #(3) CRo = SQRT( MS(SIGMAOBS) / [MS(OBS-MODEL) - MS(SIGMAMOD)] )
+        q = np.logical_and(bu.greatBound(np.absolute(omm - sigmam), 0.0), p)
+        CRStats[CRStatNames[2]][q] = sigmao[q] / (omm[q] - sigmam[q])
+        # benefit: directly measures the specified ObsError
+
+
+    # create an abbreviated dictionary with only the 'CRy'+stateType diagName and CR statistics
     CRyDict = dfw.loc({'diagName': [ommStr]}).reset_index().to_dict(orient='list')
     nrows = len(CRStats[CRStatNames[0]])
     CRyDict['diagName'] = ['CRy'+stateType] * nrows
+
+    # perform the sqrt operation for all three CR's where positive-semi-definite
     for statistic, CRStat in CRStats.items():
         CRStat[bu.lessBound(CRStat, 0.0)] = np.NaN
         CRyDict[statistic] = np.sqrt(CRStat)
