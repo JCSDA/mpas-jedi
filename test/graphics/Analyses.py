@@ -1995,10 +1995,10 @@ class GrossValues(AnalysisBase):
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
 
-                # narrow mydfwDict by binVar and binVal to reduce run-time and memory
+                # narrow mydfwDict by binVar and binMethod to reduce run-time and memory
                 myLoc = {}
                 myLoc['binVar'] = binVar
-                myLoc['binVal'] = self.binNumVals2DasStr
+                myLoc['binMethod'] = binMethod
 
                 # reducing to mydfwDict speeds extractions in innerloops
                 mydfwDict = {'dfw': self.db.loc(myLoc)}
