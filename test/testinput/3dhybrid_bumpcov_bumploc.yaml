@@ -26,22 +26,9 @@ cost function:
       date: *adate
       bump:
         prefix: Data/bump/mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
-        default_seed: 1
-        method: cor
-        strategy: specific_univariate  #common
-        new_nicas: 0
+        strategy: specific_univariate
         load_nicas: 1
-        ntry: 3
-        nrep: 2
-        lsqrt: 1
-        resol: 10
-        nicas_interp: bilin
-        network: 0
         mpicom: 2
-        advmode: 0
-        forced_radii: 0
-        rh: 2000000
-        rv: 1
       variable changes:
       - variable change: StdDev
         input variables: *incvars
@@ -56,30 +43,9 @@ cost function:
         localization variables: *incvars
         bump:
           prefix: Data/bump/mpas_parametersbump_loc
-          default_seed: 1
-          method: loc 
-          strategy: common  #specific_univariate
-          new_hdiag: 0
-          new_nicas: 0
+          strategy: common
           load_nicas: 1
-          mask_type: none
-          draw_type: random_uniform
-          nc1: 1024
-          ntry: 3
-          nrep: 2
-          nc3: 10
-          dc: 1000000
-          nl0r: 1  #1
-          ne: 5
-          minim_algo: hooke
-          rvflt: 0
-          lsqrt: 1
-          resol: 4
-          nicas_interp: bilin
-          network: 0
           mpicom: 2
-          advmode: 0
-          diag_interp: bilin
       members:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
         date: *adate

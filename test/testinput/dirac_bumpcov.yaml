@@ -16,22 +16,9 @@ background error:
   date: *date
   bump:
     prefix: Data/bump/mpas_parametersbump_cov
-    default_seed: 1
-    method: cor
-    strategy: specific_univariate  #common
-    new_nicas: 0
+    strategy: specific_univariate
     load_nicas: 1
-    ntry: 3
-    nrep: 2
-    lsqrt: 1
-    resol: 10
-    nicas_interp: bilin
-    network: 0
     mpicom: 2
-    advmode: 0
-    forced_radii: 0
-    rh: 2000000
-    rv: 1
   variable_changes: []
 dirac:
   ndir: 2
