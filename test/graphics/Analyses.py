@@ -1804,6 +1804,10 @@ class BinValAxisStatsComposite(AnalysisBase):
 
         self.requestAggDFW = True
 
+        # Force serial processing so that console output is contiguous
+        # TODO(JJG): output to an ascii file and remove this line
+        self.blocking = True
+
         self.subWidth = 1.9
         self.subAspect = 0.9
 
@@ -1901,10 +1905,10 @@ class BinValAxisStatsComposite(AnalysisBase):
 
                                 for ibin, binVal in enumerate(binVals):
                                     ptLoc['binVal'] = binVal
-                                    countsVals[ibin] = dfwDict['agg'].loc(ptLoc,'Count').to_numpy()
-                                    meansVals[ibin] = dfwDict['agg'].loc(ptLoc,'Mean').to_numpy()
-                                    rmssVals[ibin] = dfwDict['agg'].loc(ptLoc,'RMS').to_numpy()
-                                    stdsVals[ibin] = dfwDict['agg'].loc(ptLoc,'STD').to_numpy()
+                                    countsVals[ibin] = mydfwDict['agg'].loc(ptLoc,'Count').to_numpy()
+                                    meansVals[ibin] = mydfwDict['agg'].loc(ptLoc,'Mean').to_numpy()
+                                    rmssVals[ibin] = mydfwDict['agg'].loc(ptLoc,'RMS').to_numpy()
+                                    stdsVals[ibin] = mydfwDict['agg'].loc(ptLoc,'STD').to_numpy()
 
                                 # define subplot title
                                 title = varLabel
