@@ -659,16 +659,6 @@ function(jedi_app_ref_test_compare)
     endif()
 endfunction()
 
-## Settings for comparison to reference output
-# tolernaces for compare.py:
-set (ctol 0.0) #Max relative difference
-set (idif 0)   #Max difference
-
-# use compare.py:
-set(COMPARESTR COMPARE TOL ${ctol} DIF ${idif})
-# use compare.sh:
-#set(COMPARESTR COMPARE)
-
 # Default MPASJEDI_TEST_TIER
 set(MPASJEDI_TEST_TIER 1)
 
@@ -677,17 +667,23 @@ if(DEFINED ENV{MPASJEDI_TEST_TIER})
     set(MPASJEDI_TEST_TIER "$ENV{MPASJEDI_TEST_TIER}")
 endif()
 
-################
-# Select REFTYPE
-################
-## For APPLICATION tests, choose either
-## (a) create reference files (REFTYPE == "REFERENCE"):
-#set(REFTYPE "REFERENCE")
-##
-##      OR
-##
-## (b) test then compare to reference for all tests:
-set(REFTYPE "${COMPARESTR}")
+## Settings for comparison to reference output
+set(RECALIBRATE_CTEST_REFS "OFF")
+
+# tolerances for compare.py:
+set (DEFAULT_FLOAT_TOL 0.00000001) #Default max relative difference
+set (FORECAST_FLOAT_TOL 0.005) #Max relative difference for forecast-based ctests
+set (INT_TOL 0)   #Max difference
+
+if( ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
+  # recalibrate reference files to current build
+  set(DEFAULT_REF_TYPE "REFERENCE")
+  set(FORECAST_REF_TYPE "REFERENCE")
+else()
+  # test then compare to reference
+  set(DEFAULT_REF_TYPE COMPARE TOL ${DEFAULT_FLOAT_TOL} DIF ${INT_TOL})
+  set(FORECAST_REF_TYPE COMPARE TOL ${FORECAST_FLOAT_TOL} DIF ${INT_TOL})
+endif()
 
 #############################
 # Individual test definitions
@@ -695,7 +691,7 @@ set(REFTYPE "${COMPARESTR}")
 
 # UNIT tests of MPAS-JEDI classes
 #--------------------------------
-if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
+if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     # Unit tests for interface classes to PROJECT_NAME_LOWCASE
     jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
     jedi_unit_test( CLASS State           YAMLFILE state )
@@ -709,48 +705,49 @@ endif()
 
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
-jedi_app_ref_test_compare( APP     forecast                                 ${REFTYPE} )
-jedi_app_ref_test_compare( APP     hofx_nomodel                             ${REFTYPE} )
-jedi_app_ref_test_compare( APP     hofx                                     ${REFTYPE} )
+jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} )
+jedi_app_ref_test_compare( APP     hofx_nomodel                             ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
-##jedi_app_ref_test_compare( APP     enshofx                                  ${REFTYPE})
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${REFTYPE} )
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${REFTYPE} )
+##jedi_app_ref_test_compare( APP     enshofx                                  ${DEFAULT_REF_TYPE})
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} )
 ### TODO: Make the gen_ens_pert_B test produce the same output in Debug and Release. Until that time, we remove it.
-#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${REFTYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${REFTYPE}
+#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${REFTYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${REFTYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc           ${REFTYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc           ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${REFTYPE}
+jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${REFTYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${REFTYPE} NPE 3 )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${REFTYPE} NPE 3
+jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${FORECAST_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${DEFAULT_REF_TYPE} NPE 3 )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${DEFAULT_REF_TYPE} NPE 3
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${REFTYPE}
+jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DEFAULT_REF_TYPE}
                            NPE 4 NMEM 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
-if( NOT "${REFTYPE}" STREQUAL "REFERENCE" )
+if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     foreach(THIS_NPE ${multi_pe_480})
         if( THIS_NPE GREATER 1 )
+            jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} NPE ${THIS_NPE} )
 ## hofx is expensive, hold off list for now
-#            jedi_app_ref_test_compare( APP     hofx                                     ${COMPARESTR} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${COMPARESTR} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${COMPARESTR} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${COMPARESTR} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${COMPARESTR} NPE ${THIS_NPE}
+#            jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE} NPE ${THIS_NPE}
                                        DEPENDS parameters_bumpcov
                                                parameters_bumploc )
         endif()
