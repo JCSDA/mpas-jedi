@@ -124,7 +124,7 @@ phases:
 
       ##  internal repos
       #  mpas-model 
-      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH MPAS-Model /jcsda/mpas-bundle release-stable
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS-Model /jcsda/mpas-bundle release-stable
 
       #  mpas-jedi
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi $CODEBUILD_GIT_BRANCH mpasjedi /jcsda/mpas-bundle develop
