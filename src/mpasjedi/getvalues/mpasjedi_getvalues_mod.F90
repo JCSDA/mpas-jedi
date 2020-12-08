@@ -5,16 +5,15 @@
 
 module mpasjedi_getvalues_mod
 
-! atlas
-use atlas_module,                   only: atlas_fieldset, atlas_field, atlas_real
-
 ! fckit
 use fckit_mpi_module,               only: fckit_mpi_sum
 
 ! oops
 use datetime_mod,                   only: datetime
-use type_bump,                      only: bump_type
 use kinds,                          only: kind_real
+
+! saber
+use interpolatorbump_mod,         only: bump_interpolator
 
 ! ufo
 use ufo_locs_mod,                   only: ufo_locs, ufo_locs_time_mask
@@ -43,13 +42,11 @@ implicit none
 private
 public :: mpasjedi_getvalues, mpasjedi_getvalues_base
 public :: mpas_getvalues_registry
-public :: fill_geovals, initialize_bump
-public :: obsop_to_atlas, obsop_from_atlas
+public :: fill_geovals
 
 type, abstract :: mpasjedi_getvalues_base
-  type(bump_type) :: bump
+  type(bump_interpolator) :: bumpinterp
   contains
-    procedure, public :: initialize_bump
     procedure, public :: fill_geovals
 end type mpasjedi_getvalues_base
 
@@ -83,7 +80,8 @@ subroutine create(self, geom, locs)
   type(mpas_geom),                intent(in)    :: geom
   type(ufo_locs),                 intent(in)    :: locs
 
-  call initialize_bump(self, geom, locs)
+  call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
+     & nl=geom%nVertLevels)
 
 end subroutine create
 
@@ -93,7 +91,7 @@ subroutine delete(self)
 
   class(mpasjedi_getvalues), intent(inout) :: self
 
-  call self%bump%dealloc()
+  call self%bumpinterp%delete()
 
 end subroutine delete
 
@@ -112,8 +110,8 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
   logical, allocatable :: time_mask(:)
   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
-  type(atlas_fieldset) :: afieldset
-  real(kind=kind_real), allocatable :: mod_field(:,:), mod_field_ext(:,:)
+  integer, allocatable ::obs_field_int(:,:)
+  real(kind=kind_real), allocatable :: mod_field(:,:)
   real(kind=kind_real), allocatable :: obs_field(:,:)
   real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
 
@@ -123,8 +121,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
   integer, dimension(:,:), pointer :: i2d_ptr_a
-  integer, allocatable :: index_nn(:)
-  real (kind=kind_real), allocatable :: weight_nn(:)
 
   real(kind=kind_real) :: wdir           !< for wind direction
   integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
@@ -243,10 +239,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       !
       ! + initialize_bump takes other ~50% on cheyennne
       !
-      call obsop_to_atlas(geom, nlevels, afieldset, arr2d=mod_field(1:nlevels,1:ngrid))
-      self%bump%geom%nl0 = nlevels
-      call self%bump%apply_obsop(afieldset, obs_field(:,1:nlevels))
-      call afieldset%final()
+      call self%bumpinterp%apply(mod_field(1:nlevels,1:ngrid), obs_field(:,1:nlevels),trans_in=.true.)
 
       do jlev = 1, nlevels
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -262,9 +255,9 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   deallocate(mod_field)
   deallocate(obs_field)
 
-  self%bump%geom%nl0 = 1
   allocate(mod_field(ngrid,1))
   allocate(obs_field(nlocs,1))
+  allocate(obs_field_int(nlocs,1))
 
 
   ! Special cases --> interpolation, then conversion (wspeed, wdir)
@@ -281,16 +274,10 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     !- read/interp.
     call mpas_pool_get_array(fields % subFields, "u10", r1d_ptr_a)
     !write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
-    call self%bump%apply_obsop(afieldset, obs_field)
-    call afieldset%final()
-    tmp_field(:,1)=obs_field(:,1)
+    call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,1))
     call mpas_pool_get_array(fields % subFields, "v10", r1d_ptr_a)
     !write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
-    call self%bump%apply_obsop(afieldset, obs_field)
-    call afieldset%final()
-    tmp_field(:,2)=obs_field(:,1)
+    call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,2))
 
     !- allocate geoval & put values for var_sfc_wspeed
     ivar = ufo_vars_getindex(gom%variables,var_sfc_wspeed)
@@ -342,29 +329,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     call mpas_pool_get_array(fields % subFields, "isltyp", i1d_ptr_b)
     !write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
 
-
-    !initialize vector of nearest neighbor indices
-    allocate( index_nn(nlocs) )
-    allocate( weight_nn(self%bump%obsop%h%n_s) )
-
-    do jloc = 1, nlocs
-      !Picks index of self%bump%obsop%h%S containing maxium weight for obs jloc
-      !Generic method for any interpolation scheme
-      weight_nn = MPAS_JEDI_ZERO_kr
-      where ( self%bump%obsop%h%row .eq. jloc )
-        weight_nn = self%bump%obsop%h%S
-      end where
-      jj = maxloc(weight_nn,1)
-
-  !       !Cheaper method that works for BUMP unstructured "triangular mesh" ( 3 vertices per obs ) with Bilinear interp.
-  !       jj=3*(jloc-1) + maxloc(self%bump%obsop%h%S( 3*(jloc-1)+1:3*(jloc-1)+3 ),1) !nearest-interp. / maximum-weight specified.
-
-      !Store index of BUMP extended vector
-      index_nn(jloc) = self%bump%obsop%h%col(jj)
-    enddo
-
-    deallocate(weight_nn)
-
     !- allocate geoval & put values for var_sfc_landtyp
     ivar = ufo_vars_getindex(gom%variables,var_sfc_landtyp)
     if(ivar > 0) then
@@ -372,13 +336,10 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
-      allocate( mod_field_ext(self%bump%obsop%nc0b,1) )
-      call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
+      call self%bumpinterp%apply(i1d_ptr_a(1:ngrid),obs_field_int)
       do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = mod_field_ext( index_nn(jloc), 1 )
+        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = real(obs_field_int(jloc,1), kind_real)
       enddo
-      deallocate( mod_field_ext )
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
 
@@ -389,15 +350,12 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
-      allocate( mod_field_ext(self%bump%obsop%nc0b,1) )
-      call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
+      call self%bumpinterp%apply(i1d_ptr_a(1:ngrid),obs_field_int)
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_veg( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
+          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_veg(obs_field_int(jloc, 1)), kind_real)
         endif
       enddo
-      deallocate( mod_field_ext )
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
 
@@ -408,19 +366,14 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      mod_field(:,1) = real( i1d_ptr_b(1:ngrid), kind_real)
-      allocate( mod_field_ext(self%bump%obsop%nc0b,1) )
-      call self%bump%obsop%com%ext(self%bump%mpl,1,mod_field,mod_field_ext)
+      call self%bumpinterp%apply(i1d_ptr_b(1:ngrid),obs_field_int)
       do jloc = 1, nlocs
         if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_soil( int(mod_field_ext( index_nn(jloc), 1 ))), kind_real)
+          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_soil(obs_field_int(jloc, 1)), kind_real)
         endif
       enddo
-      deallocate( mod_field_ext )
       !write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
     endif
-
-    deallocate(index_nn)
 
   endif  !---end special cases
 
@@ -457,9 +410,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      call obsop_to_atlas(geom, 0, afieldset, arr1d=real(i1d_ptr_a(1:ngrid), kind=kind_real))
-      call self%bump%apply_obsop(afieldset, obs_field)
-      call afieldset%final()
+      call self%bumpinterp%apply(real(i1d_ptr_a(1:ngrid),kind_real),obs_field)
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -472,9 +423,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_a(1:ngrid))
-      call self%bump%apply_obsop(afieldset, obs_field)
-      call afieldset%final()
+      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field)
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -491,9 +440,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivarw)%nval = 1
         allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nlocs) )
       endif
-      call obsop_to_atlas(geom, 0, afieldset, arr1d=r1d_ptr_b(1:ngrid))
-      call self%bump%apply_obsop(afieldset, obs_field)
-      call afieldset%final()
+      call self%bumpinterp%apply(r1d_ptr_b(1:ngrid), obs_field)
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -578,119 +525,5 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   call mpas_pool_destroy_pool(pool_ufo)
 
 end subroutine fill_geovals
-
-! --------------------------------------------------------------------------------------------------
-
-subroutine initialize_bump(self, grid, locs)
-
-  implicit none
-  class(mpasjedi_getvalues_base), intent(inout) :: self
-  type(mpas_geom),          intent(in)  :: grid
-  type(ufo_locs),           intent(in)  :: locs
-
-  integer, save                     :: bumpid = 1000
-  character(len=5)   :: cbumpcount
-  character(len=255) :: bump_nam_prefix
-
-  ! Each bump%nam%prefix must be distinct
-  ! -------------------------------------
-  bumpid = bumpid + 1
-  write(cbumpcount,"(I0.5)") bumpid
-  bump_nam_prefix = 'mpas_bump_data_'//cbumpcount
-
-  ! Namelist options
-  ! ----------------
-
-  !Important namelist options
-  call self%bump%nam%init(grid%f_comm%size())
-
-  !Less important namelist options (should not be changed)
-  self%bump%nam%prefix       = trim(bump_nam_prefix)  ! Prefix for files output
-  self%bump%nam%default_seed = .true.
-  self%bump%nam%new_obsop    = .true.
-  self%bump%nam%write_obsop  = .false.
-  self%bump%nam%verbosity    = "none"
-  self%bump%nam%nl           = grid%nVertLevels
-  self%bump%nam%nv           = 1
-  self%bump%nam%variables(1) = "var"
-
-  ! Initialize BUMP
-  ! ---------------
-  call self%bump%setup(grid%f_comm,grid%afunctionspace,nobs=locs%nlocs,lonobs=locs%lon(:),latobs=locs%lat(:))
-
-  ! Run BUMP drivers
-  call self%bump%run_drivers
-
-  ! Partial deallocate option
-  call self%bump%partial_dealloc
-
-end subroutine initialize_bump
-
-subroutine obsop_to_atlas(geom, nlevels, afieldset, arr1d, arr2d)
-
-  type(mpas_geom), intent(in) :: geom
-  integer, intent(in) :: nlevels
-  type(atlas_fieldset), intent(inout) :: afieldset
-  real(kind=kind_real), intent(in), optional :: arr1d(geom % nCellsSolve)
-  real(kind=kind_real), intent(in), optional :: arr2d(nlevels, geom % nCellsSolve)
-
-  real(kind=kind_real), pointer :: real_ptr_1d(:), real_ptr_2d(:,:)
-  type(atlas_field) :: afield
-
-  ! Create ATLAS fieldset
-  afieldset = atlas_fieldset()
-
-  ! Create field
-  afield = geom%afunctionspace%create_field(name='var',kind=atlas_real(kind_real),levels=nlevels)
-
-  ! Add field
-  call afieldset%add(afield)
-
-  ! Copy data
-  if (nlevels == 0) then
-    call afield%data(real_ptr_1d)
-    real_ptr_1d = MPAS_JEDI_ZERO_kr
-    if (present(arr1d)) real_ptr_1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve)
-  else
-    call afield%data(real_ptr_2d)
-    real_ptr_2d = MPAS_JEDI_ZERO_kr
-    if (present(arr1d)) call abor1_ftn('obsop_to_atlas: wrong array')
-    if (present(arr2d)) real_ptr_2d(1:nlevels, 1:geom % nCellsSolve) = arr2d(1:nlevels, 1:geom % nCellsSolve)
-  end if
-
-  ! Release pointers
-  call afield%final()
-  
-end subroutine obsop_to_atlas
-
-subroutine obsop_from_atlas(geom, nlevels, afieldset, arr1d, arr2d)
-
-  type(mpas_geom), intent(in) :: geom
-  integer, intent(in) :: nlevels
-  type(atlas_fieldset), intent(in) :: afieldset
-  real(kind=kind_real), intent(inout), optional :: arr1d(geom % nCellsSolve)
-  real(kind=kind_real), intent(inout), optional :: arr2d(nlevels, geom % nCellsSolve)
-
-  real(kind=kind_real), pointer :: real_ptr_1d(:), real_ptr_2d(:,:)
-  type(atlas_field) :: afield
-
-  ! Get field
-  afield = afieldset%field('var')
-
-  ! Copy data
-  if (nlevels == 0) then
-    call afield%data(real_ptr_1d)
-    if (present(arr1d)) arr1d(1:geom % nCellsSolve) = arr1d(1:geom % nCellsSolve) + real_ptr_1d(1:geom % nCellsSolve)
-  else
-    call afield%data(real_ptr_2d)
-    if (present(arr1d)) call abor1_ftn('obsop_from_atlas: wrong array')
-    if (present(arr2d)) arr2d(1:nlevels, 1:geom % nCellsSolve) = arr2d(1:nlevels, 1:geom % nCellsSolve) &
- & + real_ptr_2d(1:nlevels, 1:geom % nCellsSolve)
-  end if
-
-  ! Release pointers
-  call afield%final()
-  
-end subroutine obsop_from_atlas
 
 end module mpasjedi_getvalues_mod
