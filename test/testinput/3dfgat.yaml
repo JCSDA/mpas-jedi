@@ -10,7 +10,8 @@ cost function:
     tstep: PT30M
     model variables: &modvars
                      [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                     index_qc, index_qi, theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+                     theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                     index_qc, index_qi, index_qr, index_qs, index_qg, pressure_p,
                      snowh, vegfra, u10, v10, lai, smois, tslb]
   analysis variables: &incvars
   - temperature
@@ -18,8 +19,6 @@ cost function:
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
-  - index_qc
-  - index_qi
   variable change: Identity
   background:
     state variables: *modvars
@@ -153,7 +152,7 @@ cost function:
       threshold: 500
     - filter: Background Check
       apply at iterations: 0,1
-      threshold: 10
+      threshold: 3
 output:
   filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
 variational:
