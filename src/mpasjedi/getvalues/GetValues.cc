@@ -28,6 +28,18 @@ GetValues::~GetValues() {
 
 // -------------------------------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
+/*! \brief fill a GeoVaLs object using a StateMPAS object
+*
+* \details **fillGeoVaLs()** Calls the fortran subroutine that will interpolate and 
+* convert the state variables to the requested GeoVaLs locations and variables. 
+*
+* \param[in] state reference to the input StateMPAS object
+* \param[in] t1 DateTime that is the beginning of the requested time window
+* \param[in] t2 DateTime that is the end of the requested time window
+* \param[out] geovals reference to the GeoVaLs object that will be populated
+*
+*/
 void GetValues::fillGeoVaLs(const StateMPAS & state, const util::DateTime & t1,
                             const util::DateTime & t2, ufo::GeoVaLs & geovals) const {
   oops::Log::trace() << "GetValues::fillGeoVaLs starting" << std::endl;

@@ -20,6 +20,7 @@ set( CMAKE_DIRECTORY_LABELS ${PROJECT_NAME} )
 ## Configuration options
 include( ${PROJECT_NAME}_compiler_flags )
 include( GNUInstallDirs )
+option( ENABLE_MPAS_DOC "Build MPAS-JEDI documentation" OFF )
 
 ## Dependencies
 find_package( OpenMP COMPONENTS CXX Fortran )
@@ -43,6 +44,10 @@ find_package( ufo REQUIRED )
 add_subdirectory( src/mpasjedi )
 add_subdirectory( src/mains )
 add_subdirectory( test )
+
+if( ENABLE_MPAS_DOC )
+    add_subdirectory( docs )
+endif()
 
 ## Package Config
 ecbuild_install_project( NAME ${PROJECT_NAME} )

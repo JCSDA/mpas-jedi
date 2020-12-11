@@ -97,16 +97,22 @@ end subroutine delete
 
 ! --------------------------------------------------------------------------------------------------
 
-! Non-linear fill_geovals used in both GetValues and LinearGetValues classes
+! -----------------------------------------------------------------------------
+!> \brief Interpolates and converts from mpas_field to populate ufo_geovals
+!!
+!! \details **fill_geovals** This subroutine populates the variables in a 
+!! ufo_geovals object by interpolating and converting the state or increment
+!! variables in an mpas_field object. This is the non-linear subroutine used in
+!! both GetValues and LinearGetValues classes
 subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
-  class(mpasjedi_getvalues_base), intent(inout) :: self
-  type(mpas_geom),                intent(in)    :: geom
-  type(mpas_field),               intent(in)    :: fields
-  type(datetime),                 intent(in)    :: t1
-  type(datetime),                 intent(in)    :: t2
-  type(ufo_locs),                 intent(in)    :: locs
-  type(ufo_geovals),              intent(inout) :: gom
+  class(mpasjedi_getvalues_base), intent(inout) :: self    !< self
+  type(mpas_geom),                intent(in)    :: geom    !< geometry (mpas mesh)
+  type(mpas_field),               intent(in)    :: fields  !< state or increment
+  type(datetime),                 intent(in)    :: t1      !< time window begin
+  type(datetime),                 intent(in)    :: t2      !< time window end
+  type(ufo_locs),                 intent(in)    :: locs    !< observation locations
+  type(ufo_geovals),              intent(inout) :: gom     !< geovals
 
   logical, allocatable :: time_mask(:)
   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
