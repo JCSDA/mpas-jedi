@@ -11,6 +11,7 @@ use fckit_mpi_module,               only: fckit_mpi_sum
 ! oops
 use datetime_mod,                   only: datetime
 use kinds,                          only: kind_real
+use unstructured_interpolation_mod
 
 ! saber
 use interpolatorbump_mod,         only: bump_interpolator
@@ -27,6 +28,7 @@ use mpas_field_routines
 use mpas_kind_types, only: StrKIND
 use mpas_pool_routines
 use mpas_dmpar, only: mpas_dmpar_exch_halo_field
+use mpasjedi_unstructured_interp_mod
 
 
 !mpas-jedi
@@ -42,12 +44,16 @@ implicit none
 private
 public :: mpasjedi_getvalues, mpasjedi_getvalues_base
 public :: mpas_getvalues_registry
-public :: fill_geovals
+public :: fill_geovals, initialize_uns_interp
 
 type, abstract :: mpasjedi_getvalues_base
-  type(bump_interpolator) :: bumpinterp
-  contains
+logical        :: use_bump_interp
+type(bump_interpolator) :: bumpinterp
+type(unstrc_interp)     :: unsinterp
+contains
+    procedure, public :: initialize_uns_interp
     procedure, public :: fill_geovals
+    procedure, private :: integer_interpolation_bump
 end type mpasjedi_getvalues_base
 
 type, extends(mpasjedi_getvalues_base) :: mpasjedi_getvalues
@@ -80,9 +86,14 @@ subroutine create(self, geom, locs)
   type(mpas_geom),                intent(in)    :: geom
   type(ufo_locs),                 intent(in)    :: locs
 
-  call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
-     & nl=geom%nVertLevels)
+  self%use_bump_interp = geom%use_bump_interpolation
 
+  if (self%use_bump_interp) then
+    call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
+      & nl=geom%nVertLevels)
+  else
+    call initialize_uns_interp(self, geom, locs)
+  endif
 end subroutine create
 
 ! --------------------------------------------------------------------------------------------------
@@ -90,8 +101,11 @@ end subroutine create
 subroutine delete(self)
 
   class(mpasjedi_getvalues), intent(inout) :: self
-
-  call self%bumpinterp%delete()
+  if (self%use_bump_interp) then
+    call self%bumpinterp%delete()
+  else
+    call self%unsinterp%delete()
+  endif
 
 end subroutine delete
 
@@ -203,7 +217,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   ! Interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------
   maxlevels = geom%nVertLevelsP1
-  allocate(mod_field(maxlevels,ngrid))
+  allocate(mod_field(ngrid,maxlevels))
   allocate(obs_field(nlocs,maxlevels))
 
   call mpas_pool_begin_iteration(pool_ufo)
@@ -217,18 +231,18 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       if (poolItr % nDims == 1) then
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i1d_ptr_a)
-          mod_field(1,:) = real( i1d_ptr_a(1:ngrid), kind_real)
+          mod_field(:,1) = real( i1d_ptr_a(1:ngrid), kind_real)
         else if (poolItr % dataType == MPAS_POOL_REAL) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          mod_field(1,:) = r1d_ptr_a(1:ngrid)
+          mod_field(:,1) = r1d_ptr_a(1:ngrid)
         endif
       else if (poolItr % nDims == 2) then
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), i2d_ptr_a)
-          mod_field(1:nlevels,:) = real( i2d_ptr_a(1:nlevels,1:ngrid), kind_real )
+          mod_field(:,1:nlevels) = real( transpose (i2d_ptr_a(1:nlevels,1:ngrid)), kind_real )
         else if (poolItr % dataType == MPAS_POOL_REAL) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          mod_field(1:nlevels,:) = r2d_ptr_a(1:nlevels,1:ngrid)
+          mod_field(:,1:nlevels) = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
         endif
       else
         write(buf,*) '--> fill_geovals: poolItr % nDims == ',poolItr % nDims,' not handled'
@@ -236,16 +250,16 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
       endif
       !write(*,*) "interp: var, ufo_var_index = ",trim(poolItr % memberName), ivar
       !write(*,*) 'MIN/MAX of ',trim(poolItr % memberName), &
-      !           minval(mod_field(1:nlevels,:)), &
-      !           maxval(mod_field(1:nlevels,:))
+      !           minval(mod_field(:,1:nlevels)), &
+      !           maxval(mod_field(:,1:nlevels))
 
-      !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
-      ! + apply_obsop takes ~50% of wall-time of getvalues on cheyenne and
-      !   scales with node count. Seems to have MPI-related issue.
-      !
-      ! + initialize_bump takes other ~50% on cheyennne
-      !
-      call self%bumpinterp%apply(mod_field(1:nlevels,1:ngrid), obs_field(:,1:nlevels),trans_in=.true.)
+      if (self%use_bump_interp) then
+        call self%bumpinterp%apply(mod_field(1:ngrid,1:nlevels), obs_field(:,1:nlevels),trans_in=.false.)
+      else
+        do jlev = 1, nlevels
+          call self%unsinterp%apply(mod_field(:,jlev),obs_field(:,jlev))
+        end do
+      endif
 
       do jlev = 1, nlevels
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
@@ -280,10 +294,22 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     !- read/interp.
     call mpas_pool_get_array(fields % subFields, "u10", r1d_ptr_a)
     !write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,1))
+    if (self%use_bump_interp) then
+      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,1))
+    else
+      mod_field(:,1) = r1d_ptr_a(1:ngrid)
+      call self%unsinterp%apply(mod_field,obs_field)
+      tmp_field(:,1)=obs_field(:,1)
+    endif
     call mpas_pool_get_array(fields % subFields, "v10", r1d_ptr_a)
     !write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,2))
+    if (self%use_bump_interp) then
+      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,2))
+    else
+      mod_field(:,1) = r1d_ptr_a(1:ngrid)
+      call self%unsinterp%apply(mod_field,obs_field)
+      tmp_field(:,2)=obs_field(:,1)
+    endif
 
     !- allocate geoval & put values for var_sfc_wspeed
     ivar = ufo_vars_getindex(gom%variables,var_sfc_wspeed)
@@ -317,7 +343,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     !- deallocate
     deallocate(tmp_field)
 
-  endif  !---end special cases
+  endif  !---end var_sfc_wspeed and/or var_sfc_wdir
 
 
   ! Special cases --> nearest neighbor (surface integer values)
@@ -335,54 +361,17 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
     call mpas_pool_get_array(fields % subFields, "isltyp", i1d_ptr_b)
     !write(*,*) 'MIN/MAX of isltyp=',minval(i1d_ptr_b),maxval(i1d_ptr_b)
 
-    !- allocate geoval & put values for var_sfc_landtyp
-    ivar = ufo_vars_getindex(gom%variables,var_sfc_landtyp)
-    if(ivar > 0) then
-      if( .not. allocated(gom%geovals(ivar)%vals) )then
-        gom%geovals(ivar)%nval = 1
-        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-      endif
-      call self%bumpinterp%apply(i1d_ptr_a(1:ngrid),obs_field_int)
-      do jloc = 1, nlocs
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = real(obs_field_int(jloc,1), kind_real)
-      enddo
-      !write(*,*) 'MIN/MAX of ',trim(var_sfc_landtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+    if (self%use_bump_interp) then
+      !- allocate geoval & put values for var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp
+      call integer_interpolation_bump(self, var_sfc_landtyp, ngrid, nlocs, time_mask, i1d_ptr_a, obs_field_int, gom)
+      call integer_interpolation_bump(self, var_sfc_vegtyp,  ngrid, nlocs, time_mask, i1d_ptr_a, obs_field_int, gom)
+      call integer_interpolation_bump(self, var_sfc_soiltyp, ngrid, nlocs, time_mask, i1d_ptr_b, obs_field_int, gom)
+    else
+      call integer_interpolation_unsinterp(self, var_sfc_landtyp, ngrid, nlocs, time_mask, i1d_ptr_a, mod_field, gom)
+      call integer_interpolation_unsinterp(self, var_sfc_vegtyp,  ngrid, nlocs, time_mask, i1d_ptr_a, mod_field, gom)
+      call integer_interpolation_unsinterp(self, var_sfc_soiltyp, ngrid, nlocs, time_mask, i1d_ptr_b, mod_field, gom)
     endif
-
-    !- allocate geoval & put values for var_sfc_vegtyp
-    ivar = ufo_vars_getindex(gom%variables,var_sfc_vegtyp)
-    if(ivar > 0) then
-      if( .not. allocated(gom%geovals(ivar)%vals) )then
-        gom%geovals(ivar)%nval = 1
-        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-      endif
-      call self%bumpinterp%apply(i1d_ptr_a(1:ngrid),obs_field_int)
-      do jloc = 1, nlocs
-        if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_veg(obs_field_int(jloc, 1)), kind_real)
-        endif
-      enddo
-      !write(*,*) 'MIN/MAX of ',trim(var_sfc_vegtyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-    endif
-
-    !- allocate geoval & put values for var_sfc_soiltyp
-    ivar = ufo_vars_getindex(gom%variables,var_sfc_soiltyp)
-    if(ivar > 0) then
-      if( .not. allocated(gom%geovals(ivar)%vals) )then
-        gom%geovals(ivar)%nval = 1
-        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-      endif
-      call self%bumpinterp%apply(i1d_ptr_b(1:ngrid),obs_field_int)
-      do jloc = 1, nlocs
-        if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,jloc) = real(convert_type_soil(obs_field_int(jloc, 1)), kind_real)
-        endif
-      enddo
-      !write(*,*) 'MIN/MAX of ',trim(var_sfc_soiltyp),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-    endif
-
-  endif  !---end special cases
-
+  endif  !---end surface integer values
 
   ! Special cases --> interdependent geovals (surface fractions)
   ! ------------------------------------------------------------
@@ -416,7 +405,12 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      call self%bumpinterp%apply(real(i1d_ptr_a(1:ngrid),kind_real),obs_field)
+      if (self%use_bump_interp) then
+        call self%bumpinterp%apply(real(i1d_ptr_a(1:ngrid),kind_real),obs_field)
+      else
+        mod_field(:,1) = r1d_ptr_a(1:ngrid)
+        call self%unsinterp%apply(mod_field,obs_field)
+      endif
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -429,7 +423,12 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivar)%nval = 1
         allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
       endif
-      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field)
+      if (self%use_bump_interp) then
+        call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field)
+      else
+        mod_field(:,1) = r1d_ptr_a(1:ngrid)
+        call self%unsinterp%apply(mod_field,obs_field)
+      endif
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -446,7 +445,12 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
         gom%geovals(ivarw)%nval = 1
         allocate( gom%geovals(ivarw)%vals(gom%geovals(ivarw)%nval,gom%geovals(ivarw)%nlocs) )
       endif
-      call self%bumpinterp%apply(r1d_ptr_b(1:ngrid), obs_field)
+      if (self%use_bump_interp) then
+        call self%bumpinterp%apply(r1d_ptr_b(1:ngrid), obs_field)
+      else
+        mod_field(:,1) = r1d_ptr_b(1:ngrid)
+        call self%unsinterp%apply(mod_field,obs_field)
+      endif
       do jloc = 1, nlocs
         if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = obs_field(jloc,1)
       enddo
@@ -531,5 +535,164 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   call mpas_pool_destroy_pool(pool_ufo)
 
 end subroutine fill_geovals
+
+! --------------------------------------------------------------------------------------------------
+
+!> \brief Initializes an unstructured interpolation type
+!!
+!! \details **initialize_uns_interp** This subroutine calls unsinterp%create,
+!! which calculates the barycentric weights used to interpolate data between the
+!! mpas mesh locations (grid) and the observation locations (locs)
+subroutine initialize_uns_interp(self, grid, locs)
+
+  implicit none
+  class(mpasjedi_getvalues_base), intent(inout) :: self !< self
+  type(mpas_geom),          intent(in)          :: grid !< mpas mesh data
+  type(ufo_locs),           intent(in)          :: locs !< lat/lon locations of obs
+
+  integer :: nn, ngrid_in, ngrid_out
+  character(len=8) :: wtype = 'barycent'
+  real(kind=kind_real), allocatable :: lats_in(:), lons_in(:)
+
+  ! Get the Solution dimensions
+  ! ---------------------------
+  ngrid_in = grid%nCellsSolve
+
+  !Calculate interpolation weight
+  !------------------------------------------
+  allocate( lats_in(ngrid_in) )
+  allocate( lons_in(ngrid_in) )
+  ngrid_out=locs%nlocs
+  lats_in(:) = grid%latCell( 1:ngrid_in ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+  lons_in(:) = grid%lonCell( 1:ngrid_in ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+
+  ! Initialize unsinterp
+  ! ---------------
+  nn = 3 ! number of nearest neigbors
+  call self%unsinterp%create(grid%f_comm, nn, wtype, &
+                            ngrid_in, lats_in, lons_in, &
+                            ngrid_out, locs%lat, locs%lon)
+
+  ! Release memory
+  ! --------------
+  deallocate(lats_in)
+  deallocate(lons_in)
+
+end subroutine initialize_uns_interp
+
+! ------------------------------------------------------------------------------
+
+!> \brief Performs interpolation of integer fields using BUMP
+!!
+!! \details **integer_interpolation_bump** This subroutine performs the interpolation
+!! of integer-valued fields (i.e. types) using BUMP
+subroutine integer_interpolation_bump(self, varname, ngrid, nlocs, time_mask, &
+                                      data_in, obs_field_int, gom)
+
+  implicit none
+
+  class(mpasjedi_getvalues_base), intent(inout) :: self     !< self
+  character(len=*), intent(in)        :: varname            !< name of interp variable
+  integer, intent(in)                 :: ngrid              !< number of cells in model mesh
+  integer, intent(in)                 :: nlocs              !< number of locations for obs
+  logical, allocatable, intent(in)    :: time_mask(:)       !< mask for time window
+  integer, dimension(:), intent(in)   :: data_in            !< data to interpolate
+  integer, allocatable, intent(inout) :: obs_field_int(:,:) !< output array of interpolated data
+  type(ufo_geovals), intent(inout)    :: gom                !< output geoVaLs
+
+  integer :: jloc, ivar
+
+  ! This code assumes time_mask already allocated to size nlocs and poplulated earlier.
+
+  !- allocate geoval & put values for 'varname'
+  ivar = ufo_vars_getindex(gom%variables, varname)
+  if(ivar > 0) then
+    if( .not. allocated(gom%geovals(ivar)%vals) )then
+      gom%geovals(ivar)%nval = 1
+      allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
+    endif
+    call self%bumpinterp%apply(data_in(1:ngrid),obs_field_int)
+    do jloc = 1, nlocs
+      if (time_mask(jloc)) then
+        select case (varname)
+          case (var_sfc_landtyp)
+            gom%geovals(ivar)%vals(1,jloc) = real(obs_field_int(jloc,1), kind_real)
+
+          case (var_sfc_vegtyp)
+            gom%geovals(ivar)%vals(1,jloc) = &
+              real(convert_type_veg(obs_field_int(jloc, 1)), kind_real)
+
+          case (var_sfc_soiltyp)
+            gom%geovals(ivar)%vals(1,jloc) = &
+              real(convert_type_soil(obs_field_int(jloc, 1)), kind_real)
+
+          case default
+            call abor1_ftn('integer_interpolation_bump: unimplemented varname')
+        end select
+      endif
+    enddo
+    !write(*,*) 'MIN/MAX of ',trim(varname),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+  endif
+
+end subroutine integer_interpolation_bump
+
+! ------------------------------------------------------------------------------
+
+!> \brief Performs interpolation of integer fields using unstructured interpolation
+!!
+!! \details **integer_interpolation_unsinterp** This subroutine performs the interpolation
+!! of integer-valued fields (i.e. types) using unstructured interpolation
+subroutine integer_interpolation_unsinterp(self, varname, ngrid, nlocs, time_mask, &
+                                          data_in, mod_field, gom)
+
+  implicit none
+
+  class(mpasjedi_getvalues_base), intent(inout)    :: self           !< self
+  character(len=*), intent(in)                     :: varname        !< name of interp variable
+  integer, intent(in)                              :: ngrid          !< number of cells in model mesh
+  integer, intent(in)                              :: nlocs          !< number of locations for obs
+  logical, allocatable, intent(in)                 :: time_mask(:)   !< mask for time window
+  integer, dimension(:), intent(in)                :: data_in        !< data to interpolate
+  real(kind=kind_real), allocatable, intent(inout) :: mod_field(:,:) !< pre-allocated 2-d (ngrid,1) array
+  type(ufo_geovals), intent(inout)                 :: gom            !< output geoVaLs
+
+  integer :: jloc, ivar
+  real(kind=kind_real), dimension(nlocs) :: interpolated_data
+
+  ! This code assumes time_mask already allocated to size nlocs and poplulated earlier.
+  ! Also, that mod_field already allocated to size (ngrid, 1)
+
+  !- allocate geoval & put values for 'varname'
+  ivar = ufo_vars_getindex(gom%variables, varname)
+  if(ivar > 0) then
+    if( .not. allocated(gom%geovals(ivar)%vals) )then
+      gom%geovals(ivar)%nval = 1
+      allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
+    endif
+    mod_field(:,1) = real( data_in(1:ngrid), kind_real)
+    call unsinterp_integer_apply(self%unsinterp, mod_field(:,1), interpolated_data)
+    do jloc = 1, nlocs
+      if (time_mask(jloc)) then
+        select case (varname)
+          case (var_sfc_landtyp)
+            gom%geovals(ivar)%vals(1,jloc) = interpolated_data(jloc)
+
+          case (var_sfc_vegtyp)
+            gom%geovals(ivar)%vals(1,jloc) = &
+              real(convert_type_veg( int(interpolated_data(jloc))), kind_real)
+
+          case (var_sfc_soiltyp)
+            gom%geovals(ivar)%vals(1,jloc) = &
+              real(convert_type_soil( int(interpolated_data(jloc))), kind_real)
+
+          case default
+            call abor1_ftn('integer_interpolation_unsinterp: unimplemented varname')
+        end select
+      endif
+    enddo
+    !write(*,*) 'MIN/MAX of ',trim(varname),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
+  endif
+
+end subroutine integer_interpolation_unsinterp
 
 end module mpasjedi_getvalues_mod

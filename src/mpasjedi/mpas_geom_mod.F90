@@ -49,6 +49,7 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    logical :: deallocate_nonda_fields
+   logical :: use_bump_interpolation
    character(len=StrKIND) :: gridfname
    character(len=StrKIND) :: bump_vunit
    real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
@@ -115,6 +116,7 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    character(len=:), allocatable :: str
    logical :: deallocate_fields
+   logical :: bump_interp
 !   write(*,*)' ==> create geom'
 
    ! MPI communicator
@@ -122,6 +124,16 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator() )
+
+   ! This is not the most appropriate place to get a config specifiying whether
+   ! to use bump interpolation or unstructured interpolation in GetValues, but
+   ! right now it's all that's available due to the OOPS interfaces.
+   if (f_conf%has("use bump interpolation")) then
+      call f_conf%get_or_die("use bump interpolation",bump_interp)
+      self % use_bump_interpolation = bump_interp
+   else
+      self % use_bump_interpolation = .True. ! BUMP is default interpolation
+   end if
 
    !Deallocate not-used fields for memory reduction
    if (f_conf%has("deallocate non-da fields")) then
@@ -515,6 +527,7 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % areaTriangle)) allocate(self % areaTriangle(self % nVertices))
    if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
 
+   self % use_bump_interpolation = other % use_bump_interpolation
    self % latCell           = other % latCell
    self % lonCell           = other % lonCell
    self % areaCell          = other % areaCell

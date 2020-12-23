@@ -78,8 +78,14 @@ subroutine create(self, geom, locs)
   type(mpas_geom),                 intent(in)    :: geom
   type(ufo_locs),                  intent(in)    :: locs
 
-  call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
-     & nl=geom%nVertLevels)
+  self%use_bump_interp = geom%use_bump_interpolation
+
+  if (self%use_bump_interp) then
+    call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
+      & nl=geom%nVertLevels)
+ else
+    call initialize_uns_interp(self, geom, locs)
+  endif
   call mpas_pool_create_pool(self % trajectories)
 
 end subroutine create
@@ -92,9 +98,11 @@ subroutine delete(self)
   class(mpasjedi_lineargetvalues), intent(inout) :: self
 
   call mpas_pool_destroy_pool(self % trajectories)
-
-  call self%bumpinterp%delete()
-
+  if (self%use_bump_interp) then
+    call self%bumpinterp%delete()
+  else
+    call self%unsinterp%delete()
+  endif
 end subroutine delete
 
 ! ------------------------------------------------------------------------------
@@ -168,7 +176,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   logical, allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
-  real(kind=kind_real), allocatable :: obs_field(:,:)
+  real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
   character(len=41) :: windowkey
@@ -284,17 +292,27 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
       nlevels = gom%geovals(jvar)%nval
 
-      !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
-      ! + apply_obsop takes ~99.9% of wall-time of getvalues_tl on cheyenne and
-      !   scales with node count. Seems to have MPI-related issue.
-      !
       if (poolItr % dataType == MPAS_POOL_REAL) then
         if (poolItr%nDims==1) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field(:,1))
+          if (self%use_bump_interp) then
+            call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field(:,1))
+          else
+            call self%unsinterp%apply(r1d_ptr_a(1:ngrid),obs_field(:,1))
+          endif
         else if (poolItr%nDims==2) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          call self%bumpinterp%apply(r2d_ptr_a(1:nlevels,1:ngrid), obs_field(:,1:nlevels),trans_in=.true.)
+          if (self%use_bump_interp) then
+            call self%bumpinterp%apply(r2d_ptr_a(1:nlevels,1:ngrid), obs_field(:,1:nlevels),trans_in=.true.)
+          else
+            ! Transpose to get the slices we pass to 'apply' contiguous in memory
+            allocate(mod_field(ngrid, nlevels))
+            mod_field = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
+            do jlev = 1, nlevels
+              call self%unsinterp%apply(mod_field(:,jlev),obs_field(:,jlev))
+            enddo
+            deallocate(mod_field)
+          endif
         end if
       else
         call abor1_ftn('--> fill_geovals_tl: not a real field')
@@ -310,14 +328,6 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
     endif
   end do
   deallocate(obs_field)
-
-  !allocate(mod_field(ngrid,1))
-  !allocate(obs_field(nlocs,1))
-
-  !! Special cases go here
-
-  !deallocate(mod_field)
-  !deallocate(obs_field)
 
   call mpas_pool_destroy_pool(pool_ufo)
 
@@ -339,8 +349,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   logical, allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
-  real(kind=kind_real), allocatable :: obs_field(:,:)
-
+  real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
   character(len=41) :: windowkey
 
@@ -410,25 +419,42 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
         end do
       end do
 
-      !TODO - JJG: Reduce wall-time of getvalues/_tl/_ad
-      ! + apply_obsop takes ~99.9% of wall-time of getvalues_ad on cheyenne and
-      !   scales with node count. Seems to have MPI-related issue.
-      !
-      ! Copy data
-      if (poolItr % dataType == MPAS_POOL_REAL) then
-        if (poolItr%nDims==1) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-          r1d_ptr_a = MPAS_JEDI_ZERO_kr
-          call self%bumpinterp%apply_ad(obs_field(:,1),r1d_ptr_a(1:ngrid))
-        else if (poolItr%nDims==2) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-          r2d_ptr_a = MPAS_JEDI_ZERO_kr
-          call self%bumpinterp%apply_ad(obs_field,r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
+      if (self%use_bump_interp) then
+        ! Copy data
+          if (poolItr % dataType == MPAS_POOL_REAL) then
+            if (poolItr%nDims==1) then
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+              r1d_ptr_a = MPAS_JEDI_ZERO_kr
+              call self%bumpinterp%apply_ad(obs_field(:,1),r1d_ptr_a(1:ngrid))
+            else if (poolItr%nDims==2) then
+              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+              r2d_ptr_a = MPAS_JEDI_ZERO_kr
+              call self%bumpinterp%apply_ad(obs_field,r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
+            end if
+          else
+            call abor1_ftn('--> fill_geovals_ad: not a real field')
+          end if
+      else ! Unstructured interpolation
+        allocate(mod_field(ngrid,maxlevels))
+        do jlev = 1, nlevels
+          call self%unsinterp%apply_ad(mod_field(:,jlev),obs_field(:,jlev))
+        end do
+        if (poolItr % dataType == MPAS_POOL_REAL) then
+          if (poolItr%nDims==1) then
+            call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+            r1d_ptr_a = MPAS_JEDI_ZERO_kr
+            r1d_ptr_a(1:ngrid) = mod_field(:,1)
+          else if (poolItr%nDims==2) then
+            call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+            r2d_ptr_a = MPAS_JEDI_ZERO_kr
+            r2d_ptr_a(1:nlevels,1:ngrid) = transpose(mod_field(:,1:nlevels))
+          end if
+        else
+          call abor1_ftn('--> fill_geovals_ad: not a real field')
         end if
-      else
-        call abor1_ftn('--> fill_geovals_ad: not a real field')
-      end if
-    endif
+        deallocate(mod_field)
+      endif ! self%use_bump_interp
+    endif ! poolItr % memberType == MPAS_POOL_FIELD
   end do
   deallocate(obs_field)
 

@@ -61,6 +61,7 @@ list( APPEND mpasjedi_src_files
     getvalues/GetValues.interface.F90
     getvalues/LinearGetValues.interface.h
     getvalues/LinearGetValues.interface.F90
+    getvalues/mpasjedi_unstructured_interp_mod.F90
     )
 
 #Create target
