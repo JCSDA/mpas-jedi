@@ -1,0 +1,62 @@
+nml_file: namelist.atmosphere_2018041500
+geometry:
+  gridfname: "./restart.2018-04-15_00.00.00.nc"
+  use bump interpolation: false
+state test:
+  statefile:
+    state variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+    filename: "./restart.2018-04-15_00.00.00.nc"
+    date: &date '2018-04-15T00:00:00Z'
+  date: *date
+  norm file: '19735.265702001503'
+  state generate:
+    analytic_init: dcmip-test-4-0
+    state variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+    date: *date
+    mean: 8
+    sinus: 2
+  interpolation test:
+    variables:
+    - air_temperature
+    - air_pressure
+  norm generated state: '20000.378266179847'
+  tolerance:
+  - 1.0e-08
+  interpolation tolerance:
+  - 0.0001
+  locations:
+    window begin: 2018-04-14T21:00:00Z
+    window end: 2018-04-15T03:00:00Z
+    obsspace:
+      name: Random Locations
+      simulated variables: []
+      generate:
+        random:
+          nobs: 10
+          lat1: -90
+          lat2: 90
+          lon1: 0
+          lon2: 360
+          random_seed: 560921
+        obs errors: []
+  statefileout:
+    state variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+    filename: "Data/states/out.2018-04-15_00.00.00.nc"
+    date: &date '2018-04-15T00:00:00Z'
+    no_transf: 1 # Prevents variable change logic in read routine
+

@@ -1,0 +1,204 @@
+nml_file: namelist.atmosphere_2018041500
+cost function:
+  cost type: 3D-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  geometry:
+    gridfname: "./restart.2018-04-15_00.00.00.nc"
+    deallocate non-da fields: true
+    use bump interpolation: true
+  analysis variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  background:
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
+                      theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+    filename: "./restart.2018-04-15_00.00.00.nc"
+    date: &adate '2018-04-15T00:00:00Z'
+  background error:
+    covariance model: ensemble
+    date: *adate
+    localization:
+      localization method: BUMP
+      localization variables: *incvars
+      bump:
+        prefix: Data/bump/mpas_parametersbump_loc
+        strategy: common
+        load_nicas: 1
+        mpicom: 2
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    variables: *incvars
+  observations:
+  - obs space:
+      name: Radiosonde
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 3
+  - obs space:
+      name: Satwind
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
+      simulated variables: [eastward_wind, northward_wind]
+    obs operator:
+      name: VertInterp
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 3
+  - obs space:
+      name: GnssroRef
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
+      simulated variables: [refractivity]
+    obs operator:
+      name: GnssroRef
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 30000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 3
+    - filter: ROobserror
+      apply at iterations: 0,1
+      variable: refractivity
+      errmodel: NBAM
+  - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 50000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 3
+    - filter: ROobserror
+      apply at iterations: 0,1
+      variable: bending_angle
+      errmodel: ECMWF
+  - obs space:
+      name: SfcPCorrected
+      obsdatain:
+        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
+      simulated variables: [surface_pressure]
+    obs operator:
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
+    linear obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+    - filter: Difference Check
+      apply at iterations: 0,1
+      reference: station_elevation@MetaData
+      value: surface_altitude@GeoVaLs
+      threshold: 500
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 10
+output:
+  filename: "Data/states/mpas.3denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
+variational:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
+      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
+      use bump interpolation: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+    diagnostics:
+      departures: depbg
+  - geometry:
+      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      deallocate non-da fields: true
+      use bump interpolation: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+final:
+  diagnostics:
+    departures: depan

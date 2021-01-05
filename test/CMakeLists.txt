@@ -45,7 +45,8 @@ endfunction(CREATE_SYMLINK_FILENAME)
 
 ## test yamls
 list( APPEND mpas_testinput
-  testinput/3denvar_bumploc.yaml
+  testinput/3denvar_bumploc_bumpinterp.yaml
+  testinput/3denvar_bumploc_unsinterp.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
@@ -77,7 +78,8 @@ list( APPEND mpas_testinput
   testinput/model.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
-  testinput/state.yaml
+  testinput/state_bumpinterp.yaml
+  testinput/state_unsinterp.yaml
   testinput/getvalues.yaml
   testinput/lineargetvalues.yaml
 )
@@ -88,7 +90,8 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 ## reference outputs
 list( APPEND mpas_testoutput
   extract_ref.sh
-  testoutput/3denvar_bumploc.ref
+  testoutput/3denvar_bumploc_bumpinterp.ref
+  testoutput/3denvar_bumploc_unsinterp.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
@@ -694,7 +697,8 @@ endif()
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     # Unit tests for interface classes to PROJECT_NAME_LOWCASE
     jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
-    jedi_unit_test( CLASS State           YAMLFILE state )
+    jedi_unit_test( CLASS State ID state_bumpinterp YAMLFILE state_bumpinterp )
+    jedi_unit_test( CLASS State ID state_unsinterp  YAMLFILE state_unsinterp )
     jedi_unit_test( CLASS Model           YAMLFILE model )
     jedi_unit_test( CLASS Increment       YAMLFILE increment )
     jedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
@@ -722,7 +726,9 @@ jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${DE
 jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${DEFAULT_REF_TYPE} )
 jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc           ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${DEFAULT_REF_TYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov
