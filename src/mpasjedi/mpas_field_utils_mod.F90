@@ -16,7 +16,7 @@ use string_utils, only: swap_name_member
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
-use ufo_locs_mod, only: ufo_locs
+use ufo_locations_mod
 use ufo_geovals_mod, only: ufo_geovals
 
 !MPAS-Model
@@ -635,7 +635,7 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
    implicit none
    character(len=2),     intent(in) :: cop
    class(mpas_field),    intent(in) :: fld
-   type(ufo_locs),       intent(in) :: locs
+   type(ufo_locations),  intent(in) :: locs
    type(oops_variables), intent(in) :: vars
    type(ufo_geovals),    intent(in) :: gom
    integer :: jvar

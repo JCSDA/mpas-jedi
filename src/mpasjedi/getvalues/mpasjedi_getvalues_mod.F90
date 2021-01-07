@@ -5,6 +5,8 @@
 
 module mpasjedi_getvalues_mod
 
+use iso_c_binding
+
 ! fckit
 use fckit_mpi_module,               only: fckit_mpi_sum
 
@@ -17,7 +19,7 @@ use unstructured_interpolation_mod
 use interpolatorbump_mod,         only: bump_interpolator
 
 ! ufo
-use ufo_locs_mod,                   only: ufo_locs, ufo_locs_time_mask
+use ufo_locations_mod
 use ufo_geovals_mod,                only: ufo_geovals
 use ufo_vars_mod
 
@@ -44,16 +46,18 @@ implicit none
 private
 public :: mpasjedi_getvalues, mpasjedi_getvalues_base
 public :: mpas_getvalues_registry
-public :: fill_geovals, initialize_uns_interp
+public :: fill_geovals, getvalues_base_create, getvalues_base_delete
 
 type, abstract :: mpasjedi_getvalues_base
 logical        :: use_bump_interp
 type(bump_interpolator) :: bumpinterp
 type(unstrc_interp)     :: unsinterp
 contains
-    procedure, public :: initialize_uns_interp
-    procedure, public :: fill_geovals
+    procedure, private :: initialize_uns_interp
+    procedure, public  :: fill_geovals
     procedure, private :: integer_interpolation_bump
+    procedure, public  :: getvalues_base_create
+    procedure, public  :: getvalues_base_delete
 end type mpasjedi_getvalues_base
 
 type, extends(mpasjedi_getvalues_base) :: mpasjedi_getvalues
@@ -80,32 +84,89 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine create(self, geom, locs)
+! -----------------------------------------------------------------------------
+!> \brief GetValues base class 'create' logic
+!!
+!! \details **getvalues_base_create** This subroutine populates the getvalues_base
+!! class members. This subroutine is called from the 'create' subroutines of all
+!! derived classes. (i.e. getvalues and lineargetvalues)
+subroutine getvalues_base_create(self, geom, locs)
   implicit none
-  class(mpasjedi_getvalues),      intent(inout) :: self
-  type(mpas_geom),                intent(in)    :: geom
-  type(ufo_locs),                 intent(in)    :: locs
+  class(mpasjedi_getvalues_base), intent(inout) :: self  !< getvalues_base self
+  type(mpas_geom),                intent(in)    :: geom  !< geometry (mpas mesh)
+  type(ufo_locations),            intent(in)    :: locs  !< ufo geovals (obs) locations
 
+  real(kind=kind_real), allocatable :: lons(:), lats(:)
+  integer :: nlocs
+
+  nlocs = locs%nlocs()
+  allocate(lons(nlocs), lats(nlocs))
+  call locs%get_lons(lons)
+  call locs%get_lats(lats)
+
+  ! Note: use_bump_interpolation is passed through the Geometry configuration only
+  ! because that is the only place the current oops interfaces permit it.
+  ! It would be more appropriate for it to be a part of a configuration for the 
+  ! GetValues class.
   self%use_bump_interp = geom%use_bump_interpolation
 
   if (self%use_bump_interp) then
-    call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
+    call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=lons, lat_out=lats, &
       & nl=geom%nVertLevels)
   else
-    call initialize_uns_interp(self, geom, locs)
+    call initialize_uns_interp(self, geom, lats, lons)
   endif
-end subroutine create
+
+  deallocate(lons, lats)
+
+end subroutine getvalues_base_create
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine delete(self)
+! -----------------------------------------------------------------------------
+!> \brief GetValues base class 'delete' logic
+!!
+!! \details **getvalues_base_delete** This subroutine deletes (frees memory) for 
+!! the getvalues_base class members. This subroutine is called from the 'delete'
+!! subroutines of all derived classes. (i.e. getvalues and lineargetvalues)
+subroutine getvalues_base_delete(self)
 
-  class(mpasjedi_getvalues), intent(inout) :: self
+  class(mpasjedi_getvalues_base), intent(inout) :: self  !< getvalues_base self
   if (self%use_bump_interp) then
     call self%bumpinterp%delete()
   else
     call self%unsinterp%delete()
   endif
+
+end subroutine getvalues_base_delete
+
+! --------------------------------------------------------------------------------------------------
+
+! -----------------------------------------------------------------------------
+!> \brief GetValues class 'create' logic
+!!
+!! \details **create** This subroutine populates a functional getvalues
+!! class instance.
+subroutine create(self, geom, locs)
+  implicit none
+  class(mpasjedi_getvalues),      intent(inout) :: self  !< getvalues self
+  type(mpas_geom),                intent(in)    :: geom  !< geometry (mpas mesh)
+  type(ufo_locations),            intent(in)    :: locs  !< ufo geovals (obs) locations
+
+  call getvalues_base_create(self, geom, locs)
+
+end subroutine create
+
+! --------------------------------------------------------------------------------------------------
+
+!> \brief GetValues class 'delete' logic
+!!
+!! \details **delete** This subroutine deletes (frees memory) for a getvalues
+!! class instance.
+subroutine delete(self)
+
+  class(mpasjedi_getvalues), intent(inout) :: self !< getvalues self
+  call getvalues_base_delete(self)
 
 end subroutine delete
 
@@ -119,16 +180,16 @@ end subroutine delete
 !! variables in an mpas_field object. This is the non-linear subroutine used in
 !! both GetValues and LinearGetValues classes
 subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
-
-  class(mpasjedi_getvalues_base), intent(inout) :: self    !< self
+  implicit none
+  class(mpasjedi_getvalues_base), intent(inout) :: self    !< getvalues_base self
   type(mpas_geom),                intent(in)    :: geom    !< geometry (mpas mesh)
   type(mpas_field),               intent(in)    :: fields  !< state or increment
   type(datetime),                 intent(in)    :: t1      !< time window begin
   type(datetime),                 intent(in)    :: t2      !< time window end
-  type(ufo_locs),                 intent(in)    :: locs    !< observation locations
+  type(ufo_locations),            intent(in)    :: locs    !< observation locations
   type(ufo_geovals),              intent(inout) :: gom     !< geovals
 
-  logical, allocatable :: time_mask(:)
+  logical(c_bool), allocatable :: time_mask(:)
   integer :: jj, jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, ivar, nlocs, nlocsg
   integer, allocatable ::obs_field_int(:,:)
   real(kind=kind_real), allocatable :: mod_field(:,:)
@@ -151,7 +212,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   ! Get grid dimensions and checks
   ! ------------------------------
   ngrid = geom % nCellsSolve
-  nlocs = locs % nlocs ! # of location for entire window
+  nlocs = locs % nlocs() ! # of location for entire window
 
   ! If no observations can early exit
   ! ---------------------------------
@@ -165,7 +226,8 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
-  call ufo_locs_time_mask(locs, t1, t2, time_mask)
+  allocate(time_mask(nlocs))
+  call locs%get_timemask(t1, t2, time_mask)
 
   !write(0,*)'fill_geovals: nlocs           : ',nlocs
   !write(0,*)'fill_geovals: size(time_mask) : ',size(time_mask)
@@ -531,6 +593,7 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   ! -----------------------
   deallocate(mod_field)
   deallocate(obs_field)
+  deallocate(time_mask)
 
   call mpas_pool_destroy_pool(pool_ufo)
 
@@ -542,13 +605,14 @@ end subroutine fill_geovals
 !!
 !! \details **initialize_uns_interp** This subroutine calls unsinterp%create,
 !! which calculates the barycentric weights used to interpolate data between the
-!! mpas mesh locations (grid) and the observation locations (locs)
-subroutine initialize_uns_interp(self, grid, locs)
+!! mpas mesh locations (grid) and the observation locations.
+subroutine initialize_uns_interp(self, grid, lats_obs, lons_obs)
 
   implicit none
-  class(mpasjedi_getvalues_base), intent(inout) :: self !< self
-  type(mpas_geom),          intent(in)          :: grid !< mpas mesh data
-  type(ufo_locs),           intent(in)          :: locs !< lat/lon locations of obs
+  class(mpasjedi_getvalues_base), intent(inout) :: self        !< self
+  type(mpas_geom),          intent(in)          :: grid        !< mpas mesh data
+  real(kind=kind_real), allocatable, intent(in) :: lats_obs(:) !< latitudes of obs
+  real(kind=kind_real), allocatable, intent(in) :: lons_obs(:) !< longitudes of obs
 
   integer :: nn, ngrid_in, ngrid_out
   character(len=8) :: wtype = 'barycent'
@@ -562,7 +626,6 @@ subroutine initialize_uns_interp(self, grid, locs)
   !------------------------------------------
   allocate( lats_in(ngrid_in) )
   allocate( lons_in(ngrid_in) )
-  ngrid_out=locs%nlocs
   lats_in(:) = grid%latCell( 1:ngrid_in ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
   lons_in(:) = grid%lonCell( 1:ngrid_in ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
 
@@ -571,7 +634,7 @@ subroutine initialize_uns_interp(self, grid, locs)
   nn = 3 ! number of nearest neigbors
   call self%unsinterp%create(grid%f_comm, nn, wtype, &
                             ngrid_in, lats_in, lons_in, &
-                            ngrid_out, locs%lat, locs%lon)
+                            size(lats_obs), lats_obs, lons_obs)
 
   ! Release memory
   ! --------------
@@ -592,13 +655,13 @@ subroutine integer_interpolation_bump(self, varname, ngrid, nlocs, time_mask, &
   implicit none
 
   class(mpasjedi_getvalues_base), intent(inout) :: self     !< self
-  character(len=*), intent(in)        :: varname            !< name of interp variable
-  integer, intent(in)                 :: ngrid              !< number of cells in model mesh
-  integer, intent(in)                 :: nlocs              !< number of locations for obs
-  logical, allocatable, intent(in)    :: time_mask(:)       !< mask for time window
-  integer, dimension(:), intent(in)   :: data_in            !< data to interpolate
-  integer, allocatable, intent(inout) :: obs_field_int(:,:) !< output array of interpolated data
-  type(ufo_geovals), intent(inout)    :: gom                !< output geoVaLs
+  character(len=*), intent(in)             :: varname            !< name of interp variable
+  integer, intent(in)                      :: ngrid              !< number of cells in model mesh
+  integer, intent(in)                      :: nlocs              !< number of locations for obs
+  logical(c_bool), allocatable, intent(in) :: time_mask(:)       !< mask for time window
+  integer, dimension(:), intent(in)        :: data_in            !< data to interpolate
+  integer, allocatable, intent(inout)      :: obs_field_int(:,:) !< output array of interpolated data
+  type(ufo_geovals), intent(inout)         :: gom                !< output geoVaLs
 
   integer :: jloc, ivar
 
@@ -651,7 +714,7 @@ subroutine integer_interpolation_unsinterp(self, varname, ngrid, nlocs, time_mas
   character(len=*), intent(in)                     :: varname        !< name of interp variable
   integer, intent(in)                              :: ngrid          !< number of cells in model mesh
   integer, intent(in)                              :: nlocs          !< number of locations for obs
-  logical, allocatable, intent(in)                 :: time_mask(:)   !< mask for time window
+  logical(c_bool), allocatable, intent(in)         :: time_mask(:)   !< mask for time window
   integer, dimension(:), intent(in)                :: data_in        !< data to interpolate
   real(kind=kind_real), allocatable, intent(inout) :: mod_field(:,:) !< pre-allocated 2-d (ngrid,1) array
   type(ufo_geovals), intent(inout)                 :: gom            !< output geoVaLs

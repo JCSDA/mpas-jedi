@@ -22,8 +22,6 @@ use mpas_field_utils_mod
 use datetime_mod
 
 !GetValuesTL/AD
-use ufo_locs_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry

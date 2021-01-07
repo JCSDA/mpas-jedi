@@ -14,7 +14,7 @@ namespace mpas {
 GetValues::GetValues(const GeometryMPAS & geom, const ufo::Locations & locs) : locs_(locs),
      geom_(new GeometryMPAS(geom)) {
   oops::Log::trace() << "GetValues::GetValues starting" << std::endl;
-  mpas_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs_.toFortran());
+  mpas_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs_);
   oops::Log::trace() << "GetValues::GetValues done" << std::endl;
 }
 
@@ -46,7 +46,7 @@ void GetValues::fillGeoVaLs(const StateMPAS & state, const util::DateTime & t1,
 
   // // Fill GeoVaLs
   mpas_getvalues_fill_geovals_f90(keyGetValues_, geom_->toFortran(),
-                                  state.toFortran(), t1, t2, locs_.toFortran(),
+                                  state.toFortran(), t1, t2, locs_,
                                   geovals.toFortran());
 
   oops::Log::trace() << "GetValues::fillGeoVaLs done" << std::endl;

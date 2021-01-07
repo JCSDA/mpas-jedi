@@ -14,7 +14,7 @@ namespace mpas {
 LinearGetValues::LinearGetValues(const GeometryMPAS & geom, const ufo::Locations & locs)
   : locs_(locs), geom_(new GeometryMPAS(geom)) {
   oops::Log::trace() << "LinearGetValues::LinearGetValues starting" << std::endl;
-  mpas_lineargetvalues_create_f90(keyLinearGetValues_, geom.toFortran(), locs.toFortran());
+  mpas_lineargetvalues_create_f90(keyLinearGetValues_, geom.toFortran(), locs);
   oops::Log::trace() << "LinearGetValues::LinearGetValues done" << std::endl;
 }
 
@@ -36,7 +36,7 @@ void LinearGetValues::setTrajectory(const StateMPAS & state, const util::DateTim
 
   mpas_lineargetvalues_set_trajectory_f90(keyLinearGetValues_, geom_->toFortran(),
                                           state.toFortran(), t1, t2,
-                                          locs_.toFortran(), geovals.toFortran());
+                                          locs_, geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::setTrajectory done" << std::endl;
 }
 
@@ -49,7 +49,7 @@ void LinearGetValues::fillGeoVaLsTL(const IncrementMPAS & inc,
 
   mpas_lineargetvalues_fill_geovals_tl_f90(keyLinearGetValues_, geom_->toFortran(),
                                            inc.toFortran(), t1, t2,
-                                           locs_.toFortran(), geovals.toFortran());
+                                           locs_, geovals.toFortran());
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsTL done" << std::endl;
 }
 
@@ -62,7 +62,7 @@ void LinearGetValues::fillGeoVaLsAD(IncrementMPAS & inc,
 
   mpas_lineargetvalues_fill_geovals_ad_f90(keyLinearGetValues_, geom_->toFortran(),
                                            inc.toFortran(), t1, t2,
-                                           locs_.toFortran(), geovals.toFortran());
+                                           locs_, geovals.toFortran());
 
   oops::Log::trace() << "LinearGetValues::fillGeoVaLsAD done" << std::endl;
 }

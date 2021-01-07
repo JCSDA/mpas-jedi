@@ -5,6 +5,8 @@
 
 module mpasjedi_lineargetvalues_mod
 
+use iso_c_binding
+
 ! fckit
 use fckit_mpi_module,               only: fckit_mpi_sum
 
@@ -16,7 +18,7 @@ use kinds,                          only: kind_real
 use interpolatorbump_mod,         only: bump_interpolator
 
 ! ufo
-use ufo_locs_mod,                   only: ufo_locs, ufo_locs_time_mask
+use ufo_locations_mod
 use ufo_geovals_mod,                only: ufo_geovals
 use ufo_vars_mod
 
@@ -70,22 +72,17 @@ contains
 
 ! --------------------------------------------------------------------------------------------------
 
-! TODO: Slightly more appropriate to move create & delete to base class for
-! bump init/dealloc, and just extend them here to also handle the trajectory pool.
+!> \brief LinearGetValues class 'create' logic
+!!
+!! \details **create** This subroutine populates a functional lineargetvalues
+!! class instance.
 subroutine create(self, geom, locs)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self
-  type(mpas_geom),                 intent(in)    :: geom
-  type(ufo_locs),                  intent(in)    :: locs
+  class(mpasjedi_lineargetvalues), intent(inout) :: self  !< lineargetvalues self
+  type(mpas_geom),                 intent(in)    :: geom  !< geometry (mpas mesh)
+  type(ufo_locations),             intent(in)    :: locs  !< ufo geovals (obs) locations
 
-  self%use_bump_interp = geom%use_bump_interpolation
-
-  if (self%use_bump_interp) then
-    call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=locs%lon, lat_out=locs%lat, &
-      & nl=geom%nVertLevels)
- else
-    call initialize_uns_interp(self, geom, locs)
-  endif
+  call getvalues_base_create(self, geom, locs)
   call mpas_pool_create_pool(self % trajectories)
 
 end subroutine create
@@ -93,16 +90,17 @@ end subroutine create
 
 ! ------------------------------------------------------------------------------
 
+!> \brief LinearGetValues class 'delete' logic
+!!
+!! \details **delete** This subroutine deletes (frees memory) for a lineargetvalues
+!! class instance.
 subroutine delete(self)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self
+  class(mpasjedi_lineargetvalues), intent(inout) :: self !< lineargetvalues self
 
   call mpas_pool_destroy_pool(self % trajectories)
-  if (self%use_bump_interp) then
-    call self%bumpinterp%delete()
-  else
-    call self%unsinterp%delete()
-  endif
+  call getvalues_base_delete(self)
+
 end subroutine delete
 
 ! ------------------------------------------------------------------------------
@@ -115,7 +113,7 @@ subroutine set_trajectory (self, geom, fields, t1, t2, locs, gom)
   type(mpas_field),               intent(in)    :: fields
   type(datetime),                 intent(in)    :: t1
   type(datetime),                 intent(in)    :: t2
-  type(ufo_locs),                 intent(in)    :: locs
+  type(ufo_locations),            intent(in)    :: locs
   type(ufo_geovals),              intent(inout) :: gom
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
@@ -169,12 +167,12 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   type(mpas_field),               intent(inout) :: fields
   type(datetime),                 intent(in)    :: t1
   type(datetime),                 intent(in)    :: t2
-  type(ufo_locs),                 intent(in)    :: locs
+  type(ufo_locations),            intent(in)    :: locs
   type(ufo_geovals),              intent(inout) :: gom
 
   character(len=*), parameter :: myname = 'fill_geovals_tl'
 
-  logical, allocatable :: time_mask(:)
+  logical(c_bool), allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
   real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
 
@@ -194,7 +192,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   ! Get grid dimensions and checks
   ! ------------------------------
   ngrid = geom % nCellsSolve
-  nlocs = locs % nlocs ! # of location for entire window
+  nlocs = locs % nlocs() ! # of location for entire window
 
   !write(*,*)'fill_geovals_tl: ngrid, nlocs = : ',ngrid, nlocs
   !call interp_checks("tl", inc, locs, vars, gom)
@@ -208,7 +206,8 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
-  call ufo_locs_time_mask(locs, t1, t2, time_mask)
+  allocate(time_mask(nlocs))
+  call locs%get_timemask(t1, t2, time_mask)
 
   !write(0,*)'fill_geovals_tl: gom%nvar        : ',gom%nvar
   !write(0,*)'fill_geovals_tl: gom%variables   : ',gom%variables
@@ -327,8 +326,9 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
       end do
     endif
   end do
-  deallocate(obs_field)
 
+  deallocate(obs_field)
+  deallocate(time_mask)
   call mpas_pool_destroy_pool(pool_ufo)
 
   !write(*,*) '---- Leaving fill_geovals_tl ---'
@@ -337,17 +337,17 @@ end subroutine fill_geovals_tl
 
 subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self
-  type(mpas_geom),                intent(in)     :: geom
-  type(mpas_field),               intent(inout)  :: fields
-  type(datetime),                 intent(in)     :: t1
-  type(datetime),                 intent(in)     :: t2
-  type(ufo_locs),                 intent(in)     :: locs
-  type(ufo_geovals),              intent(in)     :: gom
+  class(mpasjedi_lineargetvalues), intent(inout) :: self    !< lineargetvalues self
+  type(mpas_geom),                intent(in)     :: geom    !< geometry (mpas mesh)
+  type(mpas_field),               intent(inout)  :: fields  !< increment
+  type(datetime),                 intent(in)     :: t1      !< time window begin
+  type(datetime),                 intent(in)     :: t2      !< time window end
+  type(ufo_locations),            intent(in)     :: locs    !< observation locations
+  type(ufo_geovals),              intent(in)     :: gom     !< geovals
 
   character(len=*), parameter :: myname = 'fill_geovals_ad'
 
-  logical, allocatable :: time_mask(:)
+  logical(c_bool), allocatable :: time_mask(:)
   integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
   real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
@@ -365,16 +365,16 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   !if (self%traj%noobs)  return
 
 
-  ! Get mask for locations in this time window
-  ! ------------------------------------------
-  call ufo_locs_time_mask(locs, t1, t2, time_mask)
-
-
   ! Get grid dimensions and checks
   ! ------------------------------
   ngrid = geom % nCellsSolve
-  nlocs = locs % nlocs ! # of location for entire window
+  nlocs = locs % nlocs() ! # of location for entire window
   !write(0,*)'getvalues_ad: nlocs        : ',nlocs
+
+  ! Get mask for locations in this time window
+  ! ------------------------------------------
+  allocate(time_mask(nlocs))
+  call locs%get_timemask(t1, t2, time_mask)
 
   ! If no observations can early exit
   ! ---------------------------------
@@ -470,6 +470,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   !deallocate(mod_field)
   !deallocate(obs_field)
 
+  deallocate(time_mask)
   call mpas_pool_destroy_pool(pool_ufo)
 
   !write(*,*) '---- Leaving fill_geovals_ad ---'

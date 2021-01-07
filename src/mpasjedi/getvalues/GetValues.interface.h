@@ -15,20 +15,23 @@ namespace eckit {
 
 namespace util {
   class DateTime;
-  class Duration;
+}
+
+namespace ufo {
+  class Locations;
 }
 
 namespace mpas {
 
 extern "C" {
 
-  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &, const F90locs &);
+  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &, const ufo::Locations &);
 
   void mpas_getvalues_delete_f90(F90getvalues &);
 
   void mpas_getvalues_fill_geovals_f90(const F90getvalues &, const F90geom &, const F90state &,
                                           const util::DateTime &, const util::DateTime &,
-                                          const F90locs &, const F90goms &);
+                                          const ufo::Locations &, const F90goms &);
 
 };  // extern "C"
 

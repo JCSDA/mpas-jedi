@@ -19,7 +19,6 @@ use dcmip_initial_conditions_test_1_2_3, only : test1_advection_deformation, &
 use dcmip_initial_conditions_test_4, only : test4_baroclinic_wave
 
 !ufo
-use ufo_locs_mod
 use ufo_geovals_mod
 use ufo_vars_mod
 

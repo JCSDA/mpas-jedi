@@ -14,7 +14,6 @@ use kinds, only: kind_real
 use oops_variables_mod
 
 !ufo
-use ufo_locs_mod
 use ufo_geovals_mod
 use ufo_vars_mod
 

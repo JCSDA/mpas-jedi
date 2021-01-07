@@ -26,8 +26,6 @@ use mpas_pool_routines, only: mpas_pool_get_config
 use datetime_mod
 
 !UFO
-use ufo_locs_mod
-use ufo_locs_mod_c, only: ufo_locs_registry
 use ufo_vars_mod
 use ufo_geovals_mod
 use ufo_geovals_mod_c, only: ufo_geovals_registry
