@@ -429,7 +429,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
             else if (poolItr%nDims==2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               r2d_ptr_a = MPAS_JEDI_ZERO_kr
-              call self%bumpinterp%apply_ad(obs_field,r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
+              call self%bumpinterp%apply_ad(obs_field(:,1:nlevels),r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
             end if
           else
             call abor1_ftn('--> fill_geovals_ad: not a real field')
