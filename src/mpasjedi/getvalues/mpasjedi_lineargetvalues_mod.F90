@@ -46,6 +46,8 @@ public :: mpas_lineargetvalues_registry
 
 type, extends(mpasjedi_getvalues_base) :: mpasjedi_lineargetvalues
   type (mpas_pool_type), pointer :: trajectories
+  real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
+  logical(c_bool), allocatable :: time_mask(:)
   contains
     procedure, public :: create
     procedure, public :: delete
@@ -82,8 +84,29 @@ subroutine create(self, geom, locs)
   type(mpas_geom),                 intent(in)    :: geom  !< geometry (mpas mesh)
   type(ufo_locations),             intent(in)    :: locs  !< ufo geovals (obs) locations
 
+  integer :: nlocs, maxlevels
+
   call getvalues_base_create(self, geom, locs)
   call mpas_pool_create_pool(self % trajectories)
+
+  ! Get grid dimensions
+  ! -------------------
+  nlocs = locs % nlocs() ! # of location for entire window
+  maxlevels = geom%nVertLevelsP1
+
+  if (allocated(self%time_mask) .or. allocated(self%obs_field) .or. allocated(self%mod_field)) then
+    ! If we're in here this subroutine has not been called as it is intended and someone should know.
+    call abor1_ftn('--> mpasjedi_lineargetvalues::create subroutine called when member arrays already allocated.')
+  end if
+
+  ! These working arrays, used in fill_geovals_tl and fill_geovals_ad, are not repeatedly allocated
+  ! and deallocated during the inner minimization loop by instead allocating them here.
+  ! They are deallocated in the delete subroutine.
+  allocate(self%time_mask(nlocs))
+  allocate(self%obs_field(nlocs,maxlevels))
+  if (.not. self%use_bump_interp) then
+    allocate(self%mod_field(geom%nCellsSolve, maxlevels))
+  end if
 
 end subroutine create
 
@@ -98,6 +121,9 @@ subroutine delete(self)
   implicit none
   class(mpasjedi_lineargetvalues), intent(inout) :: self !< lineargetvalues self
 
+  if (allocated(self%time_mask)) deallocate(self%time_mask)
+  if (allocated(self%obs_field)) deallocate(self%obs_field)
+  if (allocated(self%mod_field)) deallocate(self%mod_field)
   call mpas_pool_destroy_pool(self % trajectories)
   call getvalues_base_delete(self)
 
@@ -172,9 +198,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   character(len=*), parameter :: myname = 'fill_geovals_tl'
 
-  logical(c_bool), allocatable :: time_mask(:)
-  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
-  real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
+  integer :: jvar, jlev, ilev, jloc, ngrid, nlevels, nlocs, nlocsg
 
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
   character(len=41) :: windowkey
@@ -206,13 +230,12 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
-  allocate(time_mask(nlocs))
-  call locs%get_timemask(t1, t2, time_mask)
+  call locs%get_timemask(t1, t2, self%time_mask)
 
   !write(0,*)'fill_geovals_tl: gom%nvar        : ',gom%nvar
   !write(0,*)'fill_geovals_tl: gom%variables   : ',gom%variables
   !write(0,*)'fill_geovals_tl: nlocs           : ',nlocs
-  !write(0,*)'fill_geovals_tl: size(time_mask) : ',size(time_mask)
+  !write(0,*)'fill_geovals_tl: size(self%time_mask) : ',size(self%time_mask)
 
   ! Allocate intermediate pool of fields w/ geovals vars
   ! and TL of variable conversion
@@ -276,9 +299,6 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   ! TL of interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------------
-  maxlevels = geom%nVertLevelsP1
-  allocate(obs_field(nlocs,maxlevels))
-
   call mpas_pool_begin_iteration(pool_ufo)
   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
@@ -287,7 +307,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
       !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
 
-      obs_field = MPAS_JEDI_ZERO_kr
+      self%obs_field = MPAS_JEDI_ZERO_kr
 
       nlevels = gom%geovals(jvar)%nval
 
@@ -295,22 +315,20 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
         if (poolItr%nDims==1) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
           if (self%use_bump_interp) then
-            call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), obs_field(:,1))
+            call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), self%obs_field(:,1))
           else
-            call self%unsinterp%apply(r1d_ptr_a(1:ngrid),obs_field(:,1))
+            call self%unsinterp%apply(r1d_ptr_a(1:ngrid), self%obs_field(:,1))
           endif
         else if (poolItr%nDims==2) then
           call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
           if (self%use_bump_interp) then
-            call self%bumpinterp%apply(r2d_ptr_a(1:nlevels,1:ngrid), obs_field(:,1:nlevels),trans_in=.true.)
+            call self%bumpinterp%apply(r2d_ptr_a(1:nlevels,1:ngrid), self%obs_field(:,1:nlevels),trans_in=.true.)
           else
             ! Transpose to get the slices we pass to 'apply' contiguous in memory
-            allocate(mod_field(ngrid, nlevels))
-            mod_field = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
+            self%mod_field(:,1:nlevels) = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
             do jlev = 1, nlevels
-              call self%unsinterp%apply(mod_field(:,jlev),obs_field(:,jlev))
+              call self%unsinterp%apply(self%mod_field(:,jlev),self%obs_field(:,jlev))
             enddo
-            deallocate(mod_field)
           endif
         end if
       else
@@ -321,14 +339,12 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
         ilev = nlevels - jlev + 1
         do jloc = 1, nlocs
           !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
-          if (time_mask(jloc)) gom%geovals(jvar)%vals(ilev,jloc) = obs_field(jloc,jlev)
+          if (self%time_mask(jloc)) gom%geovals(jvar)%vals(ilev,jloc) = self%obs_field(jloc,jlev)
         end do
       end do
     endif
   end do
 
-  deallocate(obs_field)
-  deallocate(time_mask)
   call mpas_pool_destroy_pool(pool_ufo)
 
   !write(*,*) '---- Leaving fill_geovals_tl ---'
@@ -347,9 +363,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   character(len=*), parameter :: myname = 'fill_geovals_ad'
 
-  logical(c_bool), allocatable :: time_mask(:)
-  integer :: jvar, jlev, ilev, jloc, ngrid, maxlevels, nlevels, nlocs, nlocsg
-  real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
+  integer :: jvar, jlev, ilev, jloc, ngrid, nlevels, nlocs, nlocsg
   type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
   character(len=41) :: windowkey
 
@@ -373,8 +387,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
-  allocate(time_mask(nlocs))
-  call locs%get_timemask(t1, t2, time_mask)
+  call locs%get_timemask(t1, t2, self%time_mask)
 
   ! If no observations can early exit
   ! ---------------------------------
@@ -395,16 +408,13 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
 
   ! Adjoint of interpolate fields to obs locations using pre-calculated weights
   ! ---------------------------------------------------------------------------
-  maxlevels = geom%nVertLevelsP1
-  allocate(obs_field(nlocs,maxlevels))
-
   call mpas_pool_begin_iteration(pool_ufo)
   do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
       jvar = ufo_vars_getindex( gom%variables,trim(poolItr % memberName))
       if ( jvar < 1 ) cycle
 
-      obs_field = MPAS_JEDI_ZERO_kr
+      self%obs_field = MPAS_JEDI_ZERO_kr
 
       !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
       nlevels = gom%geovals(jvar)%nval
@@ -413,8 +423,8 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
         !BJJ-tmp vertical flip, top-to-bottom for CRTM geoval
         ilev = nlevels - jlev + 1
         do jloc = 1, nlocs
-          if (time_mask(jloc)) then
-            obs_field(jloc,jlev) = gom%geovals(jvar)%vals(ilev, jloc)
+          if (self%time_mask(jloc)) then
+            self%obs_field(jloc,jlev) = gom%geovals(jvar)%vals(ilev, jloc)
           endif
         end do
       end do
@@ -425,38 +435,35 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
             if (poolItr%nDims==1) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
               r1d_ptr_a = MPAS_JEDI_ZERO_kr
-              call self%bumpinterp%apply_ad(obs_field(:,1),r1d_ptr_a(1:ngrid))
+              call self%bumpinterp%apply_ad(self%obs_field(:,1),r1d_ptr_a(1:ngrid))
             else if (poolItr%nDims==2) then
               call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
               r2d_ptr_a = MPAS_JEDI_ZERO_kr
-              call self%bumpinterp%apply_ad(obs_field(:,1:nlevels),r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
+              call self%bumpinterp%apply_ad(self%obs_field(:,1:nlevels),r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
             end if
           else
             call abor1_ftn('--> fill_geovals_ad: not a real field')
           end if
       else ! Unstructured interpolation
-        allocate(mod_field(ngrid,maxlevels))
         do jlev = 1, nlevels
-          call self%unsinterp%apply_ad(mod_field(:,jlev),obs_field(:,jlev))
+          call self%unsinterp%apply_ad(self%mod_field(:,jlev),self%obs_field(:,jlev))
         end do
         if (poolItr % dataType == MPAS_POOL_REAL) then
           if (poolItr%nDims==1) then
             call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
             r1d_ptr_a = MPAS_JEDI_ZERO_kr
-            r1d_ptr_a(1:ngrid) = mod_field(:,1)
+            r1d_ptr_a(1:ngrid) = self%mod_field(:,1)
           else if (poolItr%nDims==2) then
             call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
             r2d_ptr_a = MPAS_JEDI_ZERO_kr
-            r2d_ptr_a(1:nlevels,1:ngrid) = transpose(mod_field(:,1:nlevels))
+            r2d_ptr_a(1:nlevels,1:ngrid) = transpose(self%mod_field(:,1:nlevels))
           end if
         else
           call abor1_ftn('--> fill_geovals_ad: not a real field')
         end if
-        deallocate(mod_field)
       endif ! self%use_bump_interp
     endif ! poolItr % memberType == MPAS_POOL_FIELD
   end do
-  deallocate(obs_field)
 
   ! AD of variable conversion
   ! -------------------------
@@ -470,7 +477,6 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   !deallocate(mod_field)
   !deallocate(obs_field)
 
-  deallocate(time_mask)
   call mpas_pool_destroy_pool(pool_ufo)
 
   !write(*,*) '---- Leaving fill_geovals_ad ---'
