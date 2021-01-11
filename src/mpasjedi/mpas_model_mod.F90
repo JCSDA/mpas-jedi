@@ -18,7 +18,6 @@ use mpas_kind_types
 use mpas_subdriver
 use atm_core
 use mpas_stream_manager
-use mpas_atmphys_manager, only: physics_run_finalize
 use mpas4da_mod
 use mpas_constants, only : rgas, cp
 
