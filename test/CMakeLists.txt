@@ -553,8 +553,10 @@ endfunction()
 #   Number of processor elements to use in this test.
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
-# NMEM: optional
-#   Number of ensemble members to use in an ensemble application (EnsHofX, EnsForecast, EDA)
+# N_PARALLEL_STATES: optional
+#   Number of parallel model states used in the application.
+#     e.g., number of ensemble members in an ensemble application (EnsHofX, EnsForecast, EDA)
+#     e.g., number of parallel time windows in 4denvar
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
 # TESTTIER: optional
@@ -568,7 +570,7 @@ endfunction()
 ####################################################################################
 function(jedi_app_ref_test_compare)
     set(options COMPARE REFERENCE)
-    set(oneValueArgs APP ID TOL DIF NPE NMEM TESTTIER)
+    set(oneValueArgs APP ID TOL DIF NPE N_PARALLEL_STATES TESTTIER)
     set(multiValueArgs DEPENDS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -591,14 +593,14 @@ function(jedi_app_ref_test_compare)
     if( NOT DEFINED TEST_NPE )
         set( TEST_NPE 1 )
     endif()
-    if( NOT DEFINED TEST_NMEM )
-        set( TEST_NMEM 1 )
+    if( NOT DEFINED TEST_N_PARALLEL_STATES )
+        set( TEST_N_PARALLEL_STATES 1 )
     endif()
-    math(EXPR REMAIN "${TEST_NPE} % ${TEST_NMEM}")
+    math(EXPR REMAIN "${TEST_NPE} % ${TEST_N_PARALLEL_STATES}")
     if(NOT ${REMAIN} EQUAL 0)
-        message(FATAL_ERROR "NPE % NMEM must be zero")
+        message(FATAL_ERROR "NPE % N_PARALLEL_STATES must be zero")
     endif()
-    math(EXPR NPE_PER_MEMBER "${TEST_NPE} / ${TEST_NMEM}")
+    math(EXPR NPE_PER_MEMBER "${TEST_NPE} / ${TEST_N_PARALLEL_STATES}")
     if( ${NPE_PER_MEMBER} GREATER 1 )
         set( MPI_SUFFIX "_${NPE_PER_MEMBER}pe" )
     endif()
@@ -734,11 +736,13 @@ jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DE
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${FORECAST_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${DEFAULT_REF_TYPE} NPE 3 )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${DEFAULT_REF_TYPE} NPE 3
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${DEFAULT_REF_TYPE}
+                           NPE 3 N_PARALLEL_STATES 3 )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${DEFAULT_REF_TYPE}
+                           NPE 3 N_PARALLEL_STATES 3
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DEFAULT_REF_TYPE}
-                           NPE 4 NMEM 4
+                           NPE 4 N_PARALLEL_STATES 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
 
