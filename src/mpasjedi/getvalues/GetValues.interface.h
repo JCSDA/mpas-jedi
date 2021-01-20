@@ -25,7 +25,8 @@ namespace mpas {
 
 extern "C" {
 
-  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &, const ufo::Locations &);
+  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &, const ufo::Locations &,
+                                 const eckit::Configuration &);
 
   void mpas_getvalues_delete_f90(F90getvalues &);
 

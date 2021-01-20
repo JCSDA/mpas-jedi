@@ -11,10 +11,10 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-GetValues::GetValues(const GeometryMPAS & geom, const ufo::Locations & locs) : locs_(locs),
-     geom_(new GeometryMPAS(geom)) {
+GetValues::GetValues(const GeometryMPAS & geom, const ufo::Locations & locs, const eckit::Configuration & config)
+     : locs_(locs), geom_(new GeometryMPAS(geom)) {
   oops::Log::trace() << "GetValues::GetValues starting" << std::endl;
-  mpas_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs_);
+  mpas_getvalues_create_f90(keyGetValues_, geom.toFortran(), locs_, config);
   oops::Log::trace() << "GetValues::GetValues done" << std::endl;
 }
 

@@ -9,6 +9,7 @@ use iso_c_binding
 
 ! fckit
 use fckit_mpi_module,               only: fckit_mpi_sum
+use fckit_configuration_module,     only: fckit_configuration
 
 ! oops
 use datetime_mod,                   only: datetime
@@ -16,7 +17,7 @@ use kinds,                          only: kind_real
 use unstructured_interpolation_mod
 
 ! saber
-use interpolatorbump_mod,         only: bump_interpolator
+use interpolatorbump_mod,           only: bump_interpolator
 
 ! ufo
 use ufo_locations_mod
@@ -147,11 +148,12 @@ end subroutine getvalues_base_delete
 !!
 !! \details **create** This subroutine populates a functional getvalues
 !! class instance.
-subroutine create(self, geom, locs)
+subroutine create(self, geom, locs, f_conf)
   implicit none
-  class(mpasjedi_getvalues),      intent(inout) :: self  !< getvalues self
-  type(mpas_geom),                intent(in)    :: geom  !< geometry (mpas mesh)
-  type(ufo_locations),            intent(in)    :: locs  !< ufo geovals (obs) locations
+  class(mpasjedi_getvalues),      intent(inout) :: self   !< getvalues self
+  type(mpas_geom),                intent(in)    :: geom   !< geometry (mpas mesh)
+  type(ufo_locations),            intent(in)    :: locs   !< ufo geovals (obs) locations
+  type(fckit_configuration),      intent(in)    :: f_conf !< configuration
 
   call getvalues_base_create(self, geom, locs)
 
