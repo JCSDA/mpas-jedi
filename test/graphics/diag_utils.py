@@ -376,7 +376,8 @@ availableDiagnostics = {
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
-def diagnosticConfigs(diagnosticNames_, ObsSpaceName, nMembers=0, analysisStatistics = su.allFileStats):
+def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics=True,
+                      analysisStatistics = su.allFileStats):
 
     diagnosticConfigs = {}
     diagnosticNames = list(set(diagnosticNames_))
@@ -390,7 +391,7 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, nMembers=0, analysisStatis
         config['analyze'] = config.get('analyze', True)
         config['derived'] = config.get('derived', False)
         config[vu.mean] = config.get(vu.mean, True)
-        config[vu.ensemble] = (config.get(vu.ensemble, False) and nMembers > 1)
+        config[vu.ensemble] = (config.get(vu.ensemble, False) and includeEnsembleDiagnostics)
         config['onlyObsSpaces'] = config.get('onlyObsSpaces',[])
         config['analysisStatistics'] = config.get('analysisStatistics', analysisStatistics)
         config['staticArg'] = config.get('staticArg', None)

@@ -108,7 +108,8 @@ class DiagnoseObsStatistics:
     ######################################
 
     diagnosticConfigs = du.diagnosticConfigs(
-        selectDiagNames, ObsSpaceName, nMembers)
+        selectDiagNames, ObsSpaceName,
+        includeEnsembleDiagnostics = (nMembers > 1))
 
 
     #####################################################

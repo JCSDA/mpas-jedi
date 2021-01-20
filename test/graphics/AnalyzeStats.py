@@ -16,7 +16,7 @@ import StatisticsDatabase as sdb
 _logger = logging.getLogger(__name__)
 
 depends_on = [
-  'AnalyzeStatsArgs'
+  'AnalyzeStatsArgs',
   'analyze_config',
   'Analyses',
   'basic_plot_functions',
