@@ -39,6 +39,7 @@ class LocalizationMatrixMPAS: public util::Printable,
 
   LocalizationMatrixMPAS(const GeometryMPAS &, const eckit::Configuration &);
   ~LocalizationMatrixMPAS();
+  void randomize(IncrementMPAS &) const;
   void multiply(IncrementMPAS &) const;
 
  private:

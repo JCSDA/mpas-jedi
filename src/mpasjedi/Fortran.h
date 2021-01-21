@@ -164,6 +164,7 @@ extern "C" {
                                  const eckit::Configuration &,
                                  const F90geom &);
   void mpas_localization_delete_f90(F90lclz &);
+  void mpas_localization_randomize_f90(const F90lclz &, const F90inc &);
   void mpas_localization_mult_f90(const F90lclz &, const F90inc &);
 
 }

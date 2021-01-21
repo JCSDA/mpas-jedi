@@ -19,6 +19,9 @@ LocalizationMatrixMPAS::LocalizationMatrixMPAS(const GeometryMPAS & resol,
 LocalizationMatrixMPAS::~LocalizationMatrixMPAS() {
 }
 // -----------------------------------------------------------------------------
+void LocalizationMatrixMPAS::randomize(IncrementMPAS & dx) const {
+}
+// -----------------------------------------------------------------------------
 void LocalizationMatrixMPAS::multiply(IncrementMPAS & dx) const {
 }
 // -----------------------------------------------------------------------------
