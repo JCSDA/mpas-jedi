@@ -280,6 +280,20 @@ binVarConfigs = {
             ],
             'values': badFlagNames,
         },
+        bu.allQCMethod: {
+            'filters': [
+                {'where': bu.notEqualBound,
+                 'variable': vu.selfQCValue,
+                 'bounds': badFlags+[goodFlag],
+                 'except_diags': nonQCedDiagnostics},
+                {'where': bu.equalBound,
+                 'variable': vu.selfQCValue,
+                 'bounds': badFlags+[goodFlag],
+                 'except_diags': nonQCedDiagnostics,
+                 'mask_value': 0.0},
+            ],
+            'values': badFlagNames+[goodFlagName],
+        },
     },
     vu.obsVarPrs: {
         bu.PjetMethod: {

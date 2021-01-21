@@ -23,6 +23,7 @@ identityBinMethod = 'identity'
 #QC
 goodQCMethod = 'good'
 badQCMethod = 'bad'
+allQCMethod = 'all'
 
 #jet-stream pressure
 P_jet_min = 250.0

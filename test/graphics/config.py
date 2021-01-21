@@ -15,7 +15,7 @@ import var_utils as vu
 ## Generic binVarConfigs that apply to all observation categories
 #################################################################
 obsBinVars = defaultdict(list)
-obsBinVars[vu.obsVarQC] += [bu.goodQCMethod, bu.badQCMethod]
+obsBinVars[vu.obsVarQC] += [bu.goodQCMethod, bu.badQCMethod, bu.allQCMethod]
 obsBinVars[vu.obsVarLat] += [bu.identityBinMethod, bu.latbandsMethod]
 obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
 obsBinVars[vu.obsVarNormErr] += [bu.identityBinMethod]

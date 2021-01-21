@@ -908,6 +908,9 @@ class BinValLinesAnalysisType(CategoryBinMethodBase):
             (vu.obsVarQC, bu.badQCMethod): {
                 'onlyStatNames': ['Count'],
             },
+            (vu.obsVarQC, bu.allQCMethod): {
+                'onlyStatNames': ['Count'],
+            },
             (vu.obsVarLat, bu.latbandsMethod): {},
             (vu.obsVarCldFrac, bu.cloudbandsMethod): {},
             (vu.obsVarLandFrac, bu.surfbandsMethod): {},
