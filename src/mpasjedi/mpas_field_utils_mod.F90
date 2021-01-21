@@ -356,8 +356,8 @@ subroutine read_field(self, f_conf, vdate)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
-      call abor1_ftn(buf)
       write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
+      call abor1_ftn(buf)
    end if
 
    !==TODO: Speific part when reading parameterEst. for BUMP.	
