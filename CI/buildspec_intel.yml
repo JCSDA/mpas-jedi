@@ -186,7 +186,7 @@ phases:
         && export LIBRARY_PATH=/usr/local/lib
         && . /opt/intel/compilers_and_libraries/linux/bin/compilervars.sh
         && cd /build_container/mpasjedi
-        && ctest"
+        && ctest --output-on-failure"
 
   post_build:
     commands:

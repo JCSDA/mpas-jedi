@@ -162,7 +162,7 @@ phases:
 
       - su - jcsdauser -c "CC=mpicc CXX=mpicxx FC=mpifort
         && cd /build_container/mpasjedi
-        && ctest"
+        && ctest --output-on-failure"
 
   post_build:
     commands:

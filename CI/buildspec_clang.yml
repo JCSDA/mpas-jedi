@@ -120,7 +120,7 @@ phases:
       - echo $BUILD_STATUS
 
       - cd /build_container/mpasjedi
-      - ctest
+      - ctest --output-on-failure
 
   post_build:
     commands:

@@ -19,50 +19,51 @@ cost function:
     date: &adate '2018-04-15T00:00:00Z'
   background error:
     covariance model: hybrid
-    static weight: '0.5'
-    ensemble weight: '0.5'
-    static:
-      covariance model: BUMP
-      date: *adate
-      bump:
-        prefix: Data/bump/mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
-        strategy: specific_univariate
-        load_nicas: 1
-        mpicom: 2
-      variable changes:
-      - variable change: StdDev
-        input variables: *incvars
-        output variables: *incvars
+    components:
+    - covariance:
+        covariance model: BUMP
         bump:
-          load_var: 1
-          prefix: Data/bump/mpas_parametersbump_cov
-    ensemble:
-      date: *adate
-      localization:
-        localization method: BUMP
-        localization variables: *incvars
-        bump:
-          prefix: Data/bump/mpas_parametersbump_loc
-          strategy: common
+          prefix: Data/bump/mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
+          strategy: specific_univariate
           load_nicas: 1
           mpicom: 2
-      members:
-      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-        state variables: *incvars
-      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-        state variables: *incvars
-      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-        state variables: *incvars
-      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-        state variables: *incvars
-      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *adate
-        state variables: *incvars
-      variables: *incvars
+        variable changes:
+        - variable change: StdDev
+          input variables: *incvars
+          output variables: *incvars
+          bump:
+            load_var: 1
+            prefix: Data/bump/mpas_parametersbump_cov
+      weight:
+        value: 0.5
+    - covariance:
+        covariance model: ensemble
+        localization:
+          localization method: BUMP
+          localization variables: *incvars
+          bump:
+            prefix: Data/bump/mpas_parametersbump_loc
+            strategy: common
+            load_nicas: 1
+            mpicom: 2
+        members:
+        - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+          date: *adate
+          state variables: *incvars
+        - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+          date: *adate
+          state variables: *incvars
+        - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+          date: *adate
+          state variables: *incvars
+        - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+          date: *adate
+          state variables: *incvars
+        - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+          date: *adate
+          state variables: *incvars
+      weight:
+        value: 0.5
   observations:
   - obs space:
       name: Radiosonde
