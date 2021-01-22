@@ -39,15 +39,15 @@ cloudyRadDiagnostics = ['SCI']
 
 ## STD diagnostics
 sigmaDiagnostics_ = defaultdict(list)
-sigmaDiagnostics_['variational'] = ['sigmaob', 'sigmab', 'CRyb']
-sigmaDiagnostics_['hofx'] = ['sigmaof', 'sigmaf', 'CRyf']
+sigmaDiagnostics_['variational'] = ['omb','sigmaob', 'sigmab', 'CRyb']
+sigmaDiagnostics_['hofx'] = ['omf','sigmaof', 'sigmaf', 'CRyf']
 
 # variational analysis diagnostics
 if nOuterIter > 0:
     diffDiagnostics_['variational'] += ['oma']
     relativeDiagnostics_['variational'] += ['rltv_oma']
     absoluteDiagnostics_['variational'] += ['ana']
-    sigmaDiagnostics_['variational'] += ['sigmaoa','sigmaa', 'CRya']
+    sigmaDiagnostics_['variational'] += ['oma','sigmaoa','sigmaa', 'CRya']
 
 diffDiagnostics = diffDiagnostics_[jediAppName]
 relativeDiagnostics = relativeDiagnostics_[jediAppName]

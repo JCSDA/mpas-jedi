@@ -385,6 +385,9 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
     for diagnosticName in diagnosticNames:
         if diagnosticName in availableDiagnostics:
             config = deepcopy(availableDiagnostics[diagnosticName])
+        elif diagnosticName in diagnosticConfigs:
+            _logger.warning('diagnosticName is duplicated: '+diagnosticName)
+            continue
         else:
             _logger.error('diagnosticName is undefined: '+diagnosticName)
 
