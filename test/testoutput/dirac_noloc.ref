@@ -1,16 +1,16 @@
 Test     : Input Dirac increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=0, Max=0, RMS=0 : temperature
-Test     : Fld=2  Min=0, Max=0, RMS=0 : spechum
-Test     : Fld=3  Min=0, Max=1, RMS=0.0114064 : uReconstructZonal
-Test     : Fld=4  Min=0, Max=0, RMS=0 : uReconstructMeridional
-Test     : Fld=5  Min=0, Max=0, RMS=0 : surface_pressure
+Test     : Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
+Test     : Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : spechum
+Test     : Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.140643185e-02 : uReconstructZonal
+Test     : Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
+Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
 Test     : B * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=-1.94, Max=1.24313, RMS=0.175396 : temperature
-Test     : Fld=2  Min=-0.00224824, Max=0.00209041, RMS=0.000114408 : spechum
-Test     : Fld=3  Min=-2.93737, Max=2.88924, RMS=0.390749 : uReconstructZonal
-Test     : Fld=4  Min=-2.68515, Max=3.48754, RMS=0.384346 : uReconstructMeridional
-Test     : Fld=5  Min=-111.031, Max=256.45, RMS=28.7868 : surface_pressure
+Test     : Fld=1  Min=-1.939997090e+00, Max=1.243133640e+00, RMS=1.753959481e-01 : temperature
+Test     : Fld=2  Min=-2.248242996e-03, Max=2.090411933e-03, RMS=1.144084868e-04 : spechum
+Test     : Fld=3  Min=-2.937372315e+00, Max=2.889244877e+00, RMS=3.907485850e-01 : uReconstructZonal
+Test     : Fld=4  Min=-2.685154132e+00, Max=3.487543998e+00, RMS=3.843464603e-01 : uReconstructMeridional
+Test     : Fld=5  Min=-1.110313667e+02, Max=2.564496503e+02, RMS=2.878682887e+01 : surface_pressure

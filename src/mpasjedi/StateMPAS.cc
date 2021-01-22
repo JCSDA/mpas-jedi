@@ -8,6 +8,8 @@
 #include "mpasjedi/StateMPAS.h"
 
 #include <algorithm>
+#include <iomanip>
+#include <iostream>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
@@ -175,19 +177,29 @@ void StateMPAS::write(const eckit::Configuration & config) const {
 }
 // -----------------------------------------------------------------------------
 void StateMPAS::print(std::ostream & os) const {
+  // store os fmt state
+  std::ios oldState(nullptr);
+  oldState.copyfmt(os);
+
   int nc = 0;
   int nf = 0;
-  os << std::endl << "  Valid time: " << validTime() << std::endl;
   mpas_state_sizes_f90(keyState_, nc, nf);
+
+  os << std::endl << "  Valid time: " << validTime() << std::endl;
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", nFields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_state_gpnorm_f90(keyState_, nf, zstat[0]);
+  os << std::setprecision(9);
+  os << std::scientific;
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
        << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2]
        << " : " << vars_[jj];
   }
+
+  // restore os fmt state
+  os.copyfmt(oldState);
 }
 // -----------------------------------------------------------------------------
 /// For accumulator
