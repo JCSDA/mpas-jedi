@@ -7,14 +7,12 @@ The title of this pull request should be a brief "purpose" for this change.
 
 TYPE: choose one of [bug fix, maintenance, enhancement, new feature, feature removed, no impact, text only]
 
-KEYWORDS: approximately 3 to 6 words (more is always better) related to your commit, separated by commas
-
 DESCRIPTION OF CHANGES: One or more paragraphs describing problem, solution, and required changes.
 
-ISSUE: For use when this PR closes a Zenhub issue. For issue number 123
-```
+ISSUE: For use when this PR closes a Zenhub issue. E.g., for issue number 123,
+
 Fixes #123
-```
+
 
 LIST OF MODIFIED FILES: list of changed files (use `git diff --name-status develop` to get formatted list)
 
