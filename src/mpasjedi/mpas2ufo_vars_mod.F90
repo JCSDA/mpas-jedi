@@ -47,72 +47,11 @@ public :: w_to_q, q_to_w
 public :: theta_to_temp, temp_to_theta
 public :: twp_to_rho, hydrostatic_balance
 
-public :: update_mpas_field
 public :: convert_mpas_field2ufo,   &
           convert_mpas_field2ufoTL, &
           convert_mpas_field2ufoAD
 
 contains
-
-!-------------------------------------------------------------------------------------------
-
-subroutine update_mpas_field(domain, pool_a)
-
-   implicit none
-
-   type (domain_type), pointer, intent(in) :: domain
-   type (mpas_pool_type), pointer, intent(inout) :: pool_a
-
-   type (mpas_pool_type), pointer :: state, diag, mesh, pool_b
-   type (mpas_pool_iterator_type) :: poolItr
-   integer, parameter :: maxfield = 1
-   character (len=22) :: fieldname(1:maxfield)
-   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer :: ii
-
-   call mpas_pool_begin_iteration(pool_a)
-   call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
-   call mpas_pool_get_subpool(domain % blocklist % structs, 'diag', diag)
-   call mpas_pool_get_subpool(domain % blocklist % structs, 'mesh', mesh) 
-   call atm_compute_output_diagnostics(state, 1, diag, mesh)
-
-   fieldname(1) = 'pressure' 
-
-   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
-
-     ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-     ! so we select only those members of the pool that are fields
-     if (poolItr % memberType == MPAS_POOL_FIELD) then
-       ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-       if (poolItr % dataType == MPAS_POOL_REAL) then
-!          write(*,*)'Looking for ',trim(poolItr % memberName)
-          do ii=1, maxfield
-             if ( trim(fieldname(ii)).eq.trim(poolItr % memberName)) then
-               if (poolItr % nDims == 0) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  call mpas_pool_get_array(diag, trim(poolItr % memberName), r0d_ptr_b)
-                  r0d_ptr_a = r0d_ptr_a + r0d_ptr_b
-               else if (poolItr % nDims == 1) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  call mpas_pool_get_array(diag, trim(poolItr % memberName), r1d_ptr_b)
-                  r1d_ptr_a = r1d_ptr_b
-               else if (poolItr % nDims == 2) then
-                  call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  call mpas_pool_get_array(diag, trim(poolItr % memberName), r2d_ptr_b)
-                  r2d_ptr_a = r2d_ptr_b
-!                  write(0,*)'Update MIN/MAX: ',trim(fieldname(ii)),minval(r2d_ptr_a),maxval(r2d_ptr_a)
-               end if
-             end if
-          end do
-       end if
-     end if
-
-   end do
-
-end subroutine update_mpas_field
 
 !-------------------------------------------------------------------------------------------
 
@@ -785,13 +724,10 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields
-   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+   real (kind=kind_real), pointer :: r0d_ptr_a
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
-   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
 
-   type (field1DInteger), pointer :: field1di, field1di_src
    type (field1DReal), pointer :: field1d, field1d_src
    type (field2DReal), pointer :: field2d, field2d_a, field2d_src
    integer :: ivar, i, k
@@ -1108,12 +1044,12 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         call mpas_pool_add_field(convFields, var_sfc_vegfrac, field1d)
 !        write(*,*) "end-of ",var_sfc_vegfrac
 
-     case ( var_sfc_lai ) !-leaf_area_index :TODO, has a value for restart file, not for init file
+     case ( var_sfc_lai ) !-leaf_area_index
         call mpas_pool_get_array(subFields, "lai", r1d_ptr_a)
 !        write(*,*) 'MIN/MAX of lai=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
-        field1d % array(1:ngrid) = 3.5_kind_real !r1d_ptr_a(:) ! convert ?
+        field1d % array(1:ngrid) = r1d_ptr_a(:) ! [m2/m2] -> [m2/m2]
         field1d % fieldName = var_sfc_lai
         call mpas_pool_add_field(convFields, var_sfc_lai, field1d)
 !        write(*,*) "end-of ",var_sfc_lai
@@ -1123,7 +1059,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) 'MIN/MAX of smois=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
-        field1d % array(1:ngrid) = 0.05_kind_real !r2d_ptr_a(1,:) ! [m3/m3] -> [g/cm3] :TODO ~ Good enough ?? range [0,1]
+        field1d % array(1:ngrid) = r2d_ptr_a(1,:) ! [m3/m3] -> [g/cm3] :these are equivalent with water density 1 g/cm3
         field1d % fieldName = var_sfc_soilm
         call mpas_pool_add_field(convFields, var_sfc_soilm, field1d)
 !        write(*,*) "end-of ",var_sfc_soilm
@@ -1216,11 +1152,10 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields
-   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+   real (kind=kind_real), pointer :: r0d_ptr_a
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
-   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b
    real (kind=kind_real), dimension(:), pointer :: traj_r1d_a
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
@@ -1467,11 +1402,10 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
 
    type (mpas_pool_iterator_type) :: poolItr
    type (mpas_pool_type), pointer :: allFields, clone_subFields_ad
-   real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
+   real (kind=kind_real), pointer :: r0d_ptr_a
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
-   real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-   real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b, traj_r2d_c !BJJ test
+   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+   real (kind=kind_real), dimension(:,:), pointer :: traj_r2d_a, traj_r2d_b
    real (kind=kind_real), dimension(:), pointer :: traj_r1d_a
 
    type (field2DReal), pointer :: field2d, field2d_src, field2d_a, traj_field2d_a
