@@ -78,7 +78,21 @@ void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {
   ASSERT(this->validTime() == x2.validTime());
   oops::Log::debug() << "IncrementMPAS:diff x1 " << x1.toFortran() << std::endl;
   oops::Log::debug() << "IncrementMPAS:diff x2 " << x2.toFortran() << std::endl;
-  mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
+
+  // If the states x1, x2 have a different geometry than the increment, need to
+  // convert them.
+  std::shared_ptr<const GeometryMPAS> stateGeom = x1.geometry();
+  ASSERT(stateGeom->isEqual(*(x2.geometry())));
+  if (geom_->isEqual(*stateGeom)) {
+    mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
+  }
+  else {
+  // Note: this is likely a high-to-low resolution interpolation that should probably not
+  //       be done with barycentric?
+    StateMPAS x1_ir(*geom_, x1);
+    StateMPAS x2_ir(*geom_, x2);
+    mpas_increment_diff_incr_f90(keyInc_, x1_ir.toFortran(), x2_ir.toFortran());
+  }
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS & IncrementMPAS::operator=(const IncrementMPAS & rhs) {

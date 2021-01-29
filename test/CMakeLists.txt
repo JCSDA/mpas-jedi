@@ -53,6 +53,8 @@ list( APPEND mpas_testinput
   testinput/3dvar_bumpcov.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
+  testinput/convertstate_bumpinterp.yaml
+  testinput/convertstate_unsinterp.yaml
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
@@ -98,6 +100,8 @@ list( APPEND mpas_testoutput
   testoutput/3dvar_bumpcov.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
+  testoutput/convertstate_bumpinterp.ref
+  testoutput/convertstate_unsinterp.ref
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
@@ -143,11 +147,14 @@ ecbuild_add_resources(TARGET mpas_test_scripts SOURCES_PACK ${mpas_testinput})
 ############
 ## Test Data
 ############
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data)
+set( DATA_DIR_NAME Data )
+set( BASE_480 480km )
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME})
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480})
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg)
 
 #MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
 copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
-
 
 # MPAS static stream lists (modified from model-generated streams)
 list( APPEND mpas_test_config_base
@@ -155,7 +162,7 @@ list( APPEND mpas_test_config_base
   stream_list.atmosphere.surface
   stream_list.atmosphere.diagnostics
 )
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data  ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_base})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}  ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_base})
 
 ## Test files specific to the 480km mesh
 # Add or remove values from multi_pe_480 to select multi-PE tests
@@ -168,27 +175,27 @@ list( APPEND mpas_test_config_480
   namelist.atmosphere_2018041500
   streams.atmosphere
 )
-# static mesh descriptions
-list( APPEND mpas_test_config_480
-  x1.2562.graph.info
-)
 foreach(THIS_NPE ${multi_pe_480})
     if( THIS_NPE GREATER 1 )
         list( APPEND mpas_test_config_480 x1.2562.graph.info.part.${THIS_NPE})
     endif()
 endforeach()
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data/480km ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_480})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_480})
+# Also create 480km links in 480km directory for when we want to specify in yaml
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480} ${mpas_test_config_480})
 
-# backgrounds
+# 480km backgrounds
 list( APPEND mpas_test_bg_480
   restart.2018-04-14_21.00.00.nc
   restart.2018-04-15_00.00.00.nc
   restart.2018-04-15_03.00.00.nc
 )
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/Data/480km/bg ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_bg_480})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_bg_480})
+# Also create 480km links in 480km directory for when we want to specify in yaml
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${mpas_test_bg_480})
 
 # ensemble
-set( BASE_ENSDIR_480 480km/bg/ensemble )
+set( BASE_ENSDIR_480 ${BASE_480}/bg/ensemble )
 set(ensmembers mem01;mem02;mem03;mem04;mem05)
 list( APPEND mpas_test_ensemble_dates
   2018-04-14_21.00.00
@@ -196,12 +203,44 @@ list( APPEND mpas_test_ensemble_dates
   2018-04-15_03.00.00
 )
 foreach(MEM IN LISTS ensmembers)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/${BASE_ENSDIR_480}/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_ENSDIR_480}/${MEM})
   foreach(DATE ${mpas_test_ensemble_dates})
-    set( FILENAME Data/${BASE_ENSDIR_480}/${MEM}/x1.2562.init.${DATE}.nc )
+    set( FILENAME ${DATA_DIR_NAME}/${BASE_ENSDIR_480}/${MEM}/x1.2562.init.${DATE}.nc )
     link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FILENAME})
   endforeach()
 endforeach()
+
+## Test files specific to the 384km mesh
+#  (Used for convertstate test)
+# Add or remove values from multi_pe_384 to select multi-PE tests
+# 384km options: 2, 4, 6, 8, 12, 16
+set( BASE_384 384km )
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384})
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384}/init)
+list(APPEND multi_pe_384 2 )
+# namelists/streams
+list( APPEND mpas_test_config_384
+  namelist.atmosphere_2018041500
+  streams.atmosphere
+)
+# static mesh descriptions
+foreach(THIS_NPE ${multi_pe_384})
+    if( THIS_NPE GREATER 1 )
+        list( APPEND mpas_test_part_384 x1.4002.graph.info.part.${THIS_NPE})
+    endif()
+endforeach(THIS_NPE)
+
+# Link all the 384km files into the 384km Data directory
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_config_384})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_part_384})
+# Also link just the 384km partition files into the working directory. (No filename conflicts with 480km.)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_part_384})
+
+# 384km init files
+list( APPEND mpas_test_init_384
+  x1.4002.init.2018-04-15_00.00.00.nc
+)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384}/init ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384}/init ${mpas_test_init_384})
 
 # CRTM coefficient files
 list( APPEND crtm_test_input
@@ -238,7 +277,7 @@ list( APPEND crtm_test_input
   TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
 )
 
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff)
 
 ## Create tests to download IODA, UFO, and CRTM test files
 
@@ -378,30 +417,30 @@ else()
   endif( crtm_FOUND )
 endif()
 
-link_dir(${MPAS_IODA_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/Data/ioda)
+link_dir(${MPAS_IODA_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/ioda)
 
 
 if( crtm_FOUND )
   create_symlink_filename( ${MPAS_CRTM_COEFFS_PATH}
-                           ${CMAKE_CURRENT_BINARY_DIR}/Data/UFOCoeff 
+                           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff 
                            ${crtm_test_input} )
 endif ( crtm_FOUND )
 
 # Make directories for output test data
 #bump outputs
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/bump)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
 #ObsSpaces
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states)
 # EDA member directory names standardized by
 # oops/utils/string_utils::swap_name_member
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/ensemble)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/ensemble)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble)
 set(ensemblemembers mem001;mem002;mem003;mem004;mem005)
 foreach(MEM IN LISTS ensemblemembers)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/os/ensemble/${MEM})
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/states/ensemble/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble/${MEM})
 endforeach(MEM)
 
 
@@ -714,6 +753,8 @@ endif()
 jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} )
 jedi_app_ref_test_compare( APP     hofx_nomodel                             ${DEFAULT_REF_TYPE} )
 jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${DEFAULT_REF_TYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
 ##jedi_app_ref_test_compare( APP     enshofx                                  ${DEFAULT_REF_TYPE})
 jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} )

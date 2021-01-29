@@ -49,6 +49,8 @@ class GeometryMPAS : public util::Printable,
   atlas::FieldSet * atlasFieldSet() const
     {return atlasFieldSet_.get();}
 
+  bool isEqual(const GeometryMPAS &) const;
+
  private:
   GeometryMPAS & operator=(const GeometryMPAS &);
   void print(std::ostream &) const;

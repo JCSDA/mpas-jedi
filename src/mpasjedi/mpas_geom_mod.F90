@@ -26,7 +26,8 @@ use mpas_constants_mod
 implicit none
 private
 public :: mpas_geom, &
-        & geo_setup, geo_set_atlas_lonlat, geo_fill_atlas_fieldset, geo_clone, geo_delete, geo_info
+        & geo_setup, geo_set_atlas_lonlat, geo_fill_atlas_fieldset, geo_clone, geo_delete, geo_info, &
+        & geo_is_equal
 public :: mpas_geom_registry
 
 
@@ -107,6 +108,9 @@ subroutine geo_setup(self, f_conf, f_comm)
    character(len=StrKIND) :: string1
    type (mpas_pool_type), pointer :: meshPool, fg
    type (block_type), pointer :: block_ptr
+   !character(len=120) :: fn
+   character(len=120) :: nml_file, streams_file
+   character(len=:), allocatable :: str
 
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
@@ -114,7 +118,6 @@ subroutine geo_setup(self, f_conf, f_comm)
    type(idcounter), allocatable :: prev_count(:)
    integer :: ii, nprev
 
-   character(len=:), allocatable :: str
    logical :: deallocate_fields
    logical :: bump_interp
 !   write(*,*)' ==> create geom'
@@ -122,8 +125,20 @@ subroutine geo_setup(self, f_conf, f_comm)
    ! MPI communicator
    self%f_comm = f_comm
 
-   ! Domain decomposition and templates for state/increment variables
-   call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator() )
+   ! mpas_init uses its default filename values if it receives blank strings
+   nml_file = ''
+   streams_file = ''
+   
+   if(f_conf%get("nml_file", str)) then
+     nml_file = str
+   endif
+   if(f_conf%get("streams_file", str)) then
+     streams_file = str
+   endif
+
+    ! Domain decomposition and templates for state/increment variables
+   call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator(), &
+                 & namelistFileParam = trim(nml_file), streamsFileParam = trim(streams_file))
 
    ! This is not the most appropriate place to get a config specifiying whether
    ! to use bump interpolation or unstructured interpolation in GetValues, but
@@ -618,6 +633,23 @@ subroutine geo_delete(self)
    end do
 
 end subroutine geo_delete
+
+! ------------------------------------------------------------------------------
+
+subroutine geo_is_equal(is_equal, self, other)
+
+   implicit none
+
+   logical*1,       intent(inout) :: is_equal
+   type(mpas_geom), intent(in)    :: self
+   type(mpas_geom), intent(in)    :: other
+
+   ! Only compares two of many attributes of the two geometries, but
+   ! sufficient for current needs.
+   is_equal = (self%nCellsGlobal .eq. other%nCellsGlobal) .and. &
+              (self%nVertLevels  .eq. other%nVertLevels)
+
+end subroutine geo_is_equal
 
 ! ------------------------------------------------------------------------------
 

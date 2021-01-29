@@ -119,6 +119,26 @@ end subroutine c_mpas_geo_fill_atlas_fieldset
 
 ! ------------------------------------------------------------------------------
 
+subroutine c_mpas_geo_is_equal(c_is_equal, c_key_self, c_key_other) &
+ & bind(c,name='mpas_geo_is_equal_f90')
+use iso_c_binding
+use mpas_geom_mod
+implicit none
+logical(c_bool),    intent(inout) :: c_is_equal
+integer(c_int),     intent(in)    :: c_key_self
+integer(c_int),     intent(in)    :: c_key_other
+type(mpas_geom), pointer :: self
+type(mpas_geom), pointer :: other
+
+call mpas_geom_registry%get(c_key_self, self)
+call mpas_geom_registry%get(c_key_other, other)
+
+call geo_is_equal(c_is_equal, self, other)
+
+end subroutine c_mpas_geo_is_equal
+
+! ------------------------------------------------------------------------------
+
 subroutine c_mpas_geo_info(c_key_self, c_nCellsGlobal, c_nCells, c_nCellsSolve, &
                                        c_nEdgesGlobal, c_nEdges, c_nEdgesSolve, &
                                        c_nVertLevels, c_nVertLevelsP1) &

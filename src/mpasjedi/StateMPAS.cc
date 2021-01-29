@@ -106,7 +106,9 @@ void StateMPAS::changeResolution(const StateMPAS & other) {
 StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   oops::Log::trace() << "StateMPAS add increment starting" << std::endl;
   ASSERT(this->validTime() == dx.validTime());
-  mpas_state_add_incr_f90(keyState_, dx.toFortran());
+  // Interpolate increment to state resolution
+  IncrementMPAS dx_sr(*geom_, dx);
+  mpas_state_add_incr_f90(keyState_, dx_sr.toFortran());
   oops::Log::trace() << "StateMPAS add increment done" << std::endl;
   return *this;
 }

@@ -62,6 +62,14 @@ GeometryMPAS::~GeometryMPAS() {
   mpas_geo_delete_f90(keyGeom_);
 }
 // -----------------------------------------------------------------------------
+bool GeometryMPAS::isEqual(const GeometryMPAS & other) const {
+  bool isEqual;
+
+  mpas_geo_is_equal_f90(isEqual, keyGeom_, other.keyGeom_);
+
+  return isEqual;
+}
+// -----------------------------------------------------------------------------
 void GeometryMPAS::print(std::ostream & os) const {
   int nCellsGlobal;
   int nCells;
