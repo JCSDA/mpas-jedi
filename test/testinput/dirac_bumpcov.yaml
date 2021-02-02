@@ -19,7 +19,13 @@ background error:
     strategy: specific_univariate
     load_nicas: 1
     mpicom: 2
-  variable_changes: []
+  variable changes:
+  - variable change: StdDev
+    input variables: *vars
+    output variables: *vars
+    bump:
+      load_var: 1
+      prefix: Data/bump/mpas_parametersbump_cov
 dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123,  35.68501691,   19.01699038,
