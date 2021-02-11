@@ -47,6 +47,7 @@ endfunction(CREATE_SYMLINK_FILENAME)
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc_bumpinterp.yaml
   testinput/3denvar_bumploc_unsinterp.yaml
+  testinput/3denvar_2stream_bumploc_unsinterp.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
@@ -94,6 +95,7 @@ list( APPEND mpas_testoutput
   extract_ref.sh
   testoutput/3denvar_bumploc_bumpinterp.ref
   testoutput/3denvar_bumploc_unsinterp.ref
+  testoutput/3denvar_2stream_bumploc_unsinterp.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
@@ -209,6 +211,20 @@ foreach(MEM IN LISTS ensmembers)
     link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FILENAME})
   endforeach()
 endforeach()
+
+# 2-stream ctest files
+list( APPEND two-stream_480
+  analysis.2018-04-15_00.00.00.nc
+  mpasout.2018-04-15_00.00.00.nc
+  namelist.atmosphere_2018041500
+  static.nc
+  streams.atmosphere
+  x1.2562.grid.nc
+)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km_2stream)
+create_symlink_filename( ${CMAKE_CURRENT_SOURCE_DIR}/Data/480km_2stream
+                         ${CMAKE_CURRENT_BINARY_DIR}/Data/480km_2stream
+                         ${two-stream_480} )
 
 ## Test files specific to the 384km mesh
 #  (Used for convertstate test)
@@ -772,6 +788,8 @@ jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DE
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${DEFAULT_REF_TYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov
