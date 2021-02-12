@@ -10,6 +10,8 @@ module mpas_linvarcha_c2a_interface_mod
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
 
+use oops_variables_mod
+
 use kinds
 use mpas_field_utils_mod
 use mpas_geom_mod
@@ -25,7 +27,7 @@ contains
 ! ------------------------------------------------------------------------------
 
 subroutine c_mpas_linvarcha_c2a_setup(c_key_self, c_key_state_bg, c_key_state_fg, &
-           c_key_geom, c_conf) bind (c,name='mpas_linvarcha_c2a_setup_f90')
+           c_key_geom, c_conf, c_vars) bind (c,name='mpas_linvarcha_c2a_setup_f90')
 
 implicit none
 integer(c_int), intent(inout)  :: c_key_self     !< Change variable structure
@@ -33,12 +35,14 @@ integer(c_int), intent(in)     :: c_key_state_bg !< Background key
 integer(c_int), intent(in)     :: c_key_state_fg !< First guess key
 integer(c_int), intent(in)     :: c_key_geom     !< Geom key
 type(c_ptr), value, intent(in) :: c_conf         !< Configuration
+type(c_ptr), value, intent(in) :: c_vars         !< List of input variables
 
 type(mpas_linvarcha_c2a), pointer :: self
 type(mpas_field), pointer :: bg
 type(mpas_field), pointer :: fg
 type(mpas_geom), pointer :: geom
 type(fckit_configuration) :: f_conf
+type(oops_variables) :: vars
 
 call mpas_linvarcha_c2a_registry%init()
 call mpas_linvarcha_c2a_registry%add(c_key_self)
@@ -50,7 +54,9 @@ call mpas_field_registry%get(c_key_state_fg,fg)
 call mpas_geom_registry%get(c_key_geom,geom)
 
 f_conf = fckit_configuration(c_conf)
-call mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf)
+vars = oops_variables(c_vars)
+
+call mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
 
 end subroutine c_mpas_linvarcha_c2a_setup
 

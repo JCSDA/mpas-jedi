@@ -13,6 +13,7 @@
 
 #include <eckit/config/Configuration.h>
 
+#include <oops/base/Variables.h>
 #include <oops/util/Printable.h>
 
 #include "mpasjedi/Fortran.h"
@@ -21,6 +22,10 @@
 // Forward declarations
 namespace eckit {
   class Configuration;
+}
+
+namespace oops {
+  class Variables;
 }
 
 namespace mpas {
@@ -44,6 +49,7 @@ class LinVarChaC2AMPAS: public util::Printable {
   void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const;
 
  private:
+  oops::Variables vars_;
   F90lvcc2a keyLinVarChaC2A_;
   void print(std::ostream &) const override;
 };

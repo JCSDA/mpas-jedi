@@ -11,6 +11,8 @@
 #include <atlas/field.h>
 #include <atlas/functionspace.h>
 
+#include "oops/base/Variables.h"
+
 // Forward declarations
 namespace eckit {
   class Configuration;
@@ -148,7 +150,7 @@ extern "C" {
 // -----------------------------------------------------------------------------
   void mpas_linvarcha_c2a_setup_f90(const F90lvcc2a &, const F90state &,
                                    const F90state &, const F90geom &,
-                                   const eckit::Configuration &);
+                                   const eckit::Configuration &, const oops::Variables &);
   void mpas_linvarcha_c2a_delete_f90(F90lvcc2a &);
   void mpas_linvarcha_c2a_multiply_f90(const F90lvcc2a &, const F90inc &,
                                       const F90inc &);

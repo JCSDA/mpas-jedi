@@ -2,14 +2,45 @@
 nml_file: namelist.atmosphere_2018041500
 linear variable change tests:
 - variable change: Control2Analysis
-  tolerance inverse: '1.0e-8'
-  test inverse: '0'
+  tolerance inverse: 1.0e-8
+  test inverse: 0
   wind_cvt_method: 1
   input variables:
   - stream_function
   - velocity_potential
   - temperature
   - spechum
+  - surface_pressure
+  output variables:
+  - uReconstructZonal
+  - uReconstructMeridional
+  - temperature
+  - spechum
+  - surface_pressure
+- variable change: Control2Analysis
+  tolerance inverse: '1.0e-8'
+  test inverse: 0
+  wind_cvt_method: 1
+  input variables:
+  - stream_function
+  - velocity_potential
+  - temperature
+  - relhum #pseudo-RH
+  - surface_pressure
+  output variables:
+  - uReconstructZonal
+  - uReconstructMeridional
+  - temperature
+  - spechum
+  - surface_pressure
+- variable change: Control2Analysis
+  tolerance inverse: 1.0e-8
+  test inverse: 1
+  input variables:
+  - uReconstructZonal
+  - uReconstructMeridional
+  - temperature
+  - relhum #pseudo-RH
   - surface_pressure
   output variables:
   - uReconstructZonal
@@ -28,3 +59,4 @@ background:
   - temperature
   - spechum
   - surface_pressure
+  - pressure # required for relhum->spechum

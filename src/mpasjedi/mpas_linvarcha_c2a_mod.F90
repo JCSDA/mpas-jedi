@@ -10,6 +10,9 @@ use fckit_log_module, only : fckit_log
 use iso_c_binding
 use kinds
 
+!oops
+use oops_variables_mod, only: oops_variables
+
 !mpas-jedi
 use mpas_constants_mod
 use mpas_field_utils_mod, only: mpas_field
@@ -31,10 +34,12 @@ public :: mpas_linvarcha_c2a, mpas_linvarcha_c2a_registry, &
 !> Fortran derived type to hold configuration data for the B mat variable change
 type :: mpas_linvarcha_c2a
   integer :: wind_cvt_method  !< method for wind conversion
+  type (mpas_pool_type), pointer :: trajectories
 end type mpas_linvarcha_c2a
 
 integer, parameter    :: max_string=800
 character(max_string) :: err_msg
+character(len=1024) :: buf
 
 #define LISTED_TYPE mpas_linvarcha_c2a
 
@@ -51,16 +56,20 @@ contains
 #include <oops/util/linkedList_c.f>
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf)
+subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
 
    implicit none
    type(mpas_linvarcha_c2a),  intent(inout) :: self    !< Change variable structure
-   type(mpas_field), target, intent(in) :: bg
-   type(mpas_field), target, intent(in) :: fg
-   type(mpas_geom),          intent(in) :: geom
+   type(mpas_field), target,  intent(in)    :: bg
+   type(mpas_field), target,  intent(in)    :: fg
+   type(mpas_geom),           intent(in)    :: geom
    type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
+   type(oops_variables),      intent(in)    :: vars
+
+   type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_qs
 
    integer :: wind_cvt_method
+   integer :: ngrid
 
    if (f_conf%has("wind_cvt_method")) then
       call f_conf%get_or_die("wind_cvt_method",wind_cvt_method)
@@ -74,6 +83,25 @@ subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf)
    write(err_msg,*) 'DEBUG:: mpas_linvarcha_c2a_setup, self % wind_cvt_method=',self % wind_cvt_method
    call fckit_log%debug(err_msg)
 
+   if ( vars % has ('relhum') ) then
+      !-- set trajectories for linear variable change
+      ngrid = geom % nCells ! local + halo
+
+      call mpas_pool_create_pool(self % trajectories)
+
+      if ( .not. fg % has ('temperature') .or. .not. fg % has ('pressure') ) &
+         call abor1_ftn("LinVarChaC2AMPAS::LinVarChaC2AMPAS, mpas_linvarcha_c2a_setup: Trajectory failed")
+
+      call mpas_pool_get_field(fg % subFields, 'temperature', fld2d_t)
+      call mpas_pool_get_field(fg % subFields, 'pressure'   , fld2d_p)
+
+      call mpas_duplicate_field(fld2d_t, fld2d_qs) ! for saturation specific humidity
+
+      call da_tp_to_qs( fld2d_t % array(:,1:ngrid), fld2d_p % array(:,1:ngrid), fld2d_qs% array(:,1:ngrid))
+
+      call mpas_pool_add_field(self % trajectories, 'spechum_sat', fld2d_qs)
+   end if
+
 end subroutine mpas_linvarcha_c2a_setup
 
 ! ------------------------------------------------------------------------------
@@ -84,6 +112,10 @@ subroutine mpas_linvarcha_c2a_delete(self)
    type(mpas_linvarcha_c2a), intent(inout) :: self
 
    self % wind_cvt_method = 0
+
+   if (associated(self % trajectories)) then
+      call mpas_pool_destroy_pool(self % trajectories)
+   end if
 
 end subroutine mpas_linvarcha_c2a_delete
 
@@ -96,48 +128,73 @@ subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
    type(mpas_field), intent(inout) :: xctl
    type(mpas_field), intent(inout) :: xana
 
+   type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
-   type (field2DReal), pointer :: field2d_in, field2d_out
-   type (field1DReal), pointer :: field1d_in, field1d_out
-   integer :: k, ngrid
+   type (field2DReal), pointer :: field2d_sh, field2d_rh, field2d_traj_qs
 
-   ngrid = xctl % geom % nCells ! local + halo
+   type (field2DReal), pointer :: field2d_ctl, field2d_ana
+   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   integer :: k, ngrid
 
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiply: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(err_msg)
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiply: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(err_msg)
 
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,            'spechum', field2d_in)
-   call mpas_pool_get_field(xana % subFields,            'spechum', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,   'surface_pressure', field1d_in)
-   call mpas_pool_get_field(xana % subFields,   'surface_pressure', field1d_out)
-   field1d_out%array(:)=field1d_in%array(:)
+   ngrid = xctl % geom % nCellsSolve ! local 
 
-   call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
-   call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
-   call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
-   call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+   ! no variable change
+   call mpas_pool_begin_iteration(xctl%subFields)
+   do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
+      ! only 1d or 2d real fields are handled.
+      if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then 
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+            if (poolItr % nDims == 1) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
+               field1d_ana%array(1:ngrid)=field1d_ctl%array(1:ngrid)
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
+               field2d_ana%array(:,1:ngrid)=field2d_ctl%array(:,1:ngrid)
+            else
+               write(buf,*) '--> mpas_linvarcha_c2a_multiply: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(buf)
+            end if
+         end if
+      end if
+   end do !- end of pool iteration
 
-   call mpas_dmpar_exch_halo_field(field2d_sf)
-   call mpas_dmpar_exch_halo_field(field2d_vp)
+   if( xctl%has('relhum') .and. xana%has('spechum') ) then
+      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
+      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
+      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
+      call pseudorh_to_spechum( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
+                                field2d_traj_qs % array(:,1:ngrid) )
+   end if
 
-   if( self % wind_cvt_method .eq. 1) then
-      do k=1,xctl%geom%nVertLevels
-         call psichi_to_uv( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                            field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-      end do
-   else if( self % wind_cvt_method .eq. 2) then
-      do k=1,xctl%geom%nVertLevels
-         call psichi_to_uv2( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                             field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-      end do
-   else
-      call abor1_ftn("LinVarChaC2AMPAS:: This method is not implemented")
+   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
+       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
+      ngrid = xctl % geom % nCells ! local + halo
+      call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
+      call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
+      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
+      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+
+      call mpas_dmpar_exch_halo_field(field2d_sf)
+      call mpas_dmpar_exch_halo_field(field2d_vp)
+
+      if( self % wind_cvt_method .eq. 1) then
+         do k=1,xctl%geom%nVertLevels
+            call psichi_to_uv( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
+                               field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
+         end do
+      else if( self % wind_cvt_method .eq. 2) then
+         do k=1,xctl%geom%nVertLevels
+            call psichi_to_uv2( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
+                                field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
+         end do
+      end if
    end if
 
 end subroutine mpas_linvarcha_c2a_multiply
@@ -151,54 +208,79 @@ subroutine mpas_linvarcha_c2a_multiplyadjoint(self,xana,xctl)
    type(mpas_field), intent(inout) :: xana
    type(mpas_field), intent(inout) :: xctl
 
+   type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
-   type (field2DReal), pointer :: field2d_in, field2d_out
-   type (field1DReal), pointer :: field1d_in, field1d_out
-   integer :: k, ngrid
+   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
 
-   ngrid = xctl % geom % nCells
+   type (field2DReal), pointer :: field2d_ctl, field2d_ana
+   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   integer :: k, ngrid
 
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(err_msg)
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(err_msg)
 
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_out%array(:,:)+field2d_in%array(:,:)
-   field2d_in%array(:,:)=MPAS_JEDI_ZERO_kr
-   call mpas_pool_get_field(xana % subFields,            'spechum', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,            'spechum', field2d_out)
-   field2d_out%array(:,:)=field2d_out%array(:,:)+field2d_in%array(:,:)
-   field2d_in%array(:,:)=MPAS_JEDI_ZERO_kr
-   call mpas_pool_get_field(xana % subFields,   'surface_pressure', field1d_in)
-   call mpas_pool_get_field(xctl % subFields,   'surface_pressure', field1d_out)
-   field1d_out%array(:)=field1d_out%array(:)+field1d_in%array(:)
-   field1d_in%array(:)=MPAS_JEDI_ZERO_kr
+   ngrid = xctl % geom % nCellsSolve
 
-   call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
-   call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
-   call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
-   call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+   ! no variable change
+   call mpas_pool_begin_iteration(xctl%subFields)
+   do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
+      ! only 1d or 2d real fields are handled.
+      if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+            if (poolItr % nDims == 1) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
+               field1d_ctl%array(1:ngrid)=field1d_ctl%array(1:ngrid)+field1d_ana%array(1:ngrid)
+               field1d_ana%array(1:ngrid)=MPAS_JEDI_ZERO_kr
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
+               field2d_ctl%array(:,1:ngrid)=field2d_ctl%array(:,1:ngrid)+field2d_ana%array(:,1:ngrid)
+               field2d_ana%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+            else
+               write(buf,*) '--> mpas_linvarcha_c2a_multiplyadjoint: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(buf)
+            end if
+         end if
+      end if
+   end do !- end of pool iteration
 
-   if( self % wind_cvt_method .eq. 1) then
-      do k=1,xctl%geom%nVertLevels
-         call psichi_to_uvAD( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                              field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-      end do
-   else if( self % wind_cvt_method .eq. 2) then
-      do k=1,xctl%geom%nVertLevels
-         call psichi_to_uv2AD( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                               field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-      end do
-   else
-      call abor1_ftn("LinVarChaC2AMPAS:: This method is not implemented")
+   if( xctl%has('relhum') .and. xana%has('spechum') ) then
+      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
+      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
+      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
+      call pseudorh_to_spechumAD( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
+                                  field2d_traj_qs % array(:,1:ngrid) )
    end if
-   field2d_uRz%array(:,:)=MPAS_JEDI_ZERO_kr
-   field2d_uRm%array(:,:)=MPAS_JEDI_ZERO_kr
 
-   call mpas_dmpar_exch_halo_adj_field(field2d_sf)
-   call mpas_dmpar_exch_halo_adj_field(field2d_vp)
+   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
+       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
+      ngrid = xctl % geom % nCells ! local + halo
+      call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
+      call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
+      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
+      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+
+      if( self % wind_cvt_method .eq. 1) then
+         do k=1,xctl%geom%nVertLevels
+            call psichi_to_uvAD( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
+                               field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
+         end do
+      else if( self % wind_cvt_method .eq. 2) then
+         do k=1,xctl%geom%nVertLevels
+            call psichi_to_uv2AD( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
+                                field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
+         end do
+      end if
+
+      field2d_uRz%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
+      field2d_uRm%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
+
+      call mpas_dmpar_exch_halo_adj_field(field2d_sf)
+      call mpas_dmpar_exch_halo_adj_field(field2d_vp)
+   end if
 
 end subroutine mpas_linvarcha_c2a_multiplyadjoint
 
@@ -211,32 +293,61 @@ subroutine mpas_linvarcha_c2a_multiplyinverse(self,xana,xctl)
    type(mpas_field), intent(inout) :: xana
    type(mpas_field), intent(inout) :: xctl
 
-   type (field2DReal), pointer :: field2d_in, field2d_out
-   type (field1DReal), pointer :: field1d_in, field1d_out
+   type (mpas_pool_iterator_type) :: poolItr
+   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
+
+   type (field2DReal), pointer :: field2d_ctl, field2d_ana
+   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   integer :: ngrid
 
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(err_msg)
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(err_msg)
 
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xana % subFields,            'spechum', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,            'spechum', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_in)
-   call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_in)
-   call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xana % subFields,   'surface_pressure', field1d_in)
-   call mpas_pool_get_field(xctl % subFields,   'surface_pressure', field1d_out)
-   field1d_out%array(:)=field1d_in%array(:)
+   ngrid = xctl % geom % nCellsSolve ! local
+
+   ! no variable change
+   call mpas_pool_begin_iteration(xctl%subFields)
+   do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
+      ! only 1d or 2d real fields are handled.
+      if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+            if (poolItr % nDims == 1) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
+               field1d_ctl%array(1:ngrid)=field1d_ana%array(1:ngrid)
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
+               field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+            else
+               write(buf,*) '--> mpas_linvarcha_c2a_multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(buf)
+            end if
+         end if
+      end if
+   end do !- end of pool iteration
+
+   if( xctl%has('relhum') .and. xana%has('spechum') ) then
+      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
+      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
+      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
+      call pseudorh_to_spechum_inverse( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
+                                        field2d_traj_qs % array(:,1:ngrid) )
+   end if
+
+   !-- dummy inverse operator
+   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
+       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
+      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_ana)
+      call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_ctl)
+      field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+
+      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_ana)
+      call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_ctl)
+      field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+   end if
 
 end subroutine mpas_linvarcha_c2a_multiplyinverse
 
@@ -249,32 +360,65 @@ subroutine mpas_linvarcha_c2a_multiplyinverseadjoint(self,xctl,xana)
    type(mpas_field), intent(inout) :: xctl
    type(mpas_field), intent(inout) :: xana
 
-   type (field2DReal), pointer :: field2d_in, field2d_out
-   type (field1DReal), pointer :: field1d_in, field1d_out
+   type (mpas_pool_iterator_type) :: poolItr
+   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
+
+   type (field2DReal), pointer :: field2d_ctl, field2d_ana
+   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   integer :: ngrid
 
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(err_msg)
    write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(err_msg)
 
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,            'temperature', field2d_in)
-   call mpas_pool_get_field(xana % subFields,            'temperature', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,            'spechum', field2d_in)
-   call mpas_pool_get_field(xana % subFields,            'spechum', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_in)
-   call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_in)
-   call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_out)
-   field2d_out%array(:,:)=field2d_in%array(:,:)
-   call mpas_pool_get_field(xctl % subFields,   'surface_pressure', field1d_in)
-   call mpas_pool_get_field(xana % subFields,   'surface_pressure', field1d_out)
-   field1d_out%array(:)=field1d_in%array(:)
+   ngrid = xctl % geom % nCellsSolve ! local
+
+   ! no variable change
+   call mpas_pool_begin_iteration(xctl%subFields)
+   do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
+      ! only 1d or 2d real fields are handled.
+      if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+            if (poolItr % nDims == 1) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
+               field1d_ana%array(1:ngrid)=field1d_ana%array(1:ngrid)+field1d_ctl%array(1:ngrid)
+               field1d_ctl%array(1:ngrid)=MPAS_JEDI_ZERO_kr
+            else if (poolItr % nDims == 2) then
+               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
+               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
+               field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
+               field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+            else
+               write(buf,*) '--> mpas_linvarcha_c2a_multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(buf)
+            end if
+         end if
+      end if
+   end do !- end of pool iteration
+
+   if( xctl%has('relhum') .and. xana%has('spechum') ) then
+      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
+      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
+      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
+      call pseudorh_to_spechum_inverseAD( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
+                                          field2d_traj_qs % array(:,1:ngrid) )
+   end if
+
+   !-- dummy inverseAD operator
+   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
+       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
+      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_ana)
+      call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_ctl)
+      field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
+      field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+
+      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_ana)
+      call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_ctl)
+      field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
+      field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+   end if
 
 end subroutine mpas_linvarcha_c2a_multiplyinverseadjoint
 
@@ -699,5 +843,85 @@ subroutine psichi_to_uv2AD(geom, psi ,chi, u, v)
 end subroutine psichi_to_uv2AD
 
 ! ------------------------------------------------------------------------------
+
+elemental subroutine pseudorh_to_spechum(pseudorh,spechum,saturation_spechum)
+
+   implicit none
+   real (kind=kind_real), intent(in)  :: pseudorh
+   real (kind=kind_real), intent(out) :: spechum
+   real (kind=kind_real), intent(in)  :: saturation_spechum
+
+   spechum = pseudorh * saturation_spechum / MPAS_JEDI_HUNDRED_kr
+
+end subroutine pseudorh_to_spechum
+
+elemental subroutine pseudorh_to_spechumAD(pseudorh,spechum,saturation_spechum)
+
+   implicit none
+   real (kind=kind_real), intent(inout) :: pseudorh
+   real (kind=kind_real), intent(inout) :: spechum
+   real (kind=kind_real), intent(in)    :: saturation_spechum
+
+   pseudorh = pseudorh + spechum * saturation_spechum / MPAS_JEDI_HUNDRED_kr
+   spechum = MPAS_JEDI_ZERO_kr
+
+end subroutine pseudorh_to_spechumAD
+
+elemental subroutine pseudorh_to_spechum_inverse(pseudorh,spechum,saturation_spechum)
+
+   implicit none
+   real (kind=kind_real), intent(out) :: pseudorh
+   real (kind=kind_real), intent(in)  :: spechum
+   real (kind=kind_real), intent(in)  :: saturation_spechum
+
+   pseudorh = spechum / saturation_spechum * MPAS_JEDI_HUNDRED_kr
+
+end subroutine pseudorh_to_spechum_inverse
+
+elemental subroutine pseudorh_to_spechum_inverseAD(pseudorh,spechum,saturation_spechum)
+
+   implicit none
+   real (kind=kind_real), intent(inout) :: pseudorh
+   real (kind=kind_real), intent(inout) :: spechum
+   real (kind=kind_real), intent(in)    :: saturation_spechum
+
+   spechum = spechum + pseudorh / saturation_spechum * MPAS_JEDI_HUNDRED_kr
+   pseudorh = MPAS_JEDI_ZERO_kr
+
+end subroutine pseudorh_to_spechum_inverseAD
+
+elemental subroutine da_tp_to_qs( t, p, qs)
+
+   !---------------------------------------------------------------------------
+   ! Purpose: Convert T/p to saturation specific humidity.
+   !
+   !  Method: qs = es_alpha * es / ( p - ( 1 - rd_over_rv ) * es ).
+   !          use Rogers & Yau (1989) formula: es = a exp( bTc / (T_c + c) )
+   !--------------------------------------------------------------------------
+
+   implicit none
+
+   real (kind=kind_real), intent(in)  :: t, p
+   real (kind=kind_real), intent(out) :: qs
+
+   real (kind=kind_real) :: es
+   real (kind=kind_real) :: t_c              ! T in degreesC.
+
+   !---------------------------------------------------------------------------
+   ! [1.0] initialise:
+   !---------------------------------------------------------------------------
+   t_c = t - t_kelvin
+
+   !---------------------------------------------------------------------------
+   ! [2.0] Calculate saturation vapour pressure:
+   !---------------------------------------------------------------------------
+   es = es_alpha * exp( es_beta * t_c / ( t_c + es_gamma ) )
+
+   !---------------------------------------------------------------------------
+   ! [3.0] Calculate saturation specific humidity:
+   !---------------------------------------------------------------------------
+   qs = rd_over_rv * es / ( p - rd_over_rv1 * es )
+
+end subroutine da_tp_to_qs
 
 end module mpas_linvarcha_c2a_mod

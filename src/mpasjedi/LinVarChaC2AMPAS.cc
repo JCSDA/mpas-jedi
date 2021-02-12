@@ -24,10 +24,11 @@ namespace mpas {
 LinVarChaC2AMPAS::LinVarChaC2AMPAS(const StateMPAS & bg,
                              const StateMPAS & fg,
                              const GeometryMPAS & resol,
-                             const eckit::Configuration & config) {
+                             const eckit::Configuration & config) 
+: vars_(config, "input variables") {
   mpas_linvarcha_c2a_setup_f90(keyLinVarChaC2A_, bg.toFortran(),
                                fg.toFortran(), resol.toFortran(),
-                               config);
+                               config, vars_);
   oops::Log::trace() << "LinVarChaC2AMPAS created" << std::endl;
 }
 // -----------------------------------------------------------------------------
