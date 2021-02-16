@@ -47,6 +47,7 @@ endfunction(CREATE_SYMLINK_FILENAME)
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc_bumpinterp.yaml
   testinput/3denvar_bumploc_unsinterp.yaml
+  testinput/3denvar_dual_resolution.yaml
   testinput/3denvar_2stream_bumploc_unsinterp.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
@@ -95,6 +96,7 @@ list( APPEND mpas_testoutput
   extract_ref.sh
   testoutput/3denvar_bumploc_bumpinterp.ref
   testoutput/3denvar_bumploc_unsinterp.ref
+  testoutput/3denvar_dual_resolution.ref
   testoutput/3denvar_2stream_bumploc_unsinterp.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
@@ -788,6 +790,8 @@ jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DE
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${DEFAULT_REF_TYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
