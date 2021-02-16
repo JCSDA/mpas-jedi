@@ -475,7 +475,7 @@ endforeach(MEM)
 # MPAS::core::atmosphere target sets the desired effect on each compiled object file individually,
 # so there is no need to use the runtime environment flags.
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
-    set(TEST_ENVIRONMENT ENVIRONMENT GFORTRAN_CONVERT_UNIT=native\\$<SEMICOLON>big_endian:101-200)
+    set(TEST_ENVIRONMENT ENVIRONMENT GFORTRAN_CONVERT_UNIT=big_endian:101-200)
 endif()
 
 
@@ -542,7 +542,7 @@ function(jedi_unit_test)
 
     #Configure environment variables
     if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
-        set(_env ENVIRONMENT GFORTRAN_CONVERT_UNIT=native\\$<SEMICOLON>big_endian:101-200)
+        set(_env ENVIRONMENT GFORTRAN_CONVERT_UNIT=big_endian:101-200)
     elseif(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
         set(_env ENVIRONMENT F_UFMTENDIAN=little\\$<SEMICOLON>big:101-200)
     endif()
