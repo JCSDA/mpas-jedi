@@ -8,7 +8,6 @@ cost function:
     streams_file: "./Data/480km_2stream/streams.atmosphere"
     gridfname: "./Data/480km_2stream/x1.2562.grid.nc"
     deallocate non-da fields: true
-    use bump interpolation: false
   analysis variables: &incvars
   - temperature
   - spechum
@@ -67,6 +66,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: Satwind
       obsdatain:
@@ -84,6 +85,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: GnssroRef
       obsdatain:
@@ -119,6 +122,8 @@ cost function:
       apply at iterations: 0,1
       variable: refractivity
       errmodel: NBAM
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
@@ -154,6 +159,8 @@ cost function:
       apply at iterations: 0,1
       variable: bending_angle
       errmodel: ECMWF
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: SfcPCorrected
       obsdatain:
@@ -179,6 +186,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 10
+    get values:
+      interpolation type: unstructured
 output:
   filename: "Data/states/mpas.3denvar_2stream.$Y-$M-$D_$h.$m.$s.nc"
 variational:

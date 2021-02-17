@@ -9,6 +9,7 @@ use iso_c_binding
 
 ! fckit
 use fckit_mpi_module,               only: fckit_mpi_sum
+use fckit_configuration_module,     only: fckit_configuration
 
 ! oops
 use datetime_mod,                   only: datetime, datetime_to_string
@@ -78,15 +79,16 @@ contains
 !!
 !! \details **create** This subroutine populates a functional lineargetvalues
 !! class instance.
-subroutine create(self, geom, locs)
+subroutine create(self, geom, locs, f_conf)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self  !< lineargetvalues self
-  type(mpas_geom),                 intent(in)    :: geom  !< geometry (mpas mesh)
-  type(ufo_locations),             intent(in)    :: locs  !< ufo geovals (obs) locations
+  class(mpasjedi_lineargetvalues), intent(inout) :: self   !< lineargetvalues self
+  type(mpas_geom),                 intent(in)    :: geom   !< geometry (mpas mesh)
+  type(ufo_locations),             intent(in)    :: locs   !< ufo geovals (obs) locations
+  type(fckit_configuration),       intent(in)    :: f_conf !< configuration
 
   integer :: nlocs, maxlevels
 
-  call getvalues_base_create(self, geom, locs)
+  call getvalues_base_create(self, geom, locs, f_conf)
   call mpas_pool_create_pool(self % trajectories)
 
   ! Get grid dimensions

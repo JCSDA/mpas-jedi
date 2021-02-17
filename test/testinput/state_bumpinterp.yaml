@@ -1,7 +1,7 @@
 nml_file: namelist.atmosphere_2018041500
 geometry:
   gridfname: "./restart.2018-04-15_00.00.00.nc"
-  use bump interpolation: true
+  interpolation type: bump
 state test:
   statefile:
     state variables:

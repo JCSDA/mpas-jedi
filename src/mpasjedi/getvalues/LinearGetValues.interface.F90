@@ -9,8 +9,9 @@ module mpas_lineargetvalues_interface_mod
 
     ! Intrinsic
     use iso_c_binding
-    use kinds,               only: kind_real
-    
+    use kinds,                      only: kind_real
+    use fckit_configuration_module, only: fckit_configuration
+
     ! oops dependencies
     use datetime_mod
     
@@ -37,17 +38,19 @@ module mpas_lineargetvalues_interface_mod
 
     ! -------------------------------------------------------------------------------------------------
 
-    subroutine mpas_lineargetvalues_create_c(c_key_self, c_key_geom, c_locs) &
+    subroutine mpas_lineargetvalues_create_c(c_key_self, c_key_geom, c_locs, c_conf) &
                bind (c,name='mpas_lineargetvalues_create_f90')
     
     integer(c_int),     intent(inout) :: c_key_self    !< Key to self
     integer(c_int),     intent(in)    :: c_key_geom    !< Key to geometry
     type(c_ptr), value, intent(in)    :: c_locs        !< Observation locations
-    
+    type(c_ptr), value, intent(in)    :: c_conf        !< Key to configuration
+
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
     type(ufo_locations)                     :: locs
-    
+    type(fckit_configuration)               :: f_conf
+
     ! Create object
     call mpas_lineargetvalues_registry%init()
     call mpas_lineargetvalues_registry%add(c_key_self)
@@ -56,9 +59,10 @@ module mpas_lineargetvalues_interface_mod
     ! Others
     call mpas_geom_registry%get(c_key_geom, geom)
     locs = ufo_locations(c_locs)
-    
+    f_conf = fckit_configuration(c_conf)
+
     ! Call method
-    call self%create(geom, locs)
+    call self%create(geom, locs, f_conf)
     
     end subroutine mpas_lineargetvalues_create_c
     

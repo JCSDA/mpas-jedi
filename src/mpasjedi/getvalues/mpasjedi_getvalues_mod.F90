@@ -91,25 +91,36 @@ contains
 !! \details **getvalues_base_create** This subroutine populates the getvalues_base
 !! class members. This subroutine is called from the 'create' subroutines of all
 !! derived classes. (i.e. getvalues and lineargetvalues)
-subroutine getvalues_base_create(self, geom, locs)
+subroutine getvalues_base_create(self, geom, locs, f_conf)
   implicit none
-  class(mpasjedi_getvalues_base), intent(inout) :: self  !< getvalues_base self
-  type(mpas_geom),                intent(in)    :: geom  !< geometry (mpas mesh)
-  type(ufo_locations),            intent(in)    :: locs  !< ufo geovals (obs) locations
+  class(mpasjedi_getvalues_base), intent(inout) :: self   !< getvalues_base self
+  type(mpas_geom),                intent(in)    :: geom   !< geometry (mpas mesh)
+  type(ufo_locations),            intent(in)    :: locs   !< ufo geovals (obs) locations
+  type(fckit_configuration),      intent(in)    :: f_conf !< configuration
 
   real(kind=kind_real), allocatable :: lons(:), lats(:)
   integer :: nlocs
+  character (len=:), allocatable    :: interp_type
+  character (len=1024) :: buf
 
   nlocs = locs%nlocs()
   allocate(lons(nlocs), lats(nlocs))
   call locs%get_lons(lons)
   call locs%get_lats(lats)
 
-  ! Note: use_bump_interpolation is passed through the Geometry configuration only
-  ! because that is the only place the current oops interfaces permit it.
-  ! It would be more appropriate for it to be a part of a configuration for the 
-  ! GetValues class.
-  self%use_bump_interp = geom%use_bump_interpolation
+  if (f_conf%get("interpolation type", interp_type)) then
+    select case (interp_type)
+      case ('bump')
+        self%use_bump_interp = .True.
+      case ('unstructured')
+        self%use_bump_interp = .False.
+      case default
+        write(buf,*) '--> getvalues_base_create: interpolation type: ',interp_type,' not implemented'
+        call abor1_ftn(buf)
+    end select
+  else
+    self%use_bump_interp = .True. ! BUMP is default interpolation
+  end if
 
   if (self%use_bump_interp) then
     call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=lons, lat_out=lats, &
@@ -118,6 +129,7 @@ subroutine getvalues_base_create(self, geom, locs)
     call initialize_uns_interp(self, geom, lats, lons)
   endif
 
+  if (allocated(interp_type)) deallocate(interp_type)
   deallocate(lons, lats)
 
 end subroutine getvalues_base_create
@@ -155,7 +167,7 @@ subroutine create(self, geom, locs, f_conf)
   type(ufo_locations),            intent(in)    :: locs   !< ufo geovals (obs) locations
   type(fckit_configuration),      intent(in)    :: f_conf !< configuration
 
-  call getvalues_base_create(self, geom, locs)
+  call getvalues_base_create(self, geom, locs, f_conf)
 
 end subroutine create
 

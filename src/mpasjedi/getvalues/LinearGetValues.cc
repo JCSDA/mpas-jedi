@@ -11,10 +11,10 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-LinearGetValues::LinearGetValues(const GeometryMPAS & geom, const ufo::Locations & locs)
+LinearGetValues::LinearGetValues(const GeometryMPAS & geom, const ufo::Locations & locs, const eckit::Configuration & config)
   : locs_(locs), geom_(new GeometryMPAS(geom)) {
   oops::Log::trace() << "LinearGetValues::LinearGetValues starting" << std::endl;
-  mpas_lineargetvalues_create_f90(keyLinearGetValues_, geom.toFortran(), locs);
+  mpas_lineargetvalues_create_f90(keyLinearGetValues_, geom.toFortran(), locs, config);
   oops::Log::trace() << "LinearGetValues::LinearGetValues done" << std::endl;
 }
 

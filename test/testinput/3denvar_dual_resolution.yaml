@@ -7,7 +7,7 @@ cost function:
     nml_file: "./Data/384km/namelist.atmosphere_2018041500"
     streams_file: "./Data/384km/streams.atmosphere"
     deallocate non-da fields: true
-    use bump interpolation: false
+    interpolation type: unstructured
   analysis variables: &incvars
   - temperature
   - spechum
@@ -66,6 +66,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: Satwind
       obsdatain:
@@ -83,6 +85,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: GnssroRef
       obsdatain:
@@ -118,6 +122,8 @@ cost function:
       apply at iterations: 0,1
       variable: refractivity
       errmodel: NBAM
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
@@ -153,6 +159,8 @@ cost function:
       apply at iterations: 0,1
       variable: bending_angle
       errmodel: ECMWF
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: SfcPCorrected
       obsdatain:
@@ -178,6 +186,8 @@ cost function:
     - filter: Background Check
       apply at iterations: 0,1
       threshold: 10
+    get values:
+      interpolation type: unstructured
 output:
   filename: "Data/states/mpas.3denvar_unsinterp_dualres.$Y-$M-$D_$h.$m.$s.nc"
 variational:
@@ -187,7 +197,7 @@ variational:
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
       deallocate non-da fields: true
-      use bump interpolation: false
+      interpolation type: unstructured
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -196,7 +206,7 @@ variational:
   - geometry:
       gridfname: "./restart.2018-04-15_00.00.00.nc"
       deallocate non-da fields: true
-      use bump interpolation: false
+      interpolation type: unstructured
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'

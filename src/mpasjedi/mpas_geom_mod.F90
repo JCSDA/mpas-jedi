@@ -110,6 +110,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    type (block_type), pointer :: block_ptr
    !character(len=120) :: fn
    character(len=120) :: nml_file, streams_file
+   character(len=1024) :: buf
    character(len=:), allocatable :: str
 
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
@@ -136,18 +137,25 @@ subroutine geo_setup(self, f_conf, f_comm)
      streams_file = str
    endif
 
-    ! Domain decomposition and templates for state/increment variables
+   ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator(), &
                  & namelistFileParam = trim(nml_file), streamsFileParam = trim(streams_file))
 
-   ! This is not the most appropriate place to get a config specifiying whether
-   ! to use bump interpolation or unstructured interpolation in GetValues, but
-   ! right now it's all that's available due to the OOPS interfaces.
-   if (f_conf%has("use bump interpolation")) then
-      call f_conf%get_or_die("use bump interpolation",bump_interp)
-      self % use_bump_interpolation = bump_interp
+   ! The interpolation method specified here will be used to interpolate data between
+   ! different geometries, but not in GetValues. GetValues has its own configuration
+   ! for specifying its interpolation method.
+   if (f_conf%get("interpolation type", str)) then
+     select case (str)
+       case ('bump')
+         self%use_bump_interpolation = .True.
+       case ('unstructured')
+         self%use_bump_interpolation = .False.
+       case default
+         write(buf,*) '--> geo_setup: interpolation type: ',str,' not implemented'
+         call abor1_ftn(buf)
+     end select
    else
-      self % use_bump_interpolation = .True. ! BUMP is default interpolation
+     self%use_bump_interpolation = .True. ! BUMP is default interpolation
    end if
 
    !Deallocate not-used fields for memory reduction
@@ -301,6 +309,8 @@ subroutine geo_setup(self, f_conf, f_comm)
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
 !   write(*,*)'End of geo_setup'
+   if (allocated(prev_count)) deallocate(prev_count)
+   if (allocated(str)) deallocate(str)
 
 end subroutine geo_setup
 

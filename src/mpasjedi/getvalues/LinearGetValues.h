@@ -46,7 +46,7 @@ class LinearGetValues : public util::Printable, private util::ObjectCounter<Line
  public:
   static const std::string classname() {return "mpas::LinearGetValues";}
 
-  LinearGetValues(const GeometryMPAS &, const ufo::Locations &);
+  LinearGetValues(const GeometryMPAS &, const ufo::Locations &, const eckit::Configuration &);
   virtual ~LinearGetValues();
 
   void setTrajectory(const StateMPAS & state, const util::DateTime & t1, const util::DateTime & t2,
