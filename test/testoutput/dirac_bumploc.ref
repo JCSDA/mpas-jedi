@@ -9,16 +9,16 @@ Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 
 Test     : B * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=-2.000891275e-01, Max=2.081323346e-01, RMS=7.637853460e-03 : temperature
-Test     : Fld=2  Min=-6.393974826e-05, Max=6.493623900e-05, RMS=1.953749972e-06 : spechum
-Test     : Fld=3  Min=-7.116964001e-01, Max=7.174119878e-01, RMS=2.348381983e-02 : uReconstructZonal
-Test     : Fld=4  Min=-5.879591792e-01, Max=1.680214991e+00, RMS=2.871536310e-02 : uReconstructMeridional
+Test     : Fld=1  Min=-1.805373319e-01, Max=2.055779678e-01, RMS=7.083391894e-03 : temperature
+Test     : Fld=2  Min=-6.556054303e-05, Max=5.977830639e-05, RMS=2.020201621e-06 : spechum
+Test     : Fld=3  Min=-6.215438546e-01, Max=7.174119878e-01, RMS=2.223148011e-02 : uReconstructZonal
+Test     : Fld=4  Min=-5.128804182e-01, Max=1.608144396e+00, RMS=2.694599691e-02 : uReconstructMeridional
 Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
 Test     : Localized Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
-Test     : Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=7.785761535e-02 : temperature
-Test     : Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=7.785761535e-02 : spechum
-Test     : Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=7.785761535e-02 : uReconstructZonal
-Test     : Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=7.785761535e-02 : uReconstructMeridional
+Test     : Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=8.701136618e-02 : temperature
+Test     : Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=8.701136618e-02 : spechum
+Test     : Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=8.701136618e-02 : uReconstructZonal
+Test     : Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=8.701136618e-02 : uReconstructMeridional
 Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
