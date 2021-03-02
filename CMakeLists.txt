@@ -36,6 +36,9 @@ else()
     find_package( atlas REQUIRED )
 endif()
 
+# RTTOV
+ecbuild_use_package( PROJECT rttov VERSION 12.1.0 QUIET )
+
 find_package( oops REQUIRED )
 find_package( saber REQUIRED )
 find_package( ufo REQUIRED )

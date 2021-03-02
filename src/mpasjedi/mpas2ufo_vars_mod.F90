@@ -728,6 +728,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
 
+   type (field1DInteger), pointer :: field1di, field1di_src
    type (field1DReal), pointer :: field1d, field1d_src
    type (field2DReal), pointer :: field2d, field2d_a, field2d_src
    integer :: ivar, i, k
@@ -819,6 +820,57 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
         field1d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+!------------ RTTOV-related surface variables ----------
+     case ( var_sfc_t2m ) !-surface_temperature ##_at_2m
+        call mpas_pool_get_field(subFields, 't2m', field1d_src) !< get t2m
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+     case ( var_sfc_q2m ) !-specific_humidity_at_two_meters_above_surface
+        call mpas_pool_get_field(subFields, 'q2', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+     case ( var_sfc_u10 ) !-uwind_at_10m
+        call mpas_pool_get_field(subFields, 'u10', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+     case ( var_sfc_v10 ) !-vwind_at_10m
+        call mpas_pool_get_field(subFields, 'v10', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+     case ( var_sfc_tskin ) !-skin_temperature
+        call mpas_pool_get_field(subFields, 'skintemp', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+
+     case ( var_sfc_landmask ) !-landmask, 1: land, 0:ocean
+        call mpas_pool_get_field(subFields, 'landmask', field1di_src) !< get surface_pressure
+        call mpas_duplicate_field(field1di_src, field1di)
+        field1di % array (1:ngrid) = field1di_src%array(1:ngrid)
+        field1di % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1di)
+
+     case ( var_sfc_seaicefrac ) !-seaice_fraction
+        call mpas_pool_get_field(subFields, 'xice', field1d_src) !< get surface_pressure
+        call mpas_duplicate_field(field1d_src, field1d)
+        field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
+        field1d % fieldName = trim(fieldname(ivar))
+        call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
+!------------ RTTOV-related surface variables ----------
 
      case ( var_prsi ) !-air_pressure_levels
         call mpas_pool_get_array(subFields, "pressure", r2d_ptr_a)

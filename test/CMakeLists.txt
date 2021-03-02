@@ -77,6 +77,7 @@ list( APPEND mpas_testinput
   testinput/geometry.yaml
   testinput/hofx.yaml
   testinput/hofx_nomodel.yaml
+  testinput/hofx_nomodel_rttovcpp.yaml
   testinput/increment.yaml
   testinput/linvarcha.yaml
   testinput/model.yaml
@@ -117,6 +118,7 @@ list( APPEND mpas_testoutput
   testoutput/gen_ens_pert_B.ref
   testoutput/hofx.ref
   testoutput/hofx_nomodel.ref
+  testoutput/hofx_nomodel_rttovcpp.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
 )
@@ -769,6 +771,9 @@ endif()
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
 jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} )
+if( ${RTTOV_FOUND} )
+  jedi_app_ref_test_compare( APP   hofx_nomodel ID hofx_nomodel_rttovcpp    ${DEFAULT_REF_TYPE} )
+endif( ${RTTOV_FOUND} )
 jedi_app_ref_test_compare( APP     hofx_nomodel                             ${DEFAULT_REF_TYPE} )
 jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} )
 jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${DEFAULT_REF_TYPE} )
@@ -808,6 +813,20 @@ jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DE
                            NPE 4 N_PARALLEL_STATES 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
+
+#####################################################################
+# Files for RTTOV tests
+#####################################################################
+if( ${RTTOV_FOUND} )
+list( APPEND rttov_test_input
+rttov7pred54L/rtcoef_noaa_19_amsua.dat
+)
+
+# Symlink all RTTOV files
+CREATE_SYMLINK_FILENAME( ${rttov_SOURCE_DIR}/rtcoef_rttov12
+                         ${CMAKE_CURRENT_BINARY_DIR}/Data
+                         ${rttov_test_input} )
+endif( ${RTTOV_FOUND} )
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------

@@ -122,7 +122,10 @@ phases:
 
       #gsw
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/GSW-Fortran $CODEBUILD_GIT_BRANCH gsw /jcsda/mpas-bundle develop
- 
+
+      # rttov
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/rttov $CODEBUILD_GIT_BRANCH rttov /jcsda/mpas-bundle develop
+
       # move CMakeLists.txt
       - cp CMakeLists.txt /jcsda/mpas-bundle
       - cd /jcsda/mpas-bundle
