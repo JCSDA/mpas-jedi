@@ -1,6 +1,6 @@
-nml_file: namelist.atmosphere_2018041500
 geometry:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
 # requirements for variables in increment test:
 # + same variables in inc and state
 # + only linear transformations between inc and state in add increment method (+=)
@@ -28,7 +28,7 @@ state:
 #  - rho
 #  - theta
   - u
-  filename: "./restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 _interptest:
   tolerance: 1.0e-10

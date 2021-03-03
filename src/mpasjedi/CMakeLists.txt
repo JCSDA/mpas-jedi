@@ -17,8 +17,6 @@ list( APPEND mpasjedi_src_files
     ModelBiasMPAS.h
     ModelMPAS.cc
     ModelMPAS.h
-    RunMPAS.cc
-    RunMPAS.h
     StateMPAS.cc
     StateMPAS.h
     StateMPASFortran.h
@@ -40,7 +38,6 @@ list( APPEND mpasjedi_src_files
     mpas_linvarcha_c2a_mod.F90
     mpas_model_interface.F90
     mpas_model_mod.F90
-    mpas_run_mod.F90
     mpas_state_interface_mod.F90
     mpas_state_mod.F90
     mpas_trajectories.F90

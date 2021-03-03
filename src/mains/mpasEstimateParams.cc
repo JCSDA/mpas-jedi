@@ -5,15 +5,16 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
+#include <oops/runs/Run.h>
+
 #include <saber/oops/EstimateParams.h>
 #include <saber/oops/instantiateVariableChangeFactory.h>
 
 #include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   saber::EstimateParams<mpas::MPASTraits> dir;

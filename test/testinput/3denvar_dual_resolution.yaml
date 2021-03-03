@@ -1,4 +1,3 @@
-nml_file: namelist.atmosphere_2018041500
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -195,7 +194,8 @@ variational:
     algorithm: DRIPCG
   iterations:
   - geometry:
-      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
       interpolation type: unstructured
     ninner: '10'
@@ -204,7 +204,8 @@ variational:
     diagnostics:
       departures: depbg
   - geometry:
-      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
       interpolation type: unstructured
     ninner: '10'

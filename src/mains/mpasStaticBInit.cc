@@ -6,12 +6,12 @@
  */
 
 #include <oops/runs/StaticBInit.h>
+#include <oops/runs/Run.h>
 
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   oops::StaticBInit<mpas::MPASTraits> bmat;
   return run.execute(bmat);
 }

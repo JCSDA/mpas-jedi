@@ -6,6 +6,7 @@
  */
 
 #include <oops/runs/Variational.h>
+#include <oops/runs/Run.h>
 
 #include <saber/oops/instantiateCovarFactory.h>
 #include <saber/oops/instantiateLocalizationFactory.h>
@@ -17,10 +18,9 @@
 #include "mpasjedi/instantiateLocalizationFactory.h"
 #include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   mpas::instantiateLocalizationFactory();
   mpas::instantiateMPASVarChangeFactory();
   saber::instantiateCovarFactory<mpas::MPASTraits>();

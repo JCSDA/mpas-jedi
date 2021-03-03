@@ -6,12 +6,12 @@
  */
 
 #include <oops/runs/GenEnsPertB.h>
+#include <oops/runs/Run.h>
 
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   oops::GenEnsPertB<mpas::MPASTraits> ensgen;
   return run.execute(ensgen);
 }

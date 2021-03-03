@@ -1,4 +1,3 @@
-nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -6,7 +5,6 @@ cost function:
   geometry:
     nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
     streams_file: "./Data/480km_2stream/streams.atmosphere"
-    gridfname: "./Data/480km_2stream/x1.2562.grid.nc"
     deallocate non-da fields: true
   analysis variables: &incvars
   - temperature
@@ -197,7 +195,6 @@ variational:
   - geometry:
       nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
       streams_file: "./Data/480km_2stream/streams.atmosphere"
-      gridfname: "./Data/480km_2stream/x1.2562.grid.nc"
       deallocate non-da fields: true
       use bump interpolation: false
     ninner: '10'
@@ -208,7 +205,6 @@ variational:
   - geometry:
       nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
       streams_file: "./Data/480km_2stream/streams.atmosphere"
-      gridfname: "./Data/480km_2stream/x1.2562.grid.nc"
       deallocate non-da fields: true
       use bump interpolation: false
     ninner: '10'

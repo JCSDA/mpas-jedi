@@ -1,6 +1,6 @@
-nml_file: namelist.atmosphere_2018041500
 geometry:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
 input variables: &vars
 - temperature
 - spechum
@@ -9,7 +9,7 @@ input variables: &vars
 - surface_pressure
 initial condition:
   state variables: *vars
-  filename: "./restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: &date '2018-04-15T00:00:00Z'
 background error:
   covariance model: ensemble

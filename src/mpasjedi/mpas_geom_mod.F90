@@ -51,7 +51,6 @@ type :: mpas_geom
    integer :: maxEdges
    logical :: deallocate_nonda_fields
    logical :: use_bump_interpolation
-   character(len=StrKIND) :: gridfname
    character(len=StrKIND) :: bump_vunit
    real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
    real(kind=kind_real), dimension(:),   allocatable :: areaCell
@@ -126,16 +125,11 @@ subroutine geo_setup(self, f_conf, f_comm)
    ! MPI communicator
    self%f_comm = f_comm
 
-   ! mpas_init uses its default filename values if it receives blank strings
-   nml_file = ''
-   streams_file = ''
-   
-   if(f_conf%get("nml_file", str)) then
-     nml_file = str
-   endif
-   if(f_conf%get("streams_file", str)) then
-     streams_file = str
-   endif
+   ! "nml_file" and "streams_file" are mandatory for mpas_init.
+   call f_conf%get_or_die("nml_file",str)
+   nml_file = str
+   call f_conf%get_or_die("streams_file",str)
+   streams_file = str
 
    ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator(), &

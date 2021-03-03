@@ -1,10 +1,10 @@
-nml_file: namelist.atmosphere_2018041500
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
   window length: PT6H
   geometry:
-    gridfname: "./restart.2018-04-15_00.00.00.nc"
+    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km/streams.atmosphere"
     deallocate non-da fields: true
   analysis variables: &incvars
   - temperature
@@ -16,7 +16,7 @@ cost function:
     state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
                       theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
                       snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
-    filename: "./restart.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'
   background error:
     covariance model: ensemble
@@ -193,7 +193,8 @@ variational:
     algorithm: DRIPCG
   iterations:
   - geometry:
-      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
@@ -201,7 +202,8 @@ variational:
     diagnostics:
       departures: depbg
   - geometry:
-      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10

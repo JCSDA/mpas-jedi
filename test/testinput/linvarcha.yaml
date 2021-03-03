@@ -1,5 +1,3 @@
----
-nml_file: namelist.atmosphere_2018041500
 linear variable change tests:
 - variable change: Control2Analysis
   tolerance inverse: 1.0e-8
@@ -49,9 +47,10 @@ linear variable change tests:
   - spechum
   - surface_pressure
 geometry:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
 background:
-  filename: "./restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
   state variables:
   - uReconstructZonal

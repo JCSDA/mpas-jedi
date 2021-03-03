@@ -13,7 +13,8 @@ getvalues test:
     sinus: 2
   interpolation tolerance: 1.0e-2
 geometry:
-  gridfname: "./restart.2018-04-15_00.00.00.nc"
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
 state variables: # Has to be virtual_temperature and air_pressure
 - virtual_temperature
 - air_pressure

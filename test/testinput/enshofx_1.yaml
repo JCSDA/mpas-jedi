@@ -1,8 +1,8 @@
-nml_file: namelist.atmosphere_2018041421
 window begin: &date '2018-04-14T21:00:00Z'
 window length: PT6H
 geometry:
-  gridfname: "./restart.2018-04-14_21.00.00.nc"
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
 model:
   name: MPAS
   tstep: PT30M

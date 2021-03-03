@@ -6,15 +6,15 @@
  */
 
 #include <oops/test/interface/LinearVariableChange.h>
+#include <oops/runs/Run.h>
 
 #include <saber/oops/instantiateVariableChangeFactory.h>
 
 #include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   test::LinearVariableChange<mpas::MPASTraits> tests;

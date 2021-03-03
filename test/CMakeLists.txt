@@ -183,12 +183,14 @@ list( APPEND mpas_test_config_480
 )
 foreach(THIS_NPE ${multi_pe_480})
     if( THIS_NPE GREATER 1 )
-        list( APPEND mpas_test_config_480 x1.2562.graph.info.part.${THIS_NPE})
+        list( APPEND mpas_test_partition_480 x1.2562.graph.info.part.${THIS_NPE})
     endif()
 endforeach()
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_480})
-# Also create 480km links in 480km directory for when we want to specify in yaml
+# Create 480km links in 480km directory for when we want to specify in yaml
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480} ${mpas_test_config_480})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480} ${mpas_test_partition_480})
+# Also link just the 480km partition files into the working directory.
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_partition_480})
 
 # 480km backgrounds
 list( APPEND mpas_test_bg_480
@@ -196,8 +198,7 @@ list( APPEND mpas_test_bg_480
   restart.2018-04-15_00.00.00.nc
   restart.2018-04-15_03.00.00.nc
 )
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_bg_480})
-# Also create 480km links in 480km directory for when we want to specify in yaml
+# Create 480km links in 480km directory for when we want to specify in yaml
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${mpas_test_bg_480})
 
 # ensemble
@@ -246,15 +247,15 @@ list( APPEND mpas_test_config_384
 # static mesh descriptions
 foreach(THIS_NPE ${multi_pe_384})
     if( THIS_NPE GREATER 1 )
-        list( APPEND mpas_test_part_384 x1.4002.graph.info.part.${THIS_NPE})
+        list( APPEND mpas_test_partition_384 x1.4002.graph.info.part.${THIS_NPE})
     endif()
 endforeach(THIS_NPE)
 
 # Link all the 384km files into the 384km Data directory
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_config_384})
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_part_384})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_partition_384})
 # Also link just the 384km partition files into the working directory. (No filename conflicts with 480km.)
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_part_384})
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_partition_384})
 
 # 384km init files
 list( APPEND mpas_test_init_384

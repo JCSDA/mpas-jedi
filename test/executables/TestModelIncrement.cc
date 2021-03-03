@@ -6,12 +6,12 @@
  */
 
 #include <oops/test/base/ModelIncrement.h>
+#include <oops/runs/Run.h>
 
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(const int argc, const char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   test::ModelIncrement<mpas::MPASTraits> tests;
   return run.execute(tests);
 }

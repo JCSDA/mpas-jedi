@@ -6,14 +6,14 @@
  */
 
 #include <oops/test/interface/GetValues.h>
+#include <oops/runs/Run.h>
 
 #include <ufo/ObsTraits.h>
 
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/RunMPAS.h"
 
 int main(int argc,  char ** argv) {
-  mpas::RunMPAS run(argc, argv);
+  oops::Run run(argc, argv);
   test::GetValues<mpas::MPASTraits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }
