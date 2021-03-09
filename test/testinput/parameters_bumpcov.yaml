@@ -37,6 +37,7 @@ bump:
   new_var: 1
   new_hdiag: 1
   new_nicas: 1
+  interp_type: mesh_based
   nc1: 512
   ntry: 3
   nrep: 2

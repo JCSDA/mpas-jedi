@@ -11,6 +11,6 @@ Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
 Test     : Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
 Test     : Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : spechum
-Test     : Fld=3  Min=0.000000000e+00, Max=7.790136478e-01, RMS=1.538376533e-02 : uReconstructZonal
+Test     : Fld=3  Min=0.000000000e+00, Max=8.444389388e-01, RMS=1.732620801e-02 : uReconstructZonal
 Test     : Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
