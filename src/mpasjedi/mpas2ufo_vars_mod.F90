@@ -1101,7 +1101,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) 'MIN/MAX of lai=',minval(r1d_ptr_a),maxval(r1d_ptr_a)
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
-        field1d % array(1:ngrid) = r1d_ptr_a(:) ! [m2/m2] -> [m2/m2]
+        field1d % array(1:ngrid) = r1d_ptr_a(1:ngrid) ! [m2/m2] -> [m2/m2]
         field1d % fieldName = var_sfc_lai
         call mpas_pool_add_field(convFields, var_sfc_lai, field1d)
 !        write(*,*) "end-of ",var_sfc_lai
@@ -1111,7 +1111,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) 'MIN/MAX of smois=',minval(r2d_ptr_a(1,:)),maxval(r2d_ptr_a(1,:))
         call mpas_pool_get_field(subFields, 'u10', field1d_src) ! as a dummy array
         call mpas_duplicate_field(field1d_src, field1d)
-        field1d % array(1:ngrid) = r2d_ptr_a(1,:) ! [m3/m3] -> [g/cm3] :these are equivalent with water density 1 g/cm3
+        field1d % array(1:ngrid) = r2d_ptr_a(1,1:ngrid) ! [m3/m3] -> [g/cm3] :these are equivalent with water density 1 g/cm3
         field1d % fieldName = var_sfc_soilm
         call mpas_pool_add_field(convFields, var_sfc_soilm, field1d)
 !        write(*,*) "end-of ",var_sfc_soilm

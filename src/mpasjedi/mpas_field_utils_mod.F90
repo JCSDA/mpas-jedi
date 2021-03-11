@@ -791,10 +791,10 @@ subroutine interpolate_geoms(self,rhs)
       else if (poolItr % nDims == 2) then
         if (poolItr % dataType == MPAS_POOL_INTEGER) then
           call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_b)
-          i2d_ptr_b(1:nlevels,1:self_nCells) = transpose (int (interp_out))
+          i2d_ptr_b(1:nlevels,1:self_nCells) = transpose (int (interp_out(1:self_nCells,1:nlevels)))
         else if (poolItr % dataType == MPAS_POOL_REAL) then
           call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr_b)
-          r2d_ptr_b(1:nlevels,1:self_nCells) = transpose (interp_out)
+          r2d_ptr_b(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
         endif
       endif
     endif

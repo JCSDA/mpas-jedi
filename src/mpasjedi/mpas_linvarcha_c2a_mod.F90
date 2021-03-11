@@ -34,7 +34,7 @@ public :: mpas_linvarcha_c2a, mpas_linvarcha_c2a_registry, &
 !> Fortran derived type to hold configuration data for the B mat variable change
 type :: mpas_linvarcha_c2a
   integer :: wind_cvt_method  !< method for wind conversion
-  type (mpas_pool_type), pointer :: trajectories
+  type (mpas_pool_type), pointer :: trajectories => null()
 end type mpas_linvarcha_c2a
 
 integer, parameter    :: max_string=800
