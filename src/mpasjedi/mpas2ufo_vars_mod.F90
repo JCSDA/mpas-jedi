@@ -18,6 +18,8 @@
    !
    !-----------------------------------------------------------------------
 
+use fckit_log_module, only : fckit_log
+
 !oops
 use kinds, only : kind_real
 
@@ -50,6 +52,10 @@ public :: twp_to_rho, hydrostatic_balance
 public :: convert_mpas_field2ufo,   &
           convert_mpas_field2ufoTL, &
           convert_mpas_field2ufoAD
+
+! for fckit_log
+integer, parameter    :: max_string=8000
+character(max_string) :: message
 
 contains
 
@@ -1177,10 +1183,14 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 
         call mpas_pool_add_field(convFields, var_sfc_geomz, field1d)
 
+     case ( var_sfc_wspeed, var_sfc_wdir, &
+            var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp, &
+            var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac )
+        write(message,*) "Not processed in sub. convert_mpas_field2ufo: ", trim(fieldname(ivar))
+        call fckit_log%info(message)
+
      case default
-        write(*,*) 'Not processed in sub. convert_mpas_field2ufo: ',trim(fieldname(ivar))
-        !- TODO: Abort processing when we get here. (Breaks hofx ctests)
-        !call abor1_ftn("In convert_mpas_field2ufo: Unimplemented GeoVaLs name: "//trim(fieldname(ivar)))
+        call abor1_ftn("In convert_mpas_field2ufo: Unimplemented GeoVaLs name: "//trim(fieldname(ivar)))
 
      end select
 
