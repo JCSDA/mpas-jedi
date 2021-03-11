@@ -574,7 +574,7 @@ endfunction()
 #
 #   jedi_app_ref_test_compare( [ APP <name> ]
 #                              [ ID <id> ]
-#                              [ REFERENCE ]
+#                              [ SETUP_REFERENCE ]
 #                              [ COMPARE ]
 #                              [ TOL <float> ]
 #                              [ DIF <int> ]
@@ -593,8 +593,8 @@ endfunction()
 #   test (e.g., forecast). The YAML configuration file must match
 #   either the ID or APP if ID is not specified.
 #
-# REFERENCE: optional
-#   Include REFERENCE in order to generate new reference output
+# SETUP_REFERENCE: optional
+#   Include SETUP_REFERENCE in order to generate new reference output
 #   for future COMPARE tests. Overrides COMPARE.
 #
 # COMPARE: optional
@@ -629,7 +629,7 @@ endfunction()
 #
 ####################################################################################
 function(jedi_app_ref_test_compare)
-    set(options COMPARE REFERENCE)
+    set(options COMPARE SETUP_REFERENCE)
     set(oneValueArgs APP ID TOL DIF NPE N_PARALLEL_STATES TESTTIER)
     set(multiValueArgs DEPENDS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
@@ -665,14 +665,24 @@ function(jedi_app_ref_test_compare)
         set( MPI_SUFFIX "_${NPE_PER_MEMBER}pe" )
     endif()
 
-    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}" )
-
-    set( TARGET_PREFIX "test" )
-    set( TEST_TYPE "run" )
-    if( TEST_REFERENCE )
+    set(TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}")
+    set(TARGET_PREFIX "test")
+    set(TEST_LOG_FILE "testoutput/${TEST_NAME}.run")
+    set(TEST_REFERENCE_FILE "testoutput/${TEST_NAME}.ref")
+    if( TEST_SETUP_REFERENCE )
         set( TARGET_PREFIX "setup_ref" )
-        set( TEST_TYPE "ref" )
-        set( TEST_COMPARE False )
+    elseif( TEST_COMPARE AND DEFINED TEST_TOL AND DEFINED TEST_DIF )
+        ecbuild_add_test( TARGET       compare_${TARGET_NAME}
+                          TYPE         SCRIPT
+                          COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.py
+                          ARGS         ${TEST_LOG_FILE}
+                                       ${TEST_REFERENCE_FILE}
+                                       ${TEST_TOL} ${TEST_DIF}
+                          TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+    endif()
+    set(TEST_ARGS "testinput/${TEST_NAME}.yaml")
+    if( DEFINED TEST_TOL AND DEFINED TEST_DIF )
+      list(APPEND TEST_ARGS "${TEST_LOG_FILE}")
     endif()
     if( DEFINED TEST_DEPENDS )
         set(templist "")
@@ -684,8 +694,7 @@ function(jedi_app_ref_test_compare)
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
                           COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
-                          ARGS    testinput/${TEST_NAME}.yaml
-                                  testoutput/${TEST_NAME}${MPI_SUFFIX}.${TEST_TYPE}
+                          ARGS    ${TEST_ARGS}
                           MPI     ${TEST_NPE}
                           TEST_DEPENDS "${TEST_DEPENDS}" )
     else()
@@ -693,33 +702,15 @@ function(jedi_app_ref_test_compare)
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
                           COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
-                          ARGS    testinput/${TEST_NAME}.yaml
-                                  testoutput/${TEST_NAME}${MPI_SUFFIX}.${TEST_TYPE}
+                          ARGS    ${TEST_ARGS}
                           MPI     ${TEST_NPE} )
     endif()
-    if( TEST_COMPARE )
-        if( DEFINED TEST_TOL AND DEFINED TEST_DIF )
-            ecbuild_add_test( TARGET       compare_${TARGET_NAME}
-                              TYPE         SCRIPT
-                              COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.py
-                              ARGS         testoutput/${TEST_NAME}${MPI_SUFFIX}.run
-                                           testoutput/${TEST_NAME}.ref
-                                           ${TEST_TOL} ${TEST_DIF}
-                              TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
-        else()
-            ecbuild_add_test( TARGET       compare_${TARGET_NAME}
-                              TYPE         SCRIPT
-                              COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.sh
-                              ARGS         testoutput/${TEST_NAME}${MPI_SUFFIX}.run
-                                           testoutput/${TEST_NAME}.ref
-                              TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
-        endif()
-    endif()
-    if( TEST_REFERENCE )
+    if( TEST_SETUP_REFERENCE )
         ecbuild_add_test( TARGET  extract_ref_${TARGET_NAME}
                           TYPE    SCRIPT
                           COMMAND ${CMAKE_CURRENT_BINARY_DIR}/extract_ref.sh
-                          ARGS    testoutput/${TEST_NAME}.ref
+                          ARGS    ${TEST_LOG_FILE}
+                                  ${TEST_REFERENCE_FILE}
                           TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
     endif()
 endfunction()
@@ -736,18 +727,23 @@ endif()
 set(RECALIBRATE_CTEST_REFS "OFF")
 
 # tolerances for compare.py:
-set (DEFAULT_FLOAT_TOL 0.00000001) #Default max relative difference
-set (FORECAST_FLOAT_TOL 0.005) #Max relative difference for forecast-based ctests
-set (INT_TOL 0)   #Max difference
+set (PYHX3D_FLOAT_TOL 0.00000001)
+set (PYRTTOV_FLOAT_TOL 0.001)
+set (PYHX4D_FLOAT_TOL 0.005)
+set (PY_INT_TOL 0)   #Max difference
 
 if( ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
   # recalibrate reference files to current build
-  set(DEFAULT_REF_TYPE "REFERENCE")
-  set(FORECAST_REF_TYPE "REFERENCE")
+  set(YAML_REF_TYPE "SETUP_REFERENCE")
+  set(PYHX3D_REF_TYPE "SETUP_REFERENCE")
+  set(PYRTTOV_REF_TYPE "SETUP_REFERENCE")
+  set(PYHX4D_REF_TYPE "SETUP_REFERENCE")
 else()
   # test then compare to reference
-  set(DEFAULT_REF_TYPE COMPARE TOL ${DEFAULT_FLOAT_TOL} DIF ${INT_TOL})
-  set(FORECAST_REF_TYPE COMPARE TOL ${FORECAST_FLOAT_TOL} DIF ${INT_TOL})
+  set(YAML_REF_TYPE COMPARE)
+  set(PYHX3D_REF_TYPE COMPARE TOL ${PYHX3D_FLOAT_TOL} DIF ${PY_INT_TOL})
+  set(PYRTTOV_REF_TYPE COMPARE TOL ${PYRTTOV_FLOAT_TOL} DIF ${PY_INT_TOL})
+  set(PYHX4D_REF_TYPE COMPARE TOL ${PYHX4D_FLOAT_TOL} DIF ${PY_INT_TOL})
 endif()
 
 #############################
@@ -771,46 +767,46 @@ endif()
 
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
-jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} )
+jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     hofx_nomodel                             ${PYHX3D_REF_TYPE} )
 if( ${RTTOV_FOUND} )
-  jedi_app_ref_test_compare( APP   hofx_nomodel ID hofx_nomodel_rttovcpp    ${DEFAULT_REF_TYPE} )
+  jedi_app_ref_test_compare( APP   hofx_nomodel ID hofx_nomodel_rttovcpp    ${PYRTTOV_REF_TYPE} )
 endif( ${RTTOV_FOUND} )
-jedi_app_ref_test_compare( APP     hofx_nomodel                             ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${YAML_REF_TYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
-##jedi_app_ref_test_compare( APP     enshofx                                  ${DEFAULT_REF_TYPE})
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} )
+##jedi_app_ref_test_compare( APP     enshofx                                  ${YAML_REF_TYPE})
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} )
 ### TODO: Make the gen_ens_pert_B test produce the same output in Debug and Release. Until that time, we remove it.
-#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${DEFAULT_REF_TYPE}
+#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${YAML_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${YAML_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${DEFAULT_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${YAML_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${YAML_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${YAML_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${DEFAULT_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${DEFAULT_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE}
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${FORECAST_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${YAML_REF_TYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${YAML_REF_TYPE}
+                           DEPENDS parameters_bumploc )
+jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${YAML_REF_TYPE}
                            NPE 3 N_PARALLEL_STATES 3 )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${YAML_REF_TYPE}
                            NPE 3 N_PARALLEL_STATES 3
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DEFAULT_REF_TYPE}
+jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${YAML_REF_TYPE}
                            NPE 4 N_PARALLEL_STATES 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
@@ -834,13 +830,13 @@ endif( ${RTTOV_FOUND} )
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     foreach(THIS_NPE ${multi_pe_480})
         if( THIS_NPE GREATER 1 )
-            jedi_app_ref_test_compare( APP     forecast                                 ${FORECAST_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} NPE ${THIS_NPE} )
 ## hofx is expensive, hold off list for now
-#            jedi_app_ref_test_compare( APP     hofx                                     ${FORECAST_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE} NPE ${THIS_NPE}
+#            jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE} NPE ${THIS_NPE}
                                        DEPENDS parameters_bumpcov
                                                parameters_bumploc )
         endif()

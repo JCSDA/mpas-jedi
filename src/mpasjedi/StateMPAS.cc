@@ -187,7 +187,7 @@ void StateMPAS::print(std::ostream & os) const {
   int nf = 0;
   mpas_state_sizes_f90(keyState_, nc, nf);
 
-  os << std::endl << "  Valid time: " << validTime() << std::endl;
+  os << std::endl << "  Valid time: " << validTime();
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", nFields = " << nf;
   std::vector<double> zstat(3*nf);

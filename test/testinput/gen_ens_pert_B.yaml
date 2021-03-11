@@ -1,3 +1,9 @@
+test:
+  float relative tolerance: 0.005
+  integer tolerance: 0
+  reference filename: testoutput/gen_ens_pert_B.ref
+  log output filename: testoutput/gen_ens_pert_B.run
+  test output filename: testoutput/gen_ens_pert_B.run.ref
 Covariance:
   covariance: BUMP
 #  covariance: MPASstatic

@@ -247,7 +247,7 @@ void IncrementMPAS::print(std::ostream & os) const {
   int nf = 0;
   mpas_increment_sizes_f90(keyInc_, nc, nf);
 
-  os << std::endl << "  Valid time: " << validTime() << std::endl;
+  os << std::endl << "  Valid time: " << validTime();
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", nFields = " << nf;
   std::vector<double> zstat(3*nf);

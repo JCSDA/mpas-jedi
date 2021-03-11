@@ -1,3 +1,9 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/3denvar_bumploc_bumpinterp.ref
+  log output filename: testoutput/3denvar_bumploc_bumpinterp.run
+  test output filename: testoutput/3denvar_bumploc_bumpinterp.run.ref
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
