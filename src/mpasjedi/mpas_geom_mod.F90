@@ -7,6 +7,7 @@ module mpas_geom_mod
 
 use atlas_module, only: atlas_functionspace, atlas_fieldset, atlas_field, atlas_real
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only: fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm
 use iso_c_binding
 
@@ -590,8 +591,8 @@ subroutine geo_delete(self)
    implicit none
 
    type(mpas_geom), intent(inout) :: self
-
    integer :: ii
+   character(len=512) :: message
 
    if (allocated(self%latCell)) deallocate(self%latCell)
    if (allocated(self%lonCell)) deallocate(self%lonCell)
@@ -617,20 +618,20 @@ subroutine geo_delete(self)
       if (geom_count(ii)%id == self%domain%domainID) then
          geom_count(ii)%counter = geom_count(ii)%counter - 1
          if ((associated(self % corelist)).and.(associated(self % domain))) then
-!            if (geom_count(ii)%counter == 0) then
-!               ! Completely destroy corelist and domain
-!               !  + can only do this if they are not used by another copy of self
-!               !  + otherwise the persistance of the underlying domain
-!               !    and corelist is a known memory leak
-!!               write(*,*)'==> delete model corelist and domain'
-!               call mpas_timer_set_context( self % domain )
-!               TODO(JJG): divide mpas_finalize into smaller components to avoid
-!               MPI finalize errors
-!               call mpas_finalize(self % corelist, self % domain)
-!            else
+            if (geom_count(ii)%counter == 0) then
+               ! Completely destroy corelist and domain
+               !  + can only do this if they are not used by another copy of self
+               !  + otherwise the persistance of the underlying domain
+               !    and corelist is a known memory leak
+               write(message,'(A,I3)') &
+                  '==> destruct MPAS corelist and domain:', self%domain%domainID
+               call fckit_log%info(message)
+               call mpas_timer_set_context( self % domain )
+               call mpas_finalize(self % corelist, self % domain)
+            else
                nullify(self % corelist)
                nullify(self % domain)
-!            end if
+            end if
             exit
          end if
       end if
