@@ -1,15 +1,12 @@
 ! (C) Copyright 2017 UCAR
-! 
+!
 ! This software is licensed under the terms of the Apache Licence Version 2.0
-! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 module mpas_field_utils_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only : fckit_log
-
-! atlas
-use atlas_module, only: atlas_fieldset, atlas_field, atlas_real
 
 !oops
 use datetime_mod
@@ -139,7 +136,7 @@ public :: mpas_field, mpas_field_registry, &
 
 
    integer, parameter    :: max_string=8000
-   character(max_string) :: err_msg
+   character(max_string) :: message
 
 #define LISTED_TYPE mpas_field
 
@@ -182,14 +179,13 @@ subroutine create_field(self, geom, vars, vars_ci)
        self % fldnames_ci(ivar) = trim(vars_ci % variable(ivar))
     end do
 
-    write(err_msg,*) "DEBUG: create_field: self % fldnames(:) =",self % fldnames(:)
-    call fckit_log%debug(trim(err_msg))
- 
+    write(message,*) "DEBUG: create_field: self % fldnames(:) =",self % fldnames(:)
+    call fckit_log%debug(message)
+
     ! link geom
     if (associated(geom)) then
       self % geom => geom
     else
-      write(*,*)'--> create_field: geom not associated'
       call abor1_ftn("--> create_field: geom not associated")
     end if
 
@@ -220,13 +216,12 @@ subroutine create_pool(domain, nf_in, fldnames, pool)
     type (mpas_pool_type), pointer, intent(out) :: pool
 
     integer :: nfields
-    character(len=1024) :: buf
 
     call da_make_subpool(domain, pool, nf_in, fldnames, nfields)
 
     if ( nf_in .ne. nfields  ) then
-       write(buf,*) "--> create_pool: dimension mismatch ", nf_in, nfields
-       call abor1_ftn(buf)
+       write(message,*) "--> create_pool: dimension mismatch ", nf_in, nfields
+       call abor1_ftn(message)
     end  if
 
 end subroutine create_pool
@@ -237,8 +232,8 @@ subroutine delete_field(self)
 
    implicit none
    class(mpas_field), intent(inout) :: self
-   integer :: ierr = 0 
- 
+   integer :: ierr = 0
+
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
 
@@ -261,7 +256,7 @@ subroutine delete_pool(pool)
 
    implicit none
    type(mpas_pool_type), pointer, intent(inout) :: pool
-  
+
    if (associated(pool)) then
       call mpas_pool_destroy_pool(pool)
    end if
@@ -296,7 +291,7 @@ subroutine copy_field(self,rhs)
    call copy_pool(rhs % subFields, self % subFields)
 
 !   write(*,*)'--> copy_field done'
-  
+
 end subroutine copy_field
 
 ! ------------------------------------------------------------------------------
@@ -306,9 +301,9 @@ subroutine copy_pool(pool_src, pool)
    implicit none
    type(mpas_pool_type), pointer, intent(in)    :: pool_src
    type(mpas_pool_type), pointer, intent(inout) :: pool
-   
-   ! Duplicate the members of pool_src into pool and 
-   ! do a deep copy of the fields 
+
+   ! Duplicate the members of pool_src into pool and
+   ! do a deep copy of the fields
    call delete_pool(pool)
    call mpas_pool_create_pool(pool)
    call mpas_pool_clone_pool(pool_src, pool)
@@ -330,7 +325,6 @@ subroutine read_field(self, f_conf, vdate)
    integer                 :: ierr = 0, ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
-   character(len=1024) :: buf
 
 !   write(*,*)'--> read_field'
    call f_conf%get_or_die("date",str)
@@ -364,8 +358,8 @@ subroutine read_field(self, f_conf, vdate)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
-      write(buf,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
-      call abor1_ftn(buf)
+      write(message,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
+      call abor1_ftn(message)
    end if
 
    !==TODO: Speific part when reading parameterEst. for BUMP.	
@@ -373,7 +367,7 @@ subroutine read_field(self, f_conf, vdate)
    if (f_conf%has("no_transf")) then
       call f_conf%get_or_die("no_transf",ierr)
       if(ierr .eq. 1) then
-         call da_copy_all2sub_fields(self % geom % domain, self % subFields) 
+         call da_copy_all2sub_fields(self % geom % domain, self % subFields)
         return
       endif
    endif
@@ -404,12 +398,12 @@ subroutine update_diagnostic_fields(domain, subFields, ngrid)
    integer, pointer :: index_qv
 
    !(1) copy all to subFields
-   call da_copy_all2sub_fields(domain, subFields) 
+   call da_copy_all2sub_fields(domain, subFields)
 
    !(2) diagnose temperature
    !Special case: Convert theta and pressure to temperature
    !              Convert water vapor mixing ratio to specific humidity [ q = w / (1 + w) ]
-   !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner") 
+   !NOTE: This formula is somewhat different with MPAS one's (in physics, they use "exner")
    !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics,
    !    : we need to include "exner" in stream_list.for.reading
 
@@ -440,7 +434,6 @@ subroutine write_field(self, f_conf, vdate)
    integer                 :: ierr
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
-   character(len=1024)     :: buf
 
    call da_copy_sub2all_fields(self % geom % domain, self % subFields)
 
@@ -467,7 +460,7 @@ subroutine write_field(self, f_conf, vdate)
    ! TODO: we can get streamID from yaml
    ! TODO: should we pick different stream lists for mpas_state and mpas_increment?
    !streamID = 'restart'
-   streamID = 'output' 
+   streamID = 'output'
    !streamID = 'da'
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
@@ -475,8 +468,8 @@ subroutine write_field(self, f_conf, vdate)
    call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, &
         forceWriteNow=.true., writeTime=dateTimeString, ierr=ierr)
    if ( ierr .ne. 0  ) then
-     write(buf,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr
-     call abor1_ftn(buf)
+     write(message,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr
+     call abor1_ftn(message)
    end if
 
 end subroutine write_field
@@ -494,7 +487,8 @@ subroutine change_resol_field(self,rhs)
    else if (self%geom%nVertLevels == rhs%geom%nVertLevels) then
       call interpolate_geoms(self,rhs)
    else
-     write(*,*) '--> change_resol_field: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
+     write(message,*) '--> change_resol_field: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
+     call fckit_log%info(message)
      call abor1_ftn("mpas_field_utils_mod:change_resol_field: VertLevels dimension mismatch")
    endif
 
@@ -528,7 +522,7 @@ subroutine random_(self)
 
    implicit none
    class(mpas_field), intent(inout) :: self
-   
+
    call da_random(self % subFields, fld_select = self % fldnames_ci)
 
 end subroutine random_
@@ -683,7 +677,7 @@ end subroutine interp_checks
 !> \brief Populates subfields of self using rhs
 !!
 !! \details **interpolate_geoms** This subroutine is called when creating
-!! a new mpas_field type (self) using an existing mpas_field (rhs) as a source that 
+!! a new mpas_field type (self) using an existing mpas_field (rhs) as a source that
 !! has a different geometry/mesh (but the same number of VertLevels). It populates
 !! the subfields of self, interpolating the data from rhs. It can use either
 !! bump or unstructured interpolation for the interpolation routine.
@@ -697,20 +691,20 @@ subroutine interpolate_geoms(self,rhs)
   type(unstrc_interp)     :: unsinterp
   type (mpas_pool_iterator_type) :: poolItr
   real(kind=kind_real), allocatable :: interp_in(:,:), interp_out(:,:)
-  real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-  real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-  integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
-  integer, dimension(:,:), pointer :: i2d_ptr_a, i2d_ptr_b
-  integer :: rhs_nCells, self_nCells, nlevels, jlev
-  character(len=1024) :: buf
+  real (kind=kind_real), dimension(:), pointer :: r1d_ptr
+  real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr
+  integer, dimension(:), pointer :: i1d_ptr
+  integer, dimension(:,:), pointer :: i2d_ptr
+  integer :: rhs_nCells, self_nCells, maxlevels, nlevels, jlev
   logical             :: use_bump_interp
+  integer, allocatable :: rhsDims(:)
 
   use_bump_interp = rhs%geom%use_bump_interpolation
 
   if (use_bump_interp) then
-     call initialize_bumpinterp(self%geom, rhs%geom, bumpinterp)
+    call initialize_bumpinterp(self%geom, rhs%geom, bumpinterp)
   else
-     call initialize_uns_interp(self%geom, rhs%geom, unsinterp)
+    call initialize_uns_interp(self%geom, rhs%geom, unsinterp)
   endif
 
   self % nf = rhs % nf
@@ -725,82 +719,84 @@ subroutine interpolate_geoms(self,rhs)
 
   call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
 
-   ! Interpolate fields to obs locations using pre-calculated weights
-   ! ----------------------------------------------------------------
-   nlevels = rhs%geom%nVertLevels
-   rhs_nCells = rhs%geom%nCellsSolve
-   self_nCells = self%geom%nCellsSolve
-   ! write(*,*) 'nlevels: ', nlevels
-   ! write(*,*) 'rhs_nCells: ', rhs_nCells
-   ! write(*,*) 'self_nCells: ', self_nCells
+  ! Interpolate field from rhs mesh to self mesh using pre-calculated weights
+  ! ----------------------------------------------------------------------------------
+  maxlevels = rhs%geom%nVertLevelsP1
+  rhs_nCells = rhs%geom%nCellsSolve
+  self_nCells = self%geom%nCellsSolve
 
-   allocate(interp_in(rhs_nCells, nlevels))
-   allocate(interp_out(self_nCells, nlevels))
+  allocate(interp_in(rhs_nCells, maxlevels))
+  allocate(interp_out(self_nCells, maxlevels))
 
-   call mpas_pool_begin_iteration(rhs%subFields)
-   do while ( mpas_pool_get_next_member(rhs%subFields, poolItr) )
-    if (poolItr % memberType == MPAS_POOL_FIELD) then
-       ! write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-       ! Get the rhs fields out of the rhs%subFields pool and into an array that
-       ! can be passed to obsop_to_atlas.
-       ! (Four cases to cover: 1D/2D and real/integer variable.)
-       if (poolItr % nDims == 1) then
-         if (poolItr % dataType == MPAS_POOL_INTEGER) then
-           call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i1d_ptr_a)
-           interp_in(:,1) = real( i1d_ptr_a(1:rhs_nCells), kind_real)
-         else if (poolItr % dataType == MPAS_POOL_REAL) then
-           call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r1d_ptr_a)
-           interp_in(:,1) = r1d_ptr_a(1:rhs_nCells)
-         endif
-       else if (poolItr % nDims == 2) then
-         if (poolItr % dataType == MPAS_POOL_INTEGER) then
-           call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i2d_ptr_a)
-           if (size(i2d_ptr_a, 1) .lt. nlevels) then
-             nlevels = size(i2d_ptr_a, 1)
-           endif
-           interp_in = real( transpose (i2d_ptr_a(1:nlevels,1:rhs_nCells)), kind_real )
-         else if (poolItr % dataType == MPAS_POOL_REAL) then
-           call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r2d_ptr_a)
-           if (size(r2d_ptr_a, 1) .lt. nlevels) then
-             nlevels = size(r2d_ptr_a, 1)
-           endif
-           interp_in = transpose(r2d_ptr_a(1:nlevels,1:rhs_nCells))
-         endif
-       else
-         write(buf,*) '--> interpolate_geoms: poolItr % nDims == ',poolItr % nDims,' not handled'
-         call abor1_ftn(buf)
-       endif
+  call mpas_pool_begin_iteration(rhs%subFields)
+  do while ( mpas_pool_get_next_member(rhs%subFields, poolItr) )
+  if (poolItr % memberType == MPAS_POOL_FIELD) then
+    write(message,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+    call fckit_log%debug(message)
+    ! Get the rhs fields out of the rhs%subFields pool and into an array that
+    ! can be passed to the interpolator apply functions.
+    ! (Four cases to cover: 1D/2D and real/integer variable.)
+    if (poolItr % nDims == 1) then
+      nlevels = 1
+      if (poolItr % dataType == MPAS_POOL_INTEGER) then
+        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i1d_ptr)
+        interp_in(:,1) = real( i1d_ptr(1:rhs_nCells), kind_real)
+      else if (poolItr % dataType == MPAS_POOL_REAL) then
+        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r1d_ptr)
+        interp_in(:,1) = r1d_ptr(1:rhs_nCells)
+      endif
+    else if (poolItr % nDims == 2) then
+      rhsDims = getSolveDimensions(rhs%subFields, poolItr)
+      nlevels = rhsDims(1)
+      if (nlevels > maxlevels) then
+        write(message,*) '--> interpolate_geoms: nlevels > maxlevels, ', nlevels, maxlevels
+        call abor1_ftn(message)
+      endif
+      if (poolItr % dataType == MPAS_POOL_INTEGER) then
+        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i2d_ptr)
+        interp_in(1:rhs_nCells,1:nlevels) = real( transpose (i2d_ptr(1:nlevels,1:rhs_nCells)), kind_real )
+      else if (poolItr % dataType == MPAS_POOL_REAL) then
+        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r2d_ptr)
+        interp_in(1:rhs_nCells,1:nlevels) = transpose(r2d_ptr(1:nlevels,1:rhs_nCells))
+      endif
+    else
+      write(message,*) '--> interpolate_geoms: poolItr % nDims == ',poolItr % nDims,' not handled'
+      call abor1_ftn(message)
+    endif
 
-       if (use_bump_interp) then
-         call bumpinterp%apply(interp_in, interp_out,trans_in=.false.)
-       else
-         do jlev = 1, nlevels
-           call unsinterp%apply(interp_in(:,jlev),interp_out(:,jlev))
-         end do
-       endif
- 
-      ! Put the interpolated results into the self%subFields pool
-      if (poolItr % nDims == 1) then
-        if (poolItr % dataType == MPAS_POOL_INTEGER) then
-          call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_b)
-          i1d_ptr_b(1:self_nCells) = int (interp_out(:,1))
-        else if (poolItr % dataType == MPAS_POOL_REAL) then
-          call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr_b)
-          r1d_ptr_b(1:self_nCells) = interp_out(:,1)
-        endif
-      else if (poolItr % nDims == 2) then
-        if (poolItr % dataType == MPAS_POOL_INTEGER) then
-          call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_b)
-          i2d_ptr_b(1:nlevels,1:self_nCells) = transpose (int (interp_out(1:self_nCells,1:nlevels)))
-        else if (poolItr % dataType == MPAS_POOL_REAL) then
-          call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr_b)
-          r2d_ptr_b(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
-        endif
+    if (use_bump_interp) then
+      call bumpinterp%apply(interp_in(:,1:nlevels), &
+                            interp_out(:,1:nlevels), &
+                            trans_in=.false.)
+    else
+      do jlev = 1, nlevels
+        call unsinterp%apply(interp_in(:,jlev),interp_out(:,jlev))
+      end do
+    endif
+
+    ! Put the interpolated results into the self%subFields pool
+    if (poolItr % nDims == 1) then
+      if (poolItr % dataType == MPAS_POOL_INTEGER) then
+        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr)
+        i1d_ptr(1:self_nCells) = int (interp_out(:,1))
+      else if (poolItr % dataType == MPAS_POOL_REAL) then
+        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr)
+        r1d_ptr(1:self_nCells) = interp_out(:,1)
+      endif
+    else if (poolItr % nDims == 2) then
+      if (poolItr % dataType == MPAS_POOL_INTEGER) then
+        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr)
+        i2d_ptr(1:nlevels,1:self_nCells) = transpose (int (interp_out(1:self_nCells,1:nlevels)))
+      else if (poolItr % dataType == MPAS_POOL_REAL) then
+        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr)
+        r2d_ptr(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
       endif
     endif
-   end do !- end of pool iteration
-   deallocate(interp_in)
-   deallocate(interp_out)
+  endif
+  end do !- end of pool iteration
+  deallocate(interp_in)
+  deallocate(interp_out)
+  if (allocated(rhsDims)) deallocate(rhsDims)
 
 end subroutine interpolate_geoms
 ! ------------------------------------------------------------------------------
@@ -858,7 +854,7 @@ subroutine initialize_uns_interp(geom_to, geom_from, unsinterp)
    ! ---------------------------
    ngrid_from = geom_from%nCellsSolve
    ngrid_to   = geom_to%nCellsSolve
- 
+
    !Calculate interpolation weight
    !------------------------------------------
    allocate( lats_from(ngrid_from) )
@@ -876,17 +872,17 @@ subroutine initialize_uns_interp(geom_to, geom_from, unsinterp)
    call unsinterp%create(geom_from%f_comm, nn, wtype, &
                          ngrid_from, lats_from, lons_from, &
                          ngrid_to, lats_to, lons_to)
- 
+
    ! Release memory
    ! --------------
    deallocate(lats_from)
    deallocate(lons_from)
    deallocate(lats_to)
    deallocate(lons_to)
- 
- end subroutine initialize_uns_interp
- 
- subroutine serial_size(self, vsize)
+
+end subroutine initialize_uns_interp
+
+subroutine serial_size(self, vsize)
 
    implicit none
 
@@ -926,14 +922,13 @@ subroutine serialize_field(self, vsize, vect_inc)
    ! Local variables
    integer :: index, nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
-   character(len=1024) :: buf
    integer, allocatable :: solveDims(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
    integer, dimension(:), pointer :: i1d_ptr_a
    integer, dimension(:,:), pointer :: i2d_ptr_a
- 
+
    ! Initialize
    index = 0
 
@@ -977,8 +972,8 @@ subroutine serialize_field(self, vsize, vect_inc)
                enddo
             endif
          else
-            write(buf,*) '--> serialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
-            call abor1_ftn(buf)
+            write(message,*) '--> serialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
+            call abor1_ftn(message)
          endif
          deallocate(solveDims)
       endif
@@ -1001,7 +996,6 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
    ! Local variables
    integer :: nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
-   character(len=1024) :: buf
    integer, allocatable :: solveDims(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
@@ -1049,8 +1043,8 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
                enddo
             endif
          else
-            write(buf,*) '--> deserialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
-            call abor1_ftn(buf)
+            write(message,*) '--> deserialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
+            call abor1_ftn(message)
          endif
          deallocate(solveDims)
       endif
