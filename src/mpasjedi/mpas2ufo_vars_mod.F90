@@ -405,7 +405,7 @@ subroutine index_q_fields_forward(indexName, geovalName, subFields, convFields, 
    character (len=*),                     intent(in)    :: geovalName
    type (mpas_pool_type), pointer,        intent(in)    :: subFields    !< self % subFields
    type (mpas_pool_type), pointer,        intent(inout) :: convFields   !< pool with geovals variable
-   real (kind=kind_real), dimension(:,:), intent(in)    :: pressure_levels
+   real (kind=kind_real), dimension(:,:), pointer, intent(in) :: pressure_levels
    integer,                               intent(in)    :: ngrid        !< number of grid cells
    integer,                               intent(in)    :: nVertLevels
 
@@ -413,6 +413,10 @@ subroutine index_q_fields_forward(indexName, geovalName, subFields, convFields, 
    real (kind=kind_real) :: kgkg_kgm2
    integer :: i, k
 
+   if (.not.associated(pressure_levels)) then
+      call abor1_ftn("ERROR: mpas2ufo_vars_mod:index_q_fields_forward: Must convert '"//trim(var_prsi)// &
+         "' before '"//trim(geovalName)//"'")
+   end if
    call mpas_pool_get_field(subFields, indexName, index_field_src) !- [kg/kg]
    call mpas_duplicate_field(index_field_src, converted_field)
    do i=1,ngrid
@@ -913,33 +917,27 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) "end-of ",var_co2
 
      case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-      !--TODO: Trial: Should already have "var_prsi"
-      call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+      call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
       call index_q_fields_forward('index_qc', var_clw, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
      case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-         !--TODO: Trial: Should already have "var_prsi"
-         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
          call index_q_fields_forward('index_qi', var_cli, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
       case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
-         !--TODO: Trial: Should already have "var_prsi"
-         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
          call index_q_fields_forward('index_qr', var_clr, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
       case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
-         !--TODO: Trial: Should already have "var_prsi"
-         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
          call index_q_fields_forward('index_qs', var_cls, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
       case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
-         !--TODO: Trial: Should already have "var_prsi"
-         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
          call index_q_fields_forward('index_qg', var_clg, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
       case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
-         !--TODO: Trial: Should already have "var_prsi"
-         call mpas_pool_get_array(convFields, "air_pressure_levels", r2d_ptr_b) !- [hPa]
+         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
          call index_q_fields_forward('index_qh', var_clh, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
      case ( var_clwefr ) !-effective_radius_of_cloud water particle
