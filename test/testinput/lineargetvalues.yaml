@@ -58,6 +58,6 @@ background:
   - theta      # for array placeholder in mpas_duplicate_field
   - rho        # for add_inc
   - u          # for add_inc
-  - index_qv   # for add_inc
+  - qv         # for add_inc
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'

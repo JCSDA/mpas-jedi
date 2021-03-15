@@ -17,7 +17,7 @@ Test     : Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863998978e+04 
 Test     : Fld=6  Min=2.515963378e+02, Max=7.213766620e+02, RMS=4.411398607e+02 : theta
 Test     : Fld=7  Min=2.603256880e-02, Max=1.332438456e+00, RMS=6.137877113e-01 : rho
 Test     : Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374075049e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587570553e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587570553e-03 : qv
 Test     : Fld=10  Min=1.553926545e+03, Max=9.745489658e+04, RMS=4.889610979e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
@@ -42,7 +42,7 @@ Test     : Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867386214e+04 
 Test     : Fld=6  Min=2.518572794e+02, Max=7.256384909e+02, RMS=4.410820700e+02 : theta
 Test     : Fld=7  Min=2.565533231e-02, Max=1.333219719e+00, RMS=6.142496315e-01 : rho
 Test     : Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434589438e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693254313e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693254313e-03 : qv
 Test     : Fld=10  Min=1.514846240e+03, Max=9.802181084e+04, RMS=4.890303251e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
@@ -67,7 +67,7 @@ Test     : Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868466852e+04 
 Test     : Fld=6  Min=2.513517079e+02, Max=7.280918596e+02, RMS=4.410120397e+02 : theta
 Test     : Fld=7  Min=2.479939424e-02, Max=1.330088990e+00, RMS=6.143012793e-01 : rho
 Test     : Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374655514e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779684415e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779684415e-03 : qv
 Test     : Fld=10  Min=1.486971226e+03, Max=9.742846049e+04, RMS=4.890785041e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
@@ -101,7 +101,7 @@ Test     : Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863999007e+04 
 Test     : Fld=6  Min=2.515963378e+02, Max=7.213766620e+02, RMS=4.411399816e+02 : theta
 Test     : Fld=7  Min=2.603256880e-02, Max=1.332438456e+00, RMS=6.137881778e-01 : rho
 Test     : Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374093022e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587492402e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587492402e-03 : qv
 Test     : Fld=10  Min=1.553926545e+03, Max=9.745489658e+04, RMS=4.889609509e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
@@ -126,7 +126,7 @@ Test     : Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867386241e+04 
 Test     : Fld=6  Min=2.518572794e+02, Max=7.256384909e+02, RMS=4.410822562e+02 : theta
 Test     : Fld=7  Min=2.565533231e-02, Max=1.333219719e+00, RMS=6.142503285e-01 : rho
 Test     : Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434610169e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693146668e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693146668e-03 : qv
 Test     : Fld=10  Min=1.514846240e+03, Max=9.802181084e+04, RMS=4.890300995e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
@@ -151,7 +151,7 @@ Test     : Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868466860e+04 
 Test     : Fld=6  Min=2.513517079e+02, Max=7.280918596e+02, RMS=4.410122168e+02 : theta
 Test     : Fld=7  Min=2.479939424e-02, Max=1.330088990e+00, RMS=6.143017888e-01 : rho
 Test     : Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374670829e+01 : u
-Test     : Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779605517e-03 : index_qv
+Test     : Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779605517e-03 : qv
 Test     : Fld=10  Min=1.486971226e+03, Max=9.742846049e+04, RMS=4.890783323e+04 : pressure
 Test     : Fld=11  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : landmask
 Test     : Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice

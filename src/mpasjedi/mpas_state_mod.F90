@@ -92,11 +92,11 @@ subroutine add_incr(self, increment)
       !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
       ngrid = self%geom%nCellsSolve
 
-      ! Update index_qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
+      ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       ! note: nonlinear COV
       if ( self%has(moistureFields) .and. &
-           increment%has('spechum') .and. .not.increment%has('index_qv')) then
-         call mpas_pool_get_field(self%subFields, 'index_qv', fld2d_qv)
+           increment%has('spechum') .and. .not.increment%has('qv')) then
+         call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
          call mpas_pool_get_field(self%subFields, 'spechum', fld2d_sh)
          call q_to_w( fld2d_sh%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid) )
       endif
@@ -108,7 +108,7 @@ subroutine add_incr(self, increment)
            self%has(modelThermoFields) .and. &
            increment%has(analysisThermoFields) .and. &
            .not. increment%has(modelThermoFields) ) then
-         call mpas_pool_get_field(self%subFields, 'index_qv', fld2d_qv)
+         call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
          call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
          call mpas_pool_get_field(self%subFields, 'rho', fld2d_rho)
          call mpas_pool_get_field(self%subFields, 'surface_pressure', fld1d_ps)

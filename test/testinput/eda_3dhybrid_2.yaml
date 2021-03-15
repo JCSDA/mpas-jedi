@@ -14,7 +14,7 @@ cost function:
   - surface_pressure
   background:
     state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                      theta, rho, u, index_qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                       snowh, vegfra, u10, v10, lai, smois, tslb]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'

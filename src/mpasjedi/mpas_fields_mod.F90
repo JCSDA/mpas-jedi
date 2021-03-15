@@ -116,8 +116,7 @@ public :: mpas_fields, mpas_fields_registry, &
 
    character(len=MAXVARLEN) :: mpas_hydrometeor_fields(6) = &
       [ character(len=MAXVARLEN) :: &
-      "index_qc", "index_qi", "index_qr", &
-      "index_qs", "index_qg", "index_qh" ]
+      "qc", "qi", "qr", "qs", "qg", "qh" ]
    character(len=MAXVARLEN) :: mpas_re_fields(3) = &
       [ character(len=MAXVARLEN) :: &
       "re_cloud", "re_ice  ", "re_snow " ]
@@ -126,13 +125,13 @@ public :: mpas_fields, mpas_fields_registry, &
        'uReconstructZonal', 'uReconstructMeridional']
    character(len=MAXVARLEN), parameter :: moistureFields(2) = &
       [character(len=MAXVARLEN) :: &
-       'index_qv', 'spechum']
+       'qv', 'spechum']
    character(len=MAXVARLEN), parameter :: analysisThermoFields(2) = &
       [character(len=MAXVARLEN) :: &
        'surface_pressure', 'temperature']
    character(len=MAXVARLEN), parameter :: modelThermoFields(4) = &
       [character(len=MAXVARLEN) :: &
-       'index_qv', 'pressure', 'rho', 'theta']
+       'qv', 'pressure', 'rho', 'theta']
 
 
    integer, parameter    :: max_string=8000

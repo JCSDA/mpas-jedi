@@ -72,7 +72,7 @@ if (config_microp_re) then
    call state_vars%push_back(mpas_re_fields)
 end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
-   call state_vars%push_back("index_nr")
+   call state_vars%push_back("nr")
 end if
 if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
      trim(config_microp_scheme) /= MPAS_JEDI_OFF ) then

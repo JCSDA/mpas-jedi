@@ -397,11 +397,11 @@ end subroutine geometricZ_full_to_half
 !-------------------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------------------
-subroutine index_q_fields_forward(indexName, geovalName, subFields, convFields, pressure_levels, ngrid, nVertLevels)
+subroutine q_fields_forward(qName, geovalName, subFields, convFields, pressure_levels, ngrid, nVertLevels)
 
    implicit none
 
-   character (len=*),                     intent(in)    :: indexName
+   character (len=*),                     intent(in)    :: qName
    character (len=*),                     intent(in)    :: geovalName
    type (mpas_pool_type), pointer,        intent(in)    :: subFields    !< self % subFields
    type (mpas_pool_type), pointer,        intent(inout) :: convFields   !< pool with geovals variable
@@ -409,20 +409,20 @@ subroutine index_q_fields_forward(indexName, geovalName, subFields, convFields, 
    integer,                               intent(in)    :: ngrid        !< number of grid cells
    integer,                               intent(in)    :: nVertLevels
 
-   type (field2DReal), pointer :: converted_field, index_field_src
+   type (field2DReal), pointer :: converted_field, q_field_src
    real (kind=kind_real) :: kgkg_kgm2
    integer :: i, k
 
    if (.not.associated(pressure_levels)) then
-      call abor1_ftn("ERROR: mpas2ufo_vars_mod:index_q_fields_forward: Must convert '"//trim(var_prsi)// &
+      call abor1_ftn("ERROR: mpas2ufo_vars_mod:q_fields_forward: Must convert '"//trim(var_prsi)// &
          "' before '"//trim(geovalName)//"'")
    end if
-   call mpas_pool_get_field(subFields, indexName, index_field_src) !- [kg/kg]
-   call mpas_duplicate_field(index_field_src, converted_field)
+   call mpas_pool_get_field(subFields, qName, q_field_src) !- [kg/kg]
+   call mpas_duplicate_field(q_field_src, converted_field)
    do i=1,ngrid
       do k=1,nVertLevels
          kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-         converted_field % array(k,i) = index_field_src%array(k,i) * kgkg_kgm2
+         converted_field % array(k,i) = q_field_src%array(k,i) * kgkg_kgm2
       enddo
    enddo
    
@@ -437,15 +437,15 @@ subroutine index_q_fields_forward(indexName, geovalName, subFields, convFields, 
    converted_field % fieldName = geovalName
    call mpas_pool_add_field(convFields, geovalName, converted_field)
    !        write(*,*) "end-of ",geovalName
-end subroutine index_q_fields_forward
+end subroutine q_fields_forward
 !-------------------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------------------
-subroutine index_q_fields_TL(indexName, geovalName, subFields, convFields, pressure_levels, ngrid, nVertLevels)
+subroutine q_fields_TL(qName, geovalName, subFields, convFields, pressure_levels, ngrid, nVertLevels)
 
    implicit none
 
-   character (len=*),                     intent(in)    :: indexName
+   character (len=*),                     intent(in)    :: qName
    character (len=*),                     intent(in)    :: geovalName
    type (mpas_pool_type), pointer,        intent(in)    :: subFields    !< self % subFields
    type (mpas_pool_type), pointer,        intent(inout) :: convFields   !< pool with geovals variable
@@ -453,41 +453,41 @@ subroutine index_q_fields_TL(indexName, geovalName, subFields, convFields, press
    integer,                               intent(in)    :: ngrid        !< number of grid cells
    integer,                               intent(in)    :: nVertLevels
 
-   type (field2DReal), pointer :: converted_field, index_field_src
+   type (field2DReal), pointer :: converted_field, q_field_src
    real (kind=kind_real) :: kgkg_kgm2
    integer :: i, k
 
-   call mpas_pool_get_field(subFields, indexName, index_field_src) !- [kg/kg]
-   call mpas_duplicate_field(index_field_src, converted_field)
+   call mpas_pool_get_field(subFields, qName, q_field_src) !- [kg/kg]
+   call mpas_duplicate_field(q_field_src, converted_field)
    do i=1,ngrid
       do k=1,nVertLevels
          kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-         converted_field % array(k,i) = index_field_src%array(k,i) * kgkg_kgm2
+         converted_field % array(k,i) = q_field_src%array(k,i) * kgkg_kgm2
       enddo
    enddo
 
    converted_field % fieldName = geovalName
    call mpas_pool_add_field(convFields, geovalName, converted_field)
    !        write(*,*) "end-of ",geovalName
-end subroutine index_q_fields_TL
+end subroutine q_fields_TL
 !-------------------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------------------
-subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields, convFields, ngrid)
+subroutine q_fields_AD(geom, trajFields, qName, geovalName, subFields, convFields, ngrid)
 
    implicit none
 
    type (mpas_geom),               intent(in)    :: geom          !< geometry
    type (mpas_pool_type), pointer, intent(in)    :: trajFields    !< linearization state for conversion
-   character (len=*),              intent(in)    :: indexName
+   character (len=*),              intent(in)    :: qName
    character (len=*),              intent(in)    :: geovalName
    type (mpas_pool_type), pointer, intent(inout) :: subFields    !< self % subFields
    type (mpas_pool_type), pointer, intent(in)    :: convFields   !< pool with geovals variable
    integer,                        intent(in )   :: ngrid        !< number of grid cells
    
    real (kind=kind_real), dimension(:,:), allocatable :: pressure_levels
-   real (kind=kind_real), dimension(:,:), pointer :: index_array
-   type (field2DReal), pointer :: index_increment, geoval_field_src
+   real (kind=kind_real), dimension(:,:), pointer :: q_array
+   type (field2DReal), pointer :: q_increment, geoval_field_src
    real (kind=kind_real), dimension(:,:), pointer :: pressure_array
    real (kind=kind_real), dimension(:), pointer :: surface_pressure_array
    real (kind=kind_real) :: kgkg_kgm2
@@ -501,20 +501,20 @@ subroutine index_q_fields_AD(geom, trajFields, indexName, geovalName, subFields,
                               surface_pressure_array(1:ngrid), ngrid, geom%nVertLevels, &
                               pressure_levels)
 
-   call mpas_pool_get_array(subFields, indexName, index_array) !- [kg/kg]
+   call mpas_pool_get_array(subFields, qName, q_array) !- [kg/kg]
    call mpas_pool_get_field(convFields, geovalName, geoval_field_src)
-   call mpas_duplicate_field(geoval_field_src, index_increment)
+   call mpas_duplicate_field(geoval_field_src, q_increment)
    do i=1,ngrid
       do k=1,geom%nVertLevels
          kgkg_kgm2=( pressure_levels(k,i)-pressure_levels(k+1,i) ) / gravity !- Still bottom-to-top
-         index_increment % array(k,i) = geoval_field_src%array(k,i) * kgkg_kgm2
+         q_increment % array(k,i) = geoval_field_src%array(k,i) * kgkg_kgm2
       enddo
    enddo
-   index_array(:,1:ngrid) = index_array(:,1:ngrid) + index_increment % array(:,1:ngrid)
-   call mpas_deallocate_field(index_increment) ! not used
+   q_array(:,1:ngrid) = q_array(:,1:ngrid) + q_increment % array(:,1:ngrid)
+   call mpas_deallocate_field(q_increment) ! not used
    deallocate (pressure_levels)
 
-end subroutine index_q_fields_AD
+end subroutine q_fields_AD
 !-------------------------------------------------------------------------------------------
 real (kind=kind_real) function wgamma(y)
 implicit none
@@ -917,28 +917,28 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) "end-of ",var_co2
 
      case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-      call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-      call index_q_fields_forward('index_qc', var_clw, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qc', var_clw, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
      case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-         call index_q_fields_forward('index_qi', var_cli, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qi', var_cli, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
-      case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
-         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-         call index_q_fields_forward('index_qr', var_clr, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+     case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qr', var_clr, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
-      case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
-         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-         call index_q_fields_forward('index_qs', var_cls, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+     case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qs', var_cls, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
-      case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
-         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-         call index_q_fields_forward('index_qg', var_clg, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+     case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qg', var_clg, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
-      case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
-         call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [hPa]
-         call index_q_fields_forward('index_qh', var_clh, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
+     case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
+        call mpas_pool_get_array(convFields, var_prsi, r2d_ptr_b) !- [Pa]
+        call q_fields_forward('qh', var_clh, subFields, convFields, r2d_ptr_b, ngrid, geom % nVertLevels)
 
      case ( var_clwefr ) !-effective_radius_of_cloud water particle
         call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
@@ -947,7 +947,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
            call mpas_duplicate_field(field2d_src, field2d)
            field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
         else
-           call mpas_pool_get_field(subFields, 'index_qc', field2d_src) ! We do not really need 're_cloud' unless it is calculated in MPAS model microp
+           call mpas_pool_get_field(subFields, 'qc', field2d_src) ! We do not really need 're_cloud' unless it is calculated in MPAS model microp
            call mpas_duplicate_field(field2d_src, field2d)
            field2d % array(:,1:ngrid) = 10.0_kind_real ![micron]  ! Or, we can refer to rre_cloud which is default for MPAS radiance scheme
         end if
@@ -962,7 +962,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
            call mpas_duplicate_field(field2d_src, field2d)
            field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
         else
-           call mpas_pool_get_field(subFields, 'index_qi', field2d_src) ! We do not really need 're_ice' unless it is calculated in MPAS model microp
+           call mpas_pool_get_field(subFields, 'qi', field2d_src) ! We do not really need 're_ice' unless it is calculated in MPAS model microp
            call mpas_duplicate_field(field2d_src, field2d)
            field2d % array(:,1:ngrid) = 30.0_kind_real ! [micron]
         end if
@@ -971,14 +971,14 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
 !        write(*,*) "end-of ",var_cliefr
 
       case ( var_clrefr )  !-effective_radius_of_rain water_particle
-         call mpas_pool_get_field(subFields, 'index_qr', field2d_qr) ! effective_radius of rain_water is not calculated in MPAS model physics
+         call mpas_pool_get_field(subFields, 'qr', field2d_qr) ! effective_radius of rain_water is not calculated in MPAS model physics
          call mpas_duplicate_field(field2d_qr, field2d)
          call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
          call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
          if (config_microp_re) then
             call mpas_duplicate_field(field2d_qr, field2d_a)
             if (trim(config_microp_scheme) == 'mp_thompson') then
-               call mpas_pool_get_field(subFields, 'index_nr', field2d_nr) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
+               call mpas_pool_get_field(subFields, 'nr', field2d_nr) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
             else
                call mpas_duplicate_field(field2d_qr, field2d_nr)
                field2d_nr % array(:,1:ngrid) = MPAS_JEDI_ONE_kr
@@ -1002,7 +1002,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
             call mpas_duplicate_field(field2d_src, field2d)
             field2d % array(:,1:ngrid) = field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          else
-            call mpas_pool_get_field(subFields, 'index_qs', field2d_src) ! We do not really need 're_snow' unless it is calculated in MPAS model microp
+            call mpas_pool_get_field(subFields, 'qs', field2d_src) ! We do not really need 're_snow' unless it is calculated in MPAS model microp
             call mpas_duplicate_field(field2d_src, field2d)
             field2d % array(:,1:ngrid) = 600.0_kind_real ! [micron]
          end if
@@ -1011,7 +1011,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
  !        write(*,*) "end-of ",var_clsefr
 
       case ( var_clgefr ) !-effective_radius_of_graupel_particle
-         call mpas_pool_get_field(subFields, 'index_qg', field2d_qg) !effective_radius_of_graupel is not calculated in MPAS model physics
+         call mpas_pool_get_field(subFields, 'qg', field2d_qg) !effective_radius_of_graupel is not calculated in MPAS model physics
          call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
          call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
          call mpas_duplicate_field(field2d_qg, field2d)
@@ -1030,7 +1030,7 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
  !        write(*,*) "end-of ",var_clgefr
 
       case ( var_clhefr ) !-effective_radius_of_hail_particle :TODO: currently filled w/ default value
-         call mpas_pool_get_field(subFields, 'index_qg', field2d_src) !The current MP schemes do not include hail (wsm7 has)
+         call mpas_pool_get_field(subFields, 'qg', field2d_src) !The current MP schemes do not include hail (wsm7 has)
          call mpas_duplicate_field(field2d_src, field2d)
          field2d % array(:,1:ngrid) = 600.0_kind_real !field2d_src%array(:,1:ngrid) * MPAS_JEDI_MILLION_kr ! [m] -> [micron]
          field2d % fieldName = var_clhefr
@@ -1344,7 +1344,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
         allocate (pressure_f(geom%nVertLevels+1,ngrid))
         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                    ngrid, geom%nVertLevels, pressure_f)
-        call index_q_fields_TL('index_qc', var_clw, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+        call q_fields_TL('qc', var_clw, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
         deallocate (pressure_f)
 
      case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
@@ -1354,7 +1354,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
         allocate (pressure_f(geom%nVertLevels+1,ngrid))
         call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                    ngrid, geom%nVertLevels, pressure_f)
-        call index_q_fields_TL('index_qi', var_cli, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+        call q_fields_TL('qi', var_cli, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
         deallocate (pressure_f)
 
       case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
@@ -1364,7 +1364,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
          call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                     ngrid, geom%nVertLevels, pressure_f)
-         call index_q_fields_TL('index_qr', var_clr, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+         call q_fields_TL('qr', var_clr, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
@@ -1374,7 +1374,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
          call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                     ngrid, geom%nVertLevels, pressure_f)
-         call index_q_fields_TL('index_qs', var_cls, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+         call q_fields_TL('qs', var_cls, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
@@ -1384,7 +1384,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
          call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                     ngrid, geom%nVertLevels, pressure_f)
-         call index_q_fields_TL('index_qg', var_clg, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+         call q_fields_TL('qg', var_clg, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
       case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
@@ -1394,7 +1394,7 @@ subroutine convert_mpas_field2ufoTL(geom, trajFields, subFields_tl, convFields_t
          allocate (pressure_f(geom%nVertLevels+1,ngrid))
          call pressure_half_to_full(traj_r2d_b(:,1:ngrid), geom%zgrid(:,1:ngrid), traj_r1d_a(1:ngrid), &
                                     ngrid, geom%nVertLevels, pressure_f)
-         call index_q_fields_TL('index_qh', var_clh, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
+         call q_fields_TL('qh', var_clh, subFields_tl, convFields_tl, pressure_f, ngrid, geom % nVertLevels)
          deallocate (pressure_f)
 
      case ( var_clwefr ) !-effective_radius_of_cloud_liquid_water_particle
@@ -1592,22 +1592,22 @@ subroutine convert_mpas_field2ufoAD(geom, trajFields, subFields_ad, convFields_a
      case ( var_co2 )  !-mole_fraction_of_carbon_dioxide_in_air
 
      case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-        call index_q_fields_AD(geom, trajFields, 'index_qc', var_clw, subFields_ad, convFields_ad, ngrid)
+        call q_fields_AD(geom, trajFields, 'qc', var_clw, subFields_ad, convFields_ad, ngrid)
 
       case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-         call index_q_fields_AD(geom, trajFields, 'index_qi', var_cli, subFields_ad, convFields_ad, ngrid)
+         call q_fields_AD(geom, trajFields, 'qi', var_cli, subFields_ad, convFields_ad, ngrid)
 
       case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
-         call index_q_fields_AD(geom, trajFields, 'index_qr', var_clr, subFields_ad, convFields_ad, ngrid)
+         call q_fields_AD(geom, trajFields, 'qr', var_clr, subFields_ad, convFields_ad, ngrid)
 
       case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
-         call index_q_fields_AD(geom, trajFields, 'index_qs', var_cls, subFields_ad, convFields_ad, ngrid)
+         call q_fields_AD(geom, trajFields, 'qs', var_cls, subFields_ad, convFields_ad, ngrid)
 
       case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
-         call index_q_fields_AD(geom, trajFields, 'index_qg', var_clg, subFields_ad, convFields_ad, ngrid)
+         call q_fields_AD(geom, trajFields, 'qg', var_clg, subFields_ad, convFields_ad, ngrid)
 
       case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
-         call index_q_fields_AD(geom, trajFields, 'index_qh', var_clh, subFields_ad, convFields_ad, ngrid)
+         call q_fields_AD(geom, trajFields, 'qh', var_clh, subFields_ad, convFields_ad, ngrid)
 
      case ( var_clwefr ) !-effective_radius_of_cloud_liquid_water_particle
      case ( var_cliefr ) !-effective_radius_of_cloud_ice_particle

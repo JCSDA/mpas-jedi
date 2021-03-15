@@ -42,7 +42,7 @@ use mpas_constants_mod
 
    !***********************************************************************
    !
-   !  function match_scalar_and_index_q
+   !  function match_scalar_and_q
    !
    !> \brief   Test for a form of water vapor or hydrometeor of interest
    !> \author  Steven Vahl
@@ -50,27 +50,27 @@ use mpas_constants_mod
    !> \details
    !>  At various places in this module we wish to test for the case where
    !>  one string is 'scalars' and another string is one of several
-   !>  'index_q?' values. Rather than repeat that logic many times, it
+   !>  'q?' values. Rather than repeat that logic many times, it
    !>  is encapsulated here.
    !
    !-----------------------------------------------------------------------
-   pure function match_scalar_and_index_q(scalarName, indexName)
+   pure function match_scalar_and_q(scalarName, qName)
 
       implicit none
 
       character (len=*), intent(in) :: scalarName
-      character (len=*), intent(in) :: indexName
-      logical :: match_scalar_and_index_q
+      character (len=*), intent(in) :: qName
+      logical :: match_scalar_and_q
 
-      match_scalar_and_index_q = scalarName.eq.'scalars' .and. &
-                     (indexName.eq.'index_qv' .or. & ! water vapor
-                      indexName.eq.'index_qc' .or. & ! cloud
-                      indexName.eq.'index_qi' .or. & ! ice
-                      indexName.eq.'index_qr' .or. & ! rain
-                      indexName.eq.'index_qs' .or. & ! snow
-                      indexName.eq.'index_qg' .or. & ! graupel
-                      indexName.eq.'index_qh' .or. & ! hail
-                      indexName.eq.'index_nr'      & ! number concentration of rain
+      match_scalar_and_q = scalarName.eq.'scalars' .and. &
+                     (qName.eq.'qv' .or. & ! water vapor
+                      qName.eq.'qc' .or. & ! cloud
+                      qName.eq.'qi' .or. & ! ice
+                      qName.eq.'qr' .or. & ! rain
+                      qName.eq.'qs' .or. & ! snow
+                      qName.eq.'qg' .or. & ! graupel
+                      qName.eq.'qh' .or. & ! hail
+                      qName.eq.'nr'      & ! number concentration of rain
                      )
 
    end function
@@ -310,9 +310,9 @@ use mpas_constants_mod
 !                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( match_scalar_and_index_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar_and_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
 !                 write(0,*)'Copy all2sub field: Looking at SCALARS now'
-                  call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
+                  call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
@@ -403,9 +403,9 @@ use mpas_constants_mod
 !                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( match_scalar_and_index_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar_and_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
                   !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
-                  call mpas_pool_get_dimension(state, trim(poolItr_a % memberName), index_scalar)
+                  call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
@@ -519,8 +519,8 @@ use mpas_constants_mod
                      end if
                      nfields = nfields + 1
                   
-                  else if (match_scalar_and_index_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
-                     call mpas_pool_get_dimension(state, trim(fieldname(ii)), index_scalar)
+                  else if (match_scalar_and_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
+                     call mpas_pool_get_dimension(state, 'index_'//trim(fieldname(ii)), index_scalar)
                      if (index_scalar .gt. 0) then
                         call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d)
                         call mpas_pool_get_field(allFields, 'theta_m', field2d_src)
@@ -599,7 +599,7 @@ use mpas_constants_mod
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
-                     else if (match_scalar_and_index_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
+                     else if (match_scalar_and_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1 
                      end if
