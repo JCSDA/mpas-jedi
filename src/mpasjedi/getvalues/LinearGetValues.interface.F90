@@ -23,9 +23,9 @@ module mpas_lineargetvalues_interface_mod
     ! self dependency
     use mpasjedi_lineargetvalues_mod, only: mpasjedi_lineargetvalues, mpas_lineargetvalues_registry
     
-    ! mpas dependencies
+    ! mpas-jedi dependencies
     use mpas_geom_mod, only: mpas_geom_registry, mpas_geom
-    use mpas_field_utils_mod
+    use mpas_fields_mod
     ! use mpas_increment_mod, only: mpas_increment
     ! use mpas_increment_interface_mod, only: mpas_increment_registry
     
@@ -102,7 +102,7 @@ module mpas_lineargetvalues_interface_mod
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
-    type(mpas_field),               pointer :: fields
+    type(mpas_fields),              pointer :: fields
     type(datetime)                          :: t1
     type(datetime)                          :: t2
     type(ufo_locations)                     :: locs
@@ -111,7 +111,7 @@ module mpas_lineargetvalues_interface_mod
     ! Get objects
     call mpas_lineargetvalues_registry%get(c_key_self, self)
     call mpas_geom_registry%get(c_key_geom, geom)
-    call mpas_field_registry%get(c_key_state, fields)
+    call mpas_fields_registry%get(c_key_state, fields)
     call c_f_datetime(c_t1, t1)
     call c_f_datetime(c_t2, t2)
     locs = ufo_locations(c_locs)
@@ -139,7 +139,7 @@ module mpas_lineargetvalues_interface_mod
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
-    type(mpas_field),               pointer :: fields
+    type(mpas_fields),              pointer :: fields
     type(datetime)                          :: t1
     type(datetime)                          :: t2
     type(ufo_locations)                     :: locs
@@ -148,7 +148,7 @@ module mpas_lineargetvalues_interface_mod
     ! Get objects
     call mpas_lineargetvalues_registry%get(c_key_self, self)
     call mpas_geom_registry%get(c_key_geom, geom)
-    call mpas_field_registry%get(c_key_inc, fields)
+    call mpas_fields_registry%get(c_key_inc, fields)
     call c_f_datetime(c_t1, t1)
     call c_f_datetime(c_t2, t2)
     locs = ufo_locations(c_locs)
@@ -175,7 +175,7 @@ module mpas_lineargetvalues_interface_mod
     
     type(mpasjedi_lineargetvalues), pointer :: self
     type(mpas_geom),                pointer :: geom
-    type(mpas_field),               pointer :: fields
+    type(mpas_fields),              pointer :: fields
     type(datetime)                          :: t1
     type(datetime)                          :: t2
     type(ufo_locations)                     :: locs
@@ -184,7 +184,7 @@ module mpas_lineargetvalues_interface_mod
     ! Get objects
     call mpas_lineargetvalues_registry%get(c_key_self, self)
     call mpas_geom_registry%get(c_key_geom, geom)
-    call mpas_field_registry%get(c_key_inc, fields)
+    call mpas_fields_registry%get(c_key_inc, fields)
     call c_f_datetime(c_t1, t1)
     call c_f_datetime(c_t2, t2)
     locs = ufo_locations(c_locs)

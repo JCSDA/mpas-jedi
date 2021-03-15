@@ -15,7 +15,7 @@ use oops_variables_mod, only: oops_variables
 
 !mpas-jedi
 use mpas_constants_mod
-use mpas_field_utils_mod, only: mpas_field
+use mpas_fields_mod, only: mpas_fields
 use mpas_geom_mod, only: mpas_geom
 
 !MPAS-Model
@@ -59,8 +59,8 @@ subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
 
    implicit none
    type(mpas_linvarcha_c2a),  intent(inout) :: self    !< Change variable structure
-   type(mpas_field), target,  intent(in)    :: bg
-   type(mpas_field), target,  intent(in)    :: fg
+   type(mpas_fields), target,  intent(in)    :: bg
+   type(mpas_fields), target,  intent(in)    :: fg
    type(mpas_geom),           intent(in)    :: geom
    type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
    type(oops_variables),      intent(in)    :: vars
@@ -109,8 +109,8 @@ subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
 
    implicit none
    type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_field), intent(inout) :: xctl
-   type(mpas_field), intent(inout) :: xana
+   type(mpas_fields), intent(inout) :: xctl
+   type(mpas_fields), intent(inout) :: xana
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
@@ -200,8 +200,8 @@ subroutine mpas_linvarcha_c2a_multiplyadjoint(self,xana,xctl)
 
    implicit none
    type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_field), intent(inout) :: xana
-   type(mpas_field), intent(inout) :: xctl
+   type(mpas_fields), intent(inout) :: xana
+   type(mpas_fields), intent(inout) :: xctl
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
@@ -296,8 +296,8 @@ subroutine mpas_linvarcha_c2a_multiplyinverse(self,xana,xctl)
 
    implicit none
    type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_field), intent(inout) :: xana
-   type(mpas_field), intent(inout) :: xctl
+   type(mpas_fields), intent(inout) :: xana
+   type(mpas_fields), intent(inout) :: xctl
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
@@ -363,8 +363,8 @@ subroutine mpas_linvarcha_c2a_multiplyinverseadjoint(self,xctl,xana)
 
    implicit none
    type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_field), intent(inout) :: xctl
-   type(mpas_field), intent(inout) :: xana
+   type(mpas_fields), intent(inout) :: xctl
+   type(mpas_fields), intent(inout) :: xana
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs

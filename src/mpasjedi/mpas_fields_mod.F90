@@ -3,7 +3,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-module mpas_field_utils_mod
+module mpas_fields_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only : fckit_log
@@ -41,10 +41,10 @@ use mpas2ufo_vars_mod, only: w_to_q, theta_to_temp
 
 private
 
-public :: mpas_field, mpas_field_registry, &
+public :: mpas_fields, mpas_fields_registry, &
           interp_checks, &
-          create_field, delete_field, &
-          copy_field, copy_pool, &
+          create_fields, delete_fields, &
+          copy_fields, copy_pool, &
           update_diagnostic_fields, &
           mpas_hydrometeor_fields,  &
           mpas_re_fields, &
@@ -56,7 +56,7 @@ public :: mpas_field, mpas_field_registry, &
 ! ------------------------------------------------------------------------------
 
    !> Fortran derived type to hold MPAS field
-   type :: mpas_field
+   type :: mpas_fields
      private
 
      type (mpas_geom), pointer, public :: geom                            ! grid and MPI infos
@@ -82,30 +82,30 @@ public :: mpas_field, mpas_field_registry, &
      procedure :: zeros        => zeros_
      procedure :: ones         => ones_
 
-     procedure :: change_resol => change_resol_field
-     procedure :: copy         => copy_field
-     procedure :: create       => create_field
-     procedure :: delete       => delete_field
-     procedure :: read_file    => read_field
-     procedure :: write_file   => write_field
-     procedure :: serial_size    => serial_size
-     procedure :: serialize    => serialize_field
-     procedure :: deserialize   => deserialize_field
+     procedure :: change_resol => change_resol_fields
+     procedure :: copy         => copy_fields
+     procedure :: create       => create_fields
+     procedure :: delete       => delete_fields
+     procedure :: read_file    => read_fields
+     procedure :: write_file   => write_fields
+     procedure :: serial_size  => serial_size
+     procedure :: serialize    => serialize_fields
+     procedure :: deserialize  => deserialize_fields
 
      generic :: has => has_field, has_fields
      procedure :: has_field
      procedure :: has_fields
 
-   end type mpas_field
+   end type mpas_fields
 
 !   abstract interface
 !
 !   ! ------------------------------------------------------------------------------
 !
 !      subroutine read_file_(self, f_conf, vdate)
-!         import mpas_field, fckit_configuration, datetime
+!         import mpas_fields, fckit_configuration, datetime
 !         implicit none
-!         class(mpas_field),         intent(inout) :: self
+!         class(mpas_fields),         intent(inout) :: self
 !         type(fckit_configuration), intent(in)    :: f_conf
 !         type(datetime),            intent(inout) :: vdate
 !      end subroutine read_file_
@@ -138,13 +138,13 @@ public :: mpas_field, mpas_field_registry, &
    integer, parameter    :: max_string=8000
    character(max_string) :: message
 
-#define LISTED_TYPE mpas_field
+#define LISTED_TYPE mpas_fields
 
 !> Linked list interface - defines registry_t type
 #include <oops/util/linkedList_i.f>
 
 !> Global registry
-type(registry_t) :: mpas_field_registry
+type(registry_t) :: mpas_fields_registry
 
 ! ------------------------------------------------------------------------------
 
@@ -157,13 +157,13 @@ contains
 
 ! ------------------------------------------------------------------------------
 
-subroutine create_field(self, geom, vars, vars_ci)
+subroutine create_fields(self, geom, vars, vars_ci)
 
     implicit none
 
-    class(mpas_field), intent(inout)       :: self
-    type(mpas_geom),   intent(in), pointer :: geom
-    type(oops_variables), intent(in)       :: vars, vars_ci
+    class(mpas_fields),   intent(inout)       :: self
+    type(mpas_geom),      intent(in), pointer :: geom
+    type(oops_variables), intent(in)          :: vars, vars_ci
 
     integer :: ivar, ierr
 
@@ -179,31 +179,31 @@ subroutine create_field(self, geom, vars, vars_ci)
        self % fldnames_ci(ivar) = trim(vars_ci % variable(ivar))
     end do
 
-    write(message,*) "DEBUG: create_field: self % fldnames(:) =",self % fldnames(:)
+    write(message,*) "DEBUG: create_fields: self % fldnames(:) =",self % fldnames(:)
     call fckit_log%debug(message)
 
     ! link geom
     if (associated(geom)) then
       self % geom => geom
     else
-      call abor1_ftn("--> create_field: geom not associated")
+      call abor1_ftn("--> create_fields: geom not associated")
     end if
 
     ! clock creation
     allocate(self % clock)
     call atm_simulation_clock_init(self % clock, self % geom % domain % blocklist % configs, ierr)
     if ( ierr .ne. 0 ) then
-       call abor1_ftn("--> create_field: atm_simulation_clock_init problem")
+       call abor1_ftn("--> create_fields: atm_simulation_clock_init problem")
     end if
 
-!    write(*,*)'--> create_field: sub Pool from list of variable ',self % nf
+!    write(*,*)'--> create_fields: sub Pool from list of variable ',self % nf
     call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
 
     call self%zeros() !-- set zero for self % subFields
 
     return
 
-end subroutine create_field
+end subroutine create_fields
 
 ! ------------------------------------------------------------------------------
 
@@ -228,27 +228,27 @@ end subroutine create_pool
 
 ! ------------------------------------------------------------------------------
 
-subroutine delete_field(self)
+subroutine delete_fields(self)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
+   class(mpas_fields), intent(inout) :: self
    integer :: ierr = 0
 
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
 
-!   write(*,*)'--> delete_field: deallocate subFields Pool'
+!   write(*,*)'--> delete_fields: deallocate subFields Pool'
    call delete_pool(self % subFields)
 
    call mpas_destroy_clock(self % clock, ierr)
    if ( ierr .ne. 0  ) then
-      write(*,*) '--> delete_field deallocate clock failed'
+      write(*,*) '--> delete_fields deallocate clock failed'
    end if
-!   write(*,*)'--> delete_field done'
+!   write(*,*)'--> delete_fields done'
 
    return
 
-end subroutine delete_field
+end subroutine delete_fields
 
 ! ------------------------------------------------------------------------------
 
@@ -265,15 +265,15 @@ end subroutine delete_pool
 
 ! ------------------------------------------------------------------------------
 
-subroutine copy_field(self,rhs)
+subroutine copy_fields(self,rhs)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
-   class(mpas_field), intent(in)    :: rhs
-   type (MPAS_Time_type)   :: rhs_time
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
+   type (MPAS_Time_type) :: rhs_time
    integer :: ierr
 
-!   write(*,*)'--> copy_field: copy subFields Pool'
+!   write(*,*)'--> copy_fields: copy subFields Pool'
 
    self % nf = rhs % nf
    if (allocated(self % fldnames)) deallocate(self % fldnames)
@@ -290,9 +290,9 @@ subroutine copy_field(self,rhs)
 
    call copy_pool(rhs % subFields, self % subFields)
 
-!   write(*,*)'--> copy_field done'
+!   write(*,*)'--> copy_fields done'
 
-end subroutine copy_field
+end subroutine copy_fields
 
 ! ------------------------------------------------------------------------------
 
@@ -312,10 +312,10 @@ end subroutine copy_pool
 
 ! ------------------------------------------------------------------------------
 
-subroutine read_field(self, f_conf, vdate)
+subroutine read_fields(self, f_conf, vdate)
 
    implicit none
-   class(mpas_field),         intent(inout) :: self     !< Field
+   class(mpas_fields),        intent(inout) :: self     !< Field
    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
    type(datetime),            intent(inout) :: vdate    !< DateTime
    character(len=:), allocatable :: str
@@ -326,7 +326,7 @@ subroutine read_field(self, f_conf, vdate)
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
 
-!   write(*,*)'--> read_field'
+!   write(*,*)'--> read_fields'
    call f_conf%get_or_die("date",str)
    sdate = str
    call datetime_set(sdate, vdate)
@@ -334,7 +334,7 @@ subroutine read_field(self, f_conf, vdate)
    call f_conf%get_or_die("filename",str)
    call swap_name_member(f_conf, str)
    temp_filename = str
-!   write(*,*)'--> read_field: Reading ',trim(temp_filename)
+!   write(*,*)'--> read_fields: Reading ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -348,17 +348,17 @@ subroutine read_field(self, f_conf, vdate)
    self % manager => self % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
-!   write(*,*)'--> read_field: dateTimeString: ',trim(dateTimeString)
+!   write(*,*)'--> read_fields: dateTimeString: ',trim(dateTimeString)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
    call mpas_set_clock_time(self % clock, local_time, MPAS_NOW)
    call mpas_set_clock_time(self % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-!   write(*,*)'--> read_field: Reading ',trim(filename)
+!   write(*,*)'--> read_fields: Reading ',trim(filename)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
-      write(message,*) '--> read_field: MPAS_stream_mgr_read failed ierr=',ierr
+      write(message,*) '--> read_fields: MPAS_stream_mgr_read failed ierr=',ierr
       call abor1_ftn(message)
    end if
 
@@ -383,7 +383,7 @@ subroutine read_field(self, f_conf, vdate)
    !(2) copy all to subFields & diagnose temperature
    call update_diagnostic_fields(self % geom % domain, self % subFields, self % geom % nCellsSolve)
 
-end subroutine read_field
+end subroutine read_fields
 
 
 subroutine update_diagnostic_fields(domain, subFields, ngrid)
@@ -423,10 +423,10 @@ end subroutine update_diagnostic_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine write_field(self, f_conf, vdate)
+subroutine write_fields(self, f_conf, vdate)
 
    implicit none
-   class(mpas_field),         intent(inout) :: self   !< Field
+   class(mpas_fields),        intent(inout) :: self   !< Field
    type(fckit_configuration), intent(in)    :: f_conf !< Configuration
    type(datetime),            intent(in)    :: vdate  !< DateTime
    character(len=:), allocatable :: str
@@ -438,11 +438,11 @@ subroutine write_field(self, f_conf, vdate)
    call da_copy_sub2all_fields(self % geom % domain, self % subFields)
 
    call datetime_to_string(vdate, validitydate)
-!   write(*,*)'--> write_field: ',trim(validitydate)
+!   write(*,*)'--> write_fields: ',trim(validitydate)
    call f_conf%get_or_die("filename",str)
    call swap_name_member(f_conf, str)
    temp_filename = str
-!   write(*,*)'--> write_field: ',trim(temp_filename)
+!   write(*,*)'--> write_fields: ',trim(temp_filename)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -453,7 +453,7 @@ subroutine write_field(self, f_conf, vdate)
    call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
-   ! write(*,*)'check time --> write_field: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+   ! write(*,*)'check time --> write_fields: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
 
    self % manager => self % geom % domain % streamManager
@@ -464,42 +464,42 @@ subroutine write_field(self, f_conf, vdate)
    !streamID = 'da'
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
-!   write(*,*)'--> write_field: writing ',trim(filename)
+!   write(*,*)'--> write_fields: writing ',trim(filename)
    call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, &
         forceWriteNow=.true., writeTime=dateTimeString, ierr=ierr)
    if ( ierr .ne. 0  ) then
-     write(message,*) '--> write_field: MPAS_stream_mgr_write failed ierr=',ierr
+     write(message,*) '--> write_fields: MPAS_stream_mgr_write failed ierr=',ierr
      call abor1_ftn(message)
    end if
 
-end subroutine write_field
+end subroutine write_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine change_resol_field(self,rhs)
+subroutine change_resol_fields(self,rhs)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
-   class(mpas_field), intent(in)    :: rhs
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
 
    if (self%geom%nCells == rhs%geom%nCells .and.  self%geom%nVertLevels == rhs%geom%nVertLevels) then
      call self%copy(rhs)
    else if (self%geom%nVertLevels == rhs%geom%nVertLevels) then
-      call interpolate_geoms(self,rhs)
+      call interpolate_fields(self,rhs)
    else
-     write(message,*) '--> change_resol_field: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
+     write(message,*) '--> change_resol_fields: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
      call fckit_log%info(message)
-     call abor1_ftn("mpas_field_utils_mod:change_resol_field: VertLevels dimension mismatch")
+     call abor1_ftn("mpas_fields_mod:change_resol_fields: VertLevels dimension mismatch")
    endif
 
-end subroutine change_resol_field
+end subroutine change_resol_fields
 
 ! ------------------------------------------------------------------------------
 
 subroutine zeros_(self)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
+   class(mpas_fields), intent(inout) :: self
 
    call da_constant(self % subFields, MPAS_JEDI_ZERO_kr, fld_select = self % fldnames_ci)
 
@@ -510,7 +510,7 @@ end subroutine zeros_
 subroutine ones_(self)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
+   class(mpas_fields), intent(inout) :: self
 
    call da_constant(self % subFields, MPAS_JEDI_ONE_kr, fld_select = self % fldnames_ci)
 
@@ -521,7 +521,7 @@ end subroutine ones_
 subroutine random_(self)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
+   class(mpas_fields), intent(inout) :: self
 
    call da_random(self % subFields, fld_select = self % fldnames_ci)
 
@@ -532,7 +532,7 @@ end subroutine random_
 subroutine gpnorm_(self, nf, pstat)
 
    implicit none
-   class(mpas_field),    intent(in)  :: self
+   class(mpas_fields),   intent(in)  :: self
    integer,              intent(in)  :: nf
    real(kind=kind_real), intent(out) :: pstat(3, nf)
 
@@ -545,7 +545,7 @@ end subroutine gpnorm_
 subroutine rms_(self, prms)
 
    implicit none
-   class(mpas_field),    intent(in)  :: self
+   class(mpas_fields),   intent(in)  :: self
    real(kind=kind_real), intent(out) :: prms
 
    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms, fld_select = self % fldnames_ci)
@@ -557,8 +557,8 @@ end subroutine rms_
 subroutine self_add_(self,rhs)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
-   class(mpas_field), intent(in)    :: rhs
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
    character(len=StrKIND) :: kind_op
 
    kind_op = 'add'
@@ -571,8 +571,8 @@ end subroutine self_add_
 subroutine self_schur_(self,rhs)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
-   class(mpas_field), intent(in)    :: rhs
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
    character(len=StrKIND) :: kind_op
 
    kind_op = 'schur'
@@ -585,8 +585,8 @@ end subroutine self_schur_
 subroutine self_sub_(self,rhs)
 
    implicit none
-   class(mpas_field), intent(inout) :: self
-   class(mpas_field), intent(in)    :: rhs
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
    character(len=StrKIND) :: kind_op
 
    kind_op = 'sub'
@@ -599,7 +599,7 @@ end subroutine self_sub_
 subroutine self_mult_(self,zz)
 
    implicit none
-   class(mpas_field),    intent(inout) :: self
+   class(mpas_fields),   intent(inout) :: self
    real(kind=kind_real), intent(in)    :: zz
 
    call da_self_mult(self % subFields, zz)
@@ -611,9 +611,9 @@ end subroutine self_mult_
 subroutine axpy_(self,zz,rhs)
 
    implicit none
-   class(mpas_field),    intent(inout) :: self
+   class(mpas_fields),   intent(inout) :: self
    real(kind=kind_real), intent(in)    :: zz
-   class(mpas_field),    intent(in)    :: rhs
+   class(mpas_fields),   intent(in)    :: rhs
 
    call da_axpy(self % subFields, rhs % subFields, zz, fld_select = self % fldnames_ci)
 
@@ -624,7 +624,7 @@ end subroutine axpy_
 subroutine dot_prod_(self,fld,zprod)
 
    implicit none
-   class(mpas_field),     intent(in)    :: self, fld
+   class(mpas_fields),    intent(in)    :: self, fld
    real(kind=kind_real),  intent(inout) :: zprod
 
    call da_dot_product(self % subFields, fld % subFields, self % geom % domain % dminfo, zprod)
@@ -637,14 +637,14 @@ subroutine interp_checks(cop, fld, locs, vars, gom)
 
    implicit none
    character(len=2),     intent(in) :: cop
-   class(mpas_field),    intent(in) :: fld
+   class(mpas_fields),   intent(in) :: fld
    type(ufo_locations),  intent(in) :: locs
    type(oops_variables), intent(in) :: vars
    type(ufo_geovals),    intent(in) :: gom
    integer :: jvar
    character(len=26) :: cinfo
 
-   cinfo="mpas_field:checks "//cop//" : "
+   cinfo="mpas_fields:checks "//cop//" : "
 
    !Check things are the sizes we expect
    !------------------------------------
@@ -676,16 +676,16 @@ end subroutine interp_checks
 
 !> \brief Populates subfields of self using rhs
 !!
-!! \details **interpolate_geoms** This subroutine is called when creating
-!! a new mpas_field type (self) using an existing mpas_field (rhs) as a source that
+!! \details **interpolate_fields** This subroutine is called when creating
+!! a new mpas_fields type (self) using an existing mpas_fields (rhs) as a source that
 !! has a different geometry/mesh (but the same number of VertLevels). It populates
 !! the subfields of self, interpolating the data from rhs. It can use either
 !! bump or unstructured interpolation for the interpolation routine.
-subroutine interpolate_geoms(self,rhs)
+subroutine interpolate_fields(self,rhs)
 
   implicit none
-  class(mpas_field), intent(inout) :: self !< mpas_field being populated
-  class(mpas_field), intent(in)    :: rhs  !< mpas_field used as source
+  class(mpas_fields), intent(inout) :: self !< mpas_fields being populated
+  class(mpas_fields), intent(in)    :: rhs  !< mpas_fields used as source
 
   type(bump_interpolator) :: bumpinterp
   type(unstrc_interp)     :: unsinterp
@@ -749,7 +749,7 @@ subroutine interpolate_geoms(self,rhs)
       rhsDims = getSolveDimensions(rhs%subFields, poolItr)
       nlevels = rhsDims(1)
       if (nlevels > maxlevels) then
-        write(message,*) '--> interpolate_geoms: nlevels > maxlevels, ', nlevels, maxlevels
+        write(message,*) '--> interpolate_fields: nlevels > maxlevels, ', nlevels, maxlevels
         call abor1_ftn(message)
       endif
       if (poolItr % dataType == MPAS_POOL_INTEGER) then
@@ -760,7 +760,7 @@ subroutine interpolate_geoms(self,rhs)
         interp_in(1:rhs_nCells,1:nlevels) = transpose(r2d_ptr(1:nlevels,1:rhs_nCells))
       endif
     else
-      write(message,*) '--> interpolate_geoms: poolItr % nDims == ',poolItr % nDims,' not handled'
+      write(message,*) '--> interpolate_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
       call abor1_ftn(message)
     endif
 
@@ -798,7 +798,7 @@ subroutine interpolate_geoms(self,rhs)
   deallocate(interp_out)
   if (allocated(rhsDims)) deallocate(rhsDims)
 
-end subroutine interpolate_geoms
+end subroutine interpolate_fields
 ! ------------------------------------------------------------------------------
 
 ! ------------------------------------------------------------------------------
@@ -887,7 +887,7 @@ subroutine serial_size(self, vsize)
    implicit none
 
    ! Passed variables
-   class(mpas_field),intent(in) :: self
+   class(mpas_fields),intent(in) :: self
    integer,intent(out) :: vsize !< Size
 
    ! Local variables
@@ -910,12 +910,12 @@ end subroutine serial_size
 
 ! ------------------------------------------------------------------------------
 
-subroutine serialize_field(self, vsize, vect_inc)
+subroutine serialize_fields(self, vsize, vect_inc)
 
    implicit none
 
    ! Passed variables
-   class(mpas_field),intent(in) :: self             !< Increment
+   class(mpas_fields),intent(in) :: self             !< Increment
    integer,intent(in) :: vsize                      !< Size
    real(kind_real),intent(out) :: vect_inc(vsize)   !< Vector
 
@@ -972,23 +972,23 @@ subroutine serialize_field(self, vsize, vect_inc)
                enddo
             endif
          else
-            write(message,*) '--> serialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
+            write(message,*) '--> serialize_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(message)
          endif
          deallocate(solveDims)
       endif
    enddo
 
-end subroutine serialize_field
+end subroutine serialize_fields
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine deserialize_field(self, vsize, vect_inc, index)
+subroutine deserialize_fields(self, vsize, vect_inc, index)
 
    implicit none
 
    ! Passed variables
-   class(mpas_field),intent(inout) :: self               !< Increment
+   class(mpas_fields),intent(inout) :: self               !< Increment
    integer,intent(in) :: vsize                           !< Size
    real(kind_real),intent(in) :: vect_inc(vsize)         !< Vector
    integer,intent(inout) :: index                        !< Index
@@ -1043,24 +1043,24 @@ subroutine deserialize_field(self, vsize, vect_inc, index)
                enddo
             endif
          else
-            write(message,*) '--> deserialize_field: poolItr % nDims == ',poolItr % nDims,' not handled'
+            write(message,*) '--> deserialize_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(message)
          endif
          deallocate(solveDims)
       endif
    enddo
 
-end subroutine deserialize_field
+end subroutine deserialize_fields
 
 function has_field(self, fieldname) result(has)
-   class(mpas_field), intent(in) :: self
+   class(mpas_fields), intent(in) :: self
    character(len=*), intent(in) :: fieldname
    logical :: has
    has = (ufo_vars_getindex(self % fldnames, fieldname) > 0)
 end function has_field
 
 function has_fields(self, fieldnames) result(has)
-   class(mpas_field), intent(in) :: self
+   class(mpas_fields), intent(in) :: self
    character(len=*), intent(in) :: fieldnames(:)
    integer :: i
    logical :: has
@@ -1070,4 +1070,4 @@ function has_fields(self, fieldnames) result(has)
    end do
 end function has_fields
 
-end module mpas_field_utils_mod
+end module mpas_fields_mod

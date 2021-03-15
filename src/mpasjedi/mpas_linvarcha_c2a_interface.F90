@@ -13,7 +13,7 @@ use iso_c_binding
 use oops_variables_mod
 
 use kinds
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_geom_mod
 use mpas_linvarcha_c2a_mod
 
@@ -38,8 +38,8 @@ type(c_ptr), value, intent(in) :: c_conf         !< Configuration
 type(c_ptr), value, intent(in) :: c_vars         !< List of input variables
 
 type(mpas_linvarcha_c2a), pointer :: self
-type(mpas_field), pointer :: bg
-type(mpas_field), pointer :: fg
+type(mpas_fields), pointer :: bg
+type(mpas_fields), pointer :: fg
 type(mpas_geom), pointer :: geom
 type(fckit_configuration) :: f_conf
 type(oops_variables) :: vars
@@ -48,8 +48,8 @@ call mpas_linvarcha_c2a_registry%init()
 call mpas_linvarcha_c2a_registry%add(c_key_self)
 call mpas_linvarcha_c2a_registry%get(c_key_self, self)
 
-call mpas_field_registry%get(c_key_state_bg,bg)
-call mpas_field_registry%get(c_key_state_fg,fg)
+call mpas_fields_registry%get(c_key_state_bg,bg)
+call mpas_fields_registry%get(c_key_state_fg,fg)
 
 call mpas_geom_registry%get(c_key_geom,geom)
 
@@ -87,12 +87,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_linvarcha_c2a), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_linvarcha_c2a_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_linvarcha_c2a_multiply(self,xin,xout)
 
@@ -109,12 +109,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_linvarcha_c2a), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_linvarcha_c2a_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_linvarcha_c2a_multiplyadjoint(self,xin,xout)
 
@@ -133,12 +133,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_linvarcha_c2a), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_linvarcha_c2a_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_linvarcha_c2a_multiplyinverse(self,xin,xout)
 
@@ -155,12 +155,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_linvarcha_c2a), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_linvarcha_c2a_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_linvarcha_c2a_multiplyinverseadjoint(self,xin,xout)
 

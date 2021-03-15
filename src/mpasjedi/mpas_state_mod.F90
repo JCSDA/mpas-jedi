@@ -34,7 +34,7 @@ use mpas_dmpar, only: mpas_dmpar_exch_halo_field
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas2ufo_vars_mod
 use mpas4da_mod
 
@@ -65,8 +65,8 @@ contains
 subroutine add_incr(self, increment)
 
    implicit none
-   class(mpas_field), intent(inout) :: self !< state
-   class(mpas_field), intent(in)    :: increment
+   class(mpas_fields), intent(inout) :: self !< state
+   class(mpas_fields), intent(in)    :: increment
    character(len=StrKIND) :: kind_op
 
    integer :: ngrid
@@ -193,7 +193,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
 
   implicit none
 
-  class(mpas_field),         intent(inout) :: self   !< State
+  class(mpas_fields),        intent(inout) :: self   !< State
   type(mpas_geom), target,   intent(in)    :: geom   !< Geometry
   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
   type(datetime),            intent(inout) :: vdate  !< DateTime
@@ -459,7 +459,7 @@ subroutine invent_state(self,f_conf)
 
    implicit none
 
-   class(mpas_field),         intent(inout) :: self    !< Model fields
+   class(mpas_fields),        intent(inout) :: self    !< Model fields
    type(fckit_configuration), intent(in)    :: f_conf  !< Configuration structure
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b

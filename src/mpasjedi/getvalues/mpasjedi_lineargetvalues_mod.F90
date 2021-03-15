@@ -33,7 +33,7 @@ use mpas_pool_routines
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas2ufo_vars_mod
 use mpas4da_mod
 use mpasjedi_getvalues_mod
@@ -138,7 +138,7 @@ subroutine set_trajectory (self, geom, fields, t1, t2, locs, gom)
   implicit none
   class(mpasjedi_lineargetvalues), intent(inout) :: self
   type(mpas_geom),                intent(in)    :: geom
-  type(mpas_field),               intent(in)    :: fields
+  type(mpas_fields),              intent(in)    :: fields
   type(datetime),                 intent(in)    :: t1
   type(datetime),                 intent(in)    :: t2
   type(ufo_locations),            intent(in)    :: locs
@@ -192,7 +192,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   implicit none
   class(mpasjedi_lineargetvalues), intent(inout) :: self
   type(mpas_geom),                intent(in)    :: geom
-  type(mpas_field),               intent(inout) :: fields
+  type(mpas_fields),              intent(inout) :: fields
   type(datetime),                 intent(in)    :: t1
   type(datetime),                 intent(in)    :: t2
   type(ufo_locations),            intent(in)    :: locs
@@ -357,7 +357,7 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
   implicit none
   class(mpasjedi_lineargetvalues), intent(inout) :: self    !< lineargetvalues self
   type(mpas_geom),                intent(in)     :: geom    !< geometry (mpas mesh)
-  type(mpas_field),               intent(inout)  :: fields  !< increment
+  type(mpas_fields),              intent(inout)  :: fields  !< increment
   type(datetime),                 intent(in)     :: t1      !< time window begin
   type(datetime),                 intent(in)     :: t2      !< time window end
   type(ufo_locations),            intent(in)     :: locs    !< observation locations

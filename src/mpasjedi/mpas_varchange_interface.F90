@@ -10,7 +10,7 @@ subroutine c_mpas_varchange_setup(c_key_self, c_key_state_bg, c_key_state_fg, &
 
 use fckit_configuration_module, only: fckit_configuration
 use mpas_varchange_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_geom_mod
 
 implicit none
@@ -21,8 +21,8 @@ integer(c_int), intent(in)     :: c_key_geom     !< Geom key
 type(c_ptr), value, intent(in) :: c_conf         !< Configuration
 
 type(mpas_varchange), pointer :: self
-type(mpas_field), pointer :: bg
-type(mpas_field), pointer :: fg
+type(mpas_fields), pointer :: bg
+type(mpas_fields), pointer :: fg
 type(mpas_geom), pointer :: geom
 type(fckit_configuration) :: f_conf
 
@@ -30,8 +30,8 @@ call mpas_varchange_registry%init()
 call mpas_varchange_registry%add(c_key_self)
 call mpas_varchange_registry%get(c_key_self, self)
 
-call mpas_field_registry%get(c_key_state_bg,bg)
-call mpas_field_registry%get(c_key_state_fg,fg)
+call mpas_fields_registry%get(c_key_state_bg,bg)
+call mpas_fields_registry%get(c_key_state_fg,fg)
 
 call mpas_geom_registry%get(c_key_geom,geom)
 
@@ -66,7 +66,7 @@ subroutine c_mpas_varchange_multiply(c_key_self, c_key_in, c_key_out) &
 
 use iso_c_binding
 use mpas_varchange_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 
 implicit none
@@ -75,12 +75,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_varchange), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_varchange_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_varchange_multiply(self,xin,xout)
 
@@ -93,7 +93,7 @@ subroutine c_mpas_varchange_multiplyadjoint(c_key_self, c_key_in, &
 
 use iso_c_binding
 use mpas_varchange_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 
 implicit none
@@ -102,12 +102,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_varchange), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_varchange_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_varchange_multiplyadjoint(self,xin,xout)
 
@@ -122,7 +122,7 @@ subroutine c_mpas_varchange_multiplyinverse(c_key_self, c_key_in, c_key_out) &
 
 use iso_c_binding
 use mpas_varchange_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 
 implicit none
@@ -131,12 +131,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_varchange), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_varchange_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_varchange_multiplyinverse(self,xin,xout)
 
@@ -149,7 +149,7 @@ subroutine c_mpas_varchange_multiplyinverseadjoint(c_key_self, c_key_in, &
 
 use iso_c_binding
 use mpas_varchange_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 
 implicit none
@@ -158,12 +158,12 @@ integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 
 type(mpas_varchange), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_varchange_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call mpas_varchange_multiplyinverseadjoint(self,xin,xout)
 

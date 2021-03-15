@@ -55,7 +55,7 @@ subroutine c_mpas_model_prepare_integration(c_key_self, c_key_state) &
          & bind(c,name='mpas_model_prepare_integration_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_model_mod
 
 implicit none
@@ -63,9 +63,9 @@ integer(c_int), intent(in) :: c_key_self  !< Model
 integer(c_int), intent(in) :: c_key_state !< Model fields
 
 type(mpas_model), pointer :: self
-type(mpas_field), pointer :: state
+type(mpas_fields), pointer :: state
 
-call mpas_field_registry%get(c_key_state,state)
+call mpas_fields_registry%get(c_key_state,state)
 call mpas_model_registry%get(c_key_self, self)
 
 call model_prepare_integration(self, state)
@@ -78,7 +78,7 @@ subroutine c_mpas_model_prepare_integration_ad(c_key_self, c_key_incr) &
            bind(c,name='mpas_model_prepare_integration_ad_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_model_mod
 
 implicit none
@@ -86,10 +86,10 @@ integer(c_int), intent(in) :: c_key_self !< Model
 integer(c_int), intent(in) :: c_key_incr !< Model fields
 
 type(mpas_model), pointer :: self
-type(mpas_field), pointer :: inc
+type(mpas_fields), pointer :: inc
 
 call mpas_model_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_incr,inc)
+call mpas_fields_registry%get(c_key_incr,inc)
 
 call model_prepare_integration_ad(self, inc)
 
@@ -101,7 +101,7 @@ subroutine c_mpas_model_prepare_integration_tl(c_key_self, c_key_incr) &
            bind(c,name='mpas_model_prepare_integration_tl_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_model_mod
 
 implicit none
@@ -109,10 +109,10 @@ integer(c_int), intent(in) :: c_key_self  !< Model
 integer(c_int), intent(in) :: c_key_incr  !< Model fields
 
 type(mpas_model), pointer :: self
-type(mpas_field), pointer :: inc
+type(mpas_fields), pointer :: inc
 
 call mpas_model_registry%get(c_key_self, self)
-call mpas_field_registry%get(c_key_incr, inc)
+call mpas_fields_registry%get(c_key_incr, inc)
 
 call model_prepare_integration_tl(self, inc)
 
@@ -123,7 +123,7 @@ end subroutine c_mpas_model_prepare_integration_tl
 subroutine c_mpas_model_propagate(c_key_self, c_key_state) bind(c,name='mpas_model_propagate_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_model_mod
 
 implicit none
@@ -131,10 +131,10 @@ integer(c_int), intent(in) :: c_key_self  !< Model
 integer(c_int), intent(in) :: c_key_state !< Model fields
 
 type(mpas_model), pointer :: self
-type(mpas_field), pointer :: state
+type(mpas_fields), pointer :: state
 
 call mpas_model_registry%get(c_key_self, self)
-call mpas_field_registry%get(c_key_state,state)
+call mpas_fields_registry%get(c_key_state,state)
 
 call model_propagate(self, state)
 
@@ -146,7 +146,7 @@ subroutine c_mpas_model_propagate_ad(c_key_self, c_key_incr, c_key_traj) &
            bind(c,name='mpas_model_propagate_ad_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_trajectories
 use mpas_model_mod
 
@@ -156,11 +156,11 @@ integer(c_int), intent(in) :: c_key_incr !< Model fields
 integer(c_int), intent(in) :: c_key_traj !< Trajectory structure
 
 type(mpas_model),      pointer :: self
-type(mpas_field),  pointer :: inc
+type(mpas_fields),  pointer :: inc
 type(mpas_trajectory), pointer :: traj
 
 call mpas_model_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_incr,inc)
+call mpas_fields_registry%get(c_key_incr,inc)
 call mpas_traj_registry%get(c_key_traj,traj)
 
 call model_propagate_ad(self, inc, traj)
@@ -173,7 +173,7 @@ subroutine c_mpas_model_propagate_tl(c_key_self, c_key_incr, c_key_traj) &
            bind(c,name='mpas_model_propagate_tl_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_trajectories
 use mpas_model_mod
 
@@ -183,11 +183,11 @@ integer(c_int), intent(in) :: c_key_incr !< Model fields
 integer(c_int), intent(in) :: c_key_traj !< Trajectory structure
 
 type(mpas_model),      pointer :: self
-type(mpas_field),  pointer :: inc
+type(mpas_fields),  pointer :: inc
 type(mpas_trajectory), pointer :: traj
 
 call mpas_model_registry%get(c_key_self, self)
-call mpas_field_registry%get(c_key_incr,inc)
+call mpas_fields_registry%get(c_key_incr,inc)
 call mpas_traj_registry%get(c_key_traj,traj)
 
 call model_propagate_tl(self, inc, traj)
@@ -199,7 +199,7 @@ end subroutine c_mpas_model_propagate_tl
 subroutine c_mpas_model_prop_traj(c_key_self, c_key_state, c_key_traj) bind(c,name='mpas_model_prop_traj_f90')
 
 use iso_c_binding
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas_model_mod
 use mpas_trajectories
 
@@ -209,11 +209,11 @@ integer(c_int), intent(in)    :: c_key_state !< Model fields
 integer(c_int), intent(inout) :: c_key_traj  !< Trajectory structure
 
 type(mpas_model),      pointer :: self
-type(mpas_field),      pointer :: state
+type(mpas_fields),      pointer :: state
 type(mpas_trajectory), pointer :: traj
 
 call mpas_model_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_state,state)
+call mpas_fields_registry%get(c_key_state,state)
 
 call mpas_traj_registry%init()            
 call mpas_traj_registry%add(c_key_traj)

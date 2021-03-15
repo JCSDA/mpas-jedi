@@ -27,7 +27,7 @@ use mpas_pool_routines
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas2ufo_vars_mod
 use mpas4da_mod
 
@@ -47,9 +47,9 @@ contains
 subroutine diff_incr(lhs,x1,x2)
 
    implicit none
-   class(mpas_field), intent(inout) :: lhs
-   class(mpas_field), intent(in)    :: x1
-   class(mpas_field), intent(in)    :: x2
+   class(mpas_fields), intent(inout) :: lhs
+   class(mpas_fields), intent(in)    :: x1
+   class(mpas_fields), intent(in)    :: x2
    character(len=StrKIND) :: kind_op
 
    call lhs%zeros()
@@ -73,7 +73,7 @@ end subroutine diff_incr
 subroutine dirac(self, f_conf)
 
    implicit none
-   class(mpas_field),         intent(inout) :: self
+   class(mpas_fields),        intent(inout) :: self
    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
    character(len=:), allocatable :: str
    integer                :: ndir, idir, ildir, ndirlocal
@@ -243,7 +243,7 @@ subroutine set_atlas(self, geom, vars, afieldset)
 
    implicit none
 
-   type(mpas_field),     intent(in)    :: self
+   type(mpas_fields),    intent(in)    :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
    type(atlas_fieldset), intent(inout) :: afieldset
@@ -292,7 +292,7 @@ subroutine to_atlas(self, geom, vars, afieldset)
 
    implicit none
 
-   type(mpas_field),     intent(in)    :: self
+   type(mpas_fields),    intent(in)    :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
    type(atlas_fieldset), intent(inout) :: afieldset
@@ -357,7 +357,7 @@ subroutine from_atlas(self, geom, vars, afieldset)
 
    implicit none
 
-   type(mpas_field),     intent(inout) :: self
+   type(mpas_fields),    intent(inout) :: self
    type(mpas_geom),      intent(in)    :: geom
    type(oops_variables), intent(in)    :: vars
    type(atlas_fieldset), intent(in)    :: afieldset

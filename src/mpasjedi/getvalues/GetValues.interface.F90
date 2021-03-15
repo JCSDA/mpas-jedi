@@ -25,7 +25,7 @@ use mpasjedi_getvalues_mod, only: mpasjedi_getvalues, mpas_getvalues_registry
 
 ! mpas dependencies
 use mpas_geom_mod,            only: mpas_geom_registry, mpas_geom
-use mpas_field_utils_mod
+use mpas_fields_mod
 ! use mpas_state_interface_mod, only: mpas_state_registry
 
 implicit none
@@ -100,7 +100,7 @@ integer(c_int),     intent(in) :: c_key_geovals
 
 type(mpasjedi_getvalues), pointer :: self
 type(mpas_geom),          pointer :: geom
-type(mpas_field),         pointer :: fields
+type(mpas_fields),        pointer :: fields
 type(datetime)                    :: t1
 type(datetime)                    :: t2
 type(ufo_locations)               :: locs
@@ -109,7 +109,7 @@ type(ufo_geovals),        pointer :: geovals
 ! Get objects
 call mpas_getvalues_registry%get(c_key_self, self)
 call mpas_geom_registry%get(c_key_geom, geom)
-call mpas_field_registry%get(c_key_state, fields)
+call mpas_fields_registry%get(c_key_state, fields)
 call c_f_datetime(c_t1, t1)
 call c_f_datetime(c_t2, t2)
 locs = ufo_locations(c_locs)

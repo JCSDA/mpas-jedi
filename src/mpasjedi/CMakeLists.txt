@@ -29,7 +29,7 @@ list( APPEND mpasjedi_src_files
     mpas_constants_mod.F90
     mpas_covariance_interface.F90
     mpas_covariance_mod.F90
-    mpas_field_utils_mod.F90
+    mpas_fields_mod.F90
     mpas_geom_interface.F90
     mpas_geom_mod.F90
     mpas_increment_interface_mod.F90

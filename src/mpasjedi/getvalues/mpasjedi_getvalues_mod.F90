@@ -37,7 +37,7 @@ use mpasjedi_unstructured_interp_mod
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use mpas2ufo_vars_mod
 use mpas4da_mod
 
@@ -187,17 +187,17 @@ end subroutine delete
 ! --------------------------------------------------------------------------------------------------
 
 ! -----------------------------------------------------------------------------
-!> \brief Interpolates and converts from mpas_field to populate ufo_geovals
+!> \brief Interpolates and converts from mpas_fields to populate ufo_geovals
 !!
 !! \details **fill_geovals** This subroutine populates the variables in a 
 !! ufo_geovals object by interpolating and converting the state or increment
-!! variables in an mpas_field object. This is the non-linear subroutine used in
+!! variables in an mpas_fields object. This is the non-linear subroutine used in
 !! both GetValues and LinearGetValues classes
 subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   implicit none
   class(mpasjedi_getvalues_base), intent(inout) :: self    !< getvalues_base self
   type(mpas_geom),                intent(in)    :: geom    !< geometry (mpas mesh)
-  type(mpas_field),               intent(in)    :: fields  !< state or increment
+  type(mpas_fields),              intent(in)    :: fields  !< state or increment
   type(datetime),                 intent(in)    :: t1      !< time window begin
   type(datetime),                 intent(in)    :: t2      !< time window end
   type(ufo_locations),            intent(in)    :: locs    !< observation locations

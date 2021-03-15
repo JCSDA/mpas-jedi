@@ -56,7 +56,7 @@ subroutine c_mpas_b_inv_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 use mpas_framework !BJJ
 
@@ -65,12 +65,12 @@ integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 !TODO BJJ
 !Implement this
 !xout = xin
@@ -108,15 +108,15 @@ use mpas_framework !BJJ
 
 !mpas-jedi
 use mpas_covariance_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_in
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xin
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xin
+type(mpas_fields), pointer :: xout
 type (mpas_pool_iterator_type) :: poolItr
 type (field1DReal), pointer   :: field1d_src
 type (field2DReal), pointer   :: field2d_src
@@ -124,8 +124,8 @@ type (field2DReal), pointer   :: field2d_src
 integer :: ivar
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_in,xin)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_in,xin)
+call mpas_fields_registry%get(c_key_out,xout)
 
    write(*,*) '---- inside sub c_mpas_b_mult ----'
 !TODO BJJ
@@ -164,17 +164,17 @@ subroutine c_mpas_b_randomize(c_key_self, c_key_out) bind(c,name='mpas_b_randomi
 
 use iso_c_binding
 use mpas_covariance_mod
-use mpas_field_utils_mod
+use mpas_fields_mod
 use kinds
 
 implicit none
 integer(c_int), intent(in) :: c_key_self
 integer(c_int), intent(in) :: c_key_out
 type(mpas_covar), pointer :: self
-type(mpas_field), pointer :: xout
+type(mpas_fields), pointer :: xout
 
 call mpas_covar_registry%get(c_key_self,self)
-call mpas_field_registry%get(c_key_out,xout)
+call mpas_fields_registry%get(c_key_out,xout)
 
 call xout%random()
 
