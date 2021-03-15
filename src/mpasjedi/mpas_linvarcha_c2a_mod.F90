@@ -33,12 +33,11 @@ public :: mpas_linvarcha_c2a, mpas_linvarcha_c2a_registry, &
 
 !> Fortran derived type to hold configuration data for the B mat variable change
 type :: mpas_linvarcha_c2a
-  integer :: wind_cvt_method  !< method for wind conversion
   type (mpas_pool_type), pointer :: trajectories => null()
 end type mpas_linvarcha_c2a
 
 integer, parameter    :: max_string=800
-character(max_string) :: err_msg
+character(max_string) :: message
 character(len=1024) :: buf
 
 #define LISTED_TYPE mpas_linvarcha_c2a
@@ -68,20 +67,7 @@ subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
 
    type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_qs
 
-   integer :: wind_cvt_method
    integer :: ngrid
-
-   if (f_conf%has("wind_cvt_method")) then
-      call f_conf%get_or_die("wind_cvt_method",wind_cvt_method)
-      if( wind_cvt_method .ne. 1 .and. wind_cvt_method .ne. 2 ) &
-         call abor1_ftn("LinVarChaC2AMPAS::LinVarChaC2AMPAS, mpas_linvarcha_c2a_setup: wind_cvt_method should be 1 or 2")
-   else
-      wind_cvt_method = 1 ! default method
-   end if
-
-   self % wind_cvt_method = wind_cvt_method
-   write(err_msg,*) 'DEBUG:: mpas_linvarcha_c2a_setup, self % wind_cvt_method=',self % wind_cvt_method
-   call fckit_log%debug(err_msg)
 
    if ( vars % has ('relhum') ) then
       !-- set trajectories for linear variable change
@@ -111,8 +97,6 @@ subroutine mpas_linvarcha_c2a_delete(self)
    implicit none
    type(mpas_linvarcha_c2a), intent(inout) :: self
 
-   self % wind_cvt_method = 0
-
    if (associated(self % trajectories)) then
       call mpas_pool_destroy_pool(self % trajectories)
    end if
@@ -131,24 +115,25 @@ subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
    type (field2DReal), pointer :: field2d_sh, field2d_rh, field2d_traj_qs
+   type (field2DReal), pointer :: field2d_v_src, field2d_sf_v, field2d_e_src, field2d_u
 
    type (field2DReal), pointer :: field2d_ctl, field2d_ana
    type (field1DReal), pointer :: field1d_ctl, field1d_ana
-   integer :: k, ngrid
+   integer :: k, ngrid, nCells, nVertices, nEdges
 
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiply: xana % fldnames(:) =",xana % fldnames(:)
-   call fckit_log%debug(err_msg)
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiply: xctl % fldnames(:) =",xctl % fldnames(:)
-   call fckit_log%debug(err_msg)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiply: xana % fldnames(:) =",xana % fldnames(:)
+   call fckit_log%debug(message)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiply: xctl % fldnames(:) =",xctl % fldnames(:)
+   call fckit_log%debug(message)
 
    ngrid = xctl % geom % nCellsSolve ! local 
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
-      ! only 1d or 2d real fields are handled.
+      ! NOTE: only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then 
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
                call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
                call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
@@ -175,7 +160,6 @@ subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
 
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      ngrid = xctl % geom % nCells ! local + halo
       call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
       call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
       call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
@@ -184,17 +168,28 @@ subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
       call mpas_dmpar_exch_halo_field(field2d_sf)
       call mpas_dmpar_exch_halo_field(field2d_vp)
 
-      if( self % wind_cvt_method .eq. 1) then
-         do k=1,xctl%geom%nVertLevels
-            call psichi_to_uv( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                               field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-         end do
-      else if( self % wind_cvt_method .eq. 2) then
-         do k=1,xctl%geom%nVertLevels
-            call psichi_to_uv2( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                                field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-         end do
-      end if
+      nCells = xctl % geom % nCells    ! local + halo
+      nVertices = xctl % geom % nVertices ! local + halo
+      nEdges = xctl % geom % nEdges    ! local + halo
+
+      ! duplicate two temporary working spaces
+      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'vorticity', field2d_v_src)
+      call mpas_duplicate_field(field2d_v_src, field2d_sf_v)
+      field2d_sf_v % fieldName = 'stream_function at vertices'
+      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'u', field2d_e_src)
+      call mpas_duplicate_field(field2d_e_src, field2d_u)
+      field2d_u % fieldName = 'Horizontal normal velocity at edges'
+
+      call psichi_to_uv_edge_step1( xctl % geom, field2d_sf%array(:,1:nCells), field2d_sf_v%array(:,1:nVertices) )
+      call mpas_dmpar_exch_halo_field(field2d_sf_v)
+      call psichi_to_uv_edge_step2( xctl % geom, field2d_sf_v%array(:,1:nVertices), field2d_vp%array(:,1:nCells), &
+                                   field2d_u%array(:,1:nEdges) )
+      call mpas_dmpar_exch_halo_field(field2d_u)
+      call psichi_to_uv_edge_step3( xctl % geom, field2d_u%array(:,1:nEdges), &
+                                   field2d_uRz%array(:,1:nCells), field2d_uRm%array(:,1:nCells) )
+
+      call mpas_deallocate_field(field2d_sf_v)
+      call mpas_deallocate_field(field2d_u)
    end if
 
 end subroutine mpas_linvarcha_c2a_multiply
@@ -211,24 +206,25 @@ subroutine mpas_linvarcha_c2a_multiplyadjoint(self,xana,xctl)
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
    type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
+   type (field2DReal), pointer :: field2d_v_src, field2d_sf_v, field2d_e_src, field2d_u
 
    type (field2DReal), pointer :: field2d_ctl, field2d_ana
    type (field1DReal), pointer :: field1d_ctl, field1d_ana
-   integer :: k, ngrid
+   integer :: k, ngrid, nCells, nVertices, nEdges
 
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
-   call fckit_log%debug(err_msg)
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
-   call fckit_log%debug(err_msg)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
+   call fckit_log%debug(message)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
+   call fckit_log%debug(message)
 
    ngrid = xctl % geom % nCellsSolve
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
-      ! only 1d or 2d real fields are handled.
+      ! NOTE: only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
                call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
                call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
@@ -257,23 +253,33 @@ subroutine mpas_linvarcha_c2a_multiplyadjoint(self,xana,xctl)
 
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      ngrid = xctl % geom % nCells ! local + halo
       call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
       call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
       call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
       call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
 
-      if( self % wind_cvt_method .eq. 1) then
-         do k=1,xctl%geom%nVertLevels
-            call psichi_to_uvAD( xctl % geom, ngrid, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                               field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-         end do
-      else if( self % wind_cvt_method .eq. 2) then
-         do k=1,xctl%geom%nVertLevels
-            call psichi_to_uv2AD( xctl % geom, field2d_sf%array(k,1:ngrid), field2d_vp%array(k,1:ngrid), &
-                                field2d_uRz%array(k,1:ngrid), field2d_uRm%array(k,1:ngrid) )
-         end do
-      end if
+      nCells = xctl % geom % nCells    ! local + halo
+      nVertices = xctl % geom % nVertices ! local + halo
+      nEdges = xctl % geom % nEdges    ! local + halo
+
+      ! duplicate two temporary working spaces
+      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'vorticity', field2d_v_src)
+      call mpas_duplicate_field(field2d_v_src, field2d_sf_v)
+      field2d_sf_v % fieldName = 'stream_function at vertices'
+      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'u', field2d_e_src)
+      call mpas_duplicate_field(field2d_e_src, field2d_u)
+      field2d_u % fieldName = 'Horizontal normal velocity at edges'
+
+      call psichi_to_uv_edge_step3AD( xctl % geom, field2d_u%array(:,1:nEdges), &
+                                     field2d_uRz%array(:,1:nCells), field2d_uRm%array(:,1:nCells) )
+      call mpas_dmpar_exch_halo_adj_field(field2d_u)
+      call psichi_to_uv_edge_step2AD( xctl % geom, field2d_sf_v%array(:,1:nVertices), field2d_vp%array(:,1:nCells), &
+                                     field2d_u%array(:,1:nEdges) )
+      call mpas_dmpar_exch_halo_adj_field(field2d_sf_v)
+      call psichi_to_uv_edge_step1AD( xctl % geom, field2d_sf%array(:,1:nCells), field2d_sf_v%array(:,1:nVertices) )
+
+      call mpas_deallocate_field(field2d_sf_v)
+      call mpas_deallocate_field(field2d_u)
 
       field2d_uRz%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
       field2d_uRm%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
@@ -300,10 +306,10 @@ subroutine mpas_linvarcha_c2a_multiplyinverse(self,xana,xctl)
    type (field1DReal), pointer :: field1d_ctl, field1d_ana
    integer :: ngrid
 
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
-   call fckit_log%debug(err_msg)
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xctl % fldnames(:) =",xctl % fldnames(:)
-   call fckit_log%debug(err_msg)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
+   call fckit_log%debug(message)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xctl % fldnames(:) =",xctl % fldnames(:)
+   call fckit_log%debug(message)
 
    ngrid = xctl % geom % nCellsSolve ! local
 
@@ -312,7 +318,7 @@ subroutine mpas_linvarcha_c2a_multiplyinverse(self,xana,xctl)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
                call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
                call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
@@ -367,10 +373,10 @@ subroutine mpas_linvarcha_c2a_multiplyinverseadjoint(self,xctl,xana)
    type (field1DReal), pointer :: field1d_ctl, field1d_ana
    integer :: ngrid
 
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
-   call fckit_log%debug(err_msg)
-   write(err_msg,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
-   call fckit_log%debug(err_msg)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
+   call fckit_log%debug(message)
+   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
+   call fckit_log%debug(message)
 
    ngrid = xctl % geom % nCellsSolve ! local
 
@@ -379,7 +385,7 @@ subroutine mpas_linvarcha_c2a_multiplyinverseadjoint(self,xctl,xana)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable naems are the same.
+         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
                call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
                call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
@@ -478,18 +484,16 @@ subroutine mpas_reconstruct_2dAD(meshPool, u, uReconstructX, uReconstructY, uRec
 
     call mpas_pool_get_config(meshPool, 'on_a_sphere', on_a_sphere)
 
+    ! initialize the reconstructed vectors
+    uReconstructX = MPAS_JEDI_ZERO_kr
+    uReconstructY = MPAS_JEDI_ZERO_kr
+    uReconstructZ = MPAS_JEDI_ZERO_kr
     if (on_a_sphere) then
-      !$omp do schedule(runtime)
       do iCell = 1, nCells
         clat = cos(latCell(iCell))
         slat = sin(latCell(iCell))
         clon = cos(lonCell(iCell))
         slon = sin(lonCell(iCell))
-
-        ! initialize the reconstructed vectors  !BJJ need to do something TODO
-        uReconstructX(:,iCell) = 0.0
-        uReconstructY(:,iCell) = 0.0
-        uReconstructZ(:,iCell) = 0.0
 
         uReconstructX(:,iCell) = uReconstructX(:,iCell) - clon*slat * uReconstructMeridional(:,iCell)
         uReconstructY(:,iCell) = uReconstructY(:,iCell) - slon*slat * uReconstructMeridional(:,iCell)
@@ -498,20 +502,14 @@ subroutine mpas_reconstruct_2dAD(meshPool, u, uReconstructX, uReconstructY, uRec
         uReconstructX(:,iCell) = uReconstructX(:,iCell) - slon * uReconstructZonal(:,iCell)
         uReconstructY(:,iCell) = uReconstructY(:,iCell) + clon * uReconstructZonal(:,iCell)
       end do
-      !$omp end do
     else
-      !$omp do schedule(runtime)
       do iCell = 1, nCells
         uReconstructY(:,iCell) = uReconstructY(:,iCell) + uReconstructMeridional(:,iCell)
         uReconstructX(:,iCell) = uReconstructX(:,iCell) + uReconstructZonal     (:,iCell)
       end do
-      !$omp end do
     end if
 
-    call mpas_threading_barrier()
-
     ! loop over cell centers
-    !$omp do schedule(runtime)
     do iCell = 1, nCells
       ! a more efficient reconstruction where rbf_values*matrix_reconstruct
       ! has been precomputed in coeffs_reconstruct
@@ -522,7 +520,6 @@ subroutine mpas_reconstruct_2dAD(meshPool, u, uReconstructX, uReconstructY, uRec
                                 + coeffs_reconstruct(3,i,iCell) * uReconstructZ(:,iCell)
       enddo
     enddo   ! iCell
-    !$omp end do
 
 end subroutine mpas_reconstruct_2dAD!}}}
 
@@ -580,18 +577,16 @@ subroutine mpas_reconstruct_1dAD(meshPool, u, uReconstructX, uReconstructY, uRec
 
     call mpas_pool_get_config(meshPool, 'on_a_sphere', on_a_sphere)
 
+    ! initialize the reconstructed vectors
+    uReconstructX = MPAS_JEDI_ZERO_kr
+    uReconstructY = MPAS_JEDI_ZERO_kr
+    uReconstructZ = MPAS_JEDI_ZERO_kr
     if (on_a_sphere) then
-      !$omp do schedule(runtime)
       do iCell = 1, nCells
         clat = cos(latCell(iCell))
         slat = sin(latCell(iCell))
         clon = cos(lonCell(iCell))
         slon = sin(lonCell(iCell))
-
-        ! initialize the reconstructed vectors  !BJJ need to do something TODO
-        uReconstructX(iCell) = 0.0
-        uReconstructY(iCell) = 0.0
-        uReconstructZ(iCell) = 0.0
 
         uReconstructX(iCell) = uReconstructX(iCell) - clon*slat * uReconstructMeridional(iCell)
         uReconstructY(iCell) = uReconstructY(iCell) - slon*slat * uReconstructMeridional(iCell)
@@ -600,20 +595,14 @@ subroutine mpas_reconstruct_1dAD(meshPool, u, uReconstructX, uReconstructY, uRec
         uReconstructX(iCell) = uReconstructX(iCell) - slon * uReconstructZonal(iCell)
         uReconstructY(iCell) = uReconstructY(iCell) + clon * uReconstructZonal(iCell)
       end do
-      !$omp end do
     else
-      !$omp do schedule(runtime)
       do iCell = 1, nCells
         uReconstructY(iCell) = uReconstructY(iCell) + uReconstructMeridional(iCell)
         uReconstructX(iCell) = uReconstructX(iCell) + uReconstructZonal     (iCell)
       end do
-      !$omp end do
     end if
 
-    call mpas_threading_barrier()
-
     ! loop over cell centers
-    !$omp do schedule(runtime)
     do iCell = 1, nCells
       ! a more efficient reconstruction where rbf_values*matrix_reconstruct
       ! has been precomputed in coeffs_reconstruct
@@ -624,23 +613,21 @@ subroutine mpas_reconstruct_1dAD(meshPool, u, uReconstructX, uReconstructY, uRec
                                 + coeffs_reconstruct(3,i,iCell) * uReconstructZ(iCell)
       enddo
     enddo   ! iCell
-    !$omp end do
 
 end subroutine mpas_reconstruct_1dAD!}}}
 
 !-------------------------------------------------------------------------------
 ! input  : psi & chi @ cell center
 ! output : u & v @ cell center
-subroutine psichi_to_uv(geom, ncells, psi, chi, u, v)
+subroutine psichi_to_uv_center(geom, psi, chi, u, v)
 
    implicit none
-   type (mpas_geom),                         intent(in)  :: geom         !< geometry
-   integer,                                  intent(in)  :: ncells
-   real (kind=kind_real), dimension(ncells), intent(in)  :: psi, chi
-   real (kind=kind_real), dimension(ncells), intent(out) :: u, v
+   type (mpas_geom),                                               intent(in)  :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(in)  :: psi, chi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(out) :: u, v
 
    integer :: iC, iE, j
-   real (kind=kind_real), dimension(geom%nCellsSolve) :: &
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
               psi_line_intg_dx, psi_line_intg_dy, chi_line_intg_dx, chi_line_intg_dy
 
    psi_line_intg_dx=MPAS_JEDI_ZERO_kr
@@ -651,40 +638,39 @@ subroutine psichi_to_uv(geom, ncells, psi, chi, u, v)
    do iC = 1, geom%nCellsSolve
      do j = 1, geom%nEdgesOnCell(iC) ! or geom%maxEdges
        iE = geom%edgesOnCell(j,iC)
-       psi_line_intg_dx(iC) = psi_line_intg_dx(iC) &
-          + MPAS_JEDI_HALF_kr * ( psi(geom%cellsOnEdge(1,iE)) + psi(geom%cellsOnEdge(2,iE)) ) &
+       psi_line_intg_dx(:,iC) = psi_line_intg_dx(:,iC) &
+          + MPAS_JEDI_HALF_kr * ( psi(:,geom%cellsOnEdge(1,iE)) + psi(:,geom%cellsOnEdge(2,iE)) ) &
                               * geom%dvEdge(iE) * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC)
-       psi_line_intg_dy(iC) = psi_line_intg_dy(iC) &
-          + MPAS_JEDI_HALF_kr * ( psi(geom%cellsOnEdge(1,iE)) + psi(geom%cellsOnEdge(2,iE)) ) &
+       psi_line_intg_dy(:,iC) = psi_line_intg_dy(:,iC) &
+          + MPAS_JEDI_HALF_kr * ( psi(:,geom%cellsOnEdge(1,iE)) + psi(:,geom%cellsOnEdge(2,iE)) ) &
                               * geom%dvEdge(iE) * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC)
-       chi_line_intg_dx(iC) = chi_line_intg_dx(iC) &
-          + MPAS_JEDI_HALF_kr * ( chi(geom%cellsOnEdge(1,iE)) + chi(geom%cellsOnEdge(2,iE)) ) &
+       chi_line_intg_dx(:,iC) = chi_line_intg_dx(:,iC) &
+          + MPAS_JEDI_HALF_kr * ( chi(:,geom%cellsOnEdge(1,iE)) + chi(:,geom%cellsOnEdge(2,iE)) ) &
                               * geom%dvEdge(iE) * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC)
-       chi_line_intg_dy(iC) = chi_line_intg_dy(iC) &
-          + MPAS_JEDI_HALF_kr * ( chi(geom%cellsOnEdge(1,iE)) + chi(geom%cellsOnEdge(2,iE)) ) &
+       chi_line_intg_dy(:,iC) = chi_line_intg_dy(:,iC) &
+          + MPAS_JEDI_HALF_kr * ( chi(:,geom%cellsOnEdge(1,iE)) + chi(:,geom%cellsOnEdge(2,iE)) ) &
                               * geom%dvEdge(iE) * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC)
      enddo !- j
    enddo !- iC
 
    do iC=1, geom%nCellsSolve
-     u(iC) = ( psi_line_intg_dx(iC) - chi_line_intg_dy(iC) ) / geom%areaCell(iC)
-     v(iC) = ( psi_line_intg_dy(iC) + chi_line_intg_dx(iC) ) / geom%areaCell(iC)
+     u(:,iC) = ( psi_line_intg_dx(:,iC) - chi_line_intg_dy(:,iC) ) / geom%areaCell(iC)
+     v(:,iC) = ( psi_line_intg_dy(:,iC) + chi_line_intg_dx(:,iC) ) / geom%areaCell(iC)
    enddo
 
-end subroutine psichi_to_uv
+end subroutine psichi_to_uv_center
 
 !-------------------------------------------------------------------------------
 
-subroutine psichi_to_uvAD(geom, ncells, psi, chi, u, v)
+subroutine psichi_to_uv_centerAD(geom, psi, chi, u, v)
 
    implicit none
-   type (mpas_geom),                         intent(in)    :: geom         !< geometry
-   integer,                                  intent(in)    :: ncells
-   real (kind=kind_real), dimension(ncells), intent(inout) :: psi, chi
-   real (kind=kind_real), dimension(ncells), intent(inout) :: u, v
+   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: psi, chi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
    integer :: iC, iE, j
-   real (kind=kind_real), dimension(geom%nCellsSolve) :: &
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
               psi_line_intg_dx, psi_line_intg_dy, chi_line_intg_dx, chi_line_intg_dy
 
    psi_line_intg_dx=MPAS_JEDI_ZERO_kr
@@ -693,154 +679,200 @@ subroutine psichi_to_uvAD(geom, ncells, psi, chi, u, v)
    chi_line_intg_dy=MPAS_JEDI_ZERO_kr
 
    do iC=1, geom%nCellsSolve
-     psi_line_intg_dx(iC) = psi_line_intg_dx(iC) + u(iC) / geom%areaCell(iC)
-     chi_line_intg_dy(iC) = chi_line_intg_dy(iC) - u(iC) / geom%areaCell(iC)
-     psi_line_intg_dy(iC) = psi_line_intg_dy(iC) + v(iC) / geom%areaCell(iC)
-     chi_line_intg_dx(iC) = chi_line_intg_dx(iC) + v(iC) / geom%areaCell(iC)
+     psi_line_intg_dx(:,iC) = psi_line_intg_dx(:,iC) + u(:,iC) / geom%areaCell(iC)
+     chi_line_intg_dy(:,iC) = chi_line_intg_dy(:,iC) - u(:,iC) / geom%areaCell(iC)
+     psi_line_intg_dy(:,iC) = psi_line_intg_dy(:,iC) + v(:,iC) / geom%areaCell(iC)
+     chi_line_intg_dx(:,iC) = chi_line_intg_dx(:,iC) + v(:,iC) / geom%areaCell(iC)
    enddo
 
    do iC = 1, geom%nCellsSolve
      do j = 1, geom%nEdgesOnCell(iC) ! or geom%maxEdges
        iE = geom%edgesOnCell(j,iC)
 
-       psi(geom%cellsOnEdge(1,iE)) = psi(geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dx(iC)
-       psi(geom%cellsOnEdge(2,iE)) = psi(geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dx(iC)
+       psi(:,geom%cellsOnEdge(1,iE)) = psi(:,geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dx(:,iC)
+       psi(:,geom%cellsOnEdge(2,iE)) = psi(:,geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dx(:,iC)
        
-       psi(geom%cellsOnEdge(1,iE)) = psi(geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dy(iC)
-       psi(geom%cellsOnEdge(2,iE)) = psi(geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dy(iC)
+       psi(:,geom%cellsOnEdge(1,iE)) = psi(:,geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dy(:,iC)
+       psi(:,geom%cellsOnEdge(2,iE)) = psi(:,geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * psi_line_intg_dy(:,iC)
 
-       chi(geom%cellsOnEdge(1,iE)) = chi(geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dx(iC)
-       chi(geom%cellsOnEdge(2,iE)) = chi(geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dx(iC)
+       chi(:,geom%cellsOnEdge(1,iE)) = chi(:,geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dx(:,iC)
+       chi(:,geom%cellsOnEdge(2,iE)) = chi(:,geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * sin(MPAS_JEDI_ZERO_kr-geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dx(:,iC)
 
-       chi(geom%cellsOnEdge(1,iE)) = chi(geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dy(iC)
-       chi(geom%cellsOnEdge(2,iE)) = chi(geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
- * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dy(iC)
+       chi(:,geom%cellsOnEdge(1,iE)) = chi(:,geom%cellsOnEdge(1,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dy(:,iC)
+       chi(:,geom%cellsOnEdge(2,iE)) = chi(:,geom%cellsOnEdge(2,iE)) + MPAS_JEDI_HALF_kr * geom%dvEdge(iE)&
+ * cos(geom%angleEdge(iE)) * geom%edgesOnCell_sign(j,iC) * chi_line_intg_dy(:,iC)
      enddo !- j
    enddo !- iC
 
-end subroutine psichi_to_uvAD
+end subroutine psichi_to_uv_centerAD
 
 !-------------------------------------------------------------------------------
-! input  : psi & chi @ cell center
-! output : u & v @ cell center
-subroutine psichi_to_uv2(geom, psi, chi, u, v)
+! input  : psi @ cell center
+! output : psi @ vertices
+subroutine psichi_to_uv_edge_step1(geom, psi, psi_v)
+
+   implicit none
+   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: psi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
+
+   integer :: iC, iV, j
+
+   psi_v=MPAS_JEDI_ZERO_kr
+
+   ! Interpolate psi in cell center to vertice
+   do iV = 1, geom%nVerticesSolve ! local
+     do j = 1, geom%vertexDegree
+       iC = geom%cellsOnVertex(j,iV)
+       psi_v(:,iV) = psi_v(:,iV) + geom%kiteAreasOnVertex(j,iV) * psi(:,iC)
+     enddo
+     psi_v(:,iV) = psi_v(:,iV) / geom%areaTriangle(iV)
+   enddo
+
+end subroutine psichi_to_uv_edge_step1
+
+!-------------------------------------------------------------------------------
+! input  : psi @ vertices, chi @ cell center
+! output : edge_normal_wind @ edges
+subroutine psichi_to_uv_edge_step2(geom, psi_v, chi, edge_normal_wind)
+
+   implicit none
+   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(in)    :: psi_v
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: chi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
+
+   integer :: iE
+
+   edge_normal_wind=MPAS_JEDI_ZERO_kr
+
+   !get edge_normal_wind
+   do iE = 1, geom%nEdgesSolve ! local
+     edge_normal_wind(:,iE) = edge_normal_wind(:,iE) - &
+                ( chi(:,geom%cellsOnEdge(2,iE)) - chi(:,geom%cellsOnEdge(1,iE)) ) / geom%dcEdge(iE) - &
+                ( psi_v(:,geom%verticesOnEdge(2,iE)) - psi_v(:,geom%verticesOnEdge(1,iE)) ) / geom%dvEdge(iE)
+   enddo
+
+end subroutine psichi_to_uv_edge_step2
+
+!-------------------------------------------------------------------------------
+! input  : edge_normal_wind @ edges
+! output : zonal- and meridional- wind @ cell center
+subroutine psichi_to_uv_edge_step3(geom, edge_normal_wind, u, v)
 
    use mpas_vector_reconstruction
 
    implicit none
-   type (mpas_geom),                              intent(in)  :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nCells), intent(in)  :: psi, chi
-   real (kind=kind_real), dimension(geom%nCells), intent(out) :: u, v
+   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges), intent(in)    :: edge_normal_wind
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
-   integer :: iC, iE, iV, j
-   real (kind=kind_real), dimension(:), allocatable :: psi_v, edge_wind, &
+   real (kind=kind_real), dimension(:,:), allocatable :: &
                                         uReconstructX, uReconstructY, uReconstructZ
    type (mpas_pool_type), pointer :: mesh
 
-   allocate(psi_v(geom%nVertices))
-   allocate(edge_wind(geom%nEdges))
-   allocate(uReconstructX(geom%nCells))
-   allocate(uReconstructY(geom%nCells))
-   allocate(uReconstructZ(geom%nCells))
-
-   psi_v=MPAS_JEDI_ZERO_kr
-   edge_wind=MPAS_JEDI_ZERO_kr
-
-   ! Interpolate psi/chi in cell center to vertice
-   do iV = 1, geom%nVerticesSolve !nVertices
-     do j = 1, geom%vertexDegree
-       iC = geom%cellsOnVertex(j,iV)
-       psi_v(iV) = psi_v(iV) + geom%kiteAreasOnVertex(j,iV) * psi(iC)
-     enddo
-     psi_v(iV) = psi_v(iV) / geom%areaTriangle(iV)
-   enddo
-
-   !Halo exchange @ vertices ???
-
-   !get edge_wind
-   do iE = 1, geom%nEdgesSolve !nEdges
-      edge_wind(iE) = edge_wind(iE) - &
-       ( chi(geom%cellsOnEdge(2,iE)) - chi(geom%cellsOnEdge(1,iE)) ) / geom%dcEdge(iE) - &
-       ( psi_v(geom%verticesOnEdge(2,iE)) - psi_v(geom%verticesOnEdge(1,iE)) ) / geom%dvEdge(iE)
-   enddo
-
-   !Halo exchange @ edge ???
+   allocate(uReconstructX(geom%nVertLevels,geom%nCells))
+   allocate(uReconstructY(geom%nVertLevels,geom%nCells))
+   allocate(uReconstructZ(geom%nVertLevels,geom%nCells))
 
    !edge_wind -> u/v @ cell center
    call mpas_pool_get_subpool( geom % domain % blocklist % structs, 'mesh', mesh)
-
-   call mpas_reconstruct(mesh, edge_wind,           &
+   call mpas_reconstruct(mesh, edge_normal_wind,    &
                          uReconstructX,             &
                          uReconstructY,             &
                          uReconstructZ,             &
                          u,                         &
-                         v, .True.                  &
-                        )
+                         v, .False. ) ! local only, no halo calculation
 
-   deallocate(psi_v, edge_wind, uReconstructX, uReconstructY, uReconstructZ)
+   deallocate(uReconstructX, uReconstructY, uReconstructZ)
 
-end subroutine psichi_to_uv2
+end subroutine psichi_to_uv_edge_step3
 
 !-------------------------------------------------------------------------------
-
-subroutine psichi_to_uv2AD(geom, psi ,chi, u, v)
+subroutine psichi_to_uv_edge_step1AD(geom, psi, psi_v)
 
    implicit none
-   type (mpas_geom),                              intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nCells), intent(inout) :: psi, chi
-   real (kind=kind_real), dimension(geom%nCells), intent(inout) :: u, v
+   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: psi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
 
-   integer :: iC, iE, iV, j
-   real (kind=kind_real), dimension(:), allocatable :: psi_v, edge_wind, &
-                                        uReconstructX, uReconstructY, uReconstructZ
-   type (mpas_pool_type), pointer :: mesh
+   integer :: iC, iV, j
 
-   allocate(psi_v(geom%nVertices))
-   allocate(edge_wind(geom%nEdges))
-   allocate(uReconstructX(geom%nCells))
-   allocate(uReconstructY(geom%nCells))
-   allocate(uReconstructZ(geom%nCells))
+   psi=MPAS_JEDI_ZERO_kr
 
-   psi_v=MPAS_JEDI_ZERO_kr
-   edge_wind=MPAS_JEDI_ZERO_kr
-
-   !-
-   call mpas_pool_get_subpool( geom % domain % blocklist % structs, 'mesh', mesh)
-   call mpas_reconstruct_1dAD(mesh, edge_wind,      &
-                         uReconstructX,             &
-                         uReconstructY,             &
-                         uReconstructZ,             &
-                         u,                         &
-                         v, .True.                  &
-                        )
-
-   !-
-   do iE = 1, geom%nEdgesSolve !nEdges
-      chi(geom%cellsOnEdge(2,iE))      = chi(geom%cellsOnEdge(2,iE))      - edge_wind(iE) / geom%dcEdge(iE)
-      chi(geom%cellsOnEdge(1,iE))      = chi(geom%cellsOnEdge(1,iE))      + edge_wind(iE) / geom%dcEdge(iE)
-      psi_v(geom%verticesOnEdge(2,iE)) = psi_v(geom%verticesOnEdge(2,iE)) - edge_wind(iE) / geom%dvEdge(iE)
-      psi_v(geom%verticesOnEdge(1,iE)) = psi_v(geom%verticesOnEdge(1,iE)) + edge_wind(iE) / geom%dvEdge(iE)
-   enddo
-
-   !-
-   do iV = 1, geom%nVerticesSolve !nVertices
-     psi_v(iV) = psi_v(iV) / geom%areaTriangle(iV)
+   ! Interpolate psi in cell center to vertice
+   do iV = 1, geom%nVerticesSolve ! local
+     psi_v(:,iV) = psi_v(:,iV) / geom%areaTriangle(iV)
      do j = 1, geom%vertexDegree
        iC = geom%cellsOnVertex(j,iV)
-       psi(iC) = psi(iC) + geom%kiteAreasOnVertex(j,iV) * psi_v(iV)
+       psi(:,iC) = psi(:,iC) + geom%kiteAreasOnVertex(j,iV) * psi_v(:,iV)
      enddo
    enddo
 
-   deallocate(psi_v, edge_wind, uReconstructX, uReconstructY, uReconstructZ)
+end subroutine psichi_to_uv_edge_step1AD
 
-end subroutine psichi_to_uv2AD
+!-------------------------------------------------------------------------------
+subroutine psichi_to_uv_edge_step2AD(geom, psi_v, chi, edge_normal_wind)
+
+   implicit none
+   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: chi
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
+
+   integer :: iE
+
+   chi=MPAS_JEDI_ZERO_kr
+   psi_v=MPAS_JEDI_ZERO_kr
+
+   !get edge_normal_wind
+   do iE = 1, geom%nEdgesSolve ! local
+     chi(:,geom%cellsOnEdge(2,iE))      = chi(:,geom%cellsOnEdge(2,iE))      - edge_normal_wind(:,iE) / geom%dcEdge(iE)
+     chi(:,geom%cellsOnEdge(1,iE))      = chi(:,geom%cellsOnEdge(1,iE))      + edge_normal_wind(:,iE) / geom%dcEdge(iE)
+     psi_v(:,geom%verticesOnEdge(2,iE)) = psi_v(:,geom%verticesOnEdge(2,iE)) - edge_normal_wind(:,iE) / geom%dvEdge(iE)
+     psi_v(:,geom%verticesOnEdge(1,iE)) = psi_v(:,geom%verticesOnEdge(1,iE)) + edge_normal_wind(:,iE) / geom%dvEdge(iE)
+   enddo
+
+end subroutine psichi_to_uv_edge_step2AD
+
+!-------------------------------------------------------------------------------
+subroutine psichi_to_uv_edge_step3AD(geom, edge_normal_wind, u, v)
+
+   use mpas_vector_reconstruction
+
+   implicit none
+   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges), intent(inout) :: edge_normal_wind
+   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
+
+   real (kind=kind_real), dimension(:,:), allocatable :: &
+                                        uReconstructX, uReconstructY, uReconstructZ
+   type (mpas_pool_type), pointer :: mesh
+
+   edge_normal_wind=MPAS_JEDI_ZERO_kr
+
+   allocate(uReconstructX(geom%nVertLevels,geom%nCells))
+   allocate(uReconstructY(geom%nVertLevels,geom%nCells))
+   allocate(uReconstructZ(geom%nVertLevels,geom%nCells))
+
+   call mpas_pool_get_subpool( geom % domain % blocklist % structs, 'mesh', mesh)
+   call mpas_reconstruct_2dAD(mesh, edge_normal_wind, &
+                         uReconstructX,             &
+                         uReconstructY,             &
+                         uReconstructZ,             &
+                         u,                         &
+                         v, .False. ) ! local only, no halo calculation
+
+   deallocate(uReconstructX, uReconstructY, uReconstructZ)
+
+end subroutine psichi_to_uv_edge_step3AD
 
 ! ------------------------------------------------------------------------------
 

@@ -383,7 +383,7 @@ subroutine geo_deallocate_nonda_fields(domain)
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
 
-   integer, parameter :: num_da_fields = 34
+   integer, parameter :: num_da_fields = 35
    integer            :: i
    character (len=22), allocatable :: poolname_a(:), poolname_b(:)
    character (len=22), allocatable :: da_fieldnames(:)
@@ -418,7 +418,7 @@ subroutine geo_deallocate_nonda_fields(domain)
    da_fieldnames(16)='temperature'
    da_fieldnames(17)='relhum'
    da_fieldnames(18)='spechum'
-   da_fieldnames(19)='v'
+   da_fieldnames(19)='u'
    da_fieldnames(20)='uReconstructZonal'
    da_fieldnames(21)='uReconstructMeridional'
    da_fieldnames(22)='stream_function'
@@ -434,6 +434,7 @@ subroutine geo_deallocate_nonda_fields(domain)
    da_fieldnames(32)='lai'
    da_fieldnames(33)='smois'
    da_fieldnames(34)='tslb'
+   da_fieldnames(35)='vorticity'
 
    do i=1,size(poolname_a)
       mem => pool_get_member(domain % blocklist % structs, poolname_a(i), MPAS_POOL_SUBPOOL)

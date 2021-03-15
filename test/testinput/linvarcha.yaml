@@ -2,7 +2,6 @@ linear variable change tests:
 - variable change: Control2Analysis
   tolerance inverse: 1.0e-8
   test inverse: 0
-  wind_cvt_method: 1
   input variables:
   - stream_function
   - velocity_potential
@@ -18,7 +17,6 @@ linear variable change tests:
 - variable change: Control2Analysis
   tolerance inverse: '1.0e-8'
   test inverse: 0
-  wind_cvt_method: 1
   input variables:
   - stream_function
   - velocity_potential
