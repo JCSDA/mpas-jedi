@@ -23,8 +23,8 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_hofx.x
                         SOURCES mpasHofX.cc
                         LIBS    ${PROJECT_NAME} )
 
-ecbuild_add_executable( TARGET  ${PROJECT_NAME}_hofx_nomodel.x
-                        SOURCES mpasHofXNoModel.cc
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_hofx3d.x
+                        SOURCES mpasHofX3D.cc
                         LIBS    ${PROJECT_NAME} )
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_parameters.x

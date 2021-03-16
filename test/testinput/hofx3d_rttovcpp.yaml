@@ -10,7 +10,7 @@ forecast length: PT6H
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041421"
   streams_file: "./Data/480km/streams.atmosphere"
-forecasts:
+state:
   state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
                     qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
                     ivgtyp, isltyp, snowh, vegfra, t2m, q2, u10, v10, lai, smois, tslb]

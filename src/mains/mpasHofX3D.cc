@@ -5,7 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include <oops/runs/HofXNoModel.h>
+#include <oops/runs/HofX3D.h>
 #include <oops/runs/Run.h>
 
 #include <ufo/instantiateObsFilterFactory.h>
@@ -16,7 +16,7 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
-  oops::HofXNoModel<mpas::MPASTraits, ufo::ObsTraits> hofx;
+  oops::HofX3D<mpas::MPASTraits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }
 
