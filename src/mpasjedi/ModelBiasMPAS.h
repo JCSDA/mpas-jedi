@@ -11,14 +11,11 @@
 #include <iostream>
 #include <string>
 
-#include <eckit/memory/NonCopyable.h>
+#include "eckit/config/Configuration.h"
+#include "eckit/memory/NonCopyable.h"
 
-#include <oops/util/ObjectCounter.h>
-#include <oops/util/Printable.h>
-
-namespace eckit {
-  class Configuration;
-}
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 namespace mpas {
   class GeometryMPAS;

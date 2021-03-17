@@ -13,15 +13,15 @@
 #include <string>
 #include <vector>
 
-#include <eckit/exception/Exceptions.h>
+#include "eckit/exception/Exceptions.h"
 
-#include <oops/util/DateTime.h>
-#include <oops/util/Logger.h>
-#include <oops/util/ObjectCounter.h>
-#include <oops/util/Printable.h>
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
-#include <ufo/GeoVaLs.h>
-#include <ufo/Locations.h>
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/getvalues/GetValues.interface.h"
@@ -44,15 +44,17 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-class GetValues : public util::Printable, private util::ObjectCounter<GetValues> {
+class GetValues : public util::Printable,
+  private util::ObjectCounter<GetValues> {
  public:
   static const std::string classname() {return "mpas::GetValues";}
 
-  GetValues(const GeometryMPAS &, const ufo::Locations &, const eckit::Configuration &);
+  GetValues(const GeometryMPAS &, const ufo::Locations &,
+            const eckit::Configuration &);
   virtual ~GetValues();
 
-  void fillGeoVaLs(const StateMPAS &, const util::DateTime &, const util::DateTime &,
-                   ufo::GeoVaLs &) const;
+  void fillGeoVaLs(const StateMPAS &, const util::DateTime &,
+            const util::DateTime &, ufo::GeoVaLs &) const;
 
  private:
   void print(std::ostream &) const;

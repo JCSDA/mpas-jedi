@@ -8,11 +8,11 @@
 #ifndef MPASJEDI_INSTANTIATEMPASVARCHANGEFACTORY_H_
 #define MPASJEDI_INSTANTIATEMPASVARCHANGEFACTORY_H_
 
-#include <oops/interface/LinearVariableChange.h>
+#include "oops/interface/LinearVariableChange.h"
 
+#include "mpasjedi/LinVarChaC2AMPAS.h"
 #include "mpasjedi/MPASTraits.h"
 #include "mpasjedi/VarChangeMPAS.h"
-#include "mpasjedi/LinVarChaC2AMPAS.h"
 
 namespace mpas {
 

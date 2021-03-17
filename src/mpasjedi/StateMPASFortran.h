@@ -41,9 +41,10 @@ extern "C" {
   void mpas_state_add_incr_f90(const F90state &, const F90inc &);
   void mpas_state_change_resol_f90(const F90state &, const F90state &);
   void mpas_state_serial_size_f90(const F90state &, int &);
-  void mpas_state_serialize_f90(const F90state &, const std::size_t &, double[]);
-  void mpas_state_deserialize_f90(const F90state &, const std::size_t &, const double[],
-                                      const std::size_t &);
+  void mpas_state_serialize_f90(const F90state &, const std::size_t &,
+                                double[]);
+  void mpas_state_deserialize_f90(const F90state &, const std::size_t &,
+                                  const double[], const std::size_t &);
   void mpas_state_read_file_f90(const F90state &,
                                 const eckit::Configuration &,
                                 util::DateTime &);

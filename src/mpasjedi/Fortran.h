@@ -143,8 +143,9 @@ extern "C" {
 //  LinearVariableChange (Linear variable Change for Background error matrix)
 // -----------------------------------------------------------------------------
   void mpas_linvarcha_c2a_setup_f90(const F90lvcc2a &, const F90state &,
-                                   const F90state &, const F90geom &,
-                                   const eckit::Configuration &, const oops::Variables &);
+                                    const F90state &, const F90geom &,
+                                    const eckit::Configuration &,
+                                    const oops::Variables &);
   void mpas_linvarcha_c2a_delete_f90(F90lvcc2a &);
   void mpas_linvarcha_c2a_multiply_f90(const F90lvcc2a &, const F90inc &,
                                       const F90inc &);

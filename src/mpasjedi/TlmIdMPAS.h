@@ -10,8 +10,8 @@
 
 #include <string>
 
-#include <oops/base/LinearModelBase.h>
-#include <oops/base/Variables.h>
+#include "oops/base/LinearModelBase.h"
+#include "oops/base/Variables.h"
 
 #include "mpasjedi/MPASTraits.h"
 

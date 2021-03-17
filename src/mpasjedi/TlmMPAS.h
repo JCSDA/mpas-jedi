@@ -11,9 +11,10 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <vector>
 
-#include <oops/base/LinearModelBase.h>
-#include <oops/base/Variables.h>
+#include "oops/base/LinearModelBase.h"
+#include "oops/base/Variables.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/ModelMPAS.h"

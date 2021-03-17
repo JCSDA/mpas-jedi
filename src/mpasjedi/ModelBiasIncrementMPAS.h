@@ -9,18 +9,18 @@
 #define MPASJEDI_MODELBIASINCREMENTMPAS_H_
 
 #include <iostream>
+#include <vector>
 
-#include <oops/util/Printable.h>
-#include <oops/util/Serializable.h>
+#include "eckit/config/Configuration.h"
 
-namespace eckit {
-  class Configuration;
-}
+#include "oops/util/Printable.h"
+#include "oops/util/Serializable.h"
 
 namespace mpas {
   class ModelBiasMPAS;
   class ModelBiasCovarianceMPAS;
   class GeometryMPAS;
+
 
 // -----------------------------------------------------------------------------
 

@@ -25,14 +25,15 @@ namespace mpas {
 
 extern "C" {
 
-  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &, const ufo::Locations &,
-                                 const eckit::Configuration &);
+  void mpas_getvalues_create_f90(F90getvalues &, const F90geom &,
+    const ufo::Locations &, const eckit::Configuration &);
 
   void mpas_getvalues_delete_f90(F90getvalues &);
 
-  void mpas_getvalues_fill_geovals_f90(const F90getvalues &, const F90geom &, const F90state &,
-                                          const util::DateTime &, const util::DateTime &,
-                                          const ufo::Locations &, const F90goms &);
+  void mpas_getvalues_fill_geovals_f90(
+    const F90getvalues &, const F90geom &, const F90state &,
+    const util::DateTime &, const util::DateTime &,
+    const ufo::Locations &, const F90goms &);
 
 };  // extern "C"
 

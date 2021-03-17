@@ -5,19 +5,18 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-
 #include <vector>
 
-#include <eckit/config/Configuration.h>
-#include <eckit/exception/Exceptions.h>
+#include "eckit/config/Configuration.h"
+#include "eckit/exception/Exceptions.h"
 
-#include <oops/util/DateTime.h>
-#include <oops/util/Logger.h>
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/ModelMPAS.h"
 #include "mpasjedi/ModelBiasMPAS.h"
+#include "mpasjedi/ModelMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 
 namespace mpas {

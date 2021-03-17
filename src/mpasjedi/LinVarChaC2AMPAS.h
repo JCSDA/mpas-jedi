@@ -1,20 +1,20 @@
 /*
  * (C) Copyright 2017-2018  UCAR.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MODEL_LINVARCHAC2AMPAS_H_
-#define MODEL_LINVARCHAC2AMPAS_H_
+#ifndef MPASJEDI_LINVARCHAC2AMPAS_H_
+#define MPASJEDI_LINVARCHAC2AMPAS_H_
 
 #include <ostream>
 #include <string>
 
-#include <eckit/config/Configuration.h>
+#include "eckit/config/Configuration.h"
 
-#include <oops/base/Variables.h>
-#include <oops/util/Printable.h>
+#include "oops/base/Variables.h"
+#include "oops/util/Printable.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/GeometryMPAS.h"
@@ -56,4 +56,4 @@ class LinVarChaC2AMPAS: public util::Printable {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MODEL_LINVARCHAC2AMPAS_H_
+#endif  // MPASJEDI_LINVARCHAC2AMPAS_H_

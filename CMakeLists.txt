@@ -44,8 +44,7 @@ find_package( saber REQUIRED )
 find_package( ufo REQUIRED )
 
 ## Sources
-add_subdirectory( src/mpasjedi )
-add_subdirectory( src/mains )
+add_subdirectory( src )
 add_subdirectory( test )
 
 if( ENABLE_MPAS_DOC )

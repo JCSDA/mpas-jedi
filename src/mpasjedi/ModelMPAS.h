@@ -11,9 +11,9 @@
 #include <ostream>
 #include <string>
 
-#include <oops/base/ModelBase.h>
-#include <oops/util/Duration.h>
-#include <oops/util/ObjectCounter.h>
+#include "oops/base/ModelBase.h"
+#include "oops/util/Duration.h"
+#include "oops/util/ObjectCounter.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/MPASTraits.h"

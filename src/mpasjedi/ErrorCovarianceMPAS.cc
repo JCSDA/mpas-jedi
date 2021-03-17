@@ -5,15 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "mpasjedi/ErrorCovarianceMPAS.h"
-
 #include <cmath>
 
-#include <eckit/config/Configuration.h>
+#include "eckit/config/Configuration.h"
 
-#include <oops/base/Variables.h>
-#include <oops/util/Logger.h>
+#include "oops/base/Variables.h"
+#include "oops/util/Logger.h"
 
+#include "mpasjedi/ErrorCovarianceMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 

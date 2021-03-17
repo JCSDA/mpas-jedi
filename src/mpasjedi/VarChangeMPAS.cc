@@ -5,12 +5,11 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "mpasjedi/VarChangeMPAS.h"
-
-#include <oops/util/Logger.h>
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/VarChangeMPAS.h"
 
 namespace mpas {
 // -----------------------------------------------------------------------------

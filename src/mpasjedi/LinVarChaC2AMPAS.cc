@@ -1,22 +1,21 @@
 /*
  * (C) Copyright 2017-2018  UCAR.
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "mpasjedi/LinVarChaC2AMPAS.h"
-
 #include <ostream>
 #include <string>
 
-#include <eckit/config/Configuration.h>
+#include "eckit/config/Configuration.h"
 
-#include <oops/util/Logger.h>
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
+#include "mpasjedi/LinVarChaC2AMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 
 namespace mpas {
@@ -24,7 +23,7 @@ namespace mpas {
 LinVarChaC2AMPAS::LinVarChaC2AMPAS(const StateMPAS & bg,
                              const StateMPAS & fg,
                              const GeometryMPAS & resol,
-                             const eckit::Configuration & config) 
+                             const eckit::Configuration & config)
 : vars_(config, "input variables") {
   mpas_linvarcha_c2a_setup_f90(keyLinVarChaC2A_, bg.toFortran(),
                                fg.toFortran(), resol.toFortran(),

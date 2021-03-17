@@ -5,19 +5,16 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "mpasjedi/TlmMPAS.h"
+#include "eckit/config/LocalConfiguration.h"
 
-#include <vector>
-
-#include <eckit/config/LocalConfiguration.h>
-
-#include <oops/util/DateTime.h>
-#include <oops/util/Logger.h>
-#include <oops/util/abor1_cpp.h>
+#include "oops/util/abor1_cpp.h"
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/TlmMPAS.h"
 
 namespace mpas {
 

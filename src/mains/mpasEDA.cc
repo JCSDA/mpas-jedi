@@ -6,8 +6,8 @@
  */
 
 #include <oops/runs/EnsembleApplication.h>
-#include <oops/runs/Variational.h>
 #include <oops/runs/Run.h>
+#include <oops/runs/Variational.h>
 
 #include <saber/oops/instantiateCovarFactory.h>
 #include <saber/oops/instantiateLocalizationFactory.h>
@@ -28,6 +28,7 @@ int main(int argc,  char ** argv) {
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
-  oops::EnsembleApplication<oops::Variational <mpas::MPASTraits, ufo::ObsTraits> >eda;
+  oops::EnsembleApplication< oops::Variational
+    <mpas::MPASTraits, ufo::ObsTraits> > eda;
   return run.execute(eda);
 }

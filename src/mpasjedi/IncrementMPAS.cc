@@ -5,21 +5,18 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "mpasjedi/IncrementMPAS.h"
-
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <vector>
 
-#include <boost/algorithm/string.hpp>
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/exception/Exceptions.h"
 
-#include <eckit/config/LocalConfiguration.h>
-#include <eckit/exception/Exceptions.h>
-
-#include <oops/util/Logger.h>
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
+#include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 
 namespace mpas {
@@ -85,10 +82,9 @@ void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {
   ASSERT(stateGeom->isEqual(*(x2.geometry())));
   if (geom_->isEqual(*stateGeom)) {
     mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
-  }
-  else {
-  // Note: this is likely a high-to-low resolution interpolation that should probably not
-  //       be done with barycentric?
+  } else {
+  // Note: this is likely a high-to-low resolution interpolation that should
+  //       probably not be done with barycentric?
     StateMPAS x1_ir(*geom_, x1);
     StateMPAS x2_ir(*geom_, x2);
     mpas_increment_diff_incr_f90(keyInc_, x1_ir.toFortran(), x2_ir.toFortran());
@@ -164,15 +160,18 @@ void IncrementMPAS::random() {
 /// ATLAS
 // -----------------------------------------------------------------------------
 void IncrementMPAS::setAtlas(atlas::FieldSet * afieldset) const {
-  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
+  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_,
+    afieldset->get());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::toAtlas(atlas::FieldSet * afieldset) const {
-  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
+  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_,
+    afieldset->get());
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
-  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_, afieldset->get());
+  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_,
+    afieldset->get());
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
@@ -222,7 +221,8 @@ void IncrementMPAS::serialize(std::vector<double> & vect) const {
   time_.serialize(vect);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::deserialize(const std::vector<double> & vect, size_t & index) {
+void IncrementMPAS::deserialize(const std::vector<double> & vect,
+  size_t & index) {
   mpas_increment_deserialize_f90(keyInc_, vect.size(), vect.data(), index);
 
   // Use magic value to validate deserialization

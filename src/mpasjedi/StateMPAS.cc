@@ -5,23 +5,21 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include "mpasjedi/StateMPAS.h"
-
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <vector>
 
-#include <boost/algorithm/string.hpp>
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/exception/Exceptions.h"
 
-#include <eckit/config/LocalConfiguration.h>
-#include <eckit/exception/Exceptions.h>
-
-#include <oops/util/Duration.h>
-#include <oops/util/Logger.h>
+#include "oops/util/Duration.h"
+#include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
+#include "mpasjedi/StateMPAS.h"
+
 
 namespace mpas {
 
@@ -223,11 +221,11 @@ double StateMPAS::norm() const {
 
 oops::Variables StateMPAS::stateVars()
 {
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   /// Temporary Auxilliary Variable Definitions
-  // -----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
   //--- TODO: "w" is still here to duplicate a pool field
-  //              for geoval variable "var_prsi", which has nVertLevelsP1 levels.
+  //          for geoval variable "var_prsi", which has nVertLevelsP1 levels.
   const oops::Variables auxvars_({ "w" });
   oops::Variables statevars(vars_);
   statevars += auxvars_;

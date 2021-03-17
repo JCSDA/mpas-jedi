@@ -11,11 +11,11 @@
 #include <ostream>
 #include <string>
 
-#include <eckit/config/LocalConfiguration.h>
-#include <eckit/memory/NonCopyable.h>
+#include "eckit/config/LocalConfiguration.h"
+#include "eckit/memory/NonCopyable.h"
 
-#include <oops/util/ObjectCounter.h>
-#include <oops/util/Printable.h>
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 namespace mpas {
   class ModelBiasMPAS;
@@ -38,9 +38,9 @@ class ModelBiasCovarianceMPAS : public util::Printable,
 /// Linear algebra operators
   void linearize(const ModelBiasMPAS &, const GeometryMPAS &) {}
   void multiply(const ModelBiasIncrementMPAS &,
-                ModelBiasIncrementMPAS) const {}
+                ModelBiasIncrementMPAS &) const {}
   void inverseMultiply(const ModelBiasIncrementMPAS &,
-                       ModelBiasIncrementMPAS) const {}
+                       ModelBiasIncrementMPAS &) const {}
   void randomize(ModelBiasIncrementMPAS &) const {}
 
   const eckit::Configuration & config() const {return conf_;}

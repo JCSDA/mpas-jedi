@@ -16,9 +16,9 @@
 #include "mpasjedi/getvalues/LinearGetValues.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/LocalizationMatrixMPAS.h"
-#include "mpasjedi/ModelBiasMPAS.h"
-#include "mpasjedi/ModelBiasIncrementMPAS.h"
 #include "mpasjedi/ModelBiasCovarianceMPAS.h"
+#include "mpasjedi/ModelBiasIncrementMPAS.h"
+#include "mpasjedi/ModelBiasMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 
 namespace mpas {

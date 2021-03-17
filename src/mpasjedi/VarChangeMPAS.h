@@ -11,9 +11,9 @@
 #include <ostream>
 #include <string>
 
-#include <eckit/config/Configuration.h>
+#include "eckit/config/Configuration.h"
 
-#include <oops/util/Printable.h>
+#include "oops/util/Printable.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/GeometryMPAS.h"

@@ -12,13 +12,13 @@
 #include <ostream>
 #include <string>
 
-#include <eckit/mpi/Comm.h>
+#include "eckit/mpi/Comm.h"
 
-#include <atlas/field.h>
-#include <atlas/functionspace.h>
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
 
-#include <oops/util/ObjectCounter.h>
-#include <oops/util/Printable.h>
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
 #include "mpasjedi/Fortran.h"
 

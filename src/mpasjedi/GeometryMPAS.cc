@@ -5,14 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include "eckit/config/Configuration.h"
+
+#include "atlas/grid.h"
+#include "atlas/util/Config.h"
+
+#include "oops/util/Logger.h"
+
 #include "mpasjedi/GeometryMPAS.h"
-
-#include <eckit/config/Configuration.h>
-
-#include <atlas/grid.h>
-#include <atlas/util/Config.h>
-
-#include <oops/util/Logger.h>
 
 // -----------------------------------------------------------------------------
 namespace mpas {

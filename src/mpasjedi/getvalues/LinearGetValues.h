@@ -14,22 +14,22 @@
 #include <string>
 #include <vector>
 
-#include <eckit/exception/Exceptions.h>
+#include "eckit/exception/Exceptions.h"
 
-#include <oops/util/DateTime.h>
-#include <oops/util/Logger.h>
-#include <oops/util/ObjectCounter.h>
-#include <oops/util/Printable.h>
+#include "oops/util/DateTime.h"
+#include "oops/util/Logger.h"
+#include "oops/util/ObjectCounter.h"
+#include "oops/util/Printable.h"
 
-#include <ufo/GeoVaLs.h>
-#include <ufo/Locations.h>
+#include "ufo/GeoVaLs.h"
+#include "ufo/Locations.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/getvalues/LinearGetValues.interface.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 namespace ufo {
   class GeoVaLs;
@@ -40,20 +40,23 @@ namespace mpas {
   class StateMPAS;
   class GeometryMPAS;
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-class LinearGetValues : public util::Printable, private util::ObjectCounter<LinearGetValues> {
+class LinearGetValues : public util::Printable,
+  private util::ObjectCounter<LinearGetValues> {
  public:
   static const std::string classname() {return "mpas::LinearGetValues";}
 
-  LinearGetValues(const GeometryMPAS &, const ufo::Locations &, const eckit::Configuration &);
+  LinearGetValues(const GeometryMPAS &, const ufo::Locations &,
+                  const eckit::Configuration &);
   virtual ~LinearGetValues();
 
-  void setTrajectory(const StateMPAS & state, const util::DateTime & t1, const util::DateTime & t2,
-                     ufo::GeoVaLs & geovals);
-  void fillGeoVaLsTL(const IncrementMPAS & inc, const util::DateTime & t1, const util::DateTime & t2,
-                     ufo::GeoVaLs & geovals) const;
-  void fillGeoVaLsAD(IncrementMPAS & inc, const util::DateTime & t1, const util::DateTime & t2,
+  void setTrajectory(const StateMPAS & state, const util::DateTime & t1,
+                     const util::DateTime & t2, ufo::GeoVaLs & geovals);
+  void fillGeoVaLsTL(const IncrementMPAS & inc, const util::DateTime & t1,
+                     const util::DateTime & t2, ufo::GeoVaLs & geovals) const;
+  void fillGeoVaLsAD(IncrementMPAS & inc, const util::DateTime & t1,
+                     const util::DateTime & t2,
                      const ufo::GeoVaLs & geovals) const;
 
  private:
@@ -63,6 +66,6 @@ class LinearGetValues : public util::Printable, private util::ObjectCounter<Line
   std::shared_ptr<const GeometryMPAS> geom_;
 };
 
-// -------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 }  // namespace mpas
