@@ -166,6 +166,7 @@ copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 # MPAS static stream lists (modified from model-generated streams)
 list( APPEND mpas_test_config_base
+  geovars.yaml
   stream_list.atmosphere.output
   stream_list.atmosphere.surface
   stream_list.atmosphere.diagnostics

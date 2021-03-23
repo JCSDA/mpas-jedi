@@ -10,12 +10,15 @@ module mpas4da_mod
    !
    !  Module mpas4da_mod to encapsulate operations needed for
    !  Data assimilation purpose.
-   !  It can be used from /somewhere/MPAS/src/operators 
-   !  or from /somewhere/mpas-bundle/mpas/model (OOPS) 
+   !  It can be used from /somewhere/MPAS/src/operators
+   !  or from /somewhere/mpas-bundle/mpas/model (OOPS)
    !> \author  Gael Descombes/Mickael Duda NCAR/MMM
    !> \date    January 2018
    !
    !-----------------------------------------------------------------------
+
+!fckit
+use fckit_log_module, only: fckit_log
 
 !oops
 use kinds, only : kind_real
@@ -37,41 +40,80 @@ use mpas_pool_routines
 
 !mpas-jedi
 use mpas_constants_mod
+use mpas_geom_mod, only: mpas_geom
 
-   contains
+private
+
+public :: &
+   da_operator_addition, &
+   da_copy_all2sub_fields, &
+   da_copy_sub2all_fields, &
+   da_template_pool, &
+   !mpas_pool_template_field, &
+   da_random, &
+   da_operator, &
+   da_self_mult, &
+   da_constant, &
+   da_posdef, &
+   da_setval, &
+   da_axpy, &
+   da_gpnorm, &
+   da_fldrms, &
+   da_dot_product, &
+   cvt_oopsmpas_date, &
+   uv_cell_to_edges, &
+   r3_normalize, &
+   getSolveDimensions
+
+character(len=1024) :: message
+
+contains
 
    !***********************************************************************
    !
-   !  function match_scalar_and_q
+   !  function field_is_scalar
+   !
+   !> \brief   Test for a form of water vapor or hydrometeor of interest
+   !> \details
+   !>  At various places in this module we wish to test for the case where
+   !>  a string is one of several 'q?' values. Rather than repeat that
+   !>  logic many times, it is encapsulated here.
+   !
+   !-----------------------------------------------------------------------
+   pure function field_is_scalar(fieldName)
+
+      implicit none
+
+      character (len=*), intent(in) :: fieldName
+      logical :: field_is_scalar
+      field_is_scalar = any(trim(fieldName) == &
+                    (/'qv', 'qc', 'qi', 'qr', 'qs', 'qg', 'qh', 'nr'/))
+
+   end function
+
+   !***********************************************************************
+   !
+   !  function match_scalar
    !
    !> \brief   Test for a form of water vapor or hydrometeor of interest
    !> \author  Steven Vahl
    !> \date    11 July 2019
    !> \details
-   !>  At various places in this module we wish to test for the case where
-   !>  one string is 'scalars' and another string is one of several
-   !>  'q?' values. Rather than repeat that logic many times, it
-   !>  is encapsulated here.
+   !>  Test for the case where one string is 'scalars' and another string
+   !>   matches with available scalar variables.
    !
    !-----------------------------------------------------------------------
-   pure function match_scalar_and_q(scalarName, qName)
+   pure function match_scalar(scalarName, fieldName)
 
       implicit none
 
       character (len=*), intent(in) :: scalarName
-      character (len=*), intent(in) :: qName
-      logical :: match_scalar_and_q
+      character (len=*), intent(in) :: fieldName
+      logical :: match_scalar
 
-      match_scalar_and_q = scalarName.eq.'scalars' .and. &
-                     (qName.eq.'qv' .or. & ! water vapor
-                      qName.eq.'qc' .or. & ! cloud
-                      qName.eq.'qi' .or. & ! ice
-                      qName.eq.'qr' .or. & ! rain
-                      qName.eq.'qs' .or. & ! snow
-                      qName.eq.'qg' .or. & ! graupel
-                      qName.eq.'qh' .or. & ! hail
-                      qName.eq.'nr'      & ! number concentration of rain
-                     )
+      match_scalar = ( &
+         scalarName == 'scalars' .and. &
+         field_is_scalar(fieldName) )
 
    end function
 
@@ -310,7 +352,7 @@ use mpas_constants_mod
 !                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( match_scalar_and_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
 !                 write(0,*)'Copy all2sub field: Looking at SCALARS now'
                   call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
@@ -403,7 +445,7 @@ use mpas_constants_mod
 !                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   end if
 
-               else if ( match_scalar_and_q(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
                   !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
                   call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
@@ -427,43 +469,68 @@ use mpas_constants_mod
 
    !***********************************************************************
    !
-   !  subroutine da_make_subpool
+   !  subroutine pool_has_field
    !
-   !> \brief   Subset a pool from pools A to B
-   !> \author  Gael Descombes
-   !> \date    26 December 2017
-   !> \details
-   !>  Given pool A, create pool B as a subset of the fields in A
+   !> \brief   Check for presence of fieldname in pool
    !
    !-----------------------------------------------------------------------
-   subroutine da_make_subpool(domain, subFields, nsize, fieldname, nfields)
+   function pool_has_field(pool, field) result(has)
 
       implicit none
 
-      type (domain_type), pointer, intent(in) :: domain
-      type (mpas_pool_type), pointer, intent(out) :: subFields
-      character (len=*), intent(in) :: fieldname(:)
-      integer, intent(out) :: nfields
-      integer, intent(in) :: nsize
-      type (mpas_pool_type), pointer :: allFields, state
-
+      type (mpas_pool_type), pointer, intent(in) :: pool
+      character (len=*), intent(in) :: field
       type (mpas_pool_iterator_type) :: poolItr
-      type (field0DReal), pointer :: field0d_src, field0d_dst
-      type (field1DReal), pointer :: field1d_src, field1d_dst
-      type (field2DReal), pointer :: field2d_src, field2d_dst
-      type (field3DReal), pointer :: field3d_src, field3d_dst, field3d
-      type (field1DInteger), pointer :: ifield1d_src, ifield1d_dst
+      logical :: has
+
+      has = .false.
+
+      call mpas_pool_begin_iteration(pool)
+
+      do while ( mpas_pool_get_next_member(pool, poolItr) )
+         if (poolItr % memberType == MPAS_POOL_FIELD .and. &
+             trim(field) == trim(poolItr % memberName) ) then
+            has = .true.
+            exit
+         endif
+      end do
+
+   end function pool_has_field
+
+
+   !***********************************************************************
+   !
+   !  subroutine da_template_pool
+   !
+   !> \brief   Subset a pool from fields described in geom
+   !> \details
+   !>  Given an mpas_geom object, create templatePool containing a subset
+   !>  of the fields in the geom % domain's allFields pool and the
+   !>  geom % templated_fields
+   !
+   !-----------------------------------------------------------------------
+   subroutine da_template_pool(geom, templatePool, nf, fieldnames)
+
+      implicit none
+
+      ! Arguments
+      type (mpas_geom), intent(in) :: geom
+      type (mpas_pool_type), pointer, intent(out) :: templatePool
+      integer, intent(in) :: nf
+      character (len=*), intent(in) :: fieldnames(nf)
+
+      ! Local variables
+      type (mpas_pool_type), pointer :: allFields, state
+      character(len=MAXVARLEN) :: fieldname, template
+      !type (field2DReal), pointer :: qField
+      !type (field3DReal), pointer :: scalars
 
       integer, pointer :: index_scalar, dim0d
       integer :: ii
       integer, parameter :: ndims=10
       character(len=ShortStrKIND) :: dimnames(ndims)
 
-      nfields = 0
-      call mpas_pool_get_subpool(domain % blocklist % structs, 'state',state) 
-      allFields => domain % blocklist % allFields
- 
-      call mpas_pool_create_pool(subFields)
+      call mpas_pool_create_pool(templatePool)
 
       dimnames ( 1) = 'nCellsSolve'
       dimnames ( 2) = 'nEdgesSolve'
@@ -477,95 +544,150 @@ use mpas_constants_mod
       dimnames (10) = 'vertexDegree'
 
       do ii = 1, ndims
-         call mpas_pool_get_dimension(domain % blocklist % dimensions, trim(dimnames(ii)), dim0d)
-!         write(0,*)'Adding dimension ',trim(dimnames(ii)),': ',dim0d
-         call mpas_pool_add_dimension(subFields, trim(dimnames(ii)), dim0d)
+         call mpas_pool_get_dimension(geom % domain % blocklist % dimensions, trim(dimnames(ii)), dim0d)
+         call mpas_pool_add_dimension(templatePool, trim(dimnames(ii)), dim0d)
       end do
 
-      !write(0,*)'Fieldname: ',nsize,fieldname(:)
-      !
-      ! Iterate over allFields and copy those with names matching fieldname into subFields
-      !
-      call mpas_pool_begin_iteration(allFields)
-!      write(0,*)'Before iterating'
+      call mpas_pool_get_subpool(geom % domain % blocklist % structs, 'state',state)
+      allFields => geom % domain % blocklist % allFields
 
-      do while ( mpas_pool_get_next_member(allFields, poolItr) )
-         ! Pools may in general contain dimensions, namelist options, fields, or other pools,
-         ! so we select only those members of the pool that are fields
-         if (poolItr % memberType == MPAS_POOL_FIELD) then
-            ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+      do ii=1, nf
+         fieldname = fieldnames(ii)
+
+         if (field_is_scalar(fieldname)) then
+            ! Check if this scalar is activated
+            call mpas_pool_get_dimension(state, 'index_'//trim(fieldname), index_scalar)
+            if (index_scalar .gt. 0) then
+               call mpas_pool_template_field('theta', allFields, fieldname, templatePool)
+            else
+               write(message,*)'--> da_template_pool: ',trim(fieldname), &
+                           ' not available in MPAS domain'
+               call abor1_ftn(message)
+            end if
+         else
+            if ( pool_has_field(allFields, fieldname) ) then
+               template = fieldname
+            else if (geom % is_templated(fieldname)) then
+               template = geom%template(fieldname)
+            else
+               write(message,*)'--> da_template_pool: ',trim(fieldname), &
+                           ' not available in MPAS domain or geom % templated_fields'
+               call abor1_ftn(message)
+            end if
+
+            call mpas_pool_template_field(template, allFields, fieldname, templatePool)
+
+         end if
+      end do
+
+      call da_constant(templatePool, MPAS_JEDI_ZERO_kr)
+
+   end subroutine da_template_pool
+
+
+   !***********************************************************************
+   !
+   !  subroutine mpas_pool_template_field
+   !
+   !> \brief   Add a field to dstPool that is templated on a srcPool field
+   !> \details
+   !>  Duplicate srcFieldName from srcPool with the name dstFieldName
+   !>  in dstPool
+   !
+   !-----------------------------------------------------------------------
+   subroutine mpas_pool_template_field(srcFieldName, srcPool, dstFieldName, dstPool)
+
+      ! Arguments
+      type (mpas_pool_type), pointer, intent(in) :: srcPool
+      character (len=*), intent(in) :: srcFieldName, dstFieldName
+      type (mpas_pool_type), pointer, intent(inout) :: dstPool
+
+      ! Local variables
+      type (mpas_pool_iterator_type) :: poolItr
+      type (field0DReal), pointer :: field0d_src, field0d_dst
+      type (field1DReal), pointer :: field1d_src, field1d_dst
+      type (field2DReal), pointer :: field2d_src, field2d_dst
+      type (field3DReal), pointer :: field3d_src, field3d_dst, field3d
+      type (field0DInteger), pointer :: ifield0d_src, ifield0d_dst
+      type (field1DInteger), pointer :: ifield1d_src, ifield1d_dst
+      type (field2DInteger), pointer :: ifield2d_src, ifield2d_dst
+      type (field3DInteger), pointer :: ifield3d_src, ifield3d_dst
+
+      !
+      ! Iterate over srcPool, add the one that matches srcFieldName into dstPool
+      !
+      call mpas_pool_begin_iteration(srcPool)
+
+      do while ( mpas_pool_get_next_member(srcPool, poolItr) )
+
+         ! Only handle fields, ignore dimensions, namelist options, and other pools
+         if ( poolItr % memberType == MPAS_POOL_FIELD .and. &
+              trim(srcFieldName) == trim(poolItr % memberName) ) then
+
+            ! Handle real and integer, ignore logical and char
             if (poolItr % dataType == MPAS_POOL_REAL) then
-               do ii=1, nsize
-                  if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-!                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
-                     ! Depending on the dimensionality of the field, we need to set pointers of
-                     ! the correct type
-                     if (poolItr % nDims == 0) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field0d_src)
-                        call mpas_duplicate_field(field0d_src, field0d_dst)
-                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field0d_dst)
-                     else if (poolItr % nDims == 1) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field1d_src)
-                        call mpas_duplicate_field(field1d_src, field1d_dst)
-                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field1d_dst)
-                     else if (poolItr % nDims == 2) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field2d_src)
-                        call mpas_duplicate_field(field2d_src, field2d_dst)
-                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field2d_dst)
-                     else if (poolItr % nDims == 3) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d_src)
-                        call mpas_duplicate_field(field3d_src, field3d_dst)
-                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), field3d_dst)
-                     end if
-                     nfields = nfields + 1
-                  
-                  else if (match_scalar_and_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
-                     call mpas_pool_get_dimension(state, 'index_'//trim(fieldname(ii)), index_scalar)
-                     if (index_scalar .gt. 0) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), field3d)
-                        call mpas_pool_get_field(allFields, 'theta_m', field2d_src)
-                        call mpas_duplicate_field(field2d_src, field2d_dst)
-                        field2d_dst % fieldName = trim(fieldname(ii))
-                        field2d_dst % array(:,:) = field3d % array(index_scalar,:,:)
-                        call mpas_pool_add_field(subFields, trim(fieldname(ii)), field2d_dst)
 
-                        nfields = nfields + 1
-                     else
-                        write(0,*)'WARNING in da_make_subpool; ',trim(fieldname(ii)), &
-                                    'not available from MPAS'
-                     end if
-                  end if
-              end do
-            end if
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-              do ii=1, nsize
-                  if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-!                     write(0,*)'Adding field in the pool da_make_subpool: '//trim(fieldname(ii))
-                     ! Depending on the dimensionality of the field, we need to set pointers of
-                     ! the correct type
-                     if (poolItr % nDims == 1) then
-                        call mpas_pool_get_field(allFields, trim(poolItr % memberName), ifield1d_src)
-                        call mpas_duplicate_field(ifield1d_src, ifield1d_dst)
-                        call mpas_pool_add_field(subFields, trim(poolItr % memberName), ifield1d_dst)
+               ! Use correctly dimensioned field pointers
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), field0d_src)
+                  call mpas_duplicate_field(field0d_src, field0d_dst)
+                  field0d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), field0d_dst)
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), field1d_src)
+                  call mpas_duplicate_field(field1d_src, field1d_dst)
+                  field1d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), field1d_dst)
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), field2d_src)
+                  call mpas_duplicate_field(field2d_src, field2d_dst)
+                  field2d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), field2d_dst)
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), field3d_src)
+                  call mpas_duplicate_field(field3d_src, field3d_dst)
+                  field3d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), field3d_dst)
+               end if
 
-!                        write(0,*) '1D MIN/MAX value: ', minval(ifield1d_dst % array),maxval(ifield1d_dst % array)
-                        nfields = nfields + 1
-                     end if
-                  end if
-              end do
+            else if (poolItr % dataType == MPAS_POOL_INTEGER) then
+
+               ! Use correctly dimensioned field pointers
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), ifield0d_src)
+                  call mpas_duplicate_field(ifield0d_src, ifield0d_dst)
+                  ifield0d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), ifield0d_dst)
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), ifield1d_src)
+                  call mpas_duplicate_field(ifield1d_src, ifield1d_dst)
+                  ifield1d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), ifield1d_dst)
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), ifield2d_src)
+                  call mpas_duplicate_field(ifield2d_src, ifield2d_dst)
+                  ifield2d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), ifield2d_dst)
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_field(srcPool, trim(srcFieldName), ifield3d_src)
+                  call mpas_duplicate_field(ifield3d_src, ifield3d_dst)
+                  ifield3d_dst % fieldName = dstFieldName
+                  call mpas_pool_add_field(dstPool, trim(dstFieldName), ifield3d_dst)
+               end if
             end if
-          end if
+
+            return
+
+         end if
       end do
 
-      if ( nsize.ne.nfields ) then
-        write(0,*)'Missing field in the pool da_make_subpool nsize different: ',nsize,nfields
-      end if
+      write(message,*)'--> mpas_pool_template_field: ',trim(srcFieldName), &
+                  ' not available in srcPool'
+      call abor1_ftn(message)
 
-!      write(0,*)'da_make_subpool new Pool size ',subFields % size
+   end subroutine mpas_pool_template_field
 
-   end subroutine da_make_subpool
 
-   
    !***********************************************************************
    !
    !  function da_common_vars
@@ -599,9 +721,9 @@ use mpas_constants_mod
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
-                     else if (match_scalar_and_q(trim(poolItr % memberName), trim(fieldname(ii)))) then
+                     else if (match_scalar(trim(poolItr % memberName), trim(fieldname(ii)))) then
 !                        write(0,*)'Common field: '//trim(fieldname(ii))
-                        nsize0 = nsize0 + 1 
+                        nsize0 = nsize0 + 1
                      end if
                   end do
                end if
@@ -795,15 +917,15 @@ use mpas_constants_mod
                      r2d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
-!                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
-!                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b) 
+!                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+!                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b)
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b + r2d_ptr_c
                      else
 !                        write(*,*)'regular addition'
                         r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
                      end if
-!                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a) 
+!                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
                   else if ( trim(kind_op).eq.'schur' ) then
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b * r2d_ptr_c
@@ -912,7 +1034,7 @@ use mpas_constants_mod
 
    end subroutine da_self_mult
 
-   
+
    !***********************************************************************
    !
    !  subroutine da_constant
@@ -1224,13 +1346,11 @@ use mpas_constants_mod
 
    implicit none
 
-   ! Passed variables
+   ! Arguments
    type (mpas_pool_type), intent(in) :: pool
    type (mpas_pool_iterator_type), intent(in) :: poolItr
 
    ! Local variables
-   character(len=1024) :: buf
-
    type (field1DReal), pointer :: field1dr
    type (field2DReal), pointer :: field2dr
    type (field3DReal), pointer :: field3dr
@@ -1244,8 +1364,8 @@ use mpas_constants_mod
    integer :: ndims, id
 
    if (poolItr % memberType /= MPAS_POOL_FIELD) then
-      write(buf,*) '--> getSolveDimensions: poolItr % memberType == ',poolItr % memberType,' not handled'
-      call abor1_ftn(buf)
+      write(message,*) '--> getSolveDimensions: poolItr % memberType == ',poolItr % memberType,' not handled'
+      call abor1_ftn(message)
    end if
 
    ndims = poolItr % nDims
@@ -1277,8 +1397,8 @@ use mpas_constants_mod
             dimName = field3dr % dimNames(id)
          endif
       else
-         write(buf,*) '--> getSolveDimensions: poolItr % nDims == ',ndims,' not handled'
-         call abor1_ftn(buf)
+         write(message,*) '--> getSolveDimensions: poolItr % nDims == ',ndims,' not handled'
+         call abor1_ftn(message)
       endif
       if (isDecomposed(dimName)) then
          call mpas_pool_get_dimension(pool, trim(dimName)//'Solve', solveDim)
@@ -1549,22 +1669,22 @@ use mpas_constants_mod
 
 
   subroutine cvt_oopsmpas_date(inString2,outString2,iconv)
-   
+
      implicit none
 
-     character (len=*), intent(in) :: inString2     
-     character (len=*), intent(inout) :: outString2     
+     character (len=*), intent(in) :: inString2
+     character (len=*), intent(inout) :: outString2
      integer, intent(in) :: iconv
      integer :: i, curLen
      integer :: year, month, day, hour, minute, second
 
      character (len=ShortStrKIND) :: timePart
      character (len=ShortStrKIND) :: yearFormat
-     logical :: charExpand    
+     logical :: charExpand
      character (len=4) :: YYYY
      character (len=2) :: MM, DD, h, m, s
      character (len=21) :: outString, inString
- 
+
      ! 2017-08-08T00:00:00Z OOPS/YAML format
      ! 2010-10-24_02.00.00  MPAS format
      ! iconv=1: MPAS --> OOPS/YAML
@@ -1572,10 +1692,10 @@ use mpas_constants_mod
 
      if (iconv.eq.-1) then
         YYYY = inString2(1:4)
-        MM   = inString2(6:7)     
-        DD   = inString2(9:10)     
-        h    = inString2(12:13)     
-        m    = inString2(15:16)     
+        MM   = inString2(6:7)
+        DD   = inString2(9:10)
+        h    = inString2(12:13)
+        m    = inString2(15:16)
         s    = inString2(18:19)
      else
         YYYY = inString2(1:4)
@@ -1590,8 +1710,8 @@ use mpas_constants_mod
 !     write(*,*)'cvt_oopsmpas_date input ',trim(instring2)
 
      write(outString,*) ''
-     instring = trim(outstring2)     
-     
+     instring = trim(outstring2)
+
      curLen = 0
      charExpand = .false.
      do i = 1, len_trim(inString)
@@ -1638,7 +1758,7 @@ use mpas_constants_mod
 !  chunk of code from DART
 ! ------------------------------------------------------------------------
 
-subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, & 
+subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
                             &  nCells, edgeNormalVectors, nEdgesOnCell, edgesOnCell, nVertLevels)
 
    ! Project u, v wind increments at cell centers onto the edges.
@@ -1727,5 +1847,5 @@ end subroutine r3_normalize
 
 !===============================================================================================================
 
-end module mpas4da_mod 
+end module mpas4da_mod
 

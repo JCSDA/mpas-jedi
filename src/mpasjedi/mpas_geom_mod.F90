@@ -6,10 +6,14 @@
 module mpas_geom_mod
 
 use atlas_module, only: atlas_functionspace, atlas_fieldset, atlas_field, atlas_real
-use fckit_configuration_module, only: fckit_configuration
+use fckit_configuration_module, only: fckit_configuration, fckit_YAMLConfiguration
+use fckit_pathname_module, only: fckit_pathname
 use fckit_log_module, only: fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm
 use iso_c_binding
+
+!ufo
+use ufo_vars_mod, only: MAXVARLEN
 
 !MPAS-Model
 use mpas_derived_types
@@ -27,12 +31,19 @@ use mpas_constants_mod
 implicit none
 private
 public :: mpas_geom, &
-        & geo_setup, geo_set_atlas_lonlat, geo_fill_atlas_fieldset, geo_clone, geo_delete, geo_info, &
-        & geo_is_equal
+          geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
+          geo_set_atlas_lonlat, geo_fill_atlas_fieldset, &
+          field_is_templated, template_fieldname
+
 public :: mpas_geom_registry
 
 
 ! ------------------------------------------------------------------------------
+
+type :: templated_field
+   character(len=MAXVARLEN) :: name
+   character(len=MAXVARLEN) :: template
+end type templated_field
 
 !> Fortran derived type to hold geometry definition
 type :: mpas_geom
@@ -74,6 +85,14 @@ type :: mpas_geom
    type(fckit_mpi_comm) :: f_comm
 
    type(atlas_functionspace) :: afunctionspace
+
+   type(templated_field), allocatable :: templated_fields(:)
+
+   contains
+
+   procedure :: is_templated => field_is_templated
+   procedure :: template => template_fieldname
+
 end type mpas_geom
 
 type :: idcounter
@@ -81,6 +100,8 @@ type :: idcounter
 end type idcounter
 
 type(idcounter), allocatable :: geom_count(:)
+
+character(len=1024) :: message
 
 #define LISTED_TYPE mpas_geom
 
@@ -109,9 +130,10 @@ subroutine geo_setup(self, f_conf, f_comm)
    type (mpas_pool_type), pointer :: meshPool, fg
    type (block_type), pointer :: block_ptr
    !character(len=120) :: fn
-   character(len=120) :: nml_file, streams_file
-   character(len=1024) :: buf
+   character(len=512) :: nml_file, streams_file, fields_file
    character(len=:), allocatable :: str
+   type(fckit_configuration) :: template_conf
+   type(fckit_configuration), allocatable :: fields_conf(:)
 
    real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
@@ -146,8 +168,8 @@ subroutine geo_setup(self, f_conf, f_comm)
        case ('unstructured')
          self%use_bump_interpolation = .False.
        case default
-         write(buf,*) '--> geo_setup: interpolation type: ',str,' not implemented'
-         call abor1_ftn(buf)
+         write(message,*) '--> geo_setup: interpolation type: ',str,' not implemented'
+         call abor1_ftn(message)
      end select
    else
      self%use_bump_interpolation = .True. ! BUMP is default interpolation
@@ -189,6 +211,25 @@ subroutine geo_setup(self, f_conf, f_comm)
    end do
    geom_count(nprev+1)%id = self%domain%domainID
    geom_count(nprev+1)%counter = 1
+
+   ! first read array of templated field configurations
+   if (f_conf%get('template fields file',str)) then
+     fields_file = str
+   else
+     fields_file = 'geovars.yaml'
+   end if
+   template_conf = fckit_YAMLConfiguration(fckit_pathname(fields_file))
+   call template_conf%get_or_die('fields',fields_conf)
+
+   ! create templated field descriptors
+   allocate(self%templated_fields(size(fields_conf)))
+   do ii = 1, size(fields_conf)
+      call fields_conf(ii)%get_or_die('field name',str)
+      self%templated_fields(ii)%name = trim(str)
+      call fields_conf(ii)%get_or_die('mpas template field',str)
+      self%templated_fields(ii)%template = trim(str)
+   end do
+   deallocate(fields_conf)
 
 !   if (associated(self % domain)) then
 !       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
@@ -549,6 +590,7 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
 
    self % use_bump_interpolation = other % use_bump_interpolation
+   self % templated_fields  = other % templated_fields
    self % latCell           = other % latCell
    self % lonCell           = other % lonCell
    self % areaCell          = other % areaCell
@@ -593,8 +635,8 @@ subroutine geo_delete(self)
 
    type(mpas_geom), intent(inout) :: self
    integer :: ii
-   character(len=512) :: message
 
+   if (allocated(self%templated_fields)) deallocate(self%templated_fields)
    if (allocated(self%latCell)) deallocate(self%latCell)
    if (allocated(self%lonCell)) deallocate(self%lonCell)
    if (allocated(self%latEdge)) deallocate(self%latEdge)
@@ -683,6 +725,41 @@ subroutine geo_info(self, nCellsGlobal, nCells, nCellsSolve, &
    nVertLevelsP1 = self%nVertLevelsP1
 
 end subroutine geo_info
+
+! ------------------------------------------------------------------------------
+
+function field_is_templated(self, fieldname) result(is_templated)
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   logical :: is_templated
+   is_templated = .false.
+   if (allocated(self%templated_fields)) then
+      do ii = 1, size(self%templated_fields)
+         if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+            is_templated = .true.
+            return
+         end if
+      end do
+   end if
+end function field_is_templated
+
+! ------------------------------------------------------------------------------
+
+function template_fieldname(self, fieldname) result(template)
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   character(len=MAXVARLEN) :: template
+   do ii = 1, size(self%templated_fields)
+      if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+         template = self%templated_fields(ii)%template
+         return
+      end if
+   end do
+   write(message,*) '--> mpas_geom % template_fieldname: fieldname is not templated, ',fieldname
+   call abor1_ftn(message)
+end function template_fieldname
 
 ! ------------------------------------------------------------------------------
 

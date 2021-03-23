@@ -85,6 +85,7 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: change_resol => change_resol_fields
      procedure :: copy         => copy_fields
      procedure :: create       => create_fields
+     procedure :: populate     => populate_subfields
      procedure :: delete       => delete_fields
      procedure :: read_file    => read_fields
      procedure :: write_file   => write_fields
@@ -195,10 +196,7 @@ subroutine create_fields(self, geom, vars, vars_ci)
        call abor1_ftn("--> create_fields: atm_simulation_clock_init problem")
     end if
 
-!    write(*,*)'--> create_fields: sub Pool from list of variable ',self % nf
-    call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
-
-    call self%zeros() !-- set zero for self % subFields
+    call self%populate()
 
     return
 
@@ -206,24 +204,14 @@ end subroutine create_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine create_pool(domain, nf_in, fldnames, pool)
+subroutine populate_subFields(self)
 
     implicit none
-    type (domain_type), pointer, intent(in) :: domain
-    integer, intent(in) :: nf_in
-    character (len=*), intent(in) :: fldnames(:)
-    type (mpas_pool_type), pointer, intent(out) :: pool
+    class(mpas_fields), intent(inout) :: self
 
-    integer :: nfields
+    call da_template_pool(self % geom, self % subFields, self % nf, self % fldnames)
 
-    call da_make_subpool(domain, pool, nf_in, fldnames, nfields)
-
-    if ( nf_in .ne. nfields  ) then
-       write(message,*) "--> create_pool: dimension mismatch ", nf_in, nfields
-       call abor1_ftn(message)
-    end  if
-
-end subroutine create_pool
+end subroutine populate_subFields
 
 ! ------------------------------------------------------------------------------
 
@@ -705,18 +693,6 @@ subroutine interpolate_fields(self,rhs)
   else
     call initialize_uns_interp(self%geom, rhs%geom, unsinterp)
   endif
-
-  self % nf = rhs % nf
-  if (allocated(self % fldnames)) deallocate(self % fldnames)
-  allocate(self % fldnames(self % nf))
-  self % fldnames(:) = rhs % fldnames(:)
-
-  self % nf_ci = rhs % nf_ci
-  if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
-  allocate(self % fldnames_ci(self % nf_ci))
-  self % fldnames_ci(:) = rhs % fldnames_ci(:)
-
-  call create_pool(self % geom % domain, self % nf, self % fldnames, self % subFields)
 
   ! Interpolate field from rhs mesh to self mesh using pre-calculated weights
   ! ----------------------------------------------------------------------------------
