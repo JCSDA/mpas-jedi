@@ -69,10 +69,14 @@ call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_sc
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_radt_cld_scheme', config_radt_cld_scheme)
 
 if (config_microp_re) then
-   call state_vars%push_back(mpas_re_fields)
+   do ivar = 1, size(mpas_re_fields, 1)
+      if (.not. state_vars%has(mpas_re_fields(ivar))) &
+         call state_vars%push_back(mpas_re_fields(ivar))
+   end do
 end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
-   call state_vars%push_back("nr")
+   if (.not. state_vars%has("nr")) &
+      call state_vars%push_back("nr")
 end if
 if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
      trim(config_microp_scheme) /= MPAS_JEDI_OFF ) then
@@ -80,7 +84,8 @@ if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
       ! Only need cloud fraction when hydrometeors are in state
       if ( ufo_vars_getindex( mpas_hydrometeor_fields, &
                               state_vars%variable(ivar) ) > 0 ) then
-         call state_vars%push_back("cldfrac")
+         if (.not. state_vars%has("cldfrac")) &
+            call state_vars%push_back("cldfrac")
          exit
       end if
    end do

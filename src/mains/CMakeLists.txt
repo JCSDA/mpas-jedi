@@ -31,6 +31,10 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_parameters.x
                         SOURCES mpasEstimateParams.cc
                         LIBS    ${PROJECT_NAME} saber )
 
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_rtpp.x
+                        SOURCES mpasRTPP.cc
+                        LIBS	${PROJECT_NAME} )
+
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_staticbinit.x
                         SOURCES mpasStaticBInit.cc
                         LIBS    ${PROJECT_NAME} )

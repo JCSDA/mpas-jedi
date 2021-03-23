@@ -1,0 +1,92 @@
+Test     : Background member 1:
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 20
+Test     : Fld=1  Min=2.011312483e+02, Max=3.074890282e+02, RMS=2.440804670e+02 : temperature
+Test     : Fld=2  Min=4.183860264e-07, Max=1.796084780e-02, RMS=4.420117708e-03 : spechum
+Test     : Fld=3  Min=-3.952573409e+01, Max=8.352598274e+01, RMS=1.516394620e+01 : uReconstructZonal
+Test     : Fld=4  Min=-5.387588066e+01, Max=5.577164924e+01, RMS=7.788454349e+00 : uReconstructMeridional
+Test     : Fld=5  Min=5.627628896e+04, Max=1.041053104e+05, RMS=9.884392674e+04 : surface_pressure
+Test     : Fld=6  Min=4.183862015e-07, Max=1.828933985e-02, RMS=4.476253654e-03 : qv
+Test     : Fld=7  Min=1.363683938e+03, Max=9.726644492e+04, RMS=4.931163206e+04 : pressure
+Test     : Fld=8  Min=2.333175415e-02, Max=1.317744525e+00, RMS=6.194334721e-01 : rho
+Test     : Fld=9  Min=2.481644038e+02, Max=7.257417527e+02, RMS=4.410317782e+02 : theta
+Test     : Fld=10  Min=-8.708654811e+01, Max=8.300975785e+01, RMS=1.230867205e+01 : u
+Test     : Fld=11  Min=-4.731225655e+03, Max=7.019055836e+03, RMS=3.095888500e+03 : pressure_p
+Test     : Fld=12  Min=2.120290687e+02, Max=3.081790135e+02, RMS=2.883558528e+02 : skintemp
+Test     : Fld=13  Min=2.900000103e-02, Max=1.000000000e+00, RMS=8.913984940e-01 : smois
+Test     : Fld=14  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.672612419e-01 : snowc
+Test     : Fld=15  Min=0.000000000e+00, Max=1.991450837e+00, RMS=2.275148465e-01 : snowh
+Test     : Fld=16  Min=2.181196963e+02, Max=3.113593196e+02, RMS=2.890160384e+02 : tslb
+Test     : Fld=17  Min=-1.847001396e+01, Max=1.990062058e+01, RMS=5.740708454e+00 : u10
+Test     : Fld=18  Min=-2.082246446e+01, Max=1.753145262e+01, RMS=4.797109720e+00 : v10
+Test     : Fld=19  Min=-4.368465607e-02, Max=5.839856043e-02, RMS=2.459068977e-03 : w
+Test     : Fld=20  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.239875798e-01 : xice
+Test     : Analysis member 1:
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 20
+Test     : Fld=1  Min=2.011340863e+02, Max=3.073391331e+02, RMS=2.440784147e+02 : temperature
+Test     : Fld=2  Min=0.000000000e+00, Max=1.784516459e-02, RMS=4.421193664e-03 : spechum
+Test     : Fld=3  Min=-3.946020263e+01, Max=8.352462157e+01, RMS=1.516825898e+01 : uReconstructZonal
+Test     : Fld=4  Min=-5.387489896e+01, Max=5.578543183e+01, RMS=7.789761170e+00 : uReconstructMeridional
+Test     : Fld=5  Min=5.632664962e+04, Max=1.041084708e+05, RMS=9.883774488e+04 : surface_pressure
+Test     : Fld=6  Min=0.000000000e+00, Max=1.816940053e-02, RMS=4.477367579e-03 : qv
+Test     : Fld=7  Min=1.418368808e+03, Max=9.746665753e+04, RMS=4.900215475e+04 : pressure
+Test     : Fld=8  Min=2.443630465e-02, Max=1.320178923e+00, RMS=6.147977807e-01 : rho
+Test     : Fld=9  Min=2.478680080e+02, Max=7.213463371e+02, RMS=4.408641487e+02 : theta
+Test     : Fld=10  Min=-8.708466582e+01, Max=8.300820620e+01, RMS=1.231147547e+01 : u
+Test     : Fld=11  Min=-4.587110337e+03, Max=5.982493934e+03, RMS=2.577892538e+03 : pressure_p
+Test     : Fld=12  Min=2.120290687e+02, Max=3.081790135e+02, RMS=2.883558528e+02 : skintemp
+Test     : Fld=13  Min=2.900000103e-02, Max=1.000000000e+00, RMS=8.913984940e-01 : smois
+Test     : Fld=14  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.672612419e-01 : snowc
+Test     : Fld=15  Min=0.000000000e+00, Max=1.991450837e+00, RMS=2.275148465e-01 : snowh
+Test     : Fld=16  Min=2.181196963e+02, Max=3.113593196e+02, RMS=2.890160384e+02 : tslb
+Test     : Fld=17  Min=-1.847001396e+01, Max=1.990062058e+01, RMS=5.740708454e+00 : u10
+Test     : Fld=18  Min=-2.082246446e+01, Max=1.753145262e+01, RMS=4.797109720e+00 : v10
+Test     : Fld=19  Min=-4.368465607e-02, Max=5.839856043e-02, RMS=2.459068977e-03 : w
+Test     : Fld=20  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.239875798e-01 : xice
+Test     : Updated Analysis member 1:
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 20
+Test     : Fld=1  Min=2.011334255e+02, Max=3.073501471e+02, RMS=2.440788122e+02 : temperature
+Test     : Fld=2  Min=2.112389657e-07, Max=1.784604819e-02, RMS=4.421631142e-03 : spechum
+Test     : Fld=3  Min=-3.946828690e+01, Max=8.352459687e+01, RMS=1.516943694e+01 : uReconstructZonal
+Test     : Fld=4  Min=-5.387523830e+01, Max=5.575667259e+01, RMS=7.789806423e+00 : uReconstructMeridional
+Test     : Fld=5  Min=5.632433726e+04, Max=1.041082540e+05, RMS=9.883677428e+04 : surface_pressure
+Test     : Fld=6  Min=2.112386757e-07, Max=1.817031641e-02, RMS=4.477813734e-03 : qv
+Test     : Fld=7  Min=1.417908590e+03, Max=9.746597564e+04, RMS=4.900166782e+04 : pressure
+Test     : Fld=8  Min=2.443099422e-02, Max=1.320134399e+00, RMS=6.147919279e-01 : rho
+Test     : Fld=9  Min=2.478679437e+02, Max=7.213535946e+02, RMS=4.408657069e+02 : theta
+Test     : Fld=10  Min=-8.708447762e+01, Max=8.300814816e+01, RMS=1.231223185e+01 : u
+Test     : Fld=11  Min=-4.587827236e+03, Max=5.982504894e+03, RMS=2.577400734e+03 : pressure_p
+Test     : Fld=12  Min=2.120290687e+02, Max=3.081790135e+02, RMS=2.883558528e+02 : skintemp
+Test     : Fld=13  Min=2.900000103e-02, Max=1.000000000e+00, RMS=8.913984940e-01 : smois
+Test     : Fld=14  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.672612419e-01 : snowc
+Test     : Fld=15  Min=0.000000000e+00, Max=1.991450837e+00, RMS=2.275148465e-01 : snowh
+Test     : Fld=16  Min=2.181196963e+02, Max=3.113593196e+02, RMS=2.890160384e+02 : tslb
+Test     : Fld=17  Min=-1.847001396e+01, Max=1.990062058e+01, RMS=5.740708454e+00 : u10
+Test     : Fld=18  Min=-2.082246446e+01, Max=1.753145262e+01, RMS=4.797109720e+00 : v10
+Test     : Fld=19  Min=-4.368465607e-02, Max=5.839856043e-02, RMS=2.459068977e-03 : w
+Test     : Fld=20  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.239875798e-01 : xice
+Test     : Analysis mean:
+Test     :   Valid time: 2018-04-15T00:00:00Z
+Test     :   Resolution: nCellsGlobal = 2562, nFields = 20
+Test     : Fld=1  Min=2.011424773e+02, Max=3.069636370e+02, RMS=2.440757830e+02 : temperature
+Test     : Fld=2  Min=1.591724414e-07, Max=1.781998009e-02, RMS=4.419151782e-03 : spechum
+Test     : Fld=3  Min=-3.919995298e+01, Max=8.330592627e+01, RMS=1.518771749e+01 : uReconstructZonal
+Test     : Fld=4  Min=-5.288960151e+01, Max=5.712021460e+01, RMS=7.792440371e+00 : uReconstructMeridional
+Test     : Fld=5  Min=5.632057982e+04, Max=1.041004237e+05, RMS=9.883491265e+04 : surface_pressure
+Test     : Fld=6  Min=1.591843531e-07, Max=1.814329388e-02, RMS=4.475329058e-03 : qv
+Test     : Fld=7  Min=1.417245833e+03, Max=9.746156042e+04, RMS=4.900068054e+04 : pressure
+Test     : Fld=8  Min=2.445725657e-02, Max=1.322125779e+00, RMS=6.147828168e-01 : rho
+Test     : Fld=9  Min=2.483749365e+02, Max=7.215543389e+02, RMS=4.408676785e+02 : theta
+Test     : Fld=10  Min=-8.641111905e+01, Max=8.280958274e+01, RMS=1.231894133e+01 : u
+Test     : Fld=11  Min=-4.607053769e+03, Max=5.994055097e+03, RMS=2.578946298e+03 : pressure_p
+Test     : Fld=12  Min=2.127832278e+02, Max=3.080264242e+02, RMS=2.883398321e+02 : skintemp
+Test     : Fld=13  Min=2.900000103e-02, Max=1.000000000e+00, RMS=8.913987895e-01 : smois
+Test     : Fld=14  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.670786240e-01 : snowc
+Test     : Fld=15  Min=0.000000000e+00, Max=1.991450837e+00, RMS=2.275083180e-01 : snowh
+Test     : Fld=16  Min=2.181196843e+02, Max=3.114844466e+02, RMS=2.890122910e+02 : tslb
+Test     : Fld=17  Min=-1.892265779e+01, Max=1.929482659e+01, RMS=5.735471314e+00 : u10
+Test     : Fld=18  Min=-2.062082482e+01, Max=1.838003331e+01, RMS=4.788034504e+00 : v10
+Test     : Fld=19  Min=-4.254024360e-02, Max=5.899939574e-02, RMS=2.455092615e-03 : w
+Test     : Fld=20  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.242052986e-01 : xice

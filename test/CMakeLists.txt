@@ -83,6 +83,7 @@ list( APPEND mpas_testinput
   testinput/model.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
+  testinput/rtpp.yaml
   testinput/state_bumpinterp.yaml
   testinput/state_unsinterp.yaml
   testinput/getvalues.yaml
@@ -121,6 +122,7 @@ list( APPEND mpas_testoutput
   testoutput/hofx3d_rttovcpp.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
+  testoutput/rtpp.ref
 )
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -458,7 +460,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states)
 # oops/utils/string_utils::swap_name_member
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble)
-set(ensemblemembers mem001;mem002;mem003;mem004;mem005)
+set(ensemblemembers mem000;mem001;mem002;mem003;mem004;mem005)
 foreach(MEM IN LISTS ensemblemembers)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble/${MEM})
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble/${MEM})
@@ -817,6 +819,8 @@ jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DE
                            NPE 4 N_PARALLEL_STATES 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
+jedi_app_ref_test_compare( APP     rtpp        ID rtpp                      ${DEFAULT_REF_TYPE}
+                           DEPENDS eda_3dhybrid )
 
 #####################################################################
 # Files for RTTOV tests
