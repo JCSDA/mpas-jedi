@@ -727,6 +727,7 @@ endif()
 set(RECALIBRATE_CTEST_REFS "OFF")
 
 # tolerances for compare.py:
+set (PY_FLOAT_TOL 0.00000001)
 set (PYHX3D_FLOAT_TOL 0.00000001)
 set (PYRTTOV_FLOAT_TOL 0.001)
 set (PYHX4D_FLOAT_TOL 0.005)
@@ -735,16 +736,22 @@ set (PY_INT_TOL 0)   #Max difference
 if( ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
   # recalibrate reference files to current build
   set(YAML_REF_TYPE "SETUP_REFERENCE")
+  set(PY_REF_TYPE "SETUP_REFERENCE")
   set(PYHX3D_REF_TYPE "SETUP_REFERENCE")
   set(PYRTTOV_REF_TYPE "SETUP_REFERENCE")
   set(PYHX4D_REF_TYPE "SETUP_REFERENCE")
 else()
   # test then compare to reference
   set(YAML_REF_TYPE COMPARE)
+  set(PY_REF_TYPE COMPARE TOL ${PY_FLOAT_TOL} DIF ${PY_INT_TOL})
   set(PYHX3D_REF_TYPE COMPARE TOL ${PYHX3D_FLOAT_TOL} DIF ${PY_INT_TOL})
   set(PYRTTOV_REF_TYPE COMPARE TOL ${PYRTTOV_FLOAT_TOL} DIF ${PY_INT_TOL})
   set(PYHX4D_REF_TYPE COMPARE TOL ${PYHX4D_FLOAT_TOL} DIF ${PY_INT_TOL})
 endif()
+# TODO: replace DEFAULT_REF_TYPE and PYFC_REF_TYPE with YAML_REF_TYPE when in-core comparison
+#       is re-enabled in OOPS, then remove PY_REF_TYPE
+set(DEFAULT_REF_TYPE ${PY_REF_TYPE})
+set(PYFC_REF_TYPE ${PYHX4D_REF_TYPE})
 
 #############################
 # Individual test definitions
@@ -767,46 +774,46 @@ endif()
 
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
-jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     forecast                                 ${PYFC_REF_TYPE} )
 jedi_app_ref_test_compare( APP     hofx3d                                   ${PYHX3D_REF_TYPE} )
 if( ${RTTOV_FOUND} )
   jedi_app_ref_test_compare( APP   hofx3d       ID hofx3d_rttovcpp          ${PYRTTOV_REF_TYPE} )
 endif( ${RTTOV_FOUND} )
 jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${YAML_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${DEFAULT_REF_TYPE} )
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
-##jedi_app_ref_test_compare( APP     enshofx                                  ${YAML_REF_TYPE})
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} )
+##jedi_app_ref_test_compare( APP     enshofx                                  ${DEFAULT_REF_TYPE})
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} )
 ### TODO: Make the gen_ens_pert_B test produce the same output in Debug and Release. Until that time, we remove it.
-#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${YAML_REF_TYPE}
+#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${DEFAULT_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${DEFAULT_REF_TYPE}
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${PYFC_REF_TYPE} )
+jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${DEFAULT_REF_TYPE}
                            NPE 3 N_PARALLEL_STATES 3 )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${DEFAULT_REF_TYPE}
                            NPE 3 N_PARALLEL_STATES 3
                            DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${YAML_REF_TYPE}
+jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${DEFAULT_REF_TYPE}
                            NPE 4 N_PARALLEL_STATES 4
                            DEPENDS parameters_bumpcov
                                    parameters_bumploc )
@@ -830,13 +837,13 @@ endif( ${RTTOV_FOUND} )
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     foreach(THIS_NPE ${multi_pe_480})
         if( THIS_NPE GREATER 1 )
-            jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     forecast                                 ${PYFC_REF_TYPE} NPE ${THIS_NPE} )
 ## hofx is expensive, hold off list for now
 #            jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE} NPE ${THIS_NPE}
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${DEFAULT_REF_TYPE} NPE ${THIS_NPE} )
+            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${DEFAULT_REF_TYPE} NPE ${THIS_NPE}
                                        DEPENDS parameters_bumpcov
                                                parameters_bumploc )
         endif()
