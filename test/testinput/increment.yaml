@@ -1,53 +1,14 @@
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
-# requirements for variables in increment test:
-# + same variables in inc and state
-# + only linear transformations between inc and state in add increment method (+=)
-# + above excludes positive-definite checks for moisture/hydrometeors/tracers
-# + all fields must be serializable
-# TODO: why do pressure, rho, and theta fail?
 inc variables:
 - temperature
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
-#- pressure
-#- rho
-#- theta
+- pressure
+- rho
+- theta
 - u
 increment test:
   date: '2018-04-15T00:00:00Z'
-state:
-  state variables:
-  - temperature
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-#  - pressure
-#  - rho
-#  - theta
-  - u
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
-  date: '2018-04-15T00:00:00Z'
-_interptest:
-  tolerance: 1.0e-10
-  geovals:
-    variables:
-    - air_temperature
-    - air_pressure
-  locations:
-    window begin: 2018-04-14T21:00:00Z
-    window end: 2018-04-15T03:00:00Z
-    obsspace:
-      name: Random Locations
-      simulated variables: []
-      generate:
-        random:
-          nobs: 10
-          lat1: -90
-          lat2: 90
-          lon1: 0
-          lon2: 360
-          random_seed: 560921
-        obs errors: []

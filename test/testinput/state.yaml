@@ -1,7 +1,6 @@
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
-  interpolation type: bump
 state test:
   statefile:
     state variables:
@@ -25,30 +24,9 @@ state test:
     date: *date
     mean: 8
     sinus: 2
-  interpolation test:
-    variables:
-    - air_temperature
-    - air_pressure
   norm generated state: '20000.378266179847'
   tolerance:
   - 1.0e-08
-  interpolation tolerance:
-  - 0.0001
-  locations:
-    window begin: 2018-04-14T21:00:00Z
-    window end: 2018-04-15T03:00:00Z
-    obsspace:
-      name: Random Locations
-      simulated variables: []
-      generate:
-        random:
-          nobs: 10
-          lat1: -90
-          lat2: 90
-          lon1: 0
-          lon2: 360
-          random_seed: 560921
-        obs errors: []
   statefileout:
     state variables:
     - temperature

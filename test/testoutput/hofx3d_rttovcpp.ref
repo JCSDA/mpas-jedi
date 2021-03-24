@@ -24,13 +24,13 @@ Test     : Fld=20  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00
 Test     : Fld=21  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : isltyp
 Test     : Fld=22  Min=0.000000000e+00, Max=1.965294306e+00, RMS=2.250990278e-01 : snowh
 Test     : Fld=23  Min=0.000000000e+00, Max=8.784761678e+01, RMS=1.742871049e+01 : vegfra
-Test     : Fld=24  Min=2.189966297e+02, Max=3.112328341e+02, RMS=2.879661763e+02 : t2m
-Test     : Fld=25  Min=2.603807300e-05, Max=2.459858546e-02, RMS=1.150893611e-02 : q2
+Test     : Fld=24  Min=2.185434967e+02, Max=3.058240952e+02, RMS=2.877815141e+02 : t2m
+Test     : Fld=25  Min=1.822708763e-05, Max=2.550509158e-02, RMS=1.169876021e-02 : q2
 Test     : Fld=26  Min=-2.626057189e+01, Max=2.106270375e+01, RMS=6.069512626e+00 : u10
 Test     : Fld=27  Min=-2.022071682e+01, Max=2.231418641e+01, RMS=5.236995243e+00 : v10
 Test     : Fld=28  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00 : lai
 Test     : Fld=29  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Test     : Fld=30  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
 Test     : H(x): 
-Test     : AMSUA-NOAA19-nohydro nobs= 1500 Min=138.992, Max=277.153, RMS=226.487
+Test     : AMSUA-NOAA19-nohydro nobs= 1500 Min=138.988, Max=277.114, RMS=226.487
 Test     : End H(x)

@@ -84,9 +84,9 @@ list( APPEND mpas_testinput
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
   testinput/rtpp.yaml
-  testinput/state_bumpinterp.yaml
-  testinput/state_unsinterp.yaml
-  testinput/getvalues.yaml
+  testinput/state.yaml
+  testinput/getvalues_bumpinterp.yaml
+  testinput/getvalues_unsinterp.yaml
   testinput/lineargetvalues.yaml
 )
 # Create Data directory for test input and symlink all files
@@ -765,13 +765,13 @@ set(PYFC_REF_TYPE ${PYHX4D_REF_TYPE})
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     # Unit tests for interface classes to PROJECT_NAME_LOWCASE
     jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
-    jedi_unit_test( CLASS State ID state_bumpinterp YAMLFILE state_bumpinterp )
-    jedi_unit_test( CLASS State ID state_unsinterp  YAMLFILE state_unsinterp )
+    jedi_unit_test( CLASS State           YAMLFILE state )
     jedi_unit_test( CLASS Model           YAMLFILE model )
     jedi_unit_test( CLASS Increment       YAMLFILE increment )
     jedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     jedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    jedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
+    jedi_unit_test( CLASS GetValues ID getvalues_bumpinterp YAMLFILE getvalues_bumpinterp )
+    jedi_unit_test( CLASS GetValues ID getvalues_unsinterp  YAMLFILE getvalues_unsinterp )
     jedi_unit_test( CLASS LinearGetValues YAMLFILE lineargetvalues )
 endif()
 
