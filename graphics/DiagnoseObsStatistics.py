@@ -178,7 +178,7 @@ class DiagnoseObsStatistics:
         statsDict[statName] = []
 
     # collect stats for all diagnosticConfigs
-    for diagName, diagnosticConfig in diagnosticConfigs.items():
+    for diagName, diagnosticConfig in sorted(diagnosticConfigs.items()):
         if 'ObsFunction' not in diagnosticConfig: continue
 
         logger.info('Calculating/writing diagnostic stats for:')
