@@ -15,7 +15,6 @@
 
 #include "atlas/field.h"
 
-#include "oops/base/GeneralizedDepartures.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/dot_product.h"
@@ -53,10 +52,9 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-class IncrementMPAS : public oops::GeneralizedDepartures,
-                       public util::Printable,
-                       public util::Serializable,
-                       private util::ObjectCounter<IncrementMPAS> {
+class IncrementMPAS : public util::Printable,
+                      public util::Serializable,
+                      private util::ObjectCounter<IncrementMPAS> {
  public:
   static const std::string classname() {return "mpas::IncrementMPAS";}
 
