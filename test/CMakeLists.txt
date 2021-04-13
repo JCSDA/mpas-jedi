@@ -53,6 +53,7 @@ list( APPEND mpas_testinput
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
   testinput/3dvar_bumpcov.yaml
+  testinput/3dvar_bumpcov_rttovcpp.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
   testinput/convertstate_bumpinterp.yaml
@@ -104,6 +105,7 @@ list( APPEND mpas_testoutput
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
   testoutput/3dvar_bumpcov.ref
+  testoutput/3dvar_bumpcov_rttovcpp.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
   testoutput/convertstate_bumpinterp.ref
@@ -792,6 +794,10 @@ jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${YA
 jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${YAML_REF_TYPE} )
 jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${YAML_REF_TYPE}
                            DEPENDS parameters_bumpcov )
+if( ${RTTOV_FOUND} )
+  jedi_app_ref_test_compare( APP   variational ID 3dvar_bumpcov_rttovcpp    ${YAML_REF_TYPE}
+                             DEPENDS parameters_bumpcov )
+endif( ${RTTOV_FOUND} )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${YAML_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${YAML_REF_TYPE}
