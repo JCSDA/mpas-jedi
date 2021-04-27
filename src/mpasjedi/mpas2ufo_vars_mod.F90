@@ -846,14 +846,14 @@ subroutine convert_mpas_field2ufo(geom, subFields, convFields, fieldname, nfield
         field1d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
 
-     case ( var_sfc_u10 ) !-uwind_at_10m
+     case ( var_sfc_u10, var_sfc_u ) !-uwind_at_10m, surface_eastward_wind
         call mpas_pool_get_field(subFields, 'u10', field1d_src) !< get surface_pressure
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array (1:ngrid) = field1d_src%array(1:ngrid)
         field1d % fieldName = trim(fieldname(ivar))
         call mpas_pool_add_field(convFields, trim(fieldname(ivar)), field1d)
 
-     case ( var_sfc_v10 ) !-vwind_at_10m
+     case ( var_sfc_v10, var_sfc_v ) !-vwind_at_10m, surface_northward_wind
         call mpas_pool_get_field(subFields, 'v10', field1d_src) !< get surface_pressure
         call mpas_duplicate_field(field1d_src, field1d)
         field1d % array (1:ngrid) = field1d_src%array(1:ngrid)

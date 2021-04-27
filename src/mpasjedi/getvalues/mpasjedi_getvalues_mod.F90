@@ -208,7 +208,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   integer, allocatable ::obs_field_int(:,:)
   real(kind=kind_real), allocatable :: mod_field(:,:)
   real(kind=kind_real), allocatable :: obs_field(:,:)
-  real(kind=kind_real), allocatable :: tmp_field(:,:)  !< for wspeed/wdir
 
   type (mpas_pool_type), pointer :: pool_ufo  !< pool with ufo variables
   type (mpas_pool_iterator_type) :: poolItr
@@ -217,7 +216,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   integer, dimension(:), pointer :: i1d_ptr_a, i1d_ptr_b
   integer, dimension(:,:), pointer :: i2d_ptr_a
 
-  real(kind=kind_real) :: wdir           !< for wind direction
   integer :: ivarw, ivarl, ivari, ivars  !< for sfc fraction indices
 
   logical :: allocateGeo
@@ -354,73 +352,6 @@ subroutine fill_geovals(self, geom, fields, t1, t2, locs, gom)
   allocate(mod_field(ngrid,1))
   allocate(obs_field(nlocs,1))
   allocate(obs_field_int(nlocs,1))
-
-
-  ! Special cases --> interpolation, then conversion (wspeed, wdir)
-  ! -------------------------------------------------
-  !---add special cases: var_sfc_wspeed and/or var_sfc_wdir
-  if ( (ufo_vars_getindex(gom%variables,var_sfc_wspeed) > 0) .or. &
-       (ufo_vars_getindex(gom%variables,var_sfc_wdir)   > 0) ) then
-
-    !write(*,*) ' BJJ: special cases: var_sfc_wspeed and/or var_sfc_wdir'
-
-    !- allocate
-    allocate(tmp_field(nlocs,2))
-
-    !- read/interp.
-    call mpas_pool_get_array(fields % subFields, "u10", r1d_ptr_a)
-    !write(*,*) 'MIN/MAX of u10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    if (self%use_bump_interp) then
-      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,1))
-    else
-      mod_field(:,1) = r1d_ptr_a(1:ngrid)
-      call self%unsinterp%apply(mod_field,obs_field)
-      tmp_field(:,1)=obs_field(:,1)
-    endif
-    call mpas_pool_get_array(fields % subFields, "v10", r1d_ptr_a)
-    !write(*,*) 'MIN/MAX of v10=',minval(mod_field(:,1)),maxval(mod_field(:,1))
-    if (self%use_bump_interp) then
-      call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), tmp_field(:,2))
-    else
-      mod_field(:,1) = r1d_ptr_a(1:ngrid)
-      call self%unsinterp%apply(mod_field,obs_field)
-      tmp_field(:,2)=obs_field(:,1)
-    endif
-
-    !- allocate geoval & put values for var_sfc_wspeed
-    ivar = ufo_vars_getindex(gom%variables,var_sfc_wspeed)
-    if(ivar > 0) then
-      if( .not. allocated(gom%geovals(ivar)%vals) )then
-        gom%geovals(ivar)%nval = 1
-        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-      endif
-      do jloc = 1, nlocs
-        if (time_mask(jloc)) then
-          gom%geovals(ivar)%vals(1,jloc) = sqrt( tmp_field(jloc,1)**2 + tmp_field(jloc,2)**2 ) ! ws = sqrt(u**2+v**2) [m/s]
-        endif
-      end do
-      !write(*,*) 'MIN/MAX of ',trim(var_sfc_wspeed),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-    endif
-
-    !- allocate geoval & put values for var_sfc_wdir
-    ivar = ufo_vars_getindex(gom%variables,var_sfc_wdir)
-    if(ivar > 0) then
-      if( .not. allocated(gom%geovals(ivar)%vals) )then
-        gom%geovals(ivar)%nval = 1
-        allocate( gom%geovals(ivar)%vals(gom%geovals(ivar)%nval,gom%geovals(ivar)%nlocs) )
-      endif
-      do jloc = 1, nlocs
-        call uv_to_wdir(tmp_field(jloc,1), tmp_field(jloc,2), wdir) ! uu, vv, wind10_direction in radian
-        if (time_mask(jloc)) gom%geovals(ivar)%vals(1,jloc) = wdir * MPAS_JEDI_RAD2DEG_kr  ! radian -> degree
-      enddo
-      !write(*,*) 'MIN/MAX of ',trim(var_sfc_wdir),minval(gom%geovals(ivar)%vals),maxval(gom%geovals(ivar)%vals)
-    endif
-
-    !- deallocate
-    deallocate(tmp_field)
-
-  endif  !---end var_sfc_wspeed and/or var_sfc_wdir
-
 
   ! Special cases --> nearest neighbor (surface integer values)
   ! -----------------------------------------------------------
