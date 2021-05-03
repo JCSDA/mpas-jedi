@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import defaultdict
 import logging
 from netCDF4 import Dataset
 import numpy as np
@@ -12,15 +13,53 @@ _logger = logging.getLogger(__name__)
 # utilities for statistics, aggregation, and bootstrapping
 #==========================================================
 
+# single-precision for floating point storage
+rKindStore = np.float32
+rKindNC = 'f4'
+
+# double-precision for floating point storage
+#rKindStore = np.float64
+#rKindNC = 'f8'
+
+# double-precision for floating point calculation
+rKindCompute = np.float64
+
+
 #============
 # statistics
 #============
+
+# ddof - Delta Degrees of Freedom used in standard deviation calculations
+# Note: must be identical across experiments for the two stages:
+# + statistics generation
+# + plot generation
+ddof = int(0)
 
 #Ordered list of statistics available in ASCII stats_* files...
 # (1) that can be aggregated
 aggregatableFileStats = ['Count','Mean','MS','RMS','STD','Min','Max']
 
 allFileStats = aggregatableFileStats
+
+statDtypes = {
+  'Count': int,
+  'Mean': rKindStore,
+  'MS': rKindStore,
+  'RMS': rKindStore,
+  'STD': rKindStore,
+  'Min': rKindStore,
+  'Max': rKindStore,
+}
+
+statDtypesCompute = {
+  'Count': int,
+  'Mean': rKindCompute,
+  'MS': rKindCompute,
+  'RMS': rKindCompute,
+  'STD': rKindCompute,
+  'Min': rKindStore,
+  'Max': rKindStore,
+}
 
 # (2) that can be sampled with bootstrap
 sampleableAggStats = ['Count','Mean','MS','RMS']
@@ -30,72 +69,78 @@ fileStatAttributes = ['DiagSpaceGrp','varName','varUnits','diagName',
 
 statsFilePrefix = 'stats_'
 
+
 ###############################################################################
 def calcStats(array_f):
-    # array_f (float(:)) - 1-d array of float values for which statistics should be calculated
+# INPUTS:
+# array_f[np.array(float)] - 1-d array of floating point values for which
+#  statistics will be calculated
 
-    #Only include non-NaN values in statistics
-    STATS = {}
-    STATS['Count']  = len(array_f)-np.isnan(array_f).sum()
-    if STATS['Count'] > 0:
-        STATS['Mean'] = np.nanmean(array_f)
-        STATS['MS']   = np.nanmean(np.square(array_f))
-        STATS['RMS']  = np.sqrt(STATS['MS'])
-        STATS['STD']  = np.nanstd(array_f)
-        STATS['Min']  = np.nanmin(array_f)
-        STATS['Max']  = np.nanmax(array_f)
-    else:
-        for stat in allFileStats:
-            if stat != 'Count':
-                STATS[stat] = np.NaN
+# RETURNS:
+# STATS[dict] - population statistics, accounting for NaN values
 
-    return STATS
+  #Only include non-NaN values in statistics
+  STATS = {}
+  STATS['Count']  = np.isfinite(array_f).sum()
+  if STATS['Count'] > 0:
+    STATS['Mean'] = np.nanmean(array_f)
+    STATS['MS']   = np.nanmean(np.square(array_f))
+    STATS['RMS']  = np.sqrt(STATS['MS'])
+    STATS['STD']  = np.nanstd(array_f, ddof=ddof)
+    STATS['Min']  = np.nanmin(array_f)
+    STATS['Max']  = np.nanmax(array_f)
+  else:
+    for stat in allFileStats:
+      if stat != 'Count':
+        STATS[stat] = np.NaN
+
+  return STATS
 
 
 ###############################################################################
-def write_stats_nc(statSpace,statsDict):
+def write_stats_nc(statSpace, statsDict):
 
-    # TODO: This data is hierarchical. Compare
-    #       memory/storage requirements when using
-    #       Pandas dataframe and hdf5 statistics files
-    #       instead of dict of lists and nc4
-    statsFile = statsFilePrefix+statSpace+'.nc'
-    if os.path.exists(statsFile):
-        os.remove(statsFile)
+  # TODO: This data is hierarchical. Compare
+  #       memory/storage requirements when using
+  #       Pandas dataframe and hdf5 statistics files
+  #       instead of dict of lists and nc4
+  statsFile = statsFilePrefix+statSpace+'.nc'
+  if os.path.exists(statsFile):
+    os.remove(statsFile)
 
-    ncid = Dataset(statsFile, 'w', format='NETCDF4')
-    ncid.description = statSpace+" diagnostic statistics"
+  ncid = Dataset(statsFile, 'w', format='NETCDF4')
+  ncid.description = statSpace+" diagnostic statistics"
 
-    nrows = len(statsDict[fileStatAttributes[0]])
-    ncid.createDimension('nrows', nrows)
+  nrows = len(statsDict[fileStatAttributes[0]])
+  ncid.createDimension('nrows', nrows)
 
-    for attribName in fileStatAttributes:
-        attribHandle = ncid.createVariable(attribName,str,'nrows')
-        attribHandle[:] = np.array(statsDict[attribName], dtype=object)
+  for attribName in fileStatAttributes:
+    attribHandle = ncid.createVariable(attribName, str, 'nrows')
+    attribHandle[:] = np.array(statsDict[attribName], dtype=object)
 
-    for statName in allFileStats:
-        statHandle = ncid.createVariable(statName,'f4','nrows')  #'f8'
-        statHandle[:] = statsDict[statName]
+  for statName in allFileStats:
+    statHandle = ncid.createVariable(statName, rKindNC, 'nrows')
+    statHandle[:] = statsDict[statName]
 
-    ncid.close()
+  ncid.close()
 
 
 ###############################################################################
 def read_stats_nc(statsFile):
 
-    ncid = Dataset(statsFile, 'r')
-    ncid.set_auto_mask(False)
+  ncid = Dataset(statsFile, 'r')
+  ncid.set_auto_mask(False)
 
-    statsDict = {}
-    for attribName in fileStatAttributes:
-        statsDict[attribName] = np.asarray(ncid.variables[attribName][:])
+  statsDict = {}
+  for attribName in fileStatAttributes:
+    statsDict[attribName] = np.asarray(ncid.variables[attribName][:])
 
-    for statName in allFileStats:
-        statsDict[statName] = np.asarray(ncid.variables[statName][:])
+  for statName in allFileStats:
+    statsDict[statName] = np.asarray(ncid.variables[statName][:], statDtypes[statName])
 
-    ncid.close()
+  ncid.close()
 
-    return statsDict
+  return statsDict
 
 
 #===================
@@ -105,55 +150,71 @@ def read_stats_nc(statsFile):
 ###############################################################################
 def aggStatsDF(x):
 #PURPOSE: aggregate DataFrame containing aggregatableFileStats
-# INPUT: x - pandas DataFrame containing the subpopulation stats
-# OUTPUT: y - dictionary formatted as a pandas Series containing aggregated stats
+# INPUT: x[pd.DataFrame] - subpopulation statistics
+# RETURNS: y[pd.Series] - aggregated statistics
 
-    #converting to dictionary first speeds up the memory access
-    y = aggStatsDict(x.to_dict('list'))
+  #converting to dictionary first speeds up the memory access
+  y = aggStatsDict(x.to_dict('list'))
 
-    return pd.Series(y, index=aggregatableFileStats)
+  return pd.Series(y, index=aggregatableFileStats)
 
 def aggStatsDict(x_): #, stats = aggregatableFileStats):
 #PURPOSE: aggregate Dictionary containing aggregatableFileStats
-# INPUT: x - dictionary containing the subpopulation statistics
-# OUTPUT: y - dictionary containing aggregated statistics
+# INPUT: x[dict] - subpopulation statistics
+# RETURNS: y[dict] - aggregated statistics
 
-    # convert lists to np.array to enable math functions
-    x = {}
-#    for stat in stats:
-    for stat in aggregatableFileStats:
+  counts = np.array(x_['Count'])
+  mask = np.logical_and(np.greater(counts, 0),
+                        np.isfinite(counts))
 
-        x[stat] = np.array(x_[stat])
+  # convert lists to masked np.array to enable math functions
+  x = {}
+  for stat in aggregatableFileStats:
+    x[stat] = np.array(x_[stat], dtype=statDtypesCompute[stat])[mask]
 
-    y = {}
+  y = {}
+  for stat in aggregatableFileStats:
+    y[stat] = np.NaN
 
-    y['Count'] = np.nansum(x['Count'])
+  ## Count
+  Count = int(np.nansum(x['Count']))
+  y['Count'] = Count
 
-    for stat in aggregatableFileStats:
-        if stat != 'Count': y[stat] = np.NaN
+  if Count > 0 and np.isfinite(Count):
+    # Note: arrays are sorted in ascending order before summation to avoid precision loss
+    ## Mean
+    v1_ = np.multiply(x['Mean'], x['Count'].astype(rKindCompute))
+    v1_ = np.sort(v1_)
+    Mean = np.nansum(v1_) / rKindCompute(Count)
+    y['Mean'] = rKindStore(Mean)
 
-    if y['Count'] > 0 and np.isfinite(y['Count']):
-        y['Mean'] = ( np.nansum( np.multiply(x['Mean'], x['Count'].astype(float)) )
-                      / y['Count'].astype(float) )
+    ## MS
+    v1_ = np.multiply(x['MS'], x['Count'].astype(rKindCompute))
+    v1_ = np.sort(v1_)
+    ms = np.nansum(v1_) / rKindCompute(Count)
+    y['MS'] = rKindStore(ms)
 
-        y['MS'] = ( np.nansum( np.multiply(x['MS'], x['Count'].astype(float)) )
-                      / y['Count'].astype(float) )
+    ## RMS
+    y['RMS'] = rKindStore(np.sqrt(ms))
 
-        y['RMS'] = np.sqrt( y['MS'] )
-
-        y['STD'] = np.sqrt( (
-                       np.nansum( np.multiply(
-                           (np.square(x['STD']) + np.square(x['Mean'])),
-                           x['Count'].astype(float) ) )
-                              / y['Count'].astype(float) )
-                            - np.square(y['Mean']) )
+    ## STD
     # Pooled variance Formula as described here:
+    #  https://en.wikipedia.org/wiki/Pooled_variance#Sample-based_statistics
     #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
-        y['Min'] = np.nanmin(x['Min'])
+    v1_ = np.multiply(np.square(x['STD']), np.subtract(x['Count'].astype(rKindCompute), ddof))
+    v2_ = np.multiply(np.square(x['Mean']), x['Count'].astype(rKindCompute))
+    v12 = np.nansum(np.sort(np.append(v1_, v2_)))
+    v3 = np.square(Mean) * rKindCompute(Count)
+    if v12 >= v3:
+      y['STD'] = rKindStore(np.sqrt((v12 - v3) / rKindCompute(Count - ddof)))
 
-        y['Max'] = np.nanmax(x['Max'])
+    ## Min
+    y['Min'] = np.nanmin(x['Min'])
 
-    return y
+    ## Max
+    y['Max'] = np.nanmax(x['Max'])
+
+  return y
 
 
 #============================================
@@ -172,57 +233,60 @@ def identityFunc(x):
 
 ################################################################################
 def rmsFunc(x, axis=0):
-    return np.sqrt(np.nanmean(np.square(x),axis=axis))
+    return np.sqrt(np.nanmean(np.square(x), axis=axis))
 
 
 ################################################################################
 def bootStrapVector(X, alpha=0.05, n_samples=8000, weights=None):
 # PURPOSE: compute bootstrap confidence intervals on vector of data
 #
-#INPUTs:
-# X       - array of values
-# alpha   - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
-# n       - number of bootstrap samples, optional
-# weights - apply to X when performing mean
+# INPUTS:
+# X[np.array] - values to be bootstrapped.  For linear quantities (e.g., Mean, MS),
+#   these can also be subpopulation quantities, so long as the weights are set accordingly.
+#   See bootStrapClusterFunc for an example.
+# alpha[float] - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n[int or list(int) or array(int)] - number of bootstrap samples, optional
+# weights[np.array] - same length as X, adjusts re-sampling rates for each value, optional
 
-#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+# RETURNS:
+# ciVals - dictionary object containing mean, CI min and CI max
 
-    Ndata = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+  if type(n_samples) is list:
+    nsSamples = n_samples
+  elif (type(n_samples) is np.array
+    or type(n_samples) is np.ndarray):
+    nsSamples = list(n_samples)
+  else:
+    nsSamples = [n_samples]
+  max_samples = np.max(nsSamples)
 
-    if type(n_samples) is list:
-        nsSamples = n_samples
-    elif (type(n_samples) is np.array
-        or type(n_samples) is np.ndarray):
-        nsSamples = list(n_samples)
-    else:
-        nsSamples = [n_samples]
-    max_samples = np.max(nsSamples)
+  ## number of "data points" must by > 0
+  #  could be aggregated over a time series, space, or any other binning characteristic
+  Ndata = len(X)
 
-    if weights is None:
-        iResample = np.random.choice(Ndata, (Ndata,max_samples) ) #
-    else:
-        iResample = np.random.choice(Ndata, (Ndata,max_samples), p = weights ) #
+  if weights is None:
+    iResample = np.random.choice(Ndata, (Ndata, max_samples))
+  else:
+    iResample = np.random.choice(Ndata, (Ndata, max_samples), p = weights)
 
-    XResample = X[ iResample ]
-    Expect = np.nanmean(XResample,axis=0)
+  XResample = X[iResample]
+  Expect = np.nanmean(XResample, axis=0)
 
-    STATS = {}
-    for trait in ciTraits:
-        STATS[trait] = []
+  ciVals = defaultdict(list)
 
-    for nSamples in nsSamples:
-        sampleVals = np.sort( Expect[0:nSamples] )
-        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+  for nSamples in nsSamples:
+    sampleVals = np.sort(Expect[0:nSamples])
+    nonNaNSamples = np.isfinite(sampleVals).sum()
 
-        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
-        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
-        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+    iMid = int(np.around(0.5 * rKindCompute(nonNaNSamples)))
+    iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
+    iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-        STATS[cimean].append(sampleVals[iMid])
-        STATS[cimin].append(sampleVals[iLeft])
-        STATS[cimax].append(sampleVals[iRight])
+    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
-    return STATS
+  return ciVals
 
 
 ################################################################################
@@ -230,117 +294,118 @@ def bootStrapVectorRMSFunc(X, Y, statFunc=np.subtract,
                            alpha=0.05, n_samples=8000):
 # PURPOSE: compute bootstrap confidence intervals on RMS of vector of data
 #
-#INPUTs:
-# X, Y     - arrays of values for whole population
+# INPUTS:
+# X, Y - intrinsic values for whole population
 # statFunc - function f(RMS(X),RMS(Y)), optional, default is np.subtract
-# alpha    - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
-# n        - number of bootstrap samples, optional
+# alpha[float] - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples[int or list(int) or array(int)] - number of bootstrap samples, optional
 
-#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+# RETURNS:
+# ciVals - dictionary object containing mean, CI min and CI max
 
-    Ndata = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+  if type(n_samples) is list:
+    nsSamples = n_samples
+  elif (type(n_samples) is np.array
+    or type(n_samples) is np.ndarray):
+    nsSamples = list(n_samples)
+  else:
+    nsSamples = [n_samples]
+  max_samples = np.max(nsSamples)
 
-    if type(n_samples) is list:
-        nsSamples = n_samples
-    elif (type(n_samples) is np.array
-        or type(n_samples) is np.ndarray):
-        nsSamples = list(n_samples)
-    else:
-        nsSamples = [n_samples]
-    max_samples = np.max(nsSamples)
+  ## number of "data points" must by > 0
+  #  could be aggregated over a time series, space, or any other binning characteristic
+  Ndata = len(X)
 
-    iResample = np.random.choice(Ndata, (Ndata,max_samples) )
+  iResample = np.random.choice(Ndata, (Ndata, max_samples))
 
-    XResample = rmsFunc(X[ iResample ], axis=0)
-    YResample = rmsFunc(Y[ iResample ], axis=0)
+  XResample = rmsFunc(X[iResample], axis=0)
+  YResample = rmsFunc(Y[iResample], axis=0)
 
-    Expect = statFunc(XResample,YResample)
+  Expect = statFunc(XResample,YResample)
 
-    STATS = {}
-    for trait in ciTraits:
-        STATS[trait] = []
+  ciVals = defaultdict(list)
 
-    for nSamples in nsSamples:
-        sampleVals = np.sort( Expect[0:nSamples] )
-        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+  for nSamples in nsSamples:
+    sampleVals = np.sort(Expect[0:nSamples])
+    nonNaNSamples = np.isfinite(sampleVals).sum()
 
-        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
-        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
-        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+    iMid = int(np.around(0.5 * rKindCompute(nonNaNSamples)))
+    iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
+    iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-        STATS[cimean].append(sampleVals[iMid])
-        STATS[cimin].append(sampleVals[iLeft])
-        STATS[cimax].append(sampleVals[iRight])
+    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
-    return STATS
+  return ciVals
 
 
 ################################################################################
 def bootStrapAggRMSFunc(X, Y, Ns, statFunc=np.subtract,
                            alpha=0.05, n_samples=8000):
-# PURPOSE: compute bootstrap confidence intervals on aggregated RMS of vector of RMS of subpopulations
+# PURPOSE: compute bootstrap confidence intervals on function of aggregated RMS
+#          of two arrays of subpopulation RMSs
 #
-# X, Y     - arrays of RMS for multiple subpopulations
+# INPUTS:
+# X[np.array] - one set of RMS for multiple subpopulations
+# Y[np.array] - second set of RMS for the same subpopulations
+# Ns[np.array] - counts of data associated for the same subpopulations
 # statFunc - function f(agg(X),agg(Y)), optional, default is np.subtract
-# alpha    - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
-# n        - number of bootstrap samples, optional
+# alpha[float] - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples[int or list(int) or array(int)] - number of bootstrap samples, optional
 
-#OUTPUT: STATS - dictionary object containing mean, CI min and CI max
+# RETURNS:
+# ciVals - dictionary object containing mean, CI min and CI max
 
-    if type(n_samples) is list:
-        nsSamples = n_samples
-    elif (type(n_samples) is np.array
-        or type(n_samples) is np.ndarray):
-        nsSamples = list(n_samples)
-    else:
-        nsSamples = [n_samples]
-    max_samples = np.max(nsSamples)
+  if type(n_samples) is list:
+    nsSamples = n_samples
+  elif (type(n_samples) is np.array
+    or type(n_samples) is np.ndarray):
+    nsSamples = list(n_samples)
+  else:
+    nsSamples = [n_samples]
+  max_samples = np.max(nsSamples)
 
-    # remove zero-size clusters
-    X_ = []
-    Y_ = []
-    Ns_ = []
-    for i, n in enumerate(Ns):
-        if n > 0.0:
-            X_.append(X[i])
-            Y_.append(Y[i])
-            Ns_.append(n)
+  # remove invalid clusters
+  mask = np.logical_and(np.isfinite(X), np.isfinite(Y))
+  mask = np.logical_and(mask, Ns > 0.)
+  if mask.sum() == 0:
+    _logger.error("\n\nERROR: no valid subpopulation data")
+    os._exit(1)
 
-    X_ = np.asarray(X_)
-    Y_ = np.asarray(Y_)
-    Ns_ = np.asarray(Ns_)
+  X_ = np.asarray(X[mask], dtype=rKindCompute)
+  Y_ = np.asarray(Y[mask], dtype=rKindCompute)
+  Ns_ = np.asarray(Ns[mask], dtype=rKindCompute)
 
-    Ndata = len(X_) ; # number of "data points"
+  Ndata = len(X_) ; # number of "data points"
 
-    iResample = np.random.choice(Ndata, (Ndata,max_samples) )
+  iResample = np.random.choice(Ndata, (Ndata, max_samples))
 
-    NsResample = Ns_[ iResample ]
-    XResample = np.nansum(np.multiply(np.square(X_[ iResample ]), NsResample),axis=0)
-    YResample = np.nansum(np.multiply(np.square(Y_[ iResample ]), NsResample),axis=0)
+  NsResample = Ns_[iResample]
+  XResample = np.nansum(np.multiply(np.square(X_[iResample]), NsResample), axis=0)
+  YResample = np.nansum(np.multiply(np.square(Y_[iResample]), NsResample), axis=0)
 
-    NaggResample = np.nansum(NsResample,axis=0)
-    XaggResample = np.sqrt(np.divide(XResample, NaggResample))
-    YaggResample = np.sqrt(np.divide(YResample, NaggResample))
+  NaggResample = np.nansum(NsResample, axis=0)
+  XaggResample = np.sqrt(np.divide(XResample, NaggResample))
+  YaggResample = np.sqrt(np.divide(YResample, NaggResample))
 
-    Expect = statFunc(XaggResample,YaggResample)
+  Expect = statFunc(XaggResample, YaggResample)
 
-    STATS = {}
-    for trait in ciTraits:
-        STATS[trait] = []
+  ciVals = defaultdict(list)
 
-    for nSamples in nsSamples:
-        sampleVals = np.sort( Expect[0:nSamples] )
-        nonNaNSamples = len(sampleVals)-np.isnan(sampleVals).sum()
+  for nSamples in nsSamples:
+    sampleVals = np.sort(Expect[0:nSamples])
+    nonNaNSamples = np.isfinite(sampleVals).sum()
 
-        iMid = np.around( 0.5 * float(nonNaNSamples) ).astype(int)
-        iLeft = np.around( 0.5 * alpha * float(nonNaNSamples) ).astype(int)
-        iRight = np.around( (1 - 0.5 * alpha) * float(nonNaNSamples) ).astype(int)
+    iMid = int(np.around(0.5 * rKindCompute(nonNaNSamples)))
+    iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
+    iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-        STATS[cimean].append(sampleVals[iMid])
-        STATS[cimin].append(sampleVals[iLeft])
-        STATS[cimax].append(sampleVals[iRight])
+    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
-    return STATS
+  return ciVals
 
 
 ################################################################################
@@ -349,48 +414,51 @@ def bootStrapVectorFunc(X, Y, alpha=0.05,
                         vecFuncs=[identityFunc],
                         bootFuncs=[bootStrapVector],
                         statFunc=np.subtract):
-# PURPOSE: compute bootstrap confidence intervals on
-#          E[statFunc(vecFunc(X),vecFunc(Y))]
-#          using vectors of data, X and Y, that contain the whole population
-#INPUTS:
-# X, Y      - vectors of values for the whole population
-# alpha     - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
-# n_samples - number of bootstrap samples, optional, default==5000
-#             can either be a scalar or a list of values
-# vecFuncs  - function to apply independently to X and Y, e.g., np.square, optional
-# statFunc  - function f(vecFunc(X),vecFunc(Y)), optional, default is np.subtract
+# PURPOSE: compute bootstrap confidence intervals (bootFunc) on
+#          E[statFunc(vecFunc(X),vecFunc(Y))] using two vectors of data, X and Y,
+#          which are unique realizations of the same whole population of data
+# INPUTS:
+# X[np.array] - one set of values for the whole population
+# Y[np.array] - second set of values for the whole population
+# alpha[float] - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples[int or list(int) or array(int)] - number of bootstrap samples, optional
+# vecFuncs[list(function)] - function to apply independently to X and Y, e.g., np.square, optional
+# bootFuncs[list(function)] - function to use for bootstrapping each vecFuncs member (same length), optional
+# statFunc[function] - function f(vecFunc(X),vecFunc(Y)), optional, default is np.subtract
 
-#OUTPUTS:
-# STATS - dictionary object containing median, low CI, and high CI of bootstrapped stats
+# RETURNS:
+# funcCIVals - dictionary object containing median, low CI, and high CI of bootstrapped stats
 
-    N = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+  if type(n_samples) is list:
+    nsSamples = n_samples
+  elif (type(n_samples) is np.array
+    or type(n_samples) is np.ndarray):
+    nsSamples = list(n_samples)
+  else:
+      nsSamples = [n_samples]
+  max_samples = np.max(nsSamples)
 
-    if type(n_samples) is list:
-        nsSamples = n_samples
-    elif (type(n_samples) is np.array
-        or type(n_samples) is np.ndarray):
-        nsSamples = list(n_samples)
-    else:
-        nsSamples = [n_samples]
-    max_samples = np.max(nsSamples)
+  mask = np.logical_and(np.isfinite(X), np.isfinite(Y))
+  X_ = X[mask]
+  Y_ = Y[mask]
 
-    STATS = {}
-    for ifunc, func in enumerate(vecFuncs):
-        bootFunc = bootFuncs[ifunc]
-        if bootFunc is bootStrapVector:
-            ciVals = bootFunc(
-                         statFunc(func(X), func(Y)),
-                         n_samples=nsSamples)
-        elif bootFunc is bootStrapVectorRMSFunc:
-            ciVals = bootFunc(
-                         X, Y, statFunc,
-                         n_samples=nsSamples)
+  funcCIVals = {}
+  for ifunc, func in enumerate(vecFuncs):
+    bootFunc = bootFuncs[ifunc]
+    if bootFunc is bootStrapVector:
+      ciVals = bootFunc(
+                 statFunc(func(X_), func(Y_)),
+                 n_samples=nsSamples)
+    elif bootFunc is bootStrapVectorRMSFunc:
+      ciVals = bootFunc(
+                 X_, Y_, statFunc,
+                 n_samples=nsSamples)
 
-        STATS[ifunc] = {}
-        for trait in ciTraits:
-            STATS[ifunc][trait] = ciVals[trait]
+    funcCIVals[ifunc] = {}
+    for trait in ciTraits:
+      funcCIVals[ifunc][trait] = ciVals[trait]
 
-    return STATS
+  return funcCIVals
 
 
 ################################################################################
@@ -399,59 +467,70 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
                          statFunc=np.subtract,
                          statNames=sampleableAggStats):
 # PURPOSE: compute bootstrap confidence intervals on
-#          E[calcStats(X)] or E[statFunc(calcStats(X),calcStats(Y))]
-#          using Stats from subgroups of a whole population
-#INPUTS:
-# X, Y      - pandas DataFrames containing aggregatable stats for all subgroups
-# alpha     - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
-# n_samples - number of bootstrap samples, optional, default==5000
-#             can either be a scalar or a list of values
-# statFunc  - function, optional, default is np.subtract
-# statNames - the stats for which CI's will be produced
+#          E[statFunc(X, Y)], where X and Y contain statistics from
+#          subgroups of a whole population
+# INPUTS:
+# X[pd.DataFrame] - one set of aggregatableFileStats for all subgroups
+# Y[pd.DataFrame] - second set of aggregatableFileStats for same subgroups
+# alpha[float] - confidence interval (CI) percentile (e.g., 0.05 for 95%), optional
+# n_samples[int or list(int) or array(int)] - number of bootstrap samples, optional
+# statFunc[function] - function f(agg(X),agg(Y)), optional, default is np.subtract
+# statNames[list(str)] - the statistics for which CI's will be produced
 
-#OUTPUTS:
-# STATS   - dictionary object containing median, low CI, and high CI of bootstrapped stats
+# RETURNS:
+# statCIVals - nested dictionary object containing median, low CI, and high CI
+#              of all statNames
 
-    nClust = len(X) ; # number of "data points" (could be aggregated over a time series, or over space too)
+  ## initialize output
+  statCIVals = {}
+  for stat in statNames:
+    statCIVals[stat] = {}
+    for trait in ciTraits:
+      statCIVals[stat][trait] = [np.NaN]
+
+  ## number of "data points" must by > 0
+  #  could be aggregated over a time series, space, or any other binning characteristic
+  nClust = len(X)
+  if nClust > 0:
 
     if type(n_samples) is list:
-        nsSamples = n_samples
+      nsSamples = n_samples
     elif (type(n_samples) is np.array
-        or type(n_samples) is np.ndarray):
-        nsSamples = list(n_samples)
+      or type(n_samples) is np.ndarray):
+      nsSamples = list(n_samples)
     else:
-        nsSamples = [n_samples]
+      nsSamples = [n_samples]
     max_samples = np.max(nsSamples)
 
-    STATS = {}
     for stat in statNames:
-        if stat == 'Count': continue
-        Ns = X.loc[:,'Count'].to_numpy().astype(float)
-        X_ = X.loc[:,stat].to_numpy()
-        Y_ = Y.loc[:,stat].to_numpy()
+      if stat == 'Count': continue
+      Ns = X.loc[:,'Count'].to_numpy(dtype=rKindCompute)
+      X_ = X.loc[:,stat].to_numpy(dtype=rKindCompute)
+      Y_ = Y.loc[:,stat].to_numpy(dtype=rKindCompute)
 
-        if any(Ns > 0.0):
-            if stat == 'Mean' or stat == 'MS':
-                weights = np.divide(Ns,np.nansum(Ns))
-                ciVals = bootStrapVector(
-                             statFunc(X_,Y_),
-                             weights=weights,
-                             n_samples=nsSamples)
-            elif stat == 'RMS':
-                ciVals = bootStrapAggRMSFunc(
-                             X_, Y_, Ns, statFunc,
-                             n_samples=nsSamples)
-            else:
-                _logger.error("\n\nERROR: stat not implemented: ", stat)
-                os._exit(1)
-        else:
-            ciVals = {}
-            for trait in ciTraits: ciVals[trait] = [np.NaN]
+      # remove zero-size and non-finite clusters
+      mask = np.logical_and(np.isfinite(X_), np.isfinite(Y_))
+      mask = np.logical_and(mask, Ns > 0.)
+      if mask.sum() == 0: continue
+      Ns = Ns[mask]
+      X_ = X_[mask]
+      Y_ = Y_[mask]
 
+      if stat == 'Mean' or stat == 'MS':
+        weights = np.divide(Ns,np.nansum(Ns))
+        ciVals = bootStrapVector(
+                   statFunc(X_,Y_),
+                   weights=weights,
+                   n_samples=nsSamples)
+      elif stat == 'RMS':
+        ciVals = bootStrapAggRMSFunc(
+                   X_, Y_, Ns, statFunc,
+                   n_samples=nsSamples)
+      else:
+        _logger.error("\n\nERROR: stat not implemented: ", stat)
+        os._exit(1)
 
-        STATS[stat] = {}
-        for trait in ciTraits:
-            STATS[stat][trait] = ciVals[trait]
+      for trait in ciTraits:
+        statCIVals[stat][trait] = ciVals[trait]
 
-    return STATS
-
+  return statCIVals
