@@ -32,8 +32,9 @@ implicit none
 private
 public :: mpas_geom, &
           geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
-          geo_set_atlas_lonlat, geo_fill_atlas_fieldset, &
-          field_is_templated, template_fieldname
+          geo_set_atlas_lonlat, geo_fill_atlas_fieldset
+!          field_is_templated, template_fieldname, &
+!          field_has_identity, identity_fieldname
 
 public :: mpas_geom_registry
 
@@ -43,6 +44,7 @@ public :: mpas_geom_registry
 type :: templated_field
    character(len=MAXVARLEN) :: name
    character(len=MAXVARLEN) :: template
+   character(len=MAXVARLEN) :: identity
 end type templated_field
 
 !> Fortran derived type to hold geometry definition
@@ -90,8 +92,10 @@ type :: mpas_geom
 
    contains
 
-   procedure :: is_templated => field_is_templated
-   procedure :: template => template_fieldname
+   procedure, public :: is_templated => field_is_templated
+   procedure, public :: template => template_fieldname
+   procedure, public :: has_identity => field_has_identity
+   procedure, public :: identity => identity_fieldname
 
 end type mpas_geom
 
@@ -228,6 +232,11 @@ subroutine geo_setup(self, f_conf, f_comm)
       self%templated_fields(ii)%name = trim(str)
       call fields_conf(ii)%get_or_die('mpas template field',str)
       self%templated_fields(ii)%template = trim(str)
+      if (fields_conf(ii)%get('mpas identity field',str)) then
+        self%templated_fields(ii)%identity = trim(str)
+      else
+        self%templated_fields(ii)%identity = 'none'
+      end if
    end do
    deallocate(fields_conf)
 
@@ -760,6 +769,42 @@ function template_fieldname(self, fieldname) result(template)
    write(message,*) '--> mpas_geom % template_fieldname: fieldname is not templated, ',fieldname
    call abor1_ftn(message)
 end function template_fieldname
+
+! ------------------------------------------------------------------------------
+
+function field_has_identity(self, fieldname) result(has_identity)
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   logical :: has_identity
+   has_identity = .false.
+   if (allocated(self%templated_fields)) then
+      do ii = 1, size(self%templated_fields)
+         if (trim(self%templated_fields(ii)%name) == trim(fieldname) .and. &
+             trim(self%templated_fields(ii)%identity) /= 'none') then
+            has_identity = .true.
+            return
+         end if
+      end do
+   end if
+end function field_has_identity
+
+! ------------------------------------------------------------------------------
+
+function identity_fieldname(self, fieldname) result(identity)
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   character(len=MAXVARLEN) :: identity
+   do ii = 1, size(self%templated_fields)
+      if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+         identity = self%templated_fields(ii)%identity
+         return
+      end if
+   end do
+   write(message,*) '--> mpas_geom % identity_fieldname: fieldname does not have identity, ',fieldname
+   call abor1_ftn(message)
+end function identity_fieldname
 
 ! ------------------------------------------------------------------------------
 

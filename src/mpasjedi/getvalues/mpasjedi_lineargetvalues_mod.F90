@@ -46,15 +46,14 @@ public :: mpasjedi_lineargetvalues
 public :: mpas_lineargetvalues_registry
 
 type, extends(mpasjedi_getvalues_base) :: mpasjedi_lineargetvalues
-  type (mpas_pool_type), pointer :: trajectories
+  private
   real(kind=kind_real), allocatable :: obs_field(:,:), mod_field(:,:)
   logical(c_bool), allocatable :: time_mask(:)
   contains
-    procedure, public :: create
-    procedure, public :: delete
-    procedure, public :: set_trajectory
-    procedure, public :: fill_geovals_tl
-    procedure, public :: fill_geovals_ad
+  procedure, public :: create
+  procedure, public :: delete
+  procedure, public :: fill_geovals_tl
+  procedure, public :: fill_geovals_ad
 end type mpasjedi_lineargetvalues
 
 #define LISTED_TYPE mpasjedi_lineargetvalues
@@ -67,6 +66,8 @@ type(registry_t) :: mpas_lineargetvalues_registry
 
 ! --------------------------------------------------------------------------------------------------
 
+!character(len=1024) :: message
+
 contains
 
 ! --------------------------------------------------------------------------------------------------
@@ -77,7 +78,7 @@ contains
 
 !> \brief LinearGetValues class 'create' logic
 !!
-!! \details **create** This subroutine populates a functional lineargetvalues
+!! \details **create** This subroutine constructs an mpasjedi_lineargetvalues object
 !! class instance.
 subroutine create(self, geom, locs, f_conf)
   implicit none
@@ -89,7 +90,6 @@ subroutine create(self, geom, locs, f_conf)
   integer :: nlocs, maxlevels
 
   call getvalues_base_create(self, geom, locs, f_conf)
-  call mpas_pool_create_pool(self % trajectories)
 
   ! Get grid dimensions
   ! -------------------
@@ -113,11 +113,11 @@ subroutine create(self, geom, locs, f_conf)
 end subroutine create
 
 
-! ------------------------------------------------------------------------------
+! --------------------------------------------------------------------------------------------------
 
 !> \brief LinearGetValues class 'delete' logic
 !!
-!! \details **delete** This subroutine deletes (frees memory) for a lineargetvalues
+!! \details **delete** This subroutine deletes (frees memory) for an mpas_jedilineargetvalues object
 !! class instance.
 subroutine delete(self)
   implicit none
@@ -126,101 +126,40 @@ subroutine delete(self)
   if (allocated(self%time_mask)) deallocate(self%time_mask)
   if (allocated(self%obs_field)) deallocate(self%obs_field)
   if (allocated(self%mod_field)) deallocate(self%mod_field)
-  call mpas_pool_destroy_pool(self % trajectories)
   call getvalues_base_delete(self)
 
 end subroutine delete
 
-! ------------------------------------------------------------------------------
+! --------------------------------------------------------------------------------------------------
 
-
-subroutine set_trajectory (self, geom, fields, t1, t2, locs, gom)
+subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self
-  type(mpas_geom),                intent(in)    :: geom
-  type(mpas_fields),              intent(in)    :: fields
-  type(datetime),                 intent(in)    :: t1
-  type(datetime),                 intent(in)    :: t2
-  type(ufo_locations),            intent(in)    :: locs
-  type(ufo_geovals),              intent(inout) :: gom
-
-  type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
-  character(len=41) :: windowkey
-
-  type (field2DReal), pointer :: field2d_src, field2d_dst
-  type (field1DReal), pointer :: field1d_src, field1d_dst
-
-
-  ! Initialize this window interpolation trajectory
-  ! -----------------------------------------------
-  call mpas_pool_create_pool( windowtraj )
-
-
-  ! Add trajectory fields
-  ! ---------------------
-  call mpas_pool_get_field(fields % subFields, 'temperature', field2d_src)
-  call mpas_duplicate_field(field2d_src, field2d_dst)
-  call mpas_pool_add_field(windowtraj, 'temperature', field2d_dst)
-
-  call mpas_pool_get_field(fields % subFields, 'spechum', field2d_src)
-  call mpas_duplicate_field(field2d_src, field2d_dst)
-  call mpas_pool_add_field(windowtraj, 'spechum', field2d_dst)
-
-  call mpas_pool_get_field(fields % subFields, 'pressure', field2d_src)
-  call mpas_duplicate_field(field2d_src, field2d_dst)
-  call mpas_pool_add_field(windowtraj, 'pressure', field2d_dst)
-
-  call mpas_pool_get_field(fields % subFields, 'surface_pressure', field1d_src)
-  call mpas_duplicate_field(field1d_src, field1d_dst)
-  call mpas_pool_add_field(windowtraj, 'surface_pressure', field1d_dst)
-
-
-  ! Push to self%trajectories
-  ! -------------------------
-  call get_windowkey(t1, t2, windowkey)
-  call mpas_pool_add_subpool(self%trajectories, windowkey, windowtraj)
-
-
-  ! fill geovals at this state
-  ! --------------------------
-  ! NOTE: this call may get removed soon. See OOPS PR #577.
-  call fill_geovals(self, geom, fields, t1, t2, locs, gom)
-
-end subroutine set_trajectory
-
-subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
-  implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self
-  type(mpas_geom),                intent(in)    :: geom
-  type(mpas_fields),              intent(inout) :: fields
-  type(datetime),                 intent(in)    :: t1
-  type(datetime),                 intent(in)    :: t2
-  type(ufo_locations),            intent(in)    :: locs
-  type(ufo_geovals),              intent(inout) :: gom
+  class(mpasjedi_lineargetvalues), intent(inout) :: self !< lineargetvalues self
+  type(mpas_geom),                 intent(in)    :: geom !< geometry (mpas mesh)
+  class(mpas_fields),              intent(in)    :: inc  !< increment containing geovars
+  type(datetime),                  intent(in)    :: t1   !< time window begin
+  type(datetime),                  intent(in)    :: t2   !< time window end
+  type(ufo_locations),             intent(in)    :: locs !< observation locations
+  type(ufo_geovals),               intent(inout) :: gom  !< geovals
 
   character(len=*), parameter :: myname = 'fill_geovals_tl'
 
-  integer :: jvar, jlev, ilev, jloc, ngrid, nlevels, nlocs, nlocsg
+  integer :: jvar, jlev, ilev, jloc, nDims
+  integer :: nCells, nlevels, nlocs, nlocsg
 
-  type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
-  character(len=41) :: windowkey
-
-  type (mpas_pool_type), pointer :: pool_ufo
+  type (mpas_pool_type), pointer :: gFields_tl
+  type (mpas_pool_data_type), pointer :: gdata
   type (mpas_pool_iterator_type) :: poolItr
-  real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-  real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-  real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-  real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+  character (len=MAXVARLEN) :: geovar
 
   logical :: allocateGeo
-  character(len=1024) :: buf
 
   ! Get grid dimensions and checks
   ! ------------------------------
-  ngrid = geom % nCellsSolve
+  nCells = geom % nCellsSolve
   nlocs = locs % nlocs() ! # of location for entire window
 
-  !write(*,*)'fill_geovals_tl: ngrid, nlocs = : ',ngrid, nlocs
+  !write(*,*)'fill_geovals_tl: nCells, nlocs = : ',nCells, nlocs
   !call interp_checks("tl", inc, locs, vars, gom)
 
   ! If no observations can early exit
@@ -239,28 +178,25 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
   !write(0,*)'fill_geovals_tl: nlocs           : ',nlocs
   !write(0,*)'fill_geovals_tl: size(self%time_mask) : ',size(self%time_mask)
 
-  ! Allocate intermediate pool of fields w/ geovals vars
-  ! and TL of variable conversion
-  ! ----------------------------------------------------
-  call get_windowkey(t1, t2, windowkey)
-  call mpas_pool_get_subpool(self%trajectories, windowkey, windowtraj)
-
-  call convert_mpas_field2ufoTL(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
-
+  gFields_tl => inc % subFields
 
   ! Allocate and initialize output geovals
   ! --------------------------------------
-  call mpas_pool_begin_iteration(pool_ufo)
-  do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
+  call mpas_pool_begin_iteration(gFields_tl)
+  do while ( mpas_pool_get_next_member(gFields_tl, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
-      jvar = ufo_vars_getindex( gom%variables,trim(poolItr % memberName))
+
+      geovar = trim(poolItr % memberName)
+      nDims = poolItr % nDims
+      call inc%get(geovar, gdata)
+
+      jvar = ufo_vars_getindex(gom%variables, geovar)
       if ( jvar < 1 ) cycle
 
-      if (poolItr % nDims == 1) then
+      if (nDims == 1) then
         gom%geovals(jvar)%nval = 1
-      else if (poolItr % nDims == 2) then
-        call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-        gom%geovals(jvar)%nval = size(r2d_ptr_a,1)
+      else if (nDims == 2) then
+        gom%geovals(jvar)%nval = size(gdata%r2%array,1)
       endif
 
       allocateGeo = .true.
@@ -273,7 +209,7 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
       endif
 
       if ( allocateGeo ) then
-        allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nlocs) )
+        allocate(gom%geovals(jvar)%vals(gom%geovals(jvar)%nval, gom%geovals(jvar)%nlocs))
         gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
       endif
     endif
@@ -290,10 +226,10 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
       !   (2) implement increment variable change for mpas-jedi, including
       !       dependencies of UFO TL/AD on non-analyzed variables
       gom%geovals(jvar)%nval = geom%nVertLevels
-      allocate( gom%geovals(jvar)%vals(gom%geovals(jvar)%nval,gom%geovals(jvar)%nlocs) )
+      allocate(gom%geovals(jvar)%vals(gom%geovals(jvar)%nval, gom%geovals(jvar)%nlocs))
       gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
-      !write(buf,*) "--> fill_geovals_tl: geoval is not allocated, ", gom%variables(jvar)
-      !call abor1_ftn(buf)
+      !write(message,*) "--> fill_geovals_tl: geoval is not allocated, ", gom%variables(jvar)
+      !call abor1_ftn(message)
     endif
   enddo
   gom%linit = .true.
@@ -301,35 +237,43 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
 
   ! TL of interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------------
-  call mpas_pool_begin_iteration(pool_ufo)
-  do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
+  call mpas_pool_begin_iteration(gFields_tl)
+  do while ( mpas_pool_get_next_member(gFields_tl, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
-      jvar = ufo_vars_getindex( gom%variables,trim(poolItr % memberName))
+
+      geovar = trim(poolItr % memberName)
+      nDims = poolItr % nDims
+      call inc%get(geovar, gdata)
+
+      jvar = ufo_vars_getindex(gom%variables, geovar)
       if ( jvar < 1 ) cycle
 
-      !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+      !write(*,*) 'nDims, geovar =', nDims , geovar
 
       self%obs_field = MPAS_JEDI_ZERO_kr
 
       nlevels = gom%geovals(jvar)%nval
 
       if (poolItr % dataType == MPAS_POOL_REAL) then
-        if (poolItr%nDims==1) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
+        if (nDims == 1) then
           if (self%use_bump_interp) then
-            call self%bumpinterp%apply(r1d_ptr_a(1:ngrid), self%obs_field(:,1))
+            call self%bumpinterp%apply(gdata%r1%array(1:nCells), &
+                                       self%obs_field(:,1))
           else
-            call self%unsinterp%apply(r1d_ptr_a(1:ngrid), self%obs_field(:,1))
+            call self%unsinterp%apply(gdata%r1%array(1:nCells), &
+                                      self%obs_field(:,1))
           endif
-        else if (poolItr%nDims==2) then
-          call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
+        else if (nDims == 2) then
           if (self%use_bump_interp) then
-            call self%bumpinterp%apply(r2d_ptr_a(1:nlevels,1:ngrid), self%obs_field(:,1:nlevels),trans_in=.true.)
+            call self%bumpinterp%apply(gdata%r2%array(1:nlevels,1:nCells), &
+                                       self%obs_field(:,1:nlevels), &
+                                       trans_in=.true.)
           else
             ! Transpose to get the slices we pass to 'apply' contiguous in memory
-            self%mod_field(:,1:nlevels) = transpose(r2d_ptr_a(1:nlevels,1:ngrid))
+            self%mod_field(:,1:nlevels) = transpose(gdata%r2%array(1:nlevels,1:nCells))
             do jlev = 1, nlevels
-              call self%unsinterp%apply(self%mod_field(:,jlev),self%obs_field(:,jlev))
+              call self%unsinterp%apply(self%mod_field(:,jlev), &
+                                        self%obs_field(:,jlev))
             enddo
           endif
         end if
@@ -347,43 +291,33 @@ subroutine fill_geovals_tl(self, geom, fields, t1, t2, locs, gom)
     endif
   end do
 
-  call mpas_pool_destroy_pool(pool_ufo)
-
   !write(*,*) '---- Leaving fill_geovals_tl ---'
 
 end subroutine fill_geovals_tl
 
-subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
+subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
   implicit none
-  class(mpasjedi_lineargetvalues), intent(inout) :: self    !< lineargetvalues self
-  type(mpas_geom),                intent(in)     :: geom    !< geometry (mpas mesh)
-  type(mpas_fields),              intent(inout)  :: fields  !< increment
-  type(datetime),                 intent(in)     :: t1      !< time window begin
-  type(datetime),                 intent(in)     :: t2      !< time window end
-  type(ufo_locations),            intent(in)     :: locs    !< observation locations
-  type(ufo_geovals),              intent(in)     :: gom     !< geovals
+  class(mpasjedi_lineargetvalues), intent(inout) :: self !< lineargetvalues self
+  type(mpas_geom),                 intent(in)    :: geom !< geometry (mpas mesh)
+  class(mpas_fields),              intent(inout) :: inc  !< increment containing geovars
+  type(datetime),                  intent(in)    :: t1   !< time window begin
+  type(datetime),                  intent(in)    :: t2   !< time window end
+  type(ufo_locations),             intent(in)    :: locs !< observation locations
+  type(ufo_geovals),               intent(in)    :: gom  !< geovals
 
   character(len=*), parameter :: myname = 'fill_geovals_ad'
 
-  integer :: jvar, jlev, ilev, jloc, ngrid, nlevels, nlocs, nlocsg
-  type (mpas_pool_type), pointer :: windowtraj  !< trajectory pool for t1 to t2
-  character(len=41) :: windowkey
+  integer :: jvar, jlev, ilev, jloc, nDims
+  integer :: nCells, nlevels, nlocs, nlocsg
 
-  type (mpas_pool_type), pointer :: pool_ufo
+  type (mpas_pool_type), pointer :: gFields_ad
+  type (mpas_pool_data_type), pointer :: gdata
   type (mpas_pool_iterator_type) :: poolItr
-  real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-  real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-  real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-  real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
-
-  ! If no observations can early exit
-  ! ---------------------------------
-  !if (self%traj%noobs)  return
-
+  character (len=MAXVARLEN) :: geovar
 
   ! Get grid dimensions and checks
   ! ------------------------------
-  ngrid = geom % nCellsSolve
+  nCells = geom % nCellsSolve
   nlocs = locs % nlocs() ! # of location for entire window
   !write(0,*)'getvalues_ad: nlocs        : ',nlocs
 
@@ -398,27 +332,27 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
     return
   endif
 
-  ! Allocate intermediate pool of fields w/ geovals vars
-  ! ----------------------------------------------------
-  call get_windowkey(t1, t2, windowkey)
-  call mpas_pool_get_subpool(self%trajectories, windowkey, windowtraj)
+  ! zero out adjoint geovar fields
+  call inc%zeros()
 
-  !NOTE: this TL routine creates "pool_ufo". The field values from TL routine are unused.
-  !    : The fields are initialized as "zero" in following "do while" loop.
-  call convert_mpas_field2ufoTL(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
-
+  gFields_ad => inc % subFields
 
   ! Adjoint of interpolate fields to obs locations using pre-calculated weights
   ! ---------------------------------------------------------------------------
-  call mpas_pool_begin_iteration(pool_ufo)
-  do while ( mpas_pool_get_next_member(pool_ufo, poolItr) )
+  call mpas_pool_begin_iteration(gFields_ad)
+  do while ( mpas_pool_get_next_member(gFields_ad, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
-      jvar = ufo_vars_getindex( gom%variables,trim(poolItr % memberName))
+
+      geovar = trim(poolItr % memberName)
+      nDims = poolItr % nDims
+      call inc%get(geovar, gdata)
+
+      jvar = ufo_vars_getindex(gom%variables, geovar)
       if ( jvar < 1 ) cycle
 
       self%obs_field = MPAS_JEDI_ZERO_kr
 
-      !write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
+      !write(*,*) 'nDims, geovar =', nDims , geovar
       nlevels = gom%geovals(jvar)%nval
       do jlev = 1, nlevels
         !ORG- obs_field(:,jlev) = gom%geovals(jvar)%vals(jlev,:)
@@ -430,71 +364,36 @@ subroutine fill_geovals_ad(self, geom, fields, t1, t2, locs, gom)
           endif
         end do
       end do
+      if (poolItr % dataType == MPAS_POOL_REAL) then
+        if (self%use_bump_interp) then
+          if (nDims == 1) then
+            call self%bumpinterp%apply_ad(self%obs_field(:,1), &
+                                          gdata%r1%array(1:nCells))
+          else if (nDims == 2) then
+            call self%bumpinterp%apply_ad(self%obs_field(:,1:nlevels), &
+                                          gdata%r2%array(1:nlevels,1:nCells), &
+                                          trans_in=.true.)
+          end if
+        else ! Unstructured interpolation
+          do jlev = 1, nlevels
+            call self%unsinterp%apply_ad(self%mod_field(:,jlev), &
+                                         self%obs_field(:,jlev))
+          end do
+          if (nDims == 1) then
+            gdata%r1%array(1:nCells) = self%mod_field(:,1)
+          else if (nDims == 2) then
+            gdata%r2%array(1:nlevels,1:nCells) = transpose(self%mod_field(:,1:nlevels))
+          end if
+        endif ! self%use_bump_interp
+      else
+        call abor1_ftn('--> fill_geovals_ad: not a real field')
+      end if
 
-      if (self%use_bump_interp) then
-        ! Copy data
-          if (poolItr % dataType == MPAS_POOL_REAL) then
-            if (poolItr%nDims==1) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-              r1d_ptr_a = MPAS_JEDI_ZERO_kr
-              call self%bumpinterp%apply_ad(self%obs_field(:,1),r1d_ptr_a(1:ngrid))
-            else if (poolItr%nDims==2) then
-              call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-              r2d_ptr_a = MPAS_JEDI_ZERO_kr
-              call self%bumpinterp%apply_ad(self%obs_field(:,1:nlevels),r2d_ptr_a(1:nlevels,1:ngrid),trans_in=.true.)
-            end if
-          else
-            call abor1_ftn('--> fill_geovals_ad: not a real field')
-          end if
-      else ! Unstructured interpolation
-        do jlev = 1, nlevels
-          call self%unsinterp%apply_ad(self%mod_field(:,jlev),self%obs_field(:,jlev))
-        end do
-        if (poolItr % dataType == MPAS_POOL_REAL) then
-          if (poolItr%nDims==1) then
-            call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r1d_ptr_a)
-            r1d_ptr_a = MPAS_JEDI_ZERO_kr
-            r1d_ptr_a(1:ngrid) = self%mod_field(:,1)
-          else if (poolItr%nDims==2) then
-            call mpas_pool_get_array(pool_ufo, trim(poolItr % memberName), r2d_ptr_a)
-            r2d_ptr_a = MPAS_JEDI_ZERO_kr
-            r2d_ptr_a(1:nlevels,1:ngrid) = transpose(self%mod_field(:,1:nlevels))
-          end if
-        else
-          call abor1_ftn('--> fill_geovals_ad: not a real field')
-        end if
-      endif ! self%use_bump_interp
     endif ! poolItr % memberType == MPAS_POOL_FIELD
   end do
-
-  ! AD of variable conversion
-  ! -------------------------
-  call convert_mpas_field2ufoAD(geom, windowtraj, fields % subFields, pool_ufo, gom%variables, gom%nvar, ngrid)
-
-  !allocate(mod_field(ngrid,1))
-  !allocate(obs_field(nlocs,1))
-
-  !! Special cases go here
-
-  !deallocate(mod_field)
-  !deallocate(obs_field)
-
-  call mpas_pool_destroy_pool(pool_ufo)
 
   !write(*,*) '---- Leaving fill_geovals_ad ---'
 
 end subroutine fill_geovals_ad
-
-subroutine get_windowkey(t1, t2, key)
-  implicit none
-  type(datetime),    intent(in)  :: t1, t2
-  character(len=41), intent(out) :: key
-
-  character(len=20) :: t1str, t2str
-
-  call datetime_to_string(t1, t1str)
-  call datetime_to_string(t2, t2str)
-  key = trim(t1str)//'_'//trim(t2str)
-end subroutine get_windowkey
 
 end module mpasjedi_lineargetvalues_mod

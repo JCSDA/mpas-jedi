@@ -19,13 +19,12 @@
 #include "oops/util/Logger.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Timer.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
-#include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/getvalues/GetValues.interface.h"
-#include "mpasjedi/StateMPAS.h"
 
 // -------------------------------------------------------------------------------------------------
 
@@ -39,8 +38,9 @@ namespace ufo {
 }
 
 namespace mpas {
-  class StateMPAS;
   class GeometryMPAS;
+  class StateMPAS;
+  class VarChaModel2GeoVars;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -61,6 +61,7 @@ class GetValues : public util::Printable,
   F90getvalues keyGetValues_;
   ufo::Locations locs_;
   std::shared_ptr<const GeometryMPAS> geom_;
+  std::unique_ptr<VarChaModel2GeoVars> model2geovars_;
 };
 
 // -------------------------------------------------------------------------------------------------

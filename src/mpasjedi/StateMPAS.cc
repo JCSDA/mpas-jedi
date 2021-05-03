@@ -224,11 +224,11 @@ oops::Variables StateMPAS::stateVars()
   // ---------------------------------------------------------------------------
   /// Temporary Auxilliary Variable Definitions
   // ---------------------------------------------------------------------------
-  //--- TODO: "w" is still here to duplicate a pool field
-  //          for geoval variable "var_prsi", which has nVertLevelsP1 levels.
-  const oops::Variables auxvars_({ "w" });
+  //--- TODO: nr and mpas_re_fields are still added in mpas_state_interface_mod
+  //          they must be configured in the yaml and stream_list.atmosphere
+  //          so that realistic values read from file.  Then we can remove this
+  //          extra oops::Variables object.
   oops::Variables statevars(vars_);
-  statevars += auxvars_;
   return statevars;
 }
 // -----------------------------------------------------------------------------

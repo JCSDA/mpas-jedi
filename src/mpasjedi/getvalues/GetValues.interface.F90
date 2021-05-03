@@ -7,13 +7,15 @@
 
 module mpasjedi_getvalues_interface_mod
 
-! Intrinsic
+! intrinsic
 use iso_c_binding
-use kinds,               only: kind_real
+
+! fckit dependencies
 use fckit_configuration_module, only: fckit_configuration
 
 ! oops dependencies
 use datetime_mod
+use kinds, only: kind_real
 
 ! ufo dependencies
 use ufo_locations_mod
@@ -24,9 +26,8 @@ use ufo_geovals_mod_c, only: ufo_geovals_registry
 use mpasjedi_getvalues_mod, only: mpasjedi_getvalues, mpas_getvalues_registry
 
 ! mpas dependencies
-use mpas_geom_mod,            only: mpas_geom_registry, mpas_geom
-use mpas_fields_mod
-! use mpas_state_interface_mod, only: mpas_state_registry
+use mpas_geom_mod, only: mpas_geom, mpas_geom_registry
+use mpas_fields_mod, only: mpas_fields, mpas_fields_registry
 
 implicit none
 private

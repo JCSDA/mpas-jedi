@@ -94,7 +94,7 @@ subroutine add_incr(self, increment)
 
       ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       ! note: nonlinear COV
-      if ( self%has(moistureFields) .and. &
+      if ( all(self%has(moistureFields)) .and. &
            increment%has('spechum') .and. .not.increment%has('qv')) then
          call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
          call mpas_pool_get_field(self%subFields, 'spechum', fld2d_sh)
@@ -104,10 +104,10 @@ subroutine add_incr(self, increment)
       ! Enforce a hydrostatic balance to diagnose 3D pressure,
       ! plus update full state theta and rho
       ! note: nonlinear COV
-      if ( self%has(analysisThermoFields) .and. &
-           self%has(modelThermoFields) .and. &
-           increment%has(analysisThermoFields) .and. &
-           .not. increment%has(modelThermoFields) ) then
+      if ( all(self%has(analysisThermoFields)) .and. &
+           all(self%has(modelThermoFields)) .and. &
+           all(increment%has(analysisThermoFields)) .and. &
+           .not. all(increment%has(modelThermoFields)) ) then
          call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
          call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
          call mpas_pool_get_field(self%subFields, 'rho', fld2d_rho)
@@ -133,7 +133,7 @@ subroutine add_incr(self, increment)
       ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
       ! note: linear COV
       if ( self%has('u') .and. &
-           increment%has(cellCenteredWindFields) .and. &
+           all(increment%has(cellCenteredWindFields)) .and. &
            .not.increment%has('u') ) then
          call mpas_pool_get_field(self%subFields, 'u', fld2d_u)
          call mpas_pool_get_field(increment%subFields, 'uReconstructMeridional', fld2d_uRm)

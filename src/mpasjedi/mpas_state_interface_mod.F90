@@ -54,7 +54,7 @@ type(oops_variables) :: inc_vars
 character(len=StrKIND),  pointer :: config_microp_scheme, &
                                     config_radt_cld_scheme
 logical,  pointer :: config_microp_re
-integer :: ivar
+integer :: ivar, jvar
 
 call mpas_fields_registry%init()
 call mpas_fields_registry%add(c_key_self)
@@ -68,24 +68,27 @@ call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
 call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_radt_cld_scheme', config_radt_cld_scheme)
 
+! TODO(JJG): mpas_re_fields should be shifted to the state variables in the yaml file
 if (config_microp_re) then
-   do ivar = 1, size(mpas_re_fields, 1)
-      if (.not. state_vars%has(mpas_re_fields(ivar))) &
-         call state_vars%push_back(mpas_re_fields(ivar))
-   end do
-end if
-if (trim(config_microp_scheme) == 'mp_thompson') then
-   if (.not. state_vars%has("nr")) &
-      call state_vars%push_back("nr")
-end if
-if ( trim(config_radt_cld_scheme) /= MPAS_JEDI_OFF .and. &
-     trim(config_microp_scheme) /= MPAS_JEDI_OFF ) then
    do ivar = 1, state_vars % nvars()
-      ! Only need cloud fraction when hydrometeors are in state
+      ! Only need re when hydrometeors are in state
       if ( ufo_vars_getindex( mpas_hydrometeor_fields, &
                               state_vars%variable(ivar) ) > 0 ) then
-         if (.not. state_vars%has("cldfrac")) &
-            call state_vars%push_back("cldfrac")
+         do jvar = 1, size(mpas_re_fields, 1)
+            if (.not. state_vars%has(mpas_re_fields(jvar))) &
+               call state_vars%push_back(mpas_re_fields(jvar))
+         end do
+         exit
+      end if
+   end do
+end if
+
+! TODO(JJG): "nr" should be shifted to the state variables in the yaml file
+if (trim(config_microp_scheme) == 'mp_thompson') then
+   do ivar = 1, state_vars % nvars()
+      ! Only need nr when qr is in state
+      if ( trim(state_vars%variable(ivar)) == 'qr' ) then
+         call state_vars%push_back("nr")
          exit
       end if
    end do

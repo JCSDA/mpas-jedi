@@ -20,14 +20,12 @@
 #include "oops/util/Logger.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
+#include "oops/util/Timer.h"
 
 #include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
-#include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/getvalues/LinearGetValues.interface.h"
-#include "mpasjedi/IncrementMPAS.h"
-#include "mpasjedi/StateMPAS.h"
 
 // -----------------------------------------------------------------------------
 
@@ -37,8 +35,11 @@ namespace ufo {
 }
 
 namespace mpas {
-  class StateMPAS;
   class GeometryMPAS;
+  class IncrementMPAS;
+  class StateMPAS;
+  class VarChaModel2GeoVars;
+  class LinVarChaModel2GeoVars;
 
 // -----------------------------------------------------------------------------
 
@@ -60,10 +61,17 @@ class LinearGetValues : public util::Printable,
                      const ufo::GeoVaLs & geovals) const;
 
  private:
+  const LinVarChaModel2GeoVars * getLinVarCha(const util::DateTime &) const;
+
+  typedef std::map< util::DateTime, LinVarChaModel2GeoVars * >::iterator lvcIter;
+  typedef std::map< util::DateTime, LinVarChaModel2GeoVars * >::const_iterator lvcIterCnst;
+
   void print(std::ostream &) const;
   F90lineargetvalues keyLinearGetValues_;
   ufo::Locations locs_;
   std::shared_ptr<const GeometryMPAS> geom_;
+  std::map< util::DateTime, LinVarChaModel2GeoVars * > linearmodel2geovars_;
+  std::unique_ptr<VarChaModel2GeoVars> model2geovars_;
 };
 
 // -----------------------------------------------------------------------------

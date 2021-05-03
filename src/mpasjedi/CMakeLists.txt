@@ -59,6 +59,16 @@ list( APPEND mpasjedi_src_files
     getvalues/LinearGetValues.interface.h
     getvalues/LinearGetValues.interface.F90
     getvalues/mpasjedi_unstructured_interp_mod.F90
+    VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_interface.F90
+    VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_mod.F90
+    VariableChanges/Model2GeoVars/mpasjedi_vc_model2geovars_interface.F90
+    VariableChanges/Model2GeoVars/mpasjedi_vc_model2geovars_mod.F90
+    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.cc
+    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.h
+    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.interface.h
+    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.cc
+    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.h
+    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.interface.h
     )
 
 #Create target

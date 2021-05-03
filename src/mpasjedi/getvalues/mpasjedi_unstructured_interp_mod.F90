@@ -102,7 +102,6 @@ subroutine unsinterp_nearest_apply(unsinterp, field_in, field_out)
 
   ! Find nearest neighbor
   do n = 1, ngrid_out
-    ! The original code from lfric/fv3 had 'minloc' in the line below. Seems like a bug.
     field_out(n) = field_neighbors(maxloc(unsinterp%interp_w(:,n),1),n)
   enddo
 
