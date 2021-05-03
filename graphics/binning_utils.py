@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import defaultdict
 from collections.abc import Iterable
 from copy import deepcopy
 import inspect
@@ -19,6 +20,9 @@ _logger = logging.getLogger(__name__)
 
 # identity
 identityBinMethod = 'identity'
+
+# none
+noBinMethod = identityBinMethod
 
 #QC
 goodQCMethod = 'good'
@@ -64,6 +68,34 @@ OkamotoMethod       = 'Okamoto'
 ScaleOkamotoMethod  = 'ScaledOkamoto'
 ModHarnischMethod      = 'ModHarnisch'
 ScaleModHarnischMethod = 'ScaledModHarnisch'
+
+# geostationary IR instrument longitude parameters
+geoirlatlonboxMethod = 'geoirBox'
+geoirMaxZenith = 65.0
+
+geoirlatlonBoxParams = defaultdict(list)
+
+# activate desired instruments by uncommenting them below
+
+#seviri_m11 = 'seviri_m11'
+#geoirlatlonBoxParams['values'] += [seviri_m11]
+#geoirlatlonBoxParams['centerLon'] += [0.]
+
+#seviri_m08 = 'seviri_m08'
+#geoirlatlonBoxParams['values'] += [seviri_m08]
+#geoirlatlonBoxParams['centerLon'] += [41.5]
+
+ahi_himawari8 = 'ahi_himawari8'
+geoirlatlonBoxParams['values'] += [ahi_himawari8]
+geoirlatlonBoxParams['centerLon'] += [140.7]
+
+#abi_g17 = 'abi_g17'
+#geoirlatlonBoxParams['values'] += [abi_g17]
+#geoirlatlonBoxParams['centerLon'] += [360. - 137.2]
+
+abi_g16 = 'abi_g16'
+geoirlatlonBoxParams['values'] += [abi_g16]
+geoirlatlonBoxParams['centerLon'] += [360. - 75.2]
 
 # glint angle
 maxGlint = 90.0

@@ -65,6 +65,9 @@ varDictObs = {
 #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
 #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == obsVarAlt:
 
+obsRegionBinVar = 'ObsRegion'
+varDictObs[obsRegionBinVar] = [miss_s, obsRegionBinVar]
+
 # NC observation variable name substitutions
 vNameStr = 'varName'
 vChanStr = 'varCHAN'
@@ -181,31 +184,61 @@ def base2dbVar(baseVar, varName, outerIter):
 modVarPrs = 'pressure_p'
 modVarLat = 'latCell'
 modVarLon = 'lonCell'
+modVarLev = 'model_level'
+
+kgm3 = 'kg/m\N{SUPERSCRIPT THREE}'
 
 # columns: var_name            unit_used   abbr.
 varDictModel = {
-    'theta':                  [ 'K',    'Theta']
-  , 'pressure':               [ 'Pa',    'P'   ]
-  , modVarPrs:                [ 'Pa',    'PP'  ]
-  , 'rho':                    [ 'kg/m\N{SUPERSCRIPT THREE}', 'rho' ]
-  , 'qv':                     [ 'g/kg',  'Qv'  ]
-  , 'uReconstructZonal':      [ 'm/s',   'U'   ]
-  , 'uReconstructMeridional': [ 'm/s',   'V'   ]
-  , 'u':                      [ 'm/s',   'uedge']
-  , 'w':                      [ 'm/s',   'W'   ]
-  , modVarLat:                [ degree,  'lat' ]
-  , modVarLon:                [ degree,  'lon' ]
-  , 'temperature':            [ 'C',    'T'    ]
-  , 't2m':                    [ 'C',    'T2m'  ]
-  , 'surface_pressure':       [ 'Pa',    'Ps'  ]
-  , 'q2':                     [ 'g/kg',  'Q2m' ]
-  , 'u10':                    [ 'm/s',  'U10m' ]
-  , 'v10':                    [ 'm/s',  'V10m' ]
-    }
+  modVarLev:                [ miss_s, 'ModLev'],
+  modVarLat:                [ degree, 'lat'  ],
+  modVarLon:                [ degree, 'lon'  ],
+  modVarPrs:                [ 'Pa',   'PP'   ],
+  'pressure':               [ 'Pa',   'P'    ],
+  'q2':                     [ 'g/kg', 'Q2m'  ],
+  'qv':                     [ 'g/kg', 'Qv'   ],
+  'rho':                    [ kgm3,   'rho'  ],
+  'surface_pressure':       [ 'Pa',   'Ps'   ],
+  't2m':                    [ 'C',    'T2m'  ],
+  'temperature':            [ 'C',    'T'    ],
+  'theta':                  [ 'K',    'Theta'],
+  'u':                      [ 'm/s',  'uedge'],
+  'u10':                    [ 'm/s',  'U10m' ],
+  'uReconstructZonal':      [ 'm/s',  'U'    ],
+  'uReconstructMeridional': [ 'm/s',  'V'    ],
+  'v10':                    [ 'm/s',  'V10m' ],
+  'w':                      [ 'm/s',  'W'    ],
+}
 #Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv.
 
+## add dummy variable for no binning
+noBinVar = 'all'
+varDictModel[noBinVar] = [miss_s, noBinVar]
+
+modelRegionBinVar = 'ModelRegion'
+varDictModel[modelRegionBinVar] = [miss_s, modelRegionBinVar]
+
+modVarNames2d = ['t2m','surface_pressure','q2','u10','v10']
+modVarNames3d = ['theta','temperature','rho','pressure','uReconstructZonal','uReconstructMeridional','qv','w']
+
+def modelVarAttributes(var):
+    # return short name and units
+    dictName, suf = splitIntSuffix(var)
+    varAtt = varDictModel.get(dictName,[miss_s,dictName])
+    varShort = varAtt[1]+suf
+    varUnits = varAtt[0]
+    return varShort, varUnits
 
 #misc. constants; TODO: collect into single script
 deg2rad = np.pi / np.float(180.0)
 rad2deg = np.float(180.0) / np.pi
 
+
+# dictionary containing all analyzed variables
+varDictAll = deepcopy(varDictObs)
+for var, desc in varDictModel.items():
+  if var not in varDictAll:
+    varDictAll[var] = deepcopy(desc)
+  else:
+    assert desc[0] == varDictAll[var][0], var+' units differ between varDictObs and varDictModel'
+    assert desc[1] == varDictAll[var][1], var+' abbreviation differs between varDictObs and varDictModel'

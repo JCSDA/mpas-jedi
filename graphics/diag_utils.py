@@ -237,6 +237,10 @@ availableDiagnostics = {
         'iter': '',
         'label': '$y - x_f$',
     },
+    'mmgfsan': {
+        'offline': True,
+        'label': '$x - x_{a,GFS}$',
+    },
     'omb_nobc': {
         'variable': ObsMinusModel,
         'iter': 'bg',
@@ -393,6 +397,7 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
 
         config['analyze'] = config.get('analyze', True)
         config['derived'] = config.get('derived', False)
+        config['offline'] = config.get('offline', False)
         config[vu.mean] = config.get(vu.mean, True)
         config[vu.ensemble] = (config.get(vu.ensemble, False) and includeEnsembleDiagnostics)
         config['onlyObsSpaces'] = config.get('onlyObsSpaces',[])
@@ -424,6 +429,7 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
         diagnosticConfigs[diagnosticName]['outerIter'] = outerIter
 
         if config['derived']: continue
+        if config['offline']: continue
         diagnosticConfigs[diagnosticName]['ObsFunction'] = bu.ObsFunctionWrapper(config)
 
     return diagnosticConfigs

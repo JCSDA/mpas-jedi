@@ -181,7 +181,8 @@ class StatsDB:
                 dateDir = dateDir+'/'+self.fcTDeltas_dir[expName][0]
 
             FILEPREFIX0 = self.expDirectory+'/'+expLongName +'/'+dateDir+'/' \
-                          +statsFileSubDir+'/'+su.statsFilePrefix+DAMethod+"_"
+                          +statsFileSubDir+'/'+su.statsFilePrefix
+            if DAMethod != '': FILEPREFIX0 += DAMethod+"_"
 
             DiagSpaceNames = []
             for File in glob.glob(FILEPREFIX0+'*.nc'):
@@ -229,7 +230,9 @@ class StatsDB:
             for expName, expLongName, statsFileSubDir, DAMethod in list(zip(
                 self.expNames, self.expLongNames, self.statsFileSubDirs, self.DAMethods)):
                 expPrefix = self.expDirectory+'/'+expLongName
-                ncStatsFile = statsFileSubDir+'/'+su.statsFilePrefix+DAMethod+'_'+self.DiagSpaceName+'.nc'
+                ncStatsFile = statsFileSubDir+'/'+su.statsFilePrefix
+                if DAMethod != '': ncStatsFile += DAMethod+"_"
+                ncStatsFile += self.DiagSpaceName+'.nc'
                 for fcTDelta, fcTDelta_dir in list(zip(
                     self.fcTDeltas, self.fcTDeltas_dir[expName])):
 
@@ -311,14 +314,10 @@ class StatsDB:
         ## extract units for each varName from varUnits DF column
         self.varUnitss = []
         varLoc = {}
-        varLoc['expName'] = self.expNames[0]
         varLoc['fcTDelta'] = self.fcTDeltas[0]
         varLoc['cyDTime'] = self.cyDTimes[0]
-        varLoc['binVar'] = vu.obsVarQC
-        varLoc['binVal'] = pconf.goodFlagName
-        varLoc['binMethod'] = bu.goodQCMethod
-        goodDiags = self.dfw.levels('diagName', varLoc)
-        varLoc['diagName'] = goodDiags[0]
+        allDiags = self.dfw.levels('diagName', varLoc)
+        varLoc['diagName'] = allDiags[0]
 
         for varName in self.varNames:
             varLoc['varName'] = varName

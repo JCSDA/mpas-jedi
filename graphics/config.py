@@ -19,7 +19,8 @@ obsBinVars[vu.obsVarQC] += [bu.goodQCMethod, bu.badQCMethod, bu.allQCMethod]
 obsBinVars[vu.obsVarLat] += [bu.identityBinMethod, bu.latbandsMethod]
 obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
 obsBinVars[vu.obsVarNormErr] += [bu.identityBinMethod]
-obsBinVars['ObsRegion'] += ['CONUS']
+obsBinVars[vu.obsRegionBinVar] += ['CONUS']
+obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 
 ################################
@@ -88,13 +89,6 @@ geoirBinVars[vu.obsVarACI] += [bu.identityBinMethod]
 geoirBinVars[vu.obsVarCldFrac] += [bu.identityBinMethod,
                                   bu.cloudbandsMethod]
 
-
-# 2D bins for named latitude-band methods and clear profiles
-for var in pconf.clrlatBinVars.keys():
-    if var != vu.obsVarLandFrac or binBYLandFrac:
-        for latBand in pconf.namedLatBands['values']:
-            geoirBinVars[var] += [pconf.clrlatMethods[latBand]]
-
 # Binning variables with clr-/cld-sky methods
 for var in pconf.cldfracBinVars.keys():
     if var != vu.obsVarLandFrac or binBYLandFrac:
@@ -125,11 +119,15 @@ for method in geoirSCIMethods:
 #########################################
 # binVarConfigs for model space variables
 #########################################
-#modelBinVars = { 'ModelLatBand':  [bu.latbandsMethod,bu.identityBinMethod]
-#               , 'ModelBox':      ['CONUS']
-#               , 'ModelAltitude': [bu.identityBinMethod]
-#               , 'ModelPressure': [bu.identityBinMethod]
-#               }
+modelBinVars = defaultdict(list)
+modelBinVars[vu.noBinVar] += [bu.noBinMethod]
+modelBinVars[vu.modVarLat] += [bu.identityBinMethod]
+modelBinVars[vu.modVarLat] += [bu.latbandsMethod]
+modelBinVars[vu.modVarLev] += [bu.identityBinMethod]
+# 2D model level bins with named latitude-band methods
+for latBand in pconf.namedLatBands['values']:
+  modelBinVars[vu.modVarLev] += [latBand]
+modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 #=======================
 # DiagSpace definitions
@@ -148,7 +146,7 @@ nullDiagSpaceInfo = {
 profile_s  = 'profile'
 sfc_s      = 'surface'
 radiance_s = 'radiance'
-model_s    = 'MPAS'
+model_s    = 'model'
 
 ## analysis groups for configuring AnalyzeStats + Analyses
 convGrp = 'conv'
@@ -157,6 +155,7 @@ ahiGrp = 'ahi'
 amsuaGrp = 'amsua'
 amsuacldGrp = 'amsuacld'
 mhsGrp = 'mhs'
+modelGrp = 'model'
 
 anGroupConfig = {
     convGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:10:00'},
@@ -165,6 +164,7 @@ anGroupConfig = {
     amsuaGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
     amsuacldGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
     mhsGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:08:00'},
+    modelGrp: {'npwork': 10, 'npread': 36, 'analyze_walltime': '03:30:00'},
 }
 
 # Each entry of DiagSpaceConfig is a key-value pair, with the following possible values:
@@ -469,10 +469,12 @@ DiagSpaceConfig = {
         'channels': range(1,16),
     },
 #models
-#   'mpas-gfs': {
-#        'DiagSpaceGrp': model_s,
-#        'process': False,
-#        'binVarConfigs': modelBinVars,
-#    },
+   'mpas': {
+        'DiagSpaceGrp': model_s,
+        'process': True,
+        'anGrp': modelGrp,
+        'binVarConfigs': modelBinVars,
+        'diagNames': pconf.modelDiags,
+    },
 }
 

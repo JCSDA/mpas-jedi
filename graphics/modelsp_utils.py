@@ -40,64 +40,77 @@ ncells  = 40962
 #
 fcRange = int(fcHours)/24.
 interval = int(intervalHours)/24
-SDATE = datetime.strptime(initDate,"%Y%m%d%H")
-EDATE = datetime.strptime(endDate,"%Y%m%d%H")
+SDATE = datetime.strptime(initDate,'%Y%m%d%H')
+EDATE = datetime.strptime(endDate,'%Y%m%d%H')
 
 DATEINC = dt.timedelta(days=interval)
 expLongNames = expLongNames.split()
 expNames = expNames.split()
 nExp  = len(expNames)
 
-def readGrid():
-    date = initDate
-    print(date)
-    d = datetime.strptime(date,"%Y%m%d%H")
-    filedate= d.strftime("%Y-%m-%d_%H.%M.%S")
-    diagdir    = '../'
-    ncGFS = GFSANA_DIR+'/x1.40962.init.'+filedate+'.nc'
-    nc_fid2 = Dataset(ncGFS, "r", format="NETCDF4")
-    lats = np.array( nc_fid2.variables['latCell'][:] ) * 180.0 / np.pi
-    lons = np.array( nc_fid2.variables['lonCell'][:] ) * 180.0 / np.pi
-    return (lats,lons)
+def getGridFile(date = initDate, gfsAnaDir = GFSANA_DIR, nCells = 40962):
+  date = initDate
+  print(date)
+  d = datetime.strptime(date,'%Y%m%d%H')
+  filedate= d.strftime('%Y-%m-%d_%H.%M.%S')
 
-def varDiff(varNames,ncFile1,ncFile2):
-    nc_fid1 = Dataset(ncFile1, "r", format="NETCDF4")
-    nc_fid2 = Dataset(ncFile2, "r", format="NETCDF4")
-    if varNames in varNames3d:
-        varsVals = np.array( nc_fid2.variables[varNames][0,:,:] ) - np.array( nc_fid1.variables[varNames][0,:,:] )
+  return gfsAnaDir+'/x1.'+str(nCells)+'.init.'+filedate+'.nc'
+
+def readGrid(date=initDate, gridFile=None):
+  if gridFile is None: gridFile = getGridFile(date)
+  ncData = Dataset(gridFile, 'r')
+  lats = np.array( ncData.variables['latCell'][:] ) * 180.0 / np.pi
+  lons = np.array( ncData.variables['lonCell'][:] ) * 180.0 / np.pi
+  ncData.close()
+
+  return (lats,lons)
+
+def getPressure(ncData):
+  pressure_p = np.array( ncData.variables['pressure_p'][0,:,:] )
+  pressure_base = np.array( ncData.variables['pressure_base'][0,:,:] )
+  pressure = pressure_p + pressure_base
+  return pressure
+
+def getTemperature(ncFile):
+  ncData = Dataset(ncFile, 'r')
+  rgas = 287.0
+  cp = 1004.5
+  pressure = getPressure(ncData)
+  theta = np.array(ncData.variables['theta'][0,:,:])
+  tmp1 = (1.e5 / pressure)**(rgas / cp)
+  temperature = np.subtract(np.divide(theta, tmp1), 273.15)
+
+  ncData.close()
+
+  return temperature
+
+def varRead(varName, ncFile):
+  if (varName == 'temperature'):
+    varVals = getTemperature(ncFile)
+  else:
+    ncData = Dataset(ncFile, 'r')
+    if (varName == 'pressure'):
+      varVals = getPressure(ncData)
+    elif varName in varNames3d:
+      varVals = np.array( ncData.variables[varName][0,:,:] )
     else:
-        varsVals = np.array( nc_fid2.variables[varNames][0,:] ) - np.array( nc_fid1.variables[varNames][0,:] )
-    if (varNames == 'qv' or varNames == 'rho' or varNames == 'q2'):
-        varsVals = varsVals * 1000.
-    return varsVals
+      varVals = np.array( ncData.variables[varName][0,:] )
 
-def varRead(varNames,ncFile1):
-    nc_fid1 = Dataset(ncFile1, "r", format="NETCDF4")
-    if varNames in varNames3d:
-        varsVals = np.array( nc_fid1.variables[varNames][0,:,:] )
-    else:
-        varsVals = np.array( nc_fid1.variables[varNames][0,:] )
+    if (varName == 'qv' or varName == 'rho' or varName == 'q2'):
+      varVals = varVals * 1000.
 
-    if (varNames == 'qv' or varNames == 'rho' or varNames == 'q2'):
-        varsVals = varsVals * 1000.
-    return varsVals
+    ncData.close()
 
-def getTemperature(varNames,ncFile1):
-    nc_fid1 = Dataset(ncFile1, "r", format="NETCDF4")
-    rgas = 287.0
-    cp = 1004.5
-    pressure_p = np.array( nc_fid1.variables['pressure_p'][0,:,:] )
-    pressure_base = np.array( nc_fid1.variables['pressure_base'][0,:,:] )
-    pressure = np.divide (pressure_p + pressure_base, 100.0)
-    theta = np.array( nc_fid1.variables['theta'][0,:,:] )
-    tmp1 = (1000/pressure)**(rgas/cp)
-    temperature = np.divide(theta, tmp1)
-    varsVals = temperature - 273.15
-    return varsVals
+  return varVals
+
+def varDiff(varName, ncFile1, ncFile2):
+  var1 = varRead(varName, ncFile1)
+  var2 = varRead(varName, ncFile2)
+  return var2 - var1
 
 def main():
-    print ('This is not a runnable program.')
-    os._exit(0)
+  print ('This is not a runnable program.')
+  os._exit(0)
 
 if __name__ == '__main__': main()
 

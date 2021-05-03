@@ -106,7 +106,7 @@ class PBSProCheyenne(JobScriptBase):
         super().__init__(conf)
 
         # Initialize config settings that are specific to PBSProCheyenne
-        self.account = conf.get('account','NMMM0015')
+        self.account = conf.get('account','NMMM0043')
         self.queue = conf.get('queue','regular')
         assert self.queue in self.qavail, ("ERROR: PBSProCheyenne requires queue to be any of ",self.qavail)
         self.memory = conf.get('memory',109)

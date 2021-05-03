@@ -37,7 +37,7 @@ def write_diag_stats():
                     pressure_gfs = mu.varRead('pressure_base',ncFile1) + mu.varRead('pressure_p',ncFile1)
                     tmp = pressure_model - pressure_gfs
                 elif (varName == 'temperature'):
-                    tmp = mu.getTemperature(varName,ncFile2) - mu.getTemperature(varName,ncFile1)
+                    tmp = mu.getTemperature(ncFile2) - mu.getTemperature(ncFile1)
                 else:
                     tmp = mu.varDiff(varName,ncFile1,ncFile2)
 

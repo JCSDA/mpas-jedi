@@ -18,13 +18,13 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
            e.g., amsua selects amsua_metop-a, amsua_n19, etc.
            default behavior is to select all DiagSpaces in config
         '''))
-    parser.add_argument('-a', '--account',
+    parser.add_argument('-a', '--account', type = str,
       help='JobScript account number')
-    parser.add_argument('-q', '--queue',
+    parser.add_argument('-q', '--queue', type = str,
       help='JobScript submission queue')
-    parser.add_argument('-m', '--memory',
+    parser.add_argument('-m', '--memory', type = str,
       help='JobScript requested memory per node')
-    parser.add_argument('-s', '--scriptdir',
+    parser.add_argument('-s', '--scriptdir', type = str,
       help='Location of scripts')
 
 processor = SpawnAnalyzeStatsArgs()

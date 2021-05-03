@@ -2,6 +2,7 @@
 
 import binning_utils as bu
 from collections import defaultdict
+from copy import deepcopy
 from jediApplicationArgs import jediAppName, nOuterIter
 import numpy as np
 import os
@@ -18,6 +19,9 @@ anIter = str(nOuterIter)
 #=============================================================
 # groups of diagnostics for which statistics can be calculated
 #=============================================================
+
+## model-space diagnostics
+modelDiags = ['mmgfsan']
 
 ## difference diagnostics
 diffDiagnostics_ = defaultdict(list)
@@ -103,6 +107,29 @@ namedLandFracBands['minBounds'] = [0.0, seasurfThresh, landsurfThresh, 0.0]
 namedLandFracBands['maxBounds'] = [seasurfThresh, landsurfThresh, 1.0, 1.0]
 
 
+# geoirlatlonboxMethod bins
+geoirLonBands = deepcopy(bu.geoirlatlonBoxParams)
+geoirLatBands = deepcopy(bu.geoirlatlonBoxParams)
+
+# store minBounds/maxBounds
+for centerLon in geoirLonBands['centerLon']:
+  geoirLonBands['minBounds'] += \
+    [centerLon - bu.geoirMaxZenith]
+  geoirLonBands['maxBounds'] += \
+    [centerLon + bu.geoirMaxZenith]
+  geoirLatBands['minBounds'] += \
+    [-bu.geoirMaxZenith]
+  geoirLatBands['maxBounds'] += \
+    [bu.geoirMaxZenith]
+
+# ensure positive-definite longitude
+for bound in ['minBounds', 'maxBounds']:
+  for ii, lon in enumerate(geoirLonBands[bound]):
+    while geoirLonBands[bound][ii] > 360.:
+      geoirLonBands[bound][ii] -= 360.
+    while geoirLonBands[bound][ii] < 0.:
+      geoirLonBands[bound][ii] += 360.
+
 ## homogeneous bins
 # note: the ordering described here does not make any difference
 #       figure axes will be monotonically increasing except for pressure
@@ -178,11 +205,11 @@ binLims[vu.obsVarNormErr]['finish'] =  7.0
 binLims[vu.obsVarNormErr]['step']   =  0.25
 binLims[vu.obsVarNormErr]['format'] = '{:.2f}'
 
-#binLims[vu.modVarLat] = {}
-#binLims[vu.modVarLat]['start']  = -90.0
-#binLims[vu.modVarLat]['finish'] =  90.0
-#binLims[vu.modVarLat]['step']   =  30.0
-#binLims[vu.modVarLat]['format'] = '{:.0f}'
+binLims[vu.modVarLat] = {}
+binLims[vu.modVarLat]['start']  = -90.0
+binLims[vu.modVarLat]['finish'] =  90.0
+binLims[vu.modVarLat]['step']   =  5.0
+binLims[vu.modVarLat]['format'] = '{:.0f}'
 
 #binLims[vu.modVarAlt] = {}
 #binLims[vu.modVarAlt]['start']  = 0.0
@@ -516,7 +543,7 @@ binVarConfigs = {
             'values': binLims[vu.obsVarNormErr]['values'],
         },
     },
-    'ObsRegion': {
+    vu.obsRegionBinVar: {
         'AFRICA': nullBinMethod,
         'ATLANTIC': nullBinMethod,
         'AUSTRALIA': nullBinMethod,
@@ -548,6 +575,23 @@ binVarConfigs = {
         'SAMERICA': nullBinMethod,
         'SE_ASIA': nullBinMethod,
         'S_ASIA': nullBinMethod,
+        bu.geoirlatlonboxMethod: {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.lonMeta,
+                 'bounds': geoirLonBands['minBounds']},
+                {'where': bu.greatBound,
+                 'variable': vu.lonMeta,
+                 'bounds': geoirLonBands['maxBounds']},
+                {'where': bu.lessBound,
+                 'variable': vu.latMeta,
+                 'bounds': geoirLatBands['minBounds']},
+                {'where': bu.greatBound,
+                 'variable': vu.latMeta,
+                 'bounds': geoirLatBands['maxBounds']},
+            ],
+            'values': geoirLonBands['values'],
+        },
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
 #        'CONUS_POLYGON': {
 #            'filters': [
@@ -619,7 +663,7 @@ binVarConfigs = {
 #            'values': namedLatBands['values'],
 #        },
 #    },
-#    'ModelRegion': {
+#    vu.modelRegionBinVar: {
 #        'AFRICA': nullBinMethod,
 #        'ATLANTIC': nullBinMethod,
 #        'AUSTRALIA': nullBinMethod,
@@ -647,6 +691,23 @@ binVarConfigs = {
 #        'SAMERICA': nullBinMethod,
 #        'SE_ASIA': nullBinMethod,
 #        'S_ASIA': nullBinMethod,
+#        bu.geoirlatlonboxMethod: {
+#            'filters': [
+#                {'where': bu.lessBound,
+#                 'variable': vu.modelVarLon,
+#                 'bounds': geoirLonBands['minBounds']},
+#                {'where': bu.greatBound,
+#                 'variable': vu.modelVarLon,
+#                 'bounds': geoirLonBands['maxBounds']},
+#                {'where': bu.lessBound,
+#                 'variable': vu.modelVarLat,
+#                 'bounds': geoirLatBands['minBounds']},
+#                {'where': bu.greatBound,
+#                 'variable': vu.modelVarLat,
+#                 'bounds': geoirLatBands['maxBounds']},
+#            ],
+#            'values': geoirLonBands['values'],
+#        },
 #    },
 }
 
@@ -718,54 +779,14 @@ for binVar, rangeVar in latBinVars.items():
             'override_exclusiveDiags': rangeVar[1],
         }
 
-# Add named latitude-band-specific bins for clear-sky ranged variables
-clrlatBinVars = {
-#    vu.obsVarGlint: [bu.GlintAngle, []],
-    vu.obsVarSenZen: [vu.senzenMeta, []],
-}
-clrband = namedCldFracBands['values'].index(bu.clrskyMethod)
-clrlatMethods = {}
-for binVar, rangeVar in clrlatBinVars.items():
-    if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
-    for iband, latBand in enumerate(namedLatBands['values']):
-        clrlatMethods[latBand] = latBand+'-'+bu.clrskyMethod
-        binVarConfigs[binVar][clrlatMethods[latBand]] = {
-            'filters': [
-                {'where': bu.lessBound,
-                 'variable': rangeVar[0],
-                 'bounds': binLims[binVar]['minBounds']},
-                {'where': bu.greatEqualBound,
-                 'variable': rangeVar[0],
-                 'bounds': binLims[binVar]['maxBounds']},
-                {'where': bu.lessBound,
-                 'variable': vu.latMeta,
-                 'bounds': namedLatBands['minBounds'][iband]},
-                {'where': bu.greatEqualBound,
-                 'variable': vu.latMeta,
-                 'bounds': namedLatBands['maxBounds'][iband]},
-                {'where': bu.lessBound,
-                 'variable': vu.cldfracMeta,
-                 'bounds': namedCldFracBands['minBounds'][clrband]},
-                {'where': bu.greatBound,
-                 'variable': vu.cldfracMeta,
-                 'bounds': namedCldFracBands['maxBounds'][clrband]},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
-            ],
-            'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[1],
-        }
-
 # Add named cloud fraction-band-specific bins for applicable ranged variables
 cldfracBinVars = {
-    vu.obsVarACI: [bu.AsymmetricCloudImpact, ['obs','bak','ana','SCI']],
-    vu.obsVarGlint: [bu.GlintAngle, ['obs','bak','ana','SCI']],
-    vu.obsVarLandFrac: [vu.landfracGeo, ['obs','bak','ana','SCI']],
-    vu.obsVarLat: [vu.latMeta, ['obs','bak','ana','SCI']],
-    vu.obsVarLT: [bu.LocalHour, ['obs','bak','ana','SCI']],
-    vu.obsVarSenZen: [vu.senzenMeta, ['obs','bak','ana','SCI']],
+#    vu.obsVarACI: [bu.AsymmetricCloudImpact],
+#    vu.obsVarGlint: [bu.GlintAngle],
+#    vu.obsVarLandFrac: [vu.landfracGeo],
+    vu.obsVarLat: [vu.latMeta],
+#    vu.obsVarLT: [bu.LocalHour],
+#    vu.obsVarSenZen: [vu.senzenMeta],
 }
 for binVar, rangeVar in cldfracBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
@@ -790,13 +811,12 @@ for binVar, rangeVar in cldfracBinVars.items():
                  'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[1],
+            'override_exclusiveDiags': ['obs','bak','ana','SCI'],
     }
 
 # Add named land fraction-band-specific bins for applicable ranged variables
 landfracBinVars = {
-    vu.obsVarSCI: [bu.SCIOkamoto, ['obs','bak','ana','SCI']],
-
+    vu.obsVarSCI: [bu.SCIOkamoto],
 }
 for binVar, rangeVar in landfracBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
@@ -821,5 +841,5 @@ for binVar, rangeVar in landfracBinVars.items():
                  'except_diags': nonQCedDiagnostics},
             ],
             'values': binLims[binVar]['values'],
-            'override_exclusiveDiags': rangeVar[1],
+            'override_exclusiveDiags': ['obs','bak','ana','SCI'],
     }

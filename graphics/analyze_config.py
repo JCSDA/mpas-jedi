@@ -46,6 +46,14 @@ Job-submission examples:
 
     python SpawnAnalyzeStats.py -d amsua
 
++ Spawn one job for the MPAS model DiagSpace
+
+    python SpawnAnalyzeStats.py -d mpas
+
++ Spawn one job for each DiagSpace in the typical MPAS-Workflow hofx application
+
+    python SpawnAnalyzeStats.py -app hofx -d mhs,amusa,abi_,ahi_,sonde,airc,sfc,gnssroref,satwind
+
 + Choose a unique job account number
 
     python SpawnAnalyzeStats.py -a NMMM0043
@@ -102,10 +110,12 @@ dbConf['expLongNames'] = []
 dbConf['expNames'] = []
 
 ## DAMethods is a list of secondary labels that are within the database
-#  intermediate file names.  They may be the actual DA method used (e.g., 3denvar),
-#  an indication of the workflow component (e.g., omb or omm), or a customized
-#  label for each experiment.  DAMethods is only important for file naming and is
-#  not used in the analyses
+#  intermediate file names.  Typical values in MPAS-Workflow applications are
+#  'hofx' for OMF, 'variational' for OMB/OMA, and '' (empty) for model-space
+#  verification.  It is optional for the user to use whatever string they choose
+#  as part of the file name to distinguish the information contained within from
+#  other files, e.g., an experiment characteristic.  DAMethods is only important
+#  for file naming and is not used in the analyses
 dbConf['DAMethods'] = []
 ## Note: refer to the StatisticsDatabase.StatsDB class for more details
 
@@ -122,34 +132,39 @@ dbConf['DAMethods'] = []
 #  dbConf['DAMethods'].append('omm')
 #dbConf['cntrlExpIndex'] = nEnsDAMembers
 
-## 3denvar baseline (conventional + clear-sky AMSUA)
-#dbConf['expLongNames'].append('guerrett_3denvar_conv_clramsua_NMEM1_120km/Verification/bg')
-dbConf['expLongNames'].append('guerrett_3denvar_conv_clramsua_NMEM1_120km/Verification/fc/mean')
-dbConf['expNames'].append('deterministic')
-dbConf['DAMethods'].append('omm')
+# 6-hr forecasts from GEFS
+#dbConf['expLongNames'].append('guerrett_eda_3denvar_NMEM20_GEFSVerify_120km/Verification/bg/mean')
+#dbConf['expNames'].append('gefs')
+#dbConf['DAMethods'].append('hofx')
 
-## eda-3denvar mean
-dbConf['expLongNames'].append('guerrett_eda_3denvar_conv_clramsua_NMEM20_120km/Verification/fc/mean')
-dbConf['expNames'].append('eda')
-dbConf['DAMethods'].append('omm')
+## 3denvar benchmark (conventional + clear-sky AMSUA)
+# APRIL 2021
+#dbConf['expLongNames'].append('guerrett_3denvar_OIE120km_unstructured/Verification/bg')
+dbConf['expLongNames'].append('guerrett_3denvar_OIE120km_unstructured/Verification/fc/mean')
+dbConf['expNames'].append('benchmark')
+dbConf['DAMethods'].append('hofx')
 
-## eda-3denvar RTPP0.5 mean
-dbConf['expLongNames'].append('guerrett_eda_3denvar_conv_clramsua_NMEM20_RTPP0.5_120km/Verification/fc/mean')
-dbConf['expNames'].append('eda-RTPP0.5')
-dbConf['DAMethods'].append('omm')
+dbConf['expLongNames'].append('guerrett_eda_3denvar_NMEM20_LeaveOneOut_OIE120km/Verification/fc/mean')
+dbConf['expNames'].append('eda20-leave')
+dbConf['DAMethods'].append('hofx')
+
+dbConf['expLongNames'].append('guerrett_eda_3denvar_NMEM40_LeaveOneOut_OIE120km/Verification/fc/mean')
+dbConf['expNames'].append('eda40-leave')
+dbConf['DAMethods'].append('hofx')
+
 
 ## -------------------------------
 ## Cycle times and forecast length
 ## -------------------------------
 #First and Last CYCLE dates and increment
 dbConf['firstCycleDTime'] = dt.datetime(2018,4,15,0,0,0)
-dbConf['lastCycleDTime'] = dt.datetime(2018,4,18,0,0,0)
+dbConf['lastCycleDTime'] = dt.datetime(2018,5,14,18,0,0)
 dbConf['cyTimeInc'] = dt.timedelta(hours=12)
 
 #First and Last FORECAST durations and increment
 dbConf['fcTDeltaFirst'] = dt.timedelta(days=0)
-dbConf['fcTDeltaLast'] = dt.timedelta(days=0,hours=6)
-dbConf['fcTimeInc'] = dt.timedelta(hours=6)
+dbConf['fcTDeltaLast'] = dt.timedelta(days=0,hours=240)
+dbConf['fcTimeInc'] = dt.timedelta(hours=12)
 
 ## fcDirFormats is used to declare the directory string format
 #  for forecast lengths. Can include any combination of substrings
@@ -174,6 +189,7 @@ dbConf['fcDirFormats'] = [commonFCDirFormat]*len(dbConf['expNames'])
 # 'diagnostic_stats/obs'
 # 'diagnostic_stats/model'
 commonStatsFileSubDir = 'diagnostic_stats/obs'
+#commonStatsFileSubDir = 'diagnostic_stats/model'
 dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 
 ########################################################################
@@ -201,10 +217,10 @@ else:
     if len(dbConf['expNames']) > 1: analysisTypes.append('FCAxisExpLinesDiffCI')
 
     ## potentially useful
-    analysisTypes.append('CYandBinValAxes2D')
     analysisTypes.append('FCandBinValAxes2D')
-    analysisTypes.append('CYAxisExpLines')
-    analysisTypes.append('CYAxisFCLines')
+    #analysisTypes.append('CYandBinValAxes2D')
+    #analysisTypes.append('CYAxisExpLines')
+    #analysisTypes.append('CYAxisFCLines')
 
 ## used to dissect gross errors in more detail
 analysisTypes.append('BinValAxisProfile')

@@ -144,7 +144,7 @@ class AnalysisBase():
         Define plotting attributes for the combination of diagnosticGroup and statName
         '''
         ommDiagnostics = ['omb', 'oma', 'omm', 'omf']
-        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo']
+        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo', 'mmgfsan']
         truncateDiagnostics = ommDiagnostics+mmoDiagnostics
         diagnosticGroup_ = diagnosticGroup
         for diag in truncateDiagnostics:
@@ -244,7 +244,7 @@ def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
     category binMethods in the context of a DFWrapper
     '''
 
-    binVar = vu.varDictObs[fullBinVar][1]
+    binVar = vu.varDictAll[fullBinVar][1]
 
     dbSelect1DBinVals = dfw.levels('binVal')
     binUnitss = dfw.uniquevals('binUnits')
@@ -301,15 +301,20 @@ class CategoryBinMethodBase(AnalysisBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
         self.parallelism = True
+        self.maxBinVarTier = 2
 
         # default binVar/binMethod combinations
         self.binVarDict = {
-            (vu.obsVarQC, bu.goodQCMethod): {},
-            (vu.obsVarLat, bu.latbandsMethod): {},
-            (vu.obsVarPrs, bu.PjetMethod): {},
-            (vu.obsVarAlt, bu.altjetMethod): {},
-            (vu.obsVarCldFrac, bu.cloudbandsMethod): {},
-            (vu.obsVarLandFrac, bu.surfbandsMethod): {},
+            (vu.obsVarQC, bu.goodQCMethod): {'binVarTier': 1},
+            (vu.obsVarLat, bu.latbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFrac, bu.cloudbandsMethod): {'binVarTier': 1},
+#            (vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
+            (vu.noBinVar, bu.noBinMethod): {'binVarTier': 1},
+            (vu.obsRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
+            (vu.modelRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
+            (vu.obsVarPrs, bu.PjetMethod): {'binVarTier': 3},
+            (vu.obsVarAlt, bu.altjetMethod): {'binVarTier': 3},
+            (vu.obsVarLandFrac, bu.surfbandsMethod): {'binVarTier': 3},
         }
         self.maxDiagnosticsPerAnalysis = 10 // self.nExp
 
@@ -359,31 +364,30 @@ class CategoryBinMethodBase(AnalysisBase):
                 diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
                 analysisStatistics = set(list(analysisStatistics) +
                                          diagnosticConfigs[diagnosticName]['analysisStatistics'])
-            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
+            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
 
             diagLoc = {'diagName': diagnosticNames}
             diagBinVars = self.db.dfw.levels('binVar', diagLoc)
             diagBinMethods = self.db.dfw.levels('binMethod', diagLoc)
             for (fullBinVar, binMethod), options in self.binVarDict.items():
-                binVar = vu.varDictObs[fullBinVar][1]
+                if options.get('binVarTier', 10) > self.maxBinVarTier: continue
+                binVar = vu.varDictAll[fullBinVar][1]
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
-                for statName in analysisStatistics:
-                    if statName not in options.get('onlyStatNames', analysisStatistics): continue
 
-                    self.logger.info(diagnosticGroup+', '+binVar+', '+binMethod+', '+statName)
+                self.logger.info(diagnosticGroup+', '+binVar+', '+binMethod)
 
-                    if useWorkers:
-                        workers.apply_async(self.innerloopsWrapper,
-                            args = (diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, statName, options))
-                    else:
-                        self.innerloopsWrapper(
-                            diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, statName, options)
+                if useWorkers:
+                    workers.apply_async(self.innerloopsWrapper,
+                        args = (diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options))
+                else:
+                    self.innerloopsWrapper(
+                        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options)
 
     def innerloopsWrapper(self,
-        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, statName, options):
+        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options):
 
-        binVar = vu.varDictObs[fullBinVar][1]
+        binVar = vu.varDictAll[fullBinVar][1]
 
         # narrow mydfwDict by binVar and binMethod to reduce run-time and memory
         myLoc = {}
@@ -409,9 +413,12 @@ class CategoryBinMethodBase(AnalysisBase):
 
         nxplots, nyplots, nsubplots = self.subplotArrangement(binValsMap)
 
-        self.innerloops(
-            mydfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
-            nsubplots, nxplots, nyplots)
+        for statName in analysisStatistics:
+            if statName not in options.get('onlyStatNames', analysisStatistics): continue
+
+            self.innerloops(
+                mydfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
+                nsubplots, nxplots, nyplots)
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
@@ -907,13 +914,16 @@ class BinValLinesAnalysisType(CategoryBinMethodBase):
         self.binVarDict = {
             (vu.obsVarQC, bu.badQCMethod): {
                 'onlyStatNames': ['Count'],
+                'binVarTier': 1,
             },
             (vu.obsVarQC, bu.allQCMethod): {
                 'onlyStatNames': ['Count'],
+                'binVarTier': 1,
             },
-            (vu.obsVarLat, bu.latbandsMethod): {},
-            (vu.obsVarCldFrac, bu.cloudbandsMethod): {},
-            (vu.obsVarLandFrac, bu.surfbandsMethod): {},
+            (vu.obsVarLat, bu.latbandsMethod): {'binVarTier': 1},
+#            (vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFrac, bu.cloudbandsMethod): {'binVarTier': 1},
+            (vu.obsVarLandFrac, bu.surfbandsMethod): {'binVarTier': 3},
         }
 
     def subplotArrangement(self, dummy):
@@ -1044,19 +1054,22 @@ class OneDimBinMethodBase(AnalysisBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
         self.parallelism = True
+        self.maxBinVarTier = 1
 
         # default binVars
         self.binVarDict = {
-            vu.obsVarAlt: {'profilefunc': bpf.plotProfile},
-            vu.obsVarACI: {'profilefunc': bpf.plotSeries},
-            vu.obsVarCldFrac: {'profilefunc': bpf.plotSeries},
-            vu.obsVarGlint: {'profilefunc': bpf.plotSeries},
-            vu.obsVarLandFrac: {'profilefunc': bpf.plotSeries},
-            vu.obsVarLat: {'profilefunc': bpf.plotProfile},
-            vu.obsVarLT: {'profilefunc': bpf.plotSeries},
-            vu.obsVarPrs: {'profilefunc': bpf.plotProfile},
-            vu.obsVarSCI: {'profilefunc': bpf.plotSeries},
-            vu.obsVarSenZen: {'profilefunc': bpf.plotSeries},
+            vu.obsVarAlt: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarACI: {'profilefunc': bpf.plotSeries, 'binVarTier': 2},
+            vu.obsVarCldFrac: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
+            vu.obsVarLat: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarPrs: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarSCI: {'profilefunc': bpf.plotSeries, 'binVarTier': 2},
+#            vu.modVarLat: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.modVarLev: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarGlint: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
+            vu.obsVarLandFrac: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
+            vu.obsVarLT: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
+            vu.obsVarSenZen: {'profilefunc': bpf.plotSeries, 'binbinVarTier': 3},
         }
         self.maxDiagnosticsPerAnalysis = 10 // self.nExp
 
@@ -1088,12 +1101,13 @@ class OneDimBinMethodBase(AnalysisBase):
                 diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
                 analysisStatistics = set(list(analysisStatistics) +
                                          diagnosticConfigs[diagnosticName]['analysisStatistics'])
-            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
+            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticNames})
 
             for fullBinVar, options in self.binVarDict.items():
-                binVar = vu.varDictObs[fullBinVar][1]
+                if options.get('binVarTier', 10) > self.maxBinVarTier: continue
+                binVar = vu.varDictAll[fullBinVar][1]
                 if (binVar not in diagBinVars): continue
 
                 binVarLoc = {}
@@ -1104,20 +1118,18 @@ class OneDimBinMethodBase(AnalysisBase):
                 #Make figures for all binMethods
                 binMethods = self.db.dfw.levels('binMethod', binVarLoc)
                 for binMethod in binMethods:
-                    for statName in analysisStatistics:
-                        if statName not in options.get('onlyStatNames', analysisStatistics): continue
 
-                        self.logger.info(diagnosticGroup+', '+binVar+', '+binMethod+', '+statName)
+                    self.logger.info(diagnosticGroup+', '+binVar+', '+binMethod)
 
-                        if useWorkers:
-                            workers.apply_async(self.innerloopsWrapper,
-                                args = (diagnosticGroup, diagnosticConfigs, binVar, binMethod, statName, options))
-                        else:
-                            self.innerloopsWrapper(
-                                diagnosticGroup, diagnosticConfigs, binVar, binMethod, statName, options)
+                    if useWorkers:
+                        workers.apply_async(self.innerloopsWrapper,
+                            args = (diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options))
+                    else:
+                        self.innerloopsWrapper(
+                            diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options)
 
     def innerloopsWrapper(self,
-        diagnosticGroup, diagnosticConfigs, binVar, binMethod, statName, options):
+        diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options):
 
         myLoc = {}
         myLoc['binVar'] = binVar
@@ -1155,7 +1167,7 @@ class OneDimBinMethodBase(AnalysisBase):
             binNumVals.append(self.binNumVals[ibin])
 
             # invert independent variable axis for pressure bins
-            pressure_dict = vu.varDictObs.get(vu.obsVarPrs,['',''])
+            pressure_dict = vu.varDictAll.get(vu.obsVarPrs,['',''])
             invert_ind_axis = (pressure_dict[1] == binVar)
 
         # sort bins by numeric value
@@ -1172,11 +1184,25 @@ class OneDimBinMethodBase(AnalysisBase):
         }
         if len(binVals) < 2: return
 
-        self.innerloops(
-            mydfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options)
+        # only analyze variables that have non-zero Count when sliced by myLoc
+        nVarsLoc = 0
+        varMapLoc = []
+        for (varName, varLabel) in self.varMap:
+          countDF = mydfwDict['dfw'].loc({'varName': varName}, 'Count')
+          if countDF.shape[0] > 0:
+            counts = countDF.to_numpy()
+            if np.nansum(counts) > 0:
+              nVarsLoc += 1
+              varMapLoc.append((varName, varLabel))
+
+        for statName in analysisStatistics:
+            if statName not in options.get('onlyStatNames', analysisStatistics): continue
+
+            self.innerloops(
+                mydfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options)
 
     def innerloops(self,
-        dfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options):
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
         '''
         virtual method
         '''
@@ -1199,7 +1225,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
         self.maxDiagnosticsPerAnalysis = 1
 
     def innerloops(self,
-        dfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options):
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
         if self.nCY < 2: return
 
@@ -1210,7 +1236,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
         myPath.mkdir(parents=True, exist_ok=True)
 
         nxplots = self.nExp
-        nyplots = self.nVars
+        nyplots = nVarsLoc
         nsubplots = nxplots * nyplots
 
         planeLoc = {}
@@ -1226,7 +1252,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
             iplot = 0
 
             #subplot loop 1
-            for (varName, varLabel) in self.varMap:
+            for (varName, varLabel) in varMapLoc:
                 planeLoc['varName'] = varName
                 axisLimitsLoc['varName'] = varName
 
@@ -1249,6 +1275,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
                         binLoc['binVal'] = binVal
                         tmp = dfwDict['dfw'].loc(binLoc, statName).to_numpy()
                         for jcy, cyDTime in enumerate(planeCYDTimes):
+                            if jcy > len(tmp)-1: continue
                             icy = self.cyDTimes.index(cyDTime)
                             planeVals[ibin, icy] = tmp[jcy]
 
@@ -1297,7 +1324,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
         self.maxDiagnosticsPerAnalysis = 1
 
     def innerloops(self,
-        dfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options):
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
         if self.nFC < 2: return
 
@@ -1309,7 +1336,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
         myPath.mkdir(parents=True, exist_ok=True)
 
         nxplots = self.nExp
-        nyplots = self.nVars
+        nyplots = nVarsLoc
         nsubplots = nxplots * nyplots
 
         planeLoc = {}
@@ -1320,7 +1347,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
 
         iplot = 0
         #subplot loop 1
-        for (varName, varLabel) in self.varMap:
+        for (varName, varLabel) in varMapLoc:
             planeLoc['varName'] = varName
             axisLimitsLoc['varName'] = varName
 
@@ -1343,6 +1370,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
                     binLoc['binVal'] = binVal
                     tmp = dfwDict['agg'].loc(binLoc, statName).to_numpy()
                     for jfc, fcTDelta in enumerate(planeFCTDeltas):
+                        if jfc > len(tmp)-1: continue
                         ifc = self.fcTDeltas.index(fcTDelta)
                         planeVals[ibin, ifc] = tmp[jfc]
 
@@ -1391,7 +1419,7 @@ class BinValAxisProfile(OneDimBinMethodBase):
         self.subAspect = 1.3
 
     def innerloops(self,
-        dfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options):
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
         bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
@@ -1402,10 +1430,10 @@ class BinValAxisProfile(OneDimBinMethodBase):
 
         if self.nFC > 1:
             nxplots = min([self.nFC, self.MAX_FC_SUBFIGS])
-            nyplots = self.nVars
+            nyplots = nVarsLoc
             nsubplots = nxplots * nyplots
         else:
-            nsubplots = self.nVars
+            nsubplots = nVarsLoc
             nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
             nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
@@ -1417,7 +1445,7 @@ class BinValAxisProfile(OneDimBinMethodBase):
         iplot = 0
 
         #subplot loop 1
-        for (varName, varLabel) in self.varMap:
+        for (varName, varLabel) in varMapLoc:
             ptLoc['varName'] = varName
             axisLimitsLoc['varName'] = varName
 
@@ -1425,6 +1453,10 @@ class BinValAxisProfile(OneDimBinMethodBase):
             for fcTDelta in self.fcTDeltas:
                 ptLoc['fcTDelta'] = fcTDelta
                 axisLimitsLoc['fcTDelta'] = fcTDelta
+
+#                if len(dfwDict['agg'].loc(axisLimitsLoc, statName)) == 0:
+#                  iplot += 1
+#                  continue
 
                 # use common x-axis limits across axisLimitsLoc database locations
                 if statName == 'Count':
@@ -1452,7 +1484,11 @@ class BinValAxisProfile(OneDimBinMethodBase):
                         lineVals = []
                         for binVal in myBinConfigs['str']:
                             ptLoc['binVal'] = binVal
-                            lineVals.append(dfwDict['agg'].loc(ptLoc, statName))
+                            pt = dfwDict['agg'].loc(ptLoc, statName).to_numpy()
+                            if len(pt) == 1:
+                              lineVals.append(pt[0])
+                            else:
+                              lineVals.append(np.NaN)
 
                         linesVals.append(lineVals)
 
@@ -1511,7 +1547,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         self.subAspect = 1.3
 
     def innerloops(self,
-        dfwDict, diagnosticGroup, myLoc, statName, myBinConfigs, options):
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
         if self.nExp * len(myLoc['diagName']) < 2: return
         if self.cntrlExpName not in dfwDict['dfw'].levels('expName'): return
@@ -1526,10 +1562,10 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
 
         if self.nFC > 1:
             nxplots = min([self.nFC, self.MAX_FC_SUBFIGS])
-            nyplots = self.nVars
+            nyplots = nVarsLoc
             nsubplots = nxplots * nyplots
         else:
-            nsubplots = self.nVars
+            nsubplots = nVarsLoc
             nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
             nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
@@ -1543,7 +1579,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
 
         fcLoc = {}
         #subplot loop 1
-        for (varName, varLabel) in self.varMap:
+        for (varName, varLabel) in varMapLoc:
             fcLoc['varName'] = varName
 
             #subplot loop 2
@@ -1657,12 +1693,12 @@ class BinValAxisPDF(AnalysisBase):
         for diagnosticName, diagnosticConfig in self.diagnosticConfigs.items():
             if diagnosticName not in self.db.dfw.levels('diagName'): continue
             analysisStatistics = diagnosticConfig['analysisStatistics']
-            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
+            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticName})
 
             for fullBinVar, options in self.binVarDict:
-                binVar = vu.varDictObs[fullBinVar][1]
+                binVar = vu.varDictAll[fullBinVar][1]
                 if binVar not in diagBinVars: continue
 
                 myLoc = {}
@@ -1825,7 +1861,7 @@ class BinValAxisStatsComposite(AnalysisBase):
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticName})
 
             for fullBinVar, options in self.binVarDict.items():
-                binVar = vu.varDictObs[fullBinVar][1]
+                binVar = vu.varDictAll[fullBinVar][1]
                 if (binVar not in diagBinVars): continue
 
                 myLoc = {}
@@ -1998,7 +2034,7 @@ class GrossValues(AnalysisBase):
             diagBinMethods = self.db.dfw.levels('binMethod', diagLoc)
 
             for (fullBinVar, binMethod), options in self.binVarDict.items():
-                binVar = vu.varDictObs[fullBinVar][1]
+                binVar = vu.varDictAll[fullBinVar][1]
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
 
