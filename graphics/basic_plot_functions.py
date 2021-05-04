@@ -141,12 +141,12 @@ def plotDistri(lats,lons,values, \
 #set title  ===================================================================
     if nstation == 0:
         plt.text(0.5, 1.25, '%s   %s %s nlocs:%s' \
-            %(ObsType,VarName,var_unit,len(values)),    \
+            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),    \
             horizontalalignment='center', \
             fontsize=12, transform = ax.transAxes)
     else:
         plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nstation:%s' \
-            %(ObsType,VarName,var_unit,len(values),nstation),    \
+            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
             horizontalalignment='center', \
             fontsize=12, transform = ax.transAxes)
 

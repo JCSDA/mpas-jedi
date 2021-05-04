@@ -27,13 +27,16 @@ test/
 # columns: var_name            unit_used   abbr.
 vardict = { \
     'air_temperature':        [ '(K)',     'T'   ] \
+  , 'virtual_temperature':    [ '(K)',     'Tv'  ] \
   , 'eastward_wind':          [ '(m/s)',   'U'   ] \
   , 'northward_wind':         [ '(m/s)',   'V'   ] \
   , 'specific_humidity':      [ '(kg/kg)', 'Q'   ] \
   , 'refractivity':           [ '(%)',     'Ref' ] \
   , 'bending_angle':          [ '(%)',     'Bnd' ] \
   , 'brightness_temperature': [ '(K)',     'BT'  ] \
+  , 'surface_pressure':       [ '(Pa)',    'Ps'  ] \
     }
+# need add Ps
     #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
     #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bending_angle unit: rad
 
@@ -48,6 +51,7 @@ def readdata():
         'satwind',
         'gnssroref',
         'gnssrobndropp1d',
+        'sfc',
     ]
     radiance_group = [
         'abi_g16',
@@ -167,6 +171,7 @@ def readdata():
             prenc = np.asarray([])
             latnc = np.asarray([])
             lonnc = np.asarray([])
+            station_idnc = np.asarray([])
 
             # Build up arrays in loop over exob_group, 
             # excluding category in exob_group[0]
@@ -178,11 +183,14 @@ def readdata():
                 if ''.join(obstype) in profile_group:
                     if ''.join(obstype)[:6] == 'gnssro':
                         prenc = np.append(prenc, nc.variables['altitude@MetaData'])
+                        station_id = nc.variables['occulting_sat_id@MetaData']
                     else:
                         tmp = nc.variables['air_pressure@MetaData']
                         if np.max(tmp) > 10000.0:
                             tmp = np.divide(tmp,100.0)
                         prenc = np.append( prenc, tmp )
+                        station_id = [ b''.join(i[0:5]).decode("utf-8") for i in nc.variables['station_id@MetaData'][:]]
+                    station_idnc = np.append( station_idnc, station_id )
 
                 obsnc = np.append( obsnc, nc.variables[obs] )
                 ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
@@ -209,6 +217,11 @@ def readdata():
             bkgnc[qcbnc != 0] = np.NaN
             ananc[np.less(ananc,-1.0e+15)] = np.NaN
             ananc[qcanc != 0] = np.NaN
+            station_idnc[qcanc != 0] = np.NaN
+
+            if np.isnan(ombnc).all() == True:
+                print('all values are NaN in', varname, obstype)
+                continue
 
             if ''.join(obstype)[:6] == 'gnssro':
                 ombnc = (ombnc/obsnc)*100
@@ -232,19 +245,49 @@ def readdata():
                     binsfory=  [1000.,900.,800.,700.,600.,500.,400.,300.,200.,100.,0]
                 bins = np.asarray(bins)
 
+                ombnum = len(ombnc)-np.isnan(ombnc).sum()
+                ombnums = np.append(ombnums,ombnum)
+
+                omanum = len(omanc)-np.isnan(omanc).sum()
+                omanums = np.append(omanums,omanum)
+                print('jban check omanums=', omanums)
+                if ''.join(obstype)[:6] == 'gnssro':
+                    n_unique_stationid = len(np.unique(station_idnc[~np.isnan(station_idnc)]))
+                else:
+                    if 'nan' in station_idnc:
+                        n_unique_stationid = len(set(station_idnc)) -1
+                    else:
+                        n_unique_stationid = len(set(station_idnc))
+                # plot oma, omb from all vertical levels
+                basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,varname,vardict[varname][0],expt_obs,n_unique_stationid,"omb_allLevels")
+                basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,varname,vardict[varname][0],expt_obs,n_unique_stationid,"oma_allLevels")
+
+                ombnums  = []
+                omanums  = []
+
                 for j in range(0, len(bins)-1):
                     obsncbin = deepcopy(obsnc)
                     ombncbin = deepcopy(ombnc)
                     omancbin = deepcopy(omanc)
                     latncbin = deepcopy(latnc)
                     lonncbin = deepcopy(lonnc)
+                    stationbin = deepcopy(station_idnc)
 
                     obsncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     ombncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     omancbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     latncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     lonncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                    stationbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
 
+                    if ''.join(obstype)[:6] == 'gnssro':
+                        stationbin = stationbin[~np.isnan(stationbin)]
+                        n_unique_stationid = len(np.unique(stationbin))
+                    else:
+                        if "nan" in stationbin:
+                            n_unique_stationid = len(set(stationbin)) -1
+                        else:
+                            n_unique_stationid = len(set(stationbin))
                     RMSEomb = np.sqrt(np.nanmean(ombncbin**2))
                     RMSEoma = np.sqrt(np.nanmean(omancbin**2))
 
@@ -260,9 +303,8 @@ def readdata():
                     RMSEomas = np.append(RMSEomas,RMSEoma)
                     print(obstype)
                     # plot oma, omb from every bin range
-                    basic_plot_functions.plotDistri(latncbin,lonncbin,ombncbin,obstype,varname,vardict[varname][0],expt_obs,int(ombnums[j]),"omb_vertbin"+str(j))
-                    basic_plot_functions.plotDistri(latncbin,lonncbin,omancbin,obstype,varname,vardict[varname][0],expt_obs,int(omanums[j]),"oma_vertbin"+str(j))
-
+                    basic_plot_functions.plotDistri(latncbin,lonncbin,ombncbin,obstype,varname,vardict[varname][0],expt_obs,n_unique_stationid,"omb_vertbin"+str(j))
+                    basic_plot_functions.plotDistri(latncbin,lonncbin,omancbin,obstype,varname,vardict[varname][0],expt_obs,n_unique_stationid,"oma_vertbin"+str(j))
                 plotrmsepro(RMSEombs,RMSEomas,binsfory,ombnums,omanums,expt_obs,varname,print_fmt)
             else:
                 #Default: generate scatter plots
