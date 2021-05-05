@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import binning_utils as bu
-from predefined_configs import anIter
+from predefined_configs import anIter, appName
 from copy import deepcopy
 import logging
 import numpy as np
@@ -98,6 +98,61 @@ class RelativeObsMinusModel:
         OMM[~valid] = np.NaN
 
         return np.multiply(OMM,100.0)
+
+
+class AnalysisMinusBackground:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+
+    def evaluate(self, dbVals, caseParams):
+        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
+        return np.subtract(ana, bak)
+
+
+class RelativeAnalysisMinusBackground:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.selfObsValue)
+        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+
+    def evaluate(self, dbVals, caseParams):
+        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
+        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+
+        AMB = np.subtract(ana, bak)
+        valid = bu.greatBound(np.abs(obs), 0.0, False)
+        AMB[valid] = np.divide(AMB[valid], obs[valid])
+        AMB[~valid] = np.NaN
+
+        return np.multiply(AMB, 100.0)
+
+class AnalysisMinusBackgroundOverObsMinusBackground:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.selfObsValue)
+        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+
+    def evaluate(self, dbVals, caseParams):
+        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
+        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+
+        AMBoOMB = np.subtract(ana, bak)
+        OMB = np.subtract(obs, bak)
+        valid = bu.greatBound(np.abs(OMB), 0.0, False)
+
+        AMBoOMB[valid] = np.divide(AMBoOMB[valid], OMB[valid])
+        AMBoOMB[~valid] = np.NaN
+
+        return AMBoOMB
+
+
 
 class STDofHofX:
     def __init__(self):
@@ -196,11 +251,13 @@ def ConsistencyRatioFromDFW(dfw, stateType):
 
     return CRyDF
 
+
 ## Table of available diagnostics
 # format of each entry:
 #    diagName: {
 #        variable: variable name or class used to calculate this diag
-#        iter: iteration of "self" type variables ['bg', 'an', int, '', default: None=='0']
+#        iter: iteration of "self" type variables
+#          ('bg', 'an', int, default: None OR vu.bgIter depending on appName)
 #        vu.mean (optional): whether to apply this diagnostic to the mean state (default: True)
 #        vu.ensemble (optional): whether this diagnostic requires variables from ensemble IODA files (default: False)
 #        onlyObsSpaces (optional): list of ObsSpaces for which this diag applies
@@ -234,8 +291,12 @@ availableDiagnostics = {
     },
     'omf': {
         'variable': ObsMinusModel,
-        'iter': '',
         'label': '$y - x_f$',
+    },
+    'amb': {
+        'variable': AnalysisMinusBackground,
+        'iter': 'an',
+        'label': '$x_a - x_b$',
     },
     'mmgfsan': {
         'offline': True,
@@ -254,27 +315,36 @@ availableDiagnostics = {
     'rltv_omb': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'bg',
-        'label': '$y - x_b$',
+        'label': '$(y - x_b) / y$',
     },
     'rltv_oma': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'an',
-        'label': '$y - x_a$',
+        'label': '$(y - x_a) / y$',
     },
     'rltv_omf': {
         'variable': RelativeObsMinusModel,
-        'iter': '',
-        'label': '$y - x_f$',
+        'label': '$(y - x_f) / y$',
+    },
+    'rltv_amb': {
+        'variable': RelativeAnalysisMinusBackground,
+        'iter': 'an',
+        'label': '$(x_a - x_b) / y$',
     },
     'rltv_omb_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'bg',
-        'label': '$y - x_b$',
+        'label': '$(y - x_b) / y$',
     },
     'rltv_oma_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'an',
-        'label': '$y - x_a$',
+        'label': '$(y - x_a) / y$',
+    },
+    'amb_o_omb': {
+        'variable': AnalysisMinusBackgroundOverObsMinusBackground,
+        'iter': 'an',
+        'label': '$(x_a - x_b) / (y - x_b)$',
     },
     'obs': {
         'variable': vu.selfObsValue,
@@ -285,7 +355,6 @@ availableDiagnostics = {
     },
     'h(x)': {
         'variable': vu.selfHofXValue,
-        'iter': '',
         'label': '$h(x_f)$',
     },
     'bak': {
@@ -328,13 +397,11 @@ availableDiagnostics = {
     },
     'sigmaof': {
         'variable': vu.selfErrorValue,
-        'iter': '',
         'analyze': False,
         'label': '$\sigma_o$',
     },
     'sigmaf': {
         'variable': STDofHofX,
-        'iter': '',
         'analyze': False,
         vu.mean: False,
         vu.ensemble: True,
@@ -363,7 +430,6 @@ availableDiagnostics = {
         'label': '$CR_{y,a}$',
     },
     'CRyf': {
-        'iter': '',
         'DFWFunction': ConsistencyRatioFromDFW,
         'derived': True,
 #        'derivedFrom': ['sigmaof','sigmaf']
@@ -374,8 +440,17 @@ availableDiagnostics = {
     'SCI': {
         'variable': bu.SCIOkamoto,
         'iter': 'bg',
-        'onlyObsSpaces': ['abi_g16'],
+        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
     },
+    'ACI': {
+        'variable': bu.AsymmetricCloudImpact,
+        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+    },
+    'ABEILambda': {
+        'variable': bu.ABEILambda,
+        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'label': '$\lambda_{ABEI}$',
+    }
 }
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
@@ -415,17 +490,22 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
         # add this diagnosticConfig to the list
         diagnosticConfigs[diagnosticName] = deepcopy(config)
 
-        outerIter = '0'
-        outerIterStr = config.get('iter',None)
-        if outerIterStr is not None:
+        outerIterStr = config.get('iter', None)
+        if outerIterStr is  None or outerIterStr == '':
+            if appName == 'hofx':
+                outerIter = None
+            else:
+                outerIter = vu.bgIter
+        else:
             if outerIterStr == 'bg':
                 outerIter = vu.bgIter
             elif outerIterStr == 'an':
                 outerIter = anIter
-            elif pu.isint(outerIterStr) or outerIterStr == '':
+            elif pu.isint(outerIterStr):
                 outerIter = outerIterStr
             else:
                 _logger.error('outerIter is undefined: '+outerIterStr)
+
         diagnosticConfigs[diagnosticName]['outerIter'] = outerIter
 
         if config['derived']: continue

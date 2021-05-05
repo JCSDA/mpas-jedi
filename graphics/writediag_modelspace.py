@@ -31,15 +31,7 @@ def write_diag_stats():
                 fileDate= fcDate.strftime("%Y-%m-%d_%H.%M.%S")
                 ncFile1 = mu.GFSANA_DIR+'/x1.40962.init.'+fileDate+'.nc'
                 ncFile2 = '../restart.'+fileDate+'.nc'
-
-                if (varName == 'pressure'):
-                    pressure_model =  mu.varRead('pressure_base',ncFile2) + mu.varRead('pressure_p',ncFile2)
-                    pressure_gfs = mu.varRead('pressure_base',ncFile1) + mu.varRead('pressure_p',ncFile1)
-                    tmp = pressure_model - pressure_gfs
-                elif (varName == 'temperature'):
-                    tmp = mu.getTemperature(ncFile2) - mu.getTemperature(ncFile1)
-                else:
-                    tmp = mu.varDiff(varName,ncFile1,ncFile2)
+                tmp = mu.varDiff(varName,ncFile1,ncFile2)
 
                 #bin for regions
                 tmpbin = []

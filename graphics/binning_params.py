@@ -186,3 +186,17 @@ SCIErrParams['ahi_himawari8'][ (16, 'ScaledOkamoto') ]   =  {'X': [0.0, 35.43], 
 # ERR1: [26.93, 23.52, 14.49, 17.76, 19.39, 26.19, 18.95, 27.69, 27.71]
 
 allSCIErrParams[(30,None)] = deepcopy(SCIErrParams)
+
+# Minamide and Zhang, 2018 values derived from ABI radiances
+ABEIParams = {
+  'abi_g16': {
+    (8): {'LambdaOverACI': 0.015},
+    (9): {'LambdaOverACI': 0.012},
+    (10): {'LambdaOverACI': 0.009},
+  },
+  'ahi_himawari8': {
+    (8): {'LambdaOverACI': 0.015},
+    (9): {'LambdaOverACI': 0.012},
+    (10): {'LambdaOverACI': 0.009},
+  },
+}

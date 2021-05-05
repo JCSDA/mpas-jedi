@@ -164,14 +164,23 @@ def plotDistri(lats,lons,values, \
         cm = plt.cm.get_cmap(color)
 
     finite = np.isfinite(values)
-    if ("abi" in ObsType or "ahi" in ObsType) and finite.sum() > 4e4:
+    if ((("abi" in ObsType or "ahi" in ObsType)
+         and finite.sum() > 4e4)
+        or "model" in ObsType):
         # option 1: smoothed contours (note: color bar is not quite right)
         # sc=m.contourf(lons[finite], lats[finite], values[finite],
         #               cm.N, cmap = cm, vmin = dmin, vmax = dmax,
         #               latlon = True, tri = True, extend='both')
 
         # option 2: pixel contours
-        sc = m.pcolor(lons[finite], lats[finite], values[finite],
+        # first sort by longitude to avoid bug for cyclic projections in basemap
+        lonsPlot = lons[finite]
+        lonsPlot[lonsPlot > 180.0] -= 360.0 # fixes latitude swap bug for cyclic projections
+        latsPlot = lats[finite]
+        valuesPlot = values[finite]
+        lonSort = np.argsort(lonsPlot)
+
+        sc = m.pcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
                       cmap = cm, vmin = dmin, vmax = dmax,
                       latlon = True, tri = True)
 
@@ -193,6 +202,120 @@ def plotDistri(lats,lons,values, \
 
     plt.savefig('distri_%s_%s_%s.png'%(VarName,out_name,levbin),dpi=200,bbox_inches='tight')
     plt.close()
+
+
+def scatterMapFields(
+  lons, lats, fields,
+  filename,
+  minLon = -180., maxLon = 180.,
+  minLat = -90., maxLat = 90.,
+  cLon = None,
+  projection = 'default',
+  dmin = None, dmax = None,
+  markers = {},
+  sizes = {},
+  cmap = 'gist_ncar',
+  cbarType = None,
+  c = {},
+  logVLim = 1.e-12,
+  ):
+
+  # set up projection
+  if cLon is not None:
+    fig,ax=plt.subplots(figsize=(5,5))
+    if projection == 'default':
+      proj = 'nsper'
+    else:
+      proj = projection
+    m=Basemap(projection=proj,
+              lon_0 = cLon,
+              lat_0 = 0.0,
+              resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
+    #set the lat lon grid and the ticks of x y axies ==============================
+    parallels=np.arange(-90, 90, 30)
+    m.drawparallels(parallels, linewidth=0.2, dashes=[1,3], zorder = 3)
+    meridians=np.arange(-180, 180, 30)
+    m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3], zorder = 3)
+  else:
+    fig,ax=plt.subplots(figsize=(8,8))
+    if projection == 'default':
+      proj = 'cyl'
+    else:
+      proj = projection
+    m=Basemap(projection=proj,
+              llcrnrlon=minLon, llcrnrlat=minLat, #the lat lon of leftlower corner
+              urcrnrlon=maxLon, urcrnrlat=maxLat, #the lat lon of rightupper corner
+              resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
+    #set the lat lon grid and the ticks of x y axies ==============================
+    parallels = np.arange(minLat, maxLat, (maxLat - minLat) / 6.)
+    m.drawparallels(parallels, linewidth=0.2, dashes=[1,3],
+                    labels=[True,True,True,True], zorder = 3)
+    meridians = np.arange(minLon, maxLon, (maxLon - minLon) / 6.)
+    m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3],
+                    labels=[True,True,True,True], zorder = 3)
+
+  m.drawcoastlines(linewidth=0.2, zorder=2)  #draw coastline
+
+    # title
+#    plt.text(0.5, 1.25, '%s   %s %s nlocs:%s' \
+#             %(ObsType,VarName,var_unit,len(values)),    \
+#             horizontalalignment='center', \
+#             fontsize=12, transform = ax.transAxes)
+
+  assert (cbarType is None or cbarType in ['Log', 'SymLog']), \
+    'scatterMapFields: invalid cbarType: '+cbarType
+
+  for name, field in fields.items():
+    finite = np.isfinite(field)
+    if dmin is None:
+       vmin = field[finite].min()
+    else:
+       vmin = dmin
+    if dmax is None:
+       vmax = field[finite].max()
+    else:
+       vmax = dmax
+
+    if cbarType is None:
+      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field[finite]),
+                     latlon = True,
+                     s = sizes.get(name, 1),
+                     cmap = cmap, vmin = vmin, vmax = vmax,
+                     marker = markers.get(name, '.'), linewidth = 0,
+                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
+                                    #the point on continent will be blocked
+    elif cbarType == 'Log':
+      if vmin <= logVLim: vmin = logVLim
+      field_ = field[finite]
+      field_[field_ < vmin] = vmin
+      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field_),
+                     latlon = True,
+                     s = sizes.get(name, 1),
+                     cmap = cmap,
+                     marker = markers.get(name, '.'), linewidth = 0,
+                     norm=colors.LogNorm(vmin=vmin, vmax=vmax),
+                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
+                                    #the point on continent will be blocked
+    elif cbarType == 'SymLog':
+      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field[finite]),
+                     latlon = True,
+                     s = sizes.get(name, 1),
+                     cmap = cmap,
+                     marker = markers.get(name, '.'), linewidth = 0,
+                     norm=colors.SymLogNorm(vmin=vmin, vmax=vmax,
+                                            linthresh=1.e-4*vmax, linscale=1.0, base=10),
+                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
+                                    #the point on continent will be blocked
+
+  divider = make_axes_locatable(ax)
+  cax = divider.append_axes("top",
+    size="3%", #width of the colorbar
+    pad=0.3)   #space between colorbar and graph
+  plt.colorbar(sc, cax=cax, ax=ax, orientation='horizontal')
+  cax.xaxis.set_ticks_position('top')  #set the orientation of the ticks of the colorbar
+
+  plt.savefig(filename, dpi=200, bbox_inches='tight')
+  plt.close()
 
 def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
 #================================================================

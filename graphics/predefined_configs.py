@@ -14,6 +14,7 @@ import var_utils as vu
 
 outerIter = str(nOuterIter)
 anIter = str(nOuterIter)
+appName = jediAppName
 
 
 #=============================================================

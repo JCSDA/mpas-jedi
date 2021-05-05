@@ -164,18 +164,23 @@ def varAttributes(var):
 
 bgIter = '0'
 
-def base2dbVar(baseVar, varName, outerIter):
-    iterStr = str(outerIter)
+def base2dbVar(baseVar, varName, outerIter = None):
+    if outerIter is None:
+        iterStr = ''
+    else:
+        iterStr = str(outerIter)
     dictName, suf = splitIntSuffix(varName)
     dbVar = re.sub(vNameStr,varName,baseVar)
     dbVar = re.sub(vChanStr,suf,dbVar)
-    dbVar = re.sub(hofxGroup,hofxGroup+iterStr,dbVar)
-    dbVar = re.sub(errorGroup,errorGroup+iterStr,dbVar)
-    dbVar = re.sub(qcGroup,qcGroup+iterStr,dbVar)
-    if iterStr == bgIter:
-        dbVar = re.sub(depGroup,depbgGroup,dbVar)
-    else:
-        dbVar = re.sub(depGroup,depanGroup,dbVar)
+    for group in [hofxGroup, errorGroup, qcGroup]:
+        # append iterStr if one is not already appended
+        if group in dbVar.split('@'):
+            dbVar = re.sub(group,group+iterStr,dbVar)
+    if iterStr != '':
+        if iterStr == bgIter:
+            dbVar = re.sub(depGroup,depbgGroup,dbVar)
+        else:
+            dbVar = re.sub(depGroup,depanGroup,dbVar)
     return dbVar
 
 

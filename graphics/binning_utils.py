@@ -8,7 +8,7 @@ import logging
 import numpy as np
 import os
 import plot_utils as pu
-from binning_params import allSCIErrParams
+from binning_params import allSCIErrParams, ABEIParams
 import var_utils as vu
 
 _logger = logging.getLogger(__name__)
@@ -260,7 +260,7 @@ class AsymmetricCloudImpact:
         self.baseVars.append(vu.clrskyBTDiag)
 
     def evaluate(self,dbVals,caseParams):
-        # Minamide and Zhang, 2018
+        # Minamide and Zhang (2018)
         BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
         # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
         # BTbak = np.add(BTdep,BTobs)
@@ -268,9 +268,44 @@ class AsymmetricCloudImpact:
         BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
         p = lessBound(BTclr, 1.0, False)
         BTclr[p] = BTbak[p]
-        ACE = np.subtract(np.abs(np.subtract(BTobs, BTclr)),
+        # Minamide and Zhange (2018), maybe run into problems with non-clear-sky-bias-corrected
+        ACI = np.subtract(np.abs(np.subtract(BTobs, BTclr)),
                           np.abs(np.subtract(BTbak, BTclr)))
-        return ACE
+# some ideas, but still causes bias in ACI for non-clear-sky-bias-corrected
+#        zeros = np.zeros(BTbak.shape)
+#        ACI =  np.subtract(np.maximum(zeros, np.subtract(BTclr, BTobs)),
+#                           np.abs(np.subtract(BTbak, BTclr)))
+##                           np.maximum(zeros, np.subtract(BTclr, BTbak)))
+
+        return ACI
+
+
+class ABEILambda:
+    minLambda = 1.0
+    maxLambda = 1.4
+    def __init__(self):
+        self.ACI = AsymmetricCloudImpact()
+        self.baseVars = []
+        self.baseVars = pu.uniqueMembers(self.baseVars + self.ACI.baseVars)
+
+    def evaluate(self, dbVals, caseParams):
+        osName = caseParams['osName']
+        if osName is None or osName not in ABEIParams:
+            _logger.error('osName not available in ABEIParams => '+osName)
+            os._exit(1)
+
+        # varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
+        varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfHofXValue])
+        LambdaOverACI = ABEIParams[osName][(int(ch))]['LambdaOverACI']
+
+        ACI = self.ACI.evaluate(dbVals, caseParams)
+        lambdaOut = np.ones(ACI.shape)
+        crit = (ACI > 0.0)
+        lambdaOut[crit] = np.multiply(ACI[crit], LambdaOverACI) + self.minLambda
+        crit = (ACI >= (self.maxLambda - self.minLambda) / LambdaOverACI)
+        lambdaOut[crit] = self.maxLambda
+
+        return lambdaOut
 
 
 #classes related to the Symmetric Cloud Impact (SCI)
@@ -643,17 +678,19 @@ class BinFilter:
         self.function.evaluate(dbVals, varName, outerIter)
 
     def apply(self, array, diagName, ibin):
-        # remove locations where the mask is True
-        mask = self.where(self.function.result,(self.bounds)[ibin])
+        newArray = deepcopy(array)
 
         if diagName not in self.except_diags:
-            if len(mask) == len(array):
-                array[mask] = self.mask_value
+            # remove locations where the mask is True
+            mask = self.where(self.function.result,(self.bounds)[ibin])
+
+            if len(mask) == len(newArray):
+                newArray[mask] = self.mask_value
             else:
                 _logger.error('BinFilter mask is incorrectly defined!')
                 os._exit(1)
 
-        return array
+        return newArray
 
 
 exclusiveDiags = ['obs','bak','ana','SCI']
@@ -697,7 +734,7 @@ class BinMethod:
 #                baseVars.append(variable)
 #        return pu.uniqueMembers(baseVars)
 
-    def dbVars(self, varName, outerIters=['0']):
+    def dbVars(self, varName, outerIters=None):
         dbVars = []
         for Filter in self.filters:
             dbVars += Filter.dbVars(
