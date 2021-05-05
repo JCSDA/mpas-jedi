@@ -116,6 +116,7 @@ def ensSuffix(member):
     else:
         return ensSuffixBase+str(member)
 
+
 # functions for extracting sub-parts of UFO variable names
 def splitObsVarGrp(varATgroup):
     if "@" in varATgroup:
@@ -125,21 +126,12 @@ def splitObsVarGrp(varATgroup):
         var = varATgroup
         grp = miss_s
     return var, grp
+
 
 def splitChan(var):
     varName, grpName = splitObsVarGrp(var)
     ch = ''.join(varName.split("_")[-1:])
     return ch
-
-# functions for extracting sub-parts of UFO variable names
-def splitObsVarGrp(varATgroup):
-    if "@" in varATgroup:
-        var = ''.join(varATgroup.split("@")[:-1])
-        grp = ''.join(varATgroup.split("@")[-1])
-    else:
-        var = varATgroup
-        grp = miss_s
-    return var, grp
 
 
 def splitIntSuffix(var):
