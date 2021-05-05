@@ -107,43 +107,66 @@ maxGlint = 90.0
 # Note: NaN and Inf values have mask set to true by default
 
 def equalBound(x, bound, missingValue=True):
-    finite = np.isfinite(x)
-    mask = np.empty_like(finite)
-    mask[finite] = np.equal(x[finite], bound)
-    mask[~finite] = missingValue
+    mask = np.empty_like(x, bool)
+    if isinstance(bound, str):
+        mask = np.char.equal(x, bound)
+    else:
+        finite = np.isfinite(x)
+        mask[finite] = np.equal(x[finite], bound)
+        mask[~finite] = missingValue
     return mask
 
 def notEqualBound(x, bound, missingValue=True):
-    finite = np.isfinite(x)
-    mask = np.empty_like(finite)
-    mask[finite] = np.not_equal(x[finite], bound)
-    mask[~finite] = missingValue
+    mask = np.empty_like(x, bool)
+    if isinstance(bound, str):
+        mask = np.char.not_equal(x, bound)
+    else:
+        finite = np.isfinite(x)
+        mask[finite] = np.not_equal(x[finite], bound)
+        mask[~finite] = missingValue
+    return mask
+
+def notEqualAnyBound(x, bounds, missingValue=True):
+    assert isinstance(bounds, Iterable), \
+        ('ERROR, bounds must be Iterable for notEqualAnyBound')
+
+    mask = np.full_like(x, True, bool)
+    if isinstance(bounds[0], str):
+        for bound in bounds:
+            mask = np.logical_and(mask,
+                     np.char.not_equal(x, bound))
+    else:
+        finite = np.isfinite(x)
+        for bound in bounds:
+            mask[finite] = np.logical_and(mask[finite],
+                           np.not_equal(x[finite], bound))
+        mask[~finite] = missingValue
     return mask
 
 def lessEqualBound(x, bound, missingValue=True):
     finite = np.isfinite(x)
-    mask = np.empty_like(finite)
+    mask = np.empty_like(finite, bool)
     mask[finite] = np.less_equal(x[finite], bound)
     mask[~finite] = missingValue
     return mask
 
 def lessBound(x, bound, missingValue=True):
     finite = np.isfinite(x)
-    mask = np.empty_like(finite)
+    mask = np.empty_like(finite, bool)
     mask[finite] = np.less(x[finite], bound)
     mask[~finite] = missingValue
     return mask
 
 def greatEqualBound(x, bound, missingValue=True):
     finite = np.isfinite(x)
-    mask = np.empty_like(finite)
+    mask = np.empty_like(finite, bool)
     mask[finite] = np.greater_equal(x[finite], bound)
     mask[~finite] = missingValue
     return mask
 
 def greatBound(x, bound, missingValue=True):
     finite = np.isfinite(x)
-    mask = np.empty_like(finite)
+    mask = np.empty_like(finite, bool)
     mask[finite] = np.greater(x[finite], bound)
     mask[~finite] = missingValue
     return mask
@@ -571,23 +594,42 @@ class BinFilter:
     def __init__(self, config):
         self.where  = config['where']
         tmp         = config['bounds']
+        nBins       = config['nBins']
 
-        # allow for scalar and iterable bounds
-        self.bounds = np.empty(config['nBins'])
+        # note: for where functions that take multiple bounds (e.g., notEqualAnyBound)
+        #   config['bounds'] can wrap an inner Iterable, e.g.,
+        #   * config['bounds'] = [[0,1]] would apply the bounds 0 and 1 to all nBins bins
+        #   * config['bounds'] = [[0,1], [5,6]] would apply the bounds 0 and 1 to the first bin,
+        #                                                   the bounds 5 and 6 to the second bin,
+        #                                                   and nBins must be equal to 2
+
+        ibins = list(range(nBins))
+
+        # allow for scalar and Iterable bounds
         if (not isinstance(tmp, Iterable) or
-            len(tmp) == 1):
-            self.bounds[:] = tmp
-        elif len(tmp) == config['nBins']:
-            for ii in list(range(config['nBins'])):
-                self.bounds[ii] = tmp[ii]
+            isinstance(tmp, str)):
+            self.bounds = np.empty(nBins, dtype=type(tmp))
+            for ii in ibins:
+                self.bounds[ii] = tmp
         else:
-            _logger.error("'bounds' need to be a scalar or an Iterable with the same length as 'values'!")
-            os._exit(1)
+            self.bounds = np.empty(nBins, dtype=type(tmp[0]))
+
+            # single element Iterable is applied uniformly to all bins
+            if len(tmp) == 1:
+                for ii in ibins:
+                    self.bounds[ii] = tmp[0]
+            # multiple element Iterable must be same length as nBins
+            elif len(tmp) == nBins:
+                for ii in ibins:
+                    self.bounds[ii] = tmp[ii]
+            else:
+                _logger.error("'bounds' must be a scalar, single-member Iterable, or an Iterable with the same length as 'values'!")
+                os._exit(1)
 
         self.function = ObsFunctionWrapper(config)
         self.except_diags = config.get('except_diags', [])
         self.mask_value = config.get('mask_value', np.NaN)
-        #TODO: add other actions besides mask_value/blacklist
+        #TODO: add other actions besides mask_value/exclude
 
 #    def baseVars(self):
 #        return pu.uniqueMembers(self.function.baseVars)
@@ -601,7 +643,7 @@ class BinFilter:
         self.function.evaluate(dbVals, varName, outerIter)
 
     def apply(self, array, diagName, ibin):
-        # blacklist locations where the mask is True
+        # remove locations where the mask is True
         mask = self.where(self.function.result,(self.bounds)[ibin])
 
         if diagName not in self.except_diags:

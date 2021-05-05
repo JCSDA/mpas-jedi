@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import binning_utils as bu
-import predefined_configs as pconf
 from collections.abc import Iterable
 from collections import defaultdict
 from copy import deepcopy

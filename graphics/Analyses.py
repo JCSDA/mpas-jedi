@@ -279,8 +279,6 @@ def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
             t = ' @ '+binVar+'='+binVal
             if binUnits != vu.miss_s:
                 t = t+' '+binUnits
-        elif binVal in [pconf.goodFlagName]:
-            t = ''
         else:
             t = ' @ '+binVal
         binTitles.append(t)

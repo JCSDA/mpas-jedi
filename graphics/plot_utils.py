@@ -14,29 +14,39 @@ import pandas as pd
 # figure/plotting definitions
 #============================
 
-defaultPColors = ['k','b','g','r','c','m',
-                  'k','b','g','r','c','m']
+colorIterator = ['k','b','g','r','c','m']
 
-defaultPLineStyles = ['-', '-', '-', '-', '-', '-',
-                      '--','--','--','--','--','--']
+styleIterator = ['-','--','-.',':']
 
-def plotColor(nLines = 1, index = 0, nEnsDAMembers = 20):
-  if nLines >= nEnsDAMembers:
-    pColors = ['0.45']*nEnsDAMembers
-    for i in list(range(0, nLines - nEnsDAMembers + 1)):
-      pColors += defaultPColors[i]
+# fast varying line colors
+defaultPColors = colorIterator*len(styleIterator)
+defaultPLineStyles = []
+for style in styleIterator:
+  defaultPLineStyles += [style]*len(colorIterator)
+
+# fast varying line styles
+#defaultPLineStyles = styleIterator*len(colorIterator)
+#defaultPColors = []
+#for color in colorIterator:
+#  defaultPColors += [color]*len(styleIterator)
+
+def plotColor(nLines = 1, index = 0, nSpaghetti = None):
+  if nSpaghetti is not None and nLines >= nSpaghetti:
+    pColors = ['0.45']*nSpaghetti
+    for i in list(range(0, nLines - nSpaghetti + 1)):
+      pColors += [plotColor(1, i)]
     return pColors[index]
   else:
-    return defaultPColors[index]
+    return defaultPColors[np.mod(index,len(defaultPColors))]
 
-def plotLineStyle(nLines = 1, index = 0, nEnsDAMembers = 20):
-  if nLines >= nEnsDAMembers:
-    pLineStyles = ['--']*nEnsDAMembers
-    for i in list(range(0, nLines - nEnsDAMembers + 1)):
-      pLineStyles += defaultPLineStyles[i]
+def plotLineStyle(nLines = 1, index = 0, nSpaghetti = None):
+  if nSpaghetti is not None and nLines >= nSpaghetti:
+    pLineStyles = ['--']*nSpaghetti
+    for i in list(range(0, nLines - nSpaghetti + 1)):
+      pLineStyles += [plotLineStyle(1, i)]
     return pLineStyles[index]
   else:
-    return defaultPLineStyles[index]
+    return defaultPLineStyles[np.mod(index,len(defaultPLineStyles))]
 
 plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*',
              'k--+','b--+','g--+','r--+','c--+','m--+']

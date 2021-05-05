@@ -235,31 +235,41 @@ for binType, param in binLims.items():
 
 #@EffectiveQC* values:
 # pass    = 0;   // we like that one!
-# missing = 1;   // missing values prevent use of observation
-# preQC   = 2;   // observation rejected by pre-processing
-# bounds  = 3;   // observation value out of bounds
-# domain  = 4;   // observation not within domain of use
-# black   = 5;   // observation black listed
-# Hfailed = 6;   // H(x) computation failed
-# thinned = 7;   // observation removed due to thinning
-# diffref = 8;   // metadata too far from reference
-# clw     = 9;   // observation removed due to cloud field
-# fguess  = 10;  // observation too far from guess
-# seaice  = 11;  // observation based sea ice detection, also flags land points
-#
-# Static list above copied on 3 Oct 2019
+# passive = 1;   // H(x) is computed (for monitoring, BC...) but obs not assimilated
+# missing = 10;  // missing values prevent use of observation
+# preQC   = 11;  // observation rejected by pre-processing
+# bounds  = 12;  // observation value out of bounds
+# domain  = 13;  // observation not within domain of use
+# exclude = 14;  // observation excluded
+# Hfailed = 15;  // H(x) computation failed
+# thinned = 16;  // observation removed due to thinning
+# diffref = 17;  // metadata too far from reference
+# clw     = 18;  // observation removed due to cloud field
+# fguess  = 19;  // observation too far from guess
+# seaice  = 20;  // observation based sea ice detection, also flags land points
+# track   = 21;  // observation removed as inconsistent with the rest of track
+# buddy   = 22;  // observation rejected by the buddy check
+# derivative = 23;  // observation removed due to metadata derivative value
+# profile = 24;  // observation rejected by at least one profile QC check
+# onedvar = 25;  // observation failed to converge in 1dvar check
+# bayesianQC = 26;  // observation failed due to Bayesian background check
+# modelobthresh = 27;  // observation failed modelob threshold check
+# Static list above copied on 22 Apr 2021
 # see ufo/src/ufo/filters/QCflags.h for up-to-date list
 
-goodFlag = 0
-goodFlagName = 'pass'
+goodFlags = [0, 1]
+goodFlagNames = ['pass', 'passive']
 
-badFlags     = [1,         2,         3,         4,
-                5,         6,         7,         8,
-                9,         10,        11]
-badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
-                'black',   'Hfailed', 'thinned', 'diffref',
-                'clw',     'fguess',  'seaice']
-
+badFlags = [10, 11, 12, 13,
+            14, 15, 16, 17,
+            18, 19, 20, 21,
+            22, 23, 24, 25, 26, 27,
+]
+badFlagNames = ['missing', 'preQC',      'bounds',  'domain',
+                'exclude', 'Hfailed',    'thinned', 'diffref',
+                'clw',     'fguess',     'seaice', 'track',
+                'buddy',   'derivative', 'profile', 'onedvar', 'bayesianQC', 'modelobthresh',
+]
 
 #=================================================
 # binning configurations used for all bin methods
@@ -269,9 +279,9 @@ badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
 # key: binVar string describes the variable to bin over
 # binMethod: used to distinguish between multiple methods with the same binVar
 #  (e.g., bu.identityBinMethod, bu.badQC, bu.latbandsMethod, etc.)
-#     filters: list of filters that will blacklist locations for each method
+#     filters: list of filters that will exclude locations for each method
 #     for each filter:
-#         where: logical function that determines locations that are blacklisted
+#         where: logical function that determines locations that are excluded
 #         variable: string or class that is used to initialize the IdObsFunction or ObsFunction class
 #         bounds: numerical value(s) used in the where test (scalar or Iterable same length as values). At least one filter must have len(bounds)==len(values).
 #         except_diags (optional): list of diagnostics for which a particular filter does not apply
@@ -282,16 +292,24 @@ badFlagNames = ['missing', 'preQC',   'bounds',  'domain',
 nullBinMethod = { 'filters': [], 'values': [] }
 nullBinVarConfig = { bu.identityBinMethod:nullBinMethod }
 
+# filter locations that do not have goodFlags
+AnyBadQC = {
+  'where': bu.notEqualAnyBound,
+  'variable': vu.selfQCValue,
+  'bounds': [goodFlags],
+  'except_diags': nonQCedDiagnostics,
+}
+
 binVarConfigs = {
     vu.obsVarQC: {
         bu.goodQCMethod: {
             'filters': [
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                 'bounds': goodFlags,
+                 'except_diags': nonQCedDiagnostics}
             ],
-            'values': goodFlagName,
+            'values': goodFlagNames,
         },
         bu.badQCMethod: {
             'filters': [
@@ -311,15 +329,15 @@ binVarConfigs = {
             'filters': [
                 {'where': bu.notEqualBound,
                  'variable': vu.selfQCValue,
-                 'bounds': badFlags+[goodFlag],
+                 'bounds': goodFlags+badFlags,
                  'except_diags': nonQCedDiagnostics},
                 {'where': bu.equalBound,
                  'variable': vu.selfQCValue,
-                 'bounds': badFlags+[goodFlag],
+                 'bounds': goodFlags+badFlags,
                  'except_diags': nonQCedDiagnostics,
                  'mask_value': 0.0},
             ],
-            'values': badFlagNames+[goodFlagName],
+            'values': goodFlagNames+badFlagNames,
         },
     },
     vu.obsVarPrs: {
@@ -332,10 +350,7 @@ binVarConfigs = {
                 {'where': bu.greatEqualBound,
                  'variable': vu.prsMeta,
                  'bounds': bu.P_jet_max},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': bu.P_jet_val,
         },
@@ -350,10 +365,7 @@ binVarConfigs = {
                 {'where': bu.greatEqualBound,
                  'variable': vu.altMeta,
                  'bounds': bu.alt_jet_max},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': bu.alt_jet_val,
         },
@@ -367,10 +379,7 @@ binVarConfigs = {
                 {'where': bu.greatEqualBound,
                  'variable': vu.latMeta,
                  'bounds': namedLatBands['maxBounds']},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': namedLatBands['values'],
         },
@@ -388,10 +397,7 @@ binVarConfigs = {
                 {'where': bu.greatEqualBound,
                  'variable': vu.prsMeta,
                  'bounds': bu.P_jet_max},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': binLims[vu.obsVarLat]['values'],
         },
@@ -409,10 +415,7 @@ binVarConfigs = {
                 {'where': bu.greatEqualBound,
                  'variable': vu.altMeta,
                  'bounds': bu.alt_jet_max},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': binLims[vu.obsVarLat]['values'],
         },
@@ -426,10 +429,7 @@ binVarConfigs = {
                 {'where': bu.greatBound,
                  'variable': vu.landfracGeo,
                  'bounds': namedLandFracBands['maxBounds']},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': namedLandFracBands['values'],
         },
@@ -443,10 +443,7 @@ binVarConfigs = {
                 {'where': bu.greatBound,
                  'variable': vu.cldfracMeta,
                  'bounds': namedCldFracBands['maxBounds']},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': namedCldFracBands['values'],
         },
@@ -551,20 +548,17 @@ binVarConfigs = {
             'filters': [
                 {'where': bu.lessBound,
                  'variable': vu.lonMeta,
-                 'bounds': [234.0]},
+                 'bounds': 234.0},
                 {'where': bu.greatBound,
                  'variable': vu.lonMeta,
-                 'bounds': [294.0]},
+                 'bounds': 294.0},
                 {'where': bu.lessBound,
                  'variable': vu.latMeta,
-                 'bounds': [ 25.0]},
+                 'bounds': 25.0},
                 {'where': bu.greatBound,
                  'variable': vu.latMeta,
-                 'bounds': [ 50.0]},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                 'bounds': 50.0},
+                AnyBadQC,
             ],
             'values': ['CONUS'],
         },
@@ -671,16 +665,16 @@ binVarConfigs = {
 #            'filters': [
 #                {'where': bu.lessBound,
 #                 'variable': vu.modVarLon,
-#                 'bounds': [234.0]},
+#                 'bounds': 234.0},
 #                {'where': bu.greatBound,
 #                 'variable': vu.modVarLon,
-#                 'bounds': [294.0]},
+#                 'bounds': 294.0},
 #                {'where': bu.lessBound,
 #                 'variable': vu.modVarLat,
-#                 'bounds': [ 25.0]},
+#                 'bounds': 25.0},
 #                {'where': bu.greatBound,
 #                 'variable': vu.modVarLat,
-#                 'bounds': [ 50.0]},
+#                 'bounds': 50.0},
 #            ],
 #            'values': ['CONUS'],
 #        },
@@ -739,10 +733,7 @@ for binVar, rangeVar in identityRangeBinVars.items():
             {'where': bu.greatEqualBound,
              'variable': rangeVar[0],
              'bounds': binLims[binVar]['maxBounds']},
-            {'where': bu.notEqualBound,
-             'variable': vu.selfQCValue,
-             'bounds': goodFlag,
-             'except_diags': nonQCedDiagnostics},
+            AnyBadQC,
         ],
         'values': binLims[binVar]['values'],
         'override_exclusiveDiags': rangeVar[1],
@@ -770,10 +761,7 @@ for binVar, rangeVar in latBinVars.items():
                 {'where': bu.greatEqualBound,
                  'variable': vu.latMeta,
                  'bounds': namedLatBands['maxBounds'][iband]},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': rangeVar[1],
@@ -805,10 +793,7 @@ for binVar, rangeVar in cldfracBinVars.items():
                 {'where': bu.greatBound,
                  'variable': vu.cldfracMeta,
                  'bounds': namedCldFracBands['maxBounds'][iband]},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': ['obs','bak','ana','SCI'],
@@ -835,10 +820,7 @@ for binVar, rangeVar in landfracBinVars.items():
                 {'where': bu.greatBound,
                  'variable': vu.landfracGeo,
                  'bounds': namedLandFracBands['maxBounds'][iband]},
-                {'where': bu.notEqualBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlag,
-                 'except_diags': nonQCedDiagnostics},
+                AnyBadQC,
             ],
             'values': binLims[binVar]['values'],
             'override_exclusiveDiags': ['obs','bak','ana','SCI'],
