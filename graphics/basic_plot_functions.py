@@ -251,7 +251,7 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
     plt.savefig(VarName+'_TS_2d.png',dpi=200,bbox_inches='tight')
     plt.close()
 
-maxLegendEntries = 8
+maxLegendEntries = 12
 
 ###############################################################################
 lenWarnSer = 0
@@ -260,7 +260,7 @@ def plotSeries(fig, \
                linesVals, xVals, \
                linesLabel, \
                title="", dataLabel="y", \
-               sciticks=False, signdef=False, \
+               sciticks=False, logscale= False, signdef=False, \
                indepLabel="x", invert_ind_axis=False, \
                ny=1, nx=1, nplots=1, iplot=0, \
                linesValsMinCI=None, linesValsMaxCI=None, \
@@ -278,6 +278,7 @@ def plotSeries(fig, \
 # title            - subplot title, optional
 # dataLabel        - label for linesVals, optional
 # sciticks         - whether linesVals needs scientific formatting for ticks, optional
+# logscale         - y-axis is scaled logarithmically, optional, overrides sciticks
 # signdef          - whether linesVals is positive/negative definite, optional
 # indepLabel       - label for xVals, optional
 # invert_ind_axis  - whether to invert x-axis orientation, optional
@@ -300,7 +301,7 @@ def plotSeries(fig, \
     ax.set_title(title,fontsize=5)
 
     #add lines
-    plotVals = []
+    plotVals = np.asarray([])
     nLines = 0
     for iline, lineVals in enumerate(linesVals):
         if np.all(np.isnan(lineVals)):
@@ -327,7 +328,7 @@ def plotSeries(fig, \
                 ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
         nLines += 1
-        plotVals.append(lineVals)
+        plotVals = np.append(plotVals, lineVals)
 
         # Add shaded error regions if specified
         if linesValsMinCI is not None and \
@@ -339,7 +340,7 @@ def plotSeries(fig, \
                 significant[:] = np.NaN
             else:
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
+            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
 
             lineArr = np.array(lineVals)
             xArr = np.array(xVals)
@@ -386,14 +387,6 @@ def plotSeries(fig, \
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-
-    if sciticks:
-        ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-    ax.yaxis.get_offset_text().set_fontsize(3)
-
     # add horizontal zero line for unbounded quantities
     if not signdef:
         ax.plot([xVals[0], xVals[-1]], [0., 0.], ls="--", c=".3", \
@@ -401,14 +394,43 @@ def plotSeries(fig, \
 
     # standardize x-limits
     mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
-    if (not np.isnan(mindval) and
-        not np.isnan(maxdval) and
-        not np.isinf(mindval) and
-        not np.isinf(maxdval)):
-        ax.set_ylim(mindval,maxdval)
-        if maxdval-mindval < 1.0 or \
-           maxdval-mindval > 100.0:
-            ax.tick_params(axis='y',rotation=-35)
+
+    #axes settings
+    ax.xaxis.set_tick_params(labelsize=3)
+    ax.yaxis.set_tick_params(labelsize=3)
+
+    isLogScale = logscale
+    if logscale:
+        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+        if nonzero.sum() > 0:
+            vmin = np.nanmin(np.abs(plotVals[nonzero]))
+            vmax = np.nanmax(np.abs(plotVals[nonzero]))
+            if signdef:
+                # log tick labels look bad for single decade
+                if vmax / vmin > 10.0:
+                    ax.set_yscale('log')
+                else:
+                    isLogScale = False
+            else:
+                ax.set_yscale('symlog')
+        else:
+            isLogScale = False
+
+        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
+            ax.set_ylim(None, maxdval)
+            if np.abs(vmin) > 0.:
+                ax.set_ylim(vmin, None)
+
+    if not isLogScale:
+        if sciticks:
+            ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+        if (np.isfinite(mindval) and
+            np.isfinite(maxdval)):
+            ax.set_ylim(mindval,maxdval)
+            if maxdval-mindval < 1.0 or \
+               maxdval-mindval > 100.0:
+                ax.tick_params(axis='y',rotation=-35)
+        ax.yaxis.get_offset_text().set_fontsize(3)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -447,7 +469,7 @@ def plotProfile(fig, \
                 linesVals, yVals, \
                 linesLabel, \
                 title="", dataLabel="x", \
-                sciticks=False, signdef=False, \
+                sciticks=False, logscale=False, signdef=False, \
                 indepLabel="y", invert_ind_axis=False, \
                 ny=1, nx=1, nplots=1, iplot=0, \
                 linesValsMinCI=None, linesValsMaxCI=None, \
@@ -465,6 +487,7 @@ def plotProfile(fig, \
 # title            - subplot title, optional
 # dataLabel        - label for linesVals, optional
 # sciticks         - whether linesVals needs scientific formatting for ticks, optional
+# logscale         - x-axis is scaled logarithmically, optional, overrides sciticks
 # signdef          - whether linesVals is positive/negative definite, optional
 # indepLabel       - label for yVals, optional
 # invert_ind_axis  - whether to invert y-axis orientation, optional
@@ -487,7 +510,7 @@ def plotProfile(fig, \
     ax.set_title(title,fontsize=5)
 
     #add lines
-    plotVals = []
+    plotVals = np.asarray([])
     nLines = 0
     for iline, lineVals in enumerate(linesVals):
         if np.all(np.isnan(lineVals)):
@@ -514,7 +537,7 @@ def plotProfile(fig, \
                 ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
         nLines += 1
-        plotVals.append(lineVals)
+        plotVals = np.append(plotVals,lineVals)
 
         # Add shaded error regions if specified
         if linesValsMinCI is not None and \
@@ -526,7 +549,7 @@ def plotProfile(fig, \
                 significant[:] = np.NaN
             else:
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
+            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
 
             lineArr = np.array(lineVals)
             yArr = np.array(yVals)
@@ -573,14 +596,6 @@ def plotProfile(fig, \
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-
-    if sciticks:
-        ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    ax.xaxis.get_offset_text().set_fontsize(3)
-
     # add vertical zero line for unbounded quantities
     if not signdef:
         ax.plot([0., 0.], [yVals[0], yVals[-1]], ls="--", c=".3", \
@@ -588,14 +603,44 @@ def plotProfile(fig, \
 
     # standardize x-limits
     mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
-    if (not np.isnan(mindval) and
-        not np.isnan(maxdval) and
-        not np.isinf(mindval) and
-        not np.isinf(maxdval)):
-        ax.set_xlim(mindval,maxdval)
-        if maxdval-mindval < 1.0 or \
-           maxdval-mindval > 100.0:
-            ax.tick_params(axis='x',rotation=-35)
+
+    #axes settings
+    ax.xaxis.set_tick_params(labelsize=3)
+    ax.yaxis.set_tick_params(labelsize=3)
+
+    isLogScale = logscale
+    if logscale:
+        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+        if nonzero.sum() > 0:
+            vmin = np.nanmin(np.abs(plotVals[nonzero]))
+            vmax = np.nanmax(np.abs(plotVals[nonzero]))
+            if signdef:
+                # log tick labels look bad for single decade
+                if vmax / vmin > 10.0:
+                    ax.set_xscale('log')
+                else:
+                    isLogScale = False
+            else:
+                ax.set_xscale('symlog')
+        else:
+            isLogScale = False
+
+        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
+            ax.set_xlim(None, maxdval)
+            if np.abs(mindval) > 0.:
+                ax.set_xlim(mindval, None)
+
+    if not isLogScale:
+        if sciticks:
+            ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+        if (np.isfinite(mindval) and
+            np.isfinite(maxdval)):
+            ax.set_xlim(mindval,maxdval)
+            if maxdval-mindval < 1.0 or \
+               maxdval-mindval > 100.0:
+                ax.tick_params(axis='x',rotation=-35)
+        ax.xaxis.get_offset_text().set_fontsize(3)
+
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -634,8 +679,8 @@ nanWarnTS=0
 def plotTimeSeries(fig, \
                    xsDates, linesVals, \
                    linesLabel, \
-                   title="", ylabel="", \
-                   sciticks=False, signdef=False, \
+                   title="", dataLabel="", \
+                   sciticks=False, logscale = False, signdef=False, \
                    ny=1, nx=1, nplots=1, iplot=0, \
                    linesValsMinCI=None, linesValsMaxCI=None, \
                    dmin=np.NaN, dmax=np.NaN, \
@@ -651,8 +696,9 @@ def plotTimeSeries(fig, \
 # linesLabel       - legend label for linesVals (list)
 
 # title            - subplot title, optional
-# ylabel           - label for linesVals, optional
+# dataLabel        - label for linesVals, optional
 # sciticks         - whether linesVals needs scientific formatting for ticks, optional
+# logscale         - y-axis is scaled logarithmically, optional, overrides sciticks
 # signdef          - whether linesVals is positive/negative definite, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
@@ -673,7 +719,7 @@ def plotTimeSeries(fig, \
     ax.set_title(title,fontsize=5)
 
     #add lines
-    plotVals = []
+    plotVals = np.asarray([])
     nLines = 0
     jline = 0
     for iline, lineVals in enumerate(linesVals):
@@ -681,7 +727,7 @@ def plotTimeSeries(fig, \
             global nanWarnTS
             if nanWarnTS==0:
                 _logger.warning("skipping all-NaN data")
-                _logger.warning(title+"; "+ylabel+"; "+linesLabel[iline])
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             nanWarnTS=nanWarnTS+1
             continue
 
@@ -695,7 +741,7 @@ def plotTimeSeries(fig, \
             global lenWarnTS
             if lenWarnTS==0:
                 _logger.warning("skipping data where len(x)!=len(y)")
-                _logger.warning(title+"; "+ylabel+"; "+linesLabel[iline])
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             lenWarnTS=lenWarnTS+1
             continue
 
@@ -716,7 +762,7 @@ def plotTimeSeries(fig, \
                 ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
                 linewidth=0.5)
         nLines += 1
-        plotVals.append(lineVals)
+        plotVals = np.append(plotVals, lineVals)
 
         # Add shaded CI regions if specified
         if linesValsMinCI is not None and \
@@ -728,7 +774,7 @@ def plotTimeSeries(fig, \
                 significant[:] = np.NaN
             else:
                 significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if not np.isnan(x) else -1.0 for x in significant])
+            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
 
             lineArr = np.array(lineVals)
             xArr = np.array(xVals)
@@ -775,30 +821,54 @@ def plotTimeSeries(fig, \
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    #axes settings
-    if isinstance(xsDates[0],(list,np.ndarray)):
-        pu.format_x_for_dates(ax, xsDates[0])
-    else:
-        pu.format_x_for_dates(ax, xsDates)
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-
-    if sciticks:
-        ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-    ax.yaxis.get_offset_text().set_fontsize(3)
+    # standardize y-limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
 
     # add horizontal zero line for unbounded quantities
     if not signdef:
         ax.plot([minX, maxX], [0., 0.], ls="--", c=".3", \
             linewidth=0.7,markersize=0)
 
-    # standardize y-limits
-    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
-    if (not np.isnan(mindval) and
-        not np.isnan(maxdval) and
-        not np.isinf(mindval) and
-        not np.isinf(maxdval)):
-        ax.set_ylim(mindval,maxdval)
+    #axes settings
+    if isinstance(xsDates[0],(list,np.ndarray)):
+        pu.format_x_for_dates(ax, xsDates[0])
+    else:
+        pu.format_x_for_dates(ax, xsDates)
+
+    ax.xaxis.set_tick_params(labelsize=3)
+    ax.yaxis.set_tick_params(labelsize=3)
+    isLogScale = logscale
+    if logscale:
+        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+        if nonzero.sum() > 0:
+            vmin = np.nanmin(np.abs(plotVals[nonzero]))
+            vmax = np.nanmax(np.abs(plotVals[nonzero]))
+            if signdef:
+                # log tick labels look bad for single decade
+                if vmax / vmin > 10.0:
+                    ax.set_yscale('log')
+                else:
+                    isLogScale = False
+            else:
+                ax.set_yscale('symlog')
+        else:
+            isLogScale = False
+
+        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
+            ax.set_ylim(None, maxdval)
+            if np.abs(vmin) > 0.:
+                ax.set_ylim(vmin, None)
+
+    if not isLogScale:
+        if sciticks:
+            ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+        if (np.isfinite(mindval) and
+            np.isfinite(maxdval)):
+            ax.set_ylim(mindval,maxdval)
+            if maxdval-mindval < 1.0 or \
+               maxdval-mindval > 100.0:
+                ax.tick_params(axis='y',rotation=-35)
+        ax.yaxis.get_offset_text().set_fontsize(3)
 
     ax.grid()
 
@@ -809,7 +879,7 @@ def plotTimeSeries(fig, \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_ylabel(ylabel,fontsize=4)
+        ax.set_ylabel(dataLabel,fontsize=4)
 
     #legend
     if nLines <= maxLegendEntries:
@@ -832,8 +902,8 @@ def plotTimeSeries(fig, \
 def plotTimeSeries2D(fig, \
                      xDates, yVals, contourVals, \
                      title="", clabel="", \
-                     sciticks=False, signdef=False, \
-                     ylabel="y", invert_ind_axis=False, \
+                     sciticks=False, logscale=False, signdef=False, \
+                     dataLabel="y", invert_ind_axis=False, \
                      ny=1, nx=1, nplots=1, iplot=0, \
                      dmin=np.NaN, dmax=np.NaN,
                      interiorLabels=True):
@@ -847,8 +917,9 @@ def plotTimeSeries2D(fig, \
 # title         - subplot title, optional
 # clabel        - label for dependent variable, optional
 # sciticks      - whether contourVals needs scientific formatting for ticks, optional
+# logscale      - whether contours are spaced logarithmically, optional, overrides sciticks
 # signdef       - whether contourVals is positive/negative definite, optional
-# ylabel        - label for yVals, optional
+# dataLabel     - label for yVals, optional
 # invert_ind_axis - whether to invert y-axis orientation, optional
 
 # ny, nx        - number of subplots in x/y direction, optional
@@ -871,9 +942,22 @@ def plotTimeSeries2D(fig, \
     if signdef:
         cmapName = 'BuPu'
         nlevs = 18
+
+        # scientific contours
+        cint = contourVals.astype(int)
+        isInt = np.all((contourVals - cint) == 0)
+        if isInt:
+          minscid = np.nanmax(np.array([1., dmin]))
+        else:
+          minscid = maxdval*1.e-5
+        lognorm = colors.LogNorm(vmin=minscid, vmax=maxdval)
     else:
         cmapName = 'seismic'
         nlevs = 28
+
+        # scientific contours
+        lognorm = colors.SymLogNorm(vmin=mindval, vmax=maxdval,
+                    linthresh=1.e-3*maxdval, linscale=1.3, base=10)
 
     # plot contour
     # option 1: smoothed contours
@@ -881,12 +965,15 @@ def plotTimeSeries2D(fig, \
     #     vmin=mindval, vmax=maxdval)
 
     # option 2: pixel contours
-    levels = MaxNLocator(nbins=nlevs).tick_values(mindval,maxdval)
     cmap = plt.get_cmap(cmapName)
     cmap.set_bad(color = 'k', alpha = 1.0)
-    norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+    if logscale:
+        norm = lognorm
+    else:
+        levels = MaxNLocator(nbins=nlevs).tick_values(mindval,maxdval)
+        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
     xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
-    cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm = norm)
+    cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm=norm)
 
     #title
     ax.set_title(title,fontsize=5)
@@ -903,19 +990,19 @@ def plotTimeSeries2D(fig, \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_ylabel(ylabel,fontsize=4)
+        ax.set_ylabel(dataLabel,fontsize=4)
     if interiorLabels or ix == nx-1:
         #colorbar
         m = plt.cm.ScalarMappable(cmap=cmap)
         m.set_array(contourVals)
-        if (not np.isnan(mindval) and
-            not np.isnan(maxdval) and
-            not np.isinf(mindval) and
-            not np.isinf(maxdval)):
+        m.set_norm(norm)
+        if (np.isfinite(mindval) and
+            np.isfinite(maxdval) and
+            not logscale):
             m.set_clim(mindval,maxdval)
         cb = plt.colorbar(m, ax=ax)
         #scientific formatting
-        if sciticks:
+        if sciticks and not logscale:
             cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
         cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
@@ -1161,7 +1248,7 @@ def plotfitRampComposite(fig,
 
     indexMaxX4Std = 0
     for ii, std in enumerate(stdVals):
-        if not np.isnan(std): indexMaxX4Std = ii
+        if np.isfinite(std): indexMaxX4Std = ii
     indexMaxX = indexMaxX4Std
     maxCount = 0
     for ii, count in enumerate(countVals):
@@ -1223,10 +1310,8 @@ def plotfitRampComposite(fig,
 
     # standardize x-limits
     mindval, maxdval = pu.get_clean_ax_limits(plotVals=plotVals)
-    if (not np.isnan(mindval) and
-        not np.isnan(maxdval) and
-        not np.isinf(mindval) and
-        not np.isinf(maxdval)):
+    if (np.isfinite(mindval) and
+        np.isfinite(maxdval)):
         ax.set_ylim(mindval,maxdval)
 
     #handle interior subplot ticks/labels

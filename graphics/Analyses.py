@@ -514,7 +514,7 @@ class CYAxisExpLines(CategoryBinMethodBase):
                         fig,
                         self.cyDTimes, linesVals, linesLabel,
                         title, bgstatDiagLabel,
-                        sciTicks, signDefinite,
+                        sciTicks, False, signDefinite,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -619,7 +619,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
                     fig,
                     self.fcTDeltas, linesVals, linesLabel,
                     title, fcstatDiagLabel,
-                    sciTicks, signDefinite,
+                    sciTicks, False, signDefinite,
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
                     interiorLabels = interiorLabels)
@@ -673,7 +673,6 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
         if self.nExp * len(myLoc['diagName']) < 2: return
         if self.cntrlExpName not in dfwDict['dfw'].levels('expName'): return
 
-        #if statName not in bootStrapStats: return
         bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
@@ -753,7 +752,7 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                     linesLabel,
                     title,
                     fcstatDiagDiffLabel,
-                    False, False,
+                    False, False, False,
                     nyplots, nxplots, nsubplots, iplot,
                     linesValsMinCI = linesVals[su.cimin],
                     linesValsMaxCI = linesVals[su.cimax],
@@ -873,7 +872,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
                         fig,
                         xsVals, linesVals, self.fcTDeltas_labels,
                         title, bgstatDiagLabel,
-                        sciTicks, signDefinite,
+                        sciTicks, False, signDefinite,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -1017,7 +1016,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
                         fig,
                         self.cyDTimes, linesVals, binVals,
                         title, bgstatDiagLabel,
-                        sciTicks, signDefinite,
+                        sciTicks, False, signDefinite,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -1227,7 +1226,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
 
         if self.nCY < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
         myPath = self.myFigPath/diagnosticGroup
@@ -1285,7 +1284,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
                         fig,
                         self.cyDTimes, myBinConfigs['values'], planeVals,
                         title, bgstatDiagLabel,
-                        sciTicks, signDefinite,
+                        scilogScale, scilogScale, signDefinite,
                         myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
@@ -1326,7 +1325,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
 
         if self.nFC < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -1380,7 +1379,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
                     fig,
                     self.fcTDeltas, myBinConfigs['values'], planeVals,
                     title, fcstatDiagLabel,
-                    sciTicks, signDefinite,
+                    scilogScale, scilogScale, signDefinite,
                     myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
@@ -1419,7 +1418,7 @@ class BinValAxisProfile(OneDimBinMethodBase):
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -1499,7 +1498,7 @@ class BinValAxisProfile(OneDimBinMethodBase):
                     linesVals, myBinConfigs['values'],
                     linesLabel,
                     title, fcstatDiagLabel,
-                    sciTicks, signDefinite,
+                    scilogScale, scilogScale, signDefinite,
                     myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
@@ -1550,8 +1549,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         if self.nExp * len(myLoc['diagName']) < 2: return
         if self.cntrlExpName not in dfwDict['dfw'].levels('expName'): return
 
-        if statName not in bootStrapStats: return
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -1642,7 +1640,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
                     linesLabel,
                     title,
                     fcstatDiagDiffLabel,
-                    False, False,
+                    scilogScale, scilogScale, False,
                     myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
                     nyplots, nxplots, nsubplots, iplot,
                     linesValsMinCI = linesVals[su.cimin],
