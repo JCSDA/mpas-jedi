@@ -145,10 +145,21 @@ def plotDistri(lats,lons,values, \
             horizontalalignment='center', \
             fontsize=12, transform = ax.transAxes)
     else:
-        plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nstation:%s' \
-            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-            horizontalalignment='center', \
-            fontsize=12, transform = ax.transAxes)
+        if ObsType[:6] == 'gnssro':
+            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nprofile:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
+        elif ObsType == 'aircraft':
+            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nflight:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
+        else:
+            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nstation:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
 
 #draw points onto map =========================================================
     if color == "BT":
