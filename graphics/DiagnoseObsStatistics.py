@@ -36,14 +36,14 @@ class DiagnoseObsStatistics:
 
     # construct mean DB into 0th member slot
     self.logger.info('mean database: '+self.args.meanPath)
-    self.jdbs = {vu.mean: JediDB(self.args.meanPath, 'nc4')}
+    self.jdbs = {vu.mean: JediDB(self.args.meanPath)}
     self.osKeys = sorted(self.jdbs[vu.mean].Files.keys())
 
     # construct ens member DBs into subsequent slots (when available)
     for member in list(range(1, self.args.nMembers+1)):
         ensemblePath = str(self.args.ensemblePath).format(member)
         self.logger.info('adding member database: '+ensemblePath)
-        self.jdbs[vu.ensSuffix(member)] = JediDB(ensemblePath, 'nc4')
+        self.jdbs[vu.ensSuffix(member)] = JediDB(ensemblePath)
 
   def diagnose(self, workers = None):
     '''
@@ -78,12 +78,12 @@ class DiagnoseObsStatistics:
     # create observed variable list by selecting those variables in the
     # obs feedback files (obsFKey) with the proper suffix
     if self.args.jediAppName == 'variational':
-        markerSuffix = vu.depbgGroup
+        markerGroup = vu.depbgGroup
     elif self.args.jediAppName == 'hofx':
-        markerSuffix = vu.hofxGroup
+        markerGroup = vu.hofxGroup
     else:
         logger.error('JEDI Application is not supported:: '+self.args.jediAppName)
-    obsVars = jdbs[vu.mean].varList(osKey, obsFKey, markerSuffix)
+    obsVars = jdbs[vu.mean].varList(osKey, obsFKey, markerGroup)
 
     ########################################################
     ## Construct dictionary of binMethods for this ObsSpace
@@ -100,6 +100,8 @@ class DiagnoseObsStatistics:
                 len(config['filters']) < 1): continue
 
             config['osName'] = ObsSpaceName
+            config['fileFormat'] = jdbs[vu.mean].fileFormat(osKey, obsFKey)
+
             binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
 
 
@@ -109,7 +111,8 @@ class DiagnoseObsStatistics:
 
     diagnosticConfigs = du.diagnosticConfigs(
         selectDiagNames, ObsSpaceName,
-        includeEnsembleDiagnostics = (nMembers > 1))
+        includeEnsembleDiagnostics = (nMembers > 1),
+        fileFormat = jdbs[vu.mean].fileFormat(osKey, obsFKey))
 
 
     #####################################################
@@ -124,20 +127,20 @@ class DiagnoseObsStatistics:
             if 'ObsFunction' not in diagnosticConfig: continue
 
             # variables for diagnostics
-            for varGrp in diagnosticConfig['ObsFunction'].dbVars(
+            for grpVar in diagnosticConfig['ObsFunction'].dbVars(
                 varName, diagnosticConfig['outerIter']):
                 for memberType in dbVars.keys():
                     if diagnosticConfig[memberType]:
-                        dbVars[memberType].append(varGrp)
+                        dbVars[memberType].append(grpVar)
 
             # variables for binning
-            # TODO: anIter varGrp's are not needed for all applications
+            # TODO: anIter grpVar's are not needed for all applications
             #       can save some reading time+memory by checking all diagnosticConfigs
             #       for required iterations before appending to dbVars[vu.mean] below
             for (binVarKey,binMethodKey), binMethod in binMethods.items():
-                for varGrp in binMethod.dbVars(
+                for grpVar in binMethod.dbVars(
                     varName, diagnosticConfig['outerIter']):
-                    dbVars[vu.mean].append(varGrp)
+                    dbVars[vu.mean].append(grpVar)
 
 
     #####################################
@@ -233,7 +236,10 @@ class DiagnoseObsStatistics:
     #END diagnosticConfigs LOOP
 
     ## Create a new stats file for osKey
+    logger.info('Writing statistics file')
     su.write_stats_nc(osKey,statsDict)
+
+    logger.info('Finished')
 
 #=========================================================================
 # main program
@@ -242,15 +248,18 @@ def main():
 
   statistics = DiagnoseObsStatistics()
 
-  # create pool of workers
-  workers = mp.Pool(processes = statistics.args.nprocs)
+  if statistics.args.nprocs == 1:
+      statistics.diagnose()
+  else:
+      # create pool of workers
+      workers = mp.Pool(processes = statistics.args.nprocs)
 
-  # diagnose statistics
-  statistics.diagnose(workers)
+      # diagnose statistics
+      statistics.diagnose(workers)
 
-  # wait for workers to finish
-  workers.close()
-  workers.join()
+      # wait for workers to finish
+      workers.close()
+      workers.join()
 
   _logger.info('Finished '+__name__+' successfully')
 

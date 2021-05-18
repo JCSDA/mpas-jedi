@@ -22,10 +22,10 @@ class BiasCorrectedObs:
         self.baseVars.append(vu.selfDepValue)
         self.baseVars.append(vu.selfHofXValue)
 
-    def evaluate(self, dbVals, caseParams):
-        bcdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        mod = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        return np.subtract(mod,bcdep)
+    def evaluate(self, dbVals, insituParameters):
+        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        mod = dbVals[insituParameters[vu.selfHofXValue]]
+        return np.subtract(mod, bcdep)
 
 
 class BiasCorrection:
@@ -35,11 +35,11 @@ class BiasCorrection:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
 
-    def evaluate(self, dbVals, caseParams):
-        bcdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        mod = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        return np.subtract(np.subtract(mod,bcdep),obs)
+    def evaluate(self, dbVals, insituParameters):
+        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        mod = dbVals[insituParameters[vu.selfHofXValue]]
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+        return np.subtract(np.subtract(mod, bcdep), obs)
 
 
 class BiasCorrectedObsMinusModel:
@@ -47,8 +47,8 @@ class BiasCorrectedObsMinusModel:
         self.baseVars = []
         self.baseVars.append(vu.selfDepValue)
 
-    def evaluate(self, dbVals, caseParams):
-        bcdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+    def evaluate(self, dbVals, insituParameters):
+        bcdep = dbVals[insituParameters[vu.selfDepValue]]
         return np.negative(bcdep)
 
 
@@ -58,16 +58,16 @@ class RelativeBiasCorrectedObsMinusModel:
         self.baseVars.append(vu.selfDepValue)
         self.baseVars.append(vu.selfObsValue)
 
-    def evaluate(self, dbVals, caseParams):
-        bcdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+    def evaluate(self, dbVals, insituParameters):
+        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        obs = dbVals[insituParameters[vu.selfObsValue]]
 
         OMM = np.negative(bcdep)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
-        OMM[valid] = np.divide(OMM[valid],obs[valid])
+        OMM[valid] = np.divide(OMM[valid], obs[valid])
         OMM[~valid] = np.NaN
 
-        return np.multiply(OMM,100.0)
+        return np.multiply(OMM, 100.0)
 
 
 class ObsMinusModel:
@@ -76,10 +76,10 @@ class ObsMinusModel:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
 
-    def evaluate(self, dbVals, caseParams):
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        mod = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        return np.subtract(obs,mod)
+    def evaluate(self, dbVals, insituParameters):
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+        mod = dbVals[insituParameters[vu.selfHofXValue]]
+        return np.subtract(obs, mod)
 
 
 class RelativeObsMinusModel:
@@ -88,27 +88,27 @@ class RelativeObsMinusModel:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
 
-    def evaluate(self, dbVals, caseParams):
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        mod = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+    def evaluate(self, dbVals, insituParameters):
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+        mod = dbVals[insituParameters[vu.selfHofXValue]]
 
-        OMM = np.subtract(obs,mod)
+        OMM = np.subtract(obs, mod)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
         OMM[valid] = np.divide(OMM[valid],obs[valid])
         OMM[~valid] = np.NaN
 
-        return np.multiply(OMM,100.0)
+        return np.multiply(OMM, 100.0)
 
 
 class AnalysisMinusBackground:
     def __init__(self):
         self.baseVars = []
         self.baseVars.append(vu.selfHofXValue)
-        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+        self.baseVars.append(vu.bgHofXValue)
 
-    def evaluate(self, dbVals, caseParams):
-        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
+    def evaluate(self, dbVals, insituParameters):
+        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        bak = dbVals[insituParameters[vu.bgHofXValue]]
         return np.subtract(ana, bak)
 
 
@@ -117,12 +117,12 @@ class RelativeAnalysisMinusBackground:
         self.baseVars = []
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+        self.baseVars.append(vu.bgHofXValue)
 
-    def evaluate(self, dbVals, caseParams):
-        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+    def evaluate(self, dbVals, insituParameters):
+        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        bak = dbVals[insituParameters[vu.bgHofXValue]]
+        obs = dbVals[insituParameters[vu.selfObsValue]]
 
         AMB = np.subtract(ana, bak)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
@@ -136,12 +136,12 @@ class AnalysisMinusBackgroundOverObsMinusBackground:
         self.baseVars = []
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
-        self.baseVars.append(vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter)
+        self.baseVars.append(vu.bgHofXValue)
 
-    def evaluate(self, dbVals, caseParams):
-        ana = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        bak = dbVals[caseParams['base2db'][vu.vNameStr+'@'+vu.hofxGroup+vu.bgIter]]
-        obs = dbVals[caseParams['base2db'][vu.selfObsValue]]
+    def evaluate(self, dbVals, insituParameters):
+        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        bak = dbVals[insituParameters[vu.bgHofXValue]]
+        obs = dbVals[insituParameters[vu.selfObsValue]]
 
         AMBoOMB = np.subtract(ana, bak)
         OMB = np.subtract(obs, bak)
@@ -159,8 +159,8 @@ class STDofHofX:
         self.baseVars = []
         self.baseVars.append(vu.selfHofXValue)
 
-    def evaluate(self, dbVals, caseParams):
-        meanVarName = caseParams['base2db'][vu.selfHofXValue]
+    def evaluate(self, dbVals, insituParameters):
+        meanVarName = insituParameters[vu.selfHofXValue]
         memberKeys = []
         for key in dbVals.keys():
             if meanVarName+vu.ensSuffixBase in key:
@@ -456,7 +456,7 @@ availableDiagnostics = {
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
 def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics=True,
-                      analysisStatistics = su.allFileStats):
+                      analysisStatistics = su.allFileStats, fileFormat=vu.hdfFileFormat):
 
     diagnosticConfigs = {}
     diagnosticNames = list(set(diagnosticNames_))
@@ -486,7 +486,7 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
             ObsSpaceName not in config['onlyObsSpaces']): continue
 
         config['osName'] = ObsSpaceName
-
+        config['fileFormat'] = fileFormat
         # add this diagnosticConfig to the list
         diagnosticConfigs[diagnosticName] = deepcopy(config)
 

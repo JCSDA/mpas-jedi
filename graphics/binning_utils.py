@@ -194,17 +194,17 @@ class GlintAngle:
         self.baseVars.append(vu.solzenMeta)
         self.baseVars.append(vu.solaziMeta)
 
-    def evaluate(self, dbVals, caseParams):
-        senazi = dbVals[vu.senaziMeta]
-        solazi = dbVals[vu.solaziMeta]
+    def evaluate(self, dbVals, insituParameters):
+        senazi = dbVals[insituParameters[vu.senaziMeta]]
+        solazi = dbVals[insituParameters[vu.solaziMeta]]
 
         relazi = np.abs(np.subtract(solazi,senazi))
         p = greatBound(relazi, 180.0, False)
         relazi[p] = np.subtract(360.0, relazi[p])
         relazi = np.multiply(np.subtract(180.0, relazi), vu.deg2rad)
 
-        senzen = np.multiply(dbVals[vu.senzenMeta], vu.deg2rad)
-        solzen = np.multiply(dbVals[vu.solzenMeta], vu.deg2rad)
+        senzen = np.multiply(dbVals[insituParameters[vu.senzenMeta]], vu.deg2rad)
+        solzen = np.multiply(dbVals[insituParameters[vu.solzenMeta]], vu.deg2rad)
 
         glint = np.add(np.multiply(np.cos(solzen), np.cos(senzen)),
                     np.multiply(np.sin(solzen),
@@ -222,30 +222,38 @@ class GlintAngle:
 class LocalHour:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.dtMeta)
+        self.baseVars.append(vu.datetimeMeta)
         self.baseVars.append(vu.lonMeta)
 
-    def evaluate(self, dbVals, caseParams):
-        TimeStr = dbVals[vu.dtMeta]
-        tzOffset = np.divide(dbVals[vu.lonMeta], 15.0)
+    def evaluate(self, dbVals, insituParameters):
+        TimeStr = dbVals[insituParameters[vu.datetimeMeta]]
+        tzOffset = np.divide(dbVals[insituParameters[vu.lonMeta]], 15.0)
 
-        LH = np.full_like(tzOffset, 0.0)
+        hh = np.empty_like(tzOffset, dtype=np.float32)
+        mmi = np.empty_like(tzOffset, dtype=np.float32)
+        ss = np.empty_like(tzOffset, dtype=np.float32)
+
         t0 = LH0
         t1 = LH1
         dt = LHDT
-        for ii, time in enumerate(TimeStr):
-            ## Expecting time to fit YYYY-MM-DDThh:mm:ssZ
-            # YYYY = float(time[0:4])
-            # MMo  = float(time[5:7])
-            # DD   = float(time[8:10])
-            hh   = float(time[11:13])
-            mmi  = float(time[14:16]) / 60.0
-            ss   = float(time[17:19]) / 3600.0
+        for ii, Time in enumerate(TimeStr):
+            ## Expecting Time to fit YYYY-MM-DDThh:mm:ssZ
+            # YYYY[ii] = float(Time[0:4])
+            # MMo[ii]  = float(Time[5:7])
+            # DD[ii]   = float(Time[8:10])
+            hh[ii]   = float(Time[11:13])
+            mmi[ii]  = float(Time[14:16]) / 60.0
+            ss[ii]   = float(Time[17:19]) / 3600.0
 
-            LH[ii] = hh + mmi + ss + tzOffset[ii]
-            if LH[ii] < t0 - 0.5*dt: LH[ii] += 24.0
-            LH[ii] = LH[ii] % 24.0
-            if LH[ii] >= t1 + 0.5*dt: LH[ii] -= 24.0
+        LH = hh + mmi + ss + tzOffset
+
+        yesterday = (LH < t0 - 0.5*dt)
+        LH[yesterday] = LH[yesterday] + 24.0
+
+        LH = np.mod(LH, 24.0)
+
+        tomorrow = (LH >= t1 + 0.5*dt)
+        LH[tomorrow] = LH[tomorrow] - 24.0
 
         return LH
 
@@ -259,13 +267,13 @@ class AsymmetricCloudImpact:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
-    def evaluate(self,dbVals,caseParams):
+    def evaluate(self,dbVals,insituParameters):
         # Minamide and Zhang (2018)
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
         # BTbak = np.add(BTdep,BTobs)
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
+        BTclr = deepcopy(dbVals[insituParameters[vu.clrskyBTDiag]])
         p = lessBound(BTclr, 1.0, False)
         BTclr[p] = BTbak[p]
         # Minamide and Zhange (2018), maybe run into problems with non-clear-sky-bias-corrected
@@ -288,17 +296,17 @@ class ABEILambda:
         self.baseVars = []
         self.baseVars = pu.uniqueMembers(self.baseVars + self.ACI.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        osName = caseParams['osName']
+    def evaluate(self, dbVals, insituParameters):
+        osName = insituParameters['osName']
         if osName is None or osName not in ABEIParams:
             _logger.error('osName not available in ABEIParams => '+osName)
             os._exit(1)
 
-        # varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
-        varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfHofXValue])
+        # varName, ch = vu.splitIntSuffix(insituParameters[vu.selfDepValue])
+        varName, ch = vu.splitIntSuffix(insituParameters[vu.selfHofXValue])
         LambdaOverACI = ABEIParams[osName][(int(ch))]['LambdaOverACI']
 
-        ACI = self.ACI.evaluate(dbVals, caseParams)
+        ACI = self.ACI.evaluate(dbVals, insituParameters)
         lambdaOut = np.ones(ACI.shape)
         crit = (ACI > 0.0)
         lambdaOut[crit] = np.multiply(ACI[crit], LambdaOverACI) + self.minLambda
@@ -317,16 +325,16 @@ class SCIOkamoto:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
-    def evaluate(self, dbVals, caseParams):
+    def evaluate(self, dbVals, insituParameters):
         # Okamoto, et al.
         # Co = abs(Bias-Corrected BTobs - BTclr)
         # Cm = abs(BTbak - BTclr)
 
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
         # BTbak = np.add(BTdep, BTobs)
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
+        BTclr = deepcopy(dbVals[insituParameters[vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         SCI = np.multiply( 0.5,
                  np.add(np.abs(np.subtract(BTobs, BTclr)),
@@ -343,14 +351,14 @@ class ScaledSCIOkamoto:
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
-    def evaluate(self, dbVals, caseParams):
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+    def evaluate(self, dbVals, insituParameters):
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
         # BTbak = np.add(BTdep, BTobs)
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
+        BTclr = deepcopy(dbVals[insituParameters[vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
-        CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
+        CldFrac = dbVals[insituParameters[vu.cldfracMeta]]
 
         #Scale both Co and Cm by retrieved cloud fraction
         # SCI = np.multiply( 0.5,
@@ -376,13 +384,13 @@ class SCIModHarnisch:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.clrskyBTDiag)
 
-    def evaluate(self, dbVals, caseParams):
+    def evaluate(self, dbVals, insituParameters):
         # Modified Harnisch, et al.
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
         # BTbak = np.add(BTdep, BTobs)
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
+        BTclr = deepcopy(dbVals[insituParameters[vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
         zeros = np.full_like(BTbak,0.0)
         SCI = np.multiply( 0.5,
@@ -400,15 +408,15 @@ class ScaledSCIModHarnisch:
         self.baseVars.append(vu.clrskyBTDiag)
         self.baseVars.append(vu.cldfracMeta)
 
-    def evaluate(self, dbVals, caseParams):
+    def evaluate(self, dbVals, insituParameters):
         # Modified Harnisch, et al.
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
         # BTbak = np.add(BTdep, BTobs)
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
-        BTclr = deepcopy(dbVals[caseParams['base2db'][vu.clrskyBTDiag]])
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
+        BTclr = deepcopy(dbVals[insituParameters[vu.clrskyBTDiag]])
         BTclr[BTclr < 1.0] = BTbak[BTclr < 1.0]
-        CldFrac = dbVals[caseParams['base2db'][vu.cldfracMeta]]
+        CldFrac = dbVals[insituParameters[vu.cldfracMeta]]
 
         zeros = np.full_like(BTbak,0.0)
         SCI = np.multiply( 0.5,
@@ -426,12 +434,12 @@ class NormalizedError:
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfErrorValue)
 
-    def evaluate(self, dbVals, caseParams):
-        BTerr = dbVals[caseParams['base2db'][vu.selfErrorValue]]
+    def evaluate(self, dbVals, insituParameters):
+        BTerr = dbVals[insituParameters[vu.selfErrorValue]]
         BTerr[BTerr==0.0] = np.NaN
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
         BTdep = np.subtract(BTbak, BTobs)
 
         return np.divide(BTdep, BTerr)
@@ -449,7 +457,7 @@ class SCINormalizedError:
         self.baseVars.append(vu.selfObsValue)
         self.baseVars.append(vu.selfHofXValue)
 
-    def evaluate(self, dbVals, caseParams, SCISTDName, SCI):
+    def evaluate(self, dbVals, insituParameters, SCISTDName, SCI):
         # Parameterize BTerr as a ramped step function
         # --------------------------------------------
         # STD1 |. . . ____
@@ -462,15 +470,15 @@ class SCINormalizedError:
         #         .   .
         #        SCI0 SCI1
         #---------------------------------------------
-        osName = caseParams['osName']
+        osName = insituParameters['osName']
         SCIErrParams = deepcopy(allSCIErrParams[(mpasFCRes,biasCorrectType.get(osName,None))])
 
         if osName is None or osName not in SCIErrParams:
             _logger.error('osName not available in SCIErrParams => '+osName)
             os._exit(1)
 
-        # varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfDepValue])
-        varName, ch = vu.splitIntSuffix(caseParams['base2db'][vu.selfHofXValue])
+        # varName, ch = vu.splitIntSuffix(insituParameters[vu.selfDepValue])
+        varName, ch = vu.splitIntSuffix(insituParameters[vu.selfHofXValue])
         STD0 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][0]
         STD1 = SCIErrParams[osName][(int(ch), SCISTDName)]['ERR'][1]
         SCI0  = SCIErrParams[osName][(int(ch), SCISTDName)]['X'][0]
@@ -486,9 +494,9 @@ class SCINormalizedError:
         BTerr[onramp]    = STD0 + slope * (SCI[onramp] - SCI0)
         BTerr[aboveramp] = STD1
 
-        # BTdep = dbVals[caseParams['base2db'][vu.selfDepValue]]
-        BTobs = dbVals[caseParams['base2db'][vu.selfObsValue]]
-        BTbak = dbVals[caseParams['base2db'][vu.selfHofXValue]]
+        # BTdep = dbVals[insituParameters[vu.selfDepValue]]
+        BTobs = dbVals[insituParameters[vu.selfObsValue]]
+        BTbak = dbVals[insituParameters[vu.selfHofXValue]]
         BTdep = np.subtract(BTbak, BTobs)
 
         return np.divide(BTdep, BTerr)
@@ -500,9 +508,9 @@ class OkamotoNormalizedError(SCINormalizedError):
         self.SCI = SCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        SCI = self.SCI.evaluate(dbVals, caseParams)
-        return super().evaluate(dbVals, caseParams, OkamotoMethod, SCI)
+    def evaluate(self, dbVals, insituParameters):
+        SCI = self.SCI.evaluate(dbVals, insituParameters)
+        return super().evaluate(dbVals, insituParameters, OkamotoMethod, SCI)
 
 
 class ScaledOkamotoNormalizedError(SCINormalizedError):
@@ -511,9 +519,9 @@ class ScaledOkamotoNormalizedError(SCINormalizedError):
         self.SCI = ScaledSCIOkamoto()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        SCI = self.SCI.evaluate(dbVals, caseParams)
-        return super().evaluate(dbVals, caseParams, ScaleOkamotoMethod, SCI)
+    def evaluate(self, dbVals, insituParameters):
+        SCI = self.SCI.evaluate(dbVals, insituParameters)
+        return super().evaluate(dbVals, insituParameters, ScaleOkamotoMethod, SCI)
 
 
 class ModHarnischNormalizedError(SCINormalizedError):
@@ -522,9 +530,9 @@ class ModHarnischNormalizedError(SCINormalizedError):
         self.SCI = SCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        SCI = self.SCI.evaluate(dbVals, caseParams)
-        return super().evaluate(dbVals, caseParams, ModHarnischMethod, SCI)
+    def evaluate(self, dbVals, insituParameters):
+        SCI = self.SCI.evaluate(dbVals, insituParameters)
+        return super().evaluate(dbVals, insituParameters, ModHarnischMethod, SCI)
 
 
 class ScaledModHarnischNormalizedError(SCINormalizedError):
@@ -533,9 +541,9 @@ class ScaledModHarnischNormalizedError(SCINormalizedError):
         self.SCI = ScaledSCIModHarnisch()
         self.baseVars = pu.uniqueMembers(self.baseVars + self.SCI.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        SCI = self.SCI.evaluate(dbVals, caseParams)
-        return super().evaluate(dbVals, caseParams, ScaleModHarnischMethod, SCI)
+    def evaluate(self, dbVals, insituParameters):
+        SCI = self.SCI.evaluate(dbVals, insituParameters)
+        return super().evaluate(dbVals, insituParameters, ScaleModHarnischMethod, SCI)
 
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
 #def outsideRegion(dbVals, REGION_NAME):
@@ -557,7 +565,7 @@ class BaseObsFunction:
         self.baseVars = deepcopy(baseVars)
         pass
 
-    def dbVars(self, varName, outerIters_):
+    def dbVars(self, varName, fileFormat, outerIters_):
         dbVars = []
 
         if (not isinstance(outerIters_, Iterable)
@@ -566,10 +574,10 @@ class BaseObsFunction:
         else:
             outerIters = outerIters_
 
-        for base in self.baseVars:
+        for baseVar in self.baseVars:
             for outerIter in outerIters:
                 dbVar = vu.base2dbVar(
-                    base, varName, outerIter)
+                    baseVar, varName, fileFormat, outerIter)
                 dbVars.append(dbVar)
         return pu.uniqueMembers(dbVars)
 
@@ -578,8 +586,8 @@ class IdObsFunction(BaseObsFunction):
     def __init__(self, variable):
         super().__init__([variable])
 
-    def evaluate(self, dbVals, caseParams):
-        return dbVals[caseParams['base2db'][self.baseVars[0]]]
+    def evaluate(self, dbVals, insituParameters):
+        return dbVals[insituParameters[self.baseVars[0]]]
 
 
 class ObsFunction(BaseObsFunction):
@@ -589,13 +597,15 @@ class ObsFunction(BaseObsFunction):
             ("ERROR, function class must have the baseVars attribute:", function)
         super().__init__(self.function.baseVars)
 
-    def evaluate(self, dbVals, caseParams):
-        return self.function.evaluate(dbVals, caseParams)
+    def evaluate(self, dbVals, insituParameters):
+        return self.function.evaluate(dbVals, insituParameters)
 
 
 class ObsFunctionWrapper:
     def __init__(self, config):
-        self.osName = config.get('osName', None)
+        self.osName = config['osName']
+        self.fileFormat = config['fileFormat']
+
         variable = config['variable']
         varIsString = isinstance(variable,str)
         varIsClass = inspect.isclass(variable)
@@ -609,16 +619,18 @@ class ObsFunctionWrapper:
             self.function = ObsFunction(variable)
 
     def dbVars(self, varName, outerIters):
-        return self.function.dbVars(varName, outerIters)
+        return self.function.dbVars(varName, self.fileFormat, outerIters)
 
     def evaluate(self, dbVals, varName, outerIter):
-        caseParams = {}
-        caseParams['base2db'] = {}
-        for base in self.function.baseVars:
-            caseParams['base2db'][base] = vu.base2dbVar(
-                    base, varName, outerIter)
-        caseParams['osName'] = self.osName
-        self.result = self.function.evaluate(dbVals, caseParams)
+        # setup context-specific insituParameters for the evaluation
+        insituParameters = {}
+        for baseVar in self.function.baseVars:
+            insituParameters[baseVar] = vu.base2dbVar(
+                    baseVar, varName, self.fileFormat, outerIter)
+        insituParameters['osName'] = self.osName
+
+        # evaluate the function
+        self.result = self.function.evaluate(dbVals, insituParameters)
 
 
 #========================
@@ -660,7 +672,6 @@ class BinFilter:
             else:
                 _logger.error("'bounds' must be a scalar, single-member Iterable, or an Iterable with the same length as 'values'!")
                 os._exit(1)
-
         self.function = ObsFunctionWrapper(config)
         self.except_diags = config.get('except_diags', [])
         self.mask_value = config.get('mask_value', np.NaN)
@@ -714,6 +725,7 @@ class BinMethod:
 
         fconf = {}
         fconf['osName'] = config['osName']
+        fconf['fileFormat'] = config['fileFormat']
         fconf['nBins'] = len(self.values)
 
         self.filters = []

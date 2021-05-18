@@ -185,7 +185,7 @@ class StatsDB:
 
             DiagSpaceNames = []
             for File in glob.glob(FILEPREFIX0+'*.nc'):
-               DiagSpaceName = re.sub(".nc", "", re.sub(FILEPREFIX0, "", File))
+               DiagSpaceName = File[len(FILEPREFIX0):-len('.nc')]
                if DiagSpaceName == self.DiagSpaceName:
                    DiagSpaceNames.append(DiagSpaceName)
             expsDiagSpaceNames.append(DiagSpaceNames)

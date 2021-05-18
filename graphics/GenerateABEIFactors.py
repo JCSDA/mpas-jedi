@@ -48,7 +48,7 @@ class GenerateABEIFactors:
 
     # construct mean DB into 0th member slot
     self.logger.info('database path: '+self.args.dbPath)
-    self.db = JediDB(self.args.dbPath, 'nc4')
+    self.db = JediDB(self.args.dbPath)
     self.osNames = self.args.IRInstruments.split(',')
     dbOSNames = list(self.db.ObsSpaceName.values())
     self.osKeys = []
@@ -93,7 +93,7 @@ class GenerateABEIFactors:
     return binVarConfigs
 
   @staticmethod
-  def getBinMethods(binVarConfigs, ObsSpaceName):
+  def getBinMethods(binVarConfigs, ObsSpaceName, fileFormat):
     binMethods = {}
     for binVarKey, binMethodKeys in binVarConfigs.items():
         binVarConfig = pconf.binVarConfigs.get(binVarKey,pconf.nullBinVarConfig)
@@ -104,6 +104,7 @@ class GenerateABEIFactors:
                 len(config['filters']) < 1): continue
 
             config['osName'] = ObsSpaceName
+            config['fileFormat'] = fileFormat
             binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
 
     return binMethods
@@ -120,16 +121,16 @@ class GenerateABEIFactors:
             if 'ObsFunction' not in diagnosticConfig: continue
 
             # variables for diagnostics
-            for varGrp in diagnosticConfig['ObsFunction'].dbVars(
+            for grpVar in diagnosticConfig['ObsFunction'].dbVars(
                 varName, diagnosticConfig['outerIter']):
                 if diagnosticConfig[vu.mean]:
-                    dbVars.append(varGrp)
+                    dbVars.append(grpVar)
 
             # variables for binning
             for (binVarKey,binMethodKey), binMethod in binMethods.items():
-                for varGrp in binMethod.dbVars(
+                for grpVar in binMethod.dbVars(
                     varName, diagnosticConfig['outerIter']):
-                    dbVars.append(varGrp)
+                    dbVars.append(grpVar)
 
     dbVars.append(vu.latMeta)
     dbVars.append(vu.lonMeta)
@@ -160,14 +161,17 @@ class GenerateABEIFactors:
     ########################################################
 
     binVarConfigs = self.getBinVarConfigs()
-    binMethods = self.getBinMethods(binVarConfigs, ObsSpaceName)
+    binMethods = self.getBinMethods(binVarConfigs, ObsSpaceName, db.fileFormat(osKey, obsFKey))
 
     ######################################
     ## Construct diagnostic configurations
     ######################################
 
     diagnosticConfigs = du.diagnosticConfigs(
-        self.getDiagNames(), ObsSpaceName)
+        self.getDiagNames(), ObsSpaceName,
+        includeEnsembleDiagnostics = False,
+        fileFormat = db.fileFormat(osKey, obsFKey))
+
 # TODO: change above line after bugfix/hofxDiagsCleanup is merged into develop
 #        self.getDiagNames(), ObsSpaceName, False)
 

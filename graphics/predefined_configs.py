@@ -283,7 +283,8 @@ badFlagNames = ['missing', 'preQC',      'bounds',  'domain',
 #     filters: list of filters that will exclude locations for each method
 #     for each filter:
 #         where: logical function that determines locations that are excluded
-#         variable: string or class that is used to initialize the IdObsFunction or ObsFunction class
+#         variable: string or class that is used to initialize the IdObsFunction or ObsFunction class;
+#                   this may refer to a predefined key of vu.ObsGroups and vu.ObsVars
 #         bounds: numerical value(s) used in the where test (scalar or Iterable same length as values). At least one filter must have len(bounds)==len(values).
 #         except_diags (optional): list of diagnostics for which a particular filter does not apply
 #     values (string): list of values associated with each bin

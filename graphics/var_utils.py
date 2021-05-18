@@ -19,8 +19,11 @@ csvSEP = ';'
 ## NC variable names for MPAS-JEDI
 obsVarAlt     = 'altitude'
 obsVarACI     = 'asymmetric_cloud_impact'
+obsVarBT      = 'brightness_temperature'
+obsVarBTClear = obsVarBT+'_assuming_clear_sky'
 obsVarCldFrac = 'cloud_area_fraction'
 obsVarDT      = 'datetime'
+obsVarGlint   = 'glint'
 obsVarLT      = 'LocalTime'
 obsVarLandFrac= 'land_area_fraction'
 obsVarLat     = 'latitude'
@@ -33,7 +36,6 @@ obsVarSenZen  = 'sensor_zenith_angle'
 obsVarSenAzi  = 'sensor_azimuth_angle'
 obsVarSolZen  = 'solar_zenith_angle'
 obsVarSolAzi  = 'solar_azimuth_angle'
-obsVarGlint   = 'glint'
 
 degree= u'\N{DEGREE SIGN}'
 
@@ -41,7 +43,7 @@ degree= u'\N{DEGREE SIGN}'
 varDictObs = {
     'air_temperature':        [ 'K',     'T'       ],
     'bending_angle':          [ '%',     'Bnd'     ],
-    'brightness_temperature': [ 'K',     'BT'      ],
+    obsVarBT:                 [ 'K',     'BT'      ],
     'eastward_wind':          [ 'm/s',   'U'       ],
     'northward_wind':         [ 'm/s',   'V'       ],
     'refractivity':           [ '%',     'Ref'     ],
@@ -68,112 +70,183 @@ varDictObs = {
 obsRegionBinVar = 'ObsRegion'
 varDictObs[obsRegionBinVar] = [miss_s, obsRegionBinVar]
 
-# NC observation variable name substitutions
+# IODA observation variable name substitutions
 vNameStr = 'varName'
 vChanStr = 'varCHAN'
 
-# MPAS-JEDI suffixes for observation-type variables
+# Dynamic Fixed IODA ObsGroups for observation-type variables
 hofxGroup   = 'hofx'
-depGroup    = 'depIter'
-diagGroup   = 'ObsDiag'
-geoGroup    = 'GeoVaLs'
-obsGroup    = 'ObsValue'
-metaGroup   = 'MetaData'
 qcGroup     = 'EffectiveQC'
 errorGroup  = 'EffectiveError'
+bgIter = '0'
 
-# Fixed NC variable names
-selfObsValue   = vNameStr+'@'+obsGroup
-#selfDepBGValue = vNameStr+'@'+depbgGroup
-#selfDepANValue = vNameStr+'@'+depanGroup
-selfDepValue   = vNameStr+'@'+depGroup
+# Fixed IODA ObsGroups for observation-type variables
+obsGroup    = 'ObsValue'
+metaGroup   = 'MetaData'
 
-selfHofXValue  = vNameStr+'@'+hofxGroup
-selfQCValue    = vNameStr+'@'+qcGroup
-selfErrorValue = vNameStr+'@'+errorGroup
+# Dynamic MPAS-Workflow ObsGroups for observation-type variables
+depGroup    = 'depIter'
 
-altMeta      = obsVarAlt+'@'+metaGroup
-cldfracMeta  = obsVarCldFrac+'@'+metaGroup
-dtMeta       = obsVarDT+'@'+metaGroup
-latMeta      = obsVarLat+'@'+metaGroup
-lonMeta      = obsVarLon+'@'+metaGroup
-prsMeta      = obsVarPrs+'@'+metaGroup
-senzenMeta   = obsVarSenZen+'@'+metaGroup
-senaziMeta   = obsVarSenAzi+'@'+metaGroup
-solzenMeta   = obsVarSolZen+'@'+metaGroup
-solaziMeta   = obsVarSolAzi+'@'+metaGroup
+# GeoVaLs ObsGroups only used in post-processing, not in files
+diagGroup   = 'ObsDiag'
+geoGroup    = 'GeoVaLs'
 
-landfracGeo = obsVarLandFrac+'@'+geoGroup
+# Generic variable names used as baseVar
+selfObsValue = 'selfObsValue'
+selfDepValue = 'selfDepValue'
+selfHofXValue = 'selfHofXValue'
+selfQCValue = 'selfQCValue'
+selfErrorValue = 'selfErrorValue'
+bgHofXValue = 'bgHofXValue'
+altMeta = 'altMeta'
+cldfracMeta = 'cldfracMeta'
+datetimeMeta = 'datetimeMeta'
+latMeta = 'latMeta'
+lonMeta = 'lonMeta'
+prsMeta = 'prsMeta'
+senzenMeta = 'senzenMeta'
+senaziMeta = 'senaziMeta'
+solzenMeta = 'solzenMeta'
+solaziMeta = 'solaziMeta'
+landfracGeo = 'landfracGeo'
+clrskyBTDiag = 'clrskyBTDiag'
 
-clrskyBTDiag = 'brightness_temperature_assuming_clear_sky_'+vChanStr+'@'+diagGroup
+# Context-dependent (dynamic) IODA variable names
+ObsGroups = {}
+ObsVars = {}
+ObsGroups[selfObsValue] = obsGroup
+ObsGroups[selfDepValue] = depGroup
+ObsGroups[selfHofXValue] = hofxGroup
+ObsGroups[selfQCValue] = qcGroup
+ObsGroups[selfErrorValue] = errorGroup
 
+for key in ObsGroups.keys():
+  ObsVars[key] = vNameStr
+
+ObsGroups[bgHofXValue] = hofxGroup+bgIter
+ObsVars[bgHofXValue] = vNameStr
+
+# Fixed IODA variable names (MetaData)
+ObsVars[altMeta]      = obsVarAlt
+ObsVars[cldfracMeta]  = obsVarCldFrac
+ObsVars[datetimeMeta] = obsVarDT
+ObsVars[latMeta]      = obsVarLat
+ObsVars[lonMeta]      = obsVarLon
+ObsVars[prsMeta]      = obsVarPrs
+ObsVars[senzenMeta]   = obsVarSenZen
+ObsVars[senaziMeta]   = obsVarSenAzi
+ObsVars[solzenMeta]   = obsVarSolZen
+ObsVars[solaziMeta]   = obsVarSolAzi
+
+for key in ObsVars.keys():
+  if 'Meta' in key:
+    ObsGroups[key] = metaGroup
+
+# separator to be used for channel or other integer suffixes
+intSufSeparator = '_'
+
+
+# GeoVaLs variable names
+ObsVars[landfracGeo] = obsVarLandFrac
+ObsGroups[landfracGeo] = geoGroup
+
+ObsVars[clrskyBTDiag] = obsVarBTClear+intSufSeparator+vChanStr
+ObsGroups[clrskyBTDiag] = diagGroup
+
+
+# ensemble/mean classifiers
 mean = 'mean'
 ensemble = 'ensemble'
 ensSuffixBase = "&&&mem"
 def ensSuffix(member):
-    if member == 0:
-        return ""
-    else:
-        return ensSuffixBase+str(member)
+  if member == 0:
+    return ""
+  else:
+    return ensSuffixBase+str(member)
 
 
-# functions for extracting sub-parts of UFO variable names
-def splitObsVarGrp(varATgroup):
-    if "@" in varATgroup:
-        var = ''.join(varATgroup.split("@")[:-1])
-        grp = ''.join(varATgroup.split("@")[-1])
-    else:
-        var = varATgroup
-        grp = miss_s
-    return var, grp
-
-
-def splitChan(var):
-    varName, grpName = splitObsVarGrp(var)
-    ch = ''.join(varName.split("_")[-1:])
-    return ch
+# functions for extracting/combining sub-parts of UFO variable names
+def splitObsVarGrp(WholeVarGrp):
+  if "@" in WholeVarGrp:
+    var = '@'.join(WholeVarGrp.split('@')[:-1])
+    grp = WholeVarGrp.split('@')[-1]
+  elif "/" in WholeVarGrp:
+    grp = WholeVarGrp.split('/')[0]
+    var = '/'.join(WholeVarGrp.split('/')[1:])
+  else:
+    var = WholeVarGrp
+    grp = miss_s
+  return var, grp
 
 
 def splitIntSuffix(var):
-    # separate integer suffixes (e.g., brightness_temperature_*)
-    obsVarName, grpName = splitObsVarGrp(var)
-    suf = ''.join(obsVarName.split("_")[-1:])
-    if not pu.isint(suf):
-        suf = ''
-    else:
-        obsVarName = '_'.join(obsVarName.split("_")[:-1])
-    return obsVarName, suf
+  # separate integer suffixes (e.g., brightness_temperature_*)
+  obsVarName, grpName = splitObsVarGrp(var)
+  suf = obsVarName.split(intSufSeparator)[-1]
+  if not pu.isint(suf):
+    suf = ''
+  else:
+    obsVarName = intSufSeparator.join(obsVarName.split(intSufSeparator)[:-1])
+  return obsVarName, suf
+
+
+def appendSuffix(var, suf):
+  return var+intSufSeparator+str(suf)
 
 
 def varAttributes(var):
-    # return short name and units
-    dictName, suf = splitIntSuffix(var)
-    varAtt = varDictObs.get(dictName,[miss_s,dictName])
-    varShort = varAtt[1]+suf
-    varUnits = varAtt[0]
-    return varShort, varUnits
+  # return short name and units
+  dictName, suf = splitIntSuffix(var)
+  varAtt = varDictObs.get(dictName,[miss_s,dictName])
+  varShort = varAtt[1]+suf
+  varUnits = varAtt[0]
+  return varShort, varUnits
 
 
-bgIter = '0'
+# FileFormat-dependent variable name constructors
+def groupSLASHvar(var, group):
+  return group+'/'+var
 
-def base2dbVar(baseVar, varName, outerIter = None):
-    if outerIter is None:
-        iterStr = ''
+def varATgroup(var, group):
+  return var+'@'+group
+
+ncFileFormat = 'nc'
+hdfFileFormat = 'hdf'
+IODAVarCtors = {
+  ncFileFormat: varATgroup,
+  hdfFileFormat: groupSLASHvar,
+}
+
+
+#BaseVars describes the file-format-specific generic variable names
+BaseVars = {}
+for fileFormat, ctor in IODAVarCtors.items():
+  BaseVars[fileFormat] = {}
+  for baseVar, ObsVar in ObsVars.items():
+    BaseVars[fileFormat][baseVar] = ctor(ObsVar, ObsGroups[baseVar])
+
+def base2dbVar(baseVar, varName, fileFormat, outerIter = None):
+  # converts baseVar to a context-specific variable name to retrieve from a JediDB object
+  dbVar = BaseVars[fileFormat][baseVar]
+
+  dictName, suf = splitIntSuffix(varName)
+  dbVar = re.sub(vNameStr,varName,dbVar)
+  dbVar = re.sub(vChanStr,suf,dbVar)
+
+  if outerIter is None:
+    iterStr = ''
+  else:
+    iterStr = str(outerIter)
+  for group in [hofxGroup, errorGroup, qcGroup]:
+    # append iterStr if one is not already appended
+    if group in dbVar.split('@') or group in dbVar.split('/'):
+      dbVar = re.sub(group,group+iterStr,dbVar)
+  if iterStr != '':
+    if iterStr == bgIter:
+      dbVar = re.sub(depGroup,depbgGroup,dbVar)
     else:
-        iterStr = str(outerIter)
-    dictName, suf = splitIntSuffix(varName)
-    dbVar = re.sub(vNameStr,varName,baseVar)
-    dbVar = re.sub(vChanStr,suf,dbVar)
-    for group in [hofxGroup, errorGroup, qcGroup]:
-        # append iterStr if one is not already appended
-        if group in dbVar.split('@'):
-            dbVar = re.sub(group,group+iterStr,dbVar)
-    if iterStr != '':
-        if iterStr == bgIter:
-            dbVar = re.sub(depGroup,depbgGroup,dbVar)
-        else:
-            dbVar = re.sub(depGroup,depanGroup,dbVar)
-    return dbVar
+      dbVar = re.sub(depGroup,depanGroup,dbVar)
+  return dbVar
 
 
 ## NC variable names for MPAS-Model
