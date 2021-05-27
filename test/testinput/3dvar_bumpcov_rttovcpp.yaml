@@ -18,8 +18,8 @@ cost function:
   - uReconstructMeridional
   - surface_pressure
   background:
-    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
-                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                       snowh, vegfra, t2m, q2, u10, v10, lai, smois, tslb, pressure_p]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'
@@ -42,7 +42,7 @@ cost function:
   - obs space:
       name: Radiosonde
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_bumpcov_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -59,7 +59,7 @@ cost function:
   - obs space:
       name: GnssroRef
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_bumpcov_gnssroref.nc4
       simulated variables: [refractivity]
@@ -95,7 +95,7 @@ cost function:
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_bumpcov_gnssrobndropp1d.nc4
       simulated variables: [bending_angle]
@@ -130,7 +130,7 @@ cost function:
   - obs space:
       name: SfcPCorrected
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_bumpcov_sfc.nc4
       simulated variables: [surface_pressure]
@@ -160,7 +160,7 @@ cost function:
   - obs space:
       name: AMSUA-NOAA19
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_bumpcov_amsua_n19-rttovcpp.nc4
       simulated variables: [brightness_temperature]

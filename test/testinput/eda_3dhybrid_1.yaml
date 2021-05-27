@@ -72,7 +72,7 @@ cost function:
   - obs space:
       name: Radiosonde
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/ensemble/mem001/obsout_eda_3dhybrid_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -90,7 +90,7 @@ cost function:
   - obs space:
       name: GnssroRef
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/ensemble/mem001/obsout_eda_3dhybrid_gnssroref.nc4
       simulated variables: [refractivity]
@@ -126,7 +126,7 @@ cost function:
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/ensemble/mem001/obsout_eda_3dhybrid_gnssrobndropp1d.nc4
       simulated variables: [bending_angle]
@@ -162,7 +162,7 @@ cost function:
   - obs space:
       name: SfcPCorrected
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/ensemble/mem001/obsout_eda_3dhybrid_sfc.nc4
       simulated variables: [surface_pressure]

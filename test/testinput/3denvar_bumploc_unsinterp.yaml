@@ -19,8 +19,8 @@ cost function:
   - uReconstructMeridional
   - surface_pressure
   background:
-    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
-                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp, 
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                       snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'
@@ -56,7 +56,7 @@ cost function:
   - obs space:
       name: Radiosonde
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -75,7 +75,7 @@ cost function:
   - obs space:
       name: Satwind
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
       simulated variables: [eastward_wind, northward_wind]
@@ -94,7 +94,7 @@ cost function:
   - obs space:
       name: GnssroRef
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
       simulated variables: [refractivity]
@@ -131,7 +131,7 @@ cost function:
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
       simulated variables: [bending_angle]
@@ -168,7 +168,7 @@ cost function:
   - obs space:
       name: SfcPCorrected
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
       simulated variables: [surface_pressure]

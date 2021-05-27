@@ -28,7 +28,7 @@ observations:
 - obs space:
     name: Radiosonde
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_sondes.nc4
     simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -37,7 +37,7 @@ observations:
 - obs space:
     name: Satwind
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/satwind_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_satwind.nc4
     simulated variables: [eastward_wind, northward_wind]
@@ -46,7 +46,7 @@ observations:
 - obs space:
     name: GnssroRef
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
     obsdataout:
       obsfile: Data/os/hofx_gnssroref.nc4
     simulated variables: [refractivity]
@@ -58,7 +58,7 @@ observations:
 - obs space:
     name: GnssroBndROPP1D
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
     obsdataout:
       obsfile: Data/os/hofx_gnssrobndropp1d.nc4
     simulated variables: [bending_angle]
@@ -69,7 +69,7 @@ observations:
 - obs space:
     name: AMSUA-NOAA19--nohydro
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_amsua_n19--nohydro.nc4
     simulated variables: [brightness_temperature]
@@ -85,7 +85,7 @@ observations:
 - obs space:
     name: AMSUA-NOAA19--hydro
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_amsua_n19--hydro.nc4
     simulated variables: [brightness_temperature]
@@ -99,7 +99,7 @@ observations:
 - obs space:
     name: AIRS-AQUA
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_airs_aqua.nc4
     simulated variables: [brightness_temperature]
@@ -113,7 +113,7 @@ observations:
 - obs space:
     name: CRIS-NPP
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_cris-fsr_npp.nc4
     simulated variables: [brightness_temperature]
@@ -127,7 +127,7 @@ observations:
 - obs space:
     name: IASI-METOPA
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_iasi_metop-a.nc4
     simulated variables: [brightness_temperature]
@@ -169,7 +169,7 @@ observations:
 - obs space:
     name: SfcPCorrected
     obsdatain:
-      obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
     obsdataout:
       obsfile: Data/os/hofx_sfc.nc4
     simulated variables: [surface_pressure]

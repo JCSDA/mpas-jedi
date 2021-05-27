@@ -23,7 +23,7 @@ cost function:
   - qs
   - qg
   background:
-    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure, 
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
                       qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
                       ivgtyp, isltyp, snowh, vegfra, u10, v10, lai, smois, tslb]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
@@ -35,7 +35,7 @@ cost function:
   - obs space:
       name: Radiosonde
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sondes_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -52,7 +52,7 @@ cost function:
   - obs space:
       name: Aircraft
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_aircraft.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
@@ -69,7 +69,7 @@ cost function:
   - obs space:
       name: GnssroRef
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_gnssroref.nc4
       simulated variables: [refractivity]
@@ -104,7 +104,7 @@ cost function:
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_gnssrobndropp1d.nc4
       simulated variables: [bending_angle]
@@ -139,7 +139,7 @@ cost function:
   - obs space:
       name: SfcPCorrected
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_sfc.nc4
       simulated variables: [surface_pressure]
@@ -169,7 +169,7 @@ cost function:
   - obs space:
       name: AMSUA-NOAA19--nohydro
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
       simulated variables: [brightness_temperature]
@@ -193,7 +193,7 @@ cost function:
   - obs space:
       name: AMSUA-NOAA19--hydro
       obsdatain:
-        obsfile: Data/ioda/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       obsdataout:
         obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
       simulated variables: [brightness_temperature]

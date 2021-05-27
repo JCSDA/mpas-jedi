@@ -22,7 +22,7 @@ phases:
       - echo $CODEBUILD_WEBHOOK_EVENT
       - echo $CODEBUILD_WEBHOOK_TRIGGER
       - echo $CODEBUILD_WEBHOOK_BASE_REF
- 
+
   pre_build:
     commands:
       - echo Executing pre_build phase
@@ -42,7 +42,7 @@ phases:
 
       - cd CI
       - . /etc/profile.d/intel.sh
-        
+
       #  Set crtm branch name
       - export CRTM_JEDI_BRANCH="v2.3-jedi"
 
@@ -79,7 +79,7 @@ phases:
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/crtm $CODEBUILD_GIT_BRANCH_CRTM crtm /jcsda/mpas-bundle $CRTM_JEDI_BRANCH
 
       ##  internal repos
-      #  mpas-model 
+      #  mpas-model
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS-Model /jcsda/mpas-bundle release-stable
 
       #  mpas-jedi
@@ -96,6 +96,9 @@ phases:
 
       # rttov
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/rttov $CODEBUILD_GIT_BRANCH rttov /jcsda/mpas-bundle develop
+
+      # ufo-test
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/ufo-data $CODEBUILD_GIT_BRANCH ufo-data /jcsda/mpas-bundle develop
 
       # move CMakeLists.txt
       - cp CMakeLists.txt /jcsda/mpas-bundle
