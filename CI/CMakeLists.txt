@@ -8,7 +8,7 @@
 #
 
 cmake_minimum_required( VERSION 3.12 )
-project( mpas-bundle LANGUAGES C CXX Fortran )
+project( mpas-bundle VERSION 1.0.0 LANGUAGES C CXX Fortran )
 
 ## ECBuild integration
 include(GNUInstallDirs)
@@ -23,13 +23,15 @@ ecbuild_bundle_initialize()
 
 ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" )
 
-option(BUNDLE_SKIP_ECKIT "Don't build eckit" "ON" ) # Skip eckit build unless user passes -DBUNDLE_SKIP_ECKIT=OFF
-ecbuild_bundle( PROJECT eckit     GIT "https://github.com/jcsda-internal/eckit.git" )
-ecbuild_bundle( PROJECT fckit     GIT "https://github.com/jcsda-internal/fckit.git" )
-ecbuild_bundle( PROJECT atlas     GIT "https://github.com/jcsda-internal/atlas.git" )
+# ecmwf repos are already available in CI containers. Disabled here
+#option(BUNDLE_SKIP_ECKIT "Don't build eckit" "OFF" ) # Build eckit unless user passes -DBUNDLE_SKIP_ECKIT=ON
+#ecbuild_bundle( PROJECT eckit     GIT "https://github.com/ecmwf/eckit.git" )
+#ecbuild_bundle( PROJECT fckit     GIT "https://github.com/ecmwf/fckit.git" )
+#ecbuild_bundle( PROJECT atlas     GIT "https://github.com/ecmwf/atlas.git" )
 
 #TODO: When mpas-bundle becomes a public repo, consider changing the default value of BUNDLE_SKIP_ROPP-UFO to "ON"
-option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=OFF
+
+option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=ON
 ecbuild_bundle( PROJECT ropp-ufo  GIT "https://github.com/jcsda-internal/ropp-test.git" )
 option(BUNDLE_SKIP_GSW "Don't build GSW"       "ON") # Skip gsw build unless user passes -DBUNDLE_SKIP_GSW=OFF
 ecbuild_bundle( PROJECT gsw       GIT "https://github.com/jcsda-internal/GSW-Fortran.git" )
@@ -67,7 +69,7 @@ endif()
 set(MPAS_CORES atmosphere init_atmosphere CACHE STRING "MPAS-Model: cores to build.")
 set(MPAS_DOUBLE_PRECISION "ON" CACHE STRING "MPAS-Model: Use double precision 64-bit Floating point.")
 
-ecbuild_bundle( PROJECT MPAS-Model GIT "https://github.com/jcsda-internal/MPAS-Model.git" )
+ecbuild_bundle( PROJECT MPAS     GIT "https://github.com/jcsda-internal/MPAS-Model.git" )
 ecbuild_bundle( PROJECT mpasjedi GIT "https://github.com/jcsda-internal/mpas-jedi")
 
 ecbuild_bundle_finalize()

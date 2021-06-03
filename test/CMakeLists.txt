@@ -518,7 +518,7 @@ function(jedi_unit_test)
     else()
         set( TEST_NPE 1 )
     endif()
-    set( TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_ID}${MPI_SUFFIX}" )
+    set( TARGET_NAME "${PROJECT_NAME}_${TEST_ID}${MPI_SUFFIX}" )
 
     #Configure environment variables
     if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -642,7 +642,7 @@ function(jedi_app_ref_test_compare)
         set( MPI_SUFFIX "_${NPE_PER_MEMBER}pe" )
     endif()
 
-    set(TARGET_NAME "${PROJECT_NAME_LOWCASE}_${TEST_NAME}${MPI_SUFFIX}")
+    set(TARGET_NAME "${PROJECT_NAME}_${TEST_NAME}${MPI_SUFFIX}")
     set(TARGET_PREFIX "test")
     set(TEST_LOG_FILE "testoutput/${TEST_NAME}.run")
     set(TEST_REFERENCE_FILE "testoutput/${TEST_NAME}.ref")
@@ -664,13 +664,13 @@ function(jedi_app_ref_test_compare)
     if( DEFINED TEST_DEPENDS )
         set(templist "")
         foreach(previous_test_ID ${TEST_DEPENDS})
-           list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME_LOWCASE}_${previous_test_ID}${MPI_SUFFIX}")
+           list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME}_${previous_test_ID}${MPI_SUFFIX}")
         endforeach(previous_test_ID)
         set(TEST_DEPENDS "${templist}")
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APP}.x
                           ARGS    ${TEST_ARGS}
                           MPI     ${TEST_NPE}
                           TEST_DEPENDS "${TEST_DEPENDS}" )
@@ -678,7 +678,7 @@ function(jedi_app_ref_test_compare)
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME_LOWCASE}_${TEST_APP}.x
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APP}.x
                           ARGS    ${TEST_ARGS}
                           MPI     ${TEST_NPE} )
     endif()
@@ -730,7 +730,7 @@ endif()
 # UNIT tests of MPAS-JEDI classes
 #--------------------------------
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
-    # Unit tests for interface classes to PROJECT_NAME_LOWCASE
+    # Unit tests for interface classes to PROJECT_NAME
     jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
     jedi_unit_test( CLASS State           YAMLFILE state )
     jedi_unit_test( CLASS Model           YAMLFILE model )
@@ -746,9 +746,9 @@ endif()
 #---------------------------------------------------------------------
 jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} )
 jedi_app_ref_test_compare( APP     hofx3d                                   ${PYHX3D_REF_TYPE} )
-if( ${RTTOV_FOUND} )
+if( ${rttov_FOUND} )
   jedi_app_ref_test_compare( APP   hofx3d       ID hofx3d_rttovcpp          ${PYRTTOV_REF_TYPE} )
-endif( ${RTTOV_FOUND} )
+endif( ${rttov_FOUND} )
 jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} )
 jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${YAML_REF_TYPE} )
 jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${YAML_REF_TYPE} )
@@ -766,10 +766,10 @@ jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${YA
 jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${YAML_REF_TYPE} )
 jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${YAML_REF_TYPE}
                            DEPENDS parameters_bumpcov )
-if( ${RTTOV_FOUND} )
+if( ${rttov_FOUND} )
   jedi_app_ref_test_compare( APP   variational ID 3dvar_bumpcov_rttovcpp    ${YAML_REF_TYPE}
                              DEPENDS parameters_bumpcov )
-endif( ${RTTOV_FOUND} )
+endif( ${rttov_FOUND} )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${YAML_REF_TYPE}
                            DEPENDS parameters_bumploc )
 jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${YAML_REF_TYPE}
@@ -797,7 +797,7 @@ jedi_app_ref_test_compare( APP     rtpp        ID rtpp                      ${DE
 #####################################################################
 # Files for RTTOV tests
 #####################################################################
-if( ${RTTOV_FOUND} )
+if( ${rttov_FOUND} )
 list( APPEND rttov_test_input
 rttov7pred54L/rtcoef_noaa_19_amsua.dat
 )
@@ -806,7 +806,7 @@ rttov7pred54L/rtcoef_noaa_19_amsua.dat
 CREATE_SYMLINK_FILENAME( ${rttov_SOURCE_DIR}/rtcoef_rttov12
                          ${CMAKE_CURRENT_BINARY_DIR}/Data
                          ${rttov_test_input} )
-endif( ${RTTOV_FOUND} )
+endif( ${rttov_FOUND} )
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------

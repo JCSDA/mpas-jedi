@@ -8,10 +8,10 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( mpasjedi LANGUAGES C CXX Fortran )
+project( mpasjedi VERSION 1.0.0 LANGUAGES C CXX Fortran )
 
 ## Ecbuild integration
-find_package( ecbuild QUIET )
+find_package( ecbuild 3.3.2 REQUIRED )
 include( ecbuild_system NO_POLICY_SCOPE )
 ecbuild_declare_project()
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
@@ -29,19 +29,18 @@ find_package( Boost REQUIRED )
 
 #OpenMP dependent packages
 if(OpenMP_FOUND)
-    find_package( MPAS REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere OpenMP)
-    find_package( atlas REQUIRED COMPONENTS OMP OMP_Fortran)
+    find_package( MPAS 7.0 REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere OpenMP)
+    find_package( atlas 0.23.0 REQUIRED COMPONENTS OMP OMP_Fortran)
 else()
-    find_package( MPAS REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
-    find_package( atlas REQUIRED )
+    find_package( MPAS 7.0 REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
+    find_package( atlas 0.23.0 REQUIRED )
 endif()
 
-# RTTOV
-ecbuild_use_package( PROJECT rttov VERSION 12.1.0 QUIET )
-
-find_package( oops REQUIRED )
-find_package( saber REQUIRED )
-find_package( ufo REQUIRED )
+find_package( rttov 12.1.0 QUIET )
+find_package( oops 1.0.0 REQUIRED )
+find_package( saber 1.0.0 REQUIRED )
+find_package( ioda 1.0.0 REQUIRED )
+find_package( ufo 1.0.0 REQUIRED )
 
 ## Sources
 add_subdirectory( src )

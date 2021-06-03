@@ -2,22 +2,47 @@
 
 include(CMakeFindDependencyMacro)
 
-if(@OpenMP_FOUND@ AND NOT (OpenMP_CXX_FOUND AND OpenMP_Fortran_FOUND))
-    find_package( OpenMP REQUIRED COMPONENTS CXX Fortran )
+if(NOT (OpenMP_CXX_FOUND AND OpenMP_Fortran_FOUND))
+    find_dependency( OpenMP REQUIRED COMPONENTS CXX Fortran )
 endif()
 
-find_package( MPI REQUIRED COMPONENTS CXX Fortran )
-find_dependency( Boost REQUIRED )
-find_package( MPAS REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
-
-if(@OpenMP_FOUND@) #OpenMP_FOUND
-    find_package( atlas REQUIRED COMPONENTS OMP OMP_Fortran )
-else()
-    find_dependency( atlas REQUIRED )
+if(@rttov_FOUND@ AND NOT rttov_FOUND)
+    find_dependency(rttov REQUIRED)
 endif()
-find_dependency( oops )
-find_dependency( saber )
-find_dependency( ufo )
+
+if(NOT (MPI_CXX_FOUND AND MPI_FORTRAN_FOUND))
+    find_dependency( MPI REQUIRED COMPONENTS CXX Fortran )
+endif()
+if(NOT Boost_FOUND)
+    find_dependency( Boost REQUIRED )
+endif()
+if(NOT mpas_FOUND)
+    find_dependency( mpas REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
+endif()
+
+if(NOT atlas_FOUND)
+    if(@OpenMP_FOUND@) # OpenMP_FOUND
+        find_dependency( atlas REQUIRED COMPONENTS OMP OMP_Fortran )
+    else()
+        find_dependency( atlas REQUIRED )
+    endif()
+endif()
+
+if(NOT oops_FOUND)
+    find_dependency(oops REQUIRED)
+endif()
+
+if(NOT saber_FOUND)
+    find_dependency(saber REQUIRED)
+endif()
+
+if(NOT ioda_FOUND)
+    find_dependency(ioda REQUIRED)
+endif()
+
+if(NOT ufo_FOUND)
+    find_dependency(ufo REQUIRED)
+endif()
 
 #Export Fortran compiler version for checking module compatibility
 set(@PROJECT_NAME@_MODULES_Fortran_COMPILER_ID @CMAKE_Fortran_COMPILER_ID@)

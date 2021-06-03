@@ -72,9 +72,12 @@ list( APPEND mpasjedi_src_files
     )
 
 #Create target
+include(GNUInstallDirs)
 ecbuild_add_library( TARGET ${PROJECT_NAME}
                      SOURCES ${mpasjedi_src_files}
-                     INSTALL_HEADERS LISTED )
+                     INSTALL_HEADERS LISTED
+                     HEADER_DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+                     )
 
 #Link dependencies
 if(OpenMP_FOUND)
@@ -85,6 +88,7 @@ target_link_libraries( ${PROJECT_NAME} PUBLIC Boost::boost )
 target_link_libraries( ${PROJECT_NAME} PUBLIC MPAS::core::atmosphere )
 target_link_libraries( ${PROJECT_NAME} PUBLIC oops )
 target_link_libraries( ${PROJECT_NAME} PUBLIC saber )
+target_link_libraries( ${PROJECT_NAME} PUBLIC ioda )
 target_link_libraries( ${PROJECT_NAME} PUBLIC ufo )
 
 #Configure include directory layout for build-tree to match install-tree

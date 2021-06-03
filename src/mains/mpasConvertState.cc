@@ -12,8 +12,8 @@
 
 #include <ufo/instantiateObsFilterFactory.h>
 
-#include "MPASTraits.h"
 #include "mpasjedi/instantiateMPASVarChangeFactory.h"
+#include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);

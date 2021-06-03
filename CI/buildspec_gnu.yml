@@ -73,7 +73,7 @@ phases:
       - cd CI
 
       #  Set crtm branch name
-      - export CRTM_JEDI_BRANCH="v2.3-jedi"
+      - export CRTM_JEDI_BRANCH="release/crtm_jedi"
 
       - if [ "$CODEBUILD_GIT_BRANCH" = "develop" ];
         then export CODEBUILD_GIT_BRANCH_FORK="release-stable";
@@ -82,13 +82,6 @@ phases:
         export CODEBUILD_GIT_BRANCH_CRTM=${CODEBUILD_GIT_BRANCH};
         echo "CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH_FORK}";
         fi
-
-      ##  ecmwf repos
-      # atlas
-      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/atlas $CODEBUILD_GIT_BRANCH_FORK atlas /jcsda/mpas-bundle release-stable
-
-      #fckit
-      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/fckit $CODEBUILD_GIT_BRANCH_FORK fckit /jcsda/mpas-bundle release-stable
 
 
       ##  jedi core repos
@@ -109,7 +102,7 @@ phases:
 
       ##  internal repos
       #  mpas-model
-      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS-Model /jcsda/mpas-bundle release-stable
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS /jcsda/mpas-bundle release-stable
 
       #  mpas-jedi
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi $CODEBUILD_GIT_BRANCH mpasjedi /jcsda/mpas-bundle develop
