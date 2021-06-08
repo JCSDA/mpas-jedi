@@ -84,7 +84,7 @@ subroutine changevar(self, geom, xm, xg)
   type(field2DReal), pointer :: fieldr2_a, fieldr2_b
 
   ! reusable arrays
-  real(kind=kind_real), dimension(:), pointer :: ptrr1_a
+  real(kind=kind_real), dimension(:), pointer :: ptrr1_a, ptrr1_b
   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_a, ptrr2_b
   real(kind=kind_real), dimension(:,:), allocatable :: r2_a, r2_b
 
@@ -410,6 +410,11 @@ subroutine changevar(self, geom, xm, xg)
           !-land_type_index, vegetation_type_index, soil_type
           !-water_area_fraction, land_area_fraction, ice_area_fraction, surface_snow_area_fraction
           call xg%copy_from(geovar, CRTMSfcClassifyFields)
+
+        case ( var_sfc_wspeed ) !-surface_wind_speed
+          call xm%get('u10', ptrr1_a)
+          call xm%get('v10', ptrr1_b)
+          gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
 
 !! end surface variables
 

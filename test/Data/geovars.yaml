@@ -187,6 +187,9 @@ fields:
     mpas template field: u10
     mpas identity field: v10
 
+  - field name: surface_wind_speed
+    mpas template field: u10
+
   - field name: land_type_index
     mpas template field: ivgtyp
 
