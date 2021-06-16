@@ -343,15 +343,30 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
     xarray = range(len(xlabeltime))
     valuemin = np.amin(Stats)
     valuemax = np.amax(Stats)
-
+    # yonggangyu introduce epsilon and xi for plotting absolutely zero field,
+    # solving vmin, vcenter, vmax ascending order issue
+    epsilon  = 1.e-8
     if (valuemin > 0 or valuemax < 0):
         color = 'rainbow'
         plt.contourf(xarray,ylevels,Stats,40,vmin=valuemin, vmax=valuemax,cmap=color)
+        xi=-1
     else:
         cmap = 'coolwarm'
+        if ( -valuemin < epsilon and valuemax < epsilon ):
+            xi=1
+            valuemin = -epsilon
+            valuemax =  epsilon
+        elif ( -valuemin < epsilon and valuemax > epsilon ):
+            xi=2
+            valuemin = -epsilon
+        elif ( -valuemin > epsilon and valuemax < epsilon ):
+            xi=3
+            valuemax =  epsilon
+        else:
+            xi=4
+        #print('xi= '+str(xi)+' valuemin= ',str(valuemin)+' valuemax= ',str(valuemax))
         norm = matplotlib.colors.DivergingNorm(vmin=valuemin, vcenter=0, vmax=valuemax)
         plt.contourf(xarray,ylevels,Stats,40,vmin=valuemin, vmax=valuemax,norm=norm,cmap=cmap)
-
     xarray = range(len(xlabeltime))
     major_ticks = np.arange(0, 56, 5)
     ax1.set_yticks(major_ticks)
