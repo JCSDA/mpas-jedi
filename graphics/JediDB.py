@@ -80,7 +80,17 @@ class FileHandles():
       h.close()
 
   def varsINGroup(self, group):
-    return self.handles[0].varsINGroup(group)
+    # comprehensive list of variables in group
+    filevars = self.handles[0].varsINGroup(group)
+
+    # only include variables with finite data
+    varlist = []
+    for var in filevars:
+        grpVar = vu.IODAVarCtors[self.fileFormat](var, group)
+        var1D = self.var1DatLocs(grpVar)
+        if np.isfinite(var1D).sum() > 0: varlist.append(var)
+
+    return varlist
 
   def datatype(self, var):
     return self.handles[0].datatype(var)
