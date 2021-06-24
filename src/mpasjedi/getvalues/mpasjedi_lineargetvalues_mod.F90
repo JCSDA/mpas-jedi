@@ -147,7 +147,6 @@ subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
   integer :: jvar, jlev, ilev, jloc, nDims
   integer :: nCells, nlevels, nlocs, nlocsg
 
-  type (mpas_pool_type), pointer :: gFields_tl
   type (mpas_pool_data_type), pointer :: gdata
   type (mpas_pool_iterator_type) :: poolItr
   character (len=MAXVARLEN) :: geovar
@@ -158,9 +157,6 @@ subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
   ! ------------------------------
   nCells = geom % nCellsSolve
   nlocs = locs % nlocs() ! # of location for entire window
-
-  !write(*,*)'fill_geovals_tl: nCells, nlocs = : ',nCells, nlocs
-  !call interp_checks("tl", inc, locs, vars, gom)
 
   ! If no observations can early exit
   ! ---------------------------------
@@ -173,72 +169,10 @@ subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
   ! ------------------------------------------
   call locs%get_timemask(t1, t2, self%time_mask)
 
-  !write(0,*)'fill_geovals_tl: gom%nvar        : ',gom%nvar
-  !write(0,*)'fill_geovals_tl: gom%variables   : ',gom%variables
-  !write(0,*)'fill_geovals_tl: nlocs           : ',nlocs
-  !write(0,*)'fill_geovals_tl: size(self%time_mask) : ',size(self%time_mask)
-
-  gFields_tl => inc % subFields
-
-  ! Allocate and initialize output geovals
-  ! --------------------------------------
-  call mpas_pool_begin_iteration(gFields_tl)
-  do while ( mpas_pool_get_next_member(gFields_tl, poolItr) )
-    if (poolItr % memberType == MPAS_POOL_FIELD) then
-
-      geovar = trim(poolItr % memberName)
-      nDims = poolItr % nDims
-      call inc%get(geovar, gdata)
-
-      jvar = ufo_vars_getindex(gom%variables, geovar)
-      if ( jvar < 1 ) cycle
-
-      if (nDims == 1) then
-        gom%geovals(jvar)%nval = 1
-      else if (nDims == 2) then
-        gom%geovals(jvar)%nval = size(gdata%r2%array,1)
-      endif
-
-      allocateGeo = .true.
-      if ( allocated(gom%geovals(jvar)%vals) ) then
-        if ( size(gom%geovals(jvar)%vals,1) /= gom%geovals(jvar)%nval ) then
-          deallocate(gom%geovals(jvar)%vals)
-        else
-          allocateGeo = .false.
-        end if
-      endif
-
-      if ( allocateGeo ) then
-        allocate(gom%geovals(jvar)%vals(gom%geovals(jvar)%nval, gom%geovals(jvar)%nlocs))
-        gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
-      endif
-    endif
-  end do
-  do jvar=1,gom%nvar
-    if( .not. allocated(gom%geovals(jvar)%vals) )then
-      ! air_pressure is required for GNSSRO, but mpas-jedi does not have corresponding TL/AD
-      ! code in mpas2ufo_vars_mod.  Temporarily perform allocation here for excluded gom%variables.
-      ! TODO: move this allocation for 2D variables into loop over mpas_pool members (above)
-      !   Either
-      !   (1) add TL/AD for air_pressure if added as analysis variable and move
-      !       this allocation for 2D variables
-      !    OR
-      !   (2) implement increment variable change for mpas-jedi, including
-      !       dependencies of UFO TL/AD on non-analyzed variables
-      gom%geovals(jvar)%nval = geom%nVertLevels
-      allocate(gom%geovals(jvar)%vals(gom%geovals(jvar)%nval, gom%geovals(jvar)%nlocs))
-      gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
-      !write(message,*) "--> fill_geovals_tl: geoval is not allocated, ", gom%variables(jvar)
-      !call abor1_ftn(message)
-    endif
-  enddo
-  gom%linit = .true.
-
-
   ! TL of interpolate fields to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------------
-  call mpas_pool_begin_iteration(gFields_tl)
-  do while ( mpas_pool_get_next_member(gFields_tl, poolItr) )
+  call mpas_pool_begin_iteration(inc%subFields)
+  do while ( mpas_pool_get_next_member(inc%subFields, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
 
       geovar = trim(poolItr % memberName)
@@ -247,8 +181,6 @@ subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
 
       jvar = ufo_vars_getindex(gom%variables, geovar)
       if ( jvar < 1 ) cycle
-
-      !write(*,*) 'nDims, geovar =', nDims , geovar
 
       self%obs_field = MPAS_JEDI_ZERO_kr
 
@@ -291,8 +223,6 @@ subroutine fill_geovals_tl(self, geom, inc, t1, t2, locs, gom)
     endif
   end do
 
-  !write(*,*) '---- Leaving fill_geovals_tl ---'
-
 end subroutine fill_geovals_tl
 
 subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
@@ -310,7 +240,6 @@ subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
   integer :: jvar, jlev, ilev, jloc, nDims
   integer :: nCells, nlevels, nlocs, nlocsg
 
-  type (mpas_pool_type), pointer :: gFields_ad
   type (mpas_pool_data_type), pointer :: gdata
   type (mpas_pool_iterator_type) :: poolItr
   character (len=MAXVARLEN) :: geovar
@@ -335,12 +264,10 @@ subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
   ! zero out adjoint geovar fields
   call inc%zeros()
 
-  gFields_ad => inc % subFields
-
   ! Adjoint of interpolate fields to obs locations using pre-calculated weights
   ! ---------------------------------------------------------------------------
-  call mpas_pool_begin_iteration(gFields_ad)
-  do while ( mpas_pool_get_next_member(gFields_ad, poolItr) )
+  call mpas_pool_begin_iteration(inc%subFields)
+  do while ( mpas_pool_get_next_member(inc%subFields, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
 
       geovar = trim(poolItr % memberName)
@@ -391,8 +318,6 @@ subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
 
     endif ! poolItr % memberType == MPAS_POOL_FIELD
   end do
-
-  !write(*,*) '---- Leaving fill_geovals_ad ---'
 
 end subroutine fill_geovals_ad
 

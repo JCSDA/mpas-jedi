@@ -139,6 +139,29 @@ end subroutine c_mpas_geo_is_equal
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_geo_vars_nlevels_c(c_key_self, c_vars, c_nvars, c_nlevels) &
+      bind(c,name='mpas_geo_vars_nlevels_f90')
+use iso_c_binding
+use mpas_geom_mod, only: mpas_geom, mpas_geom_registry
+use oops_variables_mod, only: oops_variables
+implicit none
+integer(c_int), intent(in) :: c_key_self !< Geometry
+type(c_ptr), value, intent(in) :: c_vars !< Variables
+integer(c_size_t), intent(in) :: c_nvars !< size of Variables
+integer(c_size_t), intent(inout) :: c_nlevels(c_nvars) !< level counts
+
+type(mpas_geom), pointer :: self
+type(oops_variables) :: vars
+
+call mpas_geom_registry%get(c_key_self, self)
+vars = oops_variables(c_vars)
+call self%nlevels(vars, c_nvars, c_nlevels)
+
+end subroutine mpas_geo_vars_nlevels_c
+
+! ------------------------------------------------------------------------------
+
+
 subroutine c_mpas_geo_info(c_key_self, c_nCellsGlobal, c_nCells, c_nCellsSolve, &
                                        c_nEdgesGlobal, c_nEdges, c_nEdgesSolve, &
                                        c_nVertLevels, c_nVertLevelsP1) &

@@ -188,10 +188,8 @@ void IncrementMPAS::write(const eckit::Configuration & config) const {
 // -----------------------------------------------------------------------------
 size_t IncrementMPAS::serialSize() const {
   // Field
-  size_t nn = 0;
-  int inc_size;
-  mpas_increment_serial_size_f90(keyInc_, inc_size);
-  nn += inc_size;
+  size_t nn;
+  mpas_increment_serial_size_f90(keyInc_, nn);
 
   // Magic value
   nn += 1;
@@ -205,13 +203,10 @@ size_t IncrementMPAS::serialSize() const {
 constexpr double SerializeCheckValue = -54321.98765;
 void IncrementMPAS::serialize(std::vector<double> & vect) const {
   // Serialize the field
-  int inc_size;
-
-  mpas_increment_serial_size_f90(keyInc_, inc_size);
-
-  std::vector<double> vect_field(inc_size, 0.0);
-
-  mpas_increment_serialize_f90(keyInc_, inc_size, vect_field.data());
+  size_t nn;
+  mpas_increment_serial_size_f90(keyInc_, nn);
+  std::vector<double> vect_field(nn, 0.0);
+  mpas_increment_serialize_f90(keyInc_, nn, vect_field.data());
   vect.insert(vect.end(), vect_field.begin(), vect_field.end());
 
   // Magic value placed in serialization; used to validate deserialization

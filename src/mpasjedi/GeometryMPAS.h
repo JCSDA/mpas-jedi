@@ -11,12 +11,14 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "eckit/mpi/Comm.h"
 
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 
+#include "oops/base/Variables.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
@@ -50,6 +52,8 @@ class GeometryMPAS : public util::Printable,
     {return atlasFieldSet_.get();}
 
   bool isEqual(const GeometryMPAS &) const;
+
+  std::vector<size_t> variableSizes(const oops::Variables &) const;
 
  private:
   GeometryMPAS & operator=(const GeometryMPAS &);

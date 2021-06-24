@@ -12,8 +12,11 @@ use fckit_log_module, only: fckit_log
 use fckit_mpi_module, only: fckit_mpi_comm
 use iso_c_binding
 
+!oops
+use oops_variables_mod, only: oops_variables
+
 !ufo
-use ufo_vars_mod, only: MAXVARLEN
+use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
 
 !MPAS-Model
 use mpas_derived_types
@@ -32,9 +35,8 @@ implicit none
 private
 public :: mpas_geom, &
           geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
-          geo_set_atlas_lonlat, geo_fill_atlas_fieldset
-!          field_is_templated, template_fieldname, &
-!          field_has_identity, identity_fieldname
+          geo_set_atlas_lonlat, geo_fill_atlas_fieldset, pool_has_field, &
+          getSolveDimSizes, getSolveDimNames, getVertLevels
 
 public :: mpas_geom_registry
 
@@ -96,6 +98,9 @@ type :: mpas_geom
    procedure, public :: template => template_fieldname
    procedure, public :: has_identity => field_has_identity
    procedure, public :: identity => identity_fieldname
+   generic, public :: nlevels => variables_nlevels, var_nlevels
+   procedure :: variables_nlevels
+   procedure :: var_nlevels
 
 end type mpas_geom
 
@@ -106,6 +111,11 @@ end type idcounter
 type(idcounter), allocatable :: geom_count(:)
 
 character(len=1024) :: message
+
+character(len=MAXVARLEN), parameter :: &
+   MPASVerticalCoordinates(6) = &
+      [character(len=MAXVARLEN) :: 'nVertLevels', 'nVertLevelsP1', &
+         'nVertLevelsP2', 'nSoilLevels', 'nOznLevels', 'nAerLevels']
 
 #define LISTED_TYPE mpas_geom
 
@@ -433,7 +443,7 @@ subroutine geo_deallocate_nonda_fields(domain)
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
 
-   integer, parameter :: num_da_fields = 35
+   integer, parameter :: num_da_fields = 36
    integer            :: i
    character (len=22), allocatable :: poolname_a(:), poolname_b(:)
    character (len=22), allocatable :: da_fieldnames(:)
@@ -485,6 +495,7 @@ subroutine geo_deallocate_nonda_fields(domain)
    da_fieldnames(33)='smois'
    da_fieldnames(34)='tslb'
    da_fieldnames(35)='vorticity'
+   da_fieldnames(36)='w'
 
    do i=1,size(poolname_a)
       mem => pool_get_member(domain % blocklist % structs, poolname_a(i), MPAS_POOL_SUBPOOL)
@@ -505,7 +516,7 @@ subroutine geo_deallocate_nonda_fields(domain)
          do while ( mpas_pool_get_next_member(pool_b, poolItr_b) )
 
             if (poolItr_b % memberType == MPAS_POOL_FIELD .and. poolItr_b % dataType == MPAS_POOL_REAL .and. &
-               all(da_fieldnames .ne. trim(poolItr_b % memberName))) then
+               ufo_vars_getindex(da_fieldnames, poolItr_b % memberName) < 1) then
 
                if (poolItr_b % nDims == 0) then
                   call mpas_pool_get_field(pool_b,trim(poolItr_b % memberName),field0d)
@@ -805,6 +816,297 @@ function identity_fieldname(self, fieldname) result(identity)
    write(message,*) '--> mpas_geom % identity_fieldname: fieldname does not have identity, ',fieldname
    call abor1_ftn(message)
 end function identity_fieldname
+
+! ------------------------------------------------------------------------------
+
+!***********************************************************************
+!
+!  subroutine pool_has_field
+!
+!> \brief Check for presence of field in pool
+!
+!-----------------------------------------------------------------------
+function pool_has_field(pool, field) result(has)
+
+   implicit none
+
+   type(mpas_pool_type), pointer, intent(in) :: pool
+   character(len=*), intent(in) :: field
+   type(mpas_pool_iterator_type) :: poolItr
+   logical :: has
+
+   has = .false.
+
+   call mpas_pool_begin_iteration(pool)
+
+   do while ( mpas_pool_get_next_member(pool, poolItr) )
+      if (poolItr % memberType == MPAS_POOL_FIELD .and. &
+          trim(field) == trim(poolItr % memberName) ) then
+         has = .true.
+         exit
+      endif
+   end do
+
+end function pool_has_field
+
+
+!*******************************************************************************
+!
+! function isDecomposed
+!
+!> \brief whether horizontal dimension name is decomposed across MPI tasks
+!
+!*******************************************************************************
+
+logical function isDecomposed(dimName)
+   implicit none
+   character(len=*), intent(in) :: dimName
+   if (trim(dimName) == 'nCells') then
+      isDecomposed = .true.
+      return
+   else if (trim(dimName) == 'nEdges') then
+      isDecomposed = .true.
+      return
+   else if (trim(dimName) == 'nVertices') then
+      isDecomposed = .true.
+      return
+   else
+      isDecomposed = .false.
+      return
+   end if
+end function isDecomposed
+
+
+!***********************************************************************
+!
+!  function getSolveDimNames
+!
+!> \brief   Returns an array with the dimension names of a pool field member
+!
+!-----------------------------------------------------------------------
+
+function getSolveDimNames(pool, key) result(solveDimNames)
+
+   implicit none
+
+   ! Arguments
+   type(mpas_pool_type), pointer, intent(in) :: pool
+   character(len=*), intent(in) :: key
+
+   character (len=StrKIND), allocatable :: solveDimNames(:)
+
+   type(mpas_pool_data_type), pointer :: dptr
+   character (len=StrKIND) :: dimName
+   integer :: id
+
+   dptr => pool_get_member(pool, key, MPAS_POOL_FIELD)
+
+   if (.not. associated(dptr)) then
+      write(message,*)'--> getSolveDimNames: problem finding ',trim(key), &
+                  ' MPAS_POOL_FIELD in pool'
+      call abor1_ftn(message)
+   end if
+
+   allocate(solveDimNames(dptr%contentsDims))
+
+   do id = 1, dptr%contentsDims
+
+      ! fields with only one time level
+      !real
+      if (associated(dptr%r1)) then
+         dimName = trim(dptr%r1%dimNames(id))
+      else if (associated(dptr%r2)) then
+         dimName = trim(dptr%r2%dimNames(id))
+      else if (associated(dptr%r3)) then
+         dimName = trim(dptr%r3%dimNames(id))
+      !integer
+      else if (associated(dptr%i1)) then
+         dimName = trim(dptr%i1%dimNames(id))
+      else if (associated(dptr%i2)) then
+         dimName = trim(dptr%i2%dimNames(id))
+      else if (associated(dptr%i3)) then
+         dimName = trim(dptr%i3%dimNames(id))
+
+      ! fields with multiple time levels (use first time level)
+      !real
+      else if (associated(dptr%r1a)) then
+         dimName = trim(dptr%r1a(1)%dimNames(id))
+      else if (associated(dptr%r2a)) then
+         dimName = trim(dptr%r2a(1)%dimNames(id))
+      else if (associated(dptr%r3a)) then
+         dimName = trim(dptr%r3a(1)%dimNames(id))
+      !integer
+      else if (associated(dptr%i1a)) then
+         dimName = trim(dptr%i1a(1)%dimNames(id))
+      else if (associated(dptr%i2a)) then
+         dimName = trim(dptr%i2a(1)%dimNames(id))
+      else if (associated(dptr%i3a)) then
+         dimName = trim(dptr%i3a(1)%dimNames(id))
+
+      else
+         write(message,*) '--> getSolveDimNames: unsupported field type for key,&
+            & contentsDims, contentsType = ',trim(key),',',dptr%contentsDims, &
+            ',',dptr%contentsType
+         call abor1_ftn(message)
+      end if
+
+      if (isDecomposed(dimName)) then
+         solveDimNames(id) = trim(dimName)//'Solve'
+      else
+         solveDimNames(id) = trim(dimName)
+      end if
+   end do
+end function getSolveDimNames
+
+
+!***********************************************************************
+!
+!  function getSolveDimSizes
+!
+!> \brief   Returns an array with the dimension sizes of a pool field member
+!
+!> \details
+!    In some cases, the pool containing the field will not contain any
+!    dimensions.  Then the optional dimPool argument can be used.
+!
+!-----------------------------------------------------------------------
+
+function getSolveDimSizes(pool, key, dimPool) result(solveDimSizes)
+
+   implicit none
+
+   ! Arguments
+   type (mpas_pool_type), pointer, intent(in) :: pool
+   character(len=*), intent(in) :: key
+   type (mpas_pool_type), pointer, optional, intent(in) :: dimPool
+
+   integer, allocatable :: solveDimSizes(:)
+
+   character (len=StrKIND), allocatable :: dimNames(:)
+   integer :: id
+   integer, pointer :: dimSize
+
+   dimNames = getSolveDimNames(pool, key)
+
+   allocate(solveDimSizes(size(dimNames)))
+
+   do id = 1, size(dimNames)
+      if (present(dimPool)) then
+         call mpas_pool_get_dimension(dimPool, dimNames(id), dimSize)
+      else
+         call mpas_pool_get_dimension(pool, dimNames(id), dimSize)
+      end if
+
+      if (associated(dimSize)) then
+         solveDimSizes(id) = dimSize
+      else
+         write(message,*)'--> getSolveDimSizes: ',trim(dimNames(id)), &
+                     ' not available'
+         call abor1_ftn(message)
+      end if
+   end do
+
+   deallocate(dimNames)
+
+end function getSolveDimSizes
+
+
+!***********************************************************************
+!
+!  function getSolveDimSizes
+!
+!> \brief   Returns the number of vertical levels for a pool field member
+!
+!> \details
+!    In some cases, the pool containing the field will not contain any
+!    dimensions.  Then the optional dimPool argument can be used.
+!
+!-----------------------------------------------------------------------
+
+function getVertLevels(pool, key, dimPool) result(nlevels)
+
+   ! Arguments
+   type (mpas_pool_type), pointer, intent(in) :: pool
+   character(len=*), intent(in) :: key
+   type (mpas_pool_type), pointer, optional, intent(in) :: dimPool
+
+   integer :: nlevels, id
+   integer, allocatable :: dimSizes(:)
+   character (len=StrKIND), allocatable :: dimNames(:)
+
+   ! assume default value of 1, unless stated otherwise in field attributes
+   nlevels = 1
+
+   dimNames = getSolveDimNames(pool, key)
+   if (present(dimPool)) then
+      dimSizes = getSolveDimSizes(pool, key, dimPool)
+   else
+      dimSizes = getSolveDimSizes(pool, key)
+   end if
+   do id = 1, size(dimSizes)
+      ! check if dimNames(id) is one of the available vertical coordinates
+      if (ufo_vars_getindex(MPASVerticalCoordinates, dimNames(id)) > 0) then
+         nlevels = dimSizes(id)
+      end if
+   end do
+
+   deallocate(dimNames, dimSizes)
+
+end function getVertLevels
+
+! ------------------------------------------------------------------------------
+
+subroutine var_nlevels(self, var, nlevels)
+
+   implicit none
+
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: var
+   integer, intent(out) :: nlevels
+
+   character(len=StrKIND) :: poolVar
+   type(mpas_pool_type), pointer :: allFields
+
+   allFields => self % domain % blocklist % allFields
+
+   if (pool_has_field(allFields, var)) then
+      poolVar = var
+   else if (self % is_templated(var)) then
+      poolVar = self%template(var)
+      if (.not.pool_has_field(allFields, poolVar)) then
+         write(message,*)'--> vars_nlevels: ',trim(poolVar), &
+                     ' not available in MPAS domain'
+         call abor1_ftn(message)
+      end if
+   else
+      write(message,*)'--> vars_nlevels: ',trim(var), &
+                  ' not available in MPAS domain or self % templated_fields'
+      call abor1_ftn(message)
+   end if
+
+   nlevels = getVertLevels(allFields, poolVar, self % domain % blocklist % dimensions)
+
+end subroutine var_nlevels
+
+! ------------------------------------------------------------------------------
+
+subroutine variables_nlevels(self, vars, nv, nlevels)
+
+   implicit none
+
+   class(mpas_geom), intent(in) :: self
+   type(oops_variables), intent(in) :: vars
+   integer(c_size_t), intent(in) :: nv
+   integer(c_size_t), intent(inout) :: nlevels(nv)
+
+   integer :: ivar, nn
+
+   do ivar = 1, nv
+      call self%nlevels(vars%variable(ivar), nn)
+      nlevels(ivar) = int(nn, c_size_t)
+   end do
+
+end subroutine variables_nlevels
 
 ! ------------------------------------------------------------------------------
 

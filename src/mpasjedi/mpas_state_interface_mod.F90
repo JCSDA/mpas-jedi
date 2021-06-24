@@ -9,26 +9,24 @@ module mpas_state_interface_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
+
+!oops
+use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod
+
+!ufo
+use ufo_vars_mod, only: ufo_vars_getindex
+
+!MPAS-Model
+use mpas_kind_types, only: StrKIND
+use mpas_pool_routines, only: mpas_pool_get_config
 
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
 use mpas_state_mod
 use mpas_fields_mod
-
-!MPAS-Model
-use mpas_kind_types, only: StrKIND
-use mpas_pool_routines, only: mpas_pool_get_config
-
-!State read/write/init
-use datetime_mod
-
-!UFO
-use ufo_vars_mod
-use ufo_geovals_mod
-use ufo_geovals_mod_c, only: ufo_geovals_registry
 
 implicit none
 private
@@ -330,8 +328,8 @@ subroutine mpas_state_serial_size_c(c_key_self,c_vsize) &
 implicit none
 
 ! Passed variables
-integer(c_int),intent(in) :: c_key_self !< State
-integer(c_int),intent(out) :: c_vsize   !< Size
+integer(c_int),intent(in) :: c_key_self  !< State
+integer(c_size_t),intent(out) :: c_vsize !< Size
 
 type(mpas_fields),pointer :: self
 
@@ -349,7 +347,7 @@ implicit none
 
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self           !< State
-integer(c_int),intent(in) :: c_vsize              !< Size
+integer(c_size_t),intent(in) :: c_vsize           !< Size
 real(c_double),intent(out) :: c_vect_inc(c_vsize) !< Vector
 
 type(mpas_fields),pointer :: self
@@ -368,9 +366,9 @@ implicit none
 
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self          !< State
-integer(c_int),intent(in) :: c_vsize             !< Size
+integer(c_size_t),intent(in) :: c_vsize          !< Size
 real(c_double),intent(in) :: c_vect_inc(c_vsize) !< Vector
-integer(c_int), intent(inout):: c_index          !< Index
+integer(c_size_t), intent(inout):: c_index       !< Index
 
 type(mpas_fields),pointer :: self
 

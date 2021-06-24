@@ -203,7 +203,6 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
   integer, allocatable ::obs_field_int(:,:)
   real(kind=kind_real), allocatable :: mod_field(:,:), obs_field(:,:)
 
-  type(mpas_pool_type), pointer :: gFields
   character(len=MAXVARLEN) :: geovar
 
   type(mpas_pool_iterator_type) :: poolItr
@@ -211,7 +210,6 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
   real(kind=kind_real), pointer :: ptrr2(:,:)
   integer, pointer :: ptri1(:)
   integer, pointer :: ptri2(:,:)
-  logical :: allocateGeo
 
   ! Get grid dimensions and checks
   ! ------------------------------
@@ -225,61 +223,10 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
     return
   endif
 
-  !TODO: implement interp_checks if still necessary
-  !call interp_checks("nl", state, locs, gom%variables, gom)
-
   ! Get mask for locations in this time window
   ! ------------------------------------------
   allocate(time_mask(nlocs))
   call locs%get_timemask(t1, t2, time_mask)
-
-  !write(0,*)'fill_geovals: nlocs           : ',nlocs
-  !write(0,*)'fill_geovals: size(time_mask) : ',size(time_mask)
-
-  ! Allocate and initialize output geovals
-  ! --------------------------------------
-  gFields => state % subFields
-  call mpas_pool_begin_iteration(gFields)
-
-  do while ( mpas_pool_get_next_member(gFields, poolItr) )
-    if (poolItr % memberType == MPAS_POOL_FIELD) then
-
-      geovar = trim(poolItr % memberName)
-      nDims = poolItr % nDims
-
-      jvar = ufo_vars_getindex(gom%variables, geovar)
-      if ( jvar < 1 ) cycle
-
-      if (nDims == 1) then
-        gom%geovals(jvar)%nval = 1
-      else if (nDims == 2) then
-        if (poolItr % dataType == MPAS_POOL_INTEGER) then
-          call state%get(geovar, ptri2)
-          gom%geovals(jvar)%nval = size(ptri2,1)
-        else if (poolItr % dataType == MPAS_POOL_REAL) then
-          call state%get(geovar, ptrr2)
-          gom%geovals(jvar)%nval = size(ptrr2,1)
-        endif
-      endif
-
-      allocateGeo = .true.
-      if ( allocated(gom%geovals(jvar)%vals) ) then
-        if ( size(gom%geovals(jvar)%vals,1) /= gom%geovals(jvar)%nval ) then
-          deallocate(gom%geovals(jvar)%vals)
-        else
-          allocateGeo = .false.
-        end if
-      endif
-
-      if ( allocateGeo ) then
-        allocate(gom%geovals(jvar)%vals(gom%geovals(jvar)%nval, gom%geovals(jvar)%nlocs))
-        gom%geovals(jvar)%vals = MPAS_JEDI_ZERO_kr
-      endif
-
-    endif
-  end do
-  gom%linit = .true.
-
 
   ! Interpolate state to obs locations using pre-calculated weights
   ! ----------------------------------------------------------------
@@ -288,8 +235,8 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
   allocate(obs_field(nlocs,maxlevels))
   allocate(obs_field_int(nlocs,1))
 
-  call mpas_pool_begin_iteration(gFields)
-  do while ( mpas_pool_get_next_member(gFields, poolItr) )
+  call mpas_pool_begin_iteration(state%subFields)
+  do while ( mpas_pool_get_next_member(state%subFields, poolItr) )
     if (poolItr % memberType == MPAS_POOL_FIELD) then
 
       geovar = trim(poolItr % memberName)
@@ -298,7 +245,6 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
       jvar = ufo_vars_getindex(gom%variables, geovar)
       if ( jvar < 1 ) cycle
 
-      !write(*,*) 'poolItr % nDims , geovar =', poolItr % nDims, geovar
       if (poolItr % dataType == MPAS_POOL_REAL) then
         nlevels = gom%geovals(jvar)%nval
 
@@ -344,7 +290,6 @@ subroutine fill_geovals(self, geom, state, t1, t2, locs, gom)
           call abor1_ftn(message)
         endif
 
-        !- allocate geoval & put values for geovar
         jvar = ufo_vars_getindex(gom%variables, poolItr % memberName)
         if (self%use_bump_interp) then
           call self%integer_interpolation_bump(nCells, nlocs, &

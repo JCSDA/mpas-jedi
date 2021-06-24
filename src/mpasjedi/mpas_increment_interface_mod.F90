@@ -10,6 +10,9 @@ module mpas_increment_interface_mod
 use atlas_module, only: atlas_fieldset
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
+
+!oops
+use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod
 
@@ -17,14 +20,6 @@ use oops_variables_mod
 use mpas_geom_mod
 use mpas_increment_mod
 use mpas_fields_mod
-
-!Increment read/write
-use datetime_mod
-
-!GetValuesTL/AD
-use ufo_vars_mod
-use ufo_geovals_mod
-use ufo_geovals_mod_c, only: ufo_geovals_registry
 
 implicit none
 private
@@ -502,8 +497,8 @@ subroutine mpas_increment_serial_size_c(c_key_self,c_vsize) &
 implicit none
 
 ! Passed variables
-integer(c_int),intent(in) :: c_key_self !< Increment
-integer(c_int),intent(out) :: c_vsize   !< Size
+integer(c_int),intent(in) :: c_key_self  !< Increment
+integer(c_size_t),intent(out) :: c_vsize !< Size
 
 type(mpas_fields),pointer :: self
 
@@ -521,7 +516,7 @@ implicit none
 
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self           !< Increment
-integer(c_int),intent(in) :: c_vsize              !< Size
+integer(c_size_t),intent(in) :: c_vsize           !< Size
 real(c_double),intent(out) :: c_vect_inc(c_vsize) !< Vector
 
 type(mpas_fields),pointer :: self
@@ -541,9 +536,9 @@ implicit none
 
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self          !< Increment
-integer(c_int),intent(in) :: c_vsize             !< Size
+integer(c_size_t),intent(in) :: c_vsize          !< Size
 real(c_double),intent(in) :: c_vect_inc(c_vsize) !< Vector
-integer(c_int), intent(inout):: c_index          !< Index
+integer(c_size_t), intent(inout):: c_index       !< Index
 
 type(mpas_fields),pointer :: self
 

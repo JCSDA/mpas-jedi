@@ -84,6 +84,8 @@ extern "C" {
                                         atlas::field::FieldSetImpl *);
   void mpas_geo_clone_f90(F90geom &, const F90geom &);
   void mpas_geo_is_equal_f90(bool &, const F90geom &, const F90geom &);
+  void mpas_geo_vars_nlevels_f90(const F90geom &, const oops::Variables &,
+                                 const std::size_t &, std::size_t &);
   void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
                          int &, int &, int &);
   void mpas_geo_delete_f90(F90geom &);

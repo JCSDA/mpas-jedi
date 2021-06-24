@@ -70,6 +70,15 @@ bool GeometryMPAS::isEqual(const GeometryMPAS & other) const {
   return isEqual;
 }
 // -----------------------------------------------------------------------------
+std::vector<size_t> GeometryMPAS::variableSizes(const oops::Variables & vars) const {
+  // vector of level counts
+  std::vector<size_t> varSizes(vars.size());
+
+  mpas_geo_vars_nlevels_f90(keyGeom_, vars, vars.size(), varSizes[0]);
+
+  return varSizes;
+}
+// -----------------------------------------------------------------------------
 void GeometryMPAS::print(std::ostream & os) const {
   int nCellsGlobal;
   int nCells;

@@ -115,10 +115,8 @@ StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
 // -----------------------------------------------------------------------------
 size_t StateMPAS::serialSize() const {
   // Field
-  size_t nn = 0;
-  int state_size;
-  mpas_state_serial_size_f90(keyState_, state_size);
-  nn += state_size;
+  size_t nn;
+  mpas_state_serial_size_f90(keyState_, nn);
 
   // Magic factor
   nn += 1;
@@ -132,10 +130,8 @@ size_t StateMPAS::serialSize() const {
 constexpr double SerializeCheckValue = -54321.98765;
 void StateMPAS::serialize(std::vector<double> & vect) const {
   // Serialize the field
-  int state_size;
   size_t nn;
-  mpas_state_serial_size_f90(keyState_, state_size);
-  nn = state_size;
+  mpas_state_serial_size_f90(keyState_, nn);
   std::vector<double> vect_field(nn, 0);
   mpas_state_serialize_f90(keyState_, nn, vect_field.data());
   vect.insert(vect.end(), vect_field.begin(), vect_field.end());

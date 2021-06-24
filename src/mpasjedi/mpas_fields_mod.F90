@@ -7,6 +7,7 @@ module mpas_fields_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only : fckit_log
+use iso_c_binding
 
 !oops
 use datetime_mod
@@ -43,7 +44,6 @@ implicit none
 private
 
 public :: mpas_fields, mpas_fields_registry, &
-          interp_checks, &
           create_fields, delete_fields, &
           copy_fields, copy_pool, &
           update_diagnostic_fields, &
@@ -684,47 +684,6 @@ end subroutine dot_prod_
 
 ! ------------------------------------------------------------------------------
 
-subroutine interp_checks(cop, fld, locs, vars, gom)
-
-   implicit none
-   character(len=2),     intent(in) :: cop
-   class(mpas_fields),   intent(in) :: fld
-   type(ufo_locations),  intent(in) :: locs
-   type(oops_variables), intent(in) :: vars
-   type(ufo_geovals),    intent(in) :: gom
-   integer :: jvar
-   character(len=26) :: cinfo
-
-   cinfo="mpas_fields:checks "//cop//" : "
-
-   !Check things are the sizes we expect
-   !------------------------------------
-   if( gom%nvar .ne. vars%nvars() )then
-      call abor1_ftn(cinfo//"nvar wrong size")
-   endif
-   if( .not. allocated(gom%geovals) )then
-      call abor1_ftn(cinfo//"geovals unallocated")
-   endif
-   if( size(gom%geovals) .ne. vars%nvars() )then
-      call abor1_ftn(cinfo//"geovals wrong size")
-   endif
-   if (cop/="tl" .and. cop/='nl') then !BJJ or cop='ad'.   why only check ad??? because ad is set/allocated in UFO side ??
-                                                           ! also, the dimension is not general for all possible geovals.
-   if (.not.gom%linit) then
-      call abor1_ftn(cinfo//"geovals not initialized")
-   endif
-   if (.not.allocated(gom%geovals(jvar)%vals)) then
-     call abor1_ftn(cinfo//"vals not allocated")
-   endif
-
-   endif
-
-!   write(*,*)'--> interp_checks: ',cinfo,' done'
-
-end subroutine interp_checks
-
-! ------------------------------------------------------------------------------
-
 !> \brief Populates subfields of self using rhs
 !!
 !! \details **interpolate_fields** This subroutine is called when creating
@@ -785,7 +744,7 @@ subroutine interpolate_fields(self,rhs)
         interp_in(:,1) = r1d_ptr(1:rhs_nCells)
       endif
     else if (poolItr % nDims == 2) then
-      rhsDims = getSolveDimensions(rhs%subFields, poolItr)
+      rhsDims = getSolveDimSizes(rhs%subFields, poolItr%memberName)
       nlevels = rhsDims(1)
       if (nlevels > maxlevels) then
         write(message,*) '--> interpolate_fields: nlevels > maxlevels, ', nlevels, maxlevels
@@ -927,11 +886,11 @@ subroutine serial_size(self, vsize)
 
    ! Passed variables
    class(mpas_fields),intent(in) :: self
-   integer,intent(out) :: vsize !< Size
+   integer(c_size_t),intent(out) :: vsize !< Size
 
    ! Local variables
    type (mpas_pool_iterator_type) :: poolItr
-   integer, allocatable :: solveDims(:)
+   integer, allocatable :: dimSizes(:)
 
    ! Initialize
    vsize = 0
@@ -939,9 +898,9 @@ subroutine serial_size(self, vsize)
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
-         solveDims = getSolveDimensions(self%subFields, poolItr)
-         vsize = vsize + product(solveDims)
-         deallocate(solveDims)
+         dimSizes = getSolveDimSizes(self%subFields, poolItr%memberName)
+         vsize = vsize + product(dimSizes)
+         deallocate(dimSizes)
       endif
    enddo
 
@@ -954,14 +913,14 @@ subroutine serialize_fields(self, vsize, vect_inc)
    implicit none
 
    ! Passed variables
-   class(mpas_fields),intent(in) :: self             !< Increment
-   integer,intent(in) :: vsize                      !< Size
-   real(kind_real),intent(out) :: vect_inc(vsize)   !< Vector
+   class(mpas_fields),intent(in) :: self          !< Increment
+   integer(c_size_t),intent(in) :: vsize          !< Size
+   real(kind_real),intent(out) :: vect_inc(vsize) !< Vector
 
    ! Local variables
    integer :: index, nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
-   integer, allocatable :: solveDims(:)
+   integer, allocatable :: dimSizes(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
@@ -974,9 +933,9 @@ subroutine serialize_fields(self, vsize, vect_inc)
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
-         solveDims = getSolveDimensions(self%subFields, poolItr)
+         dimSizes = getSolveDimSizes(self%subFields, poolItr%memberName)
          if (poolItr % nDims == 1) then
-            nhoriz = solveDims(1)
+            nhoriz = dimSizes(1)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
                do hh = 1, nhoriz
@@ -991,8 +950,8 @@ subroutine serialize_fields(self, vsize, vect_inc)
                enddo
             endif
          elseif (poolItr % nDims == 2) then
-            nvert = solveDims(1)
-            nhoriz = solveDims(2)
+            nvert = dimSizes(1)
+            nhoriz = dimSizes(2)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
                do vv = 1, nvert
@@ -1014,7 +973,7 @@ subroutine serialize_fields(self, vsize, vect_inc)
             write(message,*) '--> serialize_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(message)
          endif
-         deallocate(solveDims)
+         deallocate(dimSizes)
       endif
    enddo
 
@@ -1027,15 +986,15 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
    implicit none
 
    ! Passed variables
-   class(mpas_fields),intent(inout) :: self               !< Increment
-   integer,intent(in) :: vsize                           !< Size
-   real(kind_real),intent(in) :: vect_inc(vsize)         !< Vector
-   integer,intent(inout) :: index                        !< Index
+   class(mpas_fields),intent(inout) :: self      !< Increment
+   integer(c_size_t),intent(in) :: vsize         !< Size
+   real(kind_real),intent(in) :: vect_inc(vsize) !< Vector
+   integer(c_size_t),intent(inout) :: index      !< Index
 
    ! Local variables
    integer :: nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
-   integer, allocatable :: solveDims(:)
+   integer, allocatable :: dimSizes(:)
 
    real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
    real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
@@ -1045,9 +1004,9 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
    call mpas_pool_begin_iteration(self%subFields)
    do while ( mpas_pool_get_next_member(self%subFields, poolItr) )
       if (poolItr % memberType == MPAS_POOL_FIELD) then
-         solveDims = getSolveDimensions(self%subFields, poolItr)
+         dimSizes = getSolveDimSizes(self%subFields, poolItr%memberName)
          if (poolItr % nDims == 1) then
-            nhoriz = solveDims(1)
+            nhoriz = dimSizes(1)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
                do hh = 1, nhoriz
@@ -1062,8 +1021,8 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
                enddo
             endif
          elseif (poolItr % nDims == 2) then
-            nvert = solveDims(1)
-            nhoriz = solveDims(2)
+            nvert = dimSizes(1)
+            nhoriz = dimSizes(2)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
                do vv = 1, nvert
@@ -1085,7 +1044,7 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
             write(message,*) '--> deserialize_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
             call abor1_ftn(message)
          endif
-         deallocate(solveDims)
+         deallocate(dimSizes)
       endif
    enddo
 
