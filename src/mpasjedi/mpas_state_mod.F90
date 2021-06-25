@@ -71,10 +71,10 @@ subroutine add_incr(self, increment)
 
    integer :: ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
-   type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_sh, fld2d_uRz, fld2d_uRm, &
-                                  fld2d_th, fld2d_qv, fld2d_rho, fld2d_u, fld2d_u_inc, &
-                                  fld2d_pb, fld2d_pp
-   type (field1DReal), pointer :: fld1d_ps
+   type (field2DReal), pointer :: fld2d_pb, fld2d_u, fld2d_u_inc, fld2d_uRm, fld2d_uRz
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_qv, ptrr2_sh
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_p, ptrr2_rho, ptrr2_t, ptrr2_th, ptrr2_pp
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ps
 
    ! Difference with self_add other is that self%subFields can contain extra fields
    ! beyond increment%subFields and the resolution of increment can be different.
@@ -96,9 +96,9 @@ subroutine add_incr(self, increment)
       ! note: nonlinear COV
       if ( all(self%has(moistureFields)) .and. &
            increment%has('spechum') .and. .not.increment%has('qv')) then
-         call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
-         call mpas_pool_get_field(self%subFields, 'spechum', fld2d_sh)
-         call q_to_w( fld2d_sh%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid) )
+         call self%get(     'qv', ptrr2_qv)
+         call self%get('spechum', ptrr2_sh)
+         call q_to_w( ptrr2_sh(:,1:ngrid), ptrr2_qv(:,1:ngrid) )
       endif
 
       ! Enforce a hydrostatic balance to diagnose 3D pressure,
@@ -108,26 +108,25 @@ subroutine add_incr(self, increment)
            all(self%has(modelThermoFields)) .and. &
            all(increment%has(analysisThermoFields)) .and. &
            .not. all(increment%has(modelThermoFields)) ) then
-         call mpas_pool_get_field(self%subFields, 'qv', fld2d_qv)
-         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
-         call mpas_pool_get_field(self%subFields, 'rho', fld2d_rho)
-         call mpas_pool_get_field(self%subFields, 'surface_pressure', fld1d_ps)
-         call mpas_pool_get_field(self%subFields, 'temperature', fld2d_t)
-         call mpas_pool_get_field(self%subFields, 'theta', fld2d_th)
+         call self%get(              'qv', ptrr2_qv)
+         call self%get(        'pressure', ptrr2_p)
+         call self%get(             'rho', ptrr2_rho)
+         call self%get('surface_pressure', ptrr1_ps)
+         call self%get(     'temperature', ptrr2_t)
+         call self%get(           'theta', ptrr2_th)
 
          call hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
-                   fld2d_t%array(:,1:ngrid), fld2d_qv%array(:,1:ngrid), &
-                   fld1d_ps%array(1:ngrid), fld2d_p%array(:,1:ngrid), &
-                   fld2d_rho%array(:,1:ngrid), fld2d_th%array(:,1:ngrid) )
+                   ptrr2_t(:,1:ngrid), ptrr2_qv(:,1:ngrid), ptrr1_ps(1:ngrid), &
+                   ptrr2_p(:,1:ngrid), ptrr2_rho(:,1:ngrid), ptrr2_th(:,1:ngrid) )
       endif
 
       ! Update pressure_p (pressure perturbation) , which is a diagnostic variable
       if ( self%has('pressure_p') .and. self%has('pressure') .and. &
            .not.increment%has('pressure_p') ) then
-         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
-         call mpas_pool_get_field(self%subFields, 'pressure_p', fld2d_pp)
+         call self%get(  'pressure', ptrr2_p)
+         call self%get('pressure_p', ptrr2_pp)
          call mpas_pool_get_field(self%geom%domain%blocklist%allFields, 'pressure_base', fld2d_pb)
-         fld2d_pp%array(:,1:ngrid) = fld2d_p%array(:,1:ngrid) - fld2d_pb%array(:,1:ngrid)
+         ptrr2_pp(:,1:ngrid) = ptrr2_p(:,1:ngrid) - fld2d_pb%array(:,1:ngrid)
       endif
 
       ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"

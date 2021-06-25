@@ -1,26 +1,31 @@
 /*
- * (C) Copyright 2017-2018  UCAR.
- * 
+ * (C) Copyright 2017-2021  UCAR.
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_VARCHANGEMPAS_H_
-#define MPASJEDI_VARCHANGEMPAS_H_
+#pragma once
 
+#include <memory>
 #include <ostream>
 #include <string>
 
 #include "eckit/config/Configuration.h"
 
+#include "oops/base/Variables.h"
 #include "oops/util/Printable.h"
 
-#include "mpasjedi/Fortran.h"
 #include "mpasjedi/GeometryMPAS.h"
+#include "mpasjedi/VariableChanges/Control2Analysis/LinVarChaC2A.interface.h"
 
 // Forward declarations
 namespace eckit {
   class Configuration;
+}
+
+namespace oops {
+  class Variables;
 }
 
 namespace mpas {
@@ -29,14 +34,12 @@ namespace mpas {
   class IncrementMPAS;
 
 // -----------------------------------------------------------------------------
-/// MPAS linear change of variable
-
-class VarChangeMPAS: public util::Printable {
+class LinVarChaC2A: public util::Printable {
  public:
-  static const std::string classname() {return "mpas::VarChangeMPAS";}
-  explicit VarChangeMPAS(const StateMPAS &, const StateMPAS &,
-                         const GeometryMPAS &, const eckit::Configuration &);
-  ~VarChangeMPAS();
+  static const std::string classname() {return "mpas::LinVarChaC2A";}
+  explicit LinVarChaC2A(const StateMPAS &, const StateMPAS &, const GeometryMPAS &,
+                       const eckit::Configuration &);
+  ~LinVarChaC2A();
   // Perform linear multiplications
   void multiply(const IncrementMPAS &, IncrementMPAS &) const;
   void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const;
@@ -44,10 +47,11 @@ class VarChangeMPAS: public util::Printable {
   void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const;
 
  private:
-  F90vc keyVarChange_;
+  std::shared_ptr<const GeometryMPAS> geom_;
+  oops::Variables vars_;
+  F90lvc_C2A keyFtnConfig_;
   void print(std::ostream &) const override;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_VARCHANGEMPAS_H_

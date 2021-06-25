@@ -3,7 +3,7 @@
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
 
-module mpas_linvarcha_c2a_mod
+module mpasjedi_linvarcha_c2a_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only : fckit_log
@@ -25,45 +25,37 @@ use mpas_pool_routines
 use mpas_dmpar
 
 implicit none
+
 private
-public :: mpas_linvarcha_c2a, mpas_linvarcha_c2a_registry, &
-          mpas_linvarcha_c2a_setup, mpas_linvarcha_c2a_delete, &
-          mpas_linvarcha_c2a_multiply, mpas_linvarcha_c2a_multiplyadjoint, &
-          mpas_linvarcha_c2a_multiplyinverse, mpas_linvarcha_c2a_multiplyinverseadjoint
+public :: mpasjedi_linvarcha_c2a
 
 !> Fortran derived type to hold configuration data for the B mat variable change
-type :: mpas_linvarcha_c2a
+type :: mpasjedi_linvarcha_c2a
   type (mpas_pool_type), pointer :: trajectories => null()
-end type mpas_linvarcha_c2a
+  contains
+    procedure, public :: create
+    procedure, public :: delete
+    procedure, public :: multiply
+    procedure, public :: multiplyadjoint
+    procedure, public :: multiplyinverse
+    procedure, public :: multiplyinverseadjoint
+end type mpasjedi_linvarcha_c2a
 
-integer, parameter    :: max_string=800
-character(max_string) :: message
-character(len=1024) :: buf
-
-#define LISTED_TYPE mpas_linvarcha_c2a
-
-!> Linked list interface - defines registry_t type
-#include <oops/util/linkedList_i.f>
-
-!> Global registry
-type(registry_t) :: mpas_linvarcha_c2a_registry
+character(len=1024) :: message
 
 ! ------------------------------------------------------------------------------
 contains
 ! ------------------------------------------------------------------------------
-!> Linked list implementation
-#include <oops/util/linkedList_c.f>
-! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
+subroutine create(self, geom, bg, fg, f_conf, vars)
 
    implicit none
-   type(mpas_linvarcha_c2a),  intent(inout) :: self    !< Change variable structure
-   type(mpas_fields), target,  intent(in)    :: bg
-   type(mpas_fields), target,  intent(in)    :: fg
-   type(mpas_geom),           intent(in)    :: geom
-   type(fckit_configuration), intent(in)    :: f_conf  !< Configuration
-   type(oops_variables),      intent(in)    :: vars
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
+   type(mpas_fields), target,    intent(in)    :: bg
+   type(mpas_fields), target,    intent(in)    :: fg
+   type(mpas_geom),              intent(in)    :: geom
+   type(fckit_configuration),    intent(in)    :: f_conf
+   type(oops_variables),         intent(in)    :: vars
 
    type (field2DReal), pointer :: fld2d_t, fld2d_p, fld2d_qs
 
@@ -76,10 +68,10 @@ subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
       call mpas_pool_create_pool(self % trajectories)
 
       if ( .not. fg % has ('temperature') .or. .not. fg % has ('pressure') ) &
-         call abor1_ftn("LinVarChaC2AMPAS::LinVarChaC2AMPAS, mpas_linvarcha_c2a_setup: Trajectory failed")
+         call abor1_ftn("LinVarChaC2A::LinVarChaC2A, mpasjedi_linvarcha_c2a_create: Trajectory failed")
 
-      call mpas_pool_get_field(fg % subFields, 'temperature', fld2d_t)
-      call mpas_pool_get_field(fg % subFields, 'pressure'   , fld2d_p)
+      call fg%get('temperature', fld2d_t)
+      call fg%get('pressure'   , fld2d_p)
 
       call mpas_duplicate_field(fld2d_t, fld2d_qs) ! for saturation specific humidity
 
@@ -88,345 +80,346 @@ subroutine mpas_linvarcha_c2a_setup(self, bg, fg, geom, f_conf, vars)
       call mpas_pool_add_field(self % trajectories, 'spechum_sat', fld2d_qs)
    end if
 
-end subroutine mpas_linvarcha_c2a_setup
+end subroutine create
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_delete(self)
+subroutine delete(self)
 
    implicit none
-   type(mpas_linvarcha_c2a), intent(inout) :: self
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
 
    if (associated(self % trajectories)) then
       call mpas_pool_destroy_pool(self % trajectories)
    end if
 
-end subroutine mpas_linvarcha_c2a_delete
+end subroutine delete
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_multiply(self,xctl,xana)
+subroutine multiply(self,geom,xctl,xana)
 
    implicit none
-   type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_fields), intent(inout) :: xctl
-   type(mpas_fields), intent(inout) :: xana
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
+   type(mpas_geom),              intent(inout) :: geom
+   type(mpas_fields),            intent(inout) :: xctl
+   type(mpas_fields),            intent(inout) :: xana
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
-   type (field2DReal), pointer :: field2d_sh, field2d_rh, field2d_traj_qs
-   type (field2DReal), pointer :: field2d_v_src, field2d_sf_v, field2d_e_src, field2d_u
+   type (field2DReal), pointer :: fld2d_sf, fld2d_vp, fld2d_uRz, fld2d_uRm, fld2d_traj_qs
+   type (field2DReal), pointer :: fld2d_v_src, fld2d_sf_v, fld2d_e_src, fld2d_u
 
-   type (field2DReal), pointer :: field2d_ctl, field2d_ana
-   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
+
    integer :: k, ngrid, nCells, nVertices, nEdges
 
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiply: xana % fldnames(:) =",xana % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiply: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(message)
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiply: xctl % fldnames(:) =",xctl % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiply: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(message)
 
-   ngrid = xctl % geom % nCellsSolve ! local 
+   ngrid = geom % nCellsSolve ! local 
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! NOTE: only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then 
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
+         if( xana%has(poolItr % memberName) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
-               field1d_ana%array(1:ngrid)=field1d_ctl%array(1:ngrid)
+               call xctl%get(poolItr % memberName, ptrr1_ctl)
+               call xana%get(poolItr % memberName, ptrr1_ana)
+               ptrr1_ana(1:ngrid)=ptrr1_ctl(1:ngrid)
             else if (poolItr % nDims == 2) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
-               field2d_ana%array(:,1:ngrid)=field2d_ctl%array(:,1:ngrid)
+               call xctl%get(poolItr % memberName, ptrr2_ctl)
+               call xana%get(poolItr % memberName, ptrr2_ana)
+               ptrr2_ana(:,1:ngrid)=ptrr2_ctl(:,1:ngrid)
             else
-               write(buf,*) '--> mpas_linvarcha_c2a_multiply: poolItr % nDims == ',poolItr % nDims,' not handled'
-               call abor1_ftn(buf)
+               write(message,*) '--> mpasjedi_linvarcha_c2a::multiply: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(message)
             end if
          end if
       end if
    end do !- end of pool iteration
 
    if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
-      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
-      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
-      call pseudorh_to_spechum( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
-                                field2d_traj_qs % array(:,1:ngrid) )
+      call xctl%get(     'relhum', ptrr2_rh)
+      call xana%get(    'spechum', ptrr2_sh)
+      call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
+      call pseudorh_to_spechum( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
-      call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
-      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
-      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+      call xctl%get(       'stream_function', fld2d_sf)
+      call xctl%get(    'velocity_potential', fld2d_vp)
+      call xana%get(     'uReconstructZonal', fld2d_uRz)
+      call xana%get('uReconstructMeridional', fld2d_uRm)
 
-      call mpas_dmpar_exch_halo_field(field2d_sf)
-      call mpas_dmpar_exch_halo_field(field2d_vp)
+      call mpas_dmpar_exch_halo_field(fld2d_sf)
+      call mpas_dmpar_exch_halo_field(fld2d_vp)
 
-      nCells = xctl % geom % nCells    ! local + halo
-      nVertices = xctl % geom % nVertices ! local + halo
-      nEdges = xctl % geom % nEdges    ! local + halo
+      nCells = geom % nCells    ! local + halo
+      nVertices = geom % nVertices ! local + halo
+      nEdges = geom % nEdges    ! local + halo
 
       ! duplicate two temporary working spaces
-      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'vorticity', field2d_v_src)
-      call mpas_duplicate_field(field2d_v_src, field2d_sf_v)
-      field2d_sf_v % fieldName = 'stream_function at vertices'
-      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'u', field2d_e_src)
-      call mpas_duplicate_field(field2d_e_src, field2d_u)
-      field2d_u % fieldName = 'Horizontal normal velocity at edges'
+      call mpas_pool_get_field( geom % domain % blocklist % allFields, 'vorticity', fld2d_v_src)
+      call mpas_duplicate_field(fld2d_v_src, fld2d_sf_v)
+      fld2d_sf_v % fieldName = 'stream_function at vertices'
+      call mpas_pool_get_field( geom % domain % blocklist % allFields, 'u', fld2d_e_src)
+      call mpas_duplicate_field(fld2d_e_src, fld2d_u)
+      fld2d_u % fieldName = 'Horizontal normal velocity at edges'
 
-      call psichi_to_uv_edge_step1( xctl % geom, field2d_sf%array(:,1:nCells), field2d_sf_v%array(:,1:nVertices) )
-      call mpas_dmpar_exch_halo_field(field2d_sf_v)
-      call psichi_to_uv_edge_step2( xctl % geom, field2d_sf_v%array(:,1:nVertices), field2d_vp%array(:,1:nCells), &
-                                   field2d_u%array(:,1:nEdges) )
-      call mpas_dmpar_exch_halo_field(field2d_u)
-      call psichi_to_uv_edge_step3( xctl % geom, field2d_u%array(:,1:nEdges), &
-                                   field2d_uRz%array(:,1:nCells), field2d_uRm%array(:,1:nCells) )
+      call psichi_to_uv_edge_step1( geom, fld2d_sf%array(:,1:nCells), fld2d_sf_v%array(:,1:nVertices) )
+      call mpas_dmpar_exch_halo_field(fld2d_sf_v)
+      call psichi_to_uv_edge_step2( geom, fld2d_sf_v%array(:,1:nVertices), fld2d_vp%array(:,1:nCells), &
+                                   fld2d_u%array(:,1:nEdges) )
+      call mpas_dmpar_exch_halo_field(fld2d_u)
+      call psichi_to_uv_edge_step3( geom, fld2d_u%array(:,1:nEdges), &
+                                   fld2d_uRz%array(:,1:nCells), fld2d_uRm%array(:,1:nCells) )
 
-      call mpas_deallocate_field(field2d_sf_v)
-      call mpas_deallocate_field(field2d_u)
+      call mpas_deallocate_field(fld2d_sf_v)
+      call mpas_deallocate_field(fld2d_u)
    end if
 
-end subroutine mpas_linvarcha_c2a_multiply
+end subroutine multiply
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_multiplyadjoint(self,xana,xctl)
+subroutine multiplyadjoint(self,geom,xana,xctl)
 
    implicit none
-   type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_fields), intent(inout) :: xana
-   type(mpas_fields), intent(inout) :: xctl
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
+   type(mpas_geom),              intent(inout) :: geom
+   type(mpas_fields),            intent(inout) :: xana
+   type(mpas_fields),            intent(inout) :: xctl
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (field2DReal), pointer :: field2d_sf, field2d_vp, field2d_uRz, field2d_uRm
-   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
-   type (field2DReal), pointer :: field2d_v_src, field2d_sf_v, field2d_e_src, field2d_u
+   type (field2DReal), pointer :: fld2d_sf, fld2d_vp, fld2d_uRz, fld2d_uRm, fld2d_traj_qs
+   type (field2DReal), pointer :: fld2d_v_src, fld2d_sf_v, fld2d_e_src, fld2d_u
 
-   type (field2DReal), pointer :: field2d_ctl, field2d_ana
-   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
    integer :: k, ngrid, nCells, nVertices, nEdges
 
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(message)
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(message)
 
-   ngrid = xctl % geom % nCellsSolve
+   ngrid = geom % nCellsSolve
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! NOTE: only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
+         if( xana%has(poolItr % memberName) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
-               field1d_ctl%array(1:ngrid)=field1d_ctl%array(1:ngrid)+field1d_ana%array(1:ngrid)
-               field1d_ana%array(1:ngrid)=MPAS_JEDI_ZERO_kr
+               call xctl%get(poolItr % memberName, ptrr1_ctl)
+               call xana%get(poolItr % memberName, ptrr1_ana)
+               ptrr1_ctl(1:ngrid)=ptrr1_ctl(1:ngrid)+ptrr1_ana(1:ngrid)
+               ptrr1_ana(1:ngrid)=MPAS_JEDI_ZERO_kr
             else if (poolItr % nDims == 2) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
-               field2d_ctl%array(:,1:ngrid)=field2d_ctl%array(:,1:ngrid)+field2d_ana%array(:,1:ngrid)
-               field2d_ana%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+               call xctl%get(poolItr % memberName, ptrr2_ctl)
+               call xana%get(poolItr % memberName, ptrr2_ana)
+               ptrr2_ctl(:,1:ngrid)=ptrr2_ctl(:,1:ngrid)+ptrr2_ana(:,1:ngrid)
+               ptrr2_ana(:,1:ngrid)=MPAS_JEDI_ZERO_kr
             else
-               write(buf,*) '--> mpas_linvarcha_c2a_multiplyadjoint: poolItr % nDims == ',poolItr % nDims,' not handled'
-               call abor1_ftn(buf)
+               write(message,*) '--> mpasjedi_linvarcha_c2a::multiplyadjoint: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(message)
             end if
          end if
       end if
    end do !- end of pool iteration
 
    if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
-      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
-      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
-      call pseudorh_to_spechumAD( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
-                                  field2d_traj_qs % array(:,1:ngrid) )
+      call xctl%get(     'relhum', ptrr2_rh)
+      call xana%get(    'spechum', ptrr2_sh)
+      call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
+      call pseudorh_to_spechumAD( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call mpas_pool_get_field(xctl % subFields,        'stream_function', field2d_sf)
-      call mpas_pool_get_field(xctl % subFields,     'velocity_potential', field2d_vp)
-      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_uRz)
-      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_uRm)
+      call xctl%get(       'stream_function', fld2d_sf)
+      call xctl%get(    'velocity_potential', fld2d_vp)
+      call xana%get(     'uReconstructZonal', fld2d_uRz)
+      call xana%get('uReconstructMeridional', fld2d_uRm)
 
-      nCells = xctl % geom % nCells    ! local + halo
-      nVertices = xctl % geom % nVertices ! local + halo
-      nEdges = xctl % geom % nEdges    ! local + halo
+      nCells = geom % nCells    ! local + halo
+      nVertices = geom % nVertices ! local + halo
+      nEdges = geom % nEdges    ! local + halo
 
       ! duplicate two temporary working spaces
-      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'vorticity', field2d_v_src)
-      call mpas_duplicate_field(field2d_v_src, field2d_sf_v)
-      field2d_sf_v % fieldName = 'stream_function at vertices'
-      call mpas_pool_get_field( xctl % geom % domain % blocklist % allFields, 'u', field2d_e_src)
-      call mpas_duplicate_field(field2d_e_src, field2d_u)
-      field2d_u % fieldName = 'Horizontal normal velocity at edges'
+      call mpas_pool_get_field( geom % domain % blocklist % allFields, 'vorticity', fld2d_v_src)
+      call mpas_duplicate_field(fld2d_v_src, fld2d_sf_v)
+      fld2d_sf_v % fieldName = 'stream_function at vertices'
+      call mpas_pool_get_field( geom % domain % blocklist % allFields, 'u', fld2d_e_src)
+      call mpas_duplicate_field(fld2d_e_src, fld2d_u)
+      fld2d_u % fieldName = 'Horizontal normal velocity at edges'
 
-      call psichi_to_uv_edge_step3AD( xctl % geom, field2d_u%array(:,1:nEdges), &
-                                     field2d_uRz%array(:,1:nCells), field2d_uRm%array(:,1:nCells) )
-      call mpas_dmpar_exch_halo_adj_field(field2d_u)
-      call psichi_to_uv_edge_step2AD( xctl % geom, field2d_sf_v%array(:,1:nVertices), field2d_vp%array(:,1:nCells), &
-                                     field2d_u%array(:,1:nEdges) )
-      call mpas_dmpar_exch_halo_adj_field(field2d_sf_v)
-      call psichi_to_uv_edge_step1AD( xctl % geom, field2d_sf%array(:,1:nCells), field2d_sf_v%array(:,1:nVertices) )
+      call psichi_to_uv_edge_step3AD( geom, fld2d_u%array(:,1:nEdges), &
+                                     fld2d_uRz%array(:,1:nCells), fld2d_uRm%array(:,1:nCells) )
+      call mpas_dmpar_exch_halo_adj_field(fld2d_u)
+      call psichi_to_uv_edge_step2AD( geom, fld2d_sf_v%array(:,1:nVertices), fld2d_vp%array(:,1:nCells), &
+                                     fld2d_u%array(:,1:nEdges) )
+      call mpas_dmpar_exch_halo_adj_field(fld2d_sf_v)
+      call psichi_to_uv_edge_step1AD( geom, fld2d_sf%array(:,1:nCells), fld2d_sf_v%array(:,1:nVertices) )
 
-      call mpas_deallocate_field(field2d_sf_v)
-      call mpas_deallocate_field(field2d_u)
+      call mpas_deallocate_field(fld2d_sf_v)
+      call mpas_deallocate_field(fld2d_u)
 
-      field2d_uRz%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
-      field2d_uRm%array(:,1:xana%geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
+      fld2d_uRz%array(:,1:geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
+      fld2d_uRm%array(:,1:geom%nCellsSolve)=MPAS_JEDI_ZERO_kr
 
-      call mpas_dmpar_exch_halo_adj_field(field2d_sf)
-      call mpas_dmpar_exch_halo_adj_field(field2d_vp)
+      call mpas_dmpar_exch_halo_adj_field(fld2d_sf)
+      call mpas_dmpar_exch_halo_adj_field(fld2d_vp)
    end if
 
-end subroutine mpas_linvarcha_c2a_multiplyadjoint
+end subroutine multiplyadjoint
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_multiplyinverse(self,xana,xctl)
+subroutine multiplyinverse(self,geom,xana,xctl)
 
    implicit none
-   type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_fields), intent(inout) :: xana
-   type(mpas_fields), intent(inout) :: xctl
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
+   type(mpas_geom),              intent(inout) :: geom
+   type(mpas_fields),            intent(inout) :: xana
+   type(mpas_fields),            intent(inout) :: xctl
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
-
-   type (field2DReal), pointer :: field2d_ctl, field2d_ana
-   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   type (field2DReal), pointer :: fld2d_traj_qs
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
    integer :: ngrid
 
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(message)
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverse: xctl % fldnames(:) =",xctl % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverse: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(message)
 
-   ngrid = xctl % geom % nCellsSolve ! local
+   ngrid = geom % nCellsSolve ! local
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
+         if( xana%has(poolItr % memberName) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
-               field1d_ctl%array(1:ngrid)=field1d_ana%array(1:ngrid)
+               call xctl%get(poolItr % memberName, ptrr1_ctl)
+               call xana%get(poolItr % memberName, ptrr1_ana)
+               ptrr1_ctl(1:ngrid)=ptrr1_ana(1:ngrid)
             else if (poolItr % nDims == 2) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
-               field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+               call xctl%get(poolItr % memberName, ptrr2_ctl)
+               call xana%get(poolItr % memberName, ptrr2_ana)
+               ptrr2_ctl(:,1:ngrid)=ptrr2_ana(:,1:ngrid)
             else
-               write(buf,*) '--> mpas_linvarcha_c2a_multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
-               call abor1_ftn(buf)
+               write(message,*) '--> mpasjedi_linvarcha_c2a::multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(message)
             end if
          end if
       end if
    end do !- end of pool iteration
 
    if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
-      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
-      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
-      call pseudorh_to_spechum_inverse( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
-                                        field2d_traj_qs % array(:,1:ngrid) )
+      call xana%get(    'spechum', ptrr2_sh)
+      call xctl%get(     'relhum', ptrr2_rh)
+      call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
+      call pseudorh_to_spechum_inverse( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    !-- dummy inverse operator
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_ana)
-      call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_ctl)
-      field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+      call xana%get('uReconstructZonal', ptrr2_ana)
+      call xctl%get(  'stream_function', ptrr2_ctl)
+      ptrr2_ctl(:,1:ngrid)=ptrr2_ana(:,1:ngrid)
 
-      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_ana)
-      call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_ctl)
-      field2d_ctl%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)
+      call xana%get('uReconstructMeridional', ptrr2_ana)
+      call xctl%get(    'velocity_potential', ptrr2_ctl)
+      ptrr2_ctl(:,1:ngrid)=ptrr2_ana(:,1:ngrid)
    end if
 
-end subroutine mpas_linvarcha_c2a_multiplyinverse
+end subroutine multiplyinverse
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_linvarcha_c2a_multiplyinverseadjoint(self,xctl,xana)
+subroutine multiplyinverseadjoint(self,geom,xctl,xana)
 
    implicit none
-   type(mpas_linvarcha_c2a), intent(inout) :: self
-   type(mpas_fields), intent(inout) :: xctl
-   type(mpas_fields), intent(inout) :: xana
+   class(mpasjedi_linvarcha_c2a),intent(inout) :: self
+   type(mpas_geom),              intent(inout) :: geom
+   type(mpas_fields),            intent(inout) :: xctl
+   type(mpas_fields),            intent(inout) :: xana
 
    type (mpas_pool_iterator_type) :: poolItr
-   type (field2DReal), pointer :: field2d_rh, field2d_sh, field2d_traj_qs
-
-   type (field2DReal), pointer :: field2d_ctl, field2d_ana
-   type (field1DReal), pointer :: field1d_ctl, field1d_ana
+   type (field2DReal), pointer :: fld2d_traj_qs
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh, ptrr2_traj_qs
    integer :: ngrid
 
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
    call fckit_log%debug(message)
-   write(message,*) "DEBUG: mpas_linvarcha_c2a_multiplyinverseadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
+   write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverseadjoint: xctl % fldnames(:) =",xctl % fldnames(:)
    call fckit_log%debug(message)
 
-   ngrid = xctl % geom % nCellsSolve ! local
+   ngrid = geom % nCellsSolve ! local
 
    ! no variable change
    call mpas_pool_begin_iteration(xctl%subFields)
    do while ( mpas_pool_get_next_member(xctl%subFields, poolItr) )
       ! only 1d or 2d real fields are handled.
       if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL) then
-         if( xana%has( trim(poolItr % memberName) ) ) then ! check if the variable names are the same.
+         if( xana%has(poolItr % memberName) ) then ! check if the variable names are the same.
             if (poolItr % nDims == 1) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field1d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field1d_ana)
-               field1d_ana%array(1:ngrid)=field1d_ana%array(1:ngrid)+field1d_ctl%array(1:ngrid)
-               field1d_ctl%array(1:ngrid)=MPAS_JEDI_ZERO_kr
+               call xctl%get(poolItr % memberName, ptrr1_ctl)
+               call xana%get(poolItr % memberName, ptrr1_ana)
+               ptrr1_ana(1:ngrid)=ptrr1_ana(1:ngrid)+ptrr1_ctl(1:ngrid)
+               ptrr1_ctl(1:ngrid)=MPAS_JEDI_ZERO_kr
             else if (poolItr % nDims == 2) then
-               call mpas_pool_get_field(xctl%subFields, trim(poolItr % memberName), field2d_ctl)
-               call mpas_pool_get_field(xana%subFields, trim(poolItr % memberName), field2d_ana)
-               field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
-               field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+               call xctl%get(poolItr % memberName, ptrr2_ctl)
+               call xana%get(poolItr % memberName, ptrr2_ana)
+               ptrr2_ana(:,1:ngrid)=ptrr2_ana(:,1:ngrid)+ptrr2_ctl(:,1:ngrid)
+               ptrr2_ctl(:,1:ngrid)=MPAS_JEDI_ZERO_kr
             else
-               write(buf,*) '--> mpas_linvarcha_c2a_multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
-               call abor1_ftn(buf)
+               write(message,*) '--> mpasjedi_linvarcha_c2a::multiplyinverse: poolItr % nDims == ',poolItr % nDims,' not handled'
+               call abor1_ftn(message)
             end if
          end if
       end if
    end do !- end of pool iteration
 
    if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call mpas_pool_get_field(xana % subFields,            'spechum', field2d_sh)
-      call mpas_pool_get_field(xctl % subFields,             'relhum', field2d_rh)
-      call mpas_pool_get_field(self % trajectories,     'spechum_sat', field2d_traj_qs)
-      call pseudorh_to_spechum_inverseAD( field2d_rh % array(:,1:ngrid), field2d_sh % array(:,1:ngrid), &
-                                          field2d_traj_qs % array(:,1:ngrid) )
+      call xana%get(    'spechum', ptrr2_sh)
+      call xctl%get(     'relhum', ptrr2_rh)
+      call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
+      call pseudorh_to_spechum_inverseAD( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    !-- dummy inverseAD operator
    if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
        xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call mpas_pool_get_field(xana % subFields,      'uReconstructZonal', field2d_ana)
-      call mpas_pool_get_field(xctl % subFields,      'stream_function'  , field2d_ctl)
-      field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
-      field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+      call xana%get('uReconstructZonal', ptrr2_ana)
+      call xctl%get(  'stream_function', ptrr2_ctl)
+      ptrr2_ana(:,1:ngrid)=ptrr2_ana(:,1:ngrid)+ptrr2_ctl(:,1:ngrid)
+      ptrr2_ctl(:,1:ngrid)=MPAS_JEDI_ZERO_kr
 
-      call mpas_pool_get_field(xana % subFields, 'uReconstructMeridional', field2d_ana)
-      call mpas_pool_get_field(xctl % subFields, 'velocity_potential'    , field2d_ctl)
-      field2d_ana%array(:,1:ngrid)=field2d_ana%array(:,1:ngrid)+field2d_ctl%array(:,1:ngrid)
-      field2d_ctl%array(:,1:ngrid)=MPAS_JEDI_ZERO_kr
+      call xana%get('uReconstructMeridional', ptrr2_ana)
+      call xctl%get(    'velocity_potential', ptrr2_ctl)
+      ptrr2_ana(:,1:ngrid)=ptrr2_ana(:,1:ngrid)+ptrr2_ctl(:,1:ngrid)
+      ptrr2_ctl(:,1:ngrid)=MPAS_JEDI_ZERO_kr
    end if
 
-end subroutine mpas_linvarcha_c2a_multiplyinverseadjoint
+end subroutine multiplyinverseadjoint
 
 !-------------------------------------------------------------------------------
 ! Adjoint code of subroutine mpas_reconstruct()
@@ -956,4 +949,4 @@ elemental subroutine da_tp_to_qs( t, p, qs)
 
 end subroutine da_tp_to_qs
 
-end module mpas_linvarcha_c2a_mod
+end module mpasjedi_linvarcha_c2a_mod

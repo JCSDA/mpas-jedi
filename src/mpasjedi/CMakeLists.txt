@@ -8,8 +8,6 @@ list( APPEND mpasjedi_src_files
     IncrementMPAS.h
     IncrementMPASFortran.h
     MPASTraits.h
-    LinVarChaC2AMPAS.cc
-    LinVarChaC2AMPAS.h
     LocalizationMatrixMPAS.cc
     LocalizationMatrixMPAS.h
     ModelBiasCovarianceMPAS.h
@@ -24,8 +22,6 @@ list( APPEND mpasjedi_src_files
     TlmIdMPAS.h
     TlmMPAS.cc
     TlmMPAS.h
-    VarChangeMPAS.cc
-    VarChangeMPAS.h
     mpas_constants_mod.F90
     mpas_covariance_interface.F90
     mpas_covariance_mod.F90
@@ -34,22 +30,17 @@ list( APPEND mpasjedi_src_files
     mpas_geom_mod.F90
     mpas_increment_interface_mod.F90
     mpas_increment_mod.F90
-    mpas_linvarcha_c2a_interface.F90
-    mpas_linvarcha_c2a_mod.F90
     mpas_model_interface.F90
     mpas_model_mod.F90
     mpas_state_interface_mod.F90
     mpas_state_mod.F90
     mpas_trajectories.F90
-    mpas_varchange_interface.F90
-    mpas_varchange_mod.F90
     mpas2ufo_vars_mod.F90
     mpas4da_mod.F90
     mpas_kinds_mod.F90
+    instantiateLocalizationFactory.h
     getvalues/mpasjedi_getvalues_mod.F90
     getvalues/mpasjedi_lineargetvalues_mod.F90
-    instantiateLocalizationFactory.h
-    instantiateMPASVarChangeFactory.h
     getvalues/GetValues.cc
     getvalues/GetValues.h
     getvalues/LinearGetValues.cc
@@ -59,6 +50,11 @@ list( APPEND mpasjedi_src_files
     getvalues/LinearGetValues.interface.h
     getvalues/LinearGetValues.interface.F90
     getvalues/mpasjedi_unstructured_interp_mod.F90
+    VariableChanges/Control2Analysis/mpasjedi_linvarcha_c2a_interface.F90
+    VariableChanges/Control2Analysis/mpasjedi_linvarcha_c2a_mod.F90
+    VariableChanges/Control2Analysis/LinVarChaC2A.cc
+    VariableChanges/Control2Analysis/LinVarChaC2A.h
+    VariableChanges/Control2Analysis/LinVarChaC2A.interface.h
     VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_interface.F90
     VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_mod.F90
     VariableChanges/Model2GeoVars/mpasjedi_vc_model2geovars_interface.F90

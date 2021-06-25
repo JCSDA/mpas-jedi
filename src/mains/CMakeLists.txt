@@ -1,7 +1,7 @@
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_dirac.x
                         SOURCES mpasDirac.cc
-                        LIBS    ${PROJECT_NAME} )
+                        LIBS    ${PROJECT_NAME} saber )
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_enshofx.x
                         SOURCES mpasEnsHofX.cc
@@ -45,4 +45,4 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_variational.x
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_convertstate.x
                         SOURCES mpasConvertState.cc
-                        LIBS    ${PROJECT_NAME} )
+                        LIBS    ${PROJECT_NAME} saber )

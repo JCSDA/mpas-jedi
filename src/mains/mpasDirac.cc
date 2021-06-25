@@ -8,7 +8,6 @@
  * does it submit to any jurisdiction.
  */
 
-#include <oops/generic/instantiateVariableChangeFactory.h>
 #include <oops/runs/Dirac.h>
 #include <oops/runs/Run.h>
 
@@ -16,12 +15,10 @@
 #include <saber/oops/instantiateLocalizationFactory.h>
 #include <saber/oops/instantiateVariableChangeFactory.h>
 
-#include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  mpas::instantiateMPASVarChangeFactory();
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();

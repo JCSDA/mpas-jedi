@@ -16,13 +16,11 @@
 #include <ufo/ObsTraits.h>
 
 #include "mpasjedi/instantiateLocalizationFactory.h"
-#include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   mpas::instantiateLocalizationFactory();
-  mpas::instantiateMPASVarChangeFactory();
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();

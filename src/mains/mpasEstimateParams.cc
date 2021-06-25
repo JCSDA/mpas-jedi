@@ -10,12 +10,10 @@
 #include <saber/oops/EstimateParams.h>
 #include <saber/oops/instantiateVariableChangeFactory.h>
 
-#include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   saber::EstimateParams<mpas::MPASTraits> dir;
   return run.execute(dir);

@@ -10,12 +10,10 @@
 
 #include <saber/oops/instantiateVariableChangeFactory.h>
 
-#include "mpasjedi/instantiateMPASVarChangeFactory.h"
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  mpas::instantiateMPASVarChangeFactory();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   test::LinearVariableChange<mpas::MPASTraits> tests;
   return run.execute(tests);
