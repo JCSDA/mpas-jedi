@@ -21,7 +21,7 @@
 
 namespace mpas {
 // -----------------------------------------------------------------------------
-static oops::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
+static oops::interface::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
                      const eckit::Configuration & model)

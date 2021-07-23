@@ -11,7 +11,7 @@
 #include <ostream>
 #include <string>
 
-#include "oops/base/ModelBase.h"
+#include "oops/interface/ModelBase.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 
@@ -37,7 +37,7 @@ namespace mpas {
  *  MPAS nonlinear model definition and configuration parameters.
  */
 
-class ModelMPAS: public oops::ModelBase<MPASTraits>,
+class ModelMPAS: public oops::interface::ModelBase<MPASTraits>,
                  private util::ObjectCounter<ModelMPAS> {
  public:
   static const std::string classname() {return "mpas::ModelMPAS";}
