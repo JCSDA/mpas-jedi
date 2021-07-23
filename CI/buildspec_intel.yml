@@ -54,6 +54,10 @@ phases:
         echo "CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH_FORK}";
         fi
 
+      # Upload branch name and commit sha as CodeBuild artifact to S3
+      - mkdir -p /jcsda/artifacts
+      - echo ${CODEBUILD_GIT_BRANCH} > /jcsda/artifacts/branch_name.txt
+      - echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} > /jcsda/artifacts/commit_sha.txt
 
       ##  jedi core repos
       # oops
@@ -92,12 +96,17 @@ phases:
 
       # move CMakeLists.txt
       - cp CMakeLists.txt /jcsda/mpas-bundle
+      - cp -r cmake /jcsda/mpas-bundle/
+      # cdash upload setup
+      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle
+
+
       - chmod -R 777 /jcsda/mpas-bundle
 
   build:
+    on-failure: CONTINUE
     commands:
       - echo Executing build phase
-      ## cannot source /etc/bash.bashrc so copy what's there for jscdauser
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
@@ -109,6 +118,10 @@ phases:
         && cd /home/jedi
         && ecbuild /jcsda/mpas-bundle/
         && cd /home/jedi/mpasjedi
+        && cp ../DartConfiguration.tcl .
+        && sed -i 's/mpas-bundle/mpas-bundle\/mpasjedi/' DartConfiguration.tcl
+        && sed -i 's/home\/jedi/home\/jedi\/mpasjedi/' DartConfiguration.tcl
+        && cat DartConfiguration.tcl
         && make -j4"
 
       - echo $CODEBUILD_BUILD_SUCCEEDING
@@ -124,21 +137,32 @@ phases:
         && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         && export PATH=/usr/local/lib:$PATH
         && cd /home/jedi/mpasjedi
-        && ctest --output-on-failure"
+        && ctest -C RelWithDebInfo -D ExperimentalTest"
+
+    finally:
+      # upload ctest report to CDASH
+      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/jedi/mpasjedi
+        && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
 
   post_build:
     commands:
       - echo Executing post_build phase
       - echo $CODEBUILD_BUILD_SUCCEEDING
+      - echo $BUILD_STATUS
 
-      - if [ "$BUILD_STATUS" = "1" ] && [ "$CODEBUILD_BUILD_SUCCEEDING" = "0" ];
-        then echo "Build passed, rerun failed tests";
-        su - jedi -c "export CC=mpiicc
-        && export FC=mpiifort
-        && export CXX=mpiicpc
-        && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        && export PATH=/usr/local/lib:$PATH
-        && cd /home/jedi/mpasjedi
-        && ctest -VV --rerun-failed";
+      # upload find cdash url and upload it as CodeBuild artifact to S3
+      - if [ "$BUILD_STATUS" = "1" ];
+        then echo "Build & tests passed, find cdash url";
+        bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /home/jedi/mpasjedi/Testing;
+        url=$(bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /home/jedi/mpasjedi/Testing);
+        echo $url;
+        echo ${url} > /jcsda/artifacts/cdash-url.txt;
+        cat /jcsda/artifacts/cdash-url.txt;
         else echo "Build failed";
         fi
+
+artifacts:
+  files:
+    - '/jcsda/artifacts/*'
+  name: mpas-intel-url

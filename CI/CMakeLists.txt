@@ -73,3 +73,6 @@ ecbuild_bundle( PROJECT MPAS     GIT "https://github.com/jcsda-internal/MPAS-Mod
 ecbuild_bundle( PROJECT mpasjedi GIT "https://github.com/jcsda-internal/mpas-jedi")
 
 ecbuild_bundle_finalize()
+
+include(cmake/cdash-integration.cmake)
+include(CTest)

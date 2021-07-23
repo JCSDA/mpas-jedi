@@ -39,8 +39,6 @@ phases:
       - echo Executing pre_build phase
       - mkdir /build_container
       - mkdir /jcsda
-      - cd CI
-
       - git lfs install # creates .gitconfig
 
       #  Set crtm branch name
@@ -54,6 +52,12 @@ phases:
         echo "CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH_FORK}";
         fi
 
+      # Upload branch name and commit sha as CodeBuild artifact to S3
+      - mkdir -p /jcsda/artifacts
+      - echo ${CODEBUILD_GIT_BRANCH} > /jcsda/artifacts/branch_name.txt
+      - echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} > /jcsda/artifacts/commit_sha.txt
+
+      - cd CI
 
       ##  jedi core repos
       # oops
@@ -92,21 +96,29 @@ phases:
 
       # move CMakeLists.txt
       - cp CMakeLists.txt /jcsda/mpas-bundle
-      - cd /jcsda/mpas-bundle
-      - ls
+      - cp -r cmake /jcsda/mpas-bundle/
+      # cdash upload setup
+      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle
 
   build:
+    on-failure: CONTINUE
     commands:
       - echo Executing build phase
       - echo $CODEBUILD_BUILD_SUCCEEDING
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
+      # configure and build
       - cd /build_container
 
-      - ecbuild /jcsda/mpas-bundle/
+      - ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
+      - ls /build_container
+      - cd /build_container/mpasjedi
+      - cp ../DartConfiguration.tcl .
+      - sed -i 's/mpas-bundle/mpas-bundle\/mpasjedi/' DartConfiguration.tcl
+      - sed -i 's/build_container/build_container\/mpasjedi/' DartConfiguration.tcl
+      - cat DartConfiguration.tcl
 
-      - cd mpasjedi
       - make -j4
 
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
@@ -116,15 +128,30 @@ phases:
       - echo $BUILD_STATUS
 
       - cd /build_container/mpasjedi
-      - ctest -E compare_mpasjedi_hofx
+      - ctest -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx
+
+    finally:
+      - cd /build_container/mpasjedi
+      - ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous
 
   post_build:
     commands:
       - echo Executing post_build phase
       - echo $CODEBUILD_BUILD_SUCCEEDING
-      - if [ "$BUILD_STATUS" = "1" ] && [ "$CODEBUILD_BUILD_SUCCEEDING" = "0" ];
-        then echo "Build passed, rerunning failed tests";
-        cd /build_container/mpasjedi;
-        ctest -VV --rerun-failed;
+      - echo $BUILD_STATUS
+
+      # upload find cdash url and upload it as CodeBuild artifact to S3
+      - if [ "$BUILD_STATUS" = "1" ];
+        then echo "Build & tests passed, find cdash url";
+        bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /build_container/mpasjedi/Testing;
+        url=$(bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /build_container/mpasjedi/Testing);
+        echo $url;
+        echo ${url} > /jcsda/artifacts/cdash-url.txt;
+        cat /jcsda/artifacts/cdash-url.txt;
         else echo "Build failed";
         fi
+
+artifacts:
+  files:
+    - '/jcsda/artifacts/*'
+  name: mpas-clang-url

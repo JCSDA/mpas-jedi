@@ -1,6 +1,7 @@
 version: 0.2
 
 env:
+  shell: bash
   parameter-store:
     GIT_USER: "/CodeBuild/Git_USER"
     GIT_PASS: "/CodeBuild/Git_PASS"
@@ -24,6 +25,7 @@ phases:
       # Codebuild only runs on PUSH events if HEAD_REF
       # is refs/heads/develop (merge to develop). In this
       # case CODEBUILD_GIT_BRANCH="develop"
+
       - if [ "$CODEBUILD_WEBHOOK_EVENT" = "PUSH" ];
         then export CODEBUILD_GIT_BRANCH="develop";
         echo "Merging to develop";
@@ -33,44 +35,11 @@ phases:
       - echo "CODEBUILD_GIT_BRANCH=${CODEBUILD_GIT_BRANCH}"
       - echo "CODEBUILD_SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}"
 
-      - echo MPI setup for Docker
-      - mkdir -p /var/run/sshd
-      - ssh-keygen -A
-      - sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config
-      - sed -i 's/#RSAAuthentication yes/RSAAuthentication yes/g' /etc/ssh/sshd_config
-      - sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
-
-      - groupadd jcsda -g 9999
-      - useradd jcsdauser
-      - mkdir -p /jcsda /build_container
-      - chown -R jcsdauser:jcsda /build_container  /usr/local
-      - chmod 6755 /jcsda /build_container /usr/local
-
-      - mkdir /jcsda/.ssh ; echo "StrictHostKeyChecking no" > /jcsda/.ssh/config
-      - mkdir -p /jcsda/.openmpi
-      - mkdir -p /home/jcsdauser/.openmpi
-
-      - cp CI/default-mca-params.conf /home/jcsdauser/.openmpi/mca-params.conf
-      - cat /home/jcsdauser/.openmpi/mca-params.conf
-      - chown -R jcsdauser:jcsda /jcsda/
-
-      - su - jcsdauser -c "ssh-keygen -f /jcsda/.ssh/id_rsa -t rsa -N ''
-        && chmod 600 /jcsda/.ssh/config
-        && chmod 700 /jcsda/.ssh
-        && cp /jcsda/.ssh/id_rsa.pub /jcsda/.ssh/authorized_keys
-        && echo MPI setup for Docker done"
-      - su - jcsdauser -c "echo $CC
-        && echo $CXX
-        && echo $FC
-        && whereis mpicc"
-
   pre_build:
     commands:
       - echo Executing pre_build phase
       - git lfs install # creates .gitconfig
-      - cp ~/.gitconfig /home/jcsdauser/
-
-      - cd CI
+      - mkdir -p /jcsda/mpas-bundle
 
       #  Set crtm branch name
       - export CRTM_JEDI_BRANCH="release/crtm_jedi"
@@ -83,6 +52,12 @@ phases:
         echo "CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH_FORK}";
         fi
 
+      # Upload branch name and commit sha as CodeBuild artifact to S3
+      - mkdir -p /jcsda/artifacts
+      - echo ${CODEBUILD_GIT_BRANCH} > /jcsda/artifacts/branch_name.txt
+      - echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} > /jcsda/artifacts/commit_sha.txt
+
+      - cd CI
 
       ##  jedi core repos
       # oops
@@ -124,33 +99,34 @@ phases:
 
       # move CMakeLists.txt
       - cp CMakeLists.txt /jcsda/mpas-bundle
-      - cd /jcsda/mpas-bundle
+      - cp -r cmake /jcsda/mpas-bundle/
+      # cdash upload setup
+      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle/
 
+      - cd /jcsda/mpas-bundle
       - chmod -R 777 /jcsda/mpas-bundle
       - ls -lt /jcsda/mpas-bundle
   build:
+    on-failure: CONTINUE
     commands:
       - echo Executing build phase
       - echo $CODEBUILD_BUILD_SUCCEEDING
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
-      - gcc --version
-      - g++ --version
-      - gfortran --version
-      - which gfortran
-      - which gcc
-      - which g++
-      - ls /usr/local/bin
-      - echo $PATH
-
-      - su - jcsdauser -c "cd /build_container
+      - su - jedi -c "cd /home/jedi
         && echo $CC
         && echo $CXX
         && echo $FC
         && CC=mpicc CXX=mpicxx FC=mpifort
-        && cmake  -DCMAKE_MODULE_PATH=/usr/local/share/ecbuild/cmake/ -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/
-        && cd mpasjedi
+        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
+
+      - su - jedi -c "cd /home/jedi/mpasjedi
+        && CC=mpicc CXX=mpicxx FC=mpifort
+        && cp ../DartConfiguration.tcl .
+        && sed -i 's/mpas-bundle/mpas-bundle\/mpasjedi/' DartConfiguration.tcl
+        && sed -i 's/home\/jedi/home\/jedi\/mpasjedi/' DartConfiguration.tcl
+        && cat DartConfiguration.tcl
         && make -j4"
 
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
@@ -159,17 +135,35 @@ phases:
         fi
       - echo $BUILD_STATUS
 
-      - su - jcsdauser -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /build_container/mpasjedi
-        && ctest -E compare_mpasjedi_hofx"
+      # run ctest
+      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/jedi/mpasjedi
+        && ctest  -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx"
+
+    finally:
+      # upload ctest report to CDASH
+      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/jedi/mpasjedi
+        && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
 
   post_build:
     commands:
       - echo Executing post_build phase
       - echo $CODEBUILD_BUILD_SUCCEEDING
-      - if [ "$BUILD_STATUS" = "1" ] && [ "$CODEBUILD_BUILD_SUCCEEDING" = "0" ];
-        then echo "Build passed, rerunning failed tests";
-        su - jcsdauser -c "cd /build_container/mpasjedi
-        && ctest -VV --rerun-failed";
+      - echo $BUILD_STATUS
+
+      # upload find cdash url and upload it as CodeBuild artifact to S3
+      - if [ "$BUILD_STATUS" = "1" ];
+        then echo "Build & tests passed, find cdash url";
+        bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /home/jedi/mpasjedi/Testing;
+        url=$(bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /home/jedi/mpasjedi/Testing);
+        echo $url;
+        echo ${url} > /jcsda/artifacts/cdash-url.txt;
+        cat /jcsda/artifacts/cdash-url.txt;
         else echo "Build failed";
         fi
+
+artifacts:
+  files:
+    - '/jcsda/artifacts/*'
+  name: mpas-gnu-url
