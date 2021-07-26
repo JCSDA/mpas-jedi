@@ -7,6 +7,7 @@ module mpas_state_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
+use fckit_log_module, only: fckit_log
 
 !oops
 use datetime_mod
@@ -230,16 +231,14 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
      ! This default value is for backward compatibility
      IC = "invent-state"
   EndIf
-
-  WRITE(*,*) "mpas_state:analytic_init: "//IC
+  call fckit_log%info ("mpas_state:analytic_init: "//IC)
 
 ! Conflicts with natural log below
 !  call log%warning("mpas_state:analytic_init: "//IC)
   call f_conf%get_or_die("date",str)
   sdate = str
-  WRITE(buf,*) 'validity date is: '//sdate
-  WRITE(*,*) buf
-!  call log%info(buf)
+  call fckit_log%info ("validity date is: "//sdate)
+
   call datetime_set(sdate, vdate)
 
    ! Need to initialize variables that are used in interpolation/getVals
@@ -448,7 +447,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
 
      call da_copy_all2sub_fields(self % geom % domain, self % subFields)
 
-!   write(*,*)'==> end mpas_state:analytic_init'
+     call fckit_log%debug ('==> end mpas_state:analytic_init')
 
 end subroutine analytic_IC
 

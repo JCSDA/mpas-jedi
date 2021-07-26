@@ -21,7 +21,7 @@ module mpas4da_mod
 use fckit_log_module, only: fckit_log
 
 !oops
-use kinds, only : kind_real
+use kinds, only: kind_real
 
 !saber?
 use random_mod, only: normal_distribution
@@ -30,7 +30,7 @@ use random_mod, only: normal_distribution
 use ufo_vars_mod
 
 !MPAS-Model
-use mpas_abort, only : mpas_dmpar_global_abort
+use mpas_abort, only: mpas_dmpar_global_abort
 use mpas_constants
 use mpas_derived_types
 use mpas_dmpar
@@ -266,7 +266,8 @@ contains
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r2d_ptr_b)
                   r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
-!                  write(0,*)'Operator add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                  write(message,*) 'Operator add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                  call fckit_log%debug(message)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
                   call mpas_pool_get_array(pool_b, trim(poolItr % memberName), r3d_ptr_b)
@@ -344,25 +345,31 @@ contains
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_a = r1d_ptr_b
                   else if (poolItr_b % nDims == 2) then
-!                     write(0,*) 'tmp poolItr_b % memberName=',trim(poolItr_b % memberName)
+                     write(message,*) 'poolItr_b % memberName=',trim(poolItr_b % memberName)
+                     call fckit_log%debug(message)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_a = r2d_ptr_b
-!                     write(0,*)'Copy all2sub field ',trim(poolItr_b % memberName),' MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     write(message,*) 'Copy all2sub field MIN/MAX: ',trim(poolItr_b % memberName), &
+                                      minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     call fckit_log%debug(message)
                   end if
 
                else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
-!                 write(0,*)'Copy all2sub field: Looking at SCALARS now'
+                  write(message,*) 'Copy all2sub field: Looking at SCALARS now',trim(poolItr_a % memberName)
+                  call fckit_log%debug(message)
                   call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                      field2d % array(:,:) = field3d % array(index_scalar,:,:)
-!                        write(0,*)'Copy all2sub field ',trim(poolItr_a % memberName), &
-!                                  minval(field2d % array), maxval(field2d % array)
+                     write(message,*) 'Copy all2sub field MIN/MAX: ',trim(poolItr_a % memberName), &
+                                      minval(field2d % array), maxval(field2d % array)
+                     call fckit_log%debug(message)
                   else
-                     write(0,*)'WARNING in Copy all2sub field; ',trim(poolItr_a % memberName), &
-                                 'not available from MPAS'
+                     write(message,*) 'WARNING in Copy all2sub field; ',trim(poolItr_a % memberName), &
+                                      'not available from MPAS'
+                     call fckit_log%debug(message)
                   end if
                end if
             end do
@@ -436,26 +443,33 @@ contains
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
                      r1d_ptr_b = r1d_ptr_a
-!                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r1d_ptr_a),maxval(r1d_ptr_a)
+                     write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName), &
+                                      minval(r1d_ptr_a),maxval(r1d_ptr_a)
+                     call fckit_log%debug(message)
                   else if (poolItr_b % nDims == 2) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
                      r2d_ptr_b = r2d_ptr_a
-!                     write(0,*)'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName),minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName), &
+                                      minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     call fckit_log%debug(message)
                   end if
 
                else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
-                  !write(0,*)'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
+                  write(message,*) 'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
+                  call fckit_log%debug(message)
                   call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
                      field3d % array(index_scalar,:,:) = field2d % array(:,:)
-!                             write(0,*)'Copy sub2all field ',trim(poolItr_a % memberName), &
-!                                       minval(field2d % array), maxval(field2d % array)
+                     write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_a % memberName), &
+                                      minval(field2d % array), maxval(field2d % array)
+                     call fckit_log%debug(message)
                   else
-                     write(0,*)'WARNING in Copy sub2all field; ',trim(poolItr_a % memberName), &
-                              'not available from MPAS'
+                     write(message,*) 'WARNING in Copy sub2all field; ',trim(poolItr_a % memberName), &
+                                      'not available from MPAS'
+                     call fckit_log%debug(message)
                   end if
 !                       end if
                end if
@@ -682,7 +696,6 @@ contains
 
       nsize0 = 0
       nsize  = size(fieldname)
-!      write(0,*)'da_common_vars size: ',nsize
       call mpas_pool_begin_iteration(pool_a)
 
          do while ( mpas_pool_get_next_member(pool_a, poolItr) )
@@ -693,18 +706,14 @@ contains
                if (poolItr % dataType == MPAS_POOL_REAL) then
                   do ii=1, nsize
                      if ( trim(fieldname(ii)).eq.(trim(poolItr % memberName)) ) then
-!                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
                      else if (match_scalar(trim(poolItr % memberName), trim(fieldname(ii)))) then
-!                        write(0,*)'Common field: '//trim(fieldname(ii))
                         nsize0 = nsize0 + 1
                      end if
                   end do
                end if
             end if
          end do
-
-!      write(0,*)'da_common_vars = ',nsize0
 
    end function da_common_vars
 
@@ -809,9 +818,8 @@ contains
       !
       call mpas_pool_begin_iteration(pool_b)
 
-      !write(0,*)'-------------------------------------------------'
-      !write(0,*)' Operator ',trim(kind_op)
-      !write(0,*)'-------------------------------------------------'
+      write(message,*) 'Operator ',trim(kind_op)
+      call fckit_log%debug(message)
 
       do while ( mpas_pool_get_next_member(pool_b, poolItr) )
 
@@ -891,15 +899,17 @@ contains
                      r2d_ptr_a = MPAS_JEDI_ZERO_kr
                   end if
                   if ( trim(kind_op).eq.'add' ) then
-!                     write(0,*)'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
-!                     write(0,*)'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+                     write(message,*) 'Operator_a add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     call fckit_log%debug(message)
+                     write(message,*) 'Operator_b add MIN/MAX: ',minval(r2d_ptr_b),maxval(r2d_ptr_b)
+                     call fckit_log%debug(message)
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b + r2d_ptr_c
                      else
-!                        write(*,*)'regular addition'
                         r2d_ptr_a = r2d_ptr_a + r2d_ptr_b
                      end if
-!                     write(0,*)'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     write(message,*) 'Operator2 add MIN/MAX: ',minval(r2d_ptr_a),maxval(r2d_ptr_a)
+                     call fckit_log%debug(message)
                   else if ( trim(kind_op).eq.'schur' ) then
                      if (present(pool_c)) then
                         r2d_ptr_a = r2d_ptr_b * r2d_ptr_c
@@ -1569,8 +1579,10 @@ contains
         s    = inString2(18:19)
      end if
 
-!     write(*,*)'cvt_oopsmpas_date instring: ',trim(YYYY),trim(MM),trim(DD),trim(h),trim(m),trim(s)
-!     write(*,*)'cvt_oopsmpas_date input ',trim(instring2)
+     write(message,*) 'cvt_oopsmpas_date instring: ',trim(YYYY),trim(MM),trim(DD),trim(h),trim(m),trim(s)
+     call fckit_log%debug(message)
+     write(message,*) 'cvt_oopsmpas_date input ',trim(instring2)
+     call fckit_log%debug(message)
 
      write(outString,*) ''
      instring = trim(outstring2)
@@ -1581,7 +1593,8 @@ contains
            if (inString(i:i) == '$' ) then
                charExpand = .true.
            else if (inString(i:i) /= '$') then
-               !write(*,*)'inString: ',trim(inString(i:i)),charExpand
+               write(message,*) 'inString: ',trim(inString(i:i)),charExpand
+               call fckit_log%debug(message)
                if (charExpand) then
                   select case (inString(i:i))
                      case ('Y')
@@ -1597,12 +1610,12 @@ contains
                      case ('s')
                          outString = trim(outString) // trim(s)
                      case default
-                        write(*, *) 'ERROR: mpas_expand_string option $', inString(i:i), ' is not a valid expansion character.'
                         call mpas_dmpar_global_abort('ERROR: mpas_timekeeping')
                   end select
                   curLen = len_trim(outString)
                   charExpand = .false.
-                  !write(*,*)'outString: ',trim(outString)
+                  write(message,*) 'outString: ',trim(outString)
+                  call fckit_log%debug(message)
                else
                   outString(curLen+1:curLen+1) = outString2(i:i)
                   curLen = curLen+1
@@ -1611,7 +1624,8 @@ contains
      end do
 
      outString2 = trim(outString)
-!     write(*,*)'cvt_oopsmpas_date output ',trim(outstring2)
+     write(message,*) 'cvt_oopsmpas_date output ',trim(outstring2)
+     call fckit_log%debug(message)
 
   end subroutine cvt_oopsmpas_date
 

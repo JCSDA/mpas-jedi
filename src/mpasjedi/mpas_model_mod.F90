@@ -6,6 +6,7 @@
 module mpas_model_mod
 
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only: fckit_log
 use iso_c_binding
 use duration_mod
 use mpas_geom_mod
@@ -43,6 +44,9 @@ type :: mpas_model
    type (core_type), pointer :: corelist
    real (kind=kind_real) :: dt
 end type mpas_model
+
+integer, parameter    :: max_string=8000
+character(max_string) :: message
 
 #define LISTED_TYPE mpas_model
 
@@ -84,7 +88,7 @@ subroutine model_setup(self, geom, f_conf)
 
 !   type(fckit_mpi_comm) :: f_comm
    
-!   write(*,*) "---- Inside of Sub. model_setup ----"
+   call fckit_log%info('===> model_setup')
 #define ModelMPAS_setup
 #ifdef ModelMPAS_setup
    self % corelist => geom % corelist
@@ -93,12 +97,12 @@ subroutine model_setup(self, geom, f_conf)
 !   !> MPAS subdriver
 !   call mpas_init( self % corelist, self % domain, mpi_comm=f_comm%communicator() )
 !   if (associated(self % domain)) then
-!       write(*,*)'inside model: model % domain associated'
+!       call fckit_log%debug('inside model: model % domain associated')
 !   end if
 !   if (associated(self % corelist)) then
-!       write(*,*)'inside model: model % corelist associated'
+!       call fckit_log%debug('inside model: model % corelist associated')
 !   else
-!       write(*,*)'inside model: model % corelist not associated'
+!       call fckit_log%debug('inside model: model % corelist not associated')
 !   end if
 
    ! GD:  we need to update some parameters here regarding the yaml namelist file of oops.
@@ -108,23 +112,24 @@ subroutine model_setup(self, geom, f_conf)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_restart_timestamp_name', config_restart_timestamp_name)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_run_duration', config_run_duration)
    call mpas_pool_get_config(self % domain % blocklist % configs, 'config_stop_time', config_stop_time)
-!   write(*,*)'config_dt: ',config_dt
-!   write(*,*)'config_start_time: ',trim(config_start_time)
-!   write(*,*)'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
-!   write(*,*)'config_run_duration: ',trim(config_run_duration)
-!   write(*,*)'config_stop_time: ',trim(config_stop_time)
-!   write(0,*)'geom % nCellsGlobal: ',geom % nCellsGlobal
-!   write(0,*)'geom % nCells: ',geom % nCells
-!   write(0,*)'geom % nCellsSolve: ',geom % nCellsSolve
-
-
+   write(message,*) 'config_dt: ',config_dt
+   call fckit_log%debug(message)
+   write(message,*) 'config_start_time: ',trim(config_start_time)
+   call fckit_log%debug(message)
+   write(message,*) 'config_restart_timestamp_name: ',trim(config_restart_timestamp_name)
+   call fckit_log%debug(message)
+   write(message,*) 'config_run_duration: ',trim(config_run_duration)
+   call fckit_log%debug(message)
+   write(message,*) 'config_stop_time: ',trim(config_stop_time)
+   call fckit_log%debug(message)
 
    ! GD: needs a converter from oops yaml file format to mpas if the yaml file drives MPAS
    ! otherwise mpas namelist file can be used.
    call f_conf%get_or_die("tstep",str)
    ststep = str
    dtstep = trim(ststep)
-!   write(0,*)'ststep: ', ststep
+   write(message,*) 'ststep: ', ststep
+   call fckit_log%debug(message)
    self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
    ! call f_conf%get_or_die("dstep",str)
    ! dstep = str
@@ -143,9 +148,9 @@ subroutine model_delete(self)
    type(mpas_model) :: self
 
    ! For now, all the structure is hold by geom
-!   write(*,*)'===> model_delete'
+   call fckit_log%info('===> model_delete')
 !   if ((associated(self % corelist)).and.(associated(self % domain))) then
-!      write(*,*)'==> delete model corelist and domain'
+!      call fckit_log%debug('===> delete model corelist and domain')
 !      call mpas_timer_set_context( self % domain )
 !      call mpas_finalize(self % corelist, self % domain)
 !   end if
@@ -178,7 +183,7 @@ subroutine model_prepare_integration(self, jedi_state)
    type (MPAS_Timeinterval_Type) ::  runDuration
    type (MPAS_Alarm_type), pointer :: alarmPtr
 
-!   write(*,*)'===> model_prepare_integration'
+   call fckit_log%info('===> model_prepare_integration')
 
    !--------------------------
    ! GD: the present design relies on the hypothesis that we run
@@ -217,19 +222,24 @@ subroutine model_prepare_integration(self, jedi_state)
    stopTime = startTime + runDuration
    call mpas_set_clock_time(self % domain % clock, stopTime, MPAS_STOP_TIME)
    call mpas_get_time(stopTime, dateTimeString=stopTimeStamp)
-!   write(*,*)'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
+   write(message,*) 'MPAS_START_TIME, MPAS_STOP_TIME: ',trim(startTimeStamp),trim(stopTimeStamp)
+   call fckit_log%debug(message)
  !--
    nowTime = mpas_get_clock_time(jedi_state % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
-!   write(*,*)'MPAS_NOW from jedi_state % clock: ',trim(nowTimeStamp)
+   write(message,*) 'MPAS_NOW from jedi_state % clock: ',trim(nowTimeStamp)
+   call fckit_log%debug(message)
    nowTime = mpas_get_clock_time(self % domain % clock, MPAS_NOW, ierr)
    call mpas_get_time(nowTime, dateTimeString=nowTimeStamp)
-!   write(*,*)'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
+   write(message,*) 'MPAS_NOW from self % domain % clock: ',trim(nowTimeStamp)
+   call fckit_log%debug(message)
 !-- set xtime as startTimeStamp
    call mpas_pool_get_array(self % domain % blocklist % allFields, 'xtime', xtime, 1)
-!   write(*,*) 'xtime_old=',xtime
+   write(message,*) 'xtime_old=',xtime
+   call fckit_log%debug(message)
    xtime = startTimeStamp
-!   write(*,*) 'xtime_new=',xtime
+   write(message,*) 'xtime_new=',xtime
+   call fckit_log%debug(message)
 
    !--------------------------------------------------------------------
    ! Computation of theta_m from theta and qv
@@ -304,7 +314,7 @@ subroutine model_prepare_integration_ad(self, inc)
    type(mpas_model)  :: self
    type(mpas_fields) :: inc
 
-   write(*,*)'===> model_prepare_integration_ad'
+   call fckit_log%info ('===> model_prepare_integration_ad')
 
 end subroutine model_prepare_integration_ad
 
@@ -316,7 +326,7 @@ subroutine model_prepare_integration_tl(self, inc)
    type(mpas_model)  :: self
    type(mpas_fields) :: inc
 
-   write(*,*)'===> model_prepare_integration_tl'
+   call fckit_log%info ('===> model_prepare_integration_tl')
 
 end subroutine model_prepare_integration_tl
 
@@ -332,7 +342,7 @@ subroutine model_propagate(self, jedi_state)
    real (kind=kind_real) :: dt
    integer :: itimestep
 
-   write(*,*)'===> model_propagate'
+   call fckit_log%info ('===> model_propagate')
 
    ! Get state, diag, and mesh from domain
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'state', state)
@@ -363,28 +373,21 @@ end subroutine model_propagate
 ! ------------------------------------------------------------------------------
 
 subroutine model_propagate_ad(self, inc, traj)
-
    implicit none
-
    type(mpas_model)      :: self
    type(mpas_fields)     :: inc
    type(mpas_trajectory) :: traj
-
-   write(*,*)'===> model_prepare_integration_ad'
-
+   call fckit_log%info ('===> model_propagate_ad')
 end subroutine model_propagate_ad
 
 ! ------------------------------------------------------------------------------
 
 subroutine model_propagate_tl(self, inc, traj)
-
    implicit none
    type(mpas_model)      :: self
    type(mpas_fields)     :: inc
    type(mpas_trajectory) :: traj
-
-   write(*,*)'===> model_propagate_tl'
-
+   call fckit_log%info ('===> model_propagate_tl')
 end subroutine model_propagate_tl
 
 ! ------------------------------------------------------------------------------
@@ -396,7 +399,7 @@ subroutine model_prop_traj(self, jedi_state, traj)
    type(mpas_fields)     :: jedi_state
    type(mpas_trajectory) :: traj
 
-   write(*,*)'===> model_prop_traj in mpas_model_mod.F90'
+   call fckit_log%info ('===> model_prop_traj in mpas_model_mod.F90')
    call set_traj(traj,jedi_state)
 
 end subroutine model_prop_traj
@@ -408,7 +411,7 @@ subroutine model_wipe_traj(traj)
    implicit none
    type(mpas_trajectory) :: traj
 
-   write(*,*)'===> model_wipe_traj'
+   call fckit_log%info ('===> model_wipe_traj')
 
 end subroutine model_wipe_traj
 

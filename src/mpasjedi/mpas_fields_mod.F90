@@ -6,7 +6,7 @@
 module mpas_fields_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fckit_log_module, only : fckit_log
+use fckit_log_module, only: fckit_log
 use iso_c_binding
 
 !oops
@@ -17,7 +17,7 @@ use string_utils, only: swap_name_member
 use unstructured_interpolation_mod
 
 ! saber
-use interpolatorbump_mod,         only: bump_interpolator
+use interpolatorbump_mod, only: bump_interpolator
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
@@ -288,14 +288,14 @@ subroutine delete_fields(self)
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
 
-!   write(*,*)'--> delete_fields: deallocate subFields Pool'
+   call fckit_log%debug('--> delete_fields: deallocate subFields Pool')
    call delete_pool(self % subFields)
 
    call mpas_destroy_clock(self % clock, ierr)
    if ( ierr .ne. 0  ) then
-      write(*,*) '--> delete_fields deallocate clock failed'
+      call fckit_log%info ('--> delete_fields deallocate clock failed')
    end if
-!   write(*,*)'--> delete_fields done'
+   call fckit_log%debug('--> delete_fields done')
 
    return
 
@@ -324,7 +324,7 @@ subroutine copy_fields(self,rhs)
    type (MPAS_Time_type) :: rhs_time
    integer :: ierr
 
-!   write(*,*)'--> copy_fields: copy subFields Pool'
+   call fckit_log%debug('--> copy_fields: copy subFields Pool')
 
    self % nf = rhs % nf
    if (allocated(self % fldnames)) deallocate(self % fldnames)
@@ -341,7 +341,7 @@ subroutine copy_fields(self,rhs)
 
    call copy_pool(rhs % subFields, self % subFields)
 
-!   write(*,*)'--> copy_fields done'
+   call fckit_log%debug('--> copy_fields done')
 
 end subroutine copy_fields
 
@@ -377,7 +377,7 @@ subroutine read_fields(self, f_conf, vdate)
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
 
-!   write(*,*)'--> read_fields'
+   call fckit_log%debug('--> read_fields')
    call f_conf%get_or_die("date",str)
    sdate = str
    call datetime_set(sdate, vdate)
@@ -385,7 +385,8 @@ subroutine read_fields(self, f_conf, vdate)
    call f_conf%get_or_die("filename",str)
    call swap_name_member(f_conf, str)
    temp_filename = str
-!   write(*,*)'--> read_fields: Reading ',trim(temp_filename)
+   write(message,*) '--> read_fields: Reading ',trim(temp_filename)
+   call fckit_log%debug(message)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -399,13 +400,15 @@ subroutine read_fields(self, f_conf, vdate)
    self % manager => self % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
    call cvt_oopsmpas_date(sdate,dateTimeString,1)
-!   write(*,*)'--> read_fields: dateTimeString: ',trim(dateTimeString)
+   write(message,*) '--> read_fields: dateTimeString: ',trim(dateTimeString)
+   call fckit_log%debug(message)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
    call mpas_set_clock_time(self % clock, local_time, MPAS_NOW)
    call mpas_set_clock_time(self % geom % domain % clock, local_time, MPAS_START_TIME)
    call mpas_expand_string(dateTimeString, -1, temp_filename, filename)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
-!   write(*,*)'--> read_fields: Reading ',trim(filename)
+   write(message,*) '--> read_fields: Reading ',trim(filename)
+   call fckit_log%debug(message)
    call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
    if ( ierr .ne. 0  ) then
@@ -489,11 +492,13 @@ subroutine write_fields(self, f_conf, vdate)
    call da_copy_sub2all_fields(self % geom % domain, self % subFields)
 
    call datetime_to_string(vdate, validitydate)
-!   write(*,*)'--> write_fields: ',trim(validitydate)
+   write(message,*) '--> write_fields: ',trim(validitydate)
+   call fckit_log%debug(message)
    call f_conf%get_or_die("filename",str)
    call swap_name_member(f_conf, str)
    temp_filename = str
-!   write(*,*)'--> write_fields: ',trim(temp_filename)
+   write(message,*) '--> write_fields: ',trim(temp_filename)
+   call fckit_log%debug(message)
    !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
@@ -504,7 +509,8 @@ subroutine write_fields(self, f_conf, vdate)
    call mpas_set_time(write_time, dateTimeString=dateTimeString, ierr=ierr)
    fld_time = mpas_get_clock_time(self % clock, MPAS_NOW, ierr)
    call mpas_get_time(fld_time, dateTimeString=dateTimeString2, ierr=ierr)
-   ! write(*,*)'check time --> write_fields: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+   write(message,*) 'check time --> write_fields: write_time,fld_time: ',trim(dateTimeString),trim(dateTimeString2)
+   call fckit_log%debug(message)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
 
    self % manager => self % geom % domain % streamManager
@@ -515,7 +521,8 @@ subroutine write_fields(self, f_conf, vdate)
    !streamID = 'da'
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
-!   write(*,*)'--> write_fields: writing ',trim(filename)
+   write(message,*) '--> write_fields: writing ',trim(filename)
+   call fckit_log%debug(message)
    call mpas_stream_mgr_write(self % geom % domain % streamManager, streamID=streamID, &
         forceWriteNow=.true., writeTime=dateTimeString, ierr=ierr)
    if ( ierr .ne. 0  ) then

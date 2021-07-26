@@ -157,7 +157,8 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    logical :: deallocate_fields
    logical :: bump_interp
-!   write(*,*)' ==> create geom'
+
+   call fckit_log%info('==> create geom')
 
    ! MPI communicator
    self%f_comm = f_comm
@@ -251,12 +252,13 @@ subroutine geo_setup(self, f_conf, f_comm)
    deallocate(fields_conf)
 
 !   if (associated(self % domain)) then
-!       write(*,*)'inside geom: geom % domain associated for domainID = ', self % domain % domainID
+!       write(message,*) 'inside geom: geom % domain associated for domainID = ', self % domain % domainID
+!       call fckit_log%debug(message)
 !   end if
 !   if (associated(self % corelist)) then
-!       write(*,*)'inside geom: geom % corelist associated'
+!       call fckit_log%debug('inside geom: geom % corelist associated')
 !   else
-!       write(*,*)'inside geom: geom % corelist not associated'
+!       call fckit_log%debug('inside geom: geom % corelist not associated')
 !   end if
 
    !  These pool accesses refer to memory (local+halo) for a single MPAS block (standard)
@@ -363,7 +365,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
-!   write(*,*)'End of geo_setup'
+   call fckit_log%debug('End of geo_setup')
    if (allocated(prev_count)) deallocate(prev_count)
    if (allocated(str)) deallocate(str)
 
@@ -569,7 +571,7 @@ subroutine geo_clone(self, other)
    ! Clone communicator
    self%f_comm = other%f_comm
 
-!   write(*,*)'====> copy of geom array'
+   call fckit_log%debug('====> copy of geom array')
 
    self % nCellsGlobal  = other % nCellsGlobal
    self % nCells        = other % nCells
@@ -631,11 +633,12 @@ subroutine geo_clone(self, other)
    self % areaTriangle      = other % areaTriangle
    self % angleEdge         = other % angleEdge
 
-!   write(*,*)'====> copy of geom corelist and domain'
+   call fckit_log%debug('====> copy of geom corelist and domain')
 
    self % corelist => other % corelist
    self % domain   => other % domain
-!   write(*,*)'inside geo_clone: other % domain % domainID = ', other % domain % domainID
+   write(message,*) 'inside geo_clone: other % domain % domainID = ', other % domain % domainID
+   call fckit_log%debug(message)
 
    do ii = 1, size(geom_count)
       if (geom_count(ii)%id == self%domain%domainID) then
@@ -643,7 +646,7 @@ subroutine geo_clone(self, other)
       end if
    end do
 
-!   write(*,*)'====> copy of geom done'
+   call fckit_log%debug('====> copy of geom done')
 
 end subroutine geo_clone
 

@@ -8,19 +8,20 @@ module mpasjedi_lineargetvalues_mod
 use iso_c_binding
 
 ! fckit
-use fckit_mpi_module,               only: fckit_mpi_sum
-use fckit_configuration_module,     only: fckit_configuration
+use fckit_mpi_module, only: fckit_mpi_sum
+use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only: fckit_log
 
 ! oops
-use datetime_mod,                   only: datetime, datetime_to_string
-use kinds,                          only: kind_real
+use datetime_mod, only: datetime, datetime_to_string
+use kinds, only: kind_real
 
 ! saber
-use interpolatorbump_mod,         only: bump_interpolator
+use interpolatorbump_mod, only: bump_interpolator
 
 ! ufo
 use ufo_locations_mod
-use ufo_geovals_mod,                only: ufo_geovals
+use ufo_geovals_mod, only: ufo_geovals
 use ufo_vars_mod
 
 !MPAS-Model
@@ -56,6 +57,9 @@ type, extends(mpasjedi_getvalues_base) :: mpasjedi_lineargetvalues
   procedure, public :: fill_geovals_ad
 end type mpasjedi_lineargetvalues
 
+integer, parameter    :: max_string=8000
+character(max_string) :: message
+
 #define LISTED_TYPE mpasjedi_lineargetvalues
 
 !> Linked list interface - defines registry_t type
@@ -65,8 +69,6 @@ end type mpasjedi_lineargetvalues
 type(registry_t) :: mpas_lineargetvalues_registry
 
 ! --------------------------------------------------------------------------------------------------
-
-!character(len=1024) :: message
 
 contains
 
@@ -248,7 +250,8 @@ subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
   ! ------------------------------
   nCells = geom % nCellsSolve
   nlocs = locs % nlocs() ! # of location for entire window
-  !write(0,*)'getvalues_ad: nlocs        : ',nlocs
+  write(message,*) 'fill_geovals_ad: nlocs        : ',nlocs
+  call fckit_log%debug(message)
 
   ! Get mask for locations in this time window
   ! ------------------------------------------
@@ -279,7 +282,8 @@ subroutine fill_geovals_ad(self, geom, inc, t1, t2, locs, gom)
 
       self%obs_field = MPAS_JEDI_ZERO_kr
 
-      !write(*,*) 'nDims, geovar =', nDims , geovar
+      write(message,*) 'fill_geovals_ad: nDims, geovar =', nDims , geovar
+      call fckit_log%debug(message)
       nlevels = gom%geovals(jvar)%nval
       do jlev = 1, nlevels
         !ORG- obs_field(:,jlev) = gom%geovals(jvar)%vals(jlev,:)

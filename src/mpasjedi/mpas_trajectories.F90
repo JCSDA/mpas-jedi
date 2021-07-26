@@ -5,6 +5,8 @@
 
 module mpas_trajectories
 
+use fckit_log_module, only: fckit_log
+
 !MPAS-Model
 use mpas_derived_types
 use mpas_pool_routines
@@ -49,15 +51,14 @@ implicit none
 type(mpas_trajectory), intent(inout) :: self
 type(mpas_fields),     intent(in)    :: state
 
- write(*,*) '===> set_traj(self) in mpas_trajectories.F90'
+ call fckit_log%info ('===> set_traj(self) in mpas_trajectories.F90')
 
  self%nf = state%nf
  allocate(self%fldnames( self%nf ))
  self%fldnames = state%fldnames
-
  call copy_pool(state % subFields, self % subFields)
 
- write(*,*) '===> DONE set_traj(self) in mpas_trajectories.F90'
+ call fckit_log%info ('===> DONE set_traj(self) in mpas_trajectories.F90')
 
 end subroutine set_traj
 
@@ -67,7 +68,7 @@ subroutine delete_traj(self)
 implicit none
 type(mpas_trajectory), intent(inout) :: self
 
- write(*,*) '===> delete_traj(self) in mpas_trajectories.F90'
+  call fckit_log%info ('===> delete_traj(self) in mpas_trajectories.F90')
 
 end subroutine delete_traj
 

@@ -7,6 +7,7 @@ module mpas_increment_mod
 
 use atlas_module, only: atlas_geometry, atlas_field, atlas_fieldset, atlas_real
 use fckit_configuration_module, only: fckit_configuration
+use fckit_log_module, only: fckit_log
 
 !oops
 use datetime_mod
@@ -37,6 +38,9 @@ private
 
 public :: diff_incr, dirac, &
         & set_atlas, to_atlas, from_atlas
+
+integer, parameter    :: max_string=8000
+character(max_string) :: message
 
 ! ------------------------------------------------------------------------------
 
@@ -123,8 +127,8 @@ subroutine dirac(self, f_conf)
       end if
    end do
 
-!   write(*,*) ' This processor owns ',ndirlocal, &
-!              ' dirac forcing locations'
+   write(message,*) 'This processor owns ',ndirlocal,' dirac forcing locations'
+   call fckit_log%debug(message)
 
    ! Check
    if (ndir<1) call abor1_ftn("mpas_increment:dirac non-positive ndir")
@@ -155,7 +159,8 @@ subroutine dirac(self, f_conf)
       ! so we select only those members of the pool that are fields
       if (poolItr % memberType == MPAS_POOL_FIELD) then
          ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
-!         write(*,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+         write(message,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , poolItr % memberName
+         call fckit_log%debug(message)
 
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
@@ -171,7 +176,7 @@ subroutine dirac(self, f_conf)
                         call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r2d_ptr_a)
                         r2d_ptr_a( ildir, dirCells(idir) ) = MPAS_JEDI_ONE_kr
                      else if (poolItr % nDims == 3) then
-                        write(*,*)'Not implemented yet'
+                        call fckit_log%info ('Not implemented yet')
                      end if
                      ndirlocal = ndirlocal + 1
                   end if

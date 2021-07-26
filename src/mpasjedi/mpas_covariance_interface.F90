@@ -96,6 +96,7 @@ end subroutine c_mpas_b_inv_mult
 subroutine c_mpas_b_mult(c_key_self, c_key_in, c_key_out) bind(c,name='mpas_b_mult_f90')
 
 use iso_c_binding
+use fckit_log_module, only: fckit_log
 
 !oops
 use kinds
@@ -123,11 +124,11 @@ type (field2DReal), pointer   :: field2d_src
 
 integer :: ivar
 
-call mpas_covar_registry%get(c_key_self,self)
-call mpas_fields_registry%get(c_key_in,xin)
-call mpas_fields_registry%get(c_key_out,xout)
+   call mpas_covar_registry%get(c_key_self,self)
+   call mpas_fields_registry%get(c_key_in,xin)
+   call mpas_fields_registry%get(c_key_out,xout)
 
-   write(*,*) '---- inside sub c_mpas_b_mult ----'
+   call fckit_log%info ('---- inside sub c_mpas_b_mult ----')
 !TODO BJJ
 !Implement this
 !xout = xin
