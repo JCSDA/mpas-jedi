@@ -8,8 +8,6 @@ list( APPEND mpasjedi_src_files
     IncrementMPAS.h
     IncrementMPASFortran.h
     MPASTraits.h
-    LocalizationMatrixMPAS.cc
-    LocalizationMatrixMPAS.h
     ModelBiasCovarianceMPAS.h
     ModelBiasIncrementMPAS.h
     ModelBiasMPAS.h
@@ -38,7 +36,6 @@ list( APPEND mpasjedi_src_files
     mpas2ufo_vars_mod.F90
     mpas4da_mod.F90
     mpas_kinds_mod.F90
-    instantiateLocalizationFactory.h
     getvalues/mpasjedi_getvalues_mod.F90
     getvalues/mpasjedi_lineargetvalues_mod.F90
     getvalues/GetValues.cc

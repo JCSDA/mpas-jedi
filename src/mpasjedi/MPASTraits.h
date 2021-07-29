@@ -15,7 +15,6 @@
 #include "mpasjedi/getvalues/GetValues.h"
 #include "mpasjedi/getvalues/LinearGetValues.h"
 #include "mpasjedi/IncrementMPAS.h"
-#include "mpasjedi/LocalizationMatrixMPAS.h"
 #include "mpasjedi/ModelBiasCovarianceMPAS.h"
 #include "mpasjedi/ModelBiasIncrementMPAS.h"
 #include "mpasjedi/ModelBiasMPAS.h"
@@ -40,8 +39,6 @@ struct MPASTraits {
 
   typedef mpas::GetValues                GetValues;
   typedef mpas::LinearGetValues          LinearGetValues;
-
-  typedef mpas::LocalizationMatrixMPAS   LocalizationMatrix;
 };
 
 }  // namespace mpas

@@ -52,8 +52,6 @@ typedef int F90ovec;
 typedef int F90hop;
 // Observation data base type
 typedef int F90odb;
-// Localization matrix
-typedef int F90lclz;
 // GetValues key
 typedef int F90getvalues;
 // LinearGetValues key
@@ -121,16 +119,6 @@ extern "C" {
   void mpas_b_invmult_f90(const F90bmat &, const F90inc &, const F90inc &);
 
   void mpas_b_randomize_f90(const F90bmat &, const F90inc &);
-
-// -----------------------------------------------------------------------------
-//  LocalizationMatrix
-// -----------------------------------------------------------------------------
-  void mpas_localization_setup_f90(F90lclz &,
-                                 const eckit::Configuration &,
-                                 const F90geom &);
-  void mpas_localization_delete_f90(F90lclz &);
-  void mpas_localization_randomize_f90(const F90lclz &, const F90inc &);
-  void mpas_localization_mult_f90(const F90lclz &, const F90inc &);
 
 }
 // -----------------------------------------------------------------------------
