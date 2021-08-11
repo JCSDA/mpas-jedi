@@ -16,8 +16,6 @@ list( APPEND mpasjedi_src_files
     StateMPAS.cc
     StateMPAS.h
     StateMPASFortran.h
-    TlmIdMPAS.cc
-    TlmIdMPAS.h
     TlmMPAS.cc
     TlmMPAS.h
     mpas_constants_mod.F90

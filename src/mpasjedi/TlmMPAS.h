@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
-#include "oops/base/LinearModelBase.h"
 #include "oops/base/Variables.h"
+#include "oops/interface/LinearModelBase.h"
 
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/ModelMPAS.h"
@@ -35,7 +35,7 @@ namespace mpas {
  *  LFRic linear model definition and configuration parameters.
  */
 
-class TlmMPAS: public oops::LinearModelBase<MPASTraits>,
+class TlmMPAS: public oops::interface::LinearModelBase<MPASTraits>,
                 private util::ObjectCounter<TlmMPAS> {
  public:
   static const std::string classname() {return "mpas::TlmMPAS";}

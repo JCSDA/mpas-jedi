@@ -19,7 +19,7 @@
 namespace mpas {
 
 // -----------------------------------------------------------------------------
-static oops::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
+static oops::interface::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
 // -----------------------------------------------------------------------------
 TlmMPAS::TlmMPAS(const GeometryMPAS & resol,
                  const eckit::Configuration & tlConf)

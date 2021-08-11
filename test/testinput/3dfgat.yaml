@@ -5,6 +5,7 @@ test:
   log output filename: testoutput/3dfgat.run
   test output filename: testoutput/3dfgat.run.ref
 cost function:
+  # 3dfgat utilizes the 4D-Var cost function with an identity linear model
   cost type: 4D-Var
   window begin: '2018-04-14T21:00:00Z'
   window length: PT6H
@@ -168,12 +169,11 @@ variational:
       nml_file: "./Data/480km/namelist.atmosphere_2018041421"
       streams_file: "./Data/480km/streams.atmosphere"
     linear model:
-      name: MPASIdTLM
+      # 3dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
+      name: Identity
+      increment variables: *incvars
       variable change: Identity
       tstep: PT30M
-      trajectory:
-        tstep: PT30M
-      tlm variables: *incvars
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -183,12 +183,11 @@ variational:
       nml_file: "./Data/480km/namelist.atmosphere_2018041421"
       streams_file: "./Data/480km/streams.atmosphere"
     linear model:
-      name: MPASIdTLM
+      # 3dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
+      name: Identity
+      increment variables: *incvars
       variable change: Identity
       tstep: PT30M
-      trajectory:
-        tstep: PT30M
-      tlm variables: *incvars
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
