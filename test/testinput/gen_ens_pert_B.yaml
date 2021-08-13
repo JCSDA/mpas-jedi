@@ -4,28 +4,9 @@ test:
   reference filename: testoutput/gen_ens_pert_B.ref
   log output filename: testoutput/gen_ens_pert_B.run
   test output filename: testoutput/gen_ens_pert_B.run.ref
-Covariance:
-  covariance: BUMP
-#  covariance: MPASstatic
-  date: '2018-04-15T00:00:00Z'
-  bump:
-    prefix: Data/bump/mpas_parametersbump_cov
-    default_seed: 1
-    method: cor
-    nonunit_diag: 1 #effectively "cov"
-    strategy: specific_univariate  #common
-    load_nicas: 1
-    ntry: 3
-    nrep: 2
-    lsqrt: 1
-    resol: 4
-    nicas_interp: bilin
-    network: 0
-    mpicom: 2
-    advmode: 0
 forecast_length: PT6H
 initial:
-  variables:
+  variables: &vars
   - temperature
   - spechum
   - uReconstructZonal
@@ -34,6 +15,33 @@ initial:
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 members: 5
+Covariance:
+  covariance: BUMP
+#  covariance: MPASstatic
+  date: &date '2018-04-15T00:00:00Z'
+  bump:
+    strategy: specific_univariate
+    load_nicas_local: 1
+    verbosity: main
+    grids:
+    - prefix: Data/bump/mpas_parametersbump_cov_3D
+      variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+    - prefix: Data/bump/mpas_parametersbump_cov_2D
+      variables: [surface_pressure]
+  variable changes:
+  - variable change: StdDev
+    input variables: *vars
+    output variables: *vars
+    bump:
+      verbosity: main
+      grids:
+      - variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+      - variables: [surface_pressure]
+    input:
+    - parameter: stddev
+      filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+      date: *date
+      no_transf: 1
 model:
   name: MPAS
   tstep: PT30M

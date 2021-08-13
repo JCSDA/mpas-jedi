@@ -3,7 +3,7 @@ test:
   integer tolerance: 0
   reference filename: testoutput/parameters_bumploc.ref
   log output filename: testoutput/parameters_bumploc.run
-  test output filename: testoutput/parameters_bumploc.run
+  test output filename: testoutput/parameters_bumploc.run.ref
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
@@ -47,10 +47,9 @@ bump:
   strategy: common
   new_hdiag: 1
   new_nicas: 1
-  interp_type: mesh_based
+  write_nicas_local: 1
+  write_nicas_global: 1
   nc1: 1024
-  ntry: 3
-  nrep: 2
   nc2: 200
   nc3: 10
   dc: 1000000
@@ -59,9 +58,8 @@ bump:
   local_diag: 1
   local_rad: 1000000
   resol: 4
-  mpicom: 2
   diag_rhflt: 3000000
-  write_grids: 1
+  write_nicas_grids: 1
 output:
 - parameter: loc_coef
   filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc

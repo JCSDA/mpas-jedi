@@ -416,13 +416,13 @@ subroutine read_fields(self, f_conf, vdate)
       call abor1_ftn(message)
    end if
 
-   !==TODO: Speific part when reading parameterEst. for BUMP.	
-   !      : They write/read a list of variables directly.	
+   !==TODO: Specific part when reading parameterEst. for BUMP.
+   !      : They write/read a list of variables directly.
    if (f_conf%has("no_transf")) then
       call f_conf%get_or_die("no_transf",ierr)
       if(ierr .eq. 1) then
          call da_copy_all2sub_fields(self % geom % domain, self % subFields)
-        return
+         return
       endif
    endif
 

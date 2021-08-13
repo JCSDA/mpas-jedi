@@ -37,16 +37,15 @@ ensemble:
     date: *date
     state variables: *vars
 bump:
-  prefix: Data/bump/mpas_parametersbump_cov
   method: cor
   strategy: specific_univariate
+  verbosity: main
   new_var: 1
   new_hdiag: 1
   new_nicas: 1
-  interp_type: mesh_based
+  write_nicas_local: 1
+  write_nicas_global: 1
   nc1: 512
-  ntry: 3
-  nrep: 2
   nc2: 150
   nc3: 5
   dc: 1000000
@@ -55,12 +54,21 @@ bump:
   local_diag: 1
   local_rad: 1000000
   resol: 4
-  mpicom: 2
   diag_rhflt: 3000000
-  write_grids: 1
+  write_nicas_grids: 1
   var_filter: 1
   var_niter: 1
-  var_rhflt: 3000.0e3
+  var_rhflt:
+    temperature: [3000.0e3]
+    spechum: [3000.0e3]
+    uReconstructZonal: [3000.0e3]
+    uReconstructMeridional: [3000.0e3]
+    surface_pressure: [3000.0e3]
+  grids:
+  - prefix: Data/bump/mpas_parametersbump_cov_3D
+    variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+  - prefix: Data/bump/mpas_parametersbump_cov_2D
+    variables: [surface_pressure]
 output:
 - parameter: stddev
   filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc

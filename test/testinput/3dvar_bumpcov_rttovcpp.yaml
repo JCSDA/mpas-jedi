@@ -27,17 +27,27 @@ cost function:
     covariance model: BUMP
     date: *adate
     bump:
-      prefix: Data/bump/mpas_parametersbump_cov
       strategy: specific_univariate
-      load_nicas: 1
-      mpicom: 2
+      load_nicas_local: 1
+      grids:
+      - prefix: Data/bump/mpas_parametersbump_cov_3D
+        variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+      - prefix: Data/bump/mpas_parametersbump_cov_2D
+        variables: [surface_pressure]
     variable changes:
     - variable change: StdDev
       input variables: *incvars
       output variables: *incvars
       bump:
-        load_var: 1
-        prefix: Data/bump/mpas_parametersbump_cov
+        verbosity: main
+        grids:
+        - variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+        - variables: [surface_pressure]
+      input:
+      - parameter: stddev
+        filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+        date: *adate
+        no_transf: 1
   observations:
   - obs space:
       name: Radiosonde

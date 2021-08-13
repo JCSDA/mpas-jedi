@@ -29,17 +29,28 @@ cost function:
     - covariance:
         covariance model: BUMP
         bump:
-          prefix: Data/bump/mpas_parametersbump_cov #mpas_3dhybrid_bumpcov
           strategy: specific_univariate
-          load_nicas: 1
-          mpicom: 2
+          load_nicas_local: 1
+          verbosity: main
+          grids:
+          - prefix: Data/bump/mpas_parametersbump_cov_3D
+            variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+          - prefix: Data/bump/mpas_parametersbump_cov_2D
+            variables: [surface_pressure]
         variable changes:
         - variable change: StdDev
           input variables: *incvars
           output variables: *incvars
           bump:
-            load_var: 1
-            prefix: Data/bump/mpas_parametersbump_cov
+            verbosity: main
+            grids:
+            - variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+            - variables: [surface_pressure]
+          input:
+          - parameter: stddev
+            filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+            date: *adate
+            no_transf: 1
       weight:
         value: 0.5
     - covariance:
@@ -50,8 +61,8 @@ cost function:
           bump:
             prefix: Data/bump/mpas_parametersbump_loc
             strategy: common
-            load_nicas: 1
-            mpicom: 2
+            load_nicas_global: 1
+            verbosity: main
         members:
         - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
           date: *adate

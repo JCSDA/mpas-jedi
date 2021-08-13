@@ -33,19 +33,6 @@ cost function:
   background error:
     covariance model: MPASstatic
     date: '2018-04-14T21:00:00Z'
-#    covariance model: BUMP
-#    bump:
-#      prefix: Data/bump/mpas_parametersbump_cov
-#      strategy: specific_univariate
-#      load_nicas: 1
-#      mpicom: 2
-#    variable changes:
-#    - variable change: StdDev
-#      input variables: *incvars
-#      output variables: *incvars
-#      bump:
-#        load_var: 1
-#        prefix: Data/bump/mpas_parametersbump_cov
   observations:
   - obs space:
       name: Radiosonde

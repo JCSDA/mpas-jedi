@@ -33,8 +33,7 @@ cost function:
       bump:
         prefix: Data/bump/mpas_parametersbump_loc
         strategy: common
-        load_nicas: 1
-        mpicom: 2
+        load_nicas_local: 1
     members:
     - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
       date: *adate

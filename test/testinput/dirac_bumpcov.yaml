@@ -1,3 +1,9 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/dirac_bumpcov.ref
+  log output filename: testoutput/dirac_bumpcov.run
+  test output filename: testoutput/dirac_bumpcov.run.ref
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
@@ -15,17 +21,27 @@ background error:
   covariance model: BUMP
   date: *date
   bump:
-    prefix: Data/bump/mpas_parametersbump_cov
     strategy: specific_univariate
-    load_nicas: 1
-    mpicom: 2
+    load_nicas_local: 1
+    grids:
+    - prefix: Data/bump/mpas_parametersbump_cov_3D
+      variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+    - prefix: Data/bump/mpas_parametersbump_cov_2D
+      variables: [surface_pressure]
   variable changes:
   - variable change: StdDev
     input variables: *vars
     output variables: *vars
     bump:
-      load_var: 1
-      prefix: Data/bump/mpas_parametersbump_cov
+      verbosity: main
+      grids:
+      - variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+      - variables: [surface_pressure]
+    input:
+    - parameter: stddev
+      filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+      date: *date
+      no_transf: 1
 dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123,  35.68501691,   19.01699038,
