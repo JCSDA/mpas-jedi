@@ -44,6 +44,7 @@ covariance:
 bump:
   prefix: Data/bump/mpas_parametersbump_loc
   method: loc  #hyb-rnd
+  verbosity: main
   strategy: common
   new_hdiag: 1
   new_nicas: 1
