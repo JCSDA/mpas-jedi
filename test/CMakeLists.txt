@@ -3,6 +3,8 @@
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+## cmake functions
+
 #link_files(src_dir dest_dir files..) -Link selected files from source dir to build dir
 # Args:
 #  src_dir: Full path to source directory
@@ -44,6 +46,8 @@ function(CREATE_SYMLINK_FILENAME src dst)
 endfunction(CREATE_SYMLINK_FILENAME)
 
 include( ${CMAKE_SOURCE_DIR}/jedicmake/cmake/Functions/git_functions.cmake )
+
+## end of cmake functions
 
 ## test yamls
 list( APPEND mpas_testinput
@@ -147,9 +151,6 @@ list( APPEND mpas_graphics
   graphics/basic_plot_functions.py
 )
 
-# This line copies all files to binary dir
-#file( COPY ${mpas_test_files} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-
 # Create directory for graphics and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
 link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_graphics})
@@ -160,115 +161,10 @@ ecbuild_add_resources(TARGET mpas_test_scripts SOURCES_PACK ${mpas_testinput})
 ## Test Data
 ############
 set( DATA_DIR_NAME Data )
-set( BASE_480 480km )
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME})
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480})
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg)
 
-#MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
+##MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
 copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
-
-# MPAS static stream lists (modified from model-generated streams)
-list( APPEND mpas_test_config_base
-  geovars.yaml
-  stream_list.atmosphere.output
-  stream_list.atmosphere.surface
-  stream_list.atmosphere.diagnostics
-)
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}  ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_config_base})
-
-## Test files specific to the 480km mesh
-# Add or remove values from multi_pe_480 to select multi-PE tests
-# 480km options: 2, 4, 6, 8, 12, 16
-# streams.atmosphere is modified from the model-generated version for lower resolution
-list(APPEND multi_pe_480 2 )
-# namelists/streams
-list( APPEND mpas_test_config_480
-  namelist.atmosphere_2018041421
-  namelist.atmosphere_2018041500
-  streams.atmosphere
-)
-foreach(THIS_NPE ${multi_pe_480})
-    if( THIS_NPE GREATER 1 )
-        list( APPEND mpas_test_partition_480 x1.2562.graph.info.part.${THIS_NPE})
-    endif()
-endforeach()
-# Create 480km links in 480km directory for when we want to specify in yaml
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480} ${mpas_test_config_480})
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480} ${mpas_test_partition_480})
-# Also link just the 480km partition files into the working directory.
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_partition_480})
-
-# 480km backgrounds
-list( APPEND mpas_test_bg_480
-  restart.2018-04-14_21.00.00.nc
-  restart.2018-04-15_00.00.00.nc
-  restart.2018-04-15_03.00.00.nc
-)
-# Create 480km links in 480km directory for when we want to specify in yaml
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_480}/bg ${mpas_test_bg_480})
-
-# ensemble
-set( BASE_ENSDIR_480 ${BASE_480}/bg/ensemble )
-set(ensmembers mem01;mem02;mem03;mem04;mem05)
-list( APPEND mpas_test_ensemble_dates
-  2018-04-14_21.00.00
-  2018-04-15_00.00.00
-  2018-04-15_03.00.00
-)
-foreach(MEM IN LISTS ensmembers)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_ENSDIR_480}/${MEM})
-  foreach(DATE ${mpas_test_ensemble_dates})
-    set( FILENAME ${DATA_DIR_NAME}/${BASE_ENSDIR_480}/${MEM}/x1.2562.init.${DATE}.nc )
-    link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${FILENAME})
-  endforeach()
-endforeach()
-
-# 2-stream ctest files
-list( APPEND two-stream_480
-  analysis.2018-04-15_00.00.00.nc
-  mpasout.2018-04-15_00.00.00.nc
-  namelist.atmosphere_2018041500
-  static.nc
-  streams.atmosphere
-  x1.2562.grid.nc
-)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Data/480km_2stream)
-create_symlink_filename( ${CMAKE_CURRENT_SOURCE_DIR}/Data/480km_2stream
-                         ${CMAKE_CURRENT_BINARY_DIR}/Data/480km_2stream
-                         ${two-stream_480} )
-
-## Test files specific to the 384km mesh
-#  (Used for convertstate test)
-# Add or remove values from multi_pe_384 to select multi-PE tests
-# 384km options: 2, 4, 6, 8, 12, 16
-set( BASE_384 384km )
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384})
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384}/init)
-list(APPEND multi_pe_384 2 )
-# namelists/streams
-list( APPEND mpas_test_config_384
-  namelist.atmosphere_2018041500
-  streams.atmosphere
-)
-# static mesh descriptions
-foreach(THIS_NPE ${multi_pe_384})
-    if( THIS_NPE GREATER 1 )
-        list( APPEND mpas_test_partition_384 x1.4002.graph.info.part.${THIS_NPE})
-    endif()
-endforeach(THIS_NPE)
-
-# Link all the 384km files into the 384km Data directory
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_config_384})
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384} ${mpas_test_partition_384})
-# Also link just the 384km partition files into the working directory. (No filename conflicts with 480km.)
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_test_partition_384})
-
-# 384km init files
-list( APPEND mpas_test_init_384
-  x1.4002.init.2018-04-15_00.00.00.nc
-)
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/${DATA_DIR_NAME}/${BASE_384}/init ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/${BASE_384}/init ${mpas_test_init_384})
 
 # CRTM coefficient files
 list( APPEND crtm_test_input
@@ -317,14 +213,15 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
   # If REPO branch is being built set GIT_BRANCH_FUNC to REPO's current branch.
   # If a tagged version of REPO is being built set GIT_TAG_FUNC to REPO's current tag.
   find_branch_name(REPO_DIR_NAME ${repo})
+
+  if ( ${repo} STREQUAL "crtm" )
+    set( GIT_TAG_FUNC ${CRTM_COEFFS_BRANCH} )
+  endif()
+
   if( DEFINED GIT_BRANCH_FUNC )
     set( REPO_GIT_BRANCH ${GIT_BRANCH_FUNC} )
   elseif( DEFINED GIT_TAG_FUNC )
     set( REPO_GIT_BRANCH ${GIT_TAG_FUNC} )
-  endif()
-
-  if ( ${repo} STREQUAL "crtm" )
-    set( GIT_TAG_FUNC ${CRTM_COEFFS_BRANCH} )
   endif()
 
   # When env veriable LOCAL_PATH_JEDI_TESTFILES is set, simply link test files
@@ -352,20 +249,36 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
   elseif( DEFINED GIT_TAG_FUNC)
     message( STATUS "Tagged version of ${repo} is used" )
     # set ARGS for get_${repo}_test_data
-    set( ECBUILD_DOWNLOAD_BASE_URL https://dashrepo.ucar.edu/dataset/147_miesch/file )
+    # TODO: Update url after dash repo is created
+
+    if( DEFINED ENV{ECBUILD_DOWNLOAD_BASE_URL} )
+      set( ECBUILD_DOWNLOAD_BASE_URL "$ENV{ECBUILD_DOWNLOAD_BASE_URL}/${repo}/${GIT_TAG_FUNC}" )
+    else()
+      set( ECBUILD_DOWNLOAD_BASE_URL https://dashrepo.ucar.edu/api/v1/dataset/147_miesch/version/1.1.0/file )
+    endif()
+
     set( DIRNAME ${GIT_TAG_FUNC} )
     set( checksum "0" )
     set( TESTFILE_DIR_REPO "${CMAKE_SOURCE_DIR}/test-data-release/${repo}/${DIRNAME}" )
 
-    list( APPEND REPO_DATA_DOWNLOADER_ARGS
-          ${ECBUILD_DOWNLOAD_BASE_URL}
-          ${TESTFILE_DIR_REPO}
-          ${test_files_dirname}
-          ${checksum} )
     # Create test-data-release in source directory
-    file( MAKE_DIRECTORY ${TESTFILE_DIR_REPO} )
+    file( MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/test-data-release )
+    # temporary solution for release 1.1.0
+    if ( ${repo} STREQUAL "crtm" )
+      list( APPEND REPO_DATA_DOWNLOADER_ARGS
+	          ${ECBUILD_DOWNLOAD_BASE_URL}
+            ${TESTFILE_DIR_REPO}
+            ${test_files_dirname}
+            ${checksum} )
+      file( MAKE_DIRECTORY ${TESTFILE_DIR_REPO} )
+    else()
+      list( APPEND REPO_DATA_DOWNLOADER_ARGS
+            ${ECBUILD_DOWNLOAD_BASE_URL}
+            ${CMAKE_SOURCE_DIR}/test-data-release
+            ${test_files_dirname}
+            ${checksum} )
+    endif()
     set ( REPO_DATA_DOWNLOADER mpas_data_downloader.py )
-    message( STATUS "Test data will be downloaded from: ${ECBUILD_DOWNLOAD_BASE_URL}" )
 
   # Any branch of REPO is being built.
   # repo-data repository is already cloned by bundle/CMakeLists.txt.
@@ -409,20 +322,97 @@ endfunction()
 # Test data filenames
 set(ufo_test_data  ufo_testinput_tier_1.tar.gz)
 set(crtm_test_data crtm_coefficients.tar.gz)
+set(mpas_test_data  mpas_testinput_tier_1.tar.gz)
 
 ADD_DOWNLOAD_TEST( "ufo" ${ufo_test_data} MPAS_UFO_TESTFILES_PATH )
 ADD_DOWNLOAD_TEST( "crtm" ${crtm_test_data} MPAS_CRTM_COEFFS_PATH )
-
-
+ADD_DOWNLOAD_TEST( "mpas-jedi" ${mpas_test_data} MPAS_MPAS_TESTFILES_PATH )
 
 link_dir(${MPAS_UFO_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/ufo)
+
+# link .nc files from mpas-jedi-data to build/mpas-jedi/test/Data
+#384km tests
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km)
+link_dir(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/384km/init
+        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/init)
+
+#480km
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km)
+link_dir(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km/bg
+         ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km/bg)
+
+#480km_2stream
+# .nc files and config files are in the same directory
+# therefore .nc files are linked one by one
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream)
+list( APPEND mpas_test_480km_2stream_nc
+      analysis.2018-04-15_00.00.00.nc
+      mpasout.2018-04-15_00.00.00.nc
+      static.nc
+      x1.2562.grid.nc
+      x1.2562.init.2018-04-14_18.00.00.nc
+)
+link_files(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km_2stream
+           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
+           ${mpas_test_480km_2stream_nc} )
+# link streams and namelists from mpas-jedi to build/mpas-jedi/test/Data
+#384km tests
+list( APPEND mpas_test_384km
+      namelist.atmosphere_2018041500
+      streams.atmosphere
+      x1.4002.graph.info.part.12
+      x1.4002.graph.info.part.16
+      x1.4002.graph.info.part.2
+      x1.4002.graph.info.part.4
+      x1.4002.graph.info.part.6
+      x1.4002.graph.info.part.8
+)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/384km
+           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km
+           ${mpas_test_384km} )
+
+#480km tests
+list( APPEND mpas_test_480km
+      namelist.atmosphere_2018041421
+      namelist.atmosphere_2018041500
+      streams.atmosphere
+      x1.2562.graph.info
+      x1.2562.graph.info.part.12
+      x1.2562.graph.info.part.16
+      x1.2562.graph.info.part.2
+      x1.2562.graph.info.part.4
+      x1.2562.graph.info.part.6
+      x1.2562.graph.info.part.8
+)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
+        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
+         ${mpas_test_480km} )
+
+#480km_2stream tests
+list( APPEND mpas_test_480km_2stream
+      namelist.atmosphere_2018041500
+      streams.atmosphere
+    )
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km_2stream
+           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
+           ${mpas_test_480km_2stream} )
+
+# test config files
+list( APPEND mpas_test_config_base
+  geovars.yaml
+  stream_list.atmosphere.output
+  stream_list.atmosphere.surface
+  stream_list.atmosphere.diagnostics
+)
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
+           ${CMAKE_CURRENT_BINARY_DIR}
+           ${mpas_test_config_base})
 
 if( crtm_FOUND )
   create_symlink_filename( ${MPAS_CRTM_COEFFS_PATH}
                            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff
                            ${crtm_test_input} )
 endif ( crtm_FOUND )
-
 
 # Make directories for output test data
 #bump outputs

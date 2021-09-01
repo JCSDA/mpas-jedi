@@ -80,7 +80,10 @@ phases:
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS /jcsda/mpas-bundle release-stable
 
       #  mpas-jedi
-      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi $CODEBUILD_GIT_BRANCH mpasjedi /jcsda/mpas-bundle develop
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi $CODEBUILD_GIT_BRANCH mpas-jedi /jcsda/mpas-bundle develop
+
+      # mpas-jedi-data
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi-data $CODEBUILD_GIT_BRANCH mpas-jedi-data /jcsda/mpas-bundle develop
 
       # jedi-cmake
       - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/jedi-cmake $CODEBUILD_GIT_BRANCH jedicmake /jcsda/mpas-bundle develop
@@ -113,10 +116,10 @@ phases:
 
       - ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
       - ls /build_container
-      - cd /build_container/mpasjedi
+      - cd /build_container/mpas-jedi
       - cp ../DartConfiguration.tcl .
-      - sed -i 's/mpas-bundle/mpas-bundle\/mpasjedi/' DartConfiguration.tcl
-      - sed -i 's/build_container/build_container\/mpasjedi/' DartConfiguration.tcl
+      - sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
+      - sed -i 's/build_container/build_container\/mpas-jedi/' DartConfiguration.tcl
       - cat DartConfiguration.tcl
 
       - make -j4
@@ -127,11 +130,11 @@ phases:
         fi
       - echo $BUILD_STATUS
 
-      - cd /build_container/mpasjedi
+      - cd /build_container/mpas-jedi
       - ctest -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx
 
     finally:
-      - cd /build_container/mpasjedi
+      - cd /build_container/mpas-jedi
       - ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous
 
   post_build:
@@ -143,8 +146,8 @@ phases:
       # upload find cdash url and upload it as CodeBuild artifact to S3
       - if [ "$BUILD_STATUS" = "1" ];
         then echo "Build & tests passed, find cdash url";
-        bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /build_container/mpasjedi/Testing;
-        url=$(bash /jcsda/mpas-bundle/mpasjedi/CI/cdash-url.sh /build_container/mpasjedi/Testing);
+        bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /build_container/mpas-jedi/Testing;
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /build_container/mpas-jedi/Testing);
         echo $url;
         echo ${url} > /jcsda/artifacts/cdash-url.txt;
         cat /jcsda/artifacts/cdash-url.txt;
