@@ -1,9 +1,9 @@
-#test:
-#  float relative tolerance: 0.005
-#  integer tolerance: 0
-#  reference filename: testoutput/hofx.ref
-#  log output filename: testoutput/hofx.run
-#  test output filename: testoutput/hofx.run.ref
+test:
+  float relative tolerance: 0.005
+  integer tolerance: 0
+  reference filename: testoutput/hofx.ref
+  log output filename: testoutput/hofx.run
+  test output filename: testoutput/hofx.run.ref
 window begin: '2018-04-14T21:00:00Z'
 window length: PT6H
 forecast length: PT6H

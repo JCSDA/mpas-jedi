@@ -166,6 +166,11 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME})
 ##MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
 copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+# RTTOV coefficient files
+list( APPEND rttov_test_input
+  rttov7pred54L/rtcoef_noaa_19_amsua.dat
+)
+
 # CRTM coefficient files
 list( APPEND crtm_test_input
   AerosolCoeff/Little_Endian/AerosolCoeff.bin
@@ -201,11 +206,7 @@ list( APPEND crtm_test_input
   TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
 )
 
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff)
-
 ## Create tests to download UFO and CRTM test files
-
-
 # Currently only use 2.3.0 CRTM coefficients
 set( CRTM_COEFFS_BRANCH "2.3.0" )
 
@@ -319,7 +320,8 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
 endfunction()
 
 #############################################
-# Test data filenames
+# Link test data files from other repositories
+#ufo
 set(ufo_test_data  ufo_testinput_tier_1.tar.gz)
 set(crtm_test_data crtm_coefficients.tar.gz)
 set(mpas_test_data  mpas_testinput_tier_1.tar.gz)
@@ -355,17 +357,12 @@ list( APPEND mpas_test_480km_2stream_nc
 link_files(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km_2stream
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
            ${mpas_test_480km_2stream_nc} )
+
 # link streams and namelists from mpas-jedi to build/mpas-jedi/test/Data
 #384km tests
 list( APPEND mpas_test_384km
       namelist.atmosphere_2018041500
       streams.atmosphere
-      x1.4002.graph.info.part.12
-      x1.4002.graph.info.part.16
-      x1.4002.graph.info.part.2
-      x1.4002.graph.info.part.4
-      x1.4002.graph.info.part.6
-      x1.4002.graph.info.part.8
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/384km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km
@@ -376,17 +373,23 @@ list( APPEND mpas_test_480km
       namelist.atmosphere_2018041421
       namelist.atmosphere_2018041500
       streams.atmosphere
-      x1.2562.graph.info
-      x1.2562.graph.info.part.12
-      x1.2562.graph.info.part.16
-      x1.2562.graph.info.part.2
-      x1.2562.graph.info.part.4
-      x1.2562.graph.info.part.6
-      x1.2562.graph.info.part.8
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
-        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
-         ${mpas_test_480km} )
+           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
+           ${mpas_test_480km} )
+# multi_pe_480: list of processor counts for which to run multi-PE 480km tests
+# options: 2, 4, 6, 8, 12, 16
+list(APPEND multi_pe_480 2 )
+list(APPEND mpas_test_partition_480km x1.2562.graph.info)
+foreach(THIS_NPE ${multi_pe_480})
+    if( THIS_NPE GREATER 1 )
+        list( APPEND mpas_test_partition_480km x1.2562.graph.info.part.${THIS_NPE})
+    endif()
+endforeach()
+# Link the 480km graph partition files directly into the test directory; required for MPAS-Model
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
+           ${CMAKE_CURRENT_BINARY_DIR}
+           ${mpas_test_partition_480km} )
 
 #480km_2stream tests
 list( APPEND mpas_test_480km_2stream
@@ -408,11 +411,21 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
            ${CMAKE_CURRENT_BINARY_DIR}
            ${mpas_test_config_base})
 
+# link crtm coefficient files
 if( crtm_FOUND )
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff)
   create_symlink_filename( ${MPAS_CRTM_COEFFS_PATH}
                            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff
                            ${crtm_test_input} )
 endif ( crtm_FOUND )
+
+# link rttov coefficient files
+if( ${rttov_FOUND} )
+  create_symlink_filename( ${rttov_SOURCE_DIR}/rtcoef_rttov12
+                           ${CMAKE_CURRENT_BINARY_DIR}/Data
+                           ${rttov_test_input} )
+endif( ${rttov_FOUND} )
+
 
 # Make directories for output test data
 #bump outputs
@@ -457,7 +470,7 @@ endif()
 # Wrapper to test a JEDI c++ CLASS
 #   jedi_unit_test( [ CLASS <name> ]
 #                   [ YAMLFILE <filename.yaml> ]
-#                   [ ID <id> ]
+#                   [ NAME <name> ]
 #                   [ NPE <number-of-processor-elements> ]
 #                   [ TESTTIER <tier-of-test> ])
 #
@@ -470,8 +483,8 @@ endif()
 # YAMLFILE:
 #   Name of YAML configuration file (without extension)
 #
-# ID: optional
-#   A unique test id to use, defaults to be equal to YAMLFILE
+# NAME: optional
+#   A unique test name to use, defaults to be equal to YAMLFILE
 #
 # NPE: optional
 #   Number of processor elements to use in this test
@@ -480,9 +493,9 @@ endif()
 #   Testing tier for this test
 #
 ######################################################################
-function(jedi_unit_test)
+function(add_mpasjedi_unit_test)
     set(options )
-    set(oneValueArgs CLASS YAMLFILE ID NPE TESTTIER)
+    set(oneValueArgs CLASS YAMLFILE NAME NPE TESTTIER)
     set(multiValueArgs )
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -496,8 +509,8 @@ function(jedi_unit_test)
       return()
     endif()
 
-    if( NOT DEFINED TEST_ID )
-        set( TEST_ID "${TEST_YAMLFILE}" )
+    if( NOT DEFINED TEST_NAME )
+        set( TEST_NAME "${TEST_YAMLFILE}" )
     endif()
 
     set( MPI_SUFFIX "" )
@@ -508,7 +521,7 @@ function(jedi_unit_test)
     else()
         set( TEST_NPE 1 )
     endif()
-    set( TARGET_NAME "${PROJECT_NAME}_${TEST_ID}${MPI_SUFFIX}" )
+    set( TARGET_NAME "${PROJECT_NAME}_${TEST_NAME}${MPI_SUFFIX}" )
 
     #Configure environment variables
     if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -527,7 +540,7 @@ endfunction()
 
 ####################################################################################
 #
-# jedi_app_ref_test_compare
+# add_mpasjedi_application_test
 # ==============
 #
 # Wrapper for JEDI application to
@@ -539,9 +552,9 @@ endfunction()
 #      OR
 #    (c) compare new output to a previous reference output
 #
-#   jedi_app_ref_test_compare( [ APP <name> ]
-#                              [ ID <id> ]
-#                              [ SETUP_REFERENCE ]
+#   add_mpasjedi_application_test( [ APPLICATION <name> ]
+#                              [ NAME <name> ]
+#                              [ RECALIBRATE ]
 #                              [ COMPARE ]
 #                              [ TOL <float> ]
 #                              [ DIF <int> ]
@@ -552,29 +565,23 @@ endfunction()
 # Options
 # -------
 #
-# APP:
+# NAME: optional
+#   A unique test name. Not needed when APPLICATION will be used for only one
+#   test (e.g., forecast). The YAML configuration file must match
+#   either NAME, or APPLICATION if NAME is not specified.
+#
+# APPLICATION:
 #   Name of the JEDI application to be tested
 #
-# ID: optional
-#   A unique test id. Not needed when APP will be used for only one
-#   test (e.g., forecast). The YAML configuration file must match
-#   either the ID or APP if ID is not specified.
 #
-# SETUP_REFERENCE: optional
-#   Include SETUP_REFERENCE in order to generate new reference output
-#   for future COMPARE tests. Overrides COMPARE.
+# RECALIBRATE: optional
+#   Include RECALIBRATE in order to generate new reference output
+#   for future comparisons.
 #
 # COMPARE: optional
 #   Add comparison test in addition to the initial application test.
 #   COMPARE enables the comparison of the application output to a
 #   reference output.
-#
-# TOL: optional
-#   The tolerance for floating-point comparison when executing compare.py
-#
-# DIF: optional
-#   The tolerance for integer comparison when executing compare.py
-#   If either TOL or DIF is not defined, compare.sh will be used instead.
 #
 # NPE: optional
 #   Number of processor elements to use in this test.
@@ -590,14 +597,14 @@ endfunction()
 #   Testing tier for this test
 #
 # DEPENDS: optional
-#   List of previous application test ID's on which this test depends.
-#   These ID's and NPE will be used to generate the list of prior
+#   List of previous application test NAME's on which this test depends.
+#   These NAME's and NPE will be used to generate the list of prior
 #   TARGET_NAME's (TEST_DEPENDS).
 #
 ####################################################################################
-function(jedi_app_ref_test_compare)
-    set(options COMPARE SETUP_REFERENCE)
-    set(oneValueArgs APP ID TOL DIF NPE N_PARALLEL_STATES TESTTIER)
+function(add_mpasjedi_application_test)
+    set(options RECALIBRATE)
+    set(oneValueArgs NAME APPLICATION NPE N_PARALLEL_STATES TESTTIER)
     set(multiValueArgs DEPENDS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
@@ -611,9 +618,8 @@ function(jedi_app_ref_test_compare)
       return()
     endif()
 
-    set( TEST_NAME "${TEST_APP}" )
-    if( DEFINED TEST_ID )
-        set( TEST_NAME "${TEST_ID}" )
+    if( NOT DEFINED TEST_NAME )
+        set( TEST_NAME "${TEST_APPLICATION}" )
     endif()
 
     set( MPI_SUFFIX "" )
@@ -634,50 +640,37 @@ function(jedi_app_ref_test_compare)
 
     set(TARGET_NAME "${PROJECT_NAME}_${TEST_NAME}${MPI_SUFFIX}")
     set(TARGET_PREFIX "test")
-    set(TEST_LOG_FILE "testoutput/${TEST_NAME}.run")
+    set(TEST_OUT_FILE "testoutput/${TEST_NAME}.run.ref")
     set(TEST_REFERENCE_FILE "testoutput/${TEST_NAME}.ref")
-    if( TEST_SETUP_REFERENCE )
+    if( TEST_RECALIBRATE )
         set( TARGET_PREFIX "setup_ref" )
-    elseif( TEST_COMPARE AND DEFINED TEST_TOL AND DEFINED TEST_DIF )
-        ecbuild_add_test( TARGET       compare_${TARGET_NAME}
-                          TYPE         SCRIPT
-                          COMMAND      ${CMAKE_BINARY_DIR}/bin/compare.py
-                          ARGS         ${TEST_LOG_FILE}
-                                       ${TEST_REFERENCE_FILE}
-                                       ${TEST_TOL} ${TEST_DIF}
-                          TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
-    endif()
-    set(TEST_ARGS "testinput/${TEST_NAME}.yaml")
-    if( DEFINED TEST_TOL AND DEFINED TEST_DIF )
-      list(APPEND TEST_ARGS "${TEST_LOG_FILE}")
     endif()
     if( DEFINED TEST_DEPENDS )
         set(templist "")
-        foreach(previous_test_ID ${TEST_DEPENDS})
-           list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME}_${previous_test_ID}${MPI_SUFFIX}")
-        endforeach(previous_test_ID)
+	foreach(previous_test_NAME ${TEST_DEPENDS})
+            list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME}_${previous_test_NAME}${MPI_SUFFIX}")
+	endforeach(previous_test_NAME)
         set(TEST_DEPENDS "${templist}")
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APP}.x
-                          ARGS    ${TEST_ARGS}
+			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+			  ARGS    "testinput/${TEST_NAME}.yaml"
                           MPI     ${TEST_NPE}
                           TEST_DEPENDS "${TEST_DEPENDS}" )
     else()
         ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APP}.x
-                          ARGS    ${TEST_ARGS}
+			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+			  ARGS    "testinput/${TEST_NAME}.yaml"
                           MPI     ${TEST_NPE} )
     endif()
-    if( TEST_SETUP_REFERENCE )
+    if( TEST_RECALIBRATE )
         ecbuild_add_test( TARGET  extract_ref_${TARGET_NAME}
                           TYPE    SCRIPT
-                          COMMAND ${CMAKE_CURRENT_BINARY_DIR}/extract_ref.sh
-                          ARGS    ${TEST_LOG_FILE}
-                                  ${TEST_REFERENCE_FILE}
+                          COMMAND cp
+                          ARGS    ${TEST_OUT_FILE} ${TEST_REFERENCE_FILE}
                           TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
     endif()
 endfunction()
@@ -690,27 +683,13 @@ if(DEFINED ENV{MPASJEDI_TEST_TIER})
     set(MPASJEDI_TEST_TIER "$ENV{MPASJEDI_TEST_TIER}")
 endif()
 
-## Settings for comparison to reference output
+## whether to recalibrate reference files to current build
 set(RECALIBRATE_CTEST_REFS "OFF")
 
-# tolerances for compare.py:
-set (PYHX3D_FLOAT_TOL 0.00000001)
-set (PYRTTOV_FLOAT_TOL 0.001)
-set (PYHX4D_FLOAT_TOL 0.005)
-set (PY_INT_TOL 0)   #Max difference
-
 if( ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
-  # recalibrate reference files to current build
-  set(YAML_REF_TYPE "SETUP_REFERENCE")
-  set(PYHX3D_REF_TYPE "SETUP_REFERENCE")
-  set(PYRTTOV_REF_TYPE "SETUP_REFERENCE")
-  set(PYHX4D_REF_TYPE "SETUP_REFERENCE")
+  set(RECALIBRATE "RECALIBRATE")
 else()
-  # test then compare to reference
-  set(YAML_REF_TYPE COMPARE)
-  set(PYHX3D_REF_TYPE COMPARE TOL ${PYHX3D_FLOAT_TOL} DIF ${PY_INT_TOL})
-  set(PYRTTOV_REF_TYPE COMPARE TOL ${PYRTTOV_FLOAT_TOL} DIF ${PY_INT_TOL})
-  set(PYHX4D_REF_TYPE COMPARE TOL ${PYHX4D_FLOAT_TOL} DIF ${PY_INT_TOL})
+  set(RECALIBRATE "")
 endif()
 
 #############################
@@ -721,97 +700,214 @@ endif()
 #--------------------------------
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     # Unit tests for interface classes to PROJECT_NAME
-    jedi_unit_test( CLASS Geometry        YAMLFILE geometry )
-    jedi_unit_test( CLASS State           YAMLFILE state )
-    jedi_unit_test( CLASS Model           YAMLFILE model )
-    jedi_unit_test( CLASS Increment       YAMLFILE increment )
-    jedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
-    jedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    jedi_unit_test( CLASS GetValues ID getvalues_bumpinterp YAMLFILE getvalues_bumpinterp )
-    jedi_unit_test( CLASS GetValues ID getvalues_unsinterp  YAMLFILE getvalues_unsinterp )
-    jedi_unit_test( CLASS LinearGetValues YAMLFILE lineargetvalues )
+    add_mpasjedi_unit_test( CLASS Geometry        YAMLFILE geometry )
+    add_mpasjedi_unit_test( CLASS State           YAMLFILE state )
+    add_mpasjedi_unit_test( CLASS Model           YAMLFILE model )
+    add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
+    add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
+    add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
+    add_mpasjedi_unit_test( CLASS GetValues NAME getvalues_bumpinterp YAMLFILE getvalues_bumpinterp )
+    add_mpasjedi_unit_test( CLASS GetValues NAME getvalues_unsinterp  YAMLFILE getvalues_unsinterp )
+    add_mpasjedi_unit_test( CLASS LinearGetValues YAMLFILE lineargetvalues )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output
 #---------------------------------------------------------------------
-jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     hofx3d                                   ${PYHX3D_REF_TYPE} )
+#forecast
+add_mpasjedi_application_test(
+    APPLICATION forecast
+    ${RECALIBRATE})
+
+#hofx/hofx3d/enshofx
+add_mpasjedi_application_test(
+    APPLICATION hofx3d
+    ${RECALIBRATE})
+
 if( ${rttov_FOUND} )
-  jedi_app_ref_test_compare( APP   hofx3d       ID hofx3d_rttovcpp          ${PYRTTOV_REF_TYPE} )
+    add_mpasjedi_application_test(
+        NAME hofx3d_rttovcpp
+        APPLICATION hofx3d
+        ${RECALIBRATE})
 endif( ${rttov_FOUND} )
-jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_bumpinterp  ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     convertstate ID convertstate_unsinterp   ${YAML_REF_TYPE} )
+
+add_mpasjedi_application_test(
+    APPLICATION hofx
+    ${RECALIBRATE})
+
 ### TODO: Get the mpas_enshofx test passing again. Until that time, we remove it.
-##jedi_app_ref_test_compare( APP     enshofx                                  ${YAML_REF_TYPE})
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} )
+##add_mpasjedi_application_test(
+##    APPLICATION enshofx
+##    ${RECALIBRATE})
+
+#convertstate
+add_mpasjedi_application_test(
+    NAME convertstate_bumpinterp
+    APPLICATION convertstate
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME convertstate_unsinterp
+    APPLICATION convertstate
+    ${RECALIBRATE})
+
+#parameters
+add_mpasjedi_application_test(
+    NAME parameters_bumpcov
+    APPLICATION parameters
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME parameters_bumploc
+    APPLICATION parameters
+    ${RECALIBRATE})
+
+#gen_ens_pert_B
 ### TODO: Make the gen_ens_pert_B test produce the same output in Debug and Release. Until that time, we remove it.
-#jedi_app_ref_test_compare( APP     gen_ens_pert_B                           ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumpcov             ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumpcov )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_bumploc             ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     dirac       ID dirac_noloc               ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 3dvar_bumpcov             ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumpcov )
-if( ${rttov_FOUND} )
-  jedi_app_ref_test_compare( APP   variational ID 3dvar_bumpcov_rttovcpp    ${YAML_REF_TYPE}
-                             DEPENDS parameters_bumpcov )
-endif( ${rttov_FOUND} )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_bumpinterp ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_bumploc_unsinterp ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumpcov
-                                   parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_dual_resolution   ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3denvar_2stream_bumploc_unsinterp ${YAML_REF_TYPE}
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     variational ID 3dfgat                    ${YAML_REF_TYPE} )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_ID                ${YAML_REF_TYPE}
-                           NPE 3 N_PARALLEL_STATES 3 )
-jedi_app_ref_test_compare( APP     variational ID 4denvar_bumploc           ${YAML_REF_TYPE}
-                           NPE 3 N_PARALLEL_STATES 3
-                           DEPENDS parameters_bumploc )
-jedi_app_ref_test_compare( APP     eda         ID eda_3dhybrid              ${YAML_REF_TYPE}
-                           NPE 4 N_PARALLEL_STATES 4
-                           DEPENDS parameters_bumpcov
-                                   parameters_bumploc )
-jedi_app_ref_test_compare( APP     rtpp        ID rtpp                      ${DEFAULT_REF_TYPE}
-                           DEPENDS eda_3dhybrid )
+#add_mpasjedi_application_test(
+#    APPLICATION gen_ens_pert_B
+#    ${RECALIBRATE})
 
-#####################################################################
-# Files for RTTOV tests
-#####################################################################
-if( ${rttov_FOUND} )
-list( APPEND rttov_test_input
-rttov7pred54L/rtcoef_noaa_19_amsua.dat
-)
+#dirac
+add_mpasjedi_application_test(
+    NAME dirac_bumpcov
+    APPLICATION dirac
+    DEPENDS parameters_bumpcov
+    ${RECALIBRATE})
 
-# Symlink all RTTOV files
-CREATE_SYMLINK_FILENAME( ${rttov_SOURCE_DIR}/rtcoef_rttov12
-                         ${CMAKE_CURRENT_BINARY_DIR}/Data
-                         ${rttov_test_input} )
+add_mpasjedi_application_test(
+    NAME dirac_bumploc
+    APPLICATION dirac
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_noloc
+    APPLICATION dirac
+    ${RECALIBRATE})
+
+#variational - 3dvar
+add_mpasjedi_application_test(
+    NAME 3dvar
+    APPLICATION variational
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3dvar_bumpcov
+    APPLICATION variational
+    DEPENDS parameters_bumpcov
+    ${RECALIBRATE})
+
+if( ${rttov_FOUND} )
+    add_mpasjedi_application_test(
+        NAME 3dvar_bumpcov_rttovcpp
+        APPLICATION variational
+        DEPENDS parameters_bumpcov
+        ${RECALIBRATE})
 endif( ${rttov_FOUND} )
+
+#variational - 3denvar
+add_mpasjedi_application_test(
+    NAME 3denvar_bumploc_bumpinterp
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3denvar_bumploc_unsinterp
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3denvar_dual_resolution
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3denvar_2stream_bumploc_unsinterp
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+#variational - 3dhybrid
+add_mpasjedi_application_test(
+    NAME 3dhybrid_bumpcov_bumploc
+    APPLICATION variational
+    DEPENDS parameters_bumpcov parameters_bumploc
+    ${RECALIBRATE})
+
+#variational - 3dfgat
+add_mpasjedi_application_test(
+    NAME 3dfgat
+    APPLICATION variational
+    ${RECALIBRATE})
+
+#variational - 4denvar
+add_mpasjedi_application_test(
+    NAME 4denvar_ID
+    APPLICATION variational
+    NPE 3
+    N_PARALLEL_STATES 3
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 4denvar_bumploc
+    APPLICATION variational
+    NPE 3
+    N_PARALLEL_STATES 3
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+# eda
+add_mpasjedi_application_test(
+    NAME eda_3dhybrid
+    APPLICATION eda
+    NPE 4
+    N_PARALLEL_STATES 4
+    DEPENDS parameters_bumpcov parameters_bumploc
+    ${RECALIBRATE})
+
+# rtpp
+add_mpasjedi_application_test(
+    APPLICATION rtpp
+    DEPENDS eda_3dhybrid
+    ${RECALIBRATE})
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     foreach(THIS_NPE ${multi_pe_480})
         if( THIS_NPE GREATER 1 )
-            jedi_app_ref_test_compare( APP     forecast                                 ${YAML_REF_TYPE} NPE ${THIS_NPE} )
+	    add_mpasjedi_application_test(
+                APPLICATION forecast
+                NPE ${THIS_NPE})
+
 ## hofx is expensive, hold off list for now
-#            jedi_app_ref_test_compare( APP     hofx                                     ${PYHX4D_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumpcov        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     parameters  ID parameters_bumploc        ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dvar                     ${YAML_REF_TYPE} NPE ${THIS_NPE} )
-            jedi_app_ref_test_compare( APP     variational ID 3dhybrid_bumpcov_bumploc  ${YAML_REF_TYPE} NPE ${THIS_NPE}
-                                       DEPENDS parameters_bumpcov
-                                               parameters_bumploc )
+#            add_mpasjedi_application_test(
+#                APPLICATION hofx
+#                NPE ${THIS_NPE})
+
+            add_mpasjedi_application_test(
+                APPLICATION parameters
+		NAME parameters_bumpcov
+                NPE ${THIS_NPE})
+
+            add_mpasjedi_application_test(
+                APPLICATION parameters
+		NAME parameters_bumploc
+                NPE ${THIS_NPE})
+
+            add_mpasjedi_application_test(
+                APPLICATION variational
+		NAME 3dvar
+                NPE ${THIS_NPE})
+
+            add_mpasjedi_application_test(
+                APPLICATION variational
+		NAME 3dhybrid_bumpcov_bumploc
+                NPE ${THIS_NPE}
+                DEPENDS parameters_bumpcov parameters_bumploc)
         endif()
     endforeach(THIS_NPE)
 endif()
