@@ -1,0 +1,144 @@
+test:
+  float relative tolerance: 0.0000001
+  integer tolerance: 0
+  reference filename: testoutput/3denvar_amsua_bc.ref
+  log output filename: testoutput/3denvar_amsua_bc.run
+  test output filename: testoutput/3denvar_amsua_bc.run.ref
+cost function:
+  cost type: 3D-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  geometry:
+    nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km_2stream/streams.atmosphere"
+    deallocate non-da fields: true
+  analysis variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  background:
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+    filename: "./Data/480km_2stream/mpasout.2018-04-15_00.00.00.nc"
+    date: &adate '2018-04-15T00:00:00Z'
+  background error:
+    covariance model: ensemble
+    date: *adate
+    localization:
+      localization method: BUMP
+      localization variables: *incvars
+      bump:
+        prefix: Data/bump/mpas_parametersbump_loc
+        strategy: common
+        load_nicas_local: 1
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *adate
+      state variables: *incvars
+    variables: *incvars
+  observations:
+  - obs space:
+      name: AMSUA-NOAA19
+      obsdatain:
+        obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3denvar_bc_amsua_n19.nc4
+      simulated variables: [brightness_temperature]
+      channels: 1-15 
+    obs error:
+      covariance model: diagonal
+    obs operator: &crtmobsoper
+      name: CRTM
+      Absorbers: [H2O,O3]
+      SurfaceWindGeoVars: uv
+      linear obs operator:
+        Absorbers: [H2O]
+      obs options: &crtmobsopts
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/UFOCoeff/
+    obs bias:
+      input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+      output file: Data/os/satbias_amsua_n19_out.nc4
+      variational bc:
+        predictors:
+        - name: constant
+        - name: lapse_rate
+          order: 2
+          tlapse: &amsua19tlap Data/ufo/testinput_tier_1/amsua_n19_tlapmean.txt
+        - name: lapse_rate
+          tlapse: *amsua19tlap
+        - name: emissivity
+        - name: scan_angle
+          order: 4
+        - name: scan_angle
+          order: 3
+        - name: scan_angle
+          order: 2
+        - name: scan_angle
+      covariance:
+        minimal required obs number: 20
+        variance range: [1.0e-6, 10.0]
+        step size: 1.0e-4
+        largest analysis variance: 10000.0
+        prior:
+          input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+          inflation:
+            ratio: 1.1
+            ratio for small dataset: 2.0
+    obs filters:
+    - filter: Bounds Check
+      filter variables:
+      - name: brightness_temperature
+        channels: 1-15
+      minvalue: 100.0
+      maxvalue: 500.0
+    - filter: Background Check
+      filter variables:
+      - name: brightness_temperature
+        channels: 1-15
+      threshold: 10.0
+    get values:
+      interpolation type: unstructured
+output:
+  filename: "Data/states/mpas.3denvar_amsua_bc.$Y-$M-$D_$h.$m.$s.nc"
+variational:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      deallocate non-da fields: true
+      use bump interpolation: false
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+    diagnostics:
+      departures: depbg
+  - geometry:
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      deallocate non-da fields: true
+      use bump interpolation: false
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+final:
+  diagnostics:
+    departures: depan
