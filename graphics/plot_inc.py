@@ -77,11 +77,11 @@ def readdata():
 
 def plot(lats,lons,data,yyyymmddhh,lvl,source):
     fig,ax=plt.subplots(figsize=(8,8))
-    map=Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=0,urcrnrlon=360,resolution='c')
+    map=Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c')
     map.drawcoastlines()
     map.drawcountries()
     map.drawparallels(np.arange(-90,90,30),labels=[1,1,0,1])
-    map.drawmeridians(np.arange(0,360,60),labels=[1,1,0,1])
+    map.drawmeridians(np.arange(-180,180,60),labels=[1,1,0,1])
 
     plt.title( source+'  '+VAR_NAME+', lvl=' + str(lvl)+",  "+yyyymmddhh)
     #cont=plt.tricontourf(lons,lats,data,30,vmin=-(max(abs(data))),vmax=max(abs(data)),extend='both',cmap=cm.bwr)

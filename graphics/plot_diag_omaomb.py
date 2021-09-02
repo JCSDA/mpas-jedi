@@ -1,4 +1,3 @@
-from netCDF4 import Dataset
 import os
 import numpy as np
 from copy import deepcopy
@@ -10,6 +9,9 @@ import matplotlib.axes as maxes
 import fnmatch
 import math
 import basic_plot_functions
+import h5py as h5
+import config as conf
+import var_utils as vu
 
 '''
 Directory Structure:
@@ -45,12 +47,17 @@ def readdata():
     print_fmt = 'png' #lower fidelity, faster
     #print_fmt = 'pdf' #higher fidelity, slower
 
+    plot_allinOneDistri = True   # plot profile_group (includes all levels) and sfc_group.
+    plot_eachLevelDistri = True  # plot every level separately for profile_group.
+
     profile_group  = [
         'sondes',
         'aircraft',
         'satwind',
         'gnssroref',
         'gnssrobndropp1d',
+    ]
+    sfc_group  = [
         'sfc',
     ]
     radiance_group = [
@@ -67,12 +74,14 @@ def readdata():
 
     all_groups = []
     all_groups.append(profile_group)
+    all_groups.append(sfc_group)
     all_groups.append(radiance_group)
 
     # Diagnostic oma/omb files located in diagdir
     diagdir    = '../Data/'
     diagprefix = 'obsout_'
-    diagsuffix = '_*.nc4'
+    diagsuffix = '_*.nc4'  #for ctests 
+    #diagsuffix = '_*.h5'   #for cycling
     # * in diagsuffix is 4-digit processor rank [0000 to XXXX]
     #npedigits = 4
 
@@ -89,6 +98,9 @@ def readdata():
     qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for depbg_var
     qcan_var  = 'EffectiveQC'+NOUTER #EffectiveQCi, where i is the iteration for depan_var
 
+    err_obs  = 'ObsError'
+    errstart_var = 'EffectiveError0'
+    errend_var = 'EffectiveError'+NOUTER
     obsoutfiles = []
     for files in os.listdir(diagdir):
         #print(files)
@@ -138,28 +150,35 @@ def readdata():
            continue
 
         # Select variables with the suffix depbg_var (required for OMB)
-        nc = Dataset(exob_group[1], 'r')
-        varlist = nc.variables.keys()
-        bglist = [var for var in varlist if (var[-len(depbg_var):] == depbg_var)]
+        nc = h5.File(exob_group[1], 'r')
+        varlist = []
+        for node in nc:
+          if type(nc[node]) is h5._hl.group.Group:
+            for var in nc[node]:
+              varlist += [node+'/'+var]
 
+        bglist = [var for var in varlist if (var[:][:5] == depbg_var)]
         # Define a channel list for radiance_group
         if ''.join(obstype) in radiance_group:
             chlist = []
             for bgname in bglist:
-                var = ''.join(bgname.split("@")[:-1])
-                chlist.append(int(''.join(var.split("_")[-1:])))
-            chlist.sort()
+                var = ''.join(bgname.split("/")[1:])
+                chlist = nc['nchans']
+            ObsSpaceInfo = conf.DiagSpaceConfig.get(obstype,conf.nullDiagSpaceInfo)
+            channels = ObsSpaceInfo.get('channels',[vu.miss_i])
 
         # Loop over variables with omb suffix
         nvars = len(bglist)
         for ivar, depbg in enumerate(bglist):
-            varname = ''.join(depbg.split("@")[:-1])
-            print(varname)
-            obs=''.join(depbg.split("@")[:-1])+'@'+obs_var
-            depan=''.join(depbg.split("@")[:-1])+'@'+depan_var
-            qcb = ''.join(depbg.split("@")[:-1])+'@'+qcbg_var
-            qca = ''.join(depbg.split("@")[:-1])+'@'+qcan_var
-            #print("obs=",obs,"depbg=",depbg,"depan=",depan)
+            varname = ''.join(depbg.split("/")[1:])
+            obs=obs_var+'/'+''.join(depbg.split("/")[1:])
+            depan=depan_var+'/'+''.join(depbg.split("/")[1:])
+            qcb = qcbg_var+'/'+''.join(depbg.split("/")[1:])
+            qca = qcan_var+'/'+''.join(depbg.split("/")[1:])
+            obserror = err_obs+'/'+''.join(depbg.split("/")[1:])
+            errstart = errstart_var+'/'+''.join(depbg.split("/")[1:])
+            errend   = errend_var+'/'+''.join(depbg.split("/")[1:])
+            print("obs=",obs,"depbg=",depbg,"depan=",depan)
 
             obsnc = np.asarray([])
             bkgnc = np.asarray([])
@@ -175,44 +194,42 @@ def readdata():
             recordNum_ananc = np.asarray([])
             stationId_baknc = np.asarray([])
             stationId_ananc = np.asarray([])
-
+            obserrornc = np.asarray([])
+            errstartnc = np.asarray([])
+            errendnc = np.asarray([])
             # Build up arrays in loop over exob_group, 
             # excluding category in exob_group[0]
             for file_name in exob_group[1:]:
-                nc = Dataset(file_name, 'r')
-                nc.set_auto_mask(False)
-                #file_rank = file_name[-(4+npedigits):-4]
-
-                if ''.join(obstype) in profile_group:
-                    if ''.join(obstype)[:6] == 'gnssro':
-                        prenc = np.append(prenc, nc.variables['altitude@MetaData'])
-                        station_id = nc.variables['occulting_sat_id@MetaData']
-                        recordNum = nc.variables['record_number@MetaData']
-                        recordNum_baknc = np.append( recordNum_baknc, recordNum)
-                        recordNum_ananc = np.append( recordNum_ananc, recordNum)
-                    else:
-                        tmp = nc.variables['air_pressure@MetaData']
-                        if np.max(tmp) > 10000.0:
-                            tmp = np.divide(tmp,100.0)
-                        prenc = np.append( prenc, tmp )
-                        station_id = [ b''.join(i[0:5]).decode("utf-8") for i in nc.variables['station_id@MetaData'][:]]
+                nc = h5.File(file_name, 'r')
+                if ''.join(obstype)[:6] == 'gnssro':
+                    prenc = np.append(prenc, nc['MetaData/altitude'])
+                    station_id = nc['MetaData/occulting_sat_id']
+                    recordNum = nc['MetaData/record_number']
+                    recordNum_baknc = np.append( recordNum_baknc, recordNum)
+                    recordNum_ananc = np.append( recordNum_ananc, recordNum)
+                elif  ''.join(obstype) not in radiance_group:
+                    tmp = nc['MetaData/air_pressure']
+                    if np.max(tmp) > 10000.0:
+                        tmp = np.divide(tmp,100.0)
+                    prenc = np.append( prenc, tmp )
+                    station_id = nc['MetaData/station_id']
+                    station_id = [ ''.join(i[0:5]) for i in nc['MetaData/station_id'][:]]
                     stationId_baknc = np.append( stationId_baknc, station_id )
                     stationId_ananc = np.append( stationId_ananc, station_id )
-                obsnc = np.append( obsnc, nc.variables[obs] )
-                ombnc = np.append( ombnc, np.negative( nc.variables[depbg] ) ) # omb = (-) depbg
-                omanc = np.append( omanc, np.negative( nc.variables[depan] ) ) # oma = (-) depan
-                qcbnc  = np.append( qcbnc,  nc.variables[qcb]  )
-                qcanc  = np.append( qcanc,  nc.variables[qca]  )
-                latnc = np.append( latnc, nc.variables['latitude@MetaData'] )
-                lonnc = np.append( lonnc, nc.variables['longitude@MetaData'] )
+                obsnc = np.append( obsnc, nc[obs] )
+                ombnc = np.append( ombnc, np.negative( nc[depbg] ) ) # omb = (-) depbg
+                omanc = np.append( omanc, np.negative( nc[depan] ) ) # oma = (-) depan
+                qcbnc  = np.append( qcbnc,  nc[qcb]  )
+                qcanc  = np.append( qcanc,  nc[qca]  )
+                obserrornc = np.append(obserrornc, nc[obserror])
+                errstartnc = np.append(errstartnc, nc[errstart])
+                errendnc = np.append(errendnc, nc[errend])
+                latnc = np.append( latnc, nc['MetaData/latitude'] )
+                lonnc = np.append( lonnc, nc['MetaData/longitude'] )
                 bkgnc = obsnc - ombnc
                 ananc = obsnc - omanc
 
-                for i in range(len(lonnc)):
-                    if lonnc[i] > 180:
-                        lonnc[i] = lonnc[i]-360
-
-            #@EffectiveQC, 1: missing; 0: good; 10: rejected by first-guess check
+            #@EffectiveQC, 10: missing; 0: good; 19: rejected by first-guess check
             #keep data @EffectiveQC=0
             obsnc[qcbnc != 0] = np.NaN
             ombnc[np.less(ombnc,-1.0e+15)] = np.NaN
@@ -223,7 +240,10 @@ def readdata():
             bkgnc[qcbnc != 0] = np.NaN
             ananc[np.less(ananc,-1.0e+15)] = np.NaN
             ananc[qcanc != 0] = np.NaN
-            if ''.join(obstype) in profile_group:
+            obserrornc[qcbnc != 0] = np.NaN
+            errstartnc[qcbnc != 0] = np.NaN
+            errendnc[qcanc != 0] = np.NaN
+            if ''.join(obstype) not in radiance_group:
                 stationId_baknc[qcbnc != 0] = np.NaN
                 stationId_ananc[qcanc != 0] = np.NaN
                 if ''.join(obstype)[:6] == 'gnssro':
@@ -237,9 +257,32 @@ def readdata():
                 ombnc = (ombnc/obsnc)*100
                 omanc = (omanc/obsnc)*100
 
+            if ''.join(obstype) not in radiance_group:
+                if (plot_allinOneDistri):
+                  if ''.join(obstype)[:6] == 'gnssro':
+                    n_stationId_bak = len(np.unique(stationId_baknc[~np.isnan(stationId_baknc)]))
+                    n_stationId_ana = len(np.unique(stationId_ananc[~np.isnan(stationId_ananc)]))
+                    n_record_bak   = len(np.unique(recordNum_baknc[~np.isnan(recordNum_baknc)]))
+                    n_record_ana   = len(np.unique(recordNum_ananc[~np.isnan(recordNum_ananc)]))
+                  else:
+                    if 'nan' in stationId_baknc:
+                        n_stationId_bak = len(set(stationId_baknc)) -1
+                    else:
+                        n_stationId_bak = len(set(stationId_baknc))
+                    if 'nan' in stationId_ananc:
+                        n_stationId_ana = len(set(stationId_ananc)) -1
+                    else:
+                        n_stationId_ana = len(set(stationId_ananc))
+
+                # plot oma, omb from all vertical levels
+                  if ''.join(obstype)[:6] == 'gnssro':
+                    basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,varname,vardict[varname][0],expt_obs,n_record_bak,"omb_allLevels")
+                    basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,varname,vardict[varname][0],expt_obs,n_record_ana,"oma_allLevels")
+                  else:
+                    basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,varname,vardict[varname][0],expt_obs,n_stationId_bak,"omb_allLevels")
+                    basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,varname,vardict[varname][0],expt_obs,n_stationId_ana,"oma_allLevels")
+
             if ''.join(obstype) in profile_group:
-                #PROFILE OBS
-                #assign bins and calculate rmse:
                 RMSEombs = []
                 RMSEomas = []
                 obsnums  = []
@@ -247,6 +290,10 @@ def readdata():
                 omanums  = []
                 latncs   = []
                 lonncs   = []
+                Meanobserrors = []
+                Meanerrstarts = []
+                obserrornums = []
+                errstartnums = []
                 if ''.join(obstype)[:6] == 'gnssro':
                     bins = list(np.arange(50000.0, -1000, -2000.))
                     binsfory= list(np.arange(49500.0,-500.0,-2000.))
@@ -261,38 +308,16 @@ def readdata():
                 omanum = len(omanc)-np.isnan(omanc).sum()
                 omanums = np.append(omanums,omanum)
 
-                if ''.join(obstype)[:6] == 'gnssro':
-                    n_stationId_bak = len(np.unique(stationId_baknc[~np.isnan(stationId_baknc)]))
-                    n_stationId_ana = len(np.unique(stationId_ananc[~np.isnan(stationId_ananc)]))
-                    n_record_bak   = len(np.unique(recordNum_baknc[~np.isnan(recordNum_baknc)]))
-                    n_record_ana   = len(np.unique(recordNum_ananc[~np.isnan(recordNum_ananc)]))
-                else:
-                    if 'nan' in stationId_baknc:
-                        n_stationId_bak = len(set(stationId_baknc)) -1
-                    else:
-                        n_stationId_bak = len(set(stationId_baknc))
-                    if 'nan' in stationId_ananc:
-                        n_stationId_ana = len(set(stationId_ananc)) -1
-                    else:
-                        n_stationId_ana = len(set(stationId_ananc))
-
-                # plot oma, omb from all vertical levels
-                if ''.join(obstype)[:6] == 'gnssro':
-                    basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,varname,vardict[varname][0],expt_obs,n_record_bak,"omb_allLevels")
-                    basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,varname,vardict[varname][0],expt_obs,n_record_ana,"oma_allLevels")
-                else:
-                    basic_plot_functions.plotDistri(latnc,lonnc,ombnc,obstype,varname,vardict[varname][0],expt_obs,n_stationId_bak,"omb_allLevels")
-                    basic_plot_functions.plotDistri(latnc,lonnc,omanc,obstype,varname,vardict[varname][0],expt_obs,n_stationId_ana,"oma_allLevels")
-
-                ombnums  = []
-                omanums  = []
-
                 for j in range(0, len(bins)-1):
+                    #print('jban check segmentation fault',j)
                     obsncbin = deepcopy(obsnc)
                     ombncbin = deepcopy(ombnc)
                     omancbin = deepcopy(omanc)
                     latncbin = deepcopy(latnc)
                     lonncbin = deepcopy(lonnc)
+                    obserrorbin = deepcopy(obserrornc)
+                    errstartbin = deepcopy(errstartnc)
+                    errendbin = deepcopy(errendnc)
                     stationbin_bak = deepcopy(stationId_baknc)
                     stationbin_ana = deepcopy(stationId_ananc)
                     recordbin_bak = deepcopy(recordNum_baknc)
@@ -305,26 +330,13 @@ def readdata():
                     lonncbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     stationbin_bak[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     stationbin_ana[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
-
-                    if ''.join(obstype)[:6] == 'gnssro':
-                        recordbin_bak[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
-                        recordbin_ana[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
-                        n_record_bak = len(np.unique(recordbin_bak[~np.isnan(recordbin_bak)]))
-                        n_record_ana = len(np.unique(recordbin_ana[~np.isnan(recordbin_ana)]))
-                        n_stationId_bak = len(np.unique(stationbin_bak[~np.isnan(stationbin_bak)]))
-                        n_stationId_ana = len(np.unique(stationbin_ana[~np.isnan(stationbin_ana)]))
-                    else:
-                        if 'nan' in stationbin_bak:
-                            n_stationId_bak = len(set(stationbin_bak)) -1
-                        else:
-                            n_stationId_bak = len(set(stationbin_bak))
-                        if 'nan' in stationbin_ana:
-                            n_stationId_ana = len(set(stationbin_ana)) -1
-                        else:
-                            n_stationId_ana = len(set(stationbin_ana))
-
+                    obserrorbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                    errstartbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                    errendbin[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
                     RMSEomb = np.sqrt(np.nanmean(ombncbin**2))
                     RMSEoma = np.sqrt(np.nanmean(omancbin**2))
+                    Meanobserror = np.nanmean(obserrorbin)
+                    Meanerrstart = np.nanmean(errstartbin)
 
                     obsnum = len(obsncbin)-np.isnan(obsncbin).sum()
                     obsnums = np.append(obsnums,obsnum)
@@ -334,88 +346,106 @@ def readdata():
 
                     omanum = len(omancbin)-np.isnan(omancbin).sum()
                     omanums = np.append(omanums,omanum)
+
+                    obserrornum = len(obserrorbin)-np.isnan(obserrorbin).sum()
+                    obserrornums = np.append(obserrornums,obserrornum)
+
+                    errstartnum = len(errstartbin)-np.isnan(errstartbin).sum()
+                    errstartnums = np.append(errstartnums,errstartnum)
+
                     RMSEombs = np.append(RMSEombs,RMSEomb)
                     RMSEomas = np.append(RMSEomas,RMSEoma)
+                    Meanobserrors = np.append(Meanobserrors,Meanobserror)
+                    Meanerrstarts = np.append(Meanerrstarts,Meanerrstart)
                     print(obstype)
                     # plot oma, omb from every bin range
-                    if ''.join(obstype)[:6] == 'gnssro':
+                    if (plot_eachLevelDistri):
+                      if ''.join(obstype)[:6] == 'gnssro':
+                        recordbin_bak[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                        recordbin_ana[np.logical_or(prenc <bins[j+1], prenc >=bins[j])] = np.NaN
+                        n_record_bak = len(np.unique(recordbin_bak[~np.isnan(recordbin_bak)]))
+                        n_record_ana = len(np.unique(recordbin_ana[~np.isnan(recordbin_ana)]))
+                        n_stationId_bak = len(np.unique(stationbin_bak[~np.isnan(stationbin_bak)]))
+                        n_stationId_ana = len(np.unique(stationbin_ana[~np.isnan(stationbin_ana)]))
+                        print('check every level n_record_bak, n_record_ana=',n_record_bak, n_record_ana)
+                      else:
+                        if 'nan' in stationbin_bak:
+                            n_stationId_bak = len(set(stationbin_bak)) -1
+                        else:
+                            n_stationId_bak = len(set(stationbin_bak))
+                        if 'nan' in stationbin_ana:
+                            n_stationId_ana = len(set(stationbin_ana)) -1
+                        else:
+                            n_stationId_ana = len(set(stationbin_ana))
+                      if ''.join(obstype)[:6] == 'gnssro':
                         basic_plot_functions.plotDistri(latncbin,lonncbin,ombncbin,obstype,varname,vardict[varname][0],expt_obs,n_record_bak,"omb_vertbin"+str(j))
                         basic_plot_functions.plotDistri(latncbin,lonncbin,omancbin,obstype,varname,vardict[varname][0],expt_obs,n_record_ana,"oma_vertbin"+str(j))
-                    else:
+                      else:
                         basic_plot_functions.plotDistri(latncbin,lonncbin,ombncbin,obstype,varname,vardict[varname][0],expt_obs,n_stationId_bak,"omb_vertbin"+str(j))
                         basic_plot_functions.plotDistri(latncbin,lonncbin,omancbin,obstype,varname,vardict[varname][0],expt_obs,n_stationId_ana,"oma_vertbin"+str(j))
+
                 plotrmsepro(RMSEombs,RMSEomas,binsfory,ombnums,omanums,expt_obs,varname,print_fmt)
-            else:
-                #Default: generate scatter plots
+                ploterrpro(Meanobserrors,Meanerrstarts,binsfory,obserrornums,errstartnums,expt_obs,varname,print_fmt,"Mean")
 
+            elif ''.join(obstype) in radiance_group:
+                obsnc = obsnc.reshape(len(latnc),len(chlist))
+                bkgnc = bkgnc.reshape(len(latnc),len(chlist))
+                ananc = ananc.reshape(len(latnc),len(chlist))
+                ombnc = ombnc.reshape(len(latnc),len(chlist))
+                omanc = omanc.reshape(len(latnc),len(chlist))
+                # Generate scatter plots
                 # Maximum number of variables/channels per figure
-                maxsubplts = 12
-                ombnum = len(ombnc)-np.isnan(ombnc).sum()
-                obsnum = len(obsnc)-np.isnan(obsnc).sum()
-                bkgnum = len(bkgnc)-np.isnan(bkgnc).sum()
-                ananum = len(ananc)-np.isnan(ananc).sum()
-                omanum = len(omanc)-np.isnan(omanc).sum()
-                if ''.join(obstype) in radiance_group:
-                    #RADIANCE OBS
-                    maxsubplts = 16
-                    ch = ''.join(varname.split("_")[-1:])
-                    ifig = chlist.index(int(ch)) + 1
-                    dictname = '_'.join(varname.split("_")[:-1])
-                    shortname = '_'+ch
-                else:
-                    print('NOTIFICATION: obstype = '+obstype+' not defined, using default scatter plots')
-                    #Generic scatter verification for any obstype
-                    ## (similar to radiance_group):
-                    ifig = ivar
-                    dictname = varname
-                    shortname = ''
-                varval = vardict.get(dictname,['',dictname])
-                units = varval[0]
-                shortname = varval[1] + shortname
-
-                if ivar == 0:
+                maxsubplts = 16
+                nvars = len(channels)
+                for channel in channels:
+                  ifig = channels.index(channel) + 1
+                  varval = vardict.get(varname,['',varname])
+                  units = vu.varDictObs[var][0]
+                  shortname = '_'+str(channel)
+                  shortname = varval[1] +  shortname
+                  ivar = channels.index(channel)
+                  if ivar == 0:
                     # scatter_verification yields 2 figure types
                     nfigtypes = 2
                     nx_subplt, ny_subplt, figs, subplt_cnt = \
-                       init_subplts(bglist, nfigtypes, maxsubplts)
+                       init_subplts(channels, nfigtypes, maxsubplts)
 
-                subplt_cnt = \
-                scatter_verification(ifig, shortname, units, ivar, nvars, \
+                  subplt_cnt = \
+                  scatter_verification(ifig, shortname, units, ivar, nvars, \
                                      maxsubplts, subplt_cnt, \
-                                     obsnc, ombnc, omanc, \
+                                     obsnc[:,channel-1], ombnc[:,channel-1], omanc[:,channel-1], \
                                      nx_subplt, ny_subplt, \
                                      nfigtypes, figs, expt_obs,print_fmt)
-                if ivar == nvars-1:
-                    # Close figs in reverse order to avoid seg fault
-                    for fig in reversed(figs):
-                        plt.close(fig)
 
                 # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
+                varval = vardict.get(varname,['',varname])
+                units = vu.varDictObs[var][0]
                 dotsize = 5.0
                 if ''.join(obstype) in radiance_group:
                     color = "BT"
                 else:
                     color = "gist_ncar"
-                basic_plot_functions.plotDistri(latnc,lonnc,obsnc, \
-                                                obstype,shortname,units,expt_obs,int(obsnum),"obs", \
+                for channel in channels:
+                    shortname = '_'+str(channel)
+                    shortname = varval[1] + shortname
+                    basic_plot_functions.plotDistri(latnc,lonnc,obsnc[:,channel-1], \
+                                                obstype,shortname,units,expt_obs,0,"obs", \
                                                 None,None,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,bkgnc, \
-                                                obstype,shortname,units,expt_obs,int(bkgnum),"bkg", \
+                    basic_plot_functions.plotDistri(latnc,lonnc,bkgnc[:,channel-1], \
+                                                obstype,shortname,units,expt_obs,0,"bkg", \
                                                 None,None,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,ananc, \
-                                                obstype,shortname,units,expt_obs,int(ananum),"ana", \
+                    basic_plot_functions.plotDistri(latnc,lonnc,ananc[:,channel-1], \
+                                                obstype,shortname,units,expt_obs,0,"ana", \
                                                 None,None,dotsize,color)
-                dmin = -30
-                dmax = 30
-                color = "hsv"
-                basic_plot_functions.plotDistri(latnc,lonnc,ombnc, \
-                                                obstype,shortname,units,expt_obs,int(ombnum),"omb", \
+                    dmin = -30
+                    dmax = 30
+                    color = "hsv"
+                    basic_plot_functions.plotDistri(latnc,lonnc,ombnc[:,channel-1], \
+                                                obstype,shortname,units,expt_obs,0,"omb", \
                                                 dmin,dmax,dotsize,color)
-                basic_plot_functions.plotDistri(latnc,lonnc,omanc, \
-                                                obstype,shortname,units,expt_obs,int(omanum),"oma", \
+                    basic_plot_functions.plotDistri(latnc,lonnc,omanc[:,channel-1], \
+                                                obstype,shortname,units,expt_obs,0,"oma", \
                                                 dmin,dmax,dotsize,color)
-
-
 
 def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):
     fig, ax1 = plt.subplots()
@@ -424,7 +454,8 @@ def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):
     plt.grid(True)
     ax1.plot(var1,binsfory,'g-*',markersize=5)
     ax1.plot(var2,binsfory,'r-*',markersize=5)
-
+    print(var1)
+    print(np.nanmax(var1))
     if VAR_NAME in 'specific_humidity':
         ax1.set_xlim([0,np.nanmax(var1)])
     else:
@@ -456,8 +487,56 @@ def plotrmsepro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt):
         ax1.legend(('OMB','OMA'), loc='lower left',fontsize=15)
         ax2.set_yticklabels(reversed(ombnums.astype(np.int)))
         ax3.set_yticklabels(reversed(omanums.astype(np.int)))
-
     fname = 'RMSE_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
+    print('Saving figure to '+fname)
+    plt.savefig(fname,dpi=200,bbox_inches='tight')
+    plt.close()
+
+def ploterrpro(var1,var2,binsfory,ombnums,omanums,EXP_NAME,VAR_NAME,fmt,metrics):
+    fig, ax1 = plt.subplots()
+#   reverse left y-axis
+    plt.gca().invert_yaxis()
+    plt.grid(True)
+    ax1.plot(var1,binsfory,'g-*',markersize=5)
+    ax1.plot(var2,binsfory,'r-*',markersize=5)
+    print(np.nanmax(var1))
+    if VAR_NAME in 'specific_humidity':
+        ax1.set_xlim([0,np.nanmax(var1)])
+    else:
+        ax1.set_xlim([0,math.ceil(np.nanmax(var2))])
+
+    ax2 = ax1.twinx()
+    ax2.spines['right'].set_position(('axes', 1.0))
+    ax2.set_yticks(binsfory)
+    #ax2.set_ylabel('Obs Num for obserror(PreQC>-10 and <3)',fontsize=8)
+    ax2.set_ylabel('Obs Num for obserror (EffectiveQCbg=0)',fontsize=8)
+
+    ax3 = ax1.twinx()
+    ax3.set_yticks(binsfory)
+    ax3.spines['right'].set_position(('axes', 1.2))
+    ax3.set_ylabel('Obs Num for EffectiveError0(EffectiveQCbg=0)',fontsize=8)
+
+    if ''.join(EXP_NAME.split("_")[-1:])[:6] == 'gnssro':
+        ax1.set_ylim([0,49500])
+        ax1.set_ylabel('Altitude (m)',fontsize=15)
+        #ax1.set_xlabel(VAR_NAME+'  RMSE of OMB/O & OMA/O '+ vardict[VAR_NAME][0],fontsize=15)
+        #ax1.legend(('(OMB/O)*100%','(OMA/O)*100%'), loc='upper right',fontsize=15)
+        ax2.set_yticklabels(ombnums.astype(np.int))
+        ax3.set_yticklabels(omanums.astype(np.int))
+    else:
+        ax1.set_ylim([1000,0])
+        major_ticks = np.arange(0, 1000, 100)
+        ax1.set_yticks(major_ticks)
+        ax1.set_ylabel('Pressure (hPa)',fontsize=15)
+        #ax1.set_xlabel(VAR_NAME+' '+ metrics +' '+ vardict[VAR_NAME][0],fontsize=15)
+        #ax1.legend(('obserr','EffectiveError0'), loc='lower left',fontsize=15)
+        ax2.set_yticklabels(reversed(ombnums.astype(np.int)))
+        ax3.set_yticklabels(reversed(omanums.astype(np.int)))
+    ax1.set_xlabel(VAR_NAME+' '+ metrics +' '+ vardict[VAR_NAME][0],fontsize=15)
+    ax1.legend(('obserr','EffectiveError0'), loc='lower left',fontsize=15)
+
+    fname = metrics+'_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
+    #fname = 'RMSE_%s_%s.'%(EXP_NAME,VAR_NAME)+fmt
     print('Saving figure to '+fname)
     plt.savefig(fname,dpi=200,bbox_inches='tight')
     plt.close()
@@ -488,7 +567,6 @@ def init_subplts(subpltlist, nfigtypes, maxsubplts):
     ny = np.ceil(np.true_divide(nsubplts,nx))
     nx_subplt.append(nx)
     ny_subplt.append(ny)
-
     figs = []
     for ifig in range(0,nnfigs*nfigtypes):
         fig = plt.figure()
@@ -532,12 +610,10 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
     jfig = int((ifig-1)/maxsubplts)
     kfig = np.mod(ifig-1,maxsubplts)+1
     subplt_cnt[jfig] += 1
-
     if jfig == nnfigs-1 :
         numsubplts = np.mod(nvars,maxsubplts)
     else :
         numsubplts = maxsubplts
-
     offset = 0
 
     for iifig in range(nfigtypes):
@@ -554,7 +630,6 @@ def scatter_verification(ifig, varname, varunits, ivar, nvars, \
         # Uncomment these 2 lines to put x/y labels only on peripheral subplts
         #if kfig <= min(nvars,numsubplts) - nx_subplt[0] : xlab = ''
         #if np.mod(kfig,nx_subplt[0]) != 1 : ylab = ''
-
         ax = figs[int(offset+jfig)].add_subplot(ny_subplt[0],nx_subplt[0],kfig)
 
         if iifig == 0:

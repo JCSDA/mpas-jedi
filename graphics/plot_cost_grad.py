@@ -15,16 +15,17 @@ import fnmatch
 Directory Structure:
 test/
  ├── testoutput/
- │   ├── 3dvar_bumpcov.test.log.out
- │   ├── 3dvar.test.log.out
+ │   ├── 3dvar.run
+ │   ├── 3denvar_2stream_bumploc_unsinterp.run
  │   ├── ...
  ├── graphics/
  │   ├── plot_cost_grad.py
  │   ├── ...
 '''
 
-VAR1=os.getenv('VAR1','Cost Function')
-VAR2=os.getenv('VAR2','Gradient Norm Reduction')
+VAR1=os.getenv('VAR1','Quadratic cost function')
+#VAR2=os.getenv('VAR2','Gradient reduction')
+VAR2=os.getenv('VAR2','Norm reduction')
 file_name = 'costgrad.txt'  # output from grep and paste command
 
 def integers(a, b):
@@ -47,17 +48,25 @@ def readdata():
             os.system('rm '+ file_name)
 
         #grep iterations and cost function.
-        cmd = 'grep "Quadratic cost function: J " '+ dalogfile +' \
+        cmd = 'grep "'+VAR1+': J " '+ dalogfile +' \
             | grep -o -P "(\(\K[^\)]+)|(=\K.+)"  |paste -d " " - - > cost.txt'
         os.system(cmd)
 
-        #grep "Norm reduction" 
-        cmd = 'grep "DRIPCG end of iteration" '+ dalogfile +' \
-            | grep -o -P "=\K.+" > grad.txt'
+        cmd = 'grep "'+VAR2+'" '+ dalogfile +' \
+            | grep -o -P "=\K.+" > gradorig.txt'
         os.system(cmd)
 
+        nLineCost = int(os.popen('wc -l < cost.txt').read())
+        nLineGrad = int(os.popen('wc -l < gradorig.txt').read())
+
+        #some outputs included GMRESR, remove 'Gradient reduction' or 'Norm reduction' from it.
+        if nLineCost !=  nLineGrad:
+            cmd = 'head -n '+str(nLineCost)+' gradorig.txt > grad.txt'
+        else:
+            cmd = 'cp gradorig.txt grad.txt'
+        os.system(cmd)
         #combine cost and grad:
-        cmd = 'paste cost.txt grad.txt > '+ file_name +' ; rm cost.txt grad.txt' 
+        cmd = 'paste cost.txt grad.txt > '+ file_name +' ; rm cost.txt grad.txt gradorig.txt'
         os.system(cmd)
 
         alist = open(file_name).read().split()
@@ -75,7 +84,6 @@ def plot(forx,value,iters,VAR,expname):
     ax1.set_xticks(forx[::2])
     ax1.set_xticklabels(iters.astype(np.int)[::2]) #,rotation=45)
     ax1.set_ylabel('%s'%VAR,fontsize=16)
-
     plt.plot(forx,value,'r.-')
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,4))
     plt.grid(True)

@@ -27,6 +27,17 @@ macro(copy_all_files src_dir dest_dir)
     endforeach()
 endmacro()
 
+#link_all_files(src_dir dest_dir) - Link all files from source dir to build dir
+# Args:
+#  src_dir: Full path to source directory
+#  dest_dir: Full path to target directory
+macro(link_all_files src_dir dest_dir)
+    file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
+    foreach(_f IN LISTS _all)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+    endforeach()
+endmacro()
+
 #link_dir(src_dir dest_dir) - Link a full directory
 # Args:
 #  src_dir: Full path to source directory
@@ -136,24 +147,9 @@ list( APPEND mpas_testoutput
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testoutput})
 
-## graphical scripts
-# TODO(JJG): re-organize
-list( APPEND mpas_graphics
-  graphics/plot_obs_nc_loc.py
-  graphics/plot_diag_omaomb.py
-  graphics/plot_diag_omaomb_timeserial.py
-  graphics/plot_cost_grad.py
-  graphics/plot_BUMP_diag.py
-  graphics/write_diagnostic_stats.py
-  graphics/plot_utils.py
-  graphics/plot_stats_timeseries.py
-  graphics/plot_inc.py
-  graphics/basic_plot_functions.py
-)
-
 # Create directory for graphics and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/graphics)
-link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_graphics})
+link_all_files(${CMAKE_SOURCE_DIR}/mpas-jedi/graphics ${CMAKE_CURRENT_BINARY_DIR}/graphics)
 
 ecbuild_add_resources(TARGET mpas_test_scripts SOURCES_PACK ${mpas_testinput})
 
