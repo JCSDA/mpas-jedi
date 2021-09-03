@@ -828,6 +828,12 @@ add_mpasjedi_application_test(
     DEPENDS parameters_bumploc
     ${RECALIBRATE})
 
+add_mpasjedi_application_test(
+    NAME 3denvar_amsua_bc
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
 #variational - 3dhybrid
 add_mpasjedi_application_test(
     NAME 3dhybrid_bumpcov_bumploc
