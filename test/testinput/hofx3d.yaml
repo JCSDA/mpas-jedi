@@ -47,17 +47,6 @@ observations:
       ro_top_meter: 30000
       use_compress: 0
 - obs space:
-    name: GnssroBndROPP1D
-    obsdatain:
-      obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-    obsdataout:
-      obsfile: Data/os/hofxnm_gnssrobndropp1d.nc4
-    simulated variables: [bending_angle]
-  obs operator:
-    name: GnssroBndROPP1D
-    obs options:
-      use_compress: 0
-- obs space:
     name: AMSUA-NOAA19--nohydro
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4

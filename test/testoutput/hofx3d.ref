@@ -33,7 +33,6 @@ Test     : H(x):
 Test     : Radiosonde nobs= 3896 Min=-30.5236, Max=298.988, RMS=122.06
 Test     : Aircraft nobs= 8392 Min=-35.3525, Max=296.633, RMS=127.999
 Test     : GnssroRef nobs= 20 Min=0.206873, Max=357.518, RMS=133.86
-Test     : GnssroBndROPP1D nobs= 12 Min=0.000563032, Max=0.0135695, RMS=0.00773282
 Test     : AMSUA-NOAA19--nohydro nobs= 600 Min=210.645, Max=263.498, RMS=233.307
 Test     : AMSUA-NOAA19--hydro nobs= 400 Min=146.43, Max=291.988, RMS=225.605
 Test     : AIRS-AQUA nobs= 300 Min=210.839, Max=231.067, RMS=222.107
