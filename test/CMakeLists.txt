@@ -346,7 +346,6 @@ link_dir(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km/bg
 # therefore .nc files are linked one by one
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream)
 list( APPEND mpas_test_480km_2stream_nc
-      analysis.2018-04-15_00.00.00.nc
       mpasout.2018-04-15_00.00.00.nc
       static.nc
       x1.2562.grid.nc
