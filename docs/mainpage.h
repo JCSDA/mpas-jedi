@@ -9,5 +9,5 @@
  *
  * MPAS-JEDI is the interface between the generic components of the JEDI system and the atmospheric core of the
  * Model for Prediction Across Scales (MPAS). The primary development partners for MPAS are Los Alamos National
- * Laboratory (COSIM) and the National Center for Atmospheric Research (NCAR).
+ * Laboratory (LANL) and the National Center for Atmospheric Research (NCAR).
  */
