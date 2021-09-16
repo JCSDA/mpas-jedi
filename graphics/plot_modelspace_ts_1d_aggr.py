@@ -7,8 +7,6 @@ import matplotlib
 matplotlib.use('pdf')
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
-from copy import deepcopy
 import datetime as dt
 import plot_utils as pu
 import var_utils as vu

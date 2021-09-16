@@ -6,7 +6,6 @@ import matplotlib
 matplotlib.use('pdf')
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import datetime as dt 
 from datetime import *
