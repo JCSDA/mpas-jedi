@@ -1,0 +1,160 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/hofx3d.ref
+  log output filename: testoutput/hofx3d.run
+  test output filename: testoutput/hofx3d.run.ref
+window begin: '2018-04-14T21:00:00Z'
+window length: PT6H
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+state:
+  state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                    qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
+                    ivgtyp, isltyp, snowh, vegfra, u10, v10, lai, smois, tslb]
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+observations:
+- obs space:
+    name: Radiosonde
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_sondes.nc4
+    simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+  obs operator:
+    name: VertInterp
+- obs space:
+    name: Aircraft
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_aircraft.nc4
+    simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+  obs operator:
+    name: VertInterp
+- obs space:
+    name: GnssroRef
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_gnssroref.nc4
+    simulated variables: [refractivity]
+  obs operator:
+    name: GnssroRef
+    obs options:
+      ro_top_meter: 30000
+      use_compress: 0
+- obs space:
+    name: AMSUA-NOAA19--nohydro
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_amsua_n19--nohydro.nc4
+    simulated variables: [brightness_temperature]
+    channels: 9-14
+  obs operator: &crtmobsoper
+    name: CRTM
+    Absorbers: [H2O,O3]
+    SurfaceWindGeoVars: uv
+    obs options: &crtmobsopts
+      Sensor_ID: amsua_n19
+      EndianType: little_endian
+      CoefficientPath: Data/UFOCoeff/
+- obs space:
+    name: AMSUA-NOAA19--hydro
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_amsua_n19--hydro.nc4
+    simulated variables: [brightness_temperature]
+    channels: 1-3,15
+  obs operator:
+    <<: *crtmobsoper
+    Clouds: [Water, Ice, Rain, Snow, Graupel]
+    Cloud_Fraction: 1.0
+    obs options:
+      <<: *crtmobsopts
+- obs space:
+    name: AIRS-AQUA
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_airs_aqua.nc4
+    simulated variables: [brightness_temperature]
+    channels: 1,6-7
+  obs operator:
+    <<: *crtmobsoper
+    obs options:
+      <<: *crtmobsopts
+      Sensor_ID: airs_aqua
+      IRVISlandCoeff: USGS
+- obs space:
+    name: CRIS-NPP
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_cris-fsr_npp.nc4
+    simulated variables: [brightness_temperature]
+    channels: 28,32,143,145,224,275,995,1008
+  obs operator:
+    <<: *crtmobsoper
+    obs options:
+      <<: *crtmobsopts
+      Sensor_ID: cris-fsr_npp
+      IRVISlandCoeff: USGS
+- obs space:
+    name: IASI-METOPA
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_iasi_metop-a.nc4
+    simulated variables: [brightness_temperature]
+    channels: 16,29,32,35,38,41,44
+  obs operator:
+    <<: *crtmobsoper
+    obs options:
+      <<: *crtmobsopts
+      Sensor_ID: iasi_metop-a
+      IRVISlandCoeff: USGS
+#  - obs space:
+#      name: ATMS-NPP--ch5-15
+#      obsdatain:
+#        obsfile: Data/atms_npp_obs_2018041500_m.nc4
+#      obsdataout:
+#        obsfile: Data/os/obsout_hofx3d_atms_npp--ch5-15.nc4
+#      simulated variables: [brightness_temperature]
+#      channels: 5-15
+#    obs operator:
+#      <<: *crtmobsoper
+#      obs options:
+#        <<: *crtmobsopts
+#        Sensor_ID: atms_npp
+#  - obs space:
+#      name: ATMS-NPP--ch1-4,16-22
+#      obsdatain:
+#        obsfile: Data/atms_npp_obs_2018041500_m.nc4
+#      obsdataout:
+#        obsfile: Data/os/obsout_hofx3d_atms_npp--ch1-4,16-22.nc4
+#      simulated variables: [brightness_temperature]
+#      channels: 1-4,16-22
+#    obs operator:
+#      <<: *crtmobsoper
+#      Clouds: [Water, Ice, Rain, Snow, Graupel]
+#      Cloud_Fraction: 1.0
+#      obs options:
+#        <<: *crtmobsopts
+#        Sensor_ID: atms_npp
+- obs space:
+    name: SfcPCorrected
+    obsdatain:
+      obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+    obsdataout:
+      obsfile: Data/os/obsout_hofx3d_sfc.nc4
+    simulated variables: [surface_pressure]
+  obs operator:
+    name: SfcPCorrected
+    da_psfc_scheme: UKMO   # or WRFDA
+prints:
+  frequency: PT3H

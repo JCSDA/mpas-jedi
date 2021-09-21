@@ -1,0 +1,11 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/enshofx.ref
+  output filename: testoutput/enshofx.run
+files:
+  - "testinput/enshofx_1.yaml"
+  - "testinput/enshofx_2.yaml"
+  - "testinput/enshofx_3.yaml"
+  - "testinput/enshofx_4.yaml"
+  - "testinput/enshofx_5.yaml"

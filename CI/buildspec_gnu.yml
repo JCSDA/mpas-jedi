@@ -1,0 +1,172 @@
+version: 0.2
+
+env:
+  shell: bash
+  parameter-store:
+    GIT_USER: "/CodeBuild/Git_USER"
+    GIT_PASS: "/CodeBuild/Git_PASS"
+
+phases:
+  install:
+    commands:
+      - echo Executing install phase
+      - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo $CODEBUILD_SOURCE_REPO_URL
+      - echo $CODEBUILD_SOURCE_VERSION
+
+      - echo $CODEBUILD_WEBHOOK_MERGE_COMMIT
+      - echo $CODEBUILD_WEBHOOK_PREV_COMMIT
+      - echo $CODEBUILD_WEBHOOK_HEAD_REF
+      - echo $CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID
+      - echo $CODEBUILD_WEBHOOK_EVENT
+      - echo $CODEBUILD_WEBHOOK_TRIGGER
+      - echo $CODEBUILD_WEBHOOK_BASE_REF
+
+      # Codebuild only runs on PUSH events if HEAD_REF
+      # is refs/heads/develop (merge to develop). In this
+      # case CODEBUILD_GIT_BRANCH="develop"
+
+      - if [ "$CODEBUILD_WEBHOOK_EVENT" = "PUSH" ];
+        then export CODEBUILD_GIT_BRANCH="develop";
+        echo "Merging to develop";
+        else export CODEBUILD_GIT_BRANCH=${CODEBUILD_WEBHOOK_HEAD_REF#refs/heads/};
+        fi
+
+      - echo "CODEBUILD_GIT_BRANCH=${CODEBUILD_GIT_BRANCH}"
+      - echo "CODEBUILD_SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}"
+
+  pre_build:
+    commands:
+      - echo Executing pre_build phase
+      - git lfs install # creates .gitconfig
+      - mkdir -p /jcsda/mpas-bundle
+
+      #  Set crtm branch name
+      - export CRTM_JEDI_BRANCH="release/crtm_jedi"
+
+      - if [ "$CODEBUILD_GIT_BRANCH" = "develop" ];
+        then export CODEBUILD_GIT_BRANCH_FORK="release-stable";
+        export CODEBUILD_GIT_BRANCH_CRTM=${CRTM_JEDI_BRANCH};
+        else export CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH};
+        export CODEBUILD_GIT_BRANCH_CRTM=${CODEBUILD_GIT_BRANCH};
+        echo "CODEBUILD_GIT_BRANCH_FORK=${CODEBUILD_GIT_BRANCH_FORK}";
+        fi
+
+      # Upload branch name and commit sha as CodeBuild artifact to S3
+      - mkdir -p /jcsda/artifacts
+      - echo ${CODEBUILD_GIT_BRANCH} > /jcsda/artifacts/branch_name.txt
+      - echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} > /jcsda/artifacts/commit_sha.txt
+
+      - cd CI
+
+      ##  jedi core repos
+      # oops
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/oops $CODEBUILD_GIT_BRANCH oops /jcsda/mpas-bundle develop
+
+      # saber
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/saber $CODEBUILD_GIT_BRANCH saber /jcsda/mpas-bundle develop
+
+      # ioda
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/ioda $CODEBUILD_GIT_BRANCH ioda /jcsda/mpas-bundle develop
+
+      # ufo
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/ufo $CODEBUILD_GIT_BRANCH ufo /jcsda/mpas-bundle develop
+
+      # crtm
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/crtm $CODEBUILD_GIT_BRANCH_CRTM crtm /jcsda/mpas-bundle $CRTM_JEDI_BRANCH
+
+      ##  internal repos
+      #  mpas-model
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/MPAS-Model $CODEBUILD_GIT_BRANCH_FORK MPAS /jcsda/mpas-bundle release-stable
+
+      #  mpas-jedi
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi $CODEBUILD_GIT_BRANCH mpas-jedi /jcsda/mpas-bundle develop
+
+      # mpas-jedi-data
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/mpas-jedi-data $CODEBUILD_GIT_BRANCH mpas-jedi-data /jcsda/mpas-bundle develop
+
+      # jedi-cmake
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/jedi-cmake $CODEBUILD_GIT_BRANCH jedicmake /jcsda/mpas-bundle develop
+
+      # ropp
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/ropp-test $CODEBUILD_GIT_BRANCH ropp-ufo /jcsda/mpas-bundle develop
+
+      #gsw
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/GSW-Fortran $CODEBUILD_GIT_BRANCH gsw /jcsda/mpas-bundle develop
+
+      # rttov
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/rttov $CODEBUILD_GIT_BRANCH rttov /jcsda/mpas-bundle develop
+
+      # ufo-test
+      - ./clone.sh $GIT_USER $GIT_PASS jcsda-internal/ufo-data $CODEBUILD_GIT_BRANCH ufo-data /jcsda/mpas-bundle develop
+
+      # move CMakeLists.txt
+      - cp CMakeLists.txt /jcsda/mpas-bundle
+      - cp -r cmake /jcsda/mpas-bundle/
+      # cdash upload setup
+      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle/
+
+      - cd /jcsda/mpas-bundle
+      - chmod -R 777 /jcsda/mpas-bundle
+      - ls -lt /jcsda/mpas-bundle
+  build:
+    on-failure: CONTINUE
+    commands:
+      - echo Executing build phase
+      - echo $CODEBUILD_BUILD_SUCCEEDING
+      - export BUILD_STATUS="0"
+      - echo $BUILD_STATUS
+
+      - su - jedi -c "cd /home/jedi
+        && echo $CC
+        && echo $CXX
+        && echo $FC
+        && CC=mpicc CXX=mpicxx FC=mpifort
+        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
+
+      - su - jedi -c "cd /home/jedi/mpas-jedi
+        && CC=mpicc CXX=mpicxx FC=mpifort
+        && cp ../DartConfiguration.tcl .
+        && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
+        && sed -i 's/home\/jedi/home\/jedi\/mpas-jedi/' DartConfiguration.tcl
+        && cat DartConfiguration.tcl
+        && make -j4"
+
+      - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
+        then export BUILD_STATUS="1";
+        echo "Build passed";
+        fi
+      - echo $BUILD_STATUS
+
+      # run ctest
+      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/jedi/mpas-jedi
+        && ctest  -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx"
+
+    finally:
+      # upload ctest report to CDASH
+      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/jedi/mpas-jedi
+        && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
+
+  post_build:
+    commands:
+      - echo Executing post_build phase
+      - echo $CODEBUILD_BUILD_SUCCEEDING
+      - echo $BUILD_STATUS
+
+      # upload find cdash url and upload it as CodeBuild artifact to S3
+      - if [ "$BUILD_STATUS" = "1" ];
+        then echo "Build & tests passed, find cdash url";
+        bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing;
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing);
+        echo $url;
+        echo ${url} > /jcsda/artifacts/cdash-url.txt;
+        cat /jcsda/artifacts/cdash-url.txt;
+        else echo "Build failed";
+        fi
+
+artifacts:
+  files:
+    - '/jcsda/artifacts/*'
+  name: mpas-gnu-url

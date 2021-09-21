@@ -1,0 +1,11 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/eda_3dhybrid.ref
+  log output filename: testoutput/eda_3dhybrid.run
+  test output filename: testoutput/eda_3dhybrid.run.ref
+files:
+  - "testinput/eda_3dhybrid_1.yaml"
+  - "testinput/eda_3dhybrid_2.yaml"
+  - "testinput/eda_3dhybrid_3.yaml"
+  - "testinput/eda_3dhybrid_4.yaml"

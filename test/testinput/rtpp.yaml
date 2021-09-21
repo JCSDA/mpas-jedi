@@ -1,0 +1,100 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/rtpp.ref
+  log output filename: testoutput/rtpp.run
+  test output filename: testoutput/rtpp.run.ref
+geometry:
+  nml_file: ./Data/480km/namelist.atmosphere_2018041500
+  streams_file: ./Data/480km/streams.atmosphere
+background:
+  _: &state
+    date: 2018-04-15T00:00:00Z
+    state variables:
+    - temperature
+    - spechum
+    - uReconstructZonal
+    - uReconstructMeridional
+    - surface_pressure
+#The additional variables below vary across members, are contained
+# in State objects and are not typically among mpas-jedi state or
+# analysis variable config entries.  For RTPP, they must be specified
+# as "state variables" in order for the output mean state to
+# correctly reflect their average values and not be simply equal to
+# member 1
+#Additionally, these four variables are modified in the StateMPAS
+# += operator for adding IncrementMPAS objects.  Their correct
+# averaging in the mean state is required in order for the updated
+# analysis ensemble to be correct after adding the RTPP perturbations.
+    - qv
+    - pressure
+    - rho
+    - theta
+    - u
+# Additionally, although the following variables are unaffected
+# in DA applications, they must be included in both the state
+# and analysis variables in order for the updated analysis
+# members to contain independent values; otherwise:
+# missing from both state and analysis variables
+#  => mean output has values equal to original analysis member 1
+# missing from only analysis variables
+#  => all output members equal to analysis mean
+#Note: exclude hydrometeors in ctest, because not present in 480km init file
+# MUST be included in cycling for correct member-by-member values
+#    - qc
+#    - qi
+#    - qr
+#    - qs
+#    - qg
+    - pressure_p
+    - skintemp
+    - smois
+    - snowc
+    - snowh
+    - tslb
+    - u10
+    - v10
+    - w
+    - xice
+  members:
+  - <<: *state
+    filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+  - <<: *state
+    filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+analysis:
+  members:
+  - <<: *state
+    filename: Data/states/ensemble/mem001/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
+  - <<: *state
+    filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
+analysis variables:
+- temperature
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
+- surface_pressure
+- qv
+- pressure
+- rho
+- theta
+- u
+#Note: exclude hydrometeors in ctest, because not present in 480km init file
+# MUST be included in cycling for correct member-by-member values
+#- qc
+#- qi
+#- qr
+#- qs
+#- qg
+- pressure_p
+- skintemp
+- smois
+- snowc
+- snowh
+- tslb
+- u10
+- v10
+- w
+- xice
+output:
+  filename: Data/states/ensemble/mem%{member}%/mpas.rtpp.$Y-$M-$D_$h.$m.$s.nc
+factor: 0.5

@@ -1,0 +1,76 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/parameters_bumploc.ref
+  log output filename: testoutput/parameters_bumploc.run
+  test output filename: testoutput/parameters_bumploc.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+  deallocate non-da fields: true
+  bump vunit: "modellevel" # modellevel, height
+input variables: &vars
+- temperature
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
+- surface_pressure
+date: &date '2018-04-15T00:00:00Z'
+background:
+  state variables: *vars
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: *date
+ensemble:
+  members:
+  - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+covariance:
+  covariance model: MPASstatic
+  date: *date
+  pseudoens_size: 10
+bump:
+  prefix: Data/bump/mpas_parametersbump_loc
+  method: loc  #hyb-rnd
+  verbosity: main
+  strategy: common
+  new_hdiag: 1
+  new_nicas: 1
+  write_nicas_local: 1
+  write_nicas_global: 1
+  nc1: 1024
+  nc2: 200
+  nc3: 10
+  dc: 1000000
+  nl0r: 1
+  ne: 5
+  local_diag: 1
+  local_rad: 1000000
+  resol: 4
+  diag_rhflt: 3000000
+  write_nicas_grids: 1
+output:
+- parameter: loc_coef
+  filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
+- parameter: loc_rh
+  filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
+- parameter: loc_rv
+  filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
+- parameter: hyb_coef
+  filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

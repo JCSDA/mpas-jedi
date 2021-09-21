@@ -1,0 +1,14 @@
+A1_psichi.bash
+	: transfer (full-field) u/v to psi/chi through intermediate lat/lon grid
+A2_convert_t_ps_sh.bash
+	: transfer (full-field) theta, pressure, qv(mixing ratio) to temperature, specific_humidity
+A3_ncdiff.bash
+	: Calculate the differences (for NMC-type perturbations)
+A4_vert_smooth.bash
+	: Optional vertical smoothing
+B1_add_uv_fields.bash
+	: Add u/v for univariate statistics
+
+Note: You need to calculate the ESMF interpolation weights in "ESMF_weights" directory
+
+There might exist some examples in /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12 on Cheyenne.

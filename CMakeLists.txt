@@ -1,81 +1,55 @@
-# (C) Copyright 2017 NCAR.
+# (C) Copyright 2017 UCAR.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-cmake_minimum_required( VERSION 3.3.2 FATAL_ERROR )
+################################################################################
+# MPAS 
+################################################################################
 
-set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/ecbuild/cmake)
-include( ecbuild_bundle )
-project( mpas C CXX Fortran)
+cmake_minimum_required( VERSION 3.12 )
+project( mpasjedi VERSION 1.0.0 LANGUAGES C CXX Fortran )
 
-set( ENABLE_MPI ON CACHE BOOL "Compile with MPI" )
-
-set( ECBUILD_DEFAULT_BUILD_TYPE Release )
+## Ecbuild integration
+find_package( ecbuild 3.3.2 REQUIRED )
 include( ecbuild_system NO_POLICY_SCOPE )
-
-ecbuild_requires_macro_version( 2.5 )
-
-################################################################################
-# Project
-################################################################################
-
 ecbuild_declare_project()
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
+set( CMAKE_DIRECTORY_LABELS ${PROJECT_NAME} )
 
-ecbuild_enable_fortran( REQUIRED )
-ecbuild_add_cxx11_flags()
+## Configuration options
+include( ${PROJECT_NAME}_compiler_flags )
+include( GNUInstallDirs )
+option( ENABLE_MPAS_DOC "Build MPAS-JEDI documentation" OFF )
 
-set( MPAS_LINKER_LANGUAGE CXX )
+## Dependencies
+find_package( OpenMP COMPONENTS CXX Fortran )
+find_package( MPI REQUIRED COMPONENTS CXX Fortran )
+find_package( Boost REQUIRED )
 
-################################################################################
-# Dependencies
-################################################################################
+#OpenMP dependent packages
+if(OpenMP_FOUND)
+    find_package( MPAS 7.0 REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere OpenMP)
+    find_package( atlas 0.23.0 REQUIRED COMPONENTS OMP OMP_Fortran)
+else()
+    find_package( MPAS 7.0 REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
+    find_package( atlas 0.23.0 REQUIRED )
+endif()
 
-# Boost
-set( Boost_MINIMUM_VERSION "1.47" )
-find_package( Boost ${Boost_MINIMUM_VERSION} REQUIRED
-              COMPONENTS unit_test_framework )
-include_directories( ${Boost_INCLUDE_DIR} )
+find_package( rttov 12.1.0 QUIET )
+find_package( oops 1.0.0 REQUIRED )
+find_package( saber 1.0.0 REQUIRED )
+find_package( ioda 1.0.0 REQUIRED )
+find_package( ufo 1.0.0 REQUIRED )
 
-# oops
-ecbuild_use_package( PROJECT oops VERSION 0.1.0 REQUIRED )
-include_directories( ${OOPS_INCLUDE_DIRS} )
-
-# MPAS
-include_directories( ${MPAS_INCLUDE} )
-
-################################################################################
-# Export package info
-################################################################################
-
-list( APPEND MPAS_TPLS oops )
-
-foreach( _tpl ${MPAS_TPLS} )
-  string( TOUPPER ${_tpl} TPL )
-  list( APPEND MPAS_EXTRA_DEFINITIONS   ${${TPL}_DEFINITIONS}  ${${TPL}_TPL_DEFINITIONS}  )
-  list( APPEND MPAS_EXTRA_INCLUDE_DIRS  ${${TPL}_INCLUDE_DIRS} ${${TPL}_TPL_INCLUDE_DIRS} )
-  list( APPEND MPAS_EXTRA_LIBRARIES     ${${TPL}_LIBRARIES}    ${${TPL}_TPL_LIBRARIES}    )
-endforeach()
-
-################################################################################
-# Sources
-################################################################################
-
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/model )
-
-add_subdirectory( model )
+## Sources
+add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( mains )
 
-################################################################################
-# Finalise configuration
-################################################################################
+if( ENABLE_MPAS_DOC )
+    add_subdirectory( docs )
+endif()
 
-# prepares a tar.gz of the sources and/or binaries
-ecbuild_install_project( NAME mpas )
-
-# print the summary of the configuration
+## Package Config
+ecbuild_install_project( NAME ${PROJECT_NAME} )
 ecbuild_print_summary()
-
-

@@ -1,0 +1,23 @@
+covariance test:
+  tolerance: '0.01'
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+analysis variables:
+- temperature
+- spechum
+- uReconstructZonal
+- uReconstructMeridional
+- surface_pressure
+background:
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+  state variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+background error:
+  covariance model: MPASstatic
+  date: '2018-04-15T00:00:00Z'
