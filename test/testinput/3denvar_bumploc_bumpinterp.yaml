@@ -57,7 +57,7 @@ cost function:
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3denvar_bump_sondes.nc4
+        obsfile: Data/os/obsout_3denvar_bumploc_bump_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     obs operator:
       name: VertInterp
@@ -76,7 +76,7 @@ cost function:
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3denvar_bump_satwind.nc4
+        obsfile: Data/os/obsout_3denvar_bumploc_bump_satwind.nc4
       simulated variables: [eastward_wind, northward_wind]
     obs operator:
       name: VertInterp
@@ -95,7 +95,7 @@ cost function:
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3denvar_bump_gnssroref.nc4
+        obsfile: Data/os/obsout_3denvar_bumploc_bump_gnssroref.nc4
       simulated variables: [refractivity]
     obs operator:
       name: GnssroRef
@@ -128,48 +128,11 @@ cost function:
     get values:
       interpolation type: bump
   - obs space:
-      name: GnssroBndROPP1D
-      obsdatain:
-        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-      obsdataout:
-        obsfile: Data/os/obsout_3denvar_bump_gnssrobndropp1d.nc4
-      simulated variables: [bending_angle]
-    obs operator:
-      name: GnssroBndROPP1D
-      obs options:
-        use_compress: 0
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: altitude@MetaData
-        minvalue: 0
-        maxvalue: 50000
-      - variable:
-          name: earth_radius_of_curvature@MetaData
-        minvalue: 6250000
-        maxvalue: 6450000
-      - variable:
-          name: geoid_height_above_reference_ellipsoid@MetaData
-        minvalue: -200
-        maxvalue: 200
-    - filter: Background Check
-      apply at iterations: 0,1
-      threshold: 3
-    - filter: ROobserror
-      apply at iterations: 0,1
-      variable: bending_angle
-      errmodel: ECMWF
-    get values:
-      interpolation type: bump
-  - obs space:
       name: SfcPCorrected
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3denvar_bump_sfc.nc4
+        obsfile: Data/os/obsout_3denvar_bumploc_bump_sfc.nc4
       simulated variables: [surface_pressure]
     obs operator:
       name: SfcPCorrected
@@ -192,7 +155,7 @@ cost function:
     get values:
       interpolation type: bump
 output:
-  filename: "Data/states/mpas.3denvar_bump.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_bumploc_bump.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   minimizer:
     algorithm: DRIPCG

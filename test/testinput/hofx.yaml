@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.005
+  float relative tolerance: 0.035
   integer tolerance: 0
   reference filename: testoutput/hofx.ref
   log output filename: testoutput/hofx.run
@@ -30,7 +30,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_sondes.nc4
+      obsfile: Data/os/obsout_hofx_sondes.nc4
     simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
   obs operator:
     name: VertInterp
@@ -39,7 +39,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_satwind.nc4
+      obsfile: Data/os/obsout_hofx_satwind.nc4
     simulated variables: [eastward_wind, northward_wind]
   obs operator:
     name: VertInterp
@@ -48,7 +48,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
     obsdataout:
-      obsfile: Data/os/hofx_gnssroref.nc4
+      obsfile: Data/os/obsout_hofx_gnssroref.nc4
     simulated variables: [refractivity]
   obs operator:
     name: GnssroRef
@@ -56,22 +56,11 @@ observations:
       ro_top_meter: 30000
       use_compress: 0
 - obs space:
-    name: GnssroBndROPP1D
-    obsdatain:
-      obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-    obsdataout:
-      obsfile: Data/os/hofx_gnssrobndropp1d.nc4
-    simulated variables: [bending_angle]
-  obs operator:
-    name: GnssroBndROPP1D
-    obs options:
-      use_compress: 0
-- obs space:
     name: AMSUA-NOAA19--nohydro
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_amsua_n19--nohydro.nc4
+      obsfile: Data/os/obsout_hofx_amsua_n19--nohydro.nc4
     simulated variables: [brightness_temperature]
     channels: 4-8
   obs operator: &crtmobsoper
@@ -87,7 +76,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_amsua_n19--hydro.nc4
+      obsfile: Data/os/obsout_hofx_amsua_n19--hydro.nc4
     simulated variables: [brightness_temperature]
     channels: 1-3,15
   obs operator:
@@ -101,7 +90,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/airs_aqua_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_airs_aqua.nc4
+      obsfile: Data/os/obsout_hofx_airs_aqua.nc4
     simulated variables: [brightness_temperature]
     channels: 1,6-7
   obs operator:
@@ -115,7 +104,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/cris-fsr_npp_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_cris-fsr_npp.nc4
+      obsfile: Data/os/obsout_hofx_cris-fsr_npp.nc4
     simulated variables: [brightness_temperature]
     channels: 24,26,135,137,332,342,1022,1058
   obs operator:
@@ -129,7 +118,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/iasi_metop-a_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_iasi_metop-a.nc4
+      obsfile: Data/os/obsout_hofx_iasi_metop-a.nc4
     simulated variables: [brightness_temperature]
     channels: 16,29,32,35,38,41,44
   obs operator:
@@ -143,7 +132,7 @@ observations:
 #      obsdatain:
 #        obsfile: Data/atms_npp_obs_2018041500_m.nc4
 #      obsdataout:
-#        obsfile: Data/os/hofx_atms_npp--ch5-15.nc4
+#        obsfile: Data/os/obsout_hofx_atms_npp--ch5-15.nc4
 #      simulated variables: [brightness_temperature]
 #      channels: 5-15
 #    obs operator:
@@ -156,7 +145,7 @@ observations:
 #      obsdatain:
 #        obsfile: Data/atms_npp_obs_2018041500_m.nc4
 #      obsdataout:
-#        obsfile: Data/os/hofx_atms_npp--ch1-4,16-22.nc4
+#        obsfile: Data/os/obsout_hofx_atms_npp--ch1-4,16-22.nc4
 #      simulated variables: [brightness_temperature]
 #      channels: 1-4,16-22
 #    obs operator:
@@ -171,7 +160,7 @@ observations:
     obsdatain:
       obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
     obsdataout:
-      obsfile: Data/os/hofx_sfc.nc4
+      obsfile: Data/os/obsout_hofx_sfc.nc4
     simulated variables: [surface_pressure]
   obs operator:
     name: SfcPCorrected

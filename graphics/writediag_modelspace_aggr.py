@@ -7,7 +7,6 @@ import numpy as np
 from netCDF4 import Dataset
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 from copy import deepcopy
 from datetime import datetime, timedelta
 import modelsp_utils as mu

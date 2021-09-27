@@ -35,7 +35,7 @@ def readdata():
                 diffdata = []
                 diffdata_rmsdiv = []
                 date = TDATE.strftime('%Y%m%d%H')
-                xlabeltime = np.append(xlabeltime,date[4:][:-2])
+                xlabeltime = np.append(xlabeltime,TDATE)
 
                 nc_file = mu.expDirectory+'/'+mu.expLongNames[iexp]+'/FC1DIAG/'+date+'/diagnostic_stats/expmgfs.nc'
                 nc_fid = Dataset(nc_file, "r", format="NETCDF4")
@@ -75,6 +75,7 @@ def readdata():
           #print(region,var,stats)
           indepLabel = 'Vertical level'
           sciTicks = False
+          logscale = False
           invert_ind_axis = False
           iplot = 0
 
@@ -87,21 +88,44 @@ def readdata():
                 BasicPF.plotTimeSeries2D( fig, \
                               xlabeltime,ylevels, k, \
                               title, statDiagLabel, \
-                              sciTicks, signDefinite, \
+                              sciTicks, logscale, signDefinite, \
                               indepLabel, invert_ind_axis, \
                               ny, nx, nsubplots, iplot, \
                               dmin = dmin, dmax = dmax, \
                               interiorLabels = interiorLabels )
                 iplot = iplot +1
-                filename = ''.join(varNamesListAll[i])+'_TS_2d'
+                filename = ''.join(varNamesListAll[i])
                 pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
 
           #plot diff between two exp for RMS:
           if (mu.diff2exp == 'True' and ''.join(varNamesListAll[i])[-3:] == 'RMS'):
               for iexp in range(1,mu.nExp):
-              #             target_exp - control_exp
+              #                 target_exp - control_exp
                   alldiffdata = arraylist[iexp]-arraylist[0]
-                  BasicPF.plotTimeserial2D(alldiffdata,xlabeltime,ylevels,''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0])
+                  is_all_zero = np.all((alldiffdata == 0))
+                  if is_all_zero:
+                      print(''.join(varNamesListAll[i]), ': no difference between experiments:', mu.expNames[0], ' and ',mu.expNames[iexp] )
+                  else:
+                      iplot = 0
+                      nx = mu.nExp - 1
+                      ny = 1
+                      nsubplots = nx * ny
+                      valuemin = np.amin(alldiffdata)
+                      valuemax = np.amax(alldiffdata)
+                      title = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0]
+                      fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
+
+                      BasicPF.plotTimeSeries2D( fig, \
+                              xlabeltime,ylevels, alldiffdata, \
+                              title, statDiagLabel, \
+                              sciTicks, logscale, signDefinite, \
+                              indepLabel, invert_ind_axis, \
+                              ny, nx, nsubplots, iplot, \
+                              dmin = dmin, dmax = dmax, \
+                              interiorLabels = interiorLabels )
+                      iplot = iplot + 1
+                      filename = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0] #''.join(varNamesListAll[i])+'_TS_2d'
+                      pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
 def main():
     readdata()
 

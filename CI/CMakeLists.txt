@@ -45,30 +45,8 @@ ecbuild_bundle( PROJECT ufo       GIT "https://github.com/jcsda-internal/ufo.git
 # ioda and ufo test data
 #---------------------------------
 
-# If IODA branch is being built set GIT_BRANCH_FUNC to IODA's current branch.
-# If a tagged version of IODA is being built set GIT_TAG_FUNC to ioda's current tag. In this case,
-# IODA test files will be download from UCAR DASH and ioda-data repo will not be cloned.
-# When LOCAL_PATH_JEDI_TESTFILES is set to the directory of IODA test files stored
-# in a local directory, ioda-data repo will not be cloned
-
-#find_branch_name(REPO_DIR_NAME ioda)
-# When LOCAL_PATH_JEDI_TESTFILES is set to the directory of IODA test files stored
-# in a local directory, ioda-data repo will not be cloned
-#if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
-#  ecbuild_bundle( PROJECT ioda-data GIT "https://github.com/JCSDA-internal/ioda-data.git" BRANCH develop UPDATE )
-#endif()
-
-# same procedure for ufo-data
-find_branch_name(REPO_DIR_NAME ufo)
-if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
-  ecbuild_bundle( PROJECT ufo-data GIT "https://github.com/JCSDA-internal/ufo-data.git" BRANCH develop UPDATE )
-endif()
-
-# same procedure for mpas-jedi-data
-find_branch_name(REPO_DIR_NAME mpas-jedi)
-if( NOT DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} AND NOT DEFINED ${GIT_TAG_FUNC} )
-  ecbuild_bundle( PROJECT mpas-jedi-data GIT "https://github.com/JCSDA-internal/mpas-jedi-data.git" )
-endif()
+ecbuild_bundle( PROJECT ufo-data GIT "https://github.com/JCSDA-internal/ufo-data.git" )
+ecbuild_bundle( PROJECT mpas-jedi-data GIT "https://github.com/JCSDA-internal/mpas-jedi-data.git" )
 
 
 set(MPAS_CORES atmosphere init_atmosphere CACHE STRING "MPAS-Model: cores to build.")

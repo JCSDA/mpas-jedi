@@ -132,42 +132,6 @@ cost function:
       variable: refractivity
       errmodel: NBAM
   - obs space:
-      name: GnssroBndROPP1D
-      obsdatain:
-        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-      obsdataout:
-        obsfile: Data/os/ensemble/mem003/obsout_eda_3dhybrid_gnssrobndropp1d.nc4
-      simulated variables: [bending_angle]
-      obs perturbations seed: 3
-    obs operator:
-      name: GnssroBndROPP1D
-      obs options:
-        use_compress: 0
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: altitude@MetaData
-        minvalue: 0
-        maxvalue: 50000
-      - variable:
-          name: earth_radius_of_curvature@MetaData
-        minvalue: 6250000
-        maxvalue: 6450000
-      - variable:
-          name: geoid_height_above_reference_ellipsoid@MetaData
-        minvalue: -200
-        maxvalue: 200
-    - filter: Background Check
-      apply at iterations: 0,1
-      threshold: 3
-    - filter: ROobserror
-      apply at iterations: 0,1
-      variable: bending_angle
-      errmodel: ECMWF
-  - obs space:
       name: SfcPCorrected
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4

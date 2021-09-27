@@ -4,7 +4,8 @@ cost function:
   window begin: '2018-04-14T21:00:00Z'
   window length: PT6H
   geometry:
-    gridfname: "./restart.2018-04-15_00.00.00.nc"
+    nml_file: "./namelist.atmosphere"
+    streams_file: "./streams.atmosphere"
   analysis variables: &incvars
   - uReconstructZonal
   - uReconstructMeridional
@@ -17,51 +18,28 @@ cost function:
 #  - index_qs
 #  - index_qg
   background:
-    state variables: *incvars
-    filename: "./restart.2018-04-15_00.00.00.nc"
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+    filename: "./background.2018-04-15_00.00.00.nc"
     date: '2018-04-15T00:00:00Z'
   background error:
     covariance model: BUMP
     date: '2018-04-15T00:00:00Z'
     bump:
-      datadir: ../BEC_cmat_nicas #.gnu_iokeys
+      datadir: ../CMAT_00 # directory where the bump NICAS output files are located.
       prefix: mpas_parametersbump_cov
-      default_seed: 1
       method: cor
       strategy: specific_univariate
-      load_nicas: 1
-      lsqrt: 1
-      mpicom: 2
-#      io_keys:
-#      - "stream_function_2018-04-15T00:00:00Z-stream_function_2018-04-15T00:00:00Z"
-#      - "velocity_potential_2018-04-15T00:00:00Z-velocity_potential_2018-04-15T00:00:00Z"
-#      - "temperature_2018-04-15T00:00:00Z-temperature_2018-04-15T00:00:00Z"
-#      - "spechum_2018-04-15T00:00:00Z-spechum_2018-04-15T00:00:00Z"
-#      - "surface_pressure_2018-04-15T00:00:00Z-surface_pressure_2018-04-15T00:00:00Z"
-#      io_values:
-#      - "var1_from_hdiag_cmat"
-#      - "var2_from_hdiag_cmat"
-#      - "var3_from_hdiag_cmat"
-#      - "var4_from_hdiag_cmat"
-#      - "var5_from_hdiag_cmat"
+      load_nicas_local: 1
+      verbosity: 'main'
     variable changes:
     - variable change: StdDev
       bump:
         load_var: 1
-        datadir: ../BEC_cmat_nicas #.gnu_iokeys
+        datadir: ../CMAT_00 # directory where the bump VAR output files are located.
         prefix: mpas_parametersbump_cov
-#        io_keys:
-#        - "stream_function_2018-04-15T00:00:00Z-stream_function_2018-04-15T00:00:00Z"
-#        - "velocity_potential_2018-04-15T00:00:00Z-velocity_potential_2018-04-15T00:00:00Z"
-#        - "temperature_2018-04-15T00:00:00Z-temperature_2018-04-15T00:00:00Z"
-#        - "spechum_2018-04-15T00:00:00Z-spechum_2018-04-15T00:00:00Z"
-#        - "surface_pressure_2018-04-15T00:00:00Z-surface_pressure_2018-04-15T00:00:00Z"
-#        io_values:
-#        - "var1_from_hdiag_cmat"
-#        - "var2_from_hdiag_cmat"
-#        - "var3_from_hdiag_cmat"
-#        - "var4_from_hdiag_cmat"
-#        - "var5_from_hdiag_cmat"
+        verbosity: 'main'
       input variables: &ctlvars
       - stream_function
       - velocity_potential
@@ -75,20 +53,18 @@ cost function:
       bump:
         check_vbal: 0
         load_vbal: 1
-        datadir: ../BEC_vbal.gnu
+        datadir: ../VBAL_00 # directory where the bump VBAL output files are located.
         prefix: mpas_vbal
         strategy: specific_univariate
         vbal_block:     [1, 1,0, 0,0,0, 1,0,0,0]
         vbal_diag_reg:  [1, 0,0, 0,0,0, 0,0,0,0]
         vbal_diag_auto: [0, 0,0, 0,0,0, 0,0,0,0]
-        verbosity: 'all'
+        verbosity: 'main'
         nv: 5
       input variables: *ctlvars
       output variables: *ctlvars
     - variable change: Control2Analysis
       toleranceInverse: '1.0e-8'
-      testinverse: '0'
-      wind_cvt_method: 1
       input variables: *ctlvars
       output variables: *incvars
   observations:
@@ -109,6 +85,8 @@ cost function:
       apply at iterations: 0
     - filter: Background Check
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: Aircraft
       obsdatain:
@@ -126,6 +104,8 @@ cost function:
       apply at iterations: 0
     - filter: Background Check
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: Satwind
       obsdatain:
@@ -143,6 +123,8 @@ cost function:
       apply at iterations: 0
     - filter: Background Check
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: GnssroRef
       obsdatain:
@@ -176,6 +158,8 @@ cost function:
     - filter: ROobserror
       variable: refractivity
       errmodel: NBAM
+    get values:
+      interpolation type: unstructured
   - obs space:
       name: SfcPCorrected
       obsdatain:
@@ -200,6 +184,8 @@ cost function:
       threshold: 200
     - filter: Background Check
       threshold: 3
+    get values:
+      interpolation type: unstructured
   - obs space: &amsuaobsspace
       name: AMSUA-NOAA19
       obsdatain:
@@ -231,6 +217,8 @@ cost function:
         Sensor_ID: amsua_n19
         EndianType: little_endian
         CoefficientPath: /glade/work/wuyl/pandac/work/fix_input/crtm_bin/
+    get values:
+      interpolation type: unstructured
   - obs space:
       <<: *amsuaobsspace
       name: AMSUA-NOAA15
@@ -253,6 +241,8 @@ cost function:
       obs options:
         <<: *crtmopts
         Sensor_ID: amsua_n15
+    get values:
+      interpolation type: unstructured
   - obs space:
       <<: *amsuaobsspace
       name: AMSUA-NOAA18
@@ -275,6 +265,8 @@ cost function:
       obs options:
         <<: *crtmopts
         Sensor_ID: amsua_n18
+    get values:
+      interpolation type: unstructured
   - obs space:
       <<: *amsuaobsspace
       name: AMSUA-METOPA
@@ -297,6 +289,8 @@ cost function:
       obs options:
         <<: *crtmopts
         Sensor_ID: amsua_metop-a
+    get values:
+      interpolation type: unstructured
 #  - obs space:
 #        <<: *amsuaobsspace
 #        name: AMSUA-METOPB
@@ -320,6 +314,8 @@ cost function:
 #      obs options:
 #          <<: *crtmopts
 #          Sensor_ID: amsua_metop-b
+#    get values:
+#      interpolation type: unstructured
   - obs space:
       <<: *amsuaobsspace
       name: AMSUA-AQUA
@@ -342,6 +338,8 @@ cost function:
       obs options:
         <<: *crtmopts
         Sensor_ID: amsua_aqua
+    get values:
+      interpolation type: unstructured
 output:
   filename: "./analysis.$Y-$M-$D_$h.$m.$s.nc"
 variational:
@@ -349,7 +347,9 @@ variational:
     algorithm: DRIPCG
   iterations:
   - geometry:
-      gridfname: "./restart.2018-04-15_00.00.00.nc"
+      nml_file: "./namelist.atmosphere"
+      streams_file: "./streams.atmosphere"
+      deallocate non-da fields: true 
     ninner: '60'
     gradient norm reduction: 1e-10
     test: 'on'

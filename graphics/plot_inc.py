@@ -6,11 +6,12 @@ import matplotlib
 matplotlib.use('pdf')
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import datetime as dt 
 from datetime import *
 import ast
+import var_utils as vu
 
 #This script is for plotting MPAS background, analysis, increment, MPAS background and analysis compare to GFS analysis  
 #python plot_inc.py $DATE method      variable   level_interval   USE_GFSANA   $GFSANA_DIR
@@ -28,7 +29,7 @@ test/
 '''
 
 DATE = str(sys.argv[1])
-DA_METHOD1 = str(sys.argv[2])
+DA_METHOD = str(sys.argv[2])
 VAR_NAME = str(sys.argv[3])
 INTERVAL = str(sys.argv[4])
 
@@ -44,7 +45,7 @@ def readdata():
      bakfile = '../restart.'+datefile+'.nc'
      baknc = Dataset(bakfile, "r")
 
-     anafile = '../mpas.'+DA_METHOD1+'.'+datefile+'.nc'
+     anafile = '../mpas.'+DA_METHOD+'.'+datefile+'.nc'
      ananc = Dataset(anafile, "r")
 
      #use gfsana
@@ -55,19 +56,27 @@ def readdata():
      lats = np.array( baknc.variables['latCell'][:] ) * 180.0 / np.pi
      lons = np.array( baknc.variables['lonCell'][:] ) * 180.0 / np.pi
      xtime = np.array( baknc.variables['xtime'][:] )
-     nVertL = baknc.dimensions['nVertLevels']
+     nVertLSize = baknc.dimensions['nVertLevels'].size
+     if ( VAR_NAME == "surface_pressure" ): nVertLSize=1
 
-     for lvl in range(0,nVertL.size,int(INTERVAL)):
+     for lvl in range(0,nVertLSize,int(INTERVAL)):
          print('lvl=',lvl)
-         bakmpas = np.array( baknc.variables[VAR_NAME][0,:,lvl] )
-         anampas = np.array( ananc.variables[VAR_NAME][0,:,lvl] )
+         if ( VAR_NAME != "surface_pressure"):
+             bakmpas = np.array( baknc.variables[VAR_NAME][0,:,lvl] )
+             anampas = np.array( ananc.variables[VAR_NAME][0,:,lvl] )
+         else:
+             bakmpas = np.array( baknc.variables[VAR_NAME][0,:] )
+             anampas = np.array( ananc.variables[VAR_NAME][0,:] )
          ambmpas = anampas - bakmpas
          plot(lats,lons,anampas,DATE,lvl+1,'MPASANA')
          plot(lats,lons,bakmpas,DATE,lvl+1,'MPASBAK')
          plot(lats,lons,ambmpas,DATE,lvl+1,'MPASAMB')
 
          if (USE_GFSANA):
-             gfs     = np.array( gfsnc.variables[VAR_NAME][0,:,lvl] )
+             if ( VAR_NAME != "surface_pressure"):
+                 gfs     = np.array( gfsnc.variables[VAR_NAME][0,:,lvl] )
+             else:
+                 gfs     = np.array( gfsnc.variables[VAR_NAME][0,:] )
              anamgfs = anampas - gfs
              bakmgfs = bakmpas - gfs
 
@@ -77,24 +86,18 @@ def readdata():
 
 def plot(lats,lons,data,yyyymmddhh,lvl,source):
     fig,ax=plt.subplots(figsize=(8,8))
-    map=Basemap(projection='cyl',llcrnrlat=-90,urcrnrlat=90,llcrnrlon=-180,urcrnrlon=180,resolution='c')
-    map.drawcoastlines()
-    map.drawcountries()
-    map.drawparallels(np.arange(-90,90,30),labels=[1,1,0,1])
-    map.drawmeridians(np.arange(-180,180,60),labels=[1,1,0,1])
 
-    plt.title( source+'  '+VAR_NAME+', lvl=' + str(lvl)+",  "+yyyymmddhh)
-    #cont=plt.tricontourf(lons,lats,data,30,vmin=-(max(abs(data))),vmax=max(abs(data)),extend='both',cmap=cm.bwr)
-    cont=plt.tricontourf(lons,lats,data,30,cmap=cm.bwr) 
-#create axes for colorbar======================================================
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.coastlines()
+    ax.set_global()
+    ax.gridlines(draw_labels=True, xlocs=np.arange(-180,180,60),linestyle='--')
+
+    cont=plt.tricontourf(lons, lats, data, 60,
+             transform=ccrs.PlateCarree())
+    plt.title( source+'  '+VAR_NAME+ ' (' +vu.varDictModel[VAR_NAME][0]+'), lev=' + str(lvl)+",  "+yyyymmddhh)
     divider = make_axes_locatable(ax)
-    cax = divider.append_axes("bottom",
-        size="3%", #width of the colorbar
-        pad=0.3)   #space between colorbar and graph
-    plt.colorbar(cont,cax=cax,ax=ax,orientation='horizontal')
-    cax.xaxis.set_ticks_position('bottom')  #set the orientation of the ticks of the colorbar
-
-#save figures 
+    cax = divider.append_axes("bottom",size="5%", pad=0.2,axes_class=plt.Axes)
+    plt.colorbar(cont,cax=cax,orientation='horizontal') #,cax=cax,ax=ax,orientation='horizontal')
     plt.savefig('distr_%s_%s_%s_%s.png'%(VAR_NAME,lvl,yyyymmddhh,source),dpi=200,bbox_inches='tight')
     plt.close()
 

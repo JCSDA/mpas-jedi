@@ -1016,13 +1016,14 @@ end function getSolveDimSizes
 
 !***********************************************************************
 !
-!  function getSolveDimSizes
+!  function getVertLevels
 !
 !> \brief   Returns the number of vertical levels for a pool field member
 !
 !> \details
 !    In some cases, the pool containing the field will not contain any
-!    dimensions.  Then the optional dimPool argument can be used.
+!    dimensions.  Then the optional dimPool argument should be used.
+!    See var_nlevels for an example.
 !
 !-----------------------------------------------------------------------
 

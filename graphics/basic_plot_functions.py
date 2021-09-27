@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from copy import deepcopy
+import cartopy.crs as ccrs
 import datetime as dt
 import logging
 from pandas.plotting import register_matplotlib_converters
@@ -11,8 +13,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 from matplotlib.colors import BoundaryNorm
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
-from mpl_toolkits.basemap import Basemap
+import matplotlib.ticker as mticker
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import plot_utils as pu
@@ -108,58 +109,14 @@ def plotDistri(lats,lons,values, \
             minLat = val['minLat']
             maxLat = val['maxLat']
 
-    parallels=np.arange(-90,90,30)      #lat
-
     if cLon is not None:
-        fig,ax=plt.subplots(figsize=(5,5))
-        m=Basemap(projection='nsper',     #map projection
-            lon_0 = cLon,
-            lat_0 = 0.0,
-            resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
-        #set the lat lon grid and the ticks of x y axies ==============================
-        m.drawparallels(parallels, linewidth=0.2, dashes=[1,3])
-        meridians=np.arange(-180,180,30)    #lon
-        m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3])
+        fig = plt.figure(figsize=(5,5))
+        ax = fig.add_subplot(projection=ccrs.Orthographic(cLon))
     else:
-        fig,ax=plt.subplots(figsize=(8,8))
-        m=Basemap(projection='cyl',     #map projection
-            llcrnrlon=minLon, llcrnrlat=minLat, #the lat lon of leftlower corner
-            urcrnrlon=maxLon, urcrnrlat=maxLat, #the lat lon of rightupper corner
-            resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
-        #set the lat lon grid and the ticks of x y axies ==============================
-        m.drawparallels(parallels, linewidth=0.2, dashes=[1,3],
-            labels=[True,True,True,True])   #Turn the ticks on or off
-        meridians=np.arange(-180,180,60)    #lon
-        m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3],
-            labels=[True,True,True,True])
+        fig = plt.figure(figsize=(8,8))
+        ax = fig.add_subplot(projection=ccrs.PlateCarree())
 
-    m.drawcoastlines(linewidth=0.2,zorder=10)  #draw coastline
-#   m.drawmapboundary(fill_color='lightblue') #the whole map is filled with the specified color
-#   m.fillcontinents(color='wheat',lake_color='lightblue') #the continents are filled
-
-
-#set title  ===================================================================
-    if nstation == 0:
-        plt.text(0.5, 1.25, '%s   %s %s nlocs:%s' \
-            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),    \
-            horizontalalignment='center', \
-            fontsize=12, transform = ax.transAxes)
-    else:
-        if ObsType[:6] == 'gnssro':
-            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nprofile:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
-                fontsize=12, transform = ax.transAxes)
-        elif ObsType == 'aircraft':
-            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nflight:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
-                fontsize=12, transform = ax.transAxes)
-        else:
-            plt.text(0.5, 1.25, '%s   %s %s nlocs:%s nstation:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
-                fontsize=12, transform = ax.transAxes)
+    ax.set_global()
 
 #draw points onto map =========================================================
     if color == "BT":
@@ -191,32 +148,54 @@ def plotDistri(lats,lons,values, \
         valuesPlot = values[finite]
         lonSort = np.argsort(lonsPlot)
 
-        sc = m.pcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
-                      cmap = cm, vmin = dmin, vmax = dmax,
-                      latlon = True, tri = True)
+        p = plt.pcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
+                       transform = ccrs.PlateCarree(),
+                       cmap = cm, vmin = dmin, vmax = dmax,
+                       latlon = True, tri = True)
 
     else:
-        sc = m.scatter(lons[finite], lats[finite], c=values[finite],
-                       latlon = True,
-                       s = dotsize, cmap = cm, vmin = dmin, vmax = dmax,
-                       marker = '.', linewidth = 0,
-                       zorder=11) #10 ; zorder determines the order of the layer. If not set,
-                                      #the point on continent will be blocked
+        p=ax.scatter(lons[finite], lats[finite], c=values[finite],
+                     transform = ccrs.PlateCarree(),
+                     cmap= cm, s = dotsize)
+        ax.gridlines(draw_labels=True, xlocs=np.arange(-180,180,60),linestyle='--')
 
-#create axes for colorbar======================================================
+    ax.coastlines()
+
     divider = make_axes_locatable(ax)
-    cax = divider.append_axes("top",
-        size="3%", #width of the colorbar
-        pad=0.3)   #space between colorbar and graph
-    plt.colorbar(sc,cax=cax,ax=ax,orientation='horizontal')
-    cax.xaxis.set_ticks_position('top')  #set the orientation of the ticks of the colorbar
+    cax = divider.append_axes("bottom",size="5%", pad=0.3,axes_class=plt.Axes)
+
+    #fig.add_axes(cax)
+    plt.colorbar(p,cax=cax,orientation='horizontal') #,cax=cax,ax=ax,orientation='horizontal')
+
+#set title  ===================================================================
+    if nstation == 0 or ObsType == 'satwind':
+        plt.text(0.5, 1.15, '%s   %s %s nlocs:%s' \
+            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),    \
+            horizontalalignment='center', \
+            fontsize=12, transform = ax.transAxes)
+    else:
+        if ObsType[:6] == 'gnssro':
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nprofile:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
+        elif ObsType == 'aircraft':
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nflight:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
+        else:
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nstation:%s' \
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
+                horizontalalignment='center', \
+                fontsize=12, transform = ax.transAxes)
 
     plt.savefig('distri_%s_%s_%s.png'%(VarName,out_name,levbin),dpi=200,bbox_inches='tight')
     plt.close()
 
 
 def scatterMapFields(
-  lons, lats, fields,
+  lonVals, latVals, fields,
   filename,
   minLon = -180., maxLon = 180.,
   minLat = -90., maxLat = 90.,
@@ -231,99 +210,97 @@ def scatterMapFields(
   logVLim = 1.e-12,
   ):
 
-  # set up projection
-  if cLon is not None:
-    fig,ax=plt.subplots(figsize=(5,5))
-    if projection == 'default':
-      proj = 'nsper'
-    else:
-      proj = projection
-    m=Basemap(projection=proj,
-              lon_0 = cLon,
-              lat_0 = 0.0,
-              resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
-    #set the lat lon grid and the ticks of x y axies ==============================
-    parallels=np.arange(-90, 90, 30)
-    m.drawparallels(parallels, linewidth=0.2, dashes=[1,3], zorder = 3)
-    meridians=np.arange(-180, 180, 30)
-    m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3], zorder = 3)
+  # setup map
+  cLons = np.asarray([])
+  lonVals_180 = {}
+
+  for name in lonVals.keys():
+    cLon = None
+
+    # 0 < longitude <= 360
+    lonVals_360 = deepcopy(lonVals[name])
+    while np.max(lonVals_360) >= 360.0:
+        lonVals_360[lonVals_360 >= 360.0] -= 360.0
+    while np.min(lonVals_360) < 0.0:
+        lonVals_360[lonVals_360 < 0.0] += 360.0
+
+    # -180 < longitude <= 180
+    lonVals_180[name] = deepcopy(lonVals_360)
+    lonVals_180[name][lonVals_180[name] > 180.0] -= 360.0
+
+    for lon in [lonVals_360, lonVals_180[name]]:
+      if np.max(lon) - np.min(lon) <= 180.0:
+        cLon = 0.5*(np.max(lon) + np.min(lon))
+
+    cLons = np.append(cLons, cLon)
+
+  anycLonNone = np.any([c is None for c in cLons])
+
+  if anycLonNone:
+    # plot entire Earth
+    fig = plt.figure(figsize=(5,5))
+    ax = fig.add_subplot(projection=ccrs.Mollweide(0.0))
+
   else:
-    fig,ax=plt.subplots(figsize=(8,8))
-    if projection == 'default':
-      proj = 'cyl'
-    else:
-      proj = projection
-    m=Basemap(projection=proj,
-              llcrnrlon=minLon, llcrnrlat=minLat, #the lat lon of leftlower corner
-              urcrnrlon=maxLon, urcrnrlat=maxLat, #the lat lon of rightupper corner
-              resolution='l') #c: crude; l:low; i:intermediate, h:high, f:full; sometimes can only >=h
-    #set the lat lon grid and the ticks of x y axies ==============================
-    parallels = np.arange(minLat, maxLat, (maxLat - minLat) / 6.)
-    m.drawparallels(parallels, linewidth=0.2, dashes=[1,3],
-                    labels=[True,True,True,True], zorder = 3)
-    meridians = np.arange(minLon, maxLon, (maxLon - minLon) / 6.)
-    m.drawmeridians(meridians, linewidth=0.2, dashes=[1,3],
-                    labels=[True,True,True,True], zorder = 3)
-
-  m.drawcoastlines(linewidth=0.2, zorder=2)  #draw coastline
-
-    # title
-#    plt.text(0.5, 1.25, '%s   %s %s nlocs:%s' \
-#             %(ObsType,VarName,var_unit,len(values)),    \
-#             horizontalalignment='center', \
-#             fontsize=12, transform = ax.transAxes)
+    # plot single projected side of Earth
+    cLon = cLons[0]
+    if cLon > 180.0: cLon-=360.0
+    fig = plt.figure(figsize=(5,5))
+    ax = fig.add_subplot(projection=ccrs.Orthographic(cLon))
 
   assert (cbarType is None or cbarType in ['Log', 'SymLog']), \
     'scatterMapFields: invalid cbarType: '+cbarType
 
   for name, field in fields.items():
-    finite = np.isfinite(field)
+    f = c=c.get(name, field)
+    finite = np.isfinite(f)
+    lons = lonVals_180[name][finite]
+    lats = latVals[name][finite]
+    f = f[finite]
+
+    ## transform to pcolormesh and cartopy conventions
+    # longitude monotonically increasing
+    lonSort = np.argsort(lons)
+    lons = lons[lonSort]
+    lats = lats[lonSort]
+    f = f[lonSort]
+
     if dmin is None:
-       vmin = field[finite].min()
+       vmin = f.min()
     else:
        vmin = dmin
     if dmax is None:
-       vmax = field[finite].max()
+       vmax = f.max()
     else:
        vmax = dmax
 
     if cbarType is None:
-      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field[finite]),
-                     latlon = True,
-                     s = sizes.get(name, 1),
-                     cmap = cmap, vmin = vmin, vmax = vmax,
-                     marker = markers.get(name, '.'), linewidth = 0,
-                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
-                                    #the point on continent will be blocked
+      norm = None
     elif cbarType == 'Log':
       if vmin <= logVLim: vmin = logVLim
-      field_ = field[finite]
-      field_[field_ < vmin] = vmin
-      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field_),
-                     latlon = True,
-                     s = sizes.get(name, 1),
-                     cmap = cmap,
-                     marker = markers.get(name, '.'), linewidth = 0,
-                     norm=colors.LogNorm(vmin=vmin, vmax=vmax),
-                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
-                                    #the point on continent will be blocked
+      f[f < vmin] = vmin
+      norm=colors.LogNorm(vmin=vmin, vmax=vmax)
     elif cbarType == 'SymLog':
-      sc = m.scatter(lons[name][finite], lats[name][finite], c=c.get(name, field[finite]),
-                     latlon = True,
-                     s = sizes.get(name, 1),
-                     cmap = cmap,
-                     marker = markers.get(name, '.'), linewidth = 0,
-                     norm=colors.SymLogNorm(vmin=vmin, vmax=vmax,
-                                            linthresh=1.e-4*vmax, linscale=1.0, base=10),
-                     zorder=1) #10 ; zorder determines the order of the layer. If not set,
-                                    #the point on continent will be blocked
+      norm=colors.SymLogNorm(vmin=vmin, vmax=vmax,
+                             linthresh=1.e-4*vmax, linscale=1.0, base=10)
+
+    sc = ax.scatter(lons, lats, c=f,
+                   s = sizes.get(name, 1),
+                   cmap = cmap,
+                   norm = norm,
+                   marker = markers.get(name, '.'), linewidth = 0,
+                   transform=ccrs.PlateCarree(),
+    )
+
+  # show full projection extent
+  ax.set_global()
+
+  # add coastlines
+  ax.coastlines()
 
   divider = make_axes_locatable(ax)
-  cax = divider.append_axes("top",
-    size="3%", #width of the colorbar
-    pad=0.3)   #space between colorbar and graph
-  plt.colorbar(sc, cax=cax, ax=ax, orientation='horizontal')
-  cax.xaxis.set_ticks_position('top')  #set the orientation of the ticks of the colorbar
+  cax = divider.append_axes("bottom",size="5%", pad=0.3,axes_class=plt.Axes)
+  cb = plt.colorbar(sc, cax=cax, orientation='horizontal')
 
   plt.savefig(filename, dpi=200, bbox_inches='tight')
   plt.close()
@@ -1119,7 +1096,7 @@ def plotTimeSeries2D(fig, \
     if logscale:
         norm = lognorm
     else:
-        levels = MaxNLocator(nbins=nlevs).tick_values(mindval,maxdval)
+        levels = mticker.MaxNLocator(nbins=nlevs).tick_values(mindval,maxdval)
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
     xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
     cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm=norm)
