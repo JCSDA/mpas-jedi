@@ -23,7 +23,7 @@ int main(int argc,  char ** argv) {
   saber::instantiateCovarFactory<mpas::MPASTraits>();
   saber::instantiateLocalizationFactory<mpas::MPASTraits>();
   saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
-  ufo::instantiateObsFilterFactory<ufo::ObsTraits>();
+  ufo::instantiateObsFilterFactory();
   oops::EnsembleApplication< oops::Variational
     <mpas::MPASTraits, ufo::ObsTraits> > eda;
   return run.execute(eda);

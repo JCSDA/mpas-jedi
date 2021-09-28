@@ -224,8 +224,8 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
   ! Pointer to geometry component of field object
   self%geom => geom
 
-  If (f_conf%has("analytic_init")) Then
-     call f_conf%get_or_die("analytic_init",str)
+  If (f_conf%has("analytic init.method")) Then
+     call f_conf%get_or_die("analytic init.method",str)
      IC = str
   Else
      ! This default value is for backward compatibility

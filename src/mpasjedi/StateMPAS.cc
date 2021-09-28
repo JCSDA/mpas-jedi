@@ -46,7 +46,7 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
 
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
 
-  if (config.has("analytic_init")) {
+  if (config.has("analytic init")) {
     mpas_state_analytic_init_f90(keyState_, resol.toFortran(), config, time_);
   } else {
     mpas_state_read_file_f90(keyState_, config, time_);

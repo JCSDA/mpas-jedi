@@ -14,7 +14,8 @@ state test:
   date: *date
   norm file: '19735.265702001503'
   state generate:
-    analytic_init: dcmip-test-4-0
+    analytic init:
+      method: dcmip-test-4-0
     state variables:
     - temperature
     - spechum

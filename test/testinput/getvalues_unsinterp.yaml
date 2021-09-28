@@ -1,6 +1,7 @@
 getvalues test:
   state generate:
-    analytic_init: dcmip-test-4-0
+    analytic init:
+      method: dcmip-test-4-0
     state variables:
     - temperature
     - spechum
