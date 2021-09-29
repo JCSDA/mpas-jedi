@@ -71,6 +71,7 @@ list( APPEND mpas_testinput
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
   testinput/3dvar_bumpcov.yaml
+  testinput/3dvar_bumpcov_ropp.yaml
   testinput/3dvar_bumpcov_rttovcpp.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
@@ -96,6 +97,7 @@ list( APPEND mpas_testinput
   testinput/geometry.yaml
   testinput/hofx.yaml
   testinput/hofx3d.yaml
+  testinput/hofx3d_ropp.yaml
   testinput/hofx3d_rttovcpp.yaml
   testinput/increment.yaml
   testinput/linvarcha.yaml
@@ -124,6 +126,7 @@ list( APPEND mpas_testoutput
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
   testoutput/3dvar_bumpcov.ref
+  testoutput/3dvar_bumpcov_ropp.ref
   testoutput/3dvar_bumpcov_rttovcpp.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
@@ -140,6 +143,7 @@ list( APPEND mpas_testoutput
   testoutput/gen_ens_pert_B.ref
   testoutput/hofx.ref
   testoutput/hofx3d.ref
+  testoutput/hofx3d_ropp.ref
   testoutput/hofx3d_rttovcpp.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
@@ -711,6 +715,13 @@ add_mpasjedi_application_test(
     APPLICATION hofx3d
     ${RECALIBRATE})
 
+if( ${ropp-ufo_FOUND} )
+    add_mpasjedi_application_test(
+        NAME hofx3d_ropp
+        APPLICATION hofx3d
+        ${RECALIBRATE})
+endif( ${ropp-ufo_FOUND} )
+
 if( ${rttov_FOUND} )
     add_mpasjedi_application_test(
         NAME hofx3d_rttovcpp
@@ -784,6 +795,14 @@ add_mpasjedi_application_test(
     APPLICATION variational
     DEPENDS parameters_bumpcov
     ${RECALIBRATE})
+
+if( ${ropp-ufo_FOUND} )
+    add_mpasjedi_application_test(
+        NAME 3dvar_bumpcov_ropp
+        APPLICATION variational
+        DEPENDS parameters_bumpcov
+        ${RECALIBRATE})
+endif( ${ropp-ufo_FOUND} )
 
 if( ${rttov_FOUND} )
     add_mpasjedi_application_test(

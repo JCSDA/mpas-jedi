@@ -10,6 +10,10 @@ if(@rttov_FOUND@ AND NOT rttov_FOUND)
     find_dependency(rttov REQUIRED)
 endif()
 
+if(@ropp_FOUND@ AND NOT ropp-ufo_FOUND)
+    find_dependency(ropp-ufo REQUIRED)
+endif()
+
 if(NOT (MPI_CXX_FOUND AND MPI_FORTRAN_FOUND))
     find_dependency( MPI REQUIRED COMPONENTS CXX Fortran )
 endif()

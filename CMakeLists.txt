@@ -37,6 +37,7 @@ else()
 endif()
 
 find_package( rttov 12.1.0 QUIET )
+find_package( ropp-ufo QUIET )
 find_package( oops 1.0.0 REQUIRED )
 find_package( saber 1.0.0 REQUIRED )
 find_package( ioda 1.0.0 REQUIRED )

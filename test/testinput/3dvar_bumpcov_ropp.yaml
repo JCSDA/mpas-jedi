@@ -1,9 +1,9 @@
 test:
-  float relative tolerance: 0.002
+  float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/3dvar_bumpcov_rttovcpp.ref
-  log output filename: testoutput/3dvar_bumpcov_rttovcpp.run
-  test output filename: testoutput/3dvar_bumpcov_rttovcpp.run.ref
+  reference filename: testoutput/3dvar_bumpcov_ropp.ref
+  log output filename: testoutput/3dvar_bumpcov_ropp.run
+  test output filename: testoutput/3dvar_bumpcov_ropp.run.ref
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -20,7 +20,7 @@ cost function:
   background:
     state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
                       theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
-                      snowh, vegfra, t2m, q2, u10, v10, lai, smois, tslb, pressure_p]
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &adate '2018-04-15T00:00:00Z'
   background error:
@@ -54,7 +54,7 @@ cost function:
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3dvar_bumpcov_sondes.nc4
+        obsfile: Data/os/obsout_3dvar_bumpcov_ropp_sondes.nc4
       simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
     obs operator:
       name: VertInterp
@@ -71,7 +71,7 @@ cost function:
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3dvar_bumpcov_gnssroref.nc4
+        obsfile: Data/os/obsout_3dvar_bumpcov_ropp_gnssroref.nc4
       simulated variables: [refractivity]
     obs operator:
       name: GnssroRef
@@ -103,11 +103,46 @@ cost function:
       apply at iterations: 0,1
       errmodel: NBAM
   - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        obsfile: Data/os/obsout_3dvar_bumpcov_ropp_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: altitude@MetaData
+        minvalue: 0
+        maxvalue: 50000
+      - variable:
+          name: earth_radius_of_curvature@MetaData
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: geoid_height_above_reference_ellipsoid@MetaData
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 3
+    - filter: ROobserror
+      apply at iterations: 0,1
+      variable: bending_angle
+      errmodel: ECMWF
+  - obs space:
       name: SfcPCorrected
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3dvar_bumpcov_sfc.nc4
+        obsfile: Data/os/obsout_3dvar_bumpcov_ropp_sfc.nc4
       simulated variables: [surface_pressure]
     obs operator:
       name: SfcPCorrected
@@ -133,25 +168,31 @@ cost function:
   # + 7 temporarily corrupted for large JEDI-GSI file (JJG, 27 MAR 2019)
   # + 8 is noisy/degraded on n19
   - obs space:
-      name: AMSUA-NOAA19
+      name: AMSUA-NOAA19--nohydro
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
       obsdataout:
-        obsfile: Data/os/obsout_3dvar_bumpcov_amsua_n19-rttovcpp.nc4
+        obsfile: Data/os/obsout_3dvar_amsua_bumpcov_ropp_amsua_n19--nohydro.nc4
       simulated variables: [brightness_temperature]
-      channels: 6-7
+      channels: 4-7,9-14
     obs error:
       covariance model: diagonal
-#    obs filters:
-#    - filter: Background Check
-#      apply at iterations: 0,1
-#      threshold: 1
+    obs filters:
+    - filter: Background Check
+      apply at iterations: 0,1
+      threshold: 10
     obs operator:
-      name: RTTOVCPP
-      CoefPath: Data/
-      SensorID: noaa_19_amsua
+      name: CRTM
+      Absorbers: [H2O,O3]
+      SurfaceWindGeoVars: uv
+      linear obs operator:
+        Absorbers: [H2O]
+      obs options:
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/UFOCoeff/
 output:
-  filename: "Data/states/mpas.3dvar_bumpcov_rttovcpp.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3dvar_bumpcov_ropp.$Y-$M-$D_$h.$m.$s.nc"
 variational:
   minimizer:
     algorithm: DRIPCG
