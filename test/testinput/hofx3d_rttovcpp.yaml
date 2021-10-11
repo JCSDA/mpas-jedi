@@ -28,5 +28,3 @@ observations:
     name: RTTOVCPP
     CoefPath: Data/
     SensorID: noaa_19_amsua
-prints:
-  frequency: PT3H

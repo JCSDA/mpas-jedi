@@ -27,5 +27,3 @@ observations:
     name: GnssroBndROPP1D
     obs options:
       use_compress: 0
-prints:
-  frequency: PT3H

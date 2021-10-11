@@ -156,5 +156,3 @@ observations:
   obs operator:
     name: SfcPCorrected
     da_psfc_scheme: UKMO   # or WRFDA
-prints:
-  frequency: PT3H
