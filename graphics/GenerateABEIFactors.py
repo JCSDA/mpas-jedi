@@ -114,7 +114,7 @@ class GenerateABEIFactors:
     return ['ABEILambda']
 
   @staticmethod
-  def getDBVars(obsVars, binMethods, diagnosticConfigs):
+  def getDBVars(obsVars, binMethods, diagnosticConfigs, fileFormat):
     dbVars = []
     for varName in obsVars:
         for diagName, diagnosticConfig in diagnosticConfigs.items():
@@ -132,8 +132,9 @@ class GenerateABEIFactors:
                     varName, diagnosticConfig['outerIter']):
                     dbVars.append(grpVar)
 
-    dbVars.append(vu.latMeta)
-    dbVars.append(vu.lonMeta)
+    # manually add latitude and longitude to dbVars
+    for var in [vu.latMeta, vu.lonMeta]:
+      dbVars.append(vu.base2dbVar(var, var, fileFormat))
 
     return dbVars
 
@@ -155,13 +156,14 @@ class GenerateABEIFactors:
     ObsSpaceGrp   = ObsSpaceInfo['DiagSpaceGrp']
 
     obsVars = self.getObsVars(db, osKey)
+    fileFormat = db.fileFormat(osKey, obsFKey)
 
     ########################################################
     ## Construct dictionary of binMethods for this ObsSpace
     ########################################################
 
     binVarConfigs = self.getBinVarConfigs()
-    binMethods = self.getBinMethods(binVarConfigs, ObsSpaceName, db.fileFormat(osKey, obsFKey))
+    binMethods = self.getBinMethods(binVarConfigs, ObsSpaceName, fileFormat)
 
     ######################################
     ## Construct diagnostic configurations
@@ -170,16 +172,13 @@ class GenerateABEIFactors:
     diagnosticConfigs = du.diagnosticConfigs(
         self.getDiagNames(), ObsSpaceName,
         includeEnsembleDiagnostics = False,
-        fileFormat = db.fileFormat(osKey, obsFKey))
-
-# TODO: change above line after bugfix/hofxDiagsCleanup is merged into develop
-#        self.getDiagNames(), ObsSpaceName, False)
+        fileFormat = fileFormat)
 
     ######################################
     ## Generate list of required variables
     ######################################
 
-    dbVars = self.getDBVars(obsVars, binMethods, diagnosticConfigs)
+    dbVars = self.getDBVars(obsVars, binMethods, diagnosticConfigs, fileFormat)
 
 
     ##################################
@@ -211,10 +210,14 @@ class GenerateABEIFactors:
       }
 
     # setup observation lat/lon
-    obsLatsDeg = dbVals[vu.latMeta]
-    obsLonsDeg = dbVals[vu.lonMeta]
+    latMeta = vu.base2dbVar(vu.latMeta, vu.latMeta, fileFormat)
+    obsLatsDeg = dbVals[latMeta]
     obsLats = np.multiply(obsLatsDeg, np.pi / 180.0)
+
+    lonMeta = vu.base2dbVar(vu.lonMeta, vu.lonMeta, fileFormat)
+    obsLonsDeg = dbVals[lonMeta]
     obsLons = np.multiply(obsLonsDeg, np.pi / 180.0)
+
     obsnLocs = len(obsLons)
 
     # setup interpolation object
