@@ -25,18 +25,23 @@ ensemble:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
+    stream name: ensemble
   - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
+    stream name: ensemble
   - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
+    stream name: ensemble
   - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
+    stream name: ensemble
   - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
+    stream name: ensemble
 covariance:
   covariance model: MPASstatic
   date: *date
@@ -65,12 +70,16 @@ output:
 - parameter: loc_coef
   filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control
 - parameter: loc_rh
   filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control
 - parameter: loc_rv
   filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control
 - parameter: hyb_coef
   filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control

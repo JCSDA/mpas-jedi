@@ -116,7 +116,6 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 
 ## reference outputs
 list( APPEND mpas_testoutput
-  extract_ref.sh
   testoutput/3denvar_bumploc_bumpinterp.ref
   testoutput/3denvar_bumploc_unsinterp.ref
   testoutput/3denvar_dual_resolution.ref
@@ -136,8 +135,6 @@ list( APPEND mpas_testoutput
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
   testoutput/eda_3dhybrid.ref
-#  testoutput/eda_3denvar.ref
-#  testoutput/eda_3dvar.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
   testoutput/gen_ens_pert_B.ref
@@ -165,8 +162,24 @@ ecbuild_add_resources(TARGET mpas_test_scripts SOURCES_PACK ${mpas_testinput})
 set( DATA_DIR_NAME Data )
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME})
 
-##MPAS Model generated namelist, streams, stream_list, and data table files exported by MPAS-Model core_atmosphere
-copy_all_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR})
+##MPAS-Data data table files exported by MPAS-Model core_atmosphere
+list( APPEND mpas_static_tables
+  CAM_ABS_DATA.DBL
+  CAM_AEROPT_DATA.DBL
+  COMPATIBILITY
+  GENPARM.TBL
+  LANDUSE.TBL
+  OZONE_DAT.TBL
+  OZONE_LAT.TBL
+  OZONE_PLEV.TBL
+  RRTMG_LW_DATA
+  RRTMG_LW_DATA.DBL
+  RRTMG_SW_DATA
+  RRTMG_SW_DATA.DBL
+  SOILPARM.TBL
+  VEGPARM.TBL
+)
+link_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_static_tables})
 
 # RTTOV coefficient files
 list( APPEND rttov_test_input
@@ -395,9 +408,10 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km_2stream
 # test config files
 list( APPEND mpas_test_config_base
   geovars.yaml
-  stream_list.atmosphere.output
-  stream_list.atmosphere.surface
-  stream_list.atmosphere.diagnostics
+  stream_list.atmosphere.background
+  stream_list.atmosphere.analysis
+  stream_list.atmosphere.ensemble
+  stream_list.atmosphere.control
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
            ${CMAKE_CURRENT_BINARY_DIR}

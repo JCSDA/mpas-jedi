@@ -1,3 +1,12 @@
+member config: &memberConfig
+  date: &analysisdate '2018-04-15T00:00:00Z'
+  state variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  stream name: ensemble
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -6,18 +15,13 @@ cost function:
     nml_file: "./Data/480km/namelist.atmosphere_2018041500"
     streams_file: "./Data/480km/streams.atmosphere"
     deallocate non-da fields: true
-  analysis variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  analysis variables: *incvars
   background:
     state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
                       theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                       snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
     filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: &adate '2018-04-15T00:00:00Z'
+    date: *analysisdate
   background error:
     covariance model: hybrid
     components:
@@ -44,8 +48,8 @@ cost function:
           input:
           - parameter: stddev
             filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-            date: *adate
-            no_transf: 1
+            date: *analysisdate
+            stream name: control
       weight:
         value: 0.5
     - covariance:
@@ -60,20 +64,15 @@ cost function:
             verbosity: main
         members:
         - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-          date: *adate
-          state variables: *incvars
+          <<: *memberConfig
         - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-          date: *adate
-          state variables: *incvars
+          <<: *memberConfig
         - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-          date: *adate
-          state variables: *incvars
+          <<: *memberConfig
         - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-          date: *adate
-          state variables: *incvars
+          <<: *memberConfig
         - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-          date: *adate
-          state variables: *incvars
+          <<: *memberConfig
       weight:
         value: 0.5
   observations:
@@ -159,6 +158,7 @@ cost function:
       threshold: 10
 output:
   filename: Data/states/ensemble/mem001/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
+  stream name: background #required for use by rtpp test
 variational:
   minimizer:
     algorithm: DRIPCG

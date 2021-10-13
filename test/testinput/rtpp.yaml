@@ -8,8 +8,9 @@ geometry:
   nml_file: ./Data/480km/namelist.atmosphere_2018041500
   streams_file: ./Data/480km/streams.atmosphere
 background:
-  _: &state
+  _: &memberConfig
     date: 2018-04-15T00:00:00Z
+    stream name: background
     state variables:
     - temperature
     - spechum
@@ -57,15 +58,15 @@ background:
     - w
     - xice
   members:
-  - <<: *state
+  - <<: *memberConfig
     filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-  - <<: *state
+  - <<: *memberConfig
     filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
 analysis:
   members:
-  - <<: *state
+  - <<: *memberConfig
     filename: Data/states/ensemble/mem001/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
-  - <<: *state
+  - <<: *memberConfig
     filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
 analysis variables:
 - temperature
@@ -97,4 +98,5 @@ analysis variables:
 - xice
 output:
   filename: Data/states/ensemble/mem%{member}%/mpas.rtpp.$Y-$M-$D_$h.$m.$s.nc
+  stream name: background
 factor: 0.5

@@ -4,6 +4,21 @@ test:
   reference filename: testoutput/4denvar_ID.ref
   log output filename: testoutput/4denvar_ID.run
   test output filename: testoutput/4denvar_ID.run.ref
+member config 1: &memberConfig1
+  date: &date1 '2018-04-14T21:00:00Z'
+  state variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  stream name: ensemble
+member config 2: &memberConfig2
+  <<: *memberConfig1
+  date: &date2 '2018-04-15T00:00:00Z'
+member config 3: &memberConfig3
+  <<: *memberConfig1
+  date: &date3 '2018-04-15T03:00:00Z'
 cost function:
   cost type: 4D-Ens-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -12,12 +27,7 @@ cost function:
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041500"
     streams_file: "./Data/480km/streams.atmosphere"
-  analysis variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  analysis variables: *incvars
   background:
     states:
     - state variables: &stvars
@@ -25,13 +35,13 @@ cost function:
                        theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                        snowh, vegfra, u10, v10, lai, smois, tslb]
       filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
-      date: &date1 '2018-04-14T21:00:00Z'
+      date: *date1
     - state variables: *stvars
       filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
-      date: &date2 '2018-04-15T00:00:00Z'
+      date: *date2
     - state variables: *stvars
       filename: "./Data/480km/bg/restart.2018-04-15_03.00.00.nc"
-      date: &date3 '2018-04-15T03:00:00Z'
+      date: *date3
   background error:
     covariance model: ensemble
     localization:
@@ -39,54 +49,39 @@ cost function:
     members:
     - states:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
-        date: *date1
-        state variables: *incvars
+        <<: *memberConfig1
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *date2
-        state variables: *incvars
+        <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_03.00.00.nc
-        date: *date3
-        state variables: *incvars
+        <<: *memberConfig3
     - states:
       - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
-        date: *date1
-        state variables: *incvars
+        <<: *memberConfig1
       - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *date2
-        state variables: *incvars
+        <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_03.00.00.nc
-        date: *date3
-        state variables: *incvars
+        <<: *memberConfig3
     - states:
       - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
-        date: *date1
-        state variables: *incvars
+        <<: *memberConfig1
       - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *date2
-        state variables: *incvars
+        <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_03.00.00.nc
-        date: *date3
-        state variables: *incvars
+        <<: *memberConfig3
     - states:
       - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
-        date: *date1
-        state variables: *incvars
+        <<: *memberConfig1
       - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *date2
-        state variables: *incvars
+        <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_03.00.00.nc
-        date: *date3
-        state variables: *incvars
+        <<: *memberConfig3
     - states:
       - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
-        date: *date1
-        state variables: *incvars
+        <<: *memberConfig1
       - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-        date: *date2
-        state variables: *incvars
+        <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
-        date: *date3
-        state variables: *incvars
+        <<: *memberConfig3
     variables: *incvars
   observations:
   - obs space:
@@ -185,6 +180,7 @@ cost function:
       threshold: 10
 output:
   filename: "Data/states/mpas.4denvar_ID.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
 variational:
   minimizer:
     algorithm: DRIPCG

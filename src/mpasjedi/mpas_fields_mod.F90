@@ -374,6 +374,7 @@ subroutine read_fields(self, f_conf, vdate)
    type (MPAS_Time_type)   :: local_time
    character (len=StrKIND) :: dateTimeString, streamID, time_string, filename, temp_filename
    integer                 :: ierr = 0, ngrid
+   logical :: Model2AnalysisVariableChange
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
 
@@ -387,15 +388,22 @@ subroutine read_fields(self, f_conf, vdate)
    temp_filename = str
    write(message,*) '--> read_fields: Reading ',trim(temp_filename)
    call fckit_log%debug(message)
-   !temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
+
+   ! streamID (default: background)
+   ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
+   ! associated with this state.  Can be any string as long as it is included within the
+   ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
+   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
+   ! unique properties, including the MPAS fields that are read/written.
+   streamID = 'background'
+   if (f_conf%get("stream name", str)) then
+     streamID = str
+   end if
+
+   ! temp_filename = 'restart.$Y-$M-$D_$h.$m.$s.nc'
    ! GD look at oops/src/util/datetime_mod.F90
    ! we probably need to extract from vdate a string to enforce the reading ..
    ! and then can be like this ....
-   ! TODO: we can get streamID from yaml
-   !streamID = 'restart'
-   !streamID = 'input'
-   streamID = 'output'
-   !streamID = 'da'
    ierr = 0
    self % manager => self % geom % domain % streamManager
    dateTimeString = '$Y-$M-$D_$h:$m:$s'
@@ -416,26 +424,32 @@ subroutine read_fields(self, f_conf, vdate)
       call abor1_ftn(message)
    end if
 
-   !==TODO: Specific part when reading parameterEst. for BUMP.
-   !      : They write/read a list of variables directly.
-   if (f_conf%has("no_transf")) then
-      call f_conf%get_or_die("no_transf",ierr)
-      if(ierr .eq. 1) then
-         call da_copy_all2sub_fields(self % geom % domain, self % subFields)
-         return
-      endif
+   ! Model2AnalysisVariableChange (default: true):
+   ! indicates whether to transform from model fields (pressure_p, pressure_base, theta, qv)
+   ! to analysis fields (temperature, specific_humidity).
+   ! When streamID=='control', the default value is changed to false.  For example, the transform
+   ! is not carried out when reading analysis fields directly (e.g., background error standard
+   ! deviation is read/written using streamID=='control').
+   Model2AnalysisVariableChange = .True.
+   if(streamID == 'control') Model2AnalysisVariableChange = .False.
+   if (f_conf%has("transform model to analysis")) then
+      call f_conf%get_or_die("transform model to analysis", Model2AnalysisVariableChange)
+   end if
+
+   if(Model2AnalysisVariableChange) then
+      !(1) diagnose pressure
+      call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)
+      call mpas_pool_get_field(diag, 'pressure_p', pressure_p)
+      call mpas_pool_get_field(diag, 'pressure_base', pressure_base)
+      call mpas_pool_get_field(diag, 'pressure', pressure)
+      ngrid = self % geom % nCellsSolve
+      pressure%array(:,1:ngrid) = pressure_base%array(:,1:ngrid) + pressure_p%array(:,1:ngrid)
+
+      !(2) copy all to subFields & diagnose temperature
+      call update_diagnostic_fields(self % geom % domain, self % subFields, self % geom % nCellsSolve)
+   else
+      call da_copy_all2sub_fields(self % geom % domain, self % subFields)
    endif
-
-   !(1) diagnose pressure
-   call mpas_pool_get_subpool(self % geom % domain % blocklist % structs, 'diag', diag)
-   call mpas_pool_get_field(diag, 'pressure_p', pressure_p)
-   call mpas_pool_get_field(diag, 'pressure_base', pressure_base)
-   call mpas_pool_get_field(diag, 'pressure', pressure)
-   ngrid = self % geom % nCellsSolve
-   pressure%array(:,1:ngrid) = pressure_base%array(:,1:ngrid) + pressure_p%array(:,1:ngrid)
-
-   !(2) copy all to subFields & diagnose temperature
-   call update_diagnostic_fields(self % geom % domain, self % subFields, self % geom % nCellsSolve)
 
 end subroutine read_fields
 
@@ -514,11 +528,18 @@ subroutine write_fields(self, f_conf, vdate)
    call mpas_expand_string(dateTimeString, -1, trim(temp_filename), filename)
 
    self % manager => self % geom % domain % streamManager
-   ! TODO: we can get streamID from yaml
-   ! TODO: should we pick different stream lists for mpas_state and mpas_increment?
-   !streamID = 'restart'
-   streamID = 'output'
-   !streamID = 'da'
+
+   ! streamID (default: da_state)
+   ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
+   ! associated with this state.  Can be any string as long as it is included within the
+   ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
+   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
+   ! unique properties, including the MPAS fields that are read/written.
+   streamID = 'da_state'
+   if (f_conf%get("stream name", str)) then
+     streamID = str
+   end if
+
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
 
    write(message,*) '--> write_fields: writing ',trim(filename)

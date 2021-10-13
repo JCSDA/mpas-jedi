@@ -27,10 +27,10 @@ cost function:
                       qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
                       ivgtyp, isltyp, snowh, vegfra, u10, v10, lai, smois, tslb]
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
-    date: &adate '2018-04-15T00:00:00Z'
+    date: &analysisdate '2018-04-15T00:00:00Z'
   background error:
     covariance model: MPASstatic
-    date: *adate
+    date: *analysisdate
   observations:
   - obs space:
       name: Radiosonde
@@ -180,6 +180,7 @@ cost function:
         <<: *crtmobsopts
 output:
   filename: "Data/states/mpas.3dvar.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
 variational:
   minimizer:
     algorithm: DRIPCG

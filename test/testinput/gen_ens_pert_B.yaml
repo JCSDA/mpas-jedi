@@ -41,7 +41,7 @@ Covariance:
     - parameter: stddev
       filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
       date: *date
-      no_transf: 1
+      stream name: control
 model:
   name: MPAS
   tstep: PT30M

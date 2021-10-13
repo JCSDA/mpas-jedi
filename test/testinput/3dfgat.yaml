@@ -113,6 +113,7 @@ cost function:
       threshold: 3
 output:
   filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
 variational:
   minimizer:
     algorithm: DRIPCG

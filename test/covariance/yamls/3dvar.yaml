@@ -342,6 +342,7 @@ cost function:
       interpolation type: unstructured
 output:
   filename: "./analysis.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
 variational:
   minimizer:
     algorithm: DRIPCG

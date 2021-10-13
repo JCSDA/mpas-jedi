@@ -41,7 +41,7 @@ background error:
     - parameter: stddev
       filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
       date: *date
-      no_transf: 1
+      stream name: control
 dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123,  35.68501691,   19.01699038,
