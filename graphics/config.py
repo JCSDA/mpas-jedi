@@ -216,6 +216,13 @@ DiagSpaceConfig = {
         'binVarConfigs': profPressBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
+    'satwindBufr': {
+        'DiagSpaceGrp': profile_s,
+        'process': True,
+        'anGrp': convGrp,
+        'binVarConfigs': profPressBinVars,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+    },
     'sfc': {
         'DiagSpaceGrp': sfc_s,
         'process': True,

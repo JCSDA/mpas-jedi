@@ -138,7 +138,7 @@ def readdata():
                     stationidnc_array=np.asarray(stationidnc)
                 stationidnc_array[np.isnan(obsnc)]= np.NaN
                 nstation = len(set(stationidnc_array)) -1 # -1: 'nan' is also included, so remove it
-                if (obstype == 'satwind'):
+                if (obstype == 'satwind' or obstype == 'satwindBufr'):
                     nstation = 0
                 if (obstype == 'gnssro' and test == 'cycling'):
                     basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nrecord,levbin)

@@ -14,11 +14,22 @@ import config as conf
 import var_utils as vu
 
 '''
-Directory Structure:
+Directory Structure for ctest:
+test/
+ ├── Data/os/
+ │        ├── obsout_3denvar_bump_sondes_0000.nc4
+ │        ├── obsout_3denvar_bump_sondes_0001.nc4
+ │        ├── ...
+ ├── graphics/
+ │   ├── plot_diag_omaomb.py
+ │   ├── basic_plot_functions.py
+ │   ├── ...
+
+Directory Structure for cycling:
 test/
  ├── Data/
- │   ├── obsout_3denvar_bump_sondes_0000.nc4
- │   ├── obsout_3denvar_bump_sondes_0001.nc4
+ │   ├── obsout_3denvar_bump_sondes_0000.h5
+ │   ├── obsout_3denvar_bump_sondes_0001.h5
  │   ├── ...
  ├── graphics/
  │   ├── plot_diag_omaomb.py
@@ -54,6 +65,7 @@ def readdata():
         'sondes',
         'aircraft',
         'satwind',
+        'satwindBufr', 
         'gnssroref',
         'gnssrobndropp1d',
     ]
