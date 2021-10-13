@@ -20,6 +20,7 @@ expDirectory = os.getenv('TOP_DIR','/glade/scratch/$user/pandac/')
 GFSANA_DIR = os.getenv('GFSANA_DIR', 'Please link GFSANA_DIR')
 expLongNames = os.getenv('expLongNames', 'please set expLongNames')
 expNames = os.getenv('expNames','please set expNames')
+ncells = os.getenv('ncells', '40962')
 #for ci:
 EXP_DIR1 = os.getenv('FCDIAG_WORK_DIR1','FC1DIAG DIR OR FC2DIAG DIR FOR CONTROL')
 EXP_DIR2 = os.getenv('FCDIAG_WORK_DIR2','FC1DIAG DIR OR FC2DIAG DIR FOR CURRENT/target exp')
@@ -146,7 +147,6 @@ templateVariables = {
 nlevelSurface = 1
 nlevels = 55
 nlevelsP1 =56
-ncells  = 40962
 
 #
 fcRange = int(fcHours)/24.
@@ -159,7 +159,7 @@ expLongNames = expLongNames.split()
 expNames = expNames.split()
 nExp  = len(expNames)
 
-def getGridFile(date = initDate, gfsAnaDir = GFSANA_DIR, nCells = 40962):
+def getGridFile(date = initDate, gfsAnaDir = GFSANA_DIR, nCells = ncells):
   date = initDate
   print(date)
   d = datetime.strptime(date,'%Y%m%d%H')

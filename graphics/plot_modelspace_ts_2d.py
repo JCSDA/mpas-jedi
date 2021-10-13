@@ -110,9 +110,10 @@ def readdata():
                       nx = mu.nExp - 1
                       ny = 1
                       nsubplots = nx * ny
+                      signDefinite = False
                       valuemin = np.amin(alldiffdata)
                       valuemax = np.amax(alldiffdata)
-                      title = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0]
+                      title = 'Diff var:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+') min=' +str(round(valuemin,3))+' max='+str(round(valuemax,3))
                       fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
                       BasicPF.plotTimeSeries2D( fig, \
@@ -121,7 +122,7 @@ def readdata():
                               sciTicks, logscale, signDefinite, \
                               indepLabel, invert_ind_axis, \
                               ny, nx, nsubplots, iplot, \
-                              dmin = dmin, dmax = dmax, \
+                              dmin = valuemin, dmax = valuemax, \
                               interiorLabels = interiorLabels )
                       iplot = iplot + 1
                       filename = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0] #''.join(varNamesListAll[i])+'_TS_2d'

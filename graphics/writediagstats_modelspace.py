@@ -21,7 +21,7 @@ def write_diag_stats():
   ap = argparse.ArgumentParser()
   ap.add_argument('date', default=os.getcwd().split('/')[-3], type=str, nargs = '?',
                     help='Valid date (%Y%m%d%H)')
-  ap.add_argument('-r', '--referenceAnalysis', default = mu.GFSANA_DIR+'/x1.40962.init', type = str,
+  ap.add_argument('-r', '--referenceAnalysis', default = mu.GFSANA_DIR+'/x1.'+mu.ncells+'.init', type = str,
                         help='Path/prefix of reference analysis state')
   ap.add_argument('-m', '--mpasState', default = '../restart', type = str,
                         help='Path/prefix of arbitrary MPAS state')

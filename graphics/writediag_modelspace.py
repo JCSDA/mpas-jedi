@@ -28,7 +28,7 @@ def write_diag_stats():
             for fcTDelta in np.arange(0, mu.fcRange+mu.interval,mu.interval):
                 fcDate = initDate + timedelta(days=fcTDelta) 
                 fileDate= fcDate.strftime("%Y-%m-%d_%H.%M.%S")
-                ncFile1 = mu.GFSANA_DIR+'/x1.40962.init.'+fileDate+'.nc'
+                ncFile1 = mu.GFSANA_DIR+'/x1.'+mu.ncells+'.init.'+fileDate+'.nc'
                 ncFile2 = '../restart.'+fileDate+'.nc'
                 tmp = mu.varDiff(varName,ncFile1,ncFile2)
 

@@ -27,7 +27,7 @@ def write_diag_stats():
                     d = datetime.strptime(fcdirs[fcdir], "%Y%m%d%H") + timedelta(days=fcTDelta)
                     fileDate= d.strftime("%Y-%m-%d_%H.%M.%S")
  
-                    ncFile1 = mu.GFSANA_DIR+'/x1.'+str(mu.ncells)+'.init.'+fileDate+'.nc'
+                    ncFile1 = mu.GFSANA_DIR+'/x1.'+mu.ncells+'.init.'+fileDate+'.nc'
                     ncFile2 = './'+fcdirs[fcdir]+'/restart.'+fileDate+'.nc'
                     tmp = mu.varDiff(varName,ncFile1,ncFile2)
 
@@ -38,11 +38,11 @@ def write_diag_stats():
                         alltmp = np.append(alltmp, tmpbin)
                         if varName in mu.varNames3d:
                             if (varName == 'w'):
-                                alltmp = alltmp.reshape(mu.ncells,mu.nlevelsP1)
+                                alltmp = alltmp.reshape(int(mu.ncells),mu.nlevelsP1)
                             else:
-                                alltmp = alltmp.reshape(mu.ncells,mu.nlevels)
+                                alltmp = alltmp.reshape(int(mu.ncells),mu.nlevels)
                         else:
-                            alltmp = alltmp.reshape(mu.ncells,mu.nlevelSurface)
+                            alltmp = alltmp.reshape(int(mu.ncells),mu.nlevelSurface)
 
                     if (fcdir != 0):
                         if varName in mu.varNames3d:
