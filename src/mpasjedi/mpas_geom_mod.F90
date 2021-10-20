@@ -73,6 +73,7 @@ type :: mpas_geom
    real(kind=kind_real), dimension(:),   allocatable :: latEdge, lonEdge
    real(kind=kind_real), dimension(:,:), allocatable :: edgeNormalVectors
    real(kind=kind_real), dimension(:,:), allocatable :: zgrid
+   real(kind=kind_real), dimension(:,:), allocatable :: scaleheight
    integer, allocatable :: nEdgesOnCell(:)
    integer, allocatable :: cellsOnCell(:,:)
    integer, allocatable :: edgesOnCell(:,:)
@@ -305,6 +306,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    allocate ( self % areaCell ( self % nCells ) )
    allocate ( self % edgeNormalVectors (3,  self % nEdges ) )
    allocate ( self % zgrid ( self % nVertLevelsP1, self % nCells ) )
+   allocate ( self % scaleheight ( self % nVertLevels, self % nCells ) )
    allocate ( self % nEdgesOnCell ( self % nCells ) )
    allocate ( self % edgesOnCell ( self % maxEdges, self % nCells ) )
    allocate ( self % cellsOnCell ( self % maxEdges, self % nCells ) )
@@ -403,6 +405,7 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
 
    integer :: i, jz
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: pressure_base(:,:)
    type(atlas_field) :: afield
 
    ! Add area
@@ -421,11 +424,11 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
       else if (trim(self % bump_vunit) .eq. 'height') then
          real_ptr_2(jz,1:self%nCellsSolve) = MPAS_JEDI_HALF_kr * &
          ( self%zgrid(jz,1:self%nCellsSolve) + self%zgrid(jz+1,1:self%nCellsSolve) )
+      else if (trim(self % bump_vunit) .eq. 'scaleheight') then
+         ! defined as a natural logarithm of pressure_base (base state pressure)
+         call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
+         real_ptr_2(jz,1:self%nCellsSolve) = log( pressure_base(jz,1:self%nCellsSolve) )
       end if
-      !--Similarly for ln of pressure_base. I don't know if we can access to "total pressure" here.
-      !real (kind=kind_real), dimension(:,:), pointer :: pressure_base
-      !call mpas_pool_get_array(self%domain%blocklist%allFields,'pressure_base', pressure_base)
-      !real_ptr_2(jz,1:self%nCellsSolve) = log( pressure_base(jz,1:self%nCellsSolve) )
    end do
    call afieldset%add(afield)
    call afield%final()
@@ -598,6 +601,7 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % areaCell)) allocate(self % areaCell(other % nCells))
    if (.not.allocated(self % edgeNormalVectors)) allocate(self % edgeNormalVectors(3, other % nEdges))
    if (.not.allocated(self % zgrid)) allocate(self % zgrid(other % nVertLevelsP1, other % nCells))
+   if (.not.allocated(self % scaleheight)) allocate(self % scaleheight(other % nVertLevels, other % nCells))
    if (.not.allocated(self % nEdgesOnCell)) allocate(self % nEdgesOnCell(other % nCells))
    if (.not.allocated(self % edgesOnCell)) allocate(self % edgesOnCell(other % maxEdges, other % nCells))
    if (.not.allocated(self % cellsOnCell)) allocate(self % cellsOnCell (other % maxEdges, other % nCells))
@@ -620,6 +624,7 @@ subroutine geo_clone(self, other)
    self % lonEdge           = other % lonEdge
    self % edgeNormalVectors = other % edgeNormalVectors
    self % zgrid             = other % zgrid
+   self % scaleheight       = other % scaleheight
    self % nEdgesOnCell      = other % nEdgesOnCell
    self % edgesOnCell       = other % edgesOnCell
    self % cellsOnCell       = other % cellsOnCell
@@ -667,6 +672,7 @@ subroutine geo_delete(self)
    if (allocated(self%areaCell)) deallocate(self%areaCell)
    if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
    if (allocated(self%zgrid)) deallocate(self%zgrid)
+   if (allocated(self%scaleheight)) deallocate(self%scaleheight)
    if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
    if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)
    if (allocated(self%cellsOnCell)) deallocate(self%cellsOnCell)
