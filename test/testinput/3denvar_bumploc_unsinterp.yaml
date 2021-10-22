@@ -4,7 +4,7 @@ test:
   reference filename: testoutput/3denvar_bumploc_unsinterp.ref
   log output filename: testoutput/3denvar_bumploc_unsinterp.run
   test output filename: testoutput/3denvar_bumploc_unsinterp.run.ref
-member config: &memberConfig
+_member config: &memberConfig
   date: &analysisdate '2018-04-15T00:00:00Z'
   state variables: &incvars
   - temperature

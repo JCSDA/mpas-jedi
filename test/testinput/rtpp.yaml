@@ -4,19 +4,15 @@ test:
   reference filename: testoutput/rtpp.ref
   log output filename: testoutput/rtpp.run
   test output filename: testoutput/rtpp.run.ref
-geometry:
-  nml_file: ./Data/480km/namelist.atmosphere_2018041500
-  streams_file: ./Data/480km/streams.atmosphere
-background:
-  _: &memberConfig
-    date: 2018-04-15T00:00:00Z
-    stream name: background
-    state variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+_member config: &memberConfig
+  date: 2018-04-15T00:00:00Z
+  stream name: background
+  state variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
 #The additional variables below vary across members, are contained
 # in State objects and are not typically among mpas-jedi state or
 # analysis variable config entries.  For RTPP, they must be specified
@@ -27,11 +23,11 @@ background:
 # += operator for adding IncrementMPAS objects.  Their correct
 # averaging in the mean state is required in order for the updated
 # analysis ensemble to be correct after adding the RTPP perturbations.
-    - qv
-    - pressure
-    - rho
-    - theta
-    - u
+  - qv
+  - pressure
+  - rho
+  - theta
+  - u
 # Additionally, although the following variables are unaffected
 # in DA applications, they must be included in both the state
 # and analysis variables in order for the updated analysis
@@ -42,21 +38,25 @@ background:
 #  => all output members equal to analysis mean
 #Note: exclude hydrometeors in ctest, because not present in 480km init file
 # MUST be included in cycling for correct member-by-member values
-#    - qc
-#    - qi
-#    - qr
-#    - qs
-#    - qg
-    - pressure_p
-    - skintemp
-    - smois
-    - snowc
-    - snowh
-    - tslb
-    - u10
-    - v10
-    - w
-    - xice
+#  - qc
+#  - qi
+#  - qr
+#  - qs
+#  - qg
+  - pressure_p
+  - skintemp
+  - smois
+  - snowc
+  - snowh
+  - tslb
+  - u10
+  - v10
+  - w
+  - xice
+geometry:
+  nml_file: ./Data/480km/namelist.atmosphere_2018041500
+  streams_file: ./Data/480km/streams.atmosphere
+background:
   members:
   - <<: *memberConfig
     filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc

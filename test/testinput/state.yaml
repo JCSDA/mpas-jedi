@@ -12,7 +12,7 @@ state test:
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &date '2018-04-15T00:00:00Z'
   date: *date
-  norm file: '19735.265702001503'
+  norm file: 19735.265702001503
   state generate:
     analytic init:
       method: dcmip-test-4-0
@@ -25,9 +25,8 @@ state test:
     date: *date
     mean: 8
     sinus: 2
-  norm generated state: '20000.378266179847'
-  tolerance:
-  - 1.0e-08
+  norm generated state: 20000.378266179847
+  tolerance: 1.0e-08
   statefileout:
     state variables:
     - temperature

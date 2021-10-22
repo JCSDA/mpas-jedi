@@ -4,7 +4,7 @@ test:
   reference filename: testoutput/4denvar_bumploc.ref
   log output filename: testoutput/4denvar_bumploc.run
   test output filename: testoutput/4denvar_bumploc.run.ref
-member config 1: &memberConfig1
+_member config 1: &memberConfig1
   date: &date1 '2018-04-14T21:00:00Z'
   state variables: &incvars
   - temperature
@@ -13,10 +13,10 @@ member config 1: &memberConfig1
   - uReconstructMeridional
   - surface_pressure
   stream name: ensemble
-member config 2: &memberConfig2
+_member config 2: &memberConfig2
   <<: *memberConfig1
   date: &date2 '2018-04-15T00:00:00Z'
-member config 3: &memberConfig3
+_member config 3: &memberConfig3
   <<: *memberConfig1
   date: &date3 '2018-04-15T03:00:00Z'
 cost function:

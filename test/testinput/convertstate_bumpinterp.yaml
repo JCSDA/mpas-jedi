@@ -12,12 +12,6 @@ output geometry:
   nml_file: "./Data/384km/namelist.atmosphere_2018041500"
   streams_file: "./Data/384km/streams.atmosphere"
   interpolation type: bump
-output variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
 states:
 - input:
     state variables:
