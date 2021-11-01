@@ -6,7 +6,7 @@ Test     : Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 
 Test     : Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.140643185e-02 : uReconstructZonal
 Test     : Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
-Test     : B * Increment: 
+Test     : Covariance(ensemble) * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
 Test     : Fld=1  Min=-1.102399720e-01, Max=1.938123501e-01, RMS=3.760132243e-03 : temperature
@@ -14,7 +14,7 @@ Test     : Fld=2  Min=-3.234089948e-05, Max=3.310316453e-05, RMS=6.230763768e-07
 Test     : Fld=3  Min=-2.159783717e-01, Max=7.174119878e-01, RMS=1.299609922e-02 : uReconstructZonal
 Test     : Fld=4  Min=-4.086845563e-01, Max=1.340857598e+00, RMS=1.630858166e-02 : uReconstructMeridional
 Test     : Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
-Test     : Localized Increment: 
+Test     : Localization(ensemble) * Increment: 
 Test     :   Valid time: 2018-04-15T00:00:00Z
 Test     :   Resolution: nCellsGlobal = 2562, nFields = 5
 Test     : Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=4.082470351e-02 : temperature
