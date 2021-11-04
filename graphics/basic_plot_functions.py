@@ -94,6 +94,11 @@ def plotDistri(lats,lons,values, \
 #    tmp = np.logical_not(lons > 0)
 #    lons[tmp] = lons[tmp] + 360
 
+#Skipping the dataset if it's empty ===========================================
+    if (np.isfinite(values).sum() == 0):
+       print("WARNING in plotDistri: empty for", ObsType, VarName, levbin, "; skipping this dataset")
+       return
+
 #set map=======================================================================
     cLon = distriZooms['default']['cLon']
     minLon = distriZooms['default']['minLon']

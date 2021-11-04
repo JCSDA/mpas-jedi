@@ -12,6 +12,7 @@ import basic_plot_functions
 import netCDF4 as nc4
 import config as conf
 import var_utils as vu
+import JediDB
 
 '''
 Directory Structure for ctest:
@@ -93,15 +94,22 @@ def readdata():
     'ahi_himawari8',
     'amsua_aqua',
     'amsua_metop-a',
+    'amsua_metop-b',
     'amsua_n15',
     'amsua_n18',
     'amsua_n19',
-    'mhs_n19',
-    'mhs_n18',
-    'mhs_metop-a',
-    'mhs_metop-b',
     'amsua_n19--hydro',
     'amsua_n19--nohydro',
+    'amsua-cld_aqua',
+    'amsua-cld_metop-a',
+    'amsua-cld_metop-b',
+    'amsua-cld_n15',
+    'amsua-cld_n18',
+    'amsua-cld_n19',
+    'mhs_metop-a',
+    'mhs_metop-b',
+    'mhs_n19',
+    'mhs_n18',
   ]
 
   analyzedObsTypeGroups = []
@@ -161,8 +169,14 @@ def readdata():
   #  contains files from all PE's
   exob_groups = [[]]
   for j, file in enumerate(obsoutfiles):
-    # exob_group_name excludes everything outside the first/final '_'
-    exob_group_name =  '_'.join(file.split("_")[1:][:-1])
+    if JediDB.IODAFileIsRanked(file):
+      # exob_group_name excludes everything outside the first/final '_'
+      exob_group_name =  '_'.join(file.split("_")[1:][:-1])
+    else:
+      # Remove suffix .nc or .h5 or .nc4
+      remove_suffix_name = '.'.join(file.split(".")[:-1])
+      # exob_group_name excludes everything outside the first '_'
+      exob_group_name = '_'.join(remove_suffix_name.split("_")[1:])
     for i, exob_group in enumerate(exob_groups):
       if exob_group_name in exob_group:
         # If exob_group with exob_group_name exists, add new file to it
@@ -199,10 +213,12 @@ def readdata():
 
     # Sort files based on PE
     obsFiles = np.array(deepcopy(exob_group[1:]))
-    PEs = []
-    for file in obsFiles:
-      PEs.append(int(file.split('_')[-1].split('.')[0]))
-    obsFiles = obsFiles[np.argsort(np.array(PEs))]
+    if JediDB.IODAFileIsRanked(obsFiles[0]):
+      PEs = []
+      for file in obsFiles:
+        print('check file=',file)
+        PEs.append(int(file.split('_')[-1].split('.')[0]))
+      obsFiles = obsFiles[np.argsort(np.array(PEs))]
 
     # Determine total nlocs
     nlocs = 0
