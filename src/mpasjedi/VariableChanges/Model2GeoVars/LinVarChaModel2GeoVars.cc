@@ -25,6 +25,9 @@ namespace mpas {
 static oops::LinearVariableChangeMaker
   < MPASTraits, oops::LinearVariableChange<MPASTraits, LinVarChaModel2GeoVars> >
   makerLinVarChaModel2GeoVars_("Model2GeoVars");
+static oops::LinearVariableChangeMaker
+  < MPASTraits, oops::LinearVariableChange<MPASTraits, LinVarChaModel2GeoVars> >
+  makerLinVarChaModel2GeoDef_("default");
 // -------------------------------------------------------------------------------------------------
 LinVarChaModel2GeoVars::LinVarChaModel2GeoVars(
   const StateMPAS & bg, const StateMPAS & fg, const GeometryMPAS & resol,

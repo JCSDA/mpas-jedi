@@ -11,17 +11,12 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <vector>
 
 #include "eckit/exception/Exceptions.h"
 
-#include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-#include "oops/util/Timer.h"
 
-#include "ufo/GeoVaLs.h"
 #include "ufo/Locations.h"
 
 #include "mpasjedi/getvalues/GetValues.interface.h"
@@ -34,13 +29,15 @@ namespace eckit {
 
 namespace ufo {
   class GeoVaLs;
-  class Locations;
+}
+
+namespace util {
+  class DateTime;
 }
 
 namespace mpas {
   class GeometryMPAS;
   class StateMPAS;
-  class VarChaModel2GeoVars;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -61,7 +58,6 @@ class GetValues : public util::Printable,
   F90getvalues keyGetValues_;
   ufo::Locations locs_;
   std::shared_ptr<const GeometryMPAS> geom_;
-  std::unique_ptr<VarChaModel2GeoVars> model2geovars_;
 };
 
 // -------------------------------------------------------------------------------------------------
