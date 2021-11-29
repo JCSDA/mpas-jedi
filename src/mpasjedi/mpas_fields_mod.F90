@@ -731,8 +731,6 @@ subroutine interpolate_fields(self,rhs)
   real(kind=kind_real), allocatable :: interp_in(:,:), interp_out(:,:)
   real (kind=kind_real), dimension(:), pointer :: r1d_ptr
   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr
-  integer, dimension(:), pointer :: i1d_ptr
-  integer, dimension(:,:), pointer :: i2d_ptr
   integer :: rhs_nCells, self_nCells, maxlevels, nlevels, jlev
   logical             :: use_bump_interp
   integer, allocatable :: rhsDims(:)
@@ -756,21 +754,17 @@ subroutine interpolate_fields(self,rhs)
 
   call mpas_pool_begin_iteration(rhs%subFields)
   do while ( mpas_pool_get_next_member(rhs%subFields, poolItr) )
-  if (poolItr % memberType == MPAS_POOL_FIELD) then
+  ! TODO: For now, we skip the interpolation for integer type.
+  if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL ) then
     write(message,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
     call fckit_log%debug(message)
     ! Get the rhs fields out of the rhs%subFields pool and into an array that
     ! can be passed to the interpolator apply functions.
-    ! (Four cases to cover: 1D/2D and real/integer variable.)
+    ! (Two cases to cover: 1D/2D real variables)
     if (poolItr % nDims == 1) then
       nlevels = 1
-      if (poolItr % dataType == MPAS_POOL_INTEGER) then
-        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i1d_ptr)
-        interp_in(:,1) = real( i1d_ptr(1:rhs_nCells), kind_real)
-      else if (poolItr % dataType == MPAS_POOL_REAL) then
-        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r1d_ptr)
-        interp_in(:,1) = r1d_ptr(1:rhs_nCells)
-      endif
+      call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r1d_ptr)
+      interp_in(:,1) = r1d_ptr(1:rhs_nCells)
     else if (poolItr % nDims == 2) then
       rhsDims = getSolveDimSizes(rhs%subFields, poolItr%memberName)
       nlevels = rhsDims(1)
@@ -778,13 +772,8 @@ subroutine interpolate_fields(self,rhs)
         write(message,*) '--> interpolate_fields: nlevels > maxlevels, ', nlevels, maxlevels
         call abor1_ftn(message)
       endif
-      if (poolItr % dataType == MPAS_POOL_INTEGER) then
-        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), i2d_ptr)
-        interp_in(1:rhs_nCells,1:nlevels) = real( transpose (i2d_ptr(1:nlevels,1:rhs_nCells)), kind_real )
-      else if (poolItr % dataType == MPAS_POOL_REAL) then
-        call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r2d_ptr)
-        interp_in(1:rhs_nCells,1:nlevels) = transpose(r2d_ptr(1:nlevels,1:rhs_nCells))
-      endif
+      call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r2d_ptr)
+      interp_in(1:rhs_nCells,1:nlevels) = transpose(r2d_ptr(1:nlevels,1:rhs_nCells))
     else
       write(message,*) '--> interpolate_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
       call abor1_ftn(message)
@@ -802,21 +791,11 @@ subroutine interpolate_fields(self,rhs)
 
     ! Put the interpolated results into the self%subFields pool
     if (poolItr % nDims == 1) then
-      if (poolItr % dataType == MPAS_POOL_INTEGER) then
-        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr)
-        i1d_ptr(1:self_nCells) = int (interp_out(:,1))
-      else if (poolItr % dataType == MPAS_POOL_REAL) then
-        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr)
-        r1d_ptr(1:self_nCells) = interp_out(:,1)
-      endif
+      call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr)
+      r1d_ptr(1:self_nCells) = interp_out(:,1)
     else if (poolItr % nDims == 2) then
-      if (poolItr % dataType == MPAS_POOL_INTEGER) then
-        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr)
-        i2d_ptr(1:nlevels,1:self_nCells) = transpose (int (interp_out(1:self_nCells,1:nlevels)))
-      else if (poolItr % dataType == MPAS_POOL_REAL) then
-        call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr)
-        r2d_ptr(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
-      endif
+      call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr)
+      r2d_ptr(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
     endif
   endif
   end do !- end of pool iteration
