@@ -8,13 +8,10 @@
 #include <oops/test/interface/LinearVariableChange.h>
 #include <oops/runs/Run.h>
 
-#include <saber/oops/instantiateVariableChangeFactory.h>
-
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
   test::LinearVariableChange<mpas::MPASTraits> tests;
   return run.execute(tests);
 }

@@ -32,12 +32,15 @@ cost function:
     covariance model: ensemble
     date: *analysisdate
     localization:
-      localization method: BUMP
-      localization variables: *incvars
-      bump:
-        prefix: Data/bump/mpas_parametersbump_loc
-        strategy: common
-        load_nicas_local: 1
+      localization method: SABER
+      saber block:
+        saber block name: BUMP_NICAS
+        input variables: *incvars
+        output variables: *incvars
+        bump:
+          prefix: Data/bump/mpas_parametersbump_loc
+          strategy: common
+          load_nicas_local: true
     members:
     - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
       <<: *memberConfig
@@ -58,7 +61,7 @@ cost function:
       obsdataout:
         obsfile: Data/os/obsout_3denvar_bc_amsua_n19.nc4
       simulated variables: [brightness_temperature]
-      channels: 1-15 
+      channels: 1-15
     obs error:
       covariance model: diagonal
     obs operator: &crtmobsoper

@@ -7,15 +7,15 @@
 
 #include <oops/runs/Run.h>
 
-#include <saber/oops/EstimateParams.h>
-#include <saber/oops/instantiateVariableChangeFactory.h>
+#include <saber/oops/ErrorCovarianceTraining.h>
+#include <saber/oops/instantiateCovarFactory.h>
 
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
-  saber::EstimateParams<mpas::MPASTraits> dir;
+  saber::instantiateCovarFactory<mpas::MPASTraits>();
+  saber::ErrorCovarianceTraining<mpas::MPASTraits> dir;
   return run.execute(dir);
 }
 

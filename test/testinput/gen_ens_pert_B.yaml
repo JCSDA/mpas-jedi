@@ -16,20 +16,23 @@ initial:
   date: '2018-04-15T00:00:00Z'
 members: 5
 Covariance:
-  covariance: BUMP
-#  covariance: MPASstatic
+  covariance: SABER
   date: &date '2018-04-15T00:00:00Z'
-  bump:
-    strategy: specific_univariate
-    load_nicas_local: 1
-    verbosity: main
-    grids:
-    - prefix: Data/bump/mpas_parametersbump_cov_3D
-      variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
-    - prefix: Data/bump/mpas_parametersbump_cov_2D
-      variables: [surface_pressure]
-  variable changes:
-  - variable change: StdDev
+  saber blocks:
+  - saber block name: BUMP_NICAS
+    saber central block: true
+    input variables: *vars
+    output variables: *vars
+    bump:
+      strategy: specific_univariate
+      load_nicas_local: true
+      verbosity: main
+      grids:
+      - prefix: Data/bump/mpas_parametersbump_cov_3D
+        variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
+      - prefix: Data/bump/mpas_parametersbump_cov_2D
+        variables: [surface_pressure]
+  - saber block name: StdDev
     input variables: *vars
     output variables: *vars
     bump:

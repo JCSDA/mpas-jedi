@@ -45,7 +45,11 @@ cost function:
   background error:
     covariance model: ensemble
     localization:
-      localization method: ID
+      localization method: SABER
+      saber block:
+        saber block name: ID
+        input variables: *stvars
+        output variables: *stvars
     members:
     - states:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc

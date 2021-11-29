@@ -14,11 +14,10 @@ input variables: &vars
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
-date: &date '2018-04-15T00:00:00Z'
 background:
   state variables: *vars
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
-  date: *date
+  date: &date 2018-04-15T00:00:00Z
 ensemble:
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
@@ -45,23 +44,23 @@ bump:
   method: cor
   strategy: specific_univariate
   verbosity: main
-  new_var: 1
-  new_hdiag: 1
-  new_nicas: 1
-  write_nicas_local: 1
-  write_nicas_global: 1
+  new_var: true
+  new_hdiag: true
+  new_nicas: true
+  write_nicas_local: true
+  write_nicas_global: true
   nc1: 512
   nc2: 150
   nc3: 5
   dc: 1000000
   nl0r: 1
   ne: 5
-  local_diag: 1
+  local_diag: true
   local_rad: 1000000
   resol: 4
   diag_rhflt: 3000000
-  write_nicas_grids: 1
-  var_filter: 1
+  write_nicas_grids: true
+  var_filter: true
   var_niter: 1
   var_rhflt:
     temperature: [3000.0e3]
@@ -74,16 +73,16 @@ bump:
     variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
   - prefix: Data/bump/mpas_parametersbump_cov_2D
     variables: [surface_pressure]
-output:
-- parameter: stddev
-  filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
-- parameter: cor_rh
-  filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
-- parameter: cor_rv
-  filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
+  output:
+  - parameter: stddev
+    filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: cor_rh
+    filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: cor_rv
+    filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control

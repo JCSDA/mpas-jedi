@@ -15,7 +15,7 @@ model test:
   final norm: 19736.672672314493
   tolerance: 0.005
   test reforecast: false # TODO: fix model module and activate testreforecast
-ModelBias: 
+ModelBias:
 model:
   name: MPAS
   tstep: PT30M

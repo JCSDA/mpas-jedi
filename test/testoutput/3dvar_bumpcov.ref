@@ -1,4 +1,4 @@
-Test     : Norm of stddev at 2018-04-15T00:00:00Z: 1.115e+01
+Test     : Norm of stddev: 1.115e+01
 Test     : CostJb   : Nonlinear Jb = 0.000e+00
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 9.284e+02, nobs = 969, Jo/n = 9.581e-01, err = 1.985e+00
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 1.543e+00, nobs = 1, Jo/n = 1.543e+00, err = 3.351e+00
@@ -33,7 +33,7 @@ Test     : Fld=21  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00
 Test     : Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Test     : Fld=23  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
 Test     : Fld=24  Min=-4.195224418e+03, Max=6.139465798e+03, RMS=2.437819379e+03 : pressure_p
-Test     : Norm of stddev at 2018-04-15T00:00:00Z: 1.115e+01
+Test     : Norm of stddev: 1.115e+01
 Test     : CostJb   : Nonlinear Jb = 6.803e+02
 Test     : CostJo   : Nonlinear Jo(Radiosonde) = 7.101e+02, nobs = 963, Jo/n = 7.374e-01, err = 1.989e+00
 Test     : CostJo   : Nonlinear Jo(GnssroRef) = 4.100e-02, nobs = 1, Jo/n = 4.100e-02, err = 3.351e+00

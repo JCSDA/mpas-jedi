@@ -22,12 +22,15 @@ background error:
   variables: *vars
   date: *date
   localization:
-    localization method: BUMP
-    localization variables: *vars
-    bump:
-      prefix: Data/bump/mpas_parametersbump_loc
-      strategy: common  #specific_univariate
-      load_nicas_local: 1
+    localization method: SABER
+    saber block:
+      saber block name: BUMP_NICAS
+      input variables: *vars
+      output variables: *vars
+      bump:
+        prefix: Data/bump/mpas_parametersbump_loc
+        strategy: common
+        load_nicas_local: true
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date

@@ -8,13 +8,13 @@
 #include <oops/runs/ConvertState.h>
 #include <oops/runs/Run.h>
 
-#include <saber/oops/instantiateVariableChangeFactory.h>
+#include <saber/oops/instantiateSaberBlockFactory.h>
 
 #include "mpasjedi/MPASTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateVariableChangeFactory<mpas::MPASTraits>();
+  saber::instantiateSaberBlockFactory<mpas::MPASTraits>();
   oops::ConvertState<mpas::MPASTraits> cs;
   return run.execute(cs);
 }

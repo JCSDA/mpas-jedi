@@ -766,12 +766,12 @@ add_mpasjedi_application_test(
 #parameters
 add_mpasjedi_application_test(
     NAME parameters_bumpcov
-    APPLICATION parameters
+    APPLICATION error_covariance_training
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME parameters_bumploc
-    APPLICATION parameters
+    APPLICATION error_covariance_training
     ${RECALIBRATE})
 
 #gen_ens_pert_B
@@ -916,12 +916,12 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
 #                NPE ${THIS_NPE})
 
             add_mpasjedi_application_test(
-                APPLICATION parameters
+                APPLICATION error_covariance_training
 		NAME parameters_bumpcov
                 NPE ${THIS_NPE})
 
             add_mpasjedi_application_test(
-                APPLICATION parameters
+                APPLICATION error_covariance_training
 		NAME parameters_bumploc
                 NPE ${THIS_NPE})
 

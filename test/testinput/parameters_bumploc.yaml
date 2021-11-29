@@ -15,11 +15,10 @@ input variables: &vars
 - uReconstructZonal
 - uReconstructMeridional
 - surface_pressure
-date: &date '2018-04-15T00:00:00Z'
 background:
   state variables: *vars
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
-  date: *date
+  filename: ./Data/480km/bg/restart.2018-04-15_00.00.00.nc
+  date: &date 2018-04-15T00:00:00Z
 ensemble:
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
@@ -42,44 +41,44 @@ ensemble:
     date: *date
     state variables: *vars
     stream name: ensemble
-covariance:
+background error:
   covariance model: MPASstatic
   date: *date
-  pseudoens_size: 10
+  randomization_size: 10
 bump:
   prefix: Data/bump/mpas_parametersbump_loc
   method: loc  #hyb-rnd
   verbosity: main
   strategy: common
-  new_hdiag: 1
-  new_nicas: 1
-  write_nicas_local: 1
-  write_nicas_global: 1
+  new_hdiag: true
+  new_nicas: true
+  write_nicas_local: true
+  write_nicas_global: true
   nc1: 1024
   nc2: 200
   nc3: 10
   dc: 1000000
   nl0r: 1
   ne: 5
-  local_diag: 1
+  local_diag: true
   local_rad: 1000000
   resol: 4
   diag_rhflt: 3000000
-  write_nicas_grids: 1
-output:
-- parameter: loc_coef
-  filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
-- parameter: loc_rh
-  filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
-- parameter: loc_rv
-  filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
-- parameter: hyb_coef
-  filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
-  date: *date
-  stream name: control
+  write_nicas_grids: true
+  output:
+  - parameter: loc_coef
+    filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: loc_rh
+    filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: loc_rv
+    filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: hyb_coef
+    filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
