@@ -1306,6 +1306,7 @@ contains
    real(kind=kind_real),           intent(out) :: pstat(3, nf)
 
    type (mpas_pool_iterator_type) :: poolItr
+   type (field1DInteger), pointer :: ifield1d
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
@@ -1331,13 +1332,14 @@ contains
       ! so we select only those members of the pool that are fields
       if (poolItr % memberType == MPAS_POOL_FIELD) then
 
-         ! Fields can be integer, logical, or real. Here, we operate only on real-valued fields
+         ndims = poolItr % nDims
+         dimSizes = getSolveDimSizes(pool_a, poolItr%memberName)
+
+         ! Fields can be integer, logical, or real. Here, we operate only on real and integer fields.
          if (poolItr % dataType == MPAS_POOL_REAL) then
 
             ! Depending on the dimensionality of the field, we need to set pointers of
             ! the correct type
-            ndims = poolItr % nDims
-            dimSizes = getSolveDimSizes(pool_a, poolItr%memberName)
             if (ndims == 1) then
                dim1 = dimSizes(1)
                call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d)
@@ -1379,6 +1381,24 @@ contains
                pstat(3,jj) = sqrt( globalSum / dimtot_global )
             end if
             deallocate(dimSizes)
+
+         else if (poolItr % dataType == MPAS_POOL_INTEGER) then
+
+            ! For now, we only handle the 1-dimensional integer variables.
+            if (ndims == 1) then
+               dim1 = dimSizes(1)
+               call mpas_pool_get_field(pool_a, trim(poolItr % memberName), ifield1d)
+               dimtot = real(dim1,kind_real)
+               prodtot = sum( real(ifield1d % array(1:dim1))**2 )
+               call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
+               call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
+               call mpas_dmpar_min_real(dminfo, real(minval(ifield1d % array(1:dim1)),kind_real), globalMin)
+               call mpas_dmpar_max_real(dminfo, real(maxval(ifield1d % array(1:dim1)),kind_real), globalMax)
+               pstat(1,jj) = globalMin
+               pstat(2,jj) = globalMax
+               pstat(3,jj) = sqrt( globalSum / dimtot_global )
+            end if
+
          end if
       end if
    end do
