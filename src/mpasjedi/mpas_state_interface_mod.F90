@@ -218,24 +218,21 @@ end subroutine mpas_state_read_file_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_state_analytic_init_c(c_key_state, c_key_geom, c_conf, c_dt) &
+subroutine mpas_state_analytic_init_c(c_key_state, c_conf, c_dt) &
       bind(c,name='mpas_state_analytic_init_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_state !< State
-integer(c_int), intent(in) :: c_key_geom  !< Geometry
 type(c_ptr), value, intent(in) :: c_conf  !< Configuration
 type(c_ptr), value, intent(in) :: c_dt    !< DateTime
 
 type(mpas_fields), pointer :: state
-type(mpas_geom), pointer :: geom
 type(datetime) :: fdate
 type(fckit_configuration) :: f_conf
 
 call mpas_fields_registry%get(c_key_state,state)
-call mpas_geom_registry%get(c_key_geom,geom)
 call c_f_datetime(c_dt, fdate)
 f_conf = fckit_configuration(c_conf)
-call analytic_IC(state, geom, f_conf, fdate)
+call analytic_IC(state, f_conf, fdate)
 
 end subroutine mpas_state_analytic_init_c
 

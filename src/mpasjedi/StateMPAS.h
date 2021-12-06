@@ -78,7 +78,6 @@ class StateMPAS : public util::Printable,
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
-  void analytic_init(const eckit::Configuration &, const GeometryMPAS &);
   void write(const eckit::Configuration &) const;
   double norm() const;
 
@@ -95,6 +94,9 @@ class StateMPAS : public util::Printable,
   const int & toFortran() const {return keyState_;}
 
  private:
+/// Analytic intialization
+  void analytic_init(const eckit::Configuration &);
+
   void print(std::ostream &) const override;
   F90state keyState_;
   std::shared_ptr<const GeometryMPAS> geom_;

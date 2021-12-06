@@ -53,9 +53,9 @@ extern "C" {
                                  const util::DateTime &);
   void mpas_state_gpnorm_f90(const F90state &, const int &, double &);
   void mpas_state_rms_f90(const F90state &, double &);
-  void mpas_state_analytic_init_f90(const F90state &, const F90geom &,
-                                        const eckit::Configuration &,
-                                        util::DateTime &);
+  void mpas_state_analytic_init_f90(const F90state &,
+                                    const eckit::Configuration &,
+                                    util::DateTime &);
   void mpas_state_sizes_f90(const F90state &, int &, int &);
 
 

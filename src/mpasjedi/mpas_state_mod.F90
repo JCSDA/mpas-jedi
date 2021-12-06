@@ -183,7 +183,7 @@ end subroutine add_incr
 !! \author J. Guerrette (adapted from fv3jedi code by M. Miesch)
 !! \date July, 2018: Created
 !!
-subroutine analytic_IC(self, geom, f_conf, vdate)
+subroutine analytic_IC(self, f_conf, vdate)
 
 !  !MPAS Test Cases
 !  !JJG: This initialization requires the init_atmospher_core core_type
@@ -193,9 +193,10 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
   implicit none
 
   class(mpas_fields),        intent(inout) :: self   !< State
-  type(mpas_geom), target,   intent(in)    :: geom   !< Geometry
   type(fckit_configuration), intent(in)    :: f_conf !< Configuration
   type(datetime),            intent(inout) :: vdate  !< DateTime
+
+  type(mpas_geom), pointer :: geom
 
   character(len=:), allocatable :: str
   character(len=30) :: IC
@@ -217,7 +218,7 @@ subroutine analytic_IC(self, geom, f_conf, vdate)
   real(kind=kind_real) :: zhalf
 
   ! Establish member pointer to geometry
-  self%geom => geom
+  geom => self%geom
 
   If (f_conf%has("analytic init.method")) Then
      call f_conf%get_or_die("analytic init.method",str)

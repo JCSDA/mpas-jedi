@@ -28,18 +28,18 @@ namespace mpas {
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & geom,
-                     const oops::Variables & incvars,
+                     const oops::Variables & vars,
                      const util::DateTime & time)
-  : geom_(new GeometryMPAS(geom)), vars_(incvars), time_(time)
+  : geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create." << std::endl;
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
   oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol,
+StateMPAS::StateMPAS(const GeometryMPAS & geom,
                      const eckit::Configuration & config)
-  : geom_(new GeometryMPAS(resol)), vars_(config, "state variables"),
+  : geom_(new GeometryMPAS(geom)), vars_(config, "state variables"),
     time_(util::DateTime())
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
@@ -47,24 +47,28 @@ StateMPAS::StateMPAS(const GeometryMPAS & resol,
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
 
   if (config.has("analytic init")) {
-    mpas_state_analytic_init_f90(keyState_, resol.toFortran(), config, time_);
+    analytic_init(config);
   } else {
-    mpas_state_read_file_f90(keyState_, config, time_);
+    read(config);
   }
 
   oops::Log::trace() << "StateMPAS::StateMPAS created and read in."
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & resol,
+StateMPAS::StateMPAS(const GeometryMPAS & geom,
                      const StateMPAS & other)
-  : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
+  : geom_(new GeometryMPAS(geom)), vars_(other.vars_), time_(other.time_)
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation."
                      << std::endl;
 
+  // create new state with geom
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
-  mpas_state_change_resol_f90(keyState_, other.keyState_);
+
+  // interpolate other to geom
+  changeResolution(other);
+
   oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation."
                      << std::endl;
 }
@@ -95,7 +99,7 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 /// Interpolate full state
 // -----------------------------------------------------------------------------
 void StateMPAS::changeResolution(const StateMPAS & other) {
-  mpas_state_change_resol_f90(keyState_, other.keyState_);
+  mpas_state_change_resol_f90(keyState_, other.toFortran());
   oops::Log::trace() << "StateMPAS changed resolution" << std::endl;
 }
 // -----------------------------------------------------------------------------
@@ -103,7 +107,7 @@ void StateMPAS::changeResolution(const StateMPAS & other) {
 // -----------------------------------------------------------------------------
 StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
   oops::Log::trace() << "StateMPAS add increment starting" << std::endl;
-  ASSERT(this->validTime() == dx.validTime());
+  ASSERT(validTime() == dx.validTime());
   // Interpolate increment to state resolution
   IncrementMPAS dx_sr(*geom_, dx);
   mpas_state_add_incr_f90(keyState_, dx_sr.toFortran());
@@ -161,10 +165,9 @@ void StateMPAS::read(const eckit::Configuration & config) {
   mpas_state_read_file_f90(keyState_, config, time_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::analytic_init(const eckit::Configuration & config,
-                              const GeometryMPAS & geom) {
+void StateMPAS::analytic_init(const eckit::Configuration & config) {
   oops::Log::trace() << "StateMPAS analytic init starting" << std::endl;
-  mpas_state_analytic_init_f90(keyState_, geom.toFortran(), config, time_);
+  mpas_state_analytic_init_f90(keyState_, config, time_);
   oops::Log::trace() << "StateMPAS analytic init done" << std::endl;
 }
 // -----------------------------------------------------------------------------
