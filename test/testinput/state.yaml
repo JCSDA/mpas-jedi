@@ -27,13 +27,16 @@ state test:
     sinus: 2
   norm generated state: 20000.378266179847
   tolerance: 1.0e-08
-  statefileout:
-    state variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
-    filename: "Data/states/mpas.state.2018-04-15_00.00.00.nc"
-    date: &date '2018-04-15T00:00:00Z'
-    transform model to analysis: false # Prevents variable change logic in read routine
+  write then read test:
+    state write:
+      filename: &filename "Data/states/mpas.state.2018-04-15_00.00.00.nc"
+    state read:
+      state variables:
+      - temperature
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
+      - surface_pressure
+      filename: *filename
+      date: *date
+      transform model to analysis: false # Prevents variable change logic in read routine
