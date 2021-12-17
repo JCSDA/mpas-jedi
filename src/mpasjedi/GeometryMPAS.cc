@@ -1,11 +1,9 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
-
-#include "eckit/config/Configuration.h"
 
 #include "atlas/grid.h"
 #include "atlas/util/Config.h"
@@ -17,11 +15,11 @@
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const eckit::Configuration & config,
+GeometryMPAS::GeometryMPAS(const GeometryMPASParameters & params,
                            const eckit::mpi::Comm & comm) : comm_(comm) {
   oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 1 =========="
                      << std::endl;
-  mpas_geo_setup_f90(keyGeom_, config, &comm);
+  mpas_geo_setup_f90(keyGeom_, params.toConfiguration(), &comm);
 
   // Set ATLAS lon/lat field
   atlasFieldSet_.reset(new atlas::FieldSet());

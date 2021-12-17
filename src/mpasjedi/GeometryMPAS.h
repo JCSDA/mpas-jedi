@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2021 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -23,10 +23,7 @@
 #include "oops/util/Printable.h"
 
 #include "mpasjedi/Fortran.h"
-
-namespace eckit {
-  class Configuration;
-}
+#include "mpasjedi/GeometryMPASParameters.h"
 
 namespace mpas {
 
@@ -36,9 +33,10 @@ namespace mpas {
 class GeometryMPAS : public util::Printable,
                       private util::ObjectCounter<GeometryMPAS> {
  public:
+  typedef GeometryMPASParameters Parameters_;
   static const std::string classname() {return "mpas::GeometryMPAS";}
 
-  GeometryMPAS(const eckit::Configuration &, const eckit::mpi::Comm &);
+  GeometryMPAS(const Parameters_ &, const eckit::mpi::Comm &);
   GeometryMPAS(const GeometryMPAS &);
   ~GeometryMPAS();
 

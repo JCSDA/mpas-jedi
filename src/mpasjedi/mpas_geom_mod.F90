@@ -192,21 +192,13 @@ subroutine geo_setup(self, f_conf, f_comm)
    end if
 
    !Deallocate not-used fields for memory reduction
-   if (f_conf%has("deallocate non-da fields")) then
-      call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
-      self % deallocate_nonda_fields = deallocate_fields
-   else
-      self % deallocate_nonda_fields = .False.
-   end if
+   call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
+   self % deallocate_nonda_fields = deallocate_fields
    if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (self % domain)
 
    ! Set up the vertical coordinate for bump
-   if (f_conf%has("bump vunit")) then
-      call f_conf%get_or_die("bump vunit",str)
-      self % bump_vunit = str
-   else
-      self % bump_vunit = 'modellevel'
-   end if
+   call f_conf%get_or_die("bump vunit",str)
+   self % bump_vunit = str
 
    if (allocated(geom_count)) then
       nprev = size(geom_count)
@@ -229,11 +221,8 @@ subroutine geo_setup(self, f_conf, f_comm)
    geom_count(nprev+1)%counter = 1
 
    ! first read array of templated field configurations
-   if (f_conf%get('template fields file',str)) then
-     fields_file = str
-   else
-     fields_file = 'geovars.yaml'
-   end if
+   call f_conf%get_or_die('template fields file',str)
+   fields_file = str
    template_conf = fckit_YAMLConfiguration(fckit_pathname(fields_file))
    call template_conf%get_or_die('fields',fields_conf)
 

@@ -4,6 +4,7 @@ list( APPEND mpasjedi_src_files
     Fortran.h
     GeometryMPAS.cc
     GeometryMPAS.h
+    GeometryMPASParameters.h
     IncrementMPAS.cc
     IncrementMPAS.h
     IncrementMPASFortran.h
