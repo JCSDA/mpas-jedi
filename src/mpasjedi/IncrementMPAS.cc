@@ -68,6 +68,11 @@ IncrementMPAS::~IncrementMPAS() {
   oops::Log::trace() << "IncrementMPAS destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
+void IncrementMPAS::updateVars(const oops::Variables & newVars) {
+  vars_ = newVars;
+  oops::Log::trace() << "IncrementMPAS update variable names" << std::endl;
+}
+// -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
 void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {

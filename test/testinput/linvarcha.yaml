@@ -1,49 +1,52 @@
 linear variable change tests:
-- variable change: Control2Analysis
+- linear variable change:
+    linear variable change name: Control2Analysis
+    input variables:
+    - stream_function
+    - velocity_potential
+    - temperature
+    - spechum
+    - surface_pressure
+    output variables:
+    - uReconstructZonal
+    - uReconstructMeridional
+    - temperature
+    - spechum
+    - surface_pressure
   tolerance inverse: 1.0e-8
   test inverse: 0
-  input variables:
-  - stream_function
-  - velocity_potential
-  - temperature
-  - spechum
-  - surface_pressure
-  output variables:
-  - uReconstructZonal
-  - uReconstructMeridional
-  - temperature
-  - spechum
-  - surface_pressure
-- variable change: Control2Analysis
+- linear variable change: 
+    linear variable change name: Control2Analysis
+    input variables:
+    - stream_function
+    - velocity_potential
+    - temperature
+    - relhum #pseudo-RH
+    - surface_pressure
+    output variables:
+    - uReconstructZonal
+    - uReconstructMeridional
+    - temperature
+    - spechum
+    - surface_pressure
   tolerance inverse: '1.0e-8'
   test inverse: 0
-  input variables:
-  - stream_function
-  - velocity_potential
-  - temperature
-  - relhum #pseudo-RH
-  - surface_pressure
-  output variables:
-  - uReconstructZonal
-  - uReconstructMeridional
-  - temperature
-  - spechum
-  - surface_pressure
-- variable change: Control2Analysis
+- linear variable change: 
+    linear variable change name: Control2Analysis
+    input variables:
+    - uReconstructZonal
+    - uReconstructMeridional
+    - temperature
+    - relhum #pseudo-RH
+    - surface_pressure
+    output variables:
+    - uReconstructZonal
+    - uReconstructMeridional
+    - temperature
+    - spechum
+    - surface_pressure
   tolerance inverse: 1.0e-8
   test inverse: 1
-  input variables:
-  - uReconstructZonal
-  - uReconstructMeridional
-  - temperature
-  - relhum #pseudo-RH
-  - surface_pressure
-  output variables:
-  - uReconstructZonal
-  - uReconstructMeridional
-  - temperature
-  - spechum
-  - surface_pressure
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"

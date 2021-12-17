@@ -46,21 +46,29 @@ list( APPEND mpasjedi_src_files
     getvalues/LinearGetValues.interface.h
     getvalues/LinearGetValues.interface.F90
     getvalues/mpasjedi_unstructured_interp_mod.F90
-    VariableChanges/Control2Analysis/mpasjedi_linvarcha_c2a_interface.F90
-    VariableChanges/Control2Analysis/mpasjedi_linvarcha_c2a_mod.F90
-    VariableChanges/Control2Analysis/LinVarChaC2A.cc
-    VariableChanges/Control2Analysis/LinVarChaC2A.h
-    VariableChanges/Control2Analysis/LinVarChaC2A.interface.h
-    VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_interface.F90
-    VariableChanges/Model2GeoVars/mpasjedi_lvc_model2geovars_mod.F90
-    VariableChanges/Model2GeoVars/mpasjedi_vc_model2geovars_interface.F90
-    VariableChanges/Model2GeoVars/mpasjedi_vc_model2geovars_mod.F90
-    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.cc
-    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.h
-    VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.interface.h
-    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.cc
-    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.h
-    VariableChanges/Model2GeoVars/VarChaModel2GeoVars.interface.h
+    LinearVariableChange/LinearVariableChange.cc
+    LinearVariableChange/LinearVariableChange.h
+    LinearVariableChange/Base/LinearVariableChangeBase.cc
+    LinearVariableChange/Base/LinearVariableChangeBase.h
+    LinearVariableChange/Control2Analysis/mpasjedi_linvarcha_c2a_interface.F90
+    LinearVariableChange/Control2Analysis/mpasjedi_linvarcha_c2a_mod.F90
+    LinearVariableChange/Control2Analysis/LinVarChaC2A.cc
+    LinearVariableChange/Control2Analysis/LinVarChaC2A.h
+    LinearVariableChange/Control2Analysis/LinVarChaC2A.interface.h
+    LinearVariableChange/Model2GeoVars/mpasjedi_lvc_model2geovars_interface.F90
+    LinearVariableChange/Model2GeoVars/mpasjedi_lvc_model2geovars_mod.F90
+    LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.cc
+    LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.h
+    LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.interface.h
+    VariableChange/VariableChange.cc
+    VariableChange/VariableChange.h
+    VariableChange/Base/VariableChangeBase.cc
+    VariableChange/Base/VariableChangeBase.h
+    VariableChange/Model2GeoVars/mpasjedi_vc_model2geovars_interface.F90
+    VariableChange/Model2GeoVars/mpasjedi_vc_model2geovars_mod.F90
+    VariableChange/Model2GeoVars/VarChaModel2GeoVars.cc
+    VariableChange/Model2GeoVars/VarChaModel2GeoVars.h
+    VariableChange/Model2GeoVars/VarChaModel2GeoVars.interface.h
     )
 
 #Create target

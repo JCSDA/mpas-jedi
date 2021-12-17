@@ -103,6 +103,11 @@ void StateMPAS::changeResolution(const StateMPAS & other) {
   oops::Log::trace() << "StateMPAS changed resolution" << std::endl;
 }
 // -----------------------------------------------------------------------------
+void StateMPAS::updateVars(const oops::Variables & newVars) {
+  vars_ = newVars;
+  oops::Log::trace() << "StateMPAS update variable names" << std::endl;
+}
+// -----------------------------------------------------------------------------
 /// Interactions with Increments
 // -----------------------------------------------------------------------------
 StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {

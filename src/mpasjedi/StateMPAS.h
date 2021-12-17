@@ -76,6 +76,9 @@ class StateMPAS : public util::Printable,
   void serialize(std::vector<double> &) const override;
   void deserialize(const std::vector<double> &, size_t &) override;
 
+/// Add or remove fields
+  void updateVars(const oops::Variables &);
+
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
   void write(const eckit::Configuration &) const;

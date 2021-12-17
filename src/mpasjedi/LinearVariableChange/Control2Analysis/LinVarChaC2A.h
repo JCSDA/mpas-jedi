@@ -16,8 +16,9 @@
 #include "oops/base/Variables.h"
 #include "oops/util/Printable.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/VariableChanges/Control2Analysis/LinVarChaC2A.interface.h"
+#include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
+#include "mpasjedi/LinearVariableChange/Control2Analysis/LinVarChaC2A.interface.h"
+#include "mpasjedi/MPASTraits.h"
 
 // Forward declarations
 namespace eckit {
@@ -34,17 +35,17 @@ namespace mpas {
   class IncrementMPAS;
 
 // -----------------------------------------------------------------------------
-class LinVarChaC2A: public util::Printable {
+class LinVarChaC2A : public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "mpas::LinVarChaC2A";}
-  explicit LinVarChaC2A(const StateMPAS &, const StateMPAS &, const GeometryMPAS &,
-                       const eckit::Configuration &);
+  LinVarChaC2A(const StateMPAS &, const StateMPAS &, const GeometryMPAS &,
+               const eckit::LocalConfiguration &);
   ~LinVarChaC2A();
   // Perform linear multiplications
-  void multiply(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const;
+  void multiply(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const override;
 
  private:
   std::shared_ptr<const GeometryMPAS> geom_;

@@ -11,10 +11,9 @@
 #include <ostream>
 #include <string>
 
-#include "oops/util/Printable.h"
-
+#include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
+#include "mpasjedi/LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.interface.h"
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.interface.h"
 
 // Forward declarations
 namespace eckit {
@@ -23,30 +22,31 @@ namespace eckit {
 
 namespace mpas {
   class GeometryMPAS;
-  class StateMPAS;
   class IncrementMPAS;
+  class StateMPAS;
 
 // -------------------------------------------------------------------------------------------------
 
-class LinVarChaModel2GeoVars : public util::Printable,
+class LinVarChaModel2GeoVars : public LinearVariableChangeBase,
                                private util::ObjectCounter<LinVarChaModel2GeoVars> {
  public:
   static const std::string classname() {return "mpas::LinVarChaModel2GeoVars";}
 
   explicit LinVarChaModel2GeoVars(const StateMPAS &, const StateMPAS &, const GeometryMPAS &,
-                                  const eckit::Configuration &);
+                         const eckit::LocalConfiguration &);
   ~LinVarChaModel2GeoVars();
 
-  void multiply(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const;
-  void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const;
+  void multiply(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const override;
 
  private:
   std::shared_ptr<const GeometryMPAS> geom_;
   F90lvc_M2G keyFtnConfig_;
   void print(std::ostream &) const override;
 };
+
 // -------------------------------------------------------------------------------------------------
 
 }  // namespace mpas

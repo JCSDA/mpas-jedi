@@ -15,10 +15,12 @@
 #include "mpasjedi/getvalues/GetValues.h"
 #include "mpasjedi/getvalues/LinearGetValues.h"
 #include "mpasjedi/IncrementMPAS.h"
+#include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
 #include "mpasjedi/ModelBiasCovarianceMPAS.h"
 #include "mpasjedi/ModelBiasIncrementMPAS.h"
 #include "mpasjedi/ModelBiasMPAS.h"
 #include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/VariableChange/VariableChange.h"
 
 namespace mpas {
 
@@ -27,11 +29,10 @@ struct MPASTraits {
   static std::string nameCovar() {return "MPASstatic";}
   static std::string nameCovar4D() {return "MPASstatic";}
 
-  typedef mpas::GeometryMPAS             Geometry;
-
-  typedef mpas::StateMPAS                State;
-  typedef mpas::IncrementMPAS            Increment;
   typedef mpas::ErrorCovarianceMPAS      Covariance;
+  typedef mpas::GeometryMPAS             Geometry;
+  typedef mpas::IncrementMPAS            Increment;
+  typedef mpas::StateMPAS                State;
 
   typedef mpas::ModelBiasMPAS            ModelAuxControl;
   typedef mpas::ModelBiasIncrementMPAS   ModelAuxIncrement;
@@ -39,6 +40,9 @@ struct MPASTraits {
 
   typedef mpas::GetValues                GetValues;
   typedef mpas::LinearGetValues          LinearGetValues;
+
+  typedef mpas::LinearVariableChange     LinearVariableChange;
+  typedef mpas::VariableChange           VariableChange;
 };
 
 }  // namespace mpas

@@ -41,7 +41,6 @@ extern "C" {
                                    const F90inc &);
   void mpas_increment_axpy_state_f90(const F90inc &, const double &,
                                      const F90state &);
-
   void mpas_increment_change_resol_f90(const F90inc &, const F90inc &);
   void mpas_increment_read_file_f90(const F90inc &,
                                 const eckit::Configuration &,

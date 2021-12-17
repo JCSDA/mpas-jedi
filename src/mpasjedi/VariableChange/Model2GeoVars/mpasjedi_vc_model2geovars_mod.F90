@@ -193,7 +193,6 @@ subroutine changevar(self, geom, xm, xg)
   call pressure_half_to_full(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr1_a(1:nCells), &
                              nCells, nVertLevels, plevels)
 
-
   ! populate xg
   do iVar = 1, xg % nf
 

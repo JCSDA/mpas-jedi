@@ -13,10 +13,9 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/base/VariableChangeBase.h"
-
 #include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/VariableChanges/Model2GeoVars/VarChaModel2GeoVars.interface.h"
+#include "mpasjedi/VariableChange/Base/VariableChangeBase.h"
+#include "mpasjedi/VariableChange/Model2GeoVars/VarChaModel2GeoVars.interface.h"
 
 namespace mpas {
   class StateMPAS;
@@ -24,11 +23,11 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-class VarChaModel2GeoVars : public oops::VariableChangeBase<MPASTraits>,
+class VarChaModel2GeoVars : public VariableChangeBase,
                             private util::ObjectCounter<VarChaModel2GeoVars> {
  public:
   static const std::string classname() {return "mpas::VarChaModel2GeoVars";}
-  VarChaModel2GeoVars(const GeometryMPAS &, const eckit::Configuration &);
+  VarChaModel2GeoVars(const GeometryMPAS &, const eckit::LocalConfiguration &);
   ~VarChaModel2GeoVars();
   void changeVar(const StateMPAS &, StateMPAS &) const override;
   void changeVarInverse(const StateMPAS &, StateMPAS &) const override;

@@ -25,7 +25,6 @@ cost function:
   - uReconstructZonal
   - uReconstructMeridional
   - surface_pressure
-  variable change: Identity
   background:
     state variables: *modvars
     filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
@@ -125,7 +124,6 @@ variational:
       # 3dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
       name: Identity
       increment variables: *incvars
-      variable change: Identity
       tstep: PT30M
     ninner: '10'
     gradient norm reduction: 1e-10
@@ -139,7 +137,6 @@ variational:
       # 3dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
       name: Identity
       increment variables: *incvars
-      variable change: Identity
       tstep: PT30M
     ninner: '10'
     gradient norm reduction: 1e-10

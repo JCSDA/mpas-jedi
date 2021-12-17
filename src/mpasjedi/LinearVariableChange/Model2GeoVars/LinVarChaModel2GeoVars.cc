@@ -10,28 +10,27 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/interface/LinearVariableChange.h"
 #include "oops/util/Logger.h"
 #include "oops/util/Timer.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
+#include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
+#include "mpasjedi/LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.h"
 #include "mpasjedi/MPASTraits.h"
 #include "mpasjedi/StateMPAS.h"
-#include "mpasjedi/VariableChanges/Model2GeoVars/LinVarChaModel2GeoVars.h"
 
 namespace mpas {
 // -------------------------------------------------------------------------------------------------
-static oops::LinearVariableChangeMaker
-  < MPASTraits, oops::LinearVariableChange<MPASTraits, LinVarChaModel2GeoVars> >
+static LinearVariableChangeMaker<LinVarChaModel2GeoVars>
   makerLinVarChaModel2GeoVars_("Model2GeoVars");
-static oops::LinearVariableChangeMaker
-  < MPASTraits, oops::LinearVariableChange<MPASTraits, LinVarChaModel2GeoVars> >
+static LinearVariableChangeMaker<LinVarChaModel2GeoVars>
   makerLinVarChaModel2GeoDef_("default");
 // -------------------------------------------------------------------------------------------------
 LinVarChaModel2GeoVars::LinVarChaModel2GeoVars(
   const StateMPAS & bg, const StateMPAS & fg, const GeometryMPAS & resol,
-  const eckit::Configuration & config) : geom_(new GeometryMPAS(resol)) {
+  const eckit::LocalConfiguration & config) : LinearVariableChangeBase(),
+  geom_(new GeometryMPAS(resol)) {
   util::Timer timer(classname(), "LinVarChaModel2GeoVars");
   oops::Log::trace() << classname() << " constructor starting" << std::endl;
   mpasjedi_lvc_model2geovars_create_f90(keyFtnConfig_, geom_->toFortran(), bg.toFortran(),
@@ -66,10 +65,10 @@ void LinVarChaModel2GeoVars::multiplyInverse(const IncrementMPAS & dxin, Increme
 void LinVarChaModel2GeoVars::multiplyAD(const IncrementMPAS & dxin, IncrementMPAS & dxout)
   const {
   util::Timer timer(classname(), "multiplyAD");
-  oops::Log::trace() << classname() << " multiplyAD starting" << std::endl;
+  oops::Log::trace() << classname() << " multiplyAD starting" << dxin << std::endl;
   mpasjedi_lvc_model2geovars_multiplyadjoint_f90(keyFtnConfig_, geom_->toFortran(),
                                                 dxin.toFortran(), dxout.toFortran());
-  oops::Log::trace() << classname() << " multiplyAD done" << std::endl;
+  oops::Log::trace() << classname() << " multiplyAD done" << dxout << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
 void LinVarChaModel2GeoVars::multiplyInverseAD(const IncrementMPAS & dxin, IncrementMPAS & dxout)

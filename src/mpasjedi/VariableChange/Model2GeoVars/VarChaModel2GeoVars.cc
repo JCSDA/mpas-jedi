@@ -16,17 +16,17 @@
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/MPASTraits.h"
 #include "mpasjedi/StateMPAS.h"
-#include "mpasjedi/VariableChanges/Model2GeoVars/VarChaModel2GeoVars.h"
+#include "mpasjedi/VariableChange/Model2GeoVars/VarChaModel2GeoVars.h"
 
 namespace mpas {
 // -------------------------------------------------------------------------------------------------
-static oops::VariableChangeMaker<MPASTraits, VarChaModel2GeoVars>
+static VariableChangeMaker<VarChaModel2GeoVars>
   makerVarChaModel2GeoVars_("Model2GeoVars");
-static oops::VariableChangeMaker<MPASTraits, VarChaModel2GeoVars>
+static VariableChangeMaker<VarChaModel2GeoVars>
   makerVarChaDefault_("default");
 // -------------------------------------------------------------------------------------------------
 VarChaModel2GeoVars::VarChaModel2GeoVars(const GeometryMPAS & geom,
- const eckit::Configuration & config) : geom_(new GeometryMPAS(geom)) {
+ const eckit::LocalConfiguration & config) : VariableChangeBase(), geom_(new GeometryMPAS(geom)) {
   util::Timer timer(classname(), "VarChaModel2GeoVars");
   oops::Log::trace() << classname() << " constructor starting" << std::endl;
   mpasjedi_vc_model2geovars_create_f90(keyFtnConfig_, geom_->toFortran(), config);

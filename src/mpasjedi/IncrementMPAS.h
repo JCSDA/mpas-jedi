@@ -92,12 +92,16 @@ class IncrementMPAS : public util::Printable,
   void write(const eckit::Configuration &) const;
   double norm() const;
 
+// Add or remove fields
+  void updateVars(const oops::Variables &);
+
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
 /// Other
   void accumul(const double &, const StateMPAS &);
 
   std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
+  const oops::Variables & variables() const {return vars_;}
 
   const util::DateTime & time() const {return time_;}
   util::DateTime & time() {return time_;}
