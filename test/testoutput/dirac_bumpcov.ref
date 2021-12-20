@@ -12,6 +12,6 @@ Covariance(SABER) * Increment:
   Resolution: nCellsGlobal = 2562, nFields = 5
 Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
 Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : spechum
-Fld=3  Min=0.000000000e+00, Max=7.448172288e-01, RMS=1.596811259e-02 : uReconstructZonal
+Fld=3  Min=0.000000000e+00, Max=7.448172288e-01, RMS=1.369060295e-02 : uReconstructZonal
 Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure

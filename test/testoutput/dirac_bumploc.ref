@@ -9,16 +9,16 @@ Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_p
 Covariance(ensemble) * Increment: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=-1.102399720e-01, Max=1.938123501e-01, RMS=3.760132243e-03 : temperature
-Fld=2  Min=-3.234089948e-05, Max=3.310316453e-05, RMS=6.230763768e-07 : spechum
-Fld=3  Min=-2.159783717e-01, Max=7.174119878e-01, RMS=1.299609922e-02 : uReconstructZonal
-Fld=4  Min=-4.086845563e-01, Max=1.340857598e+00, RMS=1.630858166e-02 : uReconstructMeridional
+Fld=1  Min=-1.083658559e-01, Max=1.713254686e-01, RMS=2.899607350e-03 : temperature
+Fld=2  Min=-3.143506798e-05, Max=2.115913343e-05, RMS=3.920041934e-07 : spechum
+Fld=3  Min=-1.413919412e-01, Max=7.174119878e-01, RMS=1.043899197e-02 : uReconstructZonal
+Fld=4  Min=-3.256853221e-01, Max=8.375380853e-01, RMS=1.068982631e-02 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
 Localization(ensemble) * Increment: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=4.082470351e-02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=4.082470351e-02 : spechum
-Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=4.082470351e-02 : uReconstructZonal
-Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=4.082470351e-02 : uReconstructMeridional
+Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : spechum
+Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : uReconstructZonal
+Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
