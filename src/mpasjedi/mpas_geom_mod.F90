@@ -66,7 +66,7 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    logical :: deallocate_nonda_fields
-   logical :: use_bump_interpolation
+   character(len=StrKIND) :: fields_to_fields_interp_type
    character(len=StrKIND) :: bump_vunit
    real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
    real(kind=kind_real), dimension(:),   allocatable :: areaCell
@@ -177,19 +177,8 @@ subroutine geo_setup(self, f_conf, f_comm)
    ! The interpolation method specified here will be used to interpolate data between
    ! different geometries, but not in GetValues. GetValues has its own configuration
    ! for specifying its interpolation method.
-   if (f_conf%get("interpolation type", str)) then
-     select case (str)
-       case ('bump')
-         self%use_bump_interpolation = .True.
-       case ('unstructured')
-         self%use_bump_interpolation = .False.
-       case default
-         write(message,*) '--> geo_setup: interpolation type: ',str,' not implemented'
-         call abor1_ftn(message)
-     end select
-   else
-     self%use_bump_interpolation = .True. ! BUMP is default interpolation
-   end if
+   call f_conf%get_or_die("interpolation type",str)
+   self % fields_to_fields_interp_type = str
 
    !Deallocate not-used fields for memory reduction
    call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
@@ -604,7 +593,7 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % areaTriangle)) allocate(self % areaTriangle(self % nVertices))
    if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
 
-   self % use_bump_interpolation = other % use_bump_interpolation
+   self % fields_to_fields_interp_type = other % fields_to_fields_interp_type
    self % templated_fields  = other % templated_fields
    self % latCell           = other % latCell
    self % lonCell           = other % lonCell

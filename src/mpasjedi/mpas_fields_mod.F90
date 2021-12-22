@@ -732,12 +732,12 @@ subroutine interpolate_fields(self,rhs)
   real (kind=kind_real), dimension(:), pointer :: r1d_ptr
   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr
   integer :: rhs_nCells, self_nCells, maxlevels, nlevels, jlev
-  logical             :: use_bump_interp
+  character(len=StrKIND) :: interp_type
   integer, allocatable :: rhsDims(:)
 
-  use_bump_interp = rhs%geom%use_bump_interpolation
+  interp_type = trim(rhs%geom%fields_to_fields_interp_type)
 
-  if (use_bump_interp) then
+  if (interp_type == 'bump') then
     call initialize_bumpinterp(self%geom, rhs%geom, bumpinterp)
   else
     call initialize_uns_interp(self%geom, rhs%geom, unsinterp)
@@ -779,7 +779,7 @@ subroutine interpolate_fields(self,rhs)
       call abor1_ftn(message)
     endif
 
-    if (use_bump_interp) then
+    if (interp_type == 'bump') then
       call bumpinterp%apply(interp_in(:,1:nlevels), &
                             interp_out(:,1:nlevels), &
                             trans_in=.false.)
