@@ -92,9 +92,6 @@ class IncrementMPAS : public util::Printable,
   void write(const eckit::Configuration &) const;
   double norm() const;
 
-// Add or remove fields
-  void updateVars(const oops::Variables &);
-
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
 /// Other

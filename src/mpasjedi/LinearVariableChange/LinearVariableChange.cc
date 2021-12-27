@@ -43,8 +43,7 @@ void LinearVariableChange::multiply(IncrementMPAS & dx, const oops::Variables & 
   oops::Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars <= dx.variables()) {
-    dx.updateVars(vars);
+  if (vars == dx.variables()) {
     oops::Log::trace() << "LinearVariableChange::multiply done (identity)" << std::endl;
     return;
   }
@@ -54,9 +53,6 @@ void LinearVariableChange::multiply(IncrementMPAS & dx, const oops::Variables & 
 
   // Call variable change
   linearVariableChange_->multiply(dx, dxout);
-
-  // Update variable names
-  dx.updateVars(vars);
 
   // Copy data from temporary increment
   dx = dxout;
@@ -70,8 +66,7 @@ void LinearVariableChange::multiplyInverse(IncrementMPAS & dx, const oops::Varia
   oops::Log::trace() << "LinearVariableChange::multiplyInverse starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars <= dx.variables()) {
-    dx.updateVars(vars);
+  if (vars == dx.variables()) {
     oops::Log::trace() << "LinearVariableChange::multiplyInverse done (identity)" << std::endl;
     return;
   }
@@ -81,9 +76,6 @@ void LinearVariableChange::multiplyInverse(IncrementMPAS & dx, const oops::Varia
 
   // Call variable change
   linearVariableChange_->multiplyInverse(dx, dxout);
-
-  // Update variable names
-  dx.updateVars(vars);
 
   // Copy data from temporary increment
   dx = dxout;
@@ -97,8 +89,7 @@ void LinearVariableChange::multiplyAD(IncrementMPAS & dx, const oops::Variables 
   oops::Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars <= dx.variables()) {
-    dx.updateVars(vars);
+  if (vars == dx.variables()) {
     oops::Log::trace() << "LinearVariableChange::multiplyAD done (identity)" << std::endl;
     return;
   }
@@ -108,9 +99,6 @@ void LinearVariableChange::multiplyAD(IncrementMPAS & dx, const oops::Variables 
 
   // Call variable change
   linearVariableChange_->multiplyAD(dx, dxout);
-
-  // Update variable names
-  dx.updateVars(vars);
 
   // Copy data from temporary increment
   dx = dxout;
@@ -125,8 +113,7 @@ void LinearVariableChange::multiplyInverseAD(IncrementMPAS & dx,
   oops::Log::trace() << "LinearVariableChange::multiplyInverseAD starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars <= dx.variables()) {
-    dx.updateVars(vars);
+  if (vars == dx.variables()) {
     oops::Log::trace() << "LinearVariableChange::multiplyInverseAD done (identity)" << std::endl;
     return;
   }
@@ -136,9 +123,6 @@ void LinearVariableChange::multiplyInverseAD(IncrementMPAS & dx,
 
   // Call variable change
   linearVariableChange_->multiplyInverseAD(dx, dxout);
-
-  // Update variable names
-  dx.updateVars(vars);
 
   // Copy data from temporary increment
   dx = dxout;

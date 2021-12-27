@@ -36,8 +36,7 @@ void VariableChange::changeVar(StateMPAS & x, const oops::Variables & vars) cons
   oops::Log::trace() << "VariableChange::changeVar starting" << std::endl;
 
   // If all variables already in incoming state just remove the no longer needed fields
-  if (vars <= x.variables()) {
-    x.updateVars(vars);
+  if (vars == x.variables()) {
     oops::Log::info() << "VariableChange::changeVar done (identity)" << std::endl;
     return;
   }
@@ -48,9 +47,6 @@ void VariableChange::changeVar(StateMPAS & x, const oops::Variables & vars) cons
 
   // Call variable change
   variableChange_->changeVar(x, xout);
-
-  // Update variable names
-  x.updateVars(vars);
 
   // Copy data from temporary state
   x = xout;
@@ -66,8 +62,7 @@ void VariableChange::changeVarInverse(StateMPAS & x, const oops::Variables & var
   oops::Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
   // If all variables already in incoming state just remove the no longer needed fields
-  if (vars <= x.variables()) {
-    x.updateVars(vars);
+  if (vars == x.variables()) {
     oops::Log::info() << "VariableChange::changeVarInverse done (identity)" << std::endl;
     return;
   }
@@ -77,9 +72,6 @@ void VariableChange::changeVarInverse(StateMPAS & x, const oops::Variables & var
 
   // Call variable change
   variableChange_->changeVarInverse(x, xout);
-
-  // Update variable names
-  x.updateVars(vars);
 
   // Copy data from temporary state
   x = xout;

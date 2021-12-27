@@ -93,6 +93,7 @@ StateMPAS::~StateMPAS() {
 StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
   mpas_state_copy_f90(keyState_, rhs.keyState_);
   time_ = rhs.time_;
+  vars_ = rhs.vars_;
   return *this;
 }
 // -----------------------------------------------------------------------------
@@ -101,11 +102,6 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 void StateMPAS::changeResolution(const StateMPAS & other) {
   mpas_state_change_resol_f90(keyState_, other.toFortran());
   oops::Log::trace() << "StateMPAS changed resolution" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void StateMPAS::updateVars(const oops::Variables & newVars) {
-  vars_ = newVars;
-  oops::Log::trace() << "StateMPAS update variable names" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Interactions with Increments
