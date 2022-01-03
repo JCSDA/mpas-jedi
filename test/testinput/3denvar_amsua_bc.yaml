@@ -30,7 +30,6 @@ cost function:
     date: *analysisdate
   background error:
     covariance model: ensemble
-    date: *analysisdate
     localization:
       localization method: SABER
       saber block:
@@ -52,7 +51,6 @@ cost function:
       <<: *memberConfig
     - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    variables: *incvars
   observations:
   - obs space:
       name: AMSUA-NOAA19

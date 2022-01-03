@@ -18,9 +18,6 @@ initial condition:
   date: &date '2018-04-15T00:00:00Z'
 background error:
   covariance model: ensemble
-  members: '5'
-  variables: *vars
-  date: *date
   localization:
     localization method: SABER
     saber block:

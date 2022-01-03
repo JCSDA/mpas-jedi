@@ -86,7 +86,6 @@ cost function:
         <<: *memberConfig2
       - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
         <<: *memberConfig3
-    variables: *incvars
   observations:
   - obs space:
       name: Radiosonde
