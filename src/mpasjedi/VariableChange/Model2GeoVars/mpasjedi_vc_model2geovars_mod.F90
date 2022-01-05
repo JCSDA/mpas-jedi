@@ -12,6 +12,7 @@ use fckit_log_module, only: fckit_log
 
 !oops
 use kinds, only : kind_real
+use oops_variables_mod, only: oops_variables
 
 !ufo
 use gnssro_mod_transform, only: geometric2geop
@@ -78,6 +79,7 @@ subroutine changevar(self, geom, xm, xg)
 
   ! pool-related pointers
   type(mpas_pool_type), pointer :: mFields
+  type (mpas_pool_type), pointer :: sfc_input
   type(mpas_pool_data_type), pointer :: mdata, gdata
 
   ! reusable fields
@@ -96,13 +98,18 @@ subroutine changevar(self, geom, xm, xg)
 
   ! surface variables
   character(len=MAXVARLEN), parameter :: &
-    MPASSfcClassifyNames(5) = &
+    MPASSfcNames(5) = &
       [ character(len=MAXVARLEN) :: 'ivgtyp', 'isltyp', 'landmask', 'xice', 'snowc']
   character(len=MAXVARLEN), parameter :: &
-    CRTMSfcClassifyNames(7) = &
-      [var_sfc_vegtyp, var_sfc_landtyp, var_sfc_soiltyp, &
+    ValidCRTMSfcNames(8) = &
+      [var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, &
+       var_sfc_vegtyp, var_sfc_soiltyp, &
        var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac]
-  type(mpas_pool_type), pointer :: CRTMSfcClassifyFields => null()
+  type(oops_variables) :: RequestedCRTMSfcNames
+  type(mpas_pool_type), pointer :: RequestedCRTMSfcFields => null()
+  character(len=MAXVARLEN), parameter :: &
+    AllCRTMLandTypeNames(3) = &
+      [var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, var_sfc_landtyp_npoess]
   integer, dimension(:), pointer :: vegtyp, soiltyp
   real(kind=kind_real), dimension(:), pointer :: wfrac, lfrac, ifrac, sfrac
 
@@ -111,7 +118,7 @@ subroutine changevar(self, geom, xm, xg)
 
   ! config members
   character(len=StrKIND), pointer :: &
-    config_microp_scheme, config_radt_cld_scheme
+    config_microp_scheme, config_radt_cld_scheme, mminlu
   logical, pointer :: config_microp_re
 
   ! convenient local variables
@@ -122,28 +129,86 @@ subroutine changevar(self, geom, xm, xg)
 
   ! CRTM surface type and fraction fields are interdependent
   ! pre-calculate all such fields if any are requested
-  if ( any(xg%has(CRTMSfcClassifyNames)) ) then
+  if ( any(xg%has(ValidCRTMSfcNames)) ) then
 
-    if (.not. all(xm%has(MPASSfcClassifyNames))) then
-      call abor1_ftn('mpasjedi_vc_model2geovars::changevar: xm must include MPASSfcClassifyNames!')
+    if (.not. all(xm%has(MPASSfcNames))) then
+      call abor1_ftn('mpasjedi_vc_model2geovars::changevar: xm must include MPASSfcNames!')
     end if
 
-    call da_template_pool(geom, CRTMSfcClassifyFields, size(CRTMSfcClassifyNames), CRTMSfcClassifyNames)
+    ! land type check
+    if (count(xg%has(AllCRTMLandTypeNames)) > 1) then
+      call abor1_ftn('mpasjedi_vc_model2geovars::changevar: '&
+                    &'can only produce one CRTM land surface classification at a time')
+    end if
+
+    ! mminlu: MPAS land surface classification system
+    call mpas_pool_get_subpool(geom % domain % blocklist % structs, 'sfc_input', sfc_input)
+    call mpas_pool_get_array(sfc_input, 'mminlu', mminlu)
+    ! possible values (see VEGPARM.TBL): "USGS", "MODIFIED_IGBP_MODIS_NOAH", "NLCD40", "USGS-RUC", "MODI-RUC"
+
+    RequestedCRTMSfcNames = oops_variables()
+    do iVar = 1, size(ValidCRTMSfcNames)
+      geovar = ValidCRTMSfcNames(ivar)
+      if (xg%has(geovar)) then
+        if (geovar == var_sfc_landtyp_usgs .and. trim(mminlu) /= 'USGS') then
+          ! fail if MPAS ivgtyp is inconsistent with var_sfc_landtyp_usgs
+          call abor1_ftn('mpasjedi_vc_model2geovars::changevar: '&
+                        &'the "USGS" CRTM land surface classification '&
+                        &'for CRTM ObsOperators associated with infrared instruments '&
+                        &'(i.e., obs operator.options.IRVISlandCoeff) '&
+                        &'can only be used with mminlu=USGS, not mminlu='//trim(mminlu))
+        end if
+        if (geovar == var_sfc_landtyp_igbp .and. trim(mminlu) /= 'MODIFIED_IGBP_MODIS_NOAH') then
+          ! fail if MPAS ivgtyp is inconsistent with var_sfc_landtyp_igbp
+          call abor1_ftn('mpasjedi_vc_model2geovars::changevar: '&
+                        &'the "IGBP" CRTM land surface classification '&
+                        &'for CRTM ObsOperators associated with infrared instruments '&
+                        &'(i.e., obs operator.options.IRVISlandCoeff) '&
+                        &'can only be used with mminlu=MODIFIED_IGBP_MODIS_NOAH, not mminlu='//trim(mminlu))
+        end if
+        call RequestedCRTMSfcNames%push_back(geovar)
+      end if
+    end do
+
+    call da_template_pool(geom, &
+                          RequestedCRTMSfcFields, &
+                          RequestedCRTMSfcNames%nvars(), &
+                          RequestedCRTMSfcNames%varlist())
 
     !! surface types
     ! land type
-    call xm%copy_to('ivgtyp', CRTMSfcClassifyFields, var_sfc_landtyp)
+    if (RequestedCRTMSfcNames%has(var_sfc_landtyp_usgs)) then
+      call xm%copy_to('ivgtyp', RequestedCRTMSfcFields, var_sfc_landtyp_usgs)
+    elseif (RequestedCRTMSfcNames%has(var_sfc_landtyp_igbp)) then
+      call xm%copy_to('ivgtyp', RequestedCRTMSfcFields, var_sfc_landtyp_igbp)
+    end if
+
+    ! For now, destruct RequestedCRTMSfcNames here, assuming that the ValidCRTMSfcNames referenced below are
+    ! requested in "xg". RequestedCRTMSfcNames could be used below for more error/consistency checking if UFO
+    ! GeoVar requests become more heterogeneous.
+    call RequestedCRTMSfcNames%destruct()
 
     ! veg type
     ! uses ivgtyp as input
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_vegtyp, vegtyp)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_vegtyp, vegtyp)
     call xm%get('ivgtyp', mdata)
-    do iCell = 1, nCells
-      vegtyp(iCell) = convert_type_veg(mdata%i1%array(iCell))
-    end do
+
+    select case (trim(mminlu))
+      case ('USGS')
+        do iCell = 1, nCells
+          vegtyp(iCell) = convert_type_veg_usgs(mdata%i1%array(iCell))
+        end do
+      case ('MODIFIED_IGBP_MODIS_NOAH')
+        do iCell = 1, nCells
+          vegtyp(iCell) = convert_type_veg_igbp(mdata%i1%array(iCell))
+        end do
+      case default
+        call abor1_ftn('mpasjedi_vc_model2geovars::changevar: invalid mminlu, must be one of'&
+                      &'[USGS, MODIFIED_IGBP_MODIS_NOAH]')
+    end select
 
     ! soil type
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_soiltyp, soiltyp)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_soiltyp, soiltyp)
     call xm%get('isltyp', mdata)
     do iCell = 1, nCells
       soiltyp(iCell) = convert_type_soil(mdata%i1%array(iCell))
@@ -152,24 +217,24 @@ subroutine changevar(self, geom, xm, xg)
     !! surface fractions
     ! land, will be adjusted later
     ! TODO: a binary landmask is a crude indicator of sub-grid land fraction
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_lfrac, lfrac)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_lfrac, lfrac)
     call xm%get('landmask', mdata) !'land-ocean mask (1=>land ; 0=>ocean)'
     lfrac(1:nCells) = real(mdata%i1%array(1:nCells), RKIND)
 
     ! ice
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_ifrac, ifrac)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_ifrac, ifrac)
     call xm%get('xice', mdata)     !'fractional area coverage of sea-ice'
     ifrac(1:nCells) = mdata%r1%array(1:nCells)
 
     ! snow
     ! TODO: Investigate. snowc varies between 0. and 1., but Registry description indicates it is binary.
     !       Similar comment to landmask.
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_sfrac, sfrac)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_sfrac, sfrac)
     call xm%get('snowc', mdata)    !'flag for snow on ground (0=>no snow; 1=>otherwise)'
     sfrac(1:nCells) = mdata%r1%array(1:nCells)
 
     ! water+snow+land
-    call mpas_pool_get_array(CRTMSfcClassifyFields, var_sfc_wfrac, wfrac)
+    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_wfrac, wfrac)
     do iCell = 1, nCells
       if (ifrac(iCell) > MPAS_JEDI_ZERO_kr) then
         sfrac(iCell) = max(min(sfrac(iCell), MPAS_JEDI_ONE_kr - ifrac(iCell)), MPAS_JEDI_ZERO_kr)
@@ -403,12 +468,13 @@ subroutine changevar(self, geom, xm, xg)
           call xm%get('tslb', mdata)
           gdata%r1%array(1:nCells) = mdata%r2%array(1,1:nCells) ! [K] -> [K]
 
-        case ( var_sfc_landtyp, var_sfc_vegtyp, var_sfc_soiltyp, &
+        case ( var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, &
+               var_sfc_vegtyp, var_sfc_soiltyp, &
                var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac )
-          ! CRTMSfcClassifyNames
+          ! RequestedCRTMSfcNames
           !-land_type_index, vegetation_type_index, soil_type
           !-water_area_fraction, land_area_fraction, ice_area_fraction, surface_snow_area_fraction
-          call xg%copy_from(geovar, CRTMSfcClassifyFields)
+          call xg%copy_from(geovar, RequestedCRTMSfcFields)
 
         case ( var_sfc_wspeed ) !-surface_wind_speed
           call xm%get('u10', ptrr1_a)
@@ -426,8 +492,8 @@ subroutine changevar(self, geom, xm, xg)
 
   end do !iVar
 
-  if (associated(CRTMSfcClassifyFields)) then
-    call mpas_pool_destroy_pool(CRTMSfcClassifyFields)
+  if (associated(RequestedCRTMSfcFields)) then
+    call mpas_pool_destroy_pool(RequestedCRTMSfcFields)
   end if
 
   deallocate(plevels)

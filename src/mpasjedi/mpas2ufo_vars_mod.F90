@@ -58,7 +58,7 @@ public :: effectrad_graupel, &
           effectrad_rainwater
 public :: pressure_half_to_full
 public :: geometricz_full_to_half
-public :: convert_type_soil, convert_type_veg
+public :: convert_type_soil, convert_type_veg_usgs, convert_type_veg_igbp
 !public :: uv_to_wdir
 
 ! model2geovars+tlad
@@ -82,11 +82,9 @@ contains
 !-------------------------------------------------------------------------------------------
 
 !-- from WRFDA/da_crtm.f90
-integer function convert_type_soil(type_in)
+function convert_type_soil(type_in) result(t)
   integer, intent(in) :: type_in
-  integer, parameter :: n_soil_type = 16  ! wrf num_soil_cat
-  integer, parameter :: wrf_to_crtm_soil(n_soil_type) = &
-    (/ 1, 1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9 /)
+  integer :: t
 
   ! CRTM soil types in crtm/src/SfcOptics/CRTM_MW_Land_SfcOptics.f90
   ! INTEGER, PARAMETER :: COARSE          =  1
@@ -99,46 +97,57 @@ integer function convert_type_soil(type_in)
   ! INTEGER, PARAMETER :: ORGANIC         =  8
   ! Note: 9 corresponds to glacial soil, for which the land fraction
   !       must be equal to zero.
+  integer, parameter :: n_soil_type = 16  ! wrf num_soil_cat
+  integer, parameter :: wrf_to_crtm_soil(n_soil_type) = &
+    (/ 1, 1, 4, 2, 2, 8, 7, 2, 6, 5, 2, 3, 8, 1, 6, 9 /)
 
-  convert_type_soil = max( 1, wrf_to_crtm_soil(type_in) )
+  t = max( 1, wrf_to_crtm_soil(type_in) )
+end function convert_type_soil! CRTM vegetation types in crtm/src/SfcOptics/CRTM_MW_Land_SfcOptics.f90
 
-end function convert_type_soil
+! CRTM vegetation types in crtm/src/SfcOptics/CRTM_MW_Land_SfcOptics.f90
+! INTEGER, PARAMETER :: BROADLEAF_EVERGREEN_TREES      =  1
+! INTEGER, PARAMETER :: BROADLEAF_DECIDUOUS_TREES      =  2
+! INTEGER, PARAMETER :: BROADLEAF_NEEDLELEAF_TREES     =  3
+! INTEGER, PARAMETER :: NEEDLELEAF_EVERGREEN_TREES     =  4
+! INTEGER, PARAMETER :: NEEDLELEAF_DECIDUOUS_TREES     =  5
+! INTEGER, PARAMETER :: BROADLEAF_TREES_GROUNDCOVER    =  6
+! INTEGER, PARAMETER :: GROUNDCOVER                    =  7
+! INTEGER, PARAMETER :: GROADLEAF_SHRUBS_GROUNDCOVER   =  8
+! INTEGER, PARAMETER :: BROADLEAF_SHRUBS_BARE_SOIL     =  9
+! INTEGER, PARAMETER :: DWARF_TREES_SHRUBS_GROUNDCOVER = 10
+! INTEGER, PARAMETER :: BARE_SOIL                      = 11
+! INTEGER, PARAMETER :: CULTIVATIONS                   = 12
+! Note: 13 corresponds to glacial vegetation, for which the land fraction
+!       must be equal to zero.
 
-integer function convert_type_veg(type_in)
+function convert_type_veg_usgs(type_in) result(t)
   integer, intent(in) :: type_in
-  integer, parameter :: USGS_n_type = 24
-  integer, parameter :: IGBP_n_type = 20
-
-  ! CRTM vegetation types in crtm/src/SfcOptics/CRTM_MW_Land_SfcOptics.f90
-  ! INTEGER, PARAMETER :: BROADLEAF_EVERGREEN_TREES      =  1
-  ! INTEGER, PARAMETER :: BROADLEAF_DECIDUOUS_TREES      =  2
-  ! INTEGER, PARAMETER :: BROADLEAF_NEEDLELEAF_TREES     =  3
-  ! INTEGER, PARAMETER :: NEEDLELEAF_EVERGREEN_TREES     =  4
-  ! INTEGER, PARAMETER :: NEEDLELEAF_DECIDUOUS_TREES     =  5
-  ! INTEGER, PARAMETER :: BROADLEAF_TREES_GROUNDCOVER    =  6
-  ! INTEGER, PARAMETER :: GROUNDCOVER                    =  7
-  ! INTEGER, PARAMETER :: GROADLEAF_SHRUBS_GROUNDCOVER   =  8
-  ! INTEGER, PARAMETER :: BROADLEAF_SHRUBS_BARE_SOIL     =  9
-  ! INTEGER, PARAMETER :: DWARF_TREES_SHRUBS_GROUNDCOVER = 10
-  ! INTEGER, PARAMETER :: BARE_SOIL                      = 11
-  ! INTEGER, PARAMETER :: CULTIVATIONS                   = 12
-  ! Note: 13 corresponds to glacial vegetation, for which the land fraction
-  !       must be equal to zero.
+  integer :: t
 
   ! vegetation type mapping for GFS classification scheme
   ! REL-2.1.3.CRTM_User_Guide.pdf table 4.16
-  integer, parameter :: usgs_to_crtm_mw(USGS_n_type) = &
+  integer, parameter :: n_type = 24
+  integer, parameter :: usgs_to_crtm_veg(n_type) = &
      (/  7, 12, 12, 12, 12, 12,  7,  9,  8,  6, &
          2,  5,  1,  4,  3,  0,  8,  8, 11, 10, &
         10, 10, 11, 13 /)
-  integer, parameter :: igbp_to_crtm_mw(IGBP_n_type) = &
+
+  t = max( 1, usgs_to_crtm_veg(type_in) )
+end function convert_type_veg_usgs
+
+function convert_type_veg_igbp(type_in) result(t)
+  integer, intent(in) :: type_in
+  integer :: t
+
+  ! vegetation type mapping for GFS classification scheme
+  ! REL-2.1.3.CRTM_User_Guide.pdf table 4.16
+  integer, parameter :: n_type = 20
+  integer, parameter :: igbp_to_crtm_veg(n_type) = &
      (/  4,  1,  5,  2,  3,  8,  9,  6,  6,  7, &
          8, 12,  7, 12, 13, 11,  0, 10, 10, 11 /)
 
-  !TODO: make this general: consider both dataset, usgs & igbp
-  convert_type_veg = max( 1, usgs_to_crtm_mw(type_in) )
-
-end function convert_type_veg
+  t = max( 1, igbp_to_crtm_veg(type_in) )
+end function convert_type_veg_igbp
 
 !  !-- from GSI/crtm_interface.f90
 !  integer(i_kind), parameter :: USGS_N_TYPES = 24
