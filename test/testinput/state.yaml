@@ -23,8 +23,6 @@ state test:
     - uReconstructMeridional
     - surface_pressure
     date: *date
-    mean: 8
-    sinus: 2
   norm generated state: 20000.378266179847
   tolerance: 1.0e-08
   write then read test:

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -9,9 +9,6 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
-
-#include "eckit/config/LocalConfiguration.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
@@ -38,18 +35,22 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
 }
 // -----------------------------------------------------------------------------
 StateMPAS::StateMPAS(const GeometryMPAS & geom,
-                     const eckit::Configuration & config)
-  : geom_(new GeometryMPAS(geom)), vars_(config, "state variables"),
-    time_(util::DateTime())
+                     const StateMPASParameters & params)
+  : geom_(new GeometryMPAS(geom)), time_(util::DateTime())
 {
   oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
 
+  // Set up vars
+  vars_ = oops::Variables(params.state_variables.value());
+
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
 
-  if (config.has("analytic init")) {
-    analytic_init(config);
+  if (params.analytic_init.value() != boost::none) {
+    analytic_init(params);
   } else {
-    read(config);
+    // filename must be set if not analytic initial condition
+    ASSERT(params.filename.value() != boost::none);
+    read(params);
   }
 
   oops::Log::trace() << "StateMPAS::StateMPAS created and read in."
@@ -162,18 +163,18 @@ void StateMPAS::deserialize(const std::vector<double> & vect, size_t & index) {
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void StateMPAS::read(const eckit::Configuration & config) {
-  mpas_state_read_file_f90(keyState_, config, time_);
+void StateMPAS::read(const StateMPASParameters & params) {
+  mpas_state_read_file_f90(keyState_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::analytic_init(const eckit::Configuration & config) {
+void StateMPAS::analytic_init(const StateMPASParameters & params) {
   oops::Log::trace() << "StateMPAS analytic init starting" << std::endl;
-  mpas_state_analytic_init_f90(keyState_, config, time_);
+  mpas_state_analytic_init_f90(keyState_, params.toConfiguration(), time_);
   oops::Log::trace() << "StateMPAS analytic init done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::write(const eckit::Configuration & config) const {
-  mpas_state_write_file_f90(keyState_, config, time_);
+void StateMPAS::write(const StateMPASWriteParameters & params) const {
+  mpas_state_write_file_f90(keyState_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
 void StateMPAS::print(std::ostream & os) const {

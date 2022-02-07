@@ -8,8 +8,6 @@ getvalues test:
     - virtual_temperature
     - air_pressure
     date: '2018-04-15T00:00:00Z'
-    mean: 8
-    sinus: 2
   interpolation tolerance: 5.0e-3
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"

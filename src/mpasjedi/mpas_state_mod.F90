@@ -174,7 +174,6 @@ end subroutine add_incr
 !! and the associated Summer School, sponsored by NOAA, NSF, DOE, NCAR, and the University of Michigan.
 !!
 !! Currently implemented options for analytic_init include:
-!! * invent-state: Backward compatibility with original analytic init option
 !! * dcmip-test-1-1: 3D deformational flow
 !! * dcmip-test-1-2: 3D Hadley-like meridional circulation
 !! * dcmip-test-3-1: Non-hydrostatic gravity wave
@@ -220,13 +219,8 @@ subroutine analytic_IC(self, f_conf, vdate)
   ! Establish member pointer to geometry
   geom => self%geom
 
-  If (f_conf%has("analytic init.method")) Then
-     call f_conf%get_or_die("analytic init.method",str)
-     IC = str
-  Else
-     ! This default value is for backward compatibility
-     IC = "invent-state"
-  EndIf
+  call f_conf%get_or_die("analytic init.method",str)
+  IC = str
   call fckit_log%info ("mpas_state:analytic_init: "//IC)
 
   call f_conf%get_or_die("date",str)

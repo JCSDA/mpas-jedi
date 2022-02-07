@@ -23,11 +23,4 @@ states:
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: '2018-04-15T00:00:00Z'
   output:
-    state variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
     filename: "Data/states/convert_bumpinterp.2018-04-15_00.00.00.nc"
-    date: '2018-04-15T00:00:00Z'

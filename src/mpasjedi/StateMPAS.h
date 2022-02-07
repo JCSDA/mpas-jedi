@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -20,10 +20,7 @@
 #include "oops/util/Serializable.h"
 
 #include "mpasjedi/StateMPASFortran.h"
-
-namespace eckit {
-  class Configuration;
-}
+#include "mpasjedi/StateMPASParameters.h"
 
 namespace ufo {
   class GeoVaLs;
@@ -52,10 +49,13 @@ class StateMPAS : public util::Printable,
  public:
   static const std::string classname() {return "mpas::StateMPAS";}
 
+  typedef StateMPASParameters Parameters_;
+  typedef StateMPASWriteParameters WriteParameters_;
+
 /// Constructor, destructor
   StateMPAS(const GeometryMPAS &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
-  StateMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  StateMPAS(const GeometryMPAS &, const Parameters_ &);
   StateMPAS(const GeometryMPAS &, const StateMPAS &);
   StateMPAS(const StateMPAS &);
   ~StateMPAS();
@@ -77,8 +77,8 @@ class StateMPAS : public util::Printable,
   void deserialize(const std::vector<double> &, size_t &) override;
 
 /// I/O and diagnostics
-  void read(const eckit::Configuration &);
-  void write(const eckit::Configuration &) const;
+  void read(const Parameters_ &);
+  void write(const WriteParameters_ &) const;
   double norm() const;
 
   std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
@@ -95,7 +95,7 @@ class StateMPAS : public util::Printable,
 
  private:
 /// Analytic intialization
-  void analytic_init(const eckit::Configuration &);
+  void analytic_init(const Parameters_ &);
 
   void print(std::ostream &) const override;
   F90state keyState_;

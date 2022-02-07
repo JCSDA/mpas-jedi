@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -24,10 +24,7 @@
 #include "oops/util/Serializable.h"
 
 #include "mpasjedi/IncrementMPASFortran.h"
-
-namespace eckit {
-  class Configuration;
-}
+#include "mpasjedi/IncrementMPASParameters.h"
 
 namespace ufo {
   class GeoVaLs;
@@ -58,6 +55,10 @@ class IncrementMPAS : public util::Printable,
  public:
   static const std::string classname() {return "mpas::IncrementMPAS";}
 
+  typedef IncrementMPASReadParameters ReadParameters_;
+  typedef IncrementMPASWriteParameters WriteParameters_;
+  typedef DiracParameters DiracParameters_;
+
 /// Constructor, destructor
   IncrementMPAS(const GeometryMPAS &, const oops::Variables &,
                 const util::DateTime &);
@@ -80,7 +81,7 @@ class IncrementMPAS : public util::Printable,
   double dot_product_with(const IncrementMPAS &) const;
   void schur_product_with(const IncrementMPAS &);
   void random();
-  void dirac(const eckit::Configuration &);
+  void dirac(const DiracParameters_ &);
 
   /// ATLAS
   void setAtlas(atlas::FieldSet *) const;
@@ -88,8 +89,8 @@ class IncrementMPAS : public util::Printable,
   void fromAtlas(atlas::FieldSet *);
 
 /// I/O and diagnostics
-  void read(const eckit::Configuration &);
-  void write(const eckit::Configuration &) const;
+  void read(const ReadParameters_ &);
+  void write(const WriteParameters_ &) const;
   double norm() const;
 
   void updateTime(const util::Duration & dt) {time_ += dt;}

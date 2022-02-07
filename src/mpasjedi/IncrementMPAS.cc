@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -9,9 +9,6 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
-
-#include "eckit/config/LocalConfiguration.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "oops/util/Logger.h"
 
@@ -177,12 +174,12 @@ void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void IncrementMPAS::read(const eckit::Configuration & config) {
-  mpas_increment_read_file_f90(keyInc_, config, time_);
+void IncrementMPAS::read(const IncrementMPASReadParameters & params) {
+  mpas_increment_read_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::write(const eckit::Configuration & config) const {
-  mpas_increment_write_file_f90(keyInc_, config, time_);
+void IncrementMPAS::write(const IncrementMPASWriteParameters & params) const {
+  mpas_increment_write_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
 /// Serialization
@@ -260,8 +257,8 @@ void IncrementMPAS::print(std::ostream & os) const {
   os.copyfmt(oldState);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::dirac(const eckit::Configuration & config) {
-  mpas_increment_dirac_f90(keyInc_, config);
+void IncrementMPAS::dirac(const DiracParameters & params) {
+  mpas_increment_dirac_f90(keyInc_, params.toConfiguration());
 }
 // -----------------------------------------------------------------------------
 
