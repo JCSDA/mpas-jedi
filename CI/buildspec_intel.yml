@@ -119,13 +119,13 @@ phases:
         && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
         && export PATH=/usr/local/lib:$PATH
         && cd /home/jedi
-        && ecbuild /jcsda/mpas-bundle/
+        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelwithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
         && cd /home/jedi/mpas-jedi
         && cp ../DartConfiguration.tcl .
         && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
         && sed -i 's/home\/jedi/home\/jedi\/mpas-jedi/' DartConfiguration.tcl
         && cat DartConfiguration.tcl
-        && make -j4"
+        && make -j3"
 
       - echo $CODEBUILD_BUILD_SUCCEEDING
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
