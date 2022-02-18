@@ -78,7 +78,3 @@ bump:
     filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  - parameter: hyb_coef
-    filename: Data/bump/mpas.hyb_sta_coef.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control

@@ -1,4 +1,4 @@
-Input Dirac increment: 
+Input Dirac increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
 Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
@@ -7,11 +7,11 @@ Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.140643185e-02 : uReconstr
 Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
 Norm of stddev: 1.115e+01
-Covariance(SABER) * Increment: 
+Covariance(SABER) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
 Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
 Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : spechum
-Fld=3  Min=0.000000000e+00, Max=7.448172288e-01, RMS=1.369060295e-02 : uReconstructZonal
+Fld=3  Min=0.000000000e+00, Max=6.645752029e-01, RMS=1.406628112e-02 : uReconstructZonal
 Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure

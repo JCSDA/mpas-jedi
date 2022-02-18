@@ -828,7 +828,7 @@ subroutine initialize_bumpinterp(geom_to, geom_from, bumpinterp)
    lons_to(:) = geom_to%lonCell( 1:geom_to%nCellsSolve ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
 
    call bumpinterp%init(geom_from%f_comm,afunctionspace_in=geom_from%afunctionspace,lon_out=lons_to,lat_out=lats_to, &
-      & nl=geom_from%nVertLevels)
+      & nl0=geom_from%nVertLevels)
 
    ! Release memory
    ! --------------

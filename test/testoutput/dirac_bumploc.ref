@@ -1,4 +1,4 @@
-Input Dirac increment: 
+Input Dirac increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
 Fld=1  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : temperature
@@ -6,19 +6,19 @@ Fld=2  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : spechum
 Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.140643185e-02 : uReconstructZonal
 Fld=4  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
-Covariance(ensemble) * Increment: 
+Covariance(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=-1.083658559e-01, Max=1.713254686e-01, RMS=2.899607350e-03 : temperature
-Fld=2  Min=-3.143506798e-05, Max=2.115913343e-05, RMS=3.920041934e-07 : spechum
-Fld=3  Min=-1.413919412e-01, Max=7.174119878e-01, RMS=1.043899197e-02 : uReconstructZonal
-Fld=4  Min=-3.256853221e-01, Max=8.375380853e-01, RMS=1.068982631e-02 : uReconstructMeridional
+Fld=1  Min=-1.891111988e-01, Max=2.048906891e-01, RMS=5.723961285e-03 : temperature
+Fld=2  Min=-5.708524225e-05, Max=5.717127025e-05, RMS=1.504397035e-06 : spechum
+Fld=3  Min=-5.500712274e-01, Max=7.174119878e-01, RMS=1.881387123e-02 : uReconstructZonal
+Fld=4  Min=-5.247603243e-01, Max=1.598680884e+00, RMS=2.380808986e-02 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure
-Localization(ensemble) * Increment: 
+Localization(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : spechum
-Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : uReconstructZonal
-Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.795853716e-02 : uReconstructMeridional
+Fld=1  Min=0.000000000e+00, Max=1.000000000e+00, RMS=6.431865121e-02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.000000000e+00, RMS=6.431865121e-02 : spechum
+Fld=3  Min=0.000000000e+00, Max=1.000000000e+00, RMS=6.431865121e-02 : uReconstructZonal
+Fld=4  Min=0.000000000e+00, Max=1.000000000e+00, RMS=6.431865121e-02 : uReconstructMeridional
 Fld=5  Min=0.000000000e+00, Max=0.000000000e+00, RMS=0.000000000e+00 : surface_pressure

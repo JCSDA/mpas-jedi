@@ -1,20 +1,20 @@
 CostJb   : Nonlinear Jb = 0
 CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 7592.56, nobs = 517, Jo/n = 14.6858, err = 2.08168
 CostFunction: Nonlinear J = 7592.56
-DRIPCGMinimizer: reduction in residual norm = 0.00282665
+DRIPCGMinimizer: reduction in residual norm = 0.00280748
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 24
-Fld=1  Min=1.979741192e+02, Max=3.050728896e+02, RMS=2.439471601e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.900357029e-02, RMS=4.631859798e-03 : spechum
-Fld=3  Min=-4.206447979e+01, Max=8.385673487e+01, RMS=1.763982268e+01 : uReconstructZonal
-Fld=4  Min=-5.650920637e+01, Max=5.924984916e+01, RMS=9.251784169e+00 : uReconstructMeridional
-Fld=5  Min=5.674889828e+04, Max=1.048229708e+05, RMS=9.866925794e+04 : surface_pressure
-Fld=6  Min=2.521956017e+02, Max=7.350205514e+02, RMS=4.410425801e+02 : theta
-Fld=7  Min=2.532485146e-02, Max=1.339477638e+00, RMS=6.141077724e-01 : rho
-Fld=8  Min=-8.266375026e+01, Max=8.060413664e+01, RMS=1.460343185e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.937170178e-02, RMS=4.694555704e-03 : qv
-Fld=10  Min=1.514390269e+03, Max=9.814375344e+04, RMS=4.890316857e+04 : pressure
+Fld=1  Min=1.985959916e+02, Max=3.049180838e+02, RMS=2.439606598e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.894912494e-02, RMS=4.631928281e-03 : spechum
+Fld=3  Min=-4.190777029e+01, Max=8.406998326e+01, RMS=1.757302350e+01 : uReconstructZonal
+Fld=4  Min=-5.642441097e+01, Max=5.921423123e+01, RMS=9.243404442e+00 : uReconstructMeridional
+Fld=5  Min=5.676928388e+04, Max=1.048045336e+05, RMS=9.866850748e+04 : surface_pressure
+Fld=6  Min=2.520337807e+02, Max=7.337314263e+02, RMS=4.410838457e+02 : theta
+Fld=7  Min=2.536963168e-02, Max=1.339555985e+00, RMS=6.141037487e-01 : rho
+Fld=8  Min=-8.287859040e+01, Max=8.078236522e+01, RMS=1.456082540e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.931512975e-02, RMS=4.694663691e-03 : qv
+Fld=10  Min=1.516241092e+03, Max=9.812577917e+04, RMS=4.890280706e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.060137952e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.896203299e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.327318748e-01 : snowc
@@ -28,35 +28,35 @@ Fld=20  Min=-2.615361105e+01, Max=1.969265823e+01, RMS=5.259553659e+00 : v10
 Fld=21  Min=0.000000000e+00, Max=6.479513502e+00, RMS=1.392975265e+00 : lai
 Fld=22  Min=2.000000011e-02, Max=1.000000000e+00, RMS=8.892706816e-01 : smois
 Fld=23  Min=2.185782809e+02, Max=3.158968977e+02, RMS=2.752438367e+02 : tslb
-Fld=24  Min=-4.346841718e+03, Max=6.203089933e+03, RMS=2.419096248e+03 : pressure_p
+Fld=24  Min=-4.375425215e+03, Max=6.196125283e+03, RMS=2.419515722e+03 : pressure_p
 Obs bias coefficients: 
 ---------------------------------------------------------------
-            constant:  Min=     -1.12666663,  Max=      1.14693581,  Norm=      2.52512596
-  lapse_rate_order_2:  Min=     -0.11518106,  Max=     31.84888832,  Norm=     31.87995883
-          lapse_rate:  Min=     -6.02337628,  Max=      0.46371151,  Norm=      6.11521610
-          emissivity:  Min=     -1.81455748,  Max=      9.45637703,  Norm=      9.76685313
-  scan_angle_order_4:  Min=     -9.11237602,  Max=      1.24778838,  Norm=     14.30537626
-  scan_angle_order_3:  Min=     -1.28295638,  Max=      2.27660403,  Norm=      3.25852718
-  scan_angle_order_2:  Min=     -4.91382677,  Max=      3.53565633,  Norm=      7.50502160
-          scan_angle:  Min=     -0.75557964,  Max=      0.06682646,  Norm=      1.29288784
+            constant:  Min=     -1.12665872,  Max=      1.14695005,  Norm=      2.52511914
+  lapse_rate_order_2:  Min=     -0.11496651,  Max=     31.87035843,  Norm=     31.90140019
+          lapse_rate:  Min=     -6.02317367,  Max=      0.46375290,  Norm=      6.11501349
+          emissivity:  Min=     -1.81454509,  Max=      9.45637703,  Norm=      9.76685163
+  scan_angle_order_4:  Min=     -9.11236641,  Max=      1.24787426,  Norm=     14.30526250
+  scan_angle_order_3:  Min=     -1.28288135,  Max=      2.27650589,  Norm=      3.25834697
+  scan_angle_order_2:  Min=     -4.91379271,  Max=      3.53571278,  Norm=      7.50502426
+          scan_angle:  Min=     -0.75557715,  Max=      0.06682117,  Norm=      1.29285073
 ---------------------------------------------------------------
-CostJb   : Nonlinear Jb = 24610.20383067
-CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 5065.43677859, nobs = 517, Jo/n = 9.79775006, err = 2.08167779
-CostFunction: Nonlinear J = 29675.64060926
-DRIPCGMinimizer: reduction in residual norm = 0.00012703
+CostJb   : Nonlinear Jb = 24726.73931793
+CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 4934.91255177, nobs = 517, Jo/n = 9.54528540, err = 2.08167779
+CostFunction: Nonlinear J = 29661.65186970
+DRIPCGMinimizer: reduction in residual norm = 0.00016601
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 24
-Fld=1  Min=1.977318037e+02, Max=3.050836324e+02, RMS=2.439537949e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.899601205e-02, RMS=4.631450563e-03 : spechum
-Fld=3  Min=-4.161296937e+01, Max=8.386496754e+01, RMS=1.760862027e+01 : uReconstructZonal
-Fld=4  Min=-5.649854111e+01, Max=5.924597325e+01, RMS=9.251501882e+00 : uReconstructMeridional
-Fld=5  Min=5.674904990e+04, Max=1.048203391e+05, RMS=9.866969493e+04 : surface_pressure
-Fld=6  Min=2.521400591e+02, Max=7.342597770e+02, RMS=4.410754901e+02 : theta
-Fld=7  Min=2.533108900e-02, Max=1.339543175e+00, RMS=6.141123727e-01 : rho
-Fld=8  Min=-8.267166652e+01, Max=8.060968121e+01, RMS=1.458419080e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.936384794e-02, RMS=4.694138660e-03 : qv
-Fld=10  Min=1.514716343e+03, Max=9.814149154e+04, RMS=4.890335115e+04 : pressure
+Fld=1  Min=1.986647052e+02, Max=3.049170059e+02, RMS=2.439632749e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.894905174e-02, RMS=4.631858226e-03 : spechum
+Fld=3  Min=-4.168634670e+01, Max=8.404272074e+01, RMS=1.756553223e+01 : uReconstructZonal
+Fld=4  Min=-5.642617011e+01, Max=5.921442106e+01, RMS=9.244192385e+00 : uReconstructMeridional
+Fld=5  Min=5.676868171e+04, Max=1.048051233e+05, RMS=9.866877055e+04 : surface_pressure
+Fld=6  Min=2.520284197e+02, Max=7.337155898e+02, RMS=4.410906364e+02 : theta
+Fld=7  Min=2.538632657e-02, Max=1.339577068e+00, RMS=6.141056108e-01 : rho
+Fld=8  Min=-8.287240979e+01, Max=8.072322974e+01, RMS=1.455642831e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.931505369e-02, RMS=4.694592748e-03 : qv
+Fld=10  Min=1.514874161e+03, Max=9.812640794e+04, RMS=4.890294197e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.060137952e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=1.896203299e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.327318748e-01 : snowc
@@ -70,18 +70,18 @@ Fld=20  Min=-2.615361105e+01, Max=1.969265823e+01, RMS=5.259553659e+00 : v10
 Fld=21  Min=0.000000000e+00, Max=6.479513502e+00, RMS=1.392975265e+00 : lai
 Fld=22  Min=2.000000011e-02, Max=1.000000000e+00, RMS=8.892706816e-01 : smois
 Fld=23  Min=2.185782809e+02, Max=3.158968977e+02, RMS=2.752438367e+02 : tslb
-Fld=24  Min=-4.349934928e+03, Max=6.203170315e+03, RMS=2.419207119e+03 : pressure_p
+Fld=24  Min=-4.374876533e+03, Max=6.196948100e+03, RMS=2.419557469e+03 : pressure_p
 Obs bias coefficients: 
 ---------------------------------------------------------------
-            constant:  Min=     -1.12666433,  Max=      1.14678052,  Norm=      2.52492859
-  lapse_rate_order_2:  Min=     -0.10949547,  Max=     30.79055289,  Norm=     30.82059294
-          lapse_rate:  Min=     -6.03679699,  Max=      0.46418694,  Norm=      6.12907823
-          emissivity:  Min=     -1.81455755,  Max=      9.45637703,  Norm=      9.76685282
-  scan_angle_order_4:  Min=     -9.11237603,  Max=      1.24768791,  Norm=     14.30651731
-  scan_angle_order_3:  Min=     -1.28633810,  Max=      2.27721215,  Norm=      3.26063448
-  scan_angle_order_2:  Min=     -4.91389880,  Max=      3.53499684,  Norm=      7.50434475
-          scan_angle:  Min=     -0.75557964,  Max=      0.06682656,  Norm=      1.29315166
+            constant:  Min=     -1.12665690,  Max=      1.14681124,  Norm=      2.52492960
+  lapse_rate_order_2:  Min=     -0.10926689,  Max=     31.05398496,  Norm=     31.08373224
+          lapse_rate:  Min=     -6.04012364,  Max=      0.46426331,  Norm=      6.13234193
+          emissivity:  Min=     -1.81454512,  Max=      9.45637703,  Norm=      9.76685133
+  scan_angle_order_4:  Min=     -9.11236642,  Max=      1.24747653,  Norm=     14.30609661
+  scan_angle_order_3:  Min=     -1.28468598,  Max=      2.27708852,  Norm=      3.25936673
+  scan_angle_order_2:  Min=     -4.91389754,  Max=      3.53509363,  Norm=      7.50442457
+          scan_angle:  Min=     -0.75557713,  Max=      0.06682133,  Norm=      1.29282886
 ---------------------------------------------------------------
-CostJb   : Nonlinear Jb = 24692.69641230
-CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 4921.43579261, nobs = 517, Jo/n = 9.51921817, err = 2.08167779
-CostFunction: Nonlinear J = 29614.13220492
+CostJb   : Nonlinear Jb = 24793.46234233
+CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 4839.21949934, nobs = 517, Jo/n = 9.36019246, err = 2.08167779
+CostFunction: Nonlinear J = 29632.68184167

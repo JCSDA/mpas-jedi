@@ -128,7 +128,7 @@ subroutine getvalues_base_create(self, geom, locs, f_conf)
 
   if (self%use_bump_interp) then
     call self%bumpinterp%init(geom%f_comm, afunctionspace_in=geom%afunctionspace, lon_out=lons, lat_out=lats, &
-      & nl=geom%nVertLevels)
+      & nl0=geom%nVertLevels)
   else
     call initialize_uns_interp(self, geom, lats, lons)
   endif
