@@ -1,11 +1,9 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
-
-#include "eckit/config/LocalConfiguration.h"
 
 #include "oops/util/abor1_cpp.h"
 #include "oops/util/DateTime.h"
@@ -22,15 +20,15 @@ namespace mpas {
 static oops::interface::LinearModelMaker<MPASTraits, TlmMPAS> makerMPASTLM_("MPASTLM");
 // -----------------------------------------------------------------------------
 TlmMPAS::TlmMPAS(const GeometryMPAS & resol,
-                 const eckit::Configuration & tlConf)
-  : keyConfig_(0), tstep_(), resol_(resol), traj_(),
-    lrmodel_(resol_, eckit::LocalConfiguration(tlConf, "trajectory")),
-    linvars_(tlConf, "tlm variables")
+                 const Parameters_ & params)
+  : keyConfig_(0), tstep_(params.tlmtstep), resol_(resol), traj_(),
+    lrmodel_(resol_, params.tlmparams),
+    linvars_(params.tlmvars)
 
 {
-  tstep_ = util::Duration(tlConf.getString("tstep"));
+  tstep_ = util::Duration(params.tlmtstep);
 
-  mpas_model_setup_f90(tlConf, resol_.toFortran(), keyConfig_);
+  mpas_model_setup_f90(params.toConfiguration(), resol_.toFortran(), keyConfig_);
 
   oops::Log::trace() << "TlmMPAS created" << std::endl;
 }

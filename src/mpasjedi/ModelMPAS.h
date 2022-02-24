@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -16,12 +16,10 @@
 #include "oops/util/ObjectCounter.h"
 
 #include "mpasjedi/GeometryMPAS.h"
+#include "mpasjedi/ModelMPASParameters.h"
 #include "mpasjedi/MPASTraits.h"
 
 // Forward declarations
-namespace eckit {
-  class Configuration;
-}
 
 namespace oops {
   class Variables;
@@ -42,7 +40,9 @@ class ModelMPAS: public oops::interface::ModelBase<MPASTraits>,
  public:
   static const std::string classname() {return "mpas::ModelMPAS";}
 
-  ModelMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  typedef ModelMPASParameters Parameters_;
+
+  ModelMPAS(const GeometryMPAS &, const ModelMPASParameters &);
   ~ModelMPAS();
 
 /// Prepare model integration

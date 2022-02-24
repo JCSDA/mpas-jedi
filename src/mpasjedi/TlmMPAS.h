@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -19,20 +19,18 @@
 #include "mpasjedi/Fortran.h"
 #include "mpasjedi/ModelMPAS.h"
 #include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/TlmMPASParameters.h"
 
 // Forward declarations
-namespace eckit {
-  class Configuration;
-}
 
 namespace mpas {
   class StateMPAS;
   class IncrementMPAS;
 
 // -----------------------------------------------------------------------------
-/// LFRic linear model definition.
+/// MPAS linear model definition.
 /*!
- *  LFRic linear model definition and configuration parameters.
+ *  MPAS linear model definition and configuration parameters.
  */
 
 class TlmMPAS: public oops::interface::LinearModelBase<MPASTraits>,
@@ -40,7 +38,9 @@ class TlmMPAS: public oops::interface::LinearModelBase<MPASTraits>,
  public:
   static const std::string classname() {return "mpas::TlmMPAS";}
 
-  TlmMPAS(const GeometryMPAS &, const eckit::Configuration &);
+  typedef TlmMPASParameters Parameters_;
+
+  TlmMPAS(const GeometryMPAS &, const  TlmMPASParameters &);
   ~TlmMPAS();
 
 /// Model trajectory computation

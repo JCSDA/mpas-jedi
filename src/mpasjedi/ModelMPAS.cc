@@ -1,14 +1,9 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
-
-#include <vector>
-
-#include "eckit/config/Configuration.h"
-#include "eckit/exception/Exceptions.h"
 
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
@@ -17,6 +12,7 @@
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/ModelBiasMPAS.h"
 #include "mpasjedi/ModelMPAS.h"
+#include "mpasjedi/ModelMPASParameters.h"
 #include "mpasjedi/StateMPAS.h"
 
 namespace mpas {
@@ -24,14 +20,14 @@ namespace mpas {
 static oops::interface::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
 ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
-                     const eckit::Configuration & model)
-  : keyModel_(0), tstep_(0), geom_(resol),
-    vars_(model, "model variables")
+                     const ModelMPASParameters & params)
+  : keyModel_(0), tstep_(params.tstep), geom_(resol),
+    vars_(params.vars)
 {
   oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
-  tstep_ = util::Duration(model.getString("tstep"));
+  tstep_ = util::Duration(params.tstep);
   oops::Log::trace() << "ModelMPAS::tstep_" << tstep_ << std::endl;
-  mpas_model_setup_f90(model, geom_.toFortran(), keyModel_);
+  mpas_model_setup_f90(params.toConfiguration(), geom_.toFortran(), keyModel_);
   oops::Log::trace() << "ModelMPAS created" << std::endl;
 }
 // -----------------------------------------------------------------------------
