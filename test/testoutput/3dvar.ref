@@ -20,11 +20,11 @@ Fld=7  Min=0.000000000e+00, Max=1.430527132e-04, RMS=7.338121863e-06 : qi
 Fld=8  Min=0.000000000e+00, Max=2.236804685e-04, RMS=6.491445519e-06 : qr
 Fld=9  Min=0.000000000e+00, Max=9.508386473e-04, RMS=2.033562172e-05 : qs
 Fld=10  Min=0.000000000e+00, Max=3.992687032e-04, RMS=7.802161305e-06 : qg
-Fld=11  Min=2.518572794e+02, Max=7.256384909e+02, RMS=4.410815210e+02 : theta
-Fld=12  Min=2.565533231e-02, Max=1.333219719e+00, RMS=6.142553264e-01 : rho
+Fld=11  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410313531e+02 : theta
+Fld=12  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201745473e-01 : rho
 Fld=13  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434597828e+01 : u
 Fld=14  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693178672e-03 : qv
-Fld=15  Min=1.514846240e+03, Max=9.802181084e+04, RMS=4.890329770e+04 : pressure
+Fld=15  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931361407e+04 : pressure
 Fld=16  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=17  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=18  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.336989268e-01 : snowc
@@ -39,32 +39,32 @@ Fld=26  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00 : lai
 Fld=27  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Fld=28  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
 CostJb   : Nonlinear Jb = 1.40911e-06
-CostJo   : Nonlinear Jo(Radiosonde) = 904.289, nobs = 961, Jo/n = 0.940988, err = 1.99065
-CostJo   : Nonlinear Jo(Aircraft) = 1327.52, nobs = 1568, Jo/n = 0.846634, err = 2.30389
-CostJo   : Nonlinear Jo(GnssroRef) = 0.00454071, nobs = 1, Jo/n = 0.00454071, err = 3.35131
-CostJo   : Nonlinear Jo(SfcPCorrected) = 654.62, nobs = 49, Jo/n = 13.3596, err = 146.496
-CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 6880.36, nobs = 544, Jo/n = 12.6477, err = 1.36768
-CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1363.96, nobs = 355, Jo/n = 3.84213, err = 2.64254
-CostFunction: Nonlinear J = 11130.7
-DRIPCGMinimizer: reduction in residual norm = 0.373865
+CostJo   : Nonlinear Jo(Radiosonde) = 919.271, nobs = 969, Jo/n = 0.94868, err = 1.98542
+CostJo   : Nonlinear Jo(Aircraft) = 1423.66, nobs = 1591, Jo/n = 0.894818, err = 2.29575
+CostJo   : Nonlinear Jo(GnssroRef) = 1.50006, nobs = 1, Jo/n = 1.50006, err = 3.35131
+CostJo   : Nonlinear Jo(SfcPCorrected) = 655.126, nobs = 49, Jo/n = 13.3699, err = 146.496
+CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7188.05, nobs = 572, Jo/n = 12.5665, err = 1.33561
+CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1304.36, nobs = 355, Jo/n = 3.67425, err = 2.64254
+CostFunction: Nonlinear J = 11492
+DRIPCGMinimizer: reduction in residual norm = 0.33881
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 28
 Fld=1  Min=1.996103430e+02, Max=3.052475047e+02, RMS=2.439651685e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.629934399e-03 : spechum
+Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.630155714e-03 : spechum
 Fld=3  Min=-4.416110238e+01, Max=8.300288464e+01, RMS=1.765462245e+01 : uReconstructZonal
 Fld=4  Min=-4.553588571e+01, Max=5.860794126e+01, RMS=9.001772300e+00 : uReconstructMeridional
 Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867450703e+04 : surface_pressure
-Fld=6  Min=0.000000000e+00, Max=7.127194111e-04, RMS=3.624438802e-05 : qc
-Fld=7  Min=0.000000000e+00, Max=1.430527132e-04, RMS=7.350901412e-06 : qi
-Fld=8  Min=0.000000000e+00, Max=2.689266972e-04, RMS=7.521110461e-06 : qr
-Fld=9  Min=0.000000000e+00, Max=9.508386473e-04, RMS=2.011939776e-05 : qs
-Fld=10  Min=0.000000000e+00, Max=3.992687032e-04, RMS=7.141858266e-06 : qg
-Fld=11  Min=2.518572794e+02, Max=7.256384909e+02, RMS=4.410815783e+02 : theta
-Fld=12  Min=2.565533231e-02, Max=1.333219719e+00, RMS=6.142556128e-01 : rho
+Fld=6  Min=0.000000000e+00, Max=7.736707719e-04, RMS=3.646968484e-05 : qc
+Fld=7  Min=0.000000000e+00, Max=1.430527132e-04, RMS=7.353383926e-06 : qi
+Fld=8  Min=0.000000000e+00, Max=2.905948415e-04, RMS=7.736015451e-06 : qr
+Fld=9  Min=0.000000000e+00, Max=9.508386473e-04, RMS=2.009966290e-05 : qs
+Fld=10  Min=0.000000000e+00, Max=3.992687032e-04, RMS=7.116507544e-06 : qg
+Fld=11  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410314320e+02 : theta
+Fld=12  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201745333e-01 : rho
 Fld=13  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434597828e+01 : u
-Fld=14  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.692733674e-03 : qv
-Fld=15  Min=1.514846240e+03, Max=9.802181084e+04, RMS=4.890329271e+04 : pressure
+Fld=14  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.692960279e-03 : qv
+Fld=15  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931361134e+04 : pressure
 Fld=16  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=17  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=18  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.336989268e-01 : snowc
@@ -78,11 +78,11 @@ Fld=25  Min=-2.022071682e+01, Max=2.231418641e+01, RMS=5.236995243e+00 : v10
 Fld=26  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00 : lai
 Fld=27  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Fld=28  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
-CostJb   : Nonlinear Jb = 5.40433e-06
-CostJo   : Nonlinear Jo(Radiosonde) = 892.339, nobs = 961, Jo/n = 0.928553, err = 1.99065
-CostJo   : Nonlinear Jo(Aircraft) = 1217.81, nobs = 1568, Jo/n = 0.776668, err = 2.30389
-CostJo   : Nonlinear Jo(GnssroRef) = 0.00431048, nobs = 1, Jo/n = 0.00431048, err = 3.35131
-CostJo   : Nonlinear Jo(SfcPCorrected) = 654.623, nobs = 49, Jo/n = 13.3596, err = 146.496
-CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 6877.43, nobs = 544, Jo/n = 12.6423, err = 1.36768
-CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1295.45, nobs = 355, Jo/n = 3.64916, err = 2.64254
-CostFunction: Nonlinear J = 10937.7
+CostJb   : Nonlinear Jb = 5.70482e-06
+CostJo   : Nonlinear Jo(Radiosonde) = 910.885, nobs = 969, Jo/n = 0.940026, err = 1.98542
+CostJo   : Nonlinear Jo(Aircraft) = 1340.2, nobs = 1591, Jo/n = 0.842365, err = 2.29575
+CostJo   : Nonlinear Jo(GnssroRef) = 1.41076, nobs = 1, Jo/n = 1.41076, err = 3.35131
+CostJo   : Nonlinear Jo(SfcPCorrected) = 655.129, nobs = 49, Jo/n = 13.37, err = 146.496
+CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7182.3, nobs = 572, Jo/n = 12.5565, err = 1.33561
+CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1245.24, nobs = 355, Jo/n = 3.50772, err = 2.64254
+CostFunction: Nonlinear J = 11335.2

@@ -52,6 +52,7 @@ public :: theta_to_temp, &
 
 ! analysis2model
 public :: hydrostatic_balance
+public :: linearized_hydrostatic_balance
 
 ! model2geovars only
 public :: effectrad_graupel, &
@@ -436,6 +437,114 @@ subroutine hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, rho, theta)
       end do
 
 end subroutine hydrostatic_balance
+!-------------------------------------------------------------------------------------------
+subroutine linearized_hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, dt, dqv, dps, dp, drho, dtheta)
+
+   implicit none
+   integer,                                            intent(in)  :: ncells, nlevels
+   real (kind=kind_real), dimension(nlevels+1,ncells), intent(in)  :: zw     ! physical height m at w levels
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: t      ! temperature, K
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: qv     ! mixing ratio, kg/kg      ! background
+   real (kind=kind_real), dimension(ncells),           intent(in)  :: ps     ! surface P, Pa            ! background
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: p      ! 3D P, Pa                 ! background
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: dt     ! temperature, K           ! increment
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: dqv    ! mixing ratio, kg/kg      ! increment
+   real (kind=kind_real), dimension(ncells),           intent(in)  :: dps    ! surface P, Pa            ! increment
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: dp     ! 3D P, Pa                 ! increment
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: drho   ! dry air density, kg/m^3  ! increment
+   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: dtheta ! dry potential T, K       ! increment
+
+   integer                :: icell, k
+   real (kind=kind_real)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
+   real (kind=kind_real), dimension(nlevels)   :: tv_h, dtv_h  ! half level virtual T
+   real (kind=kind_real), dimension(nlevels+1) :: pf, dpf      ! full level pressure
+   real (kind=kind_real), dimension(nlevels)   :: zu           ! physical height at u level
+   real (kind=kind_real)  :: tv_f, dtv_f, tv, dtv, w
+
+      rvordm1 = rv/rgas - MPAS_JEDI_ONE_kr
+
+      do icell=1,ncells
+
+         k = 1 ! 1st half level
+         pf(k)  =  ps(icell) ! first full level P is at surface
+         dpf(k) = dps(icell)
+         zu(k)  = MPAS_JEDI_HALF_kr * ( zw(k,icell) + zw(k+1,icell) )
+         tv_h(k)  =  t(k,icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,icell) )
+         dtv_h(k) = dt(k,icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k,icell) ) + &
+                     t(k,icell) * rvordm1*dqv(k,icell) 
+
+       ! integral from full level k to half level k
+!         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv_h(k)) )
+         dp(k,icell) = dpf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv_h(k)) ) + &
+                        pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv_h(k)) ) * &
+                        gravity * (zu(k)-zw(k,icell))/(rgas*tv_h(k)**2) * dtv_h(k)
+
+!         rho(k,icell) = p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
+         drho(k,icell) = dp(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) ) - &
+                         p(k,icell)/( rgas*tv_h(k)**2*(MPAS_JEDI_ONE_kr+qv(k,icell)) ) * dtv_h(k) - &
+                         p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell))**2 ) * dqv(k,icell)
+!         theta(k,icell) = t(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp)
+         dtheta(k,icell) = dt(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp) - &
+                           t(k,icell) * rgas/cp * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp-MPAS_JEDI_ONE_kr) * &
+                           MPAS_JEDI_P0_kr/p(k,icell)**2 * dp(k,icell)
+
+       do k=2,nlevels ! loop over half levels
+
+       ! half level physical height, zu(k-1) -> zw(k) -> zu(k)
+         zu(k) = MPAS_JEDI_HALF_kr * ( zw(k,icell) + zw(k+1,icell) )
+
+       ! bilinear interpolation weight for value at the half level below the full level
+         w = ( zu(k) - zw(k,icell) ) / ( zu(k) - zu(k-1) )
+
+       ! half level Tv
+         tv_h(k)  =  t(k, icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k, icell) )
+         dtv_h(k) = dt(k, icell) * ( MPAS_JEDI_ONE_kr + rvordm1*qv(k, icell) ) + &
+                      t(k, icell) * rvordm1*dqv(k, icell)
+
+       ! interpolate two half levels Tv to a full level Tv
+         tv_f  = w *  tv_h(k-1) + (MPAS_JEDI_ONE_kr - w) *  tv_h(k)
+         dtv_f = w * dtv_h(k-1) + (MPAS_JEDI_ONE_kr - w) * dtv_h(k)
+
+       ! two-step integral from half level k-1 to k
+       !-----------------------------------------------------------
+
+       ! step-1: tv used for integral from half level k-1 to full level k
+         tv  = MPAS_JEDI_HALF_kr * (  tv_h(k-1) +  tv_f )
+         dtv = MPAS_JEDI_HALF_kr * ( dtv_h(k-1) + dtv_f )
+
+       ! step-1: integral from half level k-1 to full level k, hypsometric Eq.
+         pf(k)  =  p(k-1,icell) * exp( -gravity * (zw(k,icell)-zu(k-1))/(rgas*tv) )
+         dpf(k) = dp(k-1,icell) * exp( -gravity * (zw(k,icell)-zu(k-1))/(rgas*tv) ) + &
+                   p(k-1,icell) * exp( -gravity * (zw(k,icell)-zu(k-1))/(rgas*tv) ) * &
+                   gravity * (zw(k,icell)-zu(k-1))/(rgas*tv**2) * dtv
+
+       ! step-2: tv used for integral from full level k to half level k
+         tv  = MPAS_JEDI_HALF_kr * (  tv_h(k) +  tv_f )
+         dtv = MPAS_JEDI_HALF_kr * ( dtv_h(k) + dtv_f )
+
+       ! step-2: integral from full level k to half level k
+!         p(k,icell) = pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv) )
+         dp(k,icell) = dpf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv) ) + &
+                        pf(k) * exp( -gravity * (zu(k)-zw(k,icell))/(rgas*tv) ) * &
+                        gravity * (zu(k)-zw(k,icell))/(rgas*tv**2) * dtv
+
+       !------------------------------------------------------------
+       ! dry air density at half level, equation of state
+!         rho(k,icell) = p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) )
+         drho(k,icell) = dp(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell)) ) - &
+                         p(k,icell)/( rgas*tv_h(k)**2*(MPAS_JEDI_ONE_kr+qv(k,icell)) ) * dtv_h(k) - &
+                         p(k,icell)/( rgas*tv_h(k)*(MPAS_JEDI_ONE_kr+qv(k,icell))**2 ) * dqv(k,icell)
+
+       ! dry potential T at half level, Poisson's equation
+!         theta(k,icell) = t(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp)
+         dtheta(k,icell) = dt(k,icell) * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp) - &
+                           t(k,icell) * rgas/cp * ( MPAS_JEDI_P0_kr/p(k,icell) )**(rgas/cp-MPAS_JEDI_ONE_kr) * &
+                           MPAS_JEDI_P0_kr/p(k,icell)**2 * dp(k,icell)
+
+       end do
+      end do
+
+end subroutine linearized_hydrostatic_balance
 !-------------------------------------------------------------------------------------------
 subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
    implicit none

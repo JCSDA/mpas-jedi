@@ -72,52 +72,85 @@ subroutine add_incr(self, increment)
    integer :: ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer :: fld2d_pb, fld2d_u, fld2d_u_inc, fld2d_uRm, fld2d_uRz
+   type (field2DReal), pointer :: fld2d_p, fld2d_dp, fld2d_drho, fld2d_dth, fld2d_dqv
    real(kind=kind_real), dimension(:,:), pointer :: ptrr2_qv, ptrr2_sh
    real(kind=kind_real), dimension(:,:), pointer :: ptrr2_p, ptrr2_rho, ptrr2_t, ptrr2_th, ptrr2_pp
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ps
+   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_dp, ptrr2_drho, ptrr2_dt, ptrr2_dth, ptrr2_dsh
+   real(kind=kind_real), dimension(:), pointer :: ptrr1_ps, ptrr1_dps
 
    ! Difference with self_add other is that self%subFields can contain extra fields
    ! beyond increment%subFields and the resolution of increment can be different.
 
    if (self%geom%nCells==increment%geom%nCells .and. self%geom%nVertLevels==increment%geom%nVertLevels) then
-      ! First, update subFields that are common between self and increment
-      kind_op = 'add'
-      call da_operator(trim(kind_op), self%subFields, increment%subFields, fld_select = increment%fldnames_ci)
 
-      ! Impose positive-definite limits on hydrometeors and moistureFields
-      ! note: nonlinear COV (change of variables) from increment to state
-      call da_posdef( self%subFields, mpas_hydrometeor_fields)
-      call da_posdef( self%subFields, moistureFields)
-
-      !NOTE: second, also update variables which are closely related to MPAS prognostic vars.
       ngrid = self%geom%nCellsSolve
 
-      ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
-      ! note: nonlinear COV
-      if ( all(self%has(moistureFields)) .and. &
-           increment%has('spechum') .and. .not.increment%has('qv')) then
-         call self%get(     'qv', ptrr2_qv)
-         call self%get('spechum', ptrr2_sh)
-         call q_to_w( ptrr2_sh(:,1:ngrid), ptrr2_qv(:,1:ngrid) )
-      endif
-
-      ! Enforce a hydrostatic balance to diagnose 3D pressure,
-      ! plus update full state theta and rho
-      ! note: nonlinear COV
+      ! First, update variables which are closely related to MPAS prognostic vars.
+      ! Use the linearized hydrostatic balance to get the 3D pressure increment
+      ! from the increments of temperature, specific humidity, and surface pressure.
+      ! The specific humidity increment is converted to a water vaport mixing ratio increment.
+      ! Then, the increments of rho and theta are also updated by using the linearized state equation and
+      ! the linearized Poisson's equation.
+      ! note: linear change of variables
       if ( all(self%has(analysisThermoFields)) .and. &
            all(self%has(modelThermoFields)) .and. &
            all(increment%has(analysisThermoFields)) .and. &
            .not. all(increment%has(modelThermoFields)) ) then
+
          call self%get(              'qv', ptrr2_qv)
          call self%get(        'pressure', ptrr2_p)
          call self%get(             'rho', ptrr2_rho)
          call self%get('surface_pressure', ptrr1_ps)
          call self%get(     'temperature', ptrr2_t)
          call self%get(           'theta', ptrr2_th)
+         call increment%get(     'temperature', ptrr2_dt)
+         call increment%get('surface_pressure', ptrr1_dps)
 
-         call hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
-                   ptrr2_t(:,1:ngrid), ptrr2_qv(:,1:ngrid), ptrr1_ps(1:ngrid), &
-                   ptrr2_p(:,1:ngrid), ptrr2_rho(:,1:ngrid), ptrr2_th(:,1:ngrid) )
+         call increment%get(         'spechum', ptrr2_dsh) ! converted to dqv below
+         call self%get(              'spechum', ptrr2_sh)  !    for trajectory
+
+         !duplicate dp, drho, dtheta
+         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
+         call mpas_duplicate_field(fld2d_p, fld2d_dp)   ! intermediate output
+         call mpas_duplicate_field(fld2d_p, fld2d_drho) ! intermediate output
+         call mpas_duplicate_field(fld2d_p, fld2d_dth)  ! intermediate output
+         call mpas_duplicate_field(fld2d_p, fld2d_dqv)  ! dsh (specific humidity) --> dqv (mixing ratio)
+
+         !get dqv from dsh
+         call q_to_w_tl( ptrr2_dsh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_dqv%array(:,1:ngrid) )
+
+         call linearized_hydrostatic_balance( ngrid, self%geom%nVertLevels, self%geom%zgrid(:,1:ngrid), &
+                   ptrr2_t(:,1:ngrid), ptrr2_qv(:,1:ngrid), ptrr1_ps(1:ngrid), ptrr2_p(:,1:ngrid), &
+                   ptrr2_dt(:,1:ngrid), fld2d_dqv%array(:,1:ngrid), ptrr1_dps(1:ngrid), &
+                   fld2d_dp%array(:,1:ngrid), fld2d_drho%array(:,1:ngrid), fld2d_dth%array(:,1:ngrid) )
+
+         ptrr2_p(:,1:ngrid)   = ptrr2_p(:,1:ngrid)   + fld2d_dp%array(:,1:ngrid)
+         ptrr2_rho(:,1:ngrid) = ptrr2_rho(:,1:ngrid) + fld2d_drho%array(:,1:ngrid)
+         ptrr2_th(:,1:ngrid)  = ptrr2_th(:,1:ngrid)  + fld2d_dth%array(:,1:ngrid)
+
+         call mpas_deallocate_field( fld2d_dp )
+         call mpas_deallocate_field( fld2d_drho )
+         call mpas_deallocate_field( fld2d_dth )
+         call mpas_deallocate_field( fld2d_dqv )
+      endif
+
+      ! Second, update subFields that are common between self and increment
+      kind_op = 'add'
+      call da_operator(trim(kind_op), self%subFields, increment%subFields, fld_select = increment%fldnames_ci)
+
+      ! Impose positive-definite limits on hydrometeors and moistureFields
+      ! note: nonlinear change of variable
+      call da_posdef( self%subFields, mpas_hydrometeor_fields)
+      call da_posdef( self%subFields, moistureFields)
+
+
+      ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
+      ! note: nonlinear change of variable
+      if ( all(self%has(moistureFields)) .and. &
+           increment%has('spechum') .and. .not.increment%has('qv')) then
+         call self%get(     'qv', ptrr2_qv)
+         call self%get('spechum', ptrr2_sh)
+         call q_to_w( ptrr2_sh(:,1:ngrid), ptrr2_qv(:,1:ngrid) )
       endif
 
       ! Update pressure_p (pressure perturbation) , which is a diagnostic variable
@@ -130,7 +163,7 @@ subroutine add_incr(self, increment)
       endif
 
       ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
-      ! note: linear COV
+      ! note: linear change of variable
       if ( self%has('u') .and. &
            all(increment%has(cellCenteredWindFields)) .and. &
            .not.increment%has('u') ) then
