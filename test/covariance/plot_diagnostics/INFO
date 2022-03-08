@@ -1,0 +1,22 @@
+1. From BUMP HDIAG outputs
+- plot_cmat_diag_rh.py
+	: plot the "raw" sample correlation and "fitted" function for horizontal lengths
+- plot_cmat_diag_rv.py
+	: plot the "raw" sample correlation and "fitted" function for vertical lengths
+
+- plot_cmpr_cmat_rh.py
+	: compare the vertical profiles of horizontal lengths between current adn benchmark experiments
+- plot_cmpr_cmat_rv.py
+	: compare the vertical profiles of vertical lengths between current adn benchmark experiments
+- plot_cmpr_var_stddev.py
+	: compare the vertical profiles of error standard deviations betweencurrent adn benchmark experiments
+
+2. From BUMP NICAS outputs
+- plot_nicas_grids.ncl
+	: plot the full and halos (SA, SB, SC) grid
+
+3. From BUMP VBAL outputs
+- plot_vbal_regcoef.ncl
+	: plot the diagnosed regression coefficients
+- plot_vbal_explained_variance.ncl
+	: plot the explained variance from regression

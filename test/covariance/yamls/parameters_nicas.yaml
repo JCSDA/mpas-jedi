@@ -7,29 +7,33 @@ input variables: &vars
 - temperature
 - spechum
 - surface_pressure
-date: &date '2018-04-15T00:00:00Z'
 background:
   state variables: *vars
   filename: "./restart.2018-04-15_00.00.00.nc"
-  date: *date
+  date: &date '2018-04-15T00:00:00Z'
 bump:
   prefix: mpas_parametersbump_cov
   method: cor
   strategy: specific_univariate
-  load_cmat: 1
-  new_nicas: 1
-  write_nicas_local: 1
-  write_nicas_global: 1
-  draw_type: random_uniform
+  new_nicas: true
+  write_nicas_local: true
+  write_nicas_global: true
   nc1: 4096
-  nc2: 200 #1024
-  nc3: 40 #512
-  dc: 100000
-  local_diag: 1
-  local_rad: 3000000
-  rvflt: 0
   resol: 8 #6 #8 #4
-  network: 0
-  diag_rhflt: 3000000
-  write_nicas_grids: 1
+  network: false
+  write_nicas_grids: true
   verbosity: main
+  input:
+  - parameter: rh
+    filename: ./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  - parameter: rv
+    filename: ./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+  output:
+  - parameter: nicas_norm
+    filename: ./mpas.nicas_norm.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
