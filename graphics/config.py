@@ -14,11 +14,14 @@ import var_utils as vu
 #################################################################
 ## Generic binVarConfigs that apply to all observation categories
 #################################################################
+# priority 1
 obsBinVars = defaultdict(list)
 obsBinVars[vu.obsVarQC] += [bu.goodQCMethod, bu.badQCMethod, bu.allQCMethod]
-obsBinVars[vu.obsVarLat] += [bu.identityBinMethod, bu.latbandsMethod]
-obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
-obsBinVars[vu.obsVarNormErr] += [bu.identityBinMethod]
+obsBinVars[vu.obsVarLat] += [bu.identityBinMethod]
+# TODO: re-enable obsVarLT binning after adapting to new
+#       IODA dateTime format
+#obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
+obsBinVars[vu.obsVarNormDep] += [bu.identityBinMethod]
 obsBinVars[vu.obsRegionBinVar] += ['CONUS']
 obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
 
@@ -26,43 +29,70 @@ obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
 ################################
 ## binVarConfigs for surface obs
 ################################
+# priority 1
 surfBinVars = deepcopy(obsBinVars)
-
+surfBinVars[pconf.LonLat2D] += [bu.noBinMethod]
+surfBinVars[vu.obsVarLat] += [bu.latbandsMethod]
 
 ##########################################################
 ## binVarConfigs for profile obs w/ pressure vertical bins
 ##########################################################
-profPressBinVars = deepcopy(obsBinVars)
-profPressBinVars[vu.obsVarPrs] += [bu.identityBinMethod, bu.PjetMethod]
-profPressBinVars[vu.obsVarLat] += [bu.PjetMethod]
+# priority 1
+profilePressureBinVars = deepcopy(obsBinVars)
+profilePressureBinVars[vu.obsVarPrs] += [bu.identityBinMethod, bu.PjetMethod]
+profilePressureBinVars[vu.obsVarLat] += [bu.latbandsMethod]
+# priority 2
+profilePressureBinVars[vu.obsVarLat] += [bu.PjetMethod]
 
-# 2D pressure bins with named latitude-band methods
+# pseudo-2D pressure bins with named latitude-band methods
+# priority 1
 for latBand in pconf.namedLatBands['values']:
-    profPressBinVars[vu.obsVarPrs] += [latBand]
+    profilePressureBinVars[vu.obsVarPrs] += [latBand]
+
+# 2D latitude-pressure bins
+# priority 1b
+profilePressureBinVars[pconf.LatPrs2D] += [bu.noBinMethod]
+
+# 2D bins for satwind
+# priority 1b
+satwindBinVars = deepcopy(profilePressureBinVars)
+satwindBinVars[pconf.LonLat2D] += [bu.noBinMethod]
 
 
 ##########################################################
 ## binVarConfigs for profile obs w/ altitude vertical bins
 ##########################################################
-profAltBinVars = deepcopy(obsBinVars)
-profAltBinVars[vu.obsVarAlt] += [bu.identityBinMethod, bu.altjetMethod]
-profAltBinVars[vu.obsVarLat] += [bu.altjetMethod]
+# priority 1
+gnssroBinVars = deepcopy(obsBinVars)
+gnssroBinVars[vu.obsVarAlt] += [bu.identityBinMethod, bu.altjetMethod]
+gnssroBinVars[vu.obsVarLat] += [bu.latbandsMethod]
+gnssroBinVars[vu.obsVarLat] += [bu.altjetMethod]
 
-# 2D altitude bins with named latitude-band methods
+# pseudo-2D altitude bins with named latitude-band methods
+# priority 1
 for latBand in pconf.namedLatBands['values']:
-    profAltBinVars[vu.obsVarAlt] += [latBand]
+    gnssroBinVars[vu.obsVarAlt] += [latBand]
+
+# 2D bins
+# priority 1b
+gnssroBinVars[pconf.LonLat2D] += [bu.noBinMethod]
+gnssroBinVars[pconf.LatAlt2D] += [bu.noBinMethod]
 
 
 #################################
 ## binVarConfigs for radiance obs
 #################################
+# priority 1
 radianceBinVars = deepcopy(obsBinVars)
+radianceBinVars[vu.obsVarLat] += [bu.troplatbandsMethod]
+# priority 2
 radianceBinVars[vu.obsVarGlint] += [bu.identityBinMethod]
 radianceBinVars[vu.obsVarSenZen] += [bu.identityBinMethod]
 
 
 # binBYLandFrac controls whether to bin by land-ocean fractions and categories
 # NOTE: requires geovals to be written for applicable DiagSpaces
+# priority 4
 binBYLandFrac = False
 if binBYLandFrac:
     radianceBinVars[vu.obsVarLandFrac] += [bu.identityBinMethod,
@@ -70,13 +100,24 @@ if binBYLandFrac:
 
 
 ############################################
-## binVarConfigs for polar-orbitting MW obs,
+## binVarConfigs for polar-orbitting obs,
 ## including cloud metrics
 ## e.g., AMSUA
 ############################################
-polmwBinVars = deepcopy(radianceBinVars)
-polmwBinVars[vu.obsVarACI] += [bu.identityBinMethod]
-polmwBinVars[vu.obsVarSCI] += [bu.OkamotoMethod]
+polarBinVars = deepcopy(radianceBinVars)
+
+# 2D bins
+# priority 1b
+polarBinVars[pconf.LonLat2D] += [bu.noBinMethod]
+
+# cloud-specific metrics
+polarcldBinVars = deepcopy(polarBinVars)
+
+# symmetric and asymmetric cloud impact
+# priority 4
+#polarcldBinVars[vu.obsVarACI] += [bu.OkamotoMethod]
+#polarcldBinVars[vu.obsVarCI] += [bu.OkamotoMethod]
+
 
 
 ##########################################
@@ -84,50 +125,117 @@ polmwBinVars[vu.obsVarSCI] += [bu.OkamotoMethod]
 ## including cloud metrics
 ## e.f., GOES-ABI, Himawari-AHI
 ##########################################
+# cloud fraction
+# priority 1
 geoirBinVars = deepcopy(radianceBinVars)
-geoirBinVars[vu.obsVarACI] += [bu.identityBinMethod]
-geoirBinVars[vu.obsVarCldFrac] += [bu.identityBinMethod,
-                                  bu.cloudbandsMethod]
+geoirBinVars[vu.obsVarCldFracY] += [
+  bu.identityBinMethod,
+  bu.cloudbandsMethod,
+]
+geoirBinVars[vu.obsVarCldFracX] += [
+  bu.identityBinMethod,
+  bu.cloudbandsMethod,
+]
 
-# Binning variables with clr-/cld-sky methods
-for var in pconf.cldfracBinVars.keys():
-    if var != vu.obsVarLandFrac or binBYLandFrac:
-        geoirBinVars[var] += [bu.clrskyMethod]
-        geoirBinVars[var] += [bu.cldskyMethod]
+# Binning variables with clr-/cld-sky methods (not typically needed)
+#for var in pconf.cldfracBinVars.keys():
+#    if var != vu.obsVarLandFrac or binBYLandFrac:
+#        geoirBinVars[var] += [bu.clrskyMethod]
+#        geoirBinVars[var] += [bu.cldskyMethod]
 
 # Binning variables with land category methods
+# priority 4
 if binBYLandFrac:
     for var in pconf.landfracBinVars.keys():
         for surfBand in pconf.namedLandFracBands['values']:
             geoirBinVars[var] += [surfBand]
 
-# symmetric cloud impact (expensive)
-geoirSCIMethods = [
+# symmetric cloud impact
+# priority 2
+geoirCIMethods = [
     bu.OkamotoMethod,
-    bu.ScaleOkamotoMethod,
-#    bu.ModHarnischMethod,
-#    bu.ScaleModHarnischMethod,
+#    bu.CFQuadratureMethod,
 ]
-
-for method in geoirSCIMethods:
-    geoirBinVars[vu.obsVarSCI] += [method]
-# uncomment to diagnose (HofX - ObsValue) / ObsError for SCI-parameterized ObsError
+for method in geoirCIMethods:
+    geoirBinVars[vu.obsVarCI] += [method]
+# uncomment to diagnose ENI = (HofX - ObsValue) / ObsError for SCI-parameterized ObsError
 # note: requires SCIErrParams to be defined for all all DiagSpaces that use it
-#    geoirBinVars[vu.obsVarNormErr] += [method]
+    geoirBinVars[vu.obsVarNormDep] += [method]
 
+for mode, ClearCloudModeBin in pconf.ClearCloudModeBins.items():
+  geoirBinVars[vu.obsVarNormDep] += [bu.ClearCloudModeMethod+'='+mode]
+  geoirBinVars[vu.obsVarNormDep] += [bu.OkamotoMethod+','+bu.ClearCloudModeMethod+'='+mode]
+
+# asymmetric cloud impact
+# priority 3
+geoirACIMethods = [
+    bu.MZ19Method,
+#    bu.QuadratureMethod,
+]
+for method in geoirACIMethods:
+    geoirBinVars[vu.obsVarACI] += [method]
+
+# Cloud Impact Departure bins (expensive, can be disabled unless investigating departure PDF's)
+# priority 3
+for method in pconf.binVarConfigs[vu.obsVarDep].keys():
+  geoirBinVars[vu.obsVarDep] += [method]
+#for method in pconf.binVarConfigs[vu.obsVarLogDepRatio].keys():
+#  geoirBinVars[vu.obsVarLogDepRatio] += [method]
+
+# 2D bins
+# model vs. obs PDF
+# priority 3
+geoirBinVars[pconf.ObsModel2D] += [bu.allskyBTMethod]
+
+# cloud-fraction
+# priority 2
+geoirBinVars[pconf.CldFrac2D] += [bu.noBinMethod]
+# uncomment to enable Poly2DLat fitting
+# priority 2b
+#for latBand in pconf.namedTropLatBands['values']:
+#  geoirBinVars[pconf.CldFrac2D] += [latBand]
+
+# used for diagnosing 2D statistical patterns vs. model-CI and obs-CI
+# priority 4
+#geoirBinVars[pconf.CloudImpact2D] += [bu.noBinMethod]
+#geoirBinVars[pconf.OkamotoCloudImpact2D] += [bu.noBinMethod]
+
+# instrument-specific 2D bins
+# priority 1b
+abi_g16_binVars = deepcopy(geoirBinVars)
+abi_g16_binVars[pconf.LonLat2D] += [bu.abi_g16]
+
+ahi_himawari8_binVars = deepcopy(geoirBinVars)
+ahi_himawari8_binVars[pconf.LonLat2D] += [bu.ahi_himawari8]
+
+#seviri_m08_binVars = deepcopy(radianceBinVars)
+#seviri_m08_binVars[pconf.LonLat2D] += [bu.seviri_m08]
 
 #########################################
 # binVarConfigs for model space variables
 #########################################
+# priority 1
 modelBinVars = defaultdict(list)
 modelBinVars[vu.noBinVar] += [bu.noBinMethod]
 modelBinVars[vu.modVarLat] += [bu.identityBinMethod]
-modelBinVars[vu.modVarLat] += [bu.latbandsMethod]
+modelBinVars[vu.modVarLat] += [bu.troplatbandsMethod]
 modelBinVars[vu.modVarLev] += [bu.identityBinMethod]
-# 2D model level bins with named latitude-band methods
-for latBand in pconf.namedLatBands['values']:
-  modelBinVars[vu.modVarLev] += [latBand]
 modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
+
+# pseudo-2D model level bins with named latitude-band methods
+# priority 1
+for latBand in pconf.namedTropLatBands['values']:
+  modelBinVars[vu.modVarLev] += [latBand]
+
+# pseudo-2D model level bins with GEOIR lat-lon boxes
+# priority 2
+for instrument in bu.geoirlatlonBoxParams['values']:
+  modelBinVars[vu.modVarLev] += [instrument]
+
+# 2D bins
+# priority 2
+modelBinVars[pconf.ModelLonLat2D] += [bu.noBinMethod]
+modelBinVars[pconf.ModelLatLev2D] += [bu.noBinMethod]
 
 #=======================
 # DiagSpace definitions
@@ -150,6 +258,7 @@ model_s    = 'model'
 
 ## analysis groups for configuring AnalyzeStats + Analyses
 convGrp = 'conv'
+satwindGrp = 'satwind'
 abiGrp = 'abi'
 ahiGrp = 'ahi'
 amsuaGrp = 'amsua'
@@ -158,13 +267,14 @@ mhsGrp = 'mhs'
 modelGrp = 'model'
 
 anGroupConfig = {
-    convGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:10:00'},
-    abiGrp: {'npwork': 12, 'npread': 36, 'analyze_walltime': '01:00:00'},
-    ahiGrp: {'npwork': 12, 'npread': 36, 'analyze_walltime': '01:00:00'},
-    amsuaGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
-    amsuacldGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:12:00'},
-    mhsGrp: {'npwork': 36, 'npread': 36, 'analyze_walltime': '00:08:00'},
-    modelGrp: {'npwork': 10, 'npread': 36, 'analyze_walltime': '03:30:00'},
+    convGrp: {'npwork': 18, 'npread': 36, 'analyze walltime': '00:20:00'},
+    satwindGrp: {'npwork': 16, 'npread': 36, 'analyze walltime': '00:40:00'},
+    abiGrp: {'npwork': 1, 'npread': 36, 'analyze walltime': '03:00:00'},
+    ahiGrp: {'npwork': 1, 'npread': 36, 'analyze walltime': '03:00:00'},
+    amsuaGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:60:00'}, #bg
+    amsuacldGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:25:00'},
+    mhsGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:20:00'},
+    modelGrp: {'npwork': 10, 'npread': 36, 'analyze walltime': '03:30:00'},
 }
 
 # Each entry of DiagSpaceConfig is a key-value pair, with the following possible values:
@@ -185,42 +295,42 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profPressBinVars,
+        'binVarConfigs': profilePressureBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
     'gnssro': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profAltBinVars,
+        'binVarConfigs': gnssroBinVars,
         'diagNames': pconf.relativeDiagnostics+pconf.sigmaDiagnostics,
     },
     'gnssrobndropp1d': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profAltBinVars,
+        'binVarConfigs': gnssroBinVars,
         'diagNames': pconf.relativeDiagnostics+pconf.sigmaDiagnostics,
     },
     'gnssroref': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profAltBinVars,
+        'binVarConfigs': gnssroBinVars,
         'diagNames': pconf.relativeDiagnostics+pconf.sigmaDiagnostics,
     },
     'satwind': {
         'DiagSpaceGrp': profile_s,
         'process': True,
-        'anGrp': convGrp,
-        'binVarConfigs': profPressBinVars,
+        'anGrp': satwindGrp,
+        'binVarConfigs': satwindBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
     'satwindBufr': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profPressBinVars,
+        'binVarConfigs': satwindBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
     'sfc': {
@@ -234,7 +344,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,
-        'binVarConfigs': profPressBinVars,
+        'binVarConfigs': profilePressureBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
 #radiances
@@ -242,23 +352,27 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': abiGrp,
-        'binVarConfigs': geoirBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
-        'channels': [7,8,9,10,11,12,13,14,15,16],
+        'binVarConfigs': abi_g16_binVars,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.cloudyRadDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [8, 9, 10, 13, 14, 15],
     },
     'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': ahiGrp,
-        'binVarConfigs': geoirBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
-        'channels': [7,8,9,10,11,12,13,14,15,16],
+        'binVarConfigs': ahi_himawari8_binVars,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.cloudyRadDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [8, 9, 10, 13, 14, 15],
     },
     'abi-clr_g16': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': abiGrp,
-        'binVarConfigs': geoirBinVars,
+        'binVarConfigs': abi_g16_binVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
@@ -266,14 +380,14 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': ahiGrp,
-        'binVarConfigs': geoirBinVars,
+        'binVarConfigs': ahi_himawari8_binVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [8,9,10,11,13,14,15,16],
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [1,6,7],
     },
@@ -281,7 +395,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [8,9],
     },
@@ -289,7 +403,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [5,6,9],
     },
@@ -297,7 +411,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [],
     },
@@ -305,7 +419,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [5,6,7,8,9],
     },
@@ -313,7 +427,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [5,6,7,8,9],
     },
@@ -321,21 +435,21 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuaGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [5,6,7,9],
     },
     'amsua_n19--hydro': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [1,2,3,15],
     },
     'amsua_n19--nohydro': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [4,5,6,7,9,10,11,12,13,14],
     },
@@ -343,7 +457,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
@@ -351,7 +465,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
@@ -359,7 +473,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
@@ -367,7 +481,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
@@ -375,7 +489,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
@@ -383,28 +497,28 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': amsuacldGrp,
-        'binVarConfigs': polmwBinVars,
+        'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': [1,2,3,4,15],
     },
     'cris-fsr_npp': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [24,26,28,32,37,39],
     },
     'hirs4_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': range(1,16),
     },
     'iasi_metop-a': {
         'DiagSpaceGrp': radiance_s,
         'process': False,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics,
         'channels': [16,29,32,35,38,41,44],
     },
@@ -412,7 +526,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': mhsGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': range(1,6),
     },
@@ -420,7 +534,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': mhsGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': range(1,6),
     },
@@ -428,7 +542,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': mhsGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': range(1,6),
     },
@@ -436,7 +550,7 @@ DiagSpaceConfig = {
         'DiagSpaceGrp': radiance_s,
         'process': True,
         'anGrp': mhsGrp,
-        'binVarConfigs': radianceBinVars,
+        'binVarConfigs': polarBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
         'channels': range(1,6),
     },
@@ -482,6 +596,43 @@ DiagSpaceConfig = {
         'anGrp': modelGrp,
         'binVarConfigs': modelBinVars,
         'diagNames': pconf.modelDiags,
+        ### examples for variable selection/ordering at plotting phase:
+        ## all standard variables
+        #'analyzed variables': [
+        #  'T2m', 'Q2m', 'U10m', 'V10m', 'Ps',
+        #  'T', 'Theta', 'Qv', 'U', 'V', 'P', 'rho', 'W',
+        #],
+        ## all standard variables + Qv by levels
+        'analyzed variables': [
+          'T2m', 'Q2m', 'U10m', 'V10m', 'Ps',
+          'T', 'Theta', 'Qv', 'U', 'V', 'P', 'rho', 'W',
+          'Qv01to10',
+          'Qv11to20',
+          'Qv21to30',
+          'Qv31to40',
+          'Qv41to55',
+        ],
+        ## specific standard variables
+        #'analyzed variables': [
+        #  'T2m', 'Q2m', 'U10m', 'Ps',
+        #  'T', 'Qv', 'U', 'V'
+        #],
+        ## all 2D
+        #'analyzed variables': [
+        #  'T2m', 'Q2m', 'U10m', 'V10m', 'Ps',
+        #]
+        ## all standard 3D
+        #'analyzed variables': [
+        #  'T', 'Theta', 'Qv', 'U', 'V', 'P', 'rho', 'W',
+        #],
+        ## special Qv
+        #'analyzed variables': [
+        #  'Qv01to10',
+        #  'Qv11to20',
+        #  'Qv21to30',
+        #  'Qv31to40',
+        #  'Qv41to55',
+        #],
     },
 }
 

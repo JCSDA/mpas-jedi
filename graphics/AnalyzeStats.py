@@ -25,6 +25,7 @@ depends_on = [
   'binning_utils',
   'config',
   'diag_utils',
+  'fit2D',
   'plot_utils',
   'stat_utils',
   'StatisticsDatabase',
@@ -86,7 +87,7 @@ def main():
 
         myDBConf['diagnosticConfigs'] = du.diagnosticConfigs(
             DiagSpaceConfig[DiagSpaceName]['diagNames'], DiagSpaceName,
-            analysisStatistics = anconf.analysisStatistics)
+            selectedStatistics = anconf.selectedStatistics)
         for diag in list(myDBConf['diagnosticConfigs'].keys()):
             if not myDBConf['diagnosticConfigs'][diag]['analyze']:
                 del myDBConf['diagnosticConfigs'][diag]

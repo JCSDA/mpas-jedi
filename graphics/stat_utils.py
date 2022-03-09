@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
+from copy import deepcopy
 import logging
 from netCDF4 import Dataset
 import numpy as np
 import os
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
 import pandas as pd
 
 _logger = logging.getLogger(__name__)
@@ -24,6 +26,8 @@ rKindNC = 'f4'
 # double-precision for floating point calculation
 rKindCompute = np.float64
 
+# double-precision for robustness
+iKind = np.int64
 
 #============
 # statistics
@@ -33,30 +37,49 @@ rKindCompute = np.float64
 # Note: must be identical across experiments for the two stages:
 # + statistics generation
 # + plot generation
-ddof = int(0)
+#ddof = int(1)
 
 #Ordered list of statistics available in ASCII stats_* files...
 # (1) that can be aggregated
-aggregatableFileStats = ['Count','Mean','MS','RMS','STD','Min','Max']
+aggregatableFileStats = [
+  'Count', 'Mean', 'MS', 'RMS', 'STD',
+  'm3', 'm4', 'Skew', 'ExcessKurtosis',
+  'Min', 'Max',
+]
+nonCountAggregatableFileStats = deepcopy(aggregatableFileStats)
+nonCountAggregatableFileStats.remove('Count')
+
+sigmaStatistics = ['MS', 'RMS']
+posSemiDefiniteStats = ['Count', 'MS', 'RMS', 'STD']
 
 allFileStats = aggregatableFileStats
+nonCountFileStats = deepcopy(allFileStats)
+nonCountFileStats.remove('Count')
 
 statDtypes = {
-  'Count': int,
+  'Count': iKind,
   'Mean': rKindStore,
   'MS': rKindStore,
   'RMS': rKindStore,
   'STD': rKindStore,
+  'm3': rKindStore,
+  'm4': rKindStore,
+  'Skew': rKindStore,
+  'ExcessKurtosis': rKindStore,
   'Min': rKindStore,
   'Max': rKindStore,
 }
 
 statDtypesCompute = {
-  'Count': int,
+  'Count': iKind,
   'Mean': rKindCompute,
   'MS': rKindCompute,
   'RMS': rKindCompute,
   'STD': rKindCompute,
+  'm3': rKindCompute,
+  'm4': rKindCompute,
+  'Skew': rKindCompute,
+  'ExcessKurtosis': rKindCompute,
   'Min': rKindStore,
   'Max': rKindStore,
 }
@@ -67,80 +90,167 @@ sampleableAggStats = ['Count','Mean','MS','RMS']
 fileStatAttributes = ['DiagSpaceGrp','varName','varUnits','diagName',
                       'binMethod','binVar','binVal','binUnits']
 
-statsFilePrefix = 'stats_'
-
 
 ###############################################################################
-def calcStats(array_f):
+def calcStats(x_):
 # INPUTS:
-# array_f[np.array(float)] - 1-d array of floating point values for which
+# x[np.array(float)] - 1-d array of floating point values for which
 #  statistics will be calculated
 
 # RETURNS:
-# STATS[dict] - population statistics, accounting for NaN values
+# y[dict] - population statistics, accounting for NaN values
 
   #Only include non-NaN values in statistics
-  STATS = {}
-  STATS['Count']  = np.isfinite(array_f).sum()
-  if STATS['Count'] > 0:
-    STATS['Mean'] = np.nanmean(array_f)
-    STATS['MS']   = np.nanmean(np.square(array_f))
-    STATS['RMS']  = np.sqrt(STATS['MS'])
-    STATS['STD']  = np.nanstd(array_f, ddof=ddof)
-    STATS['Min']  = np.nanmin(array_f)
-    STATS['Max']  = np.nanmax(array_f)
-  else:
-    for stat in allFileStats:
-      if stat != 'Count':
-        STATS[stat] = np.NaN
+  y = {}
+  y['Count']  = np.isfinite(x_).sum()
 
-  return STATS
+  for statName in nonCountFileStats:
+    y[statName] = statDtypes[statName](np.NaN)
 
+  if y['Count'] > 0:
+    x = np.asarray(x_).flatten()
+    x = x[np.isfinite(x)]
+    y['Mean'] = np.nanmean(x)
+    y['MS']   = np.nanmean(np.square(x))
+
+    # raw moments
+    m1 = y['Mean']
+    m2 = y['MS']
+    m3 = np.nanmean(np.power(x, 3))
+    m4 = np.nanmean(np.power(x, 4))
+    y['m3'] = m3
+    y['m4'] = m4
+
+    # central moments
+    c2 = centralMoment2(m1, m2)
+    c3 = centralMoment3(m1, m2, m3)
+    c4 = centralMoment4(m1, m2, m3, m4)
+
+    # RMS
+    y['RMS']  = np.sqrt(m2)
+
+    if np.isfinite(c2) and c2 >= 0.:
+      # STD
+      y['STD']  = np.sqrt(c2)
+
+      if c2 > 0:
+        # higher-order standardized moments, which are normalized by a power of c2
+        y['Skew'] = c3 / np.power(c2, 1.5)
+        y['ExcessKurtosis'] = c4 / np.power(c2, 2) - 3.
+
+    #y['Skew'] = np.nanmean(np.power(x - y['Mean'], 3)) / np.power(y['STD'], 3)
+    #y['ExcessKurtosis'] = np.nanmean(np.power(x - y['Mean'], 4)) / np.power(y['STD'], 4) - 3.
+
+    y['Min']  = np.nanmin(x)
+    y['Max']  = np.nanmax(x)
+
+#  else:
+#    for stat in nonCountFileStats:
+#      y[stat] = np.NaN
+
+  return y
+
+
+# central moment 2 in terms of raw moments 1, 2
+def centralMoment2(m1, m2):
+  return m2 - m1**2
+
+# central moment 3 in terms of raw moments 1, 2, 3
+def centralMoment3(m1, m2, m3):
+  # m3 - 3*m1*(m2 - m1**2) - m1**3
+  # m3 - 3*m1*m2 + 3*m1*m1**2 - m1**3
+  # m3 - 3*m1*m2 + 3*m1**3 - m1**3
+  a = np.array([m3, -3*m1*m2, 2*(m1**3)])
+  a = np.sort(a)
+  return np.sum(a)
+
+# central moment 4 in terms of raw moments 1, 2, 3, 4
+def centralMoment4(m1, m2, m3, m4):
+  # m4 - 4*m1*m2 + 6*(m1**2)*m2 - 3*(m1**4)
+  a = np.array([m4, -4*m1*m2, 6*(m1**2)*m2, -3*(m1**4)])
+  a = np.sort(a)
+  return np.sum(a)
 
 ###############################################################################
-def write_stats_nc(statSpace, statsDict):
+class BinnedStatisticsFile:
+  prefix = 'stats_'
+  hdf = '.h5'
+  nc = '.nc'
+  def __init__(self, statSpace=None, appIdentifier=None, DiagSpace=None, directory='.'):
 
-  # TODO: This data is hierarchical. Compare
-  #       memory/storage requirements when using
-  #       Pandas dataframe and hdf5 statistics files
-  #       instead of dict of lists and nc4
-  statsFile = statsFilePrefix+statSpace+'.nc'
-  if os.path.exists(statsFile):
-    os.remove(statsFile)
+    if statSpace is not None:
+      self.__statSpace = statSpace
 
-  ncid = Dataset(statsFile, 'w', format='NETCDF4')
-  ncid.description = statSpace+" diagnostic statistics"
+    elif DiagSpace is not None:
+      self.__statSpace = DiagSpace
+      if appIdentifier is not None and appIdentifier != '':
+        self.__statSpace = appIdentifier+"_"+self.__statSpace
 
-  nrows = len(statsDict[fileStatAttributes[0]])
-  ncid.createDimension('nrows', nrows)
+    else:
+      _logger.error("\n\nERROR: missing statSpace constructor info")
 
-  for attribName in fileStatAttributes:
-    attribHandle = ncid.createVariable(attribName, str, 'nrows')
-    attribHandle[:] = np.array(statsDict[attribName], dtype=object)
+    self.__directory = directory
+    self.__file = self.fileName()
 
-  for statName in allFileStats:
-    statHandle = ncid.createVariable(statName, rKindNC, 'nrows')
-    statHandle[:] = statsDict[statName]
+  def fileName(self):
+    return self.__directory+'/'+self.prefix+self.__statSpace
 
-  ncid.close()
+  @staticmethod
+  def naturalName(s):
+    return s.replace('-', '__')
 
+  def write(self, statsDict):
+    '''
+    Convert the statsDict to a pandas.DataFrame, then write to hdf using the df's native method
+    The dataset is hierarchical.  Storing as an hdf5 file is very efficient.
+    '''
+    file = self.__file+self.hdf
+    if os.path.exists(file):
+      os.remove(file)
 
-###############################################################################
-def read_stats_nc(statsFile):
+    # convert dict to df
+    df = pd.DataFrame.from_dict(statsDict)
 
-  ncid = Dataset(statsFile, 'r')
-  ncid.set_auto_mask(False)
+    # separate index from data
+    df.set_index(fileStatAttributes, inplace=True)
+    df.sort_index(inplace=True)
 
-  statsDict = {}
-  for attribName in fileStatAttributes:
-    statsDict[attribName] = np.asarray(ncid.variables[attribName][:])
+    # write to hdf
+    df.to_hdf(file, key=self.naturalName(self.__statSpace), complevel=6)
 
-  for statName in allFileStats:
-    statsDict[statName] = np.asarray(ncid.variables[statName][:], statDtypes[statName])
+  def read(self):
+    file = self.__file+self.hdf
+    if os.path.exists(file):
+      df = pd.read_hdf(file, key=self.naturalName(self.__statSpace))
 
-  ncid.close()
+      # convert index back to columns
+      df.reset_index(inplace=True)
 
-  return statsDict
+      # convert df to dict
+      statsDict = df.to_dict('list')
+
+      return statsDict
+
+    # can still read old netcdf files if they are available
+    # TODO: fully deprecate old nc format
+    file = self.__file+self.nc
+    if os.path.exists(file):
+      _logger.warning(
+      '''
+      WARNING: BinnedStatisticsFile.read; nc format will be deprecated soon in
+      favor of hdf. Please consider replacing old nc files with h5 files by
+      re-running the appropriate stats file generator.
+      ''')
+      ncid = Dataset(file, 'r')
+      ncid.set_auto_mask(False)
+      statsDict = {}
+      for attribName in fileStatAttributes:
+        statsDict[attribName] = np.asarray(ncid.variables[attribName][:])
+      for statName in allFileStats:
+        statsDict[statName] = np.asarray(ncid.variables[statName][:], statDtypes[statName])
+      ncid.close()
+
+      return statsDict
 
 
 #===================
@@ -164,49 +274,63 @@ def aggStatsDict(x_): #, stats = aggregatableFileStats):
 # RETURNS: y[dict] - aggregated statistics
 
   counts = np.array(x_['Count'])
-  mask = np.logical_and(np.greater(counts, 0),
-                        np.isfinite(counts))
+  mask = np.isfinite(counts)
+  mask[mask] = np.greater(counts[mask], 0)
 
   # convert lists to masked np.array to enable math functions
   x = {}
   for stat in aggregatableFileStats:
-    x[stat] = np.array(x_[stat], dtype=statDtypesCompute[stat])[mask]
+    x[stat] = np.array(x_[stat])[mask].astype(statDtypesCompute[stat])
 
   y = {}
-  for stat in aggregatableFileStats:
+  for stat in nonCountAggregatableFileStats:
     y[stat] = np.NaN
 
   ## Count
-  Count = int(np.nansum(x['Count']))
+  Count = np.int64(np.nansum(x['Count']))
   y['Count'] = Count
 
-  if Count > 0 and np.isfinite(Count):
+  if np.isfinite(Count) and Count > 0:
     # Note: arrays are sorted in ascending order before summation to avoid precision loss
-    ## Mean
-    v1_ = np.multiply(x['Mean'], x['Count'].astype(rKindCompute))
-    v1_ = np.sort(v1_)
-    Mean = np.nansum(v1_) / rKindCompute(Count)
-    y['Mean'] = rKindStore(Mean)
+    # all raw (non-central) moments are aggregated the same way
+    raw = {}
+    xCount = x['Count'].astype(rKindCompute)
+    for rawMoment in ['Mean', 'MS', 'm3', 'm4']:
+      v1_ = np.multiply(x[rawMoment].astype(rKindCompute), xCount)
+      v1_ = np.sort(v1_)
+      raw[rawMoment] = np.nansum(v1_) / rKindCompute(Count)
+      y[rawMoment] = rKindStore(raw[rawMoment])
 
-    ## MS
-    v1_ = np.multiply(x['MS'], x['Count'].astype(rKindCompute))
-    v1_ = np.sort(v1_)
-    ms = np.nansum(v1_) / rKindCompute(Count)
-    y['MS'] = rKindStore(ms)
+    # store for easy re-use
+    m1 = raw['Mean']
+    m2 = raw['MS']
+    m3 = raw['m3']
+    m4 = raw['m4']
+    c2 = centralMoment2(m1, m2)
+    c3 = centralMoment3(m1, m2, m3)
+    c4 = centralMoment4(m1, m2, m3, m4)
 
     ## RMS
-    y['RMS'] = rKindStore(np.sqrt(ms))
+    y['RMS'] = rKindStore(np.sqrt(m2))
 
-    ## STD
-    # Pooled variance Formula as described here:
-    #  https://en.wikipedia.org/wiki/Pooled_variance#Sample-based_statistics
-    #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
-    v1_ = np.multiply(np.square(x['STD']), np.subtract(x['Count'].astype(rKindCompute), ddof))
-    v2_ = np.multiply(np.square(x['Mean']), x['Count'].astype(rKindCompute))
-    v12 = np.nansum(np.sort(np.append(v1_, v2_)))
-    v3 = np.square(Mean) * rKindCompute(Count)
-    if v12 >= v3:
-      y['STD'] = rKindStore(np.sqrt((v12 - v3) / rKindCompute(Count - ddof)))
+#    # Pooled variance Formula as described here:
+#    #  https://en.wikipedia.org/wiki/Pooled_variance#Sample-based_statistics
+#    #  https://stats.stackexchange.com/questions/43159/how-to-calculate-pooled-variance-of-two-or-more-groups-given-known-group-varianc
+#    v1_ = np.multiply(np.square(x['STD']), np.subtract(x['Count'].astype(rKindCompute), ddof))
+#    v2_ = np.multiply(np.square(x['Mean']), x['Count'].astype(rKindCompute))
+#    v12 = np.nansum(np.sort(np.append(v1_, v2_)))
+#    v3 = np.square(m1) * rKindCompute(Count)
+#    if v12 >= v3:
+#      y['STD'] = rKindStore(np.sqrt((v12 - v3) / rKindCompute(Count - ddof)))
+
+    if np.isfinite(c2) and c2 >= 0.:
+      ## STD
+      y['STD'] = rKindStore(np.sqrt(c2))
+
+      ## higher-order standardized moments, which are normalized by a power of c2
+      if c2 > 0:
+        y['Skew'] = rKindStore(c3 / np.power(c2, 1.5))
+        y['ExcessKurtosis'] = rKindStore(c4 / np.power(c2, 2) - 3.)
 
     ## Min
     y['Min'] = np.nanmin(x['Min'])
@@ -521,11 +645,15 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
         ciVals = bootStrapVector(
                    statFunc(X_,Y_),
                    weights=weights,
-                   n_samples=nsSamples)
+                   n_samples=nsSamples,
+                   alpha=alpha,
+        )
       elif stat == 'RMS':
         ciVals = bootStrapAggRMSFunc(
                    X_, Y_, Ns, statFunc,
-                   n_samples=nsSamples)
+                   n_samples=nsSamples,
+                   alpha=alpha,
+        )
       else:
         _logger.error("\n\nERROR: stat not implemented: ", stat)
         os._exit(1)

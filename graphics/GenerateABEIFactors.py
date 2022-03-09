@@ -4,6 +4,7 @@ import GenerateABEIFactorsArgs
 
 from basic_plot_functions import plotDistri
 import binning_utils as bu
+from distutils.util import strtobool
 import predefined_configs as pconf
 from collections import defaultdict
 from collections.abc import Iterable
@@ -40,24 +41,46 @@ class GenerateABEIFactors:
     self.name = 'GenerateABEIFactors'
     self.args = GenerateABEIFactorsArgs.args
     self.logger = logging.getLogger(self.name)
+    self.nprocs = min(mp.cpu_count(), self.args.nprocs)
 
-    # localization length scale for inflation projection
-    self.localizationLength = 2.0e5 #meters ... same as all-sky gaussian thinning distance
-    #self.localizationLength = 7.2e5 #meters ... 6x grid spacing
-    #self.localizationLength = 2.e6 #meters same as background ensemble localization length
+    # observation batch size when updating local model cell inflation values
+    # trade-off is between memory overhead and wall-time when self.nprocs>1
+    # 5000 works well for MPAS 30km mesh and 15x15 super-ob subgrids
+    self.batchSize = 5000
+
+    # localization radius for inflation projection
+    self.localizationRadius = self.args.localizationRadius * 1.0e3 #convert from km to meters
+    self.cutoffRadius = 3.5 #normalized distance where localization is set to zero
 
     # construct mean DB into 0th member slot
     self.logger.info('database path: '+self.args.dbPath)
     self.db = JediDB(self.args.dbPath)
-    self.osNames = self.args.IRInstruments.split(',')
+    self.channels = self.args.channels.split(',')
+    instNames = self.args.IRInstruments.split(',')
     dbOSNames = list(self.db.ObsSpaceName.values())
     self.osKeys = []
-    for inst in self.osNames:
-      assert inst in dbOSNames, 'GenerateABEIFactors::__init__ '+inst+' not included in JediDB'
+    for inst in instNames:
+      if inst == '': continue
+      message = self.__class__.__name__+'.__init__: '+inst+' not included in JediDB'
+      assert inst in dbOSNames, message
       for osKey, osName in self.db.ObsSpaceName.items():
         if inst == osName:
           self.osKeys.append(osKey)
           break
+
+    self.plotLambda = bool(strtobool(self.args.plotLambda))
+
+#  def getWorkers(self):
+#    if self.nprocs > 1:
+#      workers = mp.Pool(processes = self.nprocs)
+#    else:
+#      workers = None
+#    return workers
+
+#  def finalizeWorkers(self, workers):
+#    if workers is not None:
+#      workers.close()
+#      workers.join()
 
   def diagnose(self):
     '''
@@ -81,15 +104,12 @@ class GenerateABEIFactors:
 #        logger.error('JEDI Application is not supported:: '+self.args.jediAppName)
 #
 #    return db.varList(osKey, obsFKey, markerSuffix)
-    return [
-      'brightness_temperature_8',
-      'brightness_temperature_9',
-      'brightness_temperature_10',
-    ]
+    return ['brightness_temperature_'+str(c) for c in self.channels]
+
   @staticmethod
   def getBinVarConfigs():
     binVarConfigs = defaultdict(list)
-    binVarConfigs[vu.obsVarQC] += [bu.goodQCMethod]
+    binVarConfigs[vu.obsVarQC] += [bu.passQCMethod]
     return binVarConfigs
 
   @staticmethod
@@ -118,10 +138,10 @@ class GenerateABEIFactors:
     dbVars = []
     for varName in obsVars:
         for diagName, diagnosticConfig in diagnosticConfigs.items():
-            if 'ObsFunction' not in diagnosticConfig: continue
+            if 'BinFunction' not in diagnosticConfig: continue
 
             # variables for diagnostics
-            for grpVar in diagnosticConfig['ObsFunction'].dbVars(
+            for grpVar in diagnosticConfig['BinFunction'].dbVars(
                 varName, diagnosticConfig['outerIter']):
                 if diagnosticConfig[vu.mean]:
                     dbVars.append(grpVar)
@@ -142,7 +162,6 @@ class GenerateABEIFactors:
   def diagnoseObsSpace(self, db, osKey, localConfig):
     #  osKey - key of db dict to process
     logger = logging.getLogger(self.name+'.diagnoseObsSpace('+osKey+')')
-    osName = self.osNames[self.osKeys.index(osKey)]
 
     # initialize mean db file handles
     db.initHandles(osKey)
@@ -198,15 +217,24 @@ class GenerateABEIFactors:
     #################################################
 
     # read model variables used for inflation calculation/templating
-    (modelLatsDeg, modelLonsDeg, EarthSphereR) = modelUtils.readGrid(gridFile=self.args.modelGridFile, returnR=True)
-    modelLats = np.multiply(modelLatsDeg, np.pi / 180.0)
-    modelLons = np.multiply(modelLonsDeg, np.pi / 180.0)
+    modelGridFile = self.args.modelGridFile
+    modelGrid = modelUtils.getNCData(modelGridFile)
+
+    grid = modelUtils.readGrid(gridFile=modelGridFile)
+    modelLatsDeg = grid['latitude']
+    modelLonsDeg = grid['longitude']
+    modelAreas = grid['area']
+    EarthSphereR = grid['R']
+
+    self.modelLats = np.multiply(modelLatsDeg, np.pi / 180.0)
+    self.modelLons = np.multiply(modelLonsDeg, np.pi / 180.0)
+    self.EarthSphereR = EarthSphereR
 
     modelTemplateVars = {}
     for templateType, templateVar in modelUtils.templateVariables.items():
       modelTemplateVars[templateType] = {
-        'values': modelUtils.varRead(templateVar, self.args.modelGridFile),
-        'dims': modelUtils.varDims(templateVar, self.args.modelGridFile),
+        'values': modelUtils.varRead(templateVar, modelGrid),
+        'dims': modelUtils.varDims(templateVar, modelGrid),
       }
 
     # setup observation lat/lon
@@ -220,28 +248,56 @@ class GenerateABEIFactors:
 
     obsnLocs = len(obsLons)
 
-    # setup interpolation object
+    # setup interpolation objects
+    logger.info('Setting up interpolators')
+
+    # interpolator from model to observation locations
     model2obs = Interpolate.InterpolateLonLat(
-      modelLons, modelLats,
+      self.modelLons, self.modelLats,
+      #weightMethod = 'unstinterp',
       weightMethod = 'barycentric',
       Radius = EarthSphereR)
     model2obs.initWeights(obsLons, obsLats)
 
-    #TODO: move these attributes to diag_utils
-    diagColors = {}
-    minmaxValue = {}
-    diagColors['ABEILambda'] = 'BuPu'
-    minmaxValue['ABEILambda'] = [
-      bu.ABEILambda().minLambda,
-      bu.ABEILambda().maxLambda,
-    ]
+    # interpolator for calculating local distances between model and observation locations
+    localRadius = self.cutoffRadius*self.localizationRadius
+    localArea = np.pi * localRadius**2
 
-    for diagName, diagnosticConfig in diagnosticConfigs.items():
-        if 'ObsFunction' not in diagnosticConfig: continue
+    meanCellArea = modelAreas.mean()
+    nLocalCells = np.floor(localArea / meanCellArea * 1.2).astype(int)
+
+    #TODO: improve area strategy for regional or variable resolution meshes
+    #minCellArea = modelAreas.min()
+    #nLocalCells = np.floor(localArea / minCellArea * 1.2).astype(int)
+
+    logger.info('Maximum number of cells per obs localization radius: '+str(nLocalCells))
+
+    modelLocal2obs = Interpolate.InterpolateLonLat(
+      self.modelLons, self.modelLats,
+      #weightMethod = 'unstinterp',
+      weightMethod = 'barycentric',
+      nInterpPoints = nLocalCells, #TODO: use reasonable number of local model points per observation based on mesh area and 3.5x localization radius
+      Radius = EarthSphereR)
+
+    obsInds = np.arange(0, len(obsLats))
+
+    # plotting attributes
+    # TODO: move these attributes to diag_utils
+    diagColors = {}
+    diagColors['ABEILambda'] = 'YlOrBr'
+
+    minmaxValue = {}
+#    minmaxValue['ABEILambda'] = [
+#      bu.ABEILambda().minLambda,
+#      bu.ABEILambda().maxLambda,
+#    ]
+
+    for diagName, diagnosticConfig in diagnosticConfigs.items(): # only 1 diagnosticConfig
+        if 'BinFunction' not in diagnosticConfig: continue
 
         logger.info('Calculating/writing diagnostic stats for:')
         logger.info('Diagnostic => '+diagName)
-        Diagnostic = diagnosticConfig['ObsFunction']
+        Diagnostic = diagnosticConfig['BinFunction']
         outerIter = diagnosticConfig['outerIter']
 
         for varName in obsVars:
@@ -256,8 +312,8 @@ class GenerateABEIFactors:
             if nLocs == 0:
                 logger.warning('All missing values for diagnostic: '+diagName)
 
-            for (binVarKey,binMethodKey), binMethod in binMethods.items():
-                if diagName in binMethod.excludeDiags: continue
+            for (binVarKey,binMethodKey), binMethod in binMethods.items(): #only 1 binMethod
+                if binMethod.excludeDiag(diagName): continue
 
                 binVarName, binGrpName = vu.splitObsVarGrp(binVarKey)
                 binVarShort, binVarUnits = vu.varAttributes(binVarName)
@@ -267,20 +323,21 @@ class GenerateABEIFactors:
                 #       and not ensemble member values
                 binMethod.evaluate(dbVals, varName, outerIter)
 
-                for binVal in binMethod.values:
+                for binVal in binMethod.getvalues(): #only 1 binVal
                     # apply binMethod filters for binVal
                     binnedDiagnostic = binMethod.apply(diagValues,diagName,binVal)
 
                     # Plot horizontal distribution of binnedDiagnostic
-                    if self.args.plotLambda:
-                      logger.info('plotting obs-space diagnostic')
+                    if self.plotLambda and False:
+                      logger.info('plotting obs-space diagnostic: '+diagName)
                       dotsize = 9.0
                       color = diagColors[diagName]
                       minmax = minmaxValue.get(diagName, [None, None])
                       nLocs = len(binnedDiagnostic)-np.isnan(binnedDiagnostic).sum()
                       plotDistri(
                         obsLatsDeg, obsLonsDeg, binnedDiagnostic,
-                        osName, varShort, varUnits, osName+'_'+binVarName+'='+binVal,
+                        ObsSpaceName, varShort, varUnits,
+                        ObsSpaceName+'_'+binVarName+'='+binVal,
                         nLocs, diagName,
                         minmax[0], minmax[1], dotsize, color)
 
@@ -289,62 +346,118 @@ class GenerateABEIFactors:
                     if diagName == 'ABEILambda':
                       lambdaVarName = 'modelLambda_'+varShort
                       resetLambda = localConfig.get('resetLambda', True)
-                      inflationFile = varShort+'_'+self.args.inflationFile
+                      inflationOutFile = varShort+'_'+self.args.inflationOutFile
 
-                      if not os.path.exists(inflationFile) or resetLambda:
+                      if not os.path.exists(inflationOutFile) or resetLambda:
                         # create new NC file with same header info as grid file
                         logger.info('creating fresh inflation file')
-                        modelUtils.createHeaderOnlyFile(
-                          self.args.modelGridFile,
-                          inflationFile,
+                        modelUtils.headerOnlyFileFromTemplate(
+                          modelGrid,
+                          inflationOutFile,
                           date = self.args.datetime,
                         )
 
-                      if modelUtils.hasVar(lambdaVarName, inflationFile):
+                      # create the inflation NC DataSet
+                      inflationOut = modelUtils.getNCData(inflationOutFile, 'a')
+
+                      if modelUtils.hasVar(lambdaVarName, inflationOut):
                         # read previous values for lambdaVarName (i.e., from previous sensor)
-                        modelLambda = modelUtils.varRead(lambdaVarName, inflationFile)
+                        modelLambda = modelUtils.varRead(lambdaVarName, inflationOut)
                       else:
                         modelLambda = np.full_like(modelTemplateVars['1D-c']['values'],
                           bu.ABEILambda().minLambda)
+
+                      # work in the range lambda >= 0.0
+                      modelLambda -= bu.ABEILambda().minLambda
+
+                      # alternative method using weight sum, not valid where NLocalObs is small
+                      #modelWeightedSumNum = np.full_like(modelTemplateVars['1D-c']['values'],
+                        #0.0)
+                      #modelWeightedSumDenom = np.full_like(modelTemplateVars['1D-c']['values'],
+                        #0.0)
+                      #modelNLocalObs = np.full_like(modelTemplateVars['1D-c']['values'], 0, dtype=int)
 
                       ## Project observation-space inflation factors to
                       #  model-space using localization function
                       #  in sequential loop over the observation locations
                       #  Minamide and Zhang (2018), eq. 10
                       logger.info('projecting inflation factors to model space')
-                      for obsInd, (obsLambda, obsLat, obsLon) in enumerate(list(zip(
-                           binnedDiagnostic,  obsLats, obsLons))):
-                        if np.isfinite(obsLambda):
-                          gcDistances = Interpolate.HaversineDistance(
-                                          obsLon, obsLat,
-                                          modelLons, modelLats,
-                                          EarthSphereR)
-                          scales = gcDistances / self.localizationLength
-                          rho = np.zeros(scales.shape)
 
-                          #See Greybush et al. (2011) for discussion
-                          # https://doi.org/10.1175/2010MWR3328.1
-                          # Greybush attributes Gaspari and Cohn (1999) with prescribing
-                          # the Gaussian localization function in model-space and
-                          # relates it to Hunt et al. (2007) application to obs-space
-                          # ... could revisit rho function for more optimal results
-                          crit = scales < 3.5
-                          rho[crit] = np.exp(- (scales[crit] ** 2) / 2.0)
-                          crit = (np.abs(rho) > 0.0)
-                          modelLocInds = np.arange(0, len(rho))[crit]
+                      valid = np.isfinite(binnedDiagnostic)
+                      s=0
+                      nValid = valid.sum()
+                      while s < nValid:
+                        e=np.min([s+self.batchSize, nValid])
+
+                        logger.info('  observation batch index limits => ['+str(s)+','+str(e)+')')
+                        obsInds_ = obsInds[valid][s:e]
+                        obsLats_ = obsLats[valid][s:e]
+                        obsLons_ = obsLons[valid][s:e]
+
+                        # work in the range lambda >= 0.0
+                        obsLambdas_ = binnedDiagnostic[valid][s:e] - bu.ABEILambda().minLambda
+
+                        #logger.info('initializing local distances')
+                        modelLocal2obs.initNeighbors(obsLons_, obsLats_, self.nprocs)
+                        normalizedDistance = modelLocal2obs.nnInterpDistances / self.localizationRadius
+
+                        #See Greybush et al. (2011) for discussion
+                        # https://doi.org/10.1175/2010MWR3328.1
+                        # Greybush attributes Gaspari and Cohn (1999) with prescribing
+                        # the Gaussian localization function in model-space and
+                        # relates it to Hunt et al. (2007) application to obs-space
+                        # ... could revisit rho function for more optimal results
+
+                        # cut off when normalized distance is less than self.cutoffRadius
+                        isLocal = bu.lessBound(normalizedDistance, self.cutoffRadius, False)
+
+                        # localization, rho
+                        rho = np.exp(-(normalizedDistance ** 2) / 2.0)
+
+                        for ii, (obsInd, obsLambda) in enumerate(list(zip(
+                             obsInds_, obsLambdas_))):
+
+                          localModelInds = modelLocal2obs.nnInterpInds[ii, isLocal[ii,:]]
 
                           # interpolate current lambda field to this obs location
                           interpLambda = model2obs.applyAtIndex(modelLambda, obsInd)
 
                           # update lambda field
-                          modelLambda[modelLocInds] = modelLambda[modelLocInds] + \
-                            rho[crit] * (obsLambda - interpLambda)
+                          modelLambda[localModelInds] = \
+                            modelLambda[localModelInds] + \
+                            rho[ii, isLocal[ii,:]] * (obsLambda - interpLambda)
 
-                      # truncate negative valuess caused by obs-space discretization
-                      modelLambda[modelLambda < bu.ABEILambda().minLambda] = \
-                        bu.ABEILambda().minLambda
+                          #modelWeightedSumNum[localModelInds] = \
+                            #modelWeightedSumNum[localModelInds] + \
+                            #rho[ii, isLocal[ii,:]] * (obsLambda - bu.ABEILambda().minLambda)
 
-                      if self.args.plotLambda:
+                          #modelWeightedSumDenom[localModelInds] = \
+                            #modelWeightedSumDenom[localModelInds] + \
+                            #rho[ii, isLocal[ii,:]]
+
+                          #modelNLocalObs[localModelInds] = \
+                            #modelNLocalObs[localModelInds] + 1
+
+                        s=e
+
+                      #maxLocalObs = float(modelNLocalObs.max())
+                      #impactedCells = bu.greatBound(modelWeightedSumDenom, 0.0, False)
+
+                      #modelLambda[impactedCells] = \
+                        #modelLambda[impactedCells] + \
+                        #modelWeightedSumNum[impactedCells] / modelWeightedSumDenom[impactedCells] * \
+                        #modelNLocalObs[impactedCells].astype(float) / maxLocalObs
+
+                      # truncate negative values caused by one of
+                      # + non-conservative interpolation
+                      # + obs-space discretization
+                      # + numerical precision loss due to addition/subtraction
+                      modelLambda[modelLambda < 0.0] = 0.0
+
+                      # convert back to lambda >= 1.0
+                      modelLambda += bu.ABEILambda().minLambda
+
+                      if self.plotLambda:
                         # Plot horizontal distribution of modelLambda
                         logger.info('plotting model-space inflation factors')
                         dotsize = 9.0
@@ -352,8 +465,8 @@ class GenerateABEIFactors:
                         minmax = minmaxValue.get(diagName, [None, None])
                         plotDistri(
                           modelLatsDeg, modelLonsDeg, modelLambda,
-                          'model-'+osName.upper()+' '+diagName, varShort, '',
-                          'model-'+osName+'_'+binVarName+'='+binVal,
+                          'model-'+ObsSpaceName.upper()+' '+diagName, varShort, '',
+                          'model-'+ObsSpaceName+'_'+binVarName+'='+binVal,
                           0, diagName,
                           minmax[0], minmax[1], dotsize, color)
 
@@ -365,16 +478,16 @@ class GenerateABEIFactors:
                         'long_name': 'Column-wise Inflation factor derived from '+varShort,
 
                       }
-                      modelUtils.varWrite(lambdaVarName, modelLambda, inflationFile,
+                      modelUtils.varWrite(lambdaVarName, modelLambda, inflationOut,
                         attrs, modelTemplateVars['1D-c']['dims'], 'double')
 
                       # write state-variable-specific inflation factors
                       for modelInflateVarName in modelUtils.inflationVariables:
                         templateInfo = modelUtils.variableTraits[modelInflateVarName]
-                        if modelUtils.hasVar(modelInflateVarName, self.args.modelGridFile):
+                        if modelUtils.hasVar(modelInflateVarName, modelGrid):
                           templateVarName = modelInflateVarName
                           templateVar = {
-                            'attrs': modelUtils.varAttrs(modelInflateVarName, self.args.modelGridFile),
+                            'attrs': modelUtils.varAttrs(modelInflateVarName, modelGrid),
                           }
                         else:
                           templateVarName = modelUtils.templateVariables[templateInfo['templateVar']]
@@ -384,9 +497,9 @@ class GenerateABEIFactors:
                               'long_name': templateInfo['long_name'],
                             },
                           }
-                        templateVar['values'] = modelUtils.varRead(templateVarName, self.args.modelGridFile)
-                        templateVar['dims'] = modelUtils.varDims(templateVarName, self.args.modelGridFile)
-                        templateVar['datatype'] = modelUtils.varDatatype(templateVarName, self.args.modelGridFile)
+                        templateVar['values'] = modelUtils.varRead(templateVarName, modelGrid)
+                        templateVar['dims'] = deepcopy(modelUtils.varDims(templateVarName, modelGrid))
+                        templateVar['datatype'] = modelUtils.varDatatype(templateVarName, modelGrid)
 
                         shape = templateVar['values'].shape
                         nDims = len(shape)
@@ -397,14 +510,19 @@ class GenerateABEIFactors:
                           for level in np.arange(0, shape[1]):
                             modelInflateVar[:,level] = modelLambda
 
-                        modelUtils.varWrite(modelInflateVarName, modelInflateVar, inflationFile,
+                        modelUtils.varWrite(modelInflateVarName, modelInflateVar, inflationOut,
                           templateVar['attrs'], templateVar['dims'], templateVar['datatype'],
                         )
+
+                      # close the inflation NC DataSet
+                      inflationOut.close()
 
                 #END binMethod.values LOOP
             #END binMethods tuple LOOP
         #END obsVars LOOP
     #END diagnosticConfigs LOOP
+
+    modelGrid.close()
 
 
 #=========================================================================

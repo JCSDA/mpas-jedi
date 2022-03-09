@@ -3,6 +3,8 @@
 from SpawnAnalyzeStatsArgs import args
 import AnalyzeStats as mainScript
 from Analyses import anWorkingDir
+from analyze_config import analysisTypes
+
 import argparse
 import config as conf
 from predefined_configs import outerIter
@@ -20,8 +22,9 @@ date
 #
 # set environment:
 # ================
-module load python/3.7.5
-source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh
+source /etc/profile.d/modules.csh
+setenv HDF5_DISABLE_VERSION_CHECK 1
+setenv NUMEXPR_MAX_THREADS 1
 
 setenv pySourceDir PYSOURCE
 
@@ -36,6 +39,7 @@ for dep in mainScript.depends_on:
     jobbody += ['  '+dep+' \\']
 jobbody += [''')
 
+#TODO: copy these scripts before job submission to allow multiple concurrent job spawns
 foreach pySource ($pyDepends)
   ln -sf ${pySourceDir}/${pySource}.py ./
 end
@@ -43,7 +47,31 @@ end
 #
 # make plots:
 # ===========
-python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE -app JEDIAPP -nout NOUTER >& an.log
+module purge
+module load python
+module list
+source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
+
+set success = 1
+set try = 0
+while ($success != 0 && $try < 5)
+  @ try++
+  echo "try=$try"
+
+  python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE -app JEDIAPP -nout NOUTER -a ANALYSISTYPE >& an.log
+  grep 'TypeError: super() takes at least 1 argument (0 given)' an.log
+  if ( $status == 0 ) then
+    sleep 2
+    deactivate
+    module purge
+    module load python
+    module list
+    source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
+  else
+    set success = 0
+  endif
+end
+
 grep 'Finished main() successfully' an.log
 if ( $status != 0 ) then
   touch ./FAIL
@@ -100,6 +128,7 @@ def main():
 
     ## submit a job for each selected DiagSpace
     for DiagSpace, dsConf in DiagSpaceConfig.items():
+      for analysisType in analysisTypes:
         myJobConf = deepcopy(jobConf)
 
         anGroup = dsConf['anGrp']
@@ -107,15 +136,16 @@ def main():
         npwork = grpAtt['npwork']
         npread = grpAtt['npread']
         myJobConf['nppernode'] = max(npwork, npread)
-        myJobConf['walltime'] = grpAtt['analyze_walltime']
+        myJobConf['walltime'] = grpAtt['analyze walltime']
 
-        myJobConf['name'] = 'AnStat_'+DiagSpace
-        myJobConf['path'] = './'+anWorkingDir(DiagSpace)
+        myJobConf['name'] = 'AnStat_'+DiagSpace+'_'+analysisType
+        myJobConf['filename'] = 'AnStat_'+DiagSpace
+        myJobConf['path'] = './'+anWorkingDir(DiagSpace, analysisType)
 
         myJobConf['script'] = []
         substitutions = {
             'DIAGSPACE': DiagSpace,
-#            'ANALYSISGROUP': anGroup,
+            'ANALYSISTYPE': analysisType,
             'PYSOURCE': str(scriptDir),
             'NPWORK': str(npwork),
             'NPREAD': str(npread),

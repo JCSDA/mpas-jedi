@@ -7,14 +7,11 @@ import predefined_configs as pconf
 import config as conf
 from copy import deepcopy
 import diag_utils as du
-import fnmatch
-import glob
 from JediDB import JediDB
 from JediDBArgs import obsFKey
 import logging
 import logsetup
 import multiprocessing as mp
-from netCDF4 import Dataset
 import numpy as np
 import os
 import stat_utils as su
@@ -33,6 +30,7 @@ class DiagnoseObsStatistics:
     self.name = 'DiagnoseObsStatistics'
     self.args = DiagnoseObsStatisticsArgs.args
     self.logger = logging.getLogger(self.name)
+    self.nprocs = min(mp.cpu_count(), self.args.nprocs)
 
     # construct mean DB into 0th member slot
     self.logger.info('mean database: '+self.args.meanPath)
@@ -53,11 +51,12 @@ class DiagnoseObsStatistics:
     for osKey in self.osKeys:
       self.logger.info(osKey)
       if workers is None:
-        self.diagnoseObsSpace(self.jdbs, osKey)
+        self.__diagnoseObsSpace(self.jdbs, osKey)
       else:
-        res = workers.apply_async(self.diagnoseObsSpace, args=(self.jdbs, osKey))
+        self.nprocs = 1
+        res = workers.apply_async(self.__diagnoseObsSpace, args=(self.jdbs, osKey))
 
-  def diagnoseObsSpace(self, jdbs, osKey):
+  def __diagnoseObsSpace(self, jdbs, osKey):
     #  osKey - key of jdbs members to reference
     logger = logging.getLogger(self.name+'.diagnoseObsSpace('+osKey+')')
     nMembers = len(jdbs)-1
@@ -89,12 +88,14 @@ class DiagnoseObsStatistics:
     ## Construct dictionary of binMethods for this ObsSpace
     ########################################################
 
+    logger.info('Initializing binMethods')
+
     binMethods = {}
 
-    for binVarKey, binMethodKeys in binVarConfigs.items():
+    for binVarKey, binMethodNames in binVarConfigs.items():
         binVarConfig = pconf.binVarConfigs.get(binVarKey,pconf.nullBinVarConfig)
-        for binMethodKey in binMethodKeys:
-            config = binVarConfig.get(binMethodKey,pconf.nullBinMethod).copy()
+        for binMethodName in binMethodNames:
+            config = binVarConfig.get(binMethodName,pconf.nullBinMethod).copy()
 
             if (len(config['values']) < 1 or
                 len(config['filters']) < 1): continue
@@ -102,12 +103,14 @@ class DiagnoseObsStatistics:
             config['osName'] = ObsSpaceName
             config['fileFormat'] = jdbs[vu.mean].fileFormat(osKey, obsFKey)
 
-            binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
+            binMethods[(binVarKey, binMethodName)] = bu.BinMethod(config)
 
 
     ######################################
     ## Construct diagnostic configurations
     ######################################
+
+    logger.info('Initializing diagnosticConfigs')
 
     diagnosticConfigs = du.diagnosticConfigs(
         selectDiagNames, ObsSpaceName,
@@ -119,15 +122,17 @@ class DiagnoseObsStatistics:
     ## Generate comprehensive dict of required variables
     #####################################################
 
+    logger.info('Initializing dbVars')
+
     meanDBVars = []
     ensDBVars = []
     dbVars = {vu.mean: [], vu.ensemble: []}
     for varName in obsVars:
         for diagName, diagnosticConfig in diagnosticConfigs.items():
-            if 'ObsFunction' not in diagnosticConfig: continue
+            if 'BinFunction' not in diagnosticConfig: continue
 
             # variables for diagnostics
-            for grpVar in diagnosticConfig['ObsFunction'].dbVars(
+            for grpVar in diagnosticConfig['BinFunction'].dbVars(
                 varName, diagnosticConfig['outerIter']):
                 for memberType in dbVars.keys():
                     if diagnosticConfig[memberType]:
@@ -137,7 +142,7 @@ class DiagnoseObsStatistics:
             # TODO: anIter grpVar's are not needed for all applications
             #       can save some reading time+memory by checking all diagnosticConfigs
             #       for required iterations before appending to dbVars[vu.mean] below
-            for (binVarKey,binMethodKey), binMethod in binMethods.items():
+            for key, binMethod in binMethods.items():
                 for grpVar in binMethod.dbVars(
                     varName, diagnosticConfig['outerIter']):
                     dbVars[vu.mean].append(grpVar)
@@ -147,13 +152,16 @@ class DiagnoseObsStatistics:
     ## Read required variables from jdbs
     #####################################
 
+    logger.info('Reading dbVals')
+
     # read mean database variable values into memory
-    dbVals = jdbs[vu.mean].readVars(osKey, dbVars[vu.mean])
+    dbVals = jdbs[vu.mean].readVars(osKey, dbVars[vu.mean], self.nprocs)
 
     # destroy mean file handles
     jdbs[vu.mean].destroyHandles(osKey)
 
     # now for ensemble members
+    # TODO: read members in parallel
     for memStr, jdb in jdbs.items():
         if memStr == vu.mean: continue
 
@@ -161,7 +169,7 @@ class DiagnoseObsStatistics:
         jdb.initHandles(osKey)
 
         # read database variable values into memory
-        memberDBVals = jdb.readVars(osKey, dbVars[vu.ensemble])
+        memberDBVals = jdb.readVars(osKey, dbVars[vu.ensemble], self.nprocs)
         for dbVar, vals in memberDBVals.items():
             dbVals[dbVar+memStr] = vals.copy()
 
@@ -174,72 +182,150 @@ class DiagnoseObsStatistics:
     ######################################
 
     # Initialize a dictionary to contain all statistical info for this osKey
+
+    if self.nprocs > 1:
+        workers = mp.Pool(processes = self.nprocs)
+    else:
+        workers = None
+
+    logger.info('Calculating diagnostic statistics')
+    logger.info("with "+str(self.nprocs)+" out of "+str(mp.cpu_count())+" processors")
+
+    subStats = []
+    for varName in obsVars:
+      # collect stats for all diagnosticConfigs
+      for diagName, diagnosticConfig in sorted(diagnosticConfigs.items()):
+        if 'BinFunction' not in diagnosticConfig: continue
+
+        if workers is None:
+          subStats.append(self._processBinMethods(
+            dbVals,
+            ObsSpaceGrp,
+            varName,
+            diagName, diagnosticConfig,
+            binMethods,
+            logger,
+          ))
+        else:
+          subStats.append(workers.apply_async(self._processBinMethods,
+            args=(
+              dbVals,
+              ObsSpaceGrp,
+              varName,
+              diagName, diagnosticConfig,
+              binMethods,
+              logger,
+            )
+          ))
+      #END diagnosticConfigs LOOP
+    #END obsVars LOOP
+
     statsDict = {}
     for attribName in su.fileStatAttributes:
         statsDict[attribName] = []
     for statName in su.allFileStats:
         statsDict[statName] = []
 
-    # collect stats for all diagnosticConfigs
-    for diagName, diagnosticConfig in sorted(diagnosticConfigs.items()):
-        if 'ObsFunction' not in diagnosticConfig: continue
+    if workers is None:
+      for stats in subStats:
+        goodValues = True
+        for name, values in stats.items():
+          if len(values) < 0: goodValues = False
+        if goodValues:
+          for name, values in stats.items():
+            statsDict[name] += values
+    else:
+      workers.close()
+      workers.join()
+      for stats in subStats:
+        goodValues = True
+        for name, values in stats.get().items():
+          if len(values) < 0: goodValues = False
+        if goodValues:
+          for name, values in stats.get().items():
+            statsDict[name] += values
 
-        logger.info('Calculating/writing diagnostic stats for:')
-        logger.info('DIAG = '+diagName)
-        Diagnostic = diagnosticConfig['ObsFunction']
-        outerIter = diagnosticConfig['outerIter']
-
-        for varName in obsVars:
-            logger.info('VARIABLE = '+varName)
-
-            varShort, varUnits = vu.varAttributes(varName)
-
-            Diagnostic.evaluate(dbVals, varName, outerIter)
-            diagValues = Diagnostic.result
-
-            if len(diagValues)-np.isnan(diagValues).sum() == 0:
-                logger.warning('All missing values for diagnostic: '+diagName)
-
-            for (binVarKey,binMethodKey), binMethod in binMethods.items():
-                if diagName in binMethod.excludeDiags: continue
-
-                binVarName, binGrpName = vu.splitObsVarGrp(binVarKey)
-                binVarShort, binVarUnits = vu.varAttributes(binVarName)
-
-                # initialize binMethod filter function result
-                # NOTE: binning is performed using mean values
-                #       and not ensemble member values
-                binMethod.evaluate(dbVals, varName, outerIter)
-
-                for binVal in binMethod.values:
-                    # apply binMethod filters for binVal
-                    binnedDiagnostic = binMethod.apply(diagValues,diagName,binVal)
-
-                    # store value and statistics associated with this bin
-                    statsDict['binVal'].append(binVal)
-                    statsVal = su.calcStats(binnedDiagnostic)
-                    for statName in su.allFileStats:
-                        statsDict[statName].append(statsVal[statName])
-
-                    # store metadata common to all bins
-                    statsDict['DiagSpaceGrp'].append(ObsSpaceGrp)
-                    statsDict['varName'].append(varShort)
-                    statsDict['varUnits'].append(varUnits)
-                    statsDict['diagName'].append(diagName)
-                    statsDict['binMethod'].append(binMethodKey)
-                    statsDict['binVar'].append(binVarShort)
-                    statsDict['binUnits'].append(binVarUnits)
-
-                #END binMethod.values LOOP
-            #END binMethods tuple LOOP
-        #END obsVars LOOP
-    #END diagnosticConfigs LOOP
+    del dbVals, binMethods, diagnosticConfigs
 
     ## Create a new stats file for osKey
     logger.info('Writing statistics file')
-    su.write_stats_nc(osKey,statsDict)
+    stats = su.BinnedStatisticsFile(statSpace=osKey)
+    stats.write(statsDict)
 
     logger.info('Finished')
+
+
+  #@staticmethod
+  def _processBinMethods(self,
+    dbVals,
+    ObsSpaceGrp,
+    varName,
+    diagName, diagnosticConfig,
+    binMethods,
+    logger,
+  ):
+
+    varShort, varUnits = vu.varAttributes(varName)
+
+    diagFunction = diagnosticConfig['BinFunction']
+    outerIter = diagnosticConfig['outerIter']
+
+    diagFunction.evaluate(dbVals, varName, outerIter)
+    diagValues = diagFunction.result
+
+    if len(diagValues)-np.isnan(diagValues).sum() == 0:
+      logger.warning('All missing values for diagnostic: '+diagName)
+
+    statsDict = {}
+    for aa in su.fileStatAttributes:
+      statsDict[aa] = []
+    for ss in su.allFileStats:
+      statsDict[ss] = []
+
+    for (binVarKey, binMethodName), binMethod in binMethods.items():
+      if binMethod.excludeDiag(diagName): continue
+      if binMethod.excludeVariable(varName): continue
+
+      # initialize binMethod filter function result
+      # NOTE: binning can be performed using either mean
+      #       or ensemble values, but only limited quantities
+      #       are available from ensemble members (e.g., HofX)
+      binMethod.evaluate(dbVals, varName, outerIter)
+
+      # initialize binVarShort and binVarUnits for generating the varStatsDict entries
+      binVarName, binGrpName = vu.splitObsVarGrp(binVarKey)
+      binVarShort, binVarUnits = vu.varAttributes(binVarName)
+
+      binVals = binMethod.getvalues()
+      nBins = len(binVals)
+      for binVal in binVals:
+        # apply binMethod filters for binVal
+        binnedDiagnostic = binMethod.apply(diagValues, diagName, binVal)
+
+        # store value and statistics associated with this bin
+        statsDict['binVal'].append(binVal)
+        statsVal = su.calcStats(binnedDiagnostic)
+        for statName in su.allFileStats:
+          statsDict[statName].append(statsVal[statName])
+
+      #END binMethod.values LOOP
+
+      # store metadata common to all bins
+      statsDict['DiagSpaceGrp'] += [ObsSpaceGrp]*nBins
+      statsDict['varName'] += [varShort]*nBins
+      statsDict['varUnits'] += [varUnits]*nBins
+      statsDict['diagName'] += [diagName]*nBins
+      statsDict['binMethod'] += [binMethodName]*nBins
+      statsDict['binVar'] += [binVarShort]*nBins
+      statsDict['binUnits'] += [binVarUnits]*nBins
+
+      logger.info('  completed '+varShort+', '+diagName+', '+binVarKey+', '+binMethodName)
+
+    #END binMethods tuple LOOP
+
+
+    return statsDict
+
 
 #=========================================================================
 # main program
@@ -247,19 +333,7 @@ def main():
   _logger.info('Starting '+__name__)
 
   statistics = DiagnoseObsStatistics()
-
-  if statistics.args.nprocs == 1:
-      statistics.diagnose()
-  else:
-      # create pool of workers
-      workers = mp.Pool(processes = statistics.args.nprocs)
-
-      # diagnose statistics
-      statistics.diagnose(workers)
-
-      # wait for workers to finish
-      workers.close()
-      workers.join()
+  statistics.diagnose()
 
   _logger.info('Finished '+__name__+' successfully')
 

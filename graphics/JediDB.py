@@ -8,6 +8,7 @@ from JediDBArgs import \
   obsFKey, geoFKey, diagFKey, default_path, fPrefixes
 import h5py as h5
 import logging
+import multiprocessing as mp
 from netCDF4 import Dataset
 import numpy as np
 import os
@@ -31,7 +32,7 @@ def getIODAFileRank(pathPlusFile):
     fileName = pathPlusFile.split('/')[-1]
 
     # fileParts as list, removing extension (after '.') first
-    fileParts = (fileName.split('.')[0]).split('_')
+    fileParts = ('.'.join(fileName.split('.')[:-1])).split('_')
 
     rank = fileParts[-1]
 
@@ -86,8 +87,8 @@ class FileHandles():
     # only include variables with finite data
     varlist = []
     for var in filevars:
-        grpVar = vu.IODAVarCtors[self.fileFormat](var, group)
-        var1D = self.var1DatLocs(grpVar)
+        grpVar = vu.AllVarCtors[self.fileFormat](var, group)
+        var1D = self.singleVarAtLocations(grpVar)
         if np.isfinite(var1D).sum() > 0: varlist.append(var)
 
     return varlist
@@ -95,7 +96,7 @@ class FileHandles():
   def datatype(self, var):
     return self.handles[0].datatype(var)
 
-  def var1DatLocs(self, grpVar, level = None):
+  def singleVarAtLocations(self, grpVar):
     varName, group = vu.splitObsVarGrp(grpVar)
 
     # GeoVaLs and ObsDiagnostics do not have ObsGroups in the file variable names
@@ -107,53 +108,84 @@ class FileHandles():
     dtype = self.datatype(fileVar)
 
     if fileVar not in self.variables:
-      _logger.error('FileHandles.var1DatLocs: fileVar not present: '+fileVar)
+      _logger.error('FileHandles.singleVarAtLocations: fileVar not present: '+fileVar)
 
     if 'byte' in dtype:
-      vals1D = np.empty(self.nlocs, dtype=np.object_)
+      valsOut = np.empty(self.nlocs, dtype=np.object_)
       istart = 0
       for h in self.handles:
         iend = istart + h.nlocs
         tmp = np.empty(h.nlocs, dtype=np.object_)
-        for ii, bytelist in enumerate(h.variableAS1DArray(fileVar)):
+        for ii, bytelist in enumerate(h.singleVarAtLocations(fileVar)):
           tmp[ii] = (b''.join(bytelist)).decode('utf-8')
-        vals1D[istart:iend] = tmp
+        valsOut[istart:iend] = tmp
         istart = iend
     else:
-      vals1D = np.empty(self.nlocs, dtype=dtype)
-      istart = 0
-      for h in self.handles:
-        iend = istart + h.nlocs
-        if level is None:
-          vals1D[istart:iend] = h.variableAS1DArray(fileVar)
-        else:
-          # GeoVaLs and ObsDiagnostics are always stored as 2D
-          vals1D[istart:iend] = np.transpose(np.asarray(h.variableAS1DArray(fileVar)))[level][:]
-        istart = iend
+      # determine number of levels
+      h = self.handles[0]
+      field0 = np.asarray(h.singleVarAtLocations(fileVar))
+      shape = field0.shape
+
+      istart, iend = 0, -1
+      if len(shape) > 1 and shape[1] > 1:
+        # treat level-dependent variables
+        valsOut = np.empty((self.nlocs, shape[1]), dtype=dtype)
+        for h in self.handles:
+          iend = istart + h.nlocs
+          valsOut[istart:iend,:] = h.singleVarAtLocations(fileVar)
+          istart = iend
+
+      elif len(shape) < 3:
+        # treat single-level/surface variables
+        valsOut = np.empty(self.nlocs, dtype=dtype)
+        for h in self.handles:
+          iend = istart + h.nlocs
+          if len(shape) == 1:
+            valsOut[istart:iend] = h.singleVarAtLocations(fileVar)
+          elif shape[1] == 1:
+            # GeoVaLs and ObsDiagnostics are always stored as 2D, even for a single level
+            valsOut[istart:iend] = np.transpose(np.asarray(h.singleVarAtLocations(fileVar)))[0][:]
+          istart = iend
+
+      else:
+        _logger.error('FileHandles.singleVarAtLocations: unable to handle more than 2 dimensions')
 
     assert iend == self.nlocs, (
-      'FileHandles.var1DatLocs: incorrect nlocs (',iend,'!=',nlocs,') for ', grpVar)
-
-    # convert pressure from Pa to hPa if needed (kludge)
-    if (vu.obsVarPrs in grpVar and np.max(vals1D) > 10000.0):
-      vals1D = np.divide(vals1D, 100.0)
+      'FileHandles.singleVarAtLocations: incorrect nlocs (',iend,'!=',nlocs,') for ', grpVar)
 
     # missing data
     if 'int32' in dtype:
-      missing = np.greater(np.abs(vals1D), MAXINT32)
+      missing = np.greater(np.abs(valsOut), MAXINT32)
     elif 'float32' in dtype:
-      missing = np.greater(np.abs(vals1D), MAXFLOAT)
+      missing = np.greater(np.abs(valsOut), MAXFLOAT)
     elif 'float64' in dtype:
-      missing = np.greater(np.abs(vals1D), MAXDOUBLE)
+      missing = np.greater(np.abs(valsOut), MAXDOUBLE)
     else:
-      missing = np.full_like(vals1D, False, dtype=bool)
+      missing = np.full_like(valsOut, False, dtype=bool)
 
     if 'float' in dtype:
-      vals1D[missing] = np.NaN
+      valsOut[missing] = np.NaN
 
     #TODO: missing value handling for integers, strings, and others?
 
-    return vals1D
+    # convert pressure from Pa to hPa if needed (kludge)
+    if (vu.obsVarPrs in grpVar and np.max(valsOut) > 10000.0):
+      finite = np.isfinite(valsOut)
+      valsOut[finite] = np.divide(valsOut[finite], 100.0)
+
+    # force longitude values into the range 0 to 360 (affects gnssro from ncdiag)
+    if vu.obsVarLon in grpVar:
+      finite = np.isfinite(valsOut)
+
+      greater = np.full_like(finite, False, bool)
+      greater[finite] = np.greater(valsOut[finite], 360.0)
+      valsOut[greater] = np.subtract(valsOut[greater], 360.0)
+
+      less = np.full_like(finite, False, bool)
+      less[finite] = np.less(valsOut[finite], 0.0)
+      valsOut[less] = np.add(valsOut[less], 360.0)
+
+    return valsOut
 
 
 class FileHandle():
@@ -169,7 +201,7 @@ class FileHandle():
     '''
     raise NotImplementedError()
 
-  def variableAS1DArray(self, var):
+  def singleVarAtLocations(self, var):
     '''
     virtual method, returns var as a 1D array
     '''
@@ -205,7 +237,7 @@ class NCFileHandle(FileHandle):
   def datatype(self, var):
     return self.h.variables[var].datatype.name
 
-  def variableAS1DArray(self, var):
+  def singleVarAtLocations(self, var):
     return self.h.variables[var][:]
 
   def close(self):
@@ -269,13 +301,13 @@ class HDFFileHandle(FileHandle):
       fileVarName = grp+'/'+fileVarName
     return self.h[fileVarName].dtype.name
 
-  def variableAS1DArray(self, var):
+  def singleVarAtLocations(self, var):
     if type(self.variables[var]) is h5._hl.dataset.Dataset:
       return self.variables[var][:]
     elif type(self.variables[var]) is HDF2DtoArray1D:
       return self.variables[var].get()
     else:
-      _logger.error('HDFFileHandle.variableAS1DArray: unsupported type')
+      _logger.error('HDFFileHandle.singleVarAtLocations: unsupported type')
 
   def close(self):
     super().close()
@@ -513,37 +545,61 @@ class JediDB:
         return varlist
 
 
-    def readVars(self, osKey, dbVars):
+    def readVars(self, osKey, dbVars, np=1):
     # osKey (string)  - experiment-ObsSpace key
     # dbVars (string) - list of variables desired from self.Handles[osKey]
 
         self.loggers[osKey].info('Reading requested variables from UFO file(s)...')
 
         ObsSpace = self.Handles[osKey][obsFKey]
-        ObsDiagnostics = self.Handles[osKey].get(diagFKey, None)
         GeoVaLs = self.Handles[osKey].get(geoFKey, None)
+        ObsDiagnostics = self.Handles[osKey].get(diagFKey, None)
 
-        #TODO: enable level selection for GeoVaLs and ObsDiagnostics during binning
-        #      might need to store level value in dbVars members using unique suffix
-        diagLev = 0
-        geoLev  = 0
+        #TODO: loop over grpVar with workers when workers is not None
+        nprocs = min(mp.cpu_count(), np)
+
+        # for now, only use one pe
+        nprocs = 1
+
+        if nprocs > 1:
+            workers = mp.Pool(processes = nprocs)
+        else:
+            workers = None
 
         # Construct output dictionary
         varsVals = {}
+        varsAsync = {}
         for grpVar in pu.uniqueMembers(dbVars):
-
-            varName, grpName = vu.splitObsVarGrp(grpVar)
-
-            if grpVar in ObsSpace.variables:
-                varsVals[grpVar] = ObsSpace.var1DatLocs(grpVar)
-
-            elif vu.geoGroup in grpName and GeoVaLs is not None:
-                varsVals[grpVar] = GeoVaLs.var1DatLocs(grpVar, geoLev)
-
-            elif vu.diagGroup in grpName and ObsDiagnostics is not None:
-                varsVals[grpVar] = ObsDiagnostics.var1DatLocs(grpVar, diagLev)
-
+            if workers is None:
+                varsVals[grpVar] = self.readVar(grpVar, ObsSpace, GeoVaLs, ObsDiagnostics)
             else:
-                self.loggers[osKey].error('grpVar not found => '+grpVar)
+                varsAsync[grpVar] = workers.apply_async(self.readVar,
+                    args = (grpVar, ObsSpace, GeoVaLs, ObsDiagnostics))
+
+        if workers is not None:
+            workers.close()
+            workers.join()
+            for grpVar, v in varsAsync.items():
+                print(grpVar, v)
+                varsVals[grpVar] = v.get()
 
         return varsVals
+
+
+    def readVar(self, grpVar, o, g, d):
+
+        varName, grpName = vu.splitObsVarGrp(grpVar)
+
+        if grpVar in o.variables:
+            values = o.singleVarAtLocations(grpVar)
+
+        elif vu.geoGroup in grpName and g is not None:
+            values = g.singleVarAtLocations(grpVar)
+
+        elif vu.diagGroup in grpName and d is not None:
+            values = d.singleVarAtLocations(grpVar)
+
+        else:
+            self.loggers[osKey].error('grpVar not found => '+grpVar)
+
+        return values

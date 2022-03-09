@@ -1,3 +1,4 @@
+import binning_utils as bu
 from copy import deepcopy
 import datetime as dt
 from datetime import datetime, timedelta
@@ -167,41 +168,29 @@ def getGridFile(date = initDate, gfsAnaDir = GFSANA_DIR, nCells = ncells):
 
   return gfsAnaDir+'/x1.'+str(nCells)+'.init.'+filedate+'.nc'
 
-def readGrid(date=initDate, gridFile=None, returnR=False):
+def readGrid(date=initDate, gridFile=None):
   if gridFile is None: gridFile = getGridFile(date)
   ncData = Dataset(gridFile, 'r')
-  lats = np.array( ncData.variables['latCell'][:] ) * 180.0 / np.pi
-  lons = np.array( ncData.variables['lonCell'][:] ) * 180.0 / np.pi
-  R = ncData.__dict__['sphere_radius']
+  grid = {}
+  grid['latitude'] = np.array( ncData.variables['latCell'][:] ) * 180.0 / np.pi
+  grid['longitude'] = np.array( ncData.variables['lonCell'][:] ) * 180.0 / np.pi
+  grid['area'] = np.array( ncData.variables['areaCell'][:] )
+  grid['R'] = ncData.__dict__['sphere_radius']
   ncData.close()
 
-  if returnR:
-    return (lats, lons, R)
+  return grid
 
-  return (lats,lons)
-
-def hasVar(varName, ncFile):
-  ncData = Dataset(ncFile, 'r')
-  ncData.close()
+def hasVar(varName, ncData):
   return (varName in ncData.variables)
 
-def varDims(varName, ncFile):
-  src = Dataset(ncFile, 'r')
-  dims = deepcopy(src.variables[varName].dimensions)
-  src.close()
-  return dims
+def varDims(varName, ncData):
+  return ncData.variables[varName].dimensions
 
-def varAttrs(varName, ncFile):
-  src = Dataset(ncFile, 'r')
-  attrs = deepcopy(src[varName].__dict__)
-  src.close()
-  return attrs
+def varAttrs(varName, ncData):
+  return ncData[varName].__dict__
 
-def varDatatype(varName, ncFile):
-  src = Dataset(ncFile, 'r')
-  datatype = src.variables[varName].datatype
-  src.close()
-  return datatype
+def varDatatype(varName, ncData):
+  return ncData.variables[varName].datatype
 
 def getPressure(ncData):
   pressure_p = np.array( ncData.variables['pressure_p'][0,:,:] )
@@ -209,8 +198,7 @@ def getPressure(ncData):
   pressure = pressure_p + pressure_base
   return pressure
 
-def getTemperature(ncFile):
-  ncData = Dataset(ncFile, 'r')
+def getTemperature(ncData):
   rgas = 287.0
   cp = 1004.5
   pressure = getPressure(ncData)
@@ -218,15 +206,15 @@ def getTemperature(ncFile):
   tmp1 = (1.e5 / pressure)**(rgas / cp)
   temperature = np.subtract(np.divide(theta, tmp1), 273.15)
 
-  ncData.close()
-
   return temperature
 
-def varRead(varName, ncFile):
+def getNCData(ncFile, mode='r'):
+  return Dataset(ncFile, mode)
+
+def varRead(varName, ncData):
   if (varName == 'temperature'):
-    varVals = getTemperature(ncFile)
+    varVals = getTemperature(ncData)
   else:
-    ncData = Dataset(ncFile, 'r')
     if (varName == 'pressure'):
       varVals = getPressure(ncData)
     elif varName in varNames3d:
@@ -237,31 +225,22 @@ def varRead(varName, ncFile):
     if (varName == 'qv' or varName == 'rho' or varName == 'q2'):
       varVals = varVals * 1000.
 
-    ncData.close()
-
   return varVals
 
-def varWrite(varName, varVals, ncFile,
+def varWrite(varName, varVals, dst,
              varAttrs,
-#             varUnits, varLongName, # could make these args optional
              dims, datatype):
-  assert os.path.exists(ncFile), 'Only appending to existing file is enabled in varWrite!'
 
-  dst = Dataset(ncFile, 'a', format=ncWriteFormat)
+  #TODO: Only appending to existing file is enabled in varWrite
+  #      need to make sure dst has 'a' mode
+
+  #assert os.path.exists(ncFile), 'Only appending to existing file is enabled in varWrite!'
+
   nDims = len(varVals.shape)
 
-  if not hasVar(varName, ncFile):
+  if not hasVar(varName, dst):
     dst.createVariable(varName, datatype, dims)
-
-#    # create variable attributes
-#    assert isinstance(varUnits, str), 'varUnits required when adding a new variable'
-#    assert isinstance(varUnits, str), 'varLongName required when adding a new variable'
-
-#    attrs = {
-#      'units': varUnits,
-#      'long_name': varLongName,
-#    }
-    dst[varName].setncatts(varAttrs)
+    dst[varName].setncatts(deepcopy(varAttrs))
 
   if 'Time' in dims:
     if nDims == 1:
@@ -274,15 +253,11 @@ def varWrite(varName, varVals, ncFile,
     elif nDims == 2:
       dst[varName][:,:] = np.asarray(varVals[:,:], dtype=datatype)
 
-  dst.close()
-
-def createHeaderOnlyFile(infile, outfile, date):
-  assert os.path.exists(infile), 'infile must exist!'
-  src = Dataset(infile, 'r')
+def headerOnlyFileFromTemplate(template, outfile, date):
   dst = Dataset(outfile, 'w', format=ncWriteFormat)
 
   # copy global attributes all at once via dictionary
-  dstatts = deepcopy(src.__dict__)
+  dstatts = deepcopy(template.__dict__)
 
   d = datetime.strptime(date, '%Y%m%d%H')
   confdate = d.strftime('%Y-%m-%d_%H:%M:%S')
@@ -291,13 +266,13 @@ def createHeaderOnlyFile(infile, outfile, date):
   dst.setncatts(dstatts)
 
   # copy dimensions
-  for name, dimension in src.dimensions.items():
+  for name, dimension in template.dimensions.items():
     dst.createDimension(
       name, (len(dimension) if not dimension.isunlimited() else None))
 
   requiredMetaVars = ['xtime']
   for varname in requiredMetaVars:
-    srcvar = src.variables[varname]
+    srcvar = template.variables[varname]
     # create variable in destination
     dst.createVariable(
        varname,
@@ -305,26 +280,118 @@ def createHeaderOnlyFile(infile, outfile, date):
        srcvar.dimensions)
 
     # copy variable attributes all at once via dictionary
-    dst[varname].setncatts(src[varname].__dict__)
+    dst[varname].setncatts(template[varname].__dict__)
 
     # finally copy variable data
     if varname == 'xtime':
-      xtime_ = src[varname][0][:]
-      xtime = nc.stringtoarr(confdate, len(src[varname][0][:]))
+      xtime_ = template[varname][0][:]
+      xtime = nc.stringtoarr(confdate, len(template[varname][0][:]))
       dst[varname][0] = xtime
     else:
       if 'Time' in srcvar.dimensions:
-        dst[varname][0,:] = src[varname][0,:]
+        dst[varname][0,:] = template[varname][0,:]
       else:
-        dst[varname][:] = src[varname][:]
+        dst[varname][:] = template[varname][:]
 
-  src.close()
   dst.close()
 
-def varDiff(varName, ncFile1, ncFile2):
-  var1 = varRead(varName, ncFile1)
-  var2 = varRead(varName, ncFile2)
+def varDiff(varName, ncData1, ncData2):
+  var1 = varRead(varName, ncData1)
+  var2 = varRead(varName, ncData2)
   return var2 - var1
+
+def varRelativeDiff(varName, ncData1, ncData2):
+  # only valid for positive-definite ncData1
+  var1 = varRead(varName, ncData1)
+  var2 = varRead(varName, ncData2)
+
+  d = np.empty_like(var1)
+  valid = bu.greatBound(np.abs(var1), 0.)
+  d[valid] = (var2[valid] - var1[valid]) / var1[valid]
+
+  return np.multiply(d, 100.0)
+
+def varLogRatio(varName, ncData1, ncData2):
+  # only valid for positive-definite ncData1 and ncData2
+  var1 = varRead(varName, ncData1)
+  var2 = varRead(varName, ncData2)
+
+  d = np.empty_like(var1)
+  valid = bu.greatBound(var1, 0.)
+  valid = np.logical_and(bu.greatBound(var2, 0.), valid)
+
+  d[valid] = np.log10(np.divide(var2[valid], var1[valid]))
+
+  return d
+
+diagnosticFunctions = {
+  'mmgfsan': varDiff,
+  'rltv_mmgfsan': varRelativeDiff,
+  'log_mogfsan': varLogRatio,
+}
+
+variableSpecificDiagnosticConfigs = {
+  # default is 'mmgfsan' below
+  'q2': ['mmgfsan', 'log_mogfsan'],
+  'qv': ['mmgfsan', 'log_mogfsan'],
+  'qv01to30': ['mmgfsan', 'log_mogfsan'],
+  'qv01to10': ['mmgfsan', 'log_mogfsan'],
+  'qv11to20': ['mmgfsan', 'log_mogfsan'],
+  'qv21to30': ['mmgfsan', 'log_mogfsan'],
+  'qv31to40': ['mmgfsan', 'log_mogfsan'],
+  'qv41to55': ['mmgfsan', 'log_mogfsan'],
+}
+
+def variableSpecificDiagnostics(varName):
+  return variableSpecificDiagnosticConfigs.get(varName, ['mmgfsan'])
+
+aggregatedVariableConfig = {
+  'qv01to30': {
+    'model variable': 'qv',
+    'max level': 30,
+  },
+  'qv01to10': {
+    'model variable': 'qv',
+    'min level': 1,
+    'max level': 10,
+  },
+  'qv11to20': {
+    'model variable': 'qv',
+    'min level': 11,
+    'max level': 20,
+  },
+  'qv21to30': {
+    'model variable': 'qv',
+    'min level': 21,
+    'max level': 30,
+  },
+  'qv31to40': {
+    'model variable': 'qv',
+    'min level': 31,
+    'max level': 40,
+  },
+  'qv41to55': {
+    'model variable': 'qv',
+    'min level': 41,
+    'max level': 55,
+  },
+}
+
+def aggVariableConfig(aggVarName):
+  return aggregatedVariableConfig.get(
+    aggVarName,
+    {'model variable': aggVarName}
+  )
+
+def aggModelVariable(aggVarName):
+  return aggVariableConfig(aggVarName)['model variable']
+
+def aggMinLevel(aggVarName):
+  return np.max([aggVariableConfig(aggVarName).get('min level', 1), 1])
+
+def aggMaxLevel(aggVarName, nLevels):
+  return np.min([aggVariableConfig(aggVarName).get('max level', nLevels), nLevels])
+
 
 def main():
   print ('This is not a runnable program.')

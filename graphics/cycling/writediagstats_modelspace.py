@@ -1,1 +1,0 @@
-../writediagstats_modelspace.py

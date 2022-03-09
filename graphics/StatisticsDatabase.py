@@ -16,7 +16,7 @@ import stat_utils as su
 from typing import List
 import var_utils as vu
 
-class DiagSpaceDict():
+class MultipleBinnedStatistics():
     def __init__(self, nrows):
         self.nrows = nrows
         self.values = {}
@@ -29,8 +29,8 @@ class DiagSpaceDict():
             self.values[statName] = np.empty(nrows, np.float)
 
     @classmethod
-    def read(cls, cyStatsFile, expName, fcTDelta, cyDTime):
-        statsDict = su.read_stats_nc(cyStatsFile)
+    def read(cls, statsFile, expName, fcTDelta, cyDTime):
+        statsDict = statsFile.read()
         nrows = len(statsDict[su.fileStatAttributes[0]])
         statsDict['expName'] = np.full(nrows, expName)
         statsDict['fcTDelta'] = np.full(nrows, fcTDelta)
@@ -38,7 +38,7 @@ class DiagSpaceDict():
 
         new = cls(nrows)
         for key, val in statsDict.items():
-            assert key in new.values, "ERROR: DiagSpaceDict.read() "+key+" not in values"
+            assert key in new.values, "ERROR: MultipleBinnedStatistics.read() "+key+" not in values"
             new.values[key][:] = val[:]
         return new
 
@@ -56,12 +56,12 @@ class DiagSpaceDict():
         return new
 
     def insert(self, other, srow):
-        assert srow >= 0, ("Error: can only insert DiagSpaceDict rows >= 0, not ", srow)
+        assert srow >= 0, ("Error: can only insert MultipleBinnedStatistics rows >= 0, not ", srow)
         erow = srow + other.nrows - 1
-        assert erow < self.nrows, ("Error: can only insert DiagSpaceDict rows < ", self.nrows, ", not ", erow)
+        assert erow < self.nrows, ("Error: can only insert MultipleBinnedStatistics rows < ", self.nrows, ", not ", erow)
         for key, val in other.values.items():
             if isinstance(val, Iterable):
-                assert key in self.values, key+" not in DiagSpaceDict"
+                assert key in self.values, key+" not in MultipleBinnedStatistics"
                 self.values[key][srow:erow+1] = val[:]
 
     def destroy(self):
@@ -86,19 +86,20 @@ class StatsDB:
     def __init__(self, conf):
 #        self.conf = conf
     ## Examples of directory structures from which this container can extract statistics.
-    ## The stats*.nc files are produced by writediagstats_obsspace.py during cycling experiments.
-    # ASCII statistics file examples for cycling runs (on cheyenne):
+    ## The su.BinnedStatisticsFile's are produced by DiagnoseObsStatistics.py and writediagstats_modelspace.py during
+    ## cycling experiments.  The directory structure is controlled by the self.statsDirectory method.  The default
+    # conventions for cycling runs (on cheyenne) are as follows:
     # (hasFCLenDir == True or self.fcTDeltas[-1] > self.fcTDeltas[0]):
     #statFile = '/glade/scratch/user/pandac/FC/3dvar/2018041500/{fcDirFormats}/diagnostic_stats/stats_omb_amsua_n19.nc'
     #            |                         |        |          |              |                |     |   |         |
     #                       ^                   ^      ^         ^              ^                 ^    ^        ^
-    #                expDirectory       expLongName cyDTime  fcTDelta statsFileSubDir statsFilePrefix DAMethod DiagSpaceName
+    #                expDirectory       expLongName cyDTime  fcTDelta statsFileSubDir statsFilePrefix appIdentifier DiagSpaceName
 
     # (hasFCLenDir == False and self.fcTDeltas[-1] == self.fcTDeltas[0]):
     #statFile = '/glade/scratch/user/pandac/DA/3dvar/2018041500/diagnostic_stats/stats_3dvar_bumpcov_amsua_n19.nc'
     #            |                         |        |          |                |     |             |         |
     #                       ^                   ^        ^       ^                 ^              ^        ^
-    #                  expDirectory       expLongName  cyDTime statsFileSubDir statsFilePrefix  DAMethod  DiagSpaceName
+    #                  expDirectory       expLongName  cyDTime statsFileSubDir statsFilePrefix  appIdentifier  DiagSpaceName
         self.available = False
 
         # selected DiagSpace (ObsSpace name or ModelSpace name)
@@ -121,13 +122,13 @@ class StatsDB:
         self.expDirectory = conf['expDirectory']
         self.expLongNames = conf['expLongNames']
         self.expNames = conf['expNames']
-        self.cntrlExpIndex = conf['cntrlExpIndex']
-        self.cntrlExpName = self.expNames[min([self.cntrlExpIndex, len(self.expNames)-1])]
+        self.cntrlExpName = conf['cntrlExpName']
+        self.cntrlExpIndex = self.expNames.index(self.cntrlExpName)
         self.noncntrlExpNames = [x for x in self.expNames if x != self.cntrlExpName]
         self.logger.info('Control Experiment: '+self.cntrlExpName)
         self.logger.info(('Non-control Experiment(s): ', self.noncntrlExpNames))
 
-        self.DAMethods = conf['DAMethods']
+        self.appIdentifiers = conf['appIdentifiers']
 
         self.diagnosticConfigs = conf['diagnosticConfigs']
 
@@ -164,47 +165,34 @@ class StatsDB:
             self.cyDTimes.append(dumDateTime)
             dumDateTime = dumDateTime + cyTimeInc
 
-        # Retrieve list of DiagSpaceNames from files available for all experiments
-        # TODO: Only populate DiagSpaceNames if all cyDTimes and fcTDeltas meet
+        # Check if first statsFile is present for self.DiagSpaceName and for all experiments
+        # TODO: self.available requires all cyDTimes and fcTDeltas to meet
         #       these conditions:
-        #         (1) all stats files are present
-        #         (2) all stats files contain the same number of rows (easier)
+        #         (1) all statsFiles are present
+        #         (2) all statsFiles generate DataFrames that contain the same number of rows (easier)
         #             or equivalent rows (harder)
         # TODO: add the capability to calculate the stats when files are missing/incomplete
         #       and then output to correct file name
         expsDiagSpaceNames = []
-        for expName, expLongName, statsFileSubDir, DAMethod in list(zip(
-            self.expNames, self.expLongNames, self.statsFileSubDirs, self.DAMethods)):
-            dateDir = self.cyDTimes_dir[0]
-            if self.hasFCLenDir:
-                dateDir = dateDir+'/'+self.fcTDeltas_dir[expName][0]
+        for expName, expLongName, statsFileSubDir, appIdentifier in list(zip(
+            self.expNames, self.expLongNames, self.statsFileSubDirs, self.appIdentifiers)):
 
-            FILEPREFIX0 = self.expDirectory+'/'+expLongName +'/'+dateDir+'/' \
-                          +statsFileSubDir+'/'+su.statsFilePrefix
-            if DAMethod != '': FILEPREFIX0 += DAMethod+"_"
+            directory = self.statsDirectory(expLongName, self.cyDTimes_dir[0], self.fcTDeltas_dir[expName][0], statsFileSubDir)
 
-            DiagSpaceNames = []
-            for File in glob.glob(FILEPREFIX0+'*.nc'):
-               DiagSpaceName = File[len(FILEPREFIX0):-len('.nc')]
-               if DiagSpaceName == self.DiagSpaceName:
-                   DiagSpaceNames.append(DiagSpaceName)
-            expsDiagSpaceNames.append(DiagSpaceNames)
+            statsFile = su.BinnedStatisticsFile(
+                            appIdentifier=appIdentifier,
+                            DiagSpace=self.DiagSpaceName,
+                            directory=directory)
 
-        # Remove DiagSpaceNames that are not common to all experiments
-        self.availDiagSpaceNames = deepcopy(expsDiagSpaceNames[0])
-        if len(expsDiagSpaceNames) > 1:
-            for expDiagSpaceNames in expsDiagSpaceNames[1:]:
-                for DiagSpaceName in expDiagSpaceNames:
-                    if DiagSpaceName not in expDiagSpaceNames:
-                        self.availDiagSpaceNames.remove(DiagSpaceName)
+            if (not os.path.exists(statsFile.fileName()+'.nc') and
+                not os.path.exists(statsFile.fileName()+'.h5')):
+                self.logger.warning("stats file not available at first cycle/forecast combination"+
+                                    "DiagSpace = "+self.DiagSpaceName+
+                                    " and expName ="+expName)
+                self.logger.warning("attempted to find stats file at "+
+                                    statsFile.fileName()+'.h5')
 
-        if (len(self.availDiagSpaceNames) < 1):
-            self.logger.warning("stats files not available for creating a StatsDB"+
-                                "object for the selected DiagSpace => "+self.DiagSpaceName)
-            return
-
-        assert len(self.availDiagSpaceNames) == 1, (
-            "\n\nERROR: only one DiagSpaceName per object is allowed.")
+                return
 
         self.available = True
 
@@ -221,31 +209,29 @@ class StatsDB:
         self.logger.info("Reading intermediate statistics files")
         self.logger.info("with "+str(nprocs)+" out of "+str(mp.cpu_count())+" processors")
         workers = mp.Pool(nprocs)
-        dsDictParts = []
+        binnedStatsParts = []
         for cyDTime, cyDTime_dir in list(zip(self.cyDTimes, self.cyDTimes_dir)):
             self.logger.info("  Working on cycle time "+str(cyDTime))
             missingFiles = []
 
-            for expName, expLongName, statsFileSubDir, DAMethod in list(zip(
-                self.expNames, self.expLongNames, self.statsFileSubDirs, self.DAMethods)):
-                expPrefix = self.expDirectory+'/'+expLongName
-                ncStatsFile = statsFileSubDir+'/'+su.statsFilePrefix
-                if DAMethod != '': ncStatsFile += DAMethod+"_"
-                ncStatsFile += self.DiagSpaceName+'.nc'
+            for expName, expLongName, statsFileSubDir, appIdentifier in list(zip(
+                self.expNames, self.expLongNames, self.statsFileSubDirs, self.appIdentifiers)):
+
                 for fcTDelta, fcTDelta_dir in list(zip(
                     self.fcTDeltas, self.fcTDeltas_dir[expName])):
 
-                    #Read all stats/attributes from NC file for ExpName, fcTDelta, cyDTime
-                    dateDir = cyDTime_dir
-                    if self.hasFCLenDir:
-                        dateDir = dateDir+'/'+fcTDelta_dir
-                    cyStatsFile = expPrefix+'/'+dateDir+'/'+ncStatsFile
-
-                    if os.path.exists(cyStatsFile):
-                        dsDictParts.append(workers.apply_async(DiagSpaceDict.read,
-                            args = (cyStatsFile, expName, fcTDelta, cyDTime)))
+                    #Read all stats/attributes from su.BinnedStatisticsFile for ExpName, fcTDelta, cyDTime
+                    directory = self.statsDirectory(expLongName, cyDTime_dir, fcTDelta_dir, statsFileSubDir)
+                    statsFile = su.BinnedStatisticsFile(
+                                    appIdentifier=appIdentifier,
+                                    DiagSpace=self.DiagSpaceName,
+                                    directory=directory)
+                    if (os.path.exists(statsFile.fileName()+'.nc') or
+                        os.path.exists(statsFile.fileName()+'.h5')):
+                        binnedStatsParts.append(workers.apply_async(MultipleBinnedStatistics.read,
+                            args = (statsFile, expName, fcTDelta, cyDTime)))
                     else:
-                        missingFiles.append(cyStatsFile)
+                        missingFiles.append(statsFile.fileName())
 
             if len(missingFiles) > 0:
                 self.logger.warning("The following files do not exist.  Matching times are excluded from the statistsics.")
@@ -255,13 +241,17 @@ class StatsDB:
         workers.join()
 
         self.logger.info("Concatenating statistics sub-dictionaries from multiple processors")
-        dsDict = DiagSpaceDict.concatasync(dsDictParts)
+        binnedStats = MultipleBinnedStatistics.concatasync(binnedStatsParts)
 
-        ## Convert dsDict to DataFrame
+        for expName in self.expNames:
+            assert expName in binnedStats.values['expName'], \
+                'ERROR: no statsFiles found for expName = '+expName
+
+        ## Convert binnedStats to DataFrame
         self.logger.info("Constructing a dataframe from statistics dictionary")
-        dsDF = pd.DataFrame.from_dict(dsDict.values)
-        dsDict.destroy()
-        del dsDictParts
+        dsDF = pd.DataFrame.from_dict(binnedStats.values)
+        binnedStats.destroy()
+        del binnedStatsParts
 
         self.logger.info("Sorting the dataframe index")
 
@@ -275,11 +265,31 @@ class StatsDB:
         ##  diagspace group
         self.DiagSpaceGrp = dsDF.index.levels[indexNames.index('DiagSpaceGrp')]
 
-        # remove the DiagSpaceGrp dimension, because it's common across all rows
+        # remove the DiagSpaceGrp dimension, because it's common across all rows and therefore extraneous
         #       expName      fcTDelta    cyDTime                     varName     diagName    binVar      binVal      binMethod
         dsLoc = (slice(None), slice(None), slice(None), self.DiagSpaceGrp[0], slice(None), slice(None), slice(None), slice(None), slice(None))
         self.dfw = DFWrapper(dsDF.xs(dsLoc))
 
+        # drop non-required diagnostics
+        requiredDiagnostics = set(list(self.diagnosticConfigs.keys()))
+        for config in self.diagnosticConfigs.values():
+            requiredDiagnostics = set(list(requiredDiagnostics) + list(config['requiredDiagnostics']))
+        availableDiagnostics = set(self.dfw.levels('diagName'))
+        keepDiagnostics = availableDiagnostics & requiredDiagnostics
+        if len(keepDiagnostics) < 1:
+            message = 'No remaining diagnostics! availableDiagnostics: '
+            for diag in availableDiagnostics: message += diag+', '
+            message += '; requiredDiagnostics: '
+            for diag in requiredDiagnostics: message += diag+', '
+            self.logger.error(message)
+        self.dfw = DFWrapper.fromLoc(self.dfw, {'diagName': keepDiagnostics})
+        # TODO: would rather drop non-required diagnostics in place to avoid memory overhead, but gives warning message
+        # for diagName in availableDiagnostics:
+        #     if diagName not in requiredDiagnostics:
+        #         # drop unused diagName from dfw
+        #         self.dfw.df.drop(diagName, level='diagName', inplace=True)
+
+        # initialize self attributes
         self.initAttributes()
 
         # add non-aggregated derived diagnostics as needed
@@ -332,14 +342,26 @@ class StatsDB:
         self.binNumVals = []
         self.binNumVals2DasStr = []
         for binVal in self.allBinVals:
+            # int
             if pu.isint(binVal):
                 self.binNumVals.append(int(binVal))
                 self.binNumVals2DasStr.append(binVal)
+            # float
             elif pu.isfloat(binVal):
                 self.binNumVals.append(float(binVal))
                 self.binNumVals2DasStr.append(binVal)
             else:
                 self.binNumVals.append(vu.miss_i)
+                # comma-separated lists of float/int
+                if ',' in binVal:
+                    binVals = binVal.split(',')
+                    if all([(pu.isint(b) or pu.isfloat(b)) for b in binVals]):
+                        self.binNumVals2DasStr.append(binVal)
+
+    def statsDirectory(self, expLongName, cyDTime, fcTDelta, statsFileSubDir):
+        dateDir = cyDTime
+        if self.hasFCLenDir: dateDir += '/'+fcTDelta
+        return self.expDirectory+'/'+expLongName +'/'+dateDir+'/'+statsFileSubDir
 
     def appendDF(self, newDiagDF):
         self.dfw.append(newDiagDF)
@@ -356,15 +378,14 @@ class StatsDB:
 
 def createORreplaceDerivedDiagnostics(dfw, diagnosticConfigs):
     for diagName, diagnosticConfig in diagnosticConfigs.items():
-        if diagnosticConfig['derived']:
-            diagNames = dfw.levels('diagName')
-            if diagName in diagNames:
+        if 'DerivedDiagnostic' in diagnosticConfig:
+            availableDiagnostics = dfw.levels('diagName')
+            if diagName in availableDiagnostics:
                 # drop derived diagName from dfw
                 dfw.df.drop(diagName, level='diagName', inplace=True)
 
             # create then append DataFrame with derived diagName
-            derivedDiagDF = diagnosticConfig['DFWFunction'](
-                dfw, diagnosticConfig['staticArg'])
+            derivedDiagDF = diagnosticConfig['DerivedDiagnostic'].evaluate(dfw)
             dfw.append(derivedDiagDF)
 
 
@@ -372,6 +393,13 @@ class DFWrapper:
     def __init__(self, df):
         self.df = df
         self.indexNames = list(self.df.index.names)
+
+    def __str__(self):
+      with pd.option_context('display.max_rows', None,
+                             'display.max_columns', None,
+                             'display.precision', 3,
+                             ):
+        return self.df.to_string()
 
     @classmethod
     def fromLoc(cls, other, locDict, var=None):
@@ -420,15 +448,15 @@ class DFWrapper:
                 indL.append(slice(None))
             elif (isinstance(locDict[index], Iterable) and
                 not isinstance(locDict[index], str)):
-                indL.append(locDict[index])
+                indL.append(list(locDict[index]))
             else:
-                indL.append([locDict[index]])
+                indL.append(list([locDict[index]]))
             Loc = tuple(indL)
         return Loc
 
     def locdf(self, Loc, var=None):
         if var is None:
-            return self.df.loc[Loc,:]
+            return self.df.loc[Loc, :]
         else:
             return self.df.loc[Loc, var]
 
@@ -439,6 +467,18 @@ class DFWrapper:
     def loc(self, locDict, var=None):
         return self.locdf(self.locTuple(locDict), var)
 
+    def loc1(self, locDict, var=None):
+        s = self.loc(locDict, var).to_numpy()
+        if isinstance(s, Iterable):
+          if len(s) == 1:
+            return s[0]
+          else:
+            return np.NaN
+          #assert len(s) == 1, "DFWrapper::loc0, locDict/var must return single location only"
+          #return s[0]
+        else:
+          return s
+
     def var(self, var):
         return self.loc({}, var=var)
 
@@ -446,10 +486,10 @@ class DFWrapper:
         return pu.uniqueMembers(self.loc(locDict, var).tolist())
 
     def min(self, locDict, var=None):
-        return self.locdf(self.locTuple(locDict), var).dropna().min()
+       return self.loc(locDict, var).dropna().min()
 
     def max(self, locDict, var):
-        return self.locdf(self.locTuple(locDict), var).dropna().max()
+        return self.loc(locDict, var).dropna().max()
 
     def aggStats(self, aggovers):
         groupby = deepcopy(self.indexNames)

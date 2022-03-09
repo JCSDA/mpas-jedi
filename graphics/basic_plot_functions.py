@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-from copy import deepcopy
 import cartopy.crs as ccrs
-import datetime as dt
+from cartopy.mpl.ticker import (LongitudeFormatter, LatitudeFormatter,
+                                LatitudeLocator, LongitudeLocator)
+from collections.abc import Iterable
+from copy import deepcopy, copy
 import logging
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
@@ -72,8 +74,8 @@ distriZooms['ahi'] = {
     'maxLat': None,
 }
 
-def plotDistri(lats,lons,values, \
-               ObsType,VarName,var_unit,out_name,nstation,levbin, \
+def plotDistri(lats,lons,values,
+               ObsType,VarName,var_unit,out_name,nstation,levbin,
                dmin=None,dmax=None,dotsize=6,color="rainbow"):
 #================================================================
 #INPUTS:
@@ -153,10 +155,14 @@ def plotDistri(lats,lons,values, \
         valuesPlot = values[finite]
         lonSort = np.argsort(lonsPlot)
 
-        p = plt.pcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
+#        p = plt.pcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
+#                       transform = ccrs.PlateCarree(),
+#                       cmap = cm, vmin = dmin, vmax = dmax,
+#                       latlon = True, tri = True)
+
+        p = plt.tripcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
                        transform = ccrs.PlateCarree(),
-                       cmap = cm, vmin = dmin, vmax = dmax,
-                       latlon = True, tri = True)
+                       cmap = cm, vmin = dmin, vmax = dmax)
 
     else:
         p=ax.scatter(lons[finite], lats[finite], c=values[finite],
@@ -174,25 +180,25 @@ def plotDistri(lats,lons,values, \
 
 #set title  ===================================================================
     if nstation == 0 or ObsType == 'satwind' or ObsType == 'satwindBufr':
-        plt.text(0.5, 1.15, '%s   %s %s nlocs:%s' \
-            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),    \
-            horizontalalignment='center', \
+        plt.text(0.5, 1.15, '%s   %s %s nlocs:%s'
+            %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),
+            horizontalalignment='center',
             fontsize=12, transform = ax.transAxes)
     else:
         if ObsType[:6] == 'gnssro':
-            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nprofile:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nprofile:%s'
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),
+                horizontalalignment='center',
                 fontsize=12, transform = ax.transAxes)
         elif ObsType == 'aircraft':
-            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nflight:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nflight:%s'
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),
+                horizontalalignment='center',
                 fontsize=12, transform = ax.transAxes)
         else:
-            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nstation:%s' \
-                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),    \
-                horizontalalignment='center', \
+            plt.text(0.5, 1.15, '%s   %s %s nlocs:%s nstation:%s'
+                %(ObsType,VarName,var_unit,len(values[~np.isnan(values)]),nstation),
+                horizontalalignment='center',
                 fontsize=12, transform = ax.transAxes)
 
     plt.savefig('distri_%s_%s_%s.png'%(VarName,out_name,levbin),dpi=200,bbox_inches='tight')
@@ -314,7 +320,7 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
 #================================================================
 #INPUTS:
 # Stats      - statistics
-# xlabeltime - time labels for x-axis 
+# xlabeltime - time labels for x-axis
 # ylevels    - vertical levels for y-axis
 # VarName    - variable name
 #================================================================
@@ -382,21 +388,125 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
     plt.savefig(VarName+'_TS_2d.png',dpi=200,bbox_inches='tight')
     plt.close()
 
+
+## default independent axis configurations
+defaultIndepConfig = {'transform': None, 'invert': False}
+
+## Functions used to transform axes
+axisTransforms = {}
+
+# Pressure: x**(1/pressureExponent)
+pressureExponent = 3.0
+def forwardPressure(x):
+    global pressureExponent
+    return np.power(x, 1./pressureExponent)
+
+def inversePressure(y):
+    global pressureExponent
+    return np.power(y, pressureExponent)
+
+axisTransforms['Pressure'] = {
+    'forward': forwardPressure,
+    'inverse': inversePressure,
+    'locator': mticker.FixedLocator,
+}
+
+#ciExponent = np.e
+ciExponent = 2.0
+def forwardCloudImpact(x):
+    global ciExponent
+    return np.sign(x) * np.power(np.abs(x), 1./ciExponent)
+
+def inverseCloudImpact(y):
+    global ciExponent
+    return np.sign(y) * np.power(np.abs(y), ciExponent)
+
+axisTransforms['CloudImpact'] = {
+    'forward': forwardCloudImpact,
+    'inverse': inverseCloudImpact,
+    'locator': mticker.FixedLocator,
+}
+
+class axisTransform:
+    '''
+    Accessor class for axisTransforms dictionary of axis transformation and locator functions
+    '''
+    def __init__(self, name):
+        assert name in axisTransforms, ('ERROR in axisTransform: ',name,' is not a defined transformation')
+        assert 'forward' in axisTransforms[name], ('ERROR in axisTransform: ',name,' is missing forward transform')
+        assert 'inverse' in axisTransforms[name], ('ERROR in axisTransform: ',name,' is missing inverse transform')
+        assert 'locator' in axisTransforms[name], ('ERROR in axisTransform: ',name,' is missing locator')
+        self.tname = name
+
+    def forward(self):
+        return axisTransforms[self.tname]['forward']
+
+    def inverse(self):
+        return axisTransforms[self.tname]['inverse']
+
+    def locator(self):
+        return axisTransforms[self.tname]['locator']
+
+
+## axis locators and formatters for one-centered ratios
+#TODO: make the locators adjustable so that only 1 or 2 decades are shown at once
+#      otherwise can be difficult to see tick marks
+#TODO: optionally allow for values very close to 1., e.g., 1.+0.001*baseRatios
+baseRatios = np.array([2., 3., 5., 8., 10.]) #Fibonacci-like sequence
+decades = np.arange(0, 4)
+
+#Major
+oneCenteredRatiosRight = np.array([])
+majorRight = []
+for decade in decades:
+  majorRight += list(baseRatios * (10.**decade))
+oneCenteredRatiosRight = np.array(majorRight)
+oneCenteredRatiosLeft = np.flip(np.divide(1.,oneCenteredRatiosRight))
+oneCenteredRatios = np.append(oneCenteredRatiosLeft, np.array([1.]))
+oneCenteredRatios = np.append(oneCenteredRatios, oneCenteredRatiosRight)
+
+oneCenteredRatiosMajorLocator = mticker.FixedLocator(oneCenteredRatios)
+oneCenteredRatiosMajorFormatter = mticker.FormatStrFormatter('%.2f')
+
+#Minor - fractally divides baseRatios using a 10% reduction
+minorRight = []
+lastR = 1.
+for thisR in oneCenteredRatiosRight:
+  diff = thisR - lastR
+  for r in 0.1*baseRatios:
+    minorRight.append(lastR + r*diff)
+
+  lastR = thisR
+
+oneCenteredRatiosRight = np.array(minorRight)
+oneCenteredRatiosLeft = np.flip(np.divide(1.,oneCenteredRatiosRight))
+oneCenteredRatios = np.append(oneCenteredRatiosLeft, np.array([1.]))
+oneCenteredRatios = np.append(oneCenteredRatios, oneCenteredRatiosRight)
+
+oneCenteredRatiosMinorLocator = mticker.FixedLocator(oneCenteredRatios)
+oneCenteredRatiosMinorFormatter = mticker.NullFormatter()
+
+# maximum number of legend entries for line-style plots
 maxLegendEntries = 12
+
+# common line width for "ax.plot"
+commonLineWidth = 0.92
+significanceLineWidth = 0.5
+errorbarLineWidth = 0.3
 
 ###############################################################################
 lenWarnSer = 0
 nanWarnSer = 0
-def plotSeries(fig, \
-               linesVals, xVals, \
-               linesLabel, \
-               title="", dataLabel="y", \
-               sciticks=False, logscale= False, signdef=False, \
-               indepLabel="x", invert_ind_axis=False, \
-               ny=1, nx=1, nplots=1, iplot=0, \
-               linesValsMinCI=None, linesValsMaxCI=None, \
-               dmin=np.NaN, dmax=np.NaN, \
-               lineAttribOffset=0, \
+def plotSeries(fig,
+               linesVals, xVals,
+               linesLabel,
+               title="", indepLabel="x", dataLabel="y",
+               indepConfig=defaultIndepConfig,
+               sciTicks=False, logScale= False, centralValue=None,
+               ny=1, nx=1, nplots=1, iplot=0,
+               linesValsMinCI=None, linesValsMaxCI=None,
+               dmin=np.NaN, dmax=np.NaN,
+               lineAttribOffset=0,
                legend_inside=True,
                interiorLabels=True):
 
@@ -408,11 +518,11 @@ def plotSeries(fig, \
 
 # title            - subplot title, optional
 # dataLabel        - label for linesVals, optional
-# sciticks         - whether linesVals needs scientific formatting for ticks, optional
-# logscale         - y-axis is scaled logarithmically, optional, overrides sciticks
-# signdef          - whether linesVals is positive/negative definite, optional
+# sciTicks         - whether linesVals needs scientific formatting for ticks, optional
+# logScale         - y-axis is scaled logarithmically, optional, overrides sciTicks
+# centralValue     - central value of linesVals, optional
 # indepLabel       - label for xVals, optional
-# invert_ind_axis  - whether to invert x-axis orientation, optional
+# indepConfig      - x axis formatting config, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
 # nplots           - total number of subplots, optional
@@ -425,6 +535,7 @@ def plotSeries(fig, \
 # lineAttribOffset - offset for selecting line attributes, optional
 # dmin, dmax       - min/max values of linesVals, optional
 # legend_inside    - whether legend should be placed inside the subplot, optional
+# interiorLabels   - whether to add titles and axis labels for interior subplots, optional
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -453,11 +564,11 @@ def plotSeries(fig, \
         # Plot line for each lineVals that has non-missing data
         pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
-        ax.plot(xVals, lineVals, \
-                color=pColor, \
-                label=linesLabel[iline], \
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
-                linewidth=0.5)
+        ax.plot(xVals, lineVals,
+                color=pColor,
+                label=linesLabel[iline],
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                linewidth=commonLineWidth)
         nLines += 1
         plotVals = np.append(plotVals, lineVals)
 
@@ -465,103 +576,161 @@ def plotSeries(fig, \
         if linesValsMinCI is not None and \
            linesValsMaxCI is not None:
 
-            # test statistical significance versus zero
-            if signdef:
-                significant = np.empty(len(lineVals))
-                significant[:] = np.NaN
-            else:
-                significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
-
             lineArr = np.array(lineVals)
             xArr = np.array(xVals)
-            negsiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
-            if len(negsiginds) > 0:
-                ax.plot(xArr[negsiginds], lineArr[negsiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='v', \
-                        markersize=1.5)
 
-            possiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
-            if len(possiginds) > 0:
-                ax.plot(xArr[possiginds], lineArr[possiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='^', \
-                        markersize=1.5)
+            # user error bars when there is more than one experiment
+            if len(plotVals) > 1:
+              deltaError = np.asarray([
+                -(linesValsMinCI[iline]-lineArr),
+                linesValsMaxCI[iline]-lineArr])
 
-            ax.plot(xVals, linesValsMinCI[iline], \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.plot(xVals, linesValsMaxCI[iline], \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.0, alpha = 0.1)
-            ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            where=significant > 0.0, \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.2, alpha = 0.3)
+              ax.errorbar(xVals, lineArr, yerr=deltaError,
+                          fmt = 'none',
+                          ecolor=pColor,
+                          elinewidth=errorbarLineWidth,
+                          capsize=1.5, capthick=0.2)
+
+            # otherwise use shaded significance region
+            else:
+              # test statistical significance versus centralValue
+              if centralValue is None:
+                  significant = np.empty(len(lineVals))
+                  significant[:] = np.NaN
+                  centralValue_ = 0.0
+              else:
+                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                                            np.subtract(linesValsMaxCI[iline], centralValue))
+                  centralValue_ = centralValue
+              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+
+              negsiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
+              if len(negsiginds) > 0:
+                  ax.plot(xArr[negsiginds], lineArr[negsiginds],
+                          color=pColor,
+                          ls='',
+                          marker='v',
+                          markersize=0.2)
+
+              possiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
+              if len(possiginds) > 0:
+                  ax.plot(xArr[possiginds], lineArr[possiginds],
+                          color=pColor,
+                          ls='',
+                          marker='^',
+                          markersize=0.2)
+
+              ax.plot(xVals, linesValsMinCI[iline],
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+              ax.plot(xVals, linesValsMaxCI[iline],
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+
+              ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                              color=pColor,
+                              edgecolor=pColor,
+                              linewidth=0.0, alpha = 0.1)
+              ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                              where=significant > 0.0,
+                              color=pColor,
+                              edgecolor=pColor,
+                              linewidth=0.2, alpha = 0.3)
 
     if nLines == 0:
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    # add horizontal zero line for unbounded quantities
-    if not signdef:
-        ax.plot([xVals[0], xVals[-1]], [0., 0.], ls="--", c=".3", \
+    # add horizontal centralValue line for unbounded quantities
+    if centralValue is not None:
+        ax.plot([xVals[0], xVals[-1]], [centralValue, centralValue], ls="--", c=".3",
             linewidth=0.7,markersize=0)
 
-    # standardize x-limits
-    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
+    # standardize data-limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, plotVals, centralValue)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
 
     #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
+    scaleType = 'linear'
 
-    isLogScale = logscale
-    if logscale:
-        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+    # TODO: encapsulate this log-axis formatting and oneCenteredRatios tick formatting
+    #       into a reusable function for all plot types, including color axis in 2D plots
+    if logScale:
+        finite = np.isfinite(plotVals)
+        nonzero = finite
+        nonzero[finite] = np.greater(np.abs(plotVals[finite]), 0.)
         if nonzero.sum() > 0:
             vmin = np.nanmin(np.abs(plotVals[nonzero]))
             vmax = np.nanmax(np.abs(plotVals[nonzero]))
-            if signdef:
+            if centralValue is None:
                 # log tick labels look bad for single decade
-                if vmax / vmin > 10.0:
-                    ax.set_yscale('log')
-                else:
-                    isLogScale = False
+                if vmax / vmin > 10.0 and vmax > 0.:
+                    mindval, maxdval = pu.get_clean_ax_limits(
+                        np.log10(np.nanmax(np.array([vmin, vmax*1.e-3]))),
+                        np.log10(vmax))
+                    mindval = np.power(10., mindval)
+                    maxdval = np.power(10., maxdval)
+                    scaleType = 'log'
+                    maxp = None
+                    if np.isfinite(maxdval):
+                        maxp = maxdval
+                    pint = plotVals.astype(int)
+                    isInt = np.all((plotVals - pint) == 0)
+                    if isInt:
+                        minp = np.nanmax(np.array([1., mindval]))
+                    else:
+                        minp = mindval
+            elif float(centralValue) == 0.:
+                scaleType = 'symlog'
+                if maxp is not None: minp = -maxp
             else:
-                ax.set_yscale('symlog')
+                scaleType = 'log'
+                maxratio = np.max([vmax/centralValue, centralValue/vmin])
+                maxp = maxratio / centralValue
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                maxratio = maxp / centralValue
+                minp = centralValue / maxratio
+
+    # for non-linear axis scales, limits must be set before scale
+    ax.set_ylim(minp, maxp)
+    ax.set_yscale(scaleType)
+
+    if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
+        ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
+        if maxp < 8.0:
+            ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
         else:
-            isLogScale = False
+            ax.yaxis.set_minor_locator(mticker.NullLocator())
+        ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
+        ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
 
-        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
-            ax.set_ylim(None, maxdval)
-            if np.abs(vmin) > 0.:
-                ax.set_ylim(vmin, None)
-
-    if not isLogScale:
-        if sciticks:
+    if scaleType == 'linear':
+        if sciTicks:
             ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        if (np.isfinite(mindval) and
-            np.isfinite(maxdval)):
-            ax.set_ylim(mindval,maxdval)
-            if maxdval-mindval < 1.0 or \
-               maxdval-mindval > 100.0:
-                ax.tick_params(axis='y',rotation=-35)
         ax.yaxis.get_offset_text().set_fontsize(3)
+
+    if indepConfig['transform'] is None:
+        ax.set_xscale('linear')
+        ax.xaxis.set_major_locator(mticker.AutoLocator())
+    else:
+        transform = axisTransform(indepConfig['transform'])
+        locator = transform.locator()
+        ax.set_xscale('function', functions=(transform.forward(), transform.inverse()))
+        ax.xaxis.set_major_locator(locator(xVals))
+        ax.tick_params(axis='x', rotation=60.)
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -578,15 +747,15 @@ def plotSeries(fig, \
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,
                            framealpha=0.4,ncol=1)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+            ax.legend(loc='upper left',fontsize=3,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
-    if invert_ind_axis:
+    if indepConfig['invert']:
         ax.invert_xaxis()
 
     ax.grid()
@@ -596,16 +765,16 @@ def plotSeries(fig, \
 ###############################################################################
 lenWarnProf = 0
 nanWarnProf = 0
-def plotProfile(fig, \
-                linesVals, yVals, \
-                linesLabel, \
-                title="", dataLabel="x", \
-                sciticks=False, logscale=False, signdef=False, \
-                indepLabel="y", invert_ind_axis=False, \
-                ny=1, nx=1, nplots=1, iplot=0, \
-                linesValsMinCI=None, linesValsMaxCI=None, \
-                dmin=np.NaN, dmax=np.NaN, \
-                lineAttribOffset=0, \
+def plotProfile(fig,
+                linesVals, yVals,
+                linesLabel,
+                title="", indepLabel="y", dataLabel="x",
+                indepConfig=defaultIndepConfig,
+                sciTicks=False, logScale=False, centralValue=None,
+                ny=1, nx=1, nplots=1, iplot=0,
+                linesValsMinCI=None, linesValsMaxCI=None,
+                dmin=np.NaN, dmax=np.NaN,
+                lineAttribOffset=0,
                 legend_inside=True,
                 interiorLabels=True):
 
@@ -617,11 +786,12 @@ def plotProfile(fig, \
 
 # title            - subplot title, optional
 # dataLabel        - label for linesVals, optional
-# sciticks         - whether linesVals needs scientific formatting for ticks, optional
-# logscale         - x-axis is scaled logarithmically, optional, overrides sciticks
-# signdef          - whether linesVals is positive/negative definite, optional
+# indepConfig      - y axis formatting config, optional
+
+# sciTicks         - whether linesVals needs scientific formatting for ticks, optional
+# logScale         - x-axis is scaled logarithmically, optional, overrides sciTicks
+# centralValue     - central value of linesVals, optional
 # indepLabel       - label for yVals, optional
-# invert_ind_axis  - whether to invert y-axis orientation, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
 # nplots           - total number of subplots, optional
@@ -634,6 +804,7 @@ def plotProfile(fig, \
 # lineAttribOffset - offset for selecting line attributes, optional
 # dmin, dmax       - min/max values of linesVals, optional
 # legend_inside    - whether legend should be placed inside the subplot, optional
+# interiorLabels   - whether to add titles and axis labels for interior subplots, optional
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -662,11 +833,11 @@ def plotProfile(fig, \
         # Plot line for each lineVals that has non-missing data
         pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
-        ax.plot(lineVals, yVals, \
-                color=pColor, \
-                label=linesLabel[iline], \
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
-                linewidth=0.5)
+        ax.plot(lineVals, yVals,
+                color=pColor,
+                label=linesLabel[iline],
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                linewidth=commonLineWidth)
         nLines += 1
         plotVals = np.append(plotVals,lineVals)
 
@@ -674,104 +845,163 @@ def plotProfile(fig, \
         if linesValsMinCI is not None and \
            linesValsMaxCI is not None:
 
-            # test statistical significance versus zero
-            if signdef:
-                significant = np.empty(len(lineVals))
-                significant[:] = np.NaN
-            else:
-                significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
-
             lineArr = np.array(lineVals)
             yArr = np.array(yVals)
-            negsiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
-            if len(negsiginds) > 0:
-                ax.plot(lineArr[negsiginds], yArr[negsiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='<', \
-                        markersize=1.5)
 
-            possiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
-            if len(possiginds) > 0:
-                ax.plot(lineArr[possiginds], yArr[possiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='>', \
-                        markersize=1.5)
+            # user error bars when there is more than one experiment
+            if len(plotVals) > 1:
+              deltaError = np.asarray([
+                -(linesValsMinCI[iline]-lineArr),
+                linesValsMaxCI[iline]-lineArr])
 
-            ax.plot(linesValsMinCI[iline], yVals, \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.plot(linesValsMaxCI[iline], yVals, \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.fill_betweenx(yVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.0, alpha = 0.1)
-            ax.fill_betweenx(yVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            where=significant > 0.0, \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.2, alpha = 0.3)
+              ax.errorbar(lineArr, yVals, xerr=deltaError,
+                          fmt = 'none',
+                          ecolor=pColor,
+                          elinewidth=errorbarLineWidth,
+                          capsize=1.5, capthick=0.2)
+
+            # otherwise use shaded significance region
+            else:
+              # test statistical significance versus centralValue
+              if centralValue is None:
+                  significant = np.empty(len(lineVals))
+                  significant[:] = np.NaN
+                  centralValue_ = 0.0
+              else:
+                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                                            np.subtract(linesValsMaxCI[iline], centralValue))
+                  centralValue_ = centralValue
+              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+
+              negsiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
+              if len(negsiginds) > 0:
+                  ax.plot(lineArr[negsiginds], yArr[negsiginds],
+                          color=pColor,
+                          ls='',
+                          marker='<',
+                          markersize=0.2)
+
+              possiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
+              if len(possiginds) > 0:
+                  ax.plot(lineArr[possiginds], yArr[possiginds],
+                          color=pColor,
+                          ls='',
+                          marker='>',
+                          markersize=0.2)
+
+              ax.plot(linesValsMinCI[iline], yVals,
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+              ax.plot(linesValsMaxCI[iline], yVals,
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+
+              ax.fill_betweenx(yVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                               color=pColor,
+                               edgecolor=pColor,
+                               linewidth=0.0, alpha = 0.1)
+              ax.fill_betweenx(yVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                               where=significant > 0.0,
+                               color=pColor,
+                               edgecolor=pColor,
+                               linewidth=0.2, alpha = 0.3)
 
     if nLines == 0:
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    # add vertical zero line for unbounded quantities
-    if not signdef:
-        ax.plot([0., 0.], [yVals[0], yVals[-1]], ls="--", c=".3", \
+    # add vertical centralValue line for unbounded quantities
+    if centralValue is not None:
+        ax.plot([centralValue, centralValue], [yVals[0], yVals[-1]], ls="--", c=".3",
             linewidth=0.7,markersize=0)
 
-    # standardize x-limits
-    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
+    # standardize data-limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, plotVals, centralValue)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
 
     #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-
-    isLogScale = logscale
-    if logscale:
-        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+    scaleType = 'linear'
+    if logScale:
+        finite = np.isfinite(plotVals)
+        nonzero = finite
+        nonzero[finite] = np.greater(np.abs(plotVals[finite]), 0.)
         if nonzero.sum() > 0:
             vmin = np.nanmin(np.abs(plotVals[nonzero]))
             vmax = np.nanmax(np.abs(plotVals[nonzero]))
-            if signdef:
+            if centralValue is None:
                 # log tick labels look bad for single decade
-                if vmax / vmin > 10.0:
-                    ax.set_xscale('log')
-                else:
-                    isLogScale = False
+                if vmax / vmin > 10.0 and vmax > 0.:
+                    mindval, maxdval = pu.get_clean_ax_limits(
+                        np.log10(np.nanmax(np.array([vmin, vmax*1.e-3]))),
+                        np.log10(vmax))
+                    mindval = np.power(10., mindval)
+                    maxdval = np.power(10., maxdval)
+                    scaleType = 'log'
+                    maxp = None
+                    if np.isfinite(maxdval):
+                        maxp = maxdval
+                    pint = plotVals.astype(int)
+                    isInt = np.all((plotVals - pint) == 0)
+                    if isInt:
+                        minp = np.nanmax(np.array([1., mindval]))
+                    else:
+                        minp = mindval
+            elif float(centralValue) == 0.:
+                scaleType = 'symlog'
+                if maxp is not None: minp = -maxp
             else:
-                ax.set_xscale('symlog')
+                scaleType = 'log'
+                maxratio = np.max([vmax/centralValue, centralValue/vmin])
+                maxp = maxratio / centralValue
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                maxratio = maxp / centralValue
+                minp = centralValue / maxratio
+
+    # for non-linear axis scales, limits must be set before scale
+    ax.set_xlim(minp, maxp)
+    ax.set_xscale(scaleType)
+
+    if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
+        ax.xaxis.set_major_locator(oneCenteredRatiosMajorLocator)
+        if maxp < 8.0:
+            ax.xaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
         else:
-            isLogScale = False
+            ax.xaxis.set_minor_locator(mticker.NullLocator())
+        ax.xaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
+        ax.xaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+        ax.tick_params(axis='x', rotation=90)
 
-        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
-            ax.set_xlim(None, maxdval)
-            if np.abs(mindval) > 0.:
-                ax.set_xlim(mindval, None)
-
-    if not isLogScale:
-        if sciticks:
+    if scaleType == 'linear':
+        if sciTicks:
             ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-        if (np.isfinite(mindval) and
-            np.isfinite(maxdval)):
-            ax.set_xlim(mindval,maxdval)
-            if maxdval-mindval < 1.0 or \
-               maxdval-mindval > 100.0:
-                ax.tick_params(axis='x',rotation=-35)
+        if (np.isfinite(minp) and
+            np.isfinite(maxp)):
+            if maxp-minp < 1.0 or \
+               maxp-minp > 100.0:
+                ax.tick_params(axis='x', rotation=90)
         ax.xaxis.get_offset_text().set_fontsize(3)
 
+    if indepConfig['transform'] is None:
+        ax.set_yscale('linear')
+        ax.yaxis.set_major_locator(mticker.AutoLocator())
+    else:
+        transform = axisTransform(indepConfig['transform'])
+        locator = transform.locator()
+        ax.set_yscale('function', functions=(transform.forward(), transform.inverse()))
+        ax.yaxis.set_major_locator(locator(yVals))
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -788,15 +1018,15 @@ def plotProfile(fig, \
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,
                            framealpha=0.4,ncol=1)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+            ax.legend(loc='upper left',fontsize=3,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
-    if invert_ind_axis:
+    if indepConfig['invert']:
         ax.invert_yaxis()
 
     ax.grid()
@@ -807,30 +1037,30 @@ def plotProfile(fig, \
 ###############################################################################
 lenWarnTS=0
 nanWarnTS=0
-def plotTimeSeries(fig, \
-                   xsDates, linesVals, \
-                   linesLabel, \
-                   title="", dataLabel="", \
-                   sciticks=False, logscale = False, signdef=False, \
-                   ny=1, nx=1, nplots=1, iplot=0, \
-                   linesValsMinCI=None, linesValsMaxCI=None, \
-                   dmin=np.NaN, dmax=np.NaN, \
-                   lineAttribOffset=0, \
+def plotTimeSeries(fig,
+                   xsDates, linesVals,
+                   linesLabel,
+                   title="", dataLabel="",
+                   sciTicks=False, logScale = False, centralValue=None,
+                   ny=1, nx=1, nplots=1, iplot=0,
+                   linesValsMinCI=None, linesValsMaxCI=None,
+                   dmin=np.NaN, dmax=np.NaN,
+                   lineAttribOffset=0,
                    legend_inside=True,
                    interiorLabels=True):
 
 # ARGUMENTS
 # fig              - matplotlib figure object
 # xsDates          - date x-values (list/array or list of lists/arrays
-#                                   of float seconds, dt.timedelta, dt.datetime)
+#                                   of float seconds, datetime.timedelta, datetime.datetime)
 # linesVals        - dependent variable (list of arrays)
 # linesLabel       - legend label for linesVals (list)
 
 # title            - subplot title, optional
 # dataLabel        - label for linesVals, optional
-# sciticks         - whether linesVals needs scientific formatting for ticks, optional
-# logscale         - y-axis is scaled logarithmically, optional, overrides sciticks
-# signdef          - whether linesVals is positive/negative definite, optional
+# sciTicks         - whether linesVals needs scientific formatting for ticks, optional
+# logScale         - y-axis is scaled logarithmically, optional, overrides sciTicks
+# centralValue     - central value of linesVals, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
 # nplots           - total number of subplots, optional
@@ -843,6 +1073,7 @@ def plotTimeSeries(fig, \
 # lineAttribOffset - offset for selecting line attributes, optional
 # dmin, dmax       - min/max values of linesVals, optional
 # legend_inside    - whether legend should be placed inside the subplot, optional
+# interiorLabels   - whether to add titles and axis labels for interior subplots, optional
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -863,7 +1094,7 @@ def plotTimeSeries(fig, \
             continue
 
         #float xVals
-        if isinstance(xsDates[0],(list,np.ndarray)):
+        if isinstance(xsDates[0], Iterable):
             xVals = pu.TDeltas2Seconds(xsDates[min([iline,len(xsDates)-1])])
         else:
             xVals = pu.TDeltas2Seconds(xsDates)
@@ -887,11 +1118,11 @@ def plotTimeSeries(fig, \
         # Plot line for each lineVals that has non-missing data
         pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
 
-        ax.plot(xVals, lineVals, \
-                label=linesLabel[iline], \
-                color=pColor, \
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset), \
-                linewidth=0.5)
+        ax.plot(xVals, lineVals,
+                label=linesLabel[iline],
+                color=pColor,
+                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                linewidth=commonLineWidth)
         nLines += 1
         plotVals = np.append(plotVals, lineVals)
 
@@ -899,107 +1130,155 @@ def plotTimeSeries(fig, \
         if linesValsMinCI is not None and \
            linesValsMaxCI is not None:
 
-            # test statistical significance versus zero
-            if signdef:
-                significant = np.empty(len(lineVals))
-                significant[:] = np.NaN
-            else:
-                significant = np.multiply(linesValsMinCI[iline], linesValsMaxCI[iline])
-            significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
-
             lineArr = np.array(lineVals)
             xArr = np.array(xVals)
-            negsiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] < 0.0)],dtype=int)
-            if len(negsiginds) > 0:
-                ax.plot(xArr[negsiginds], lineArr[negsiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='v', \
-                        markersize=1.5)
 
-            possiginds = np.array([i for i,x in enumerate(significant)
-                                   if (x > 0.0 and lineArr[i] > 0.0)],dtype=int)
-            if len(possiginds) > 0:
-                ax.plot(xArr[possiginds], lineArr[possiginds], \
-                        color=pColor, \
-                        ls='', \
-                        marker='^', \
-                        markersize=1.5)
+            # user error bars when there is more than one experiment
+            if len(plotVals) > 1:
+              deltaError = np.asarray([
+                -(linesValsMinCI[iline]-lineArr),
+                linesValsMaxCI[iline]-lineArr])
 
-            ax.plot(xVals, linesValsMinCI[iline], \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.plot(xVals, linesValsMaxCI[iline], \
-                    color=pColor, \
-                    alpha=0.4, \
-                    ls='-', \
-                    linewidth=0.5)
-            ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.0, alpha = 0.1)
-            ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline], \
-                            where=significant > 0.0, \
-                            color=pColor, \
-                            edgecolor=pColor, \
-                            linewidth=0.2, alpha = 0.3)
+              ax.errorbar(xVals, lineArr, yerr=deltaError,
+                          fmt = 'none',
+                          ecolor=pColor,
+                          elinewidth=errorbarLineWidth,
+                          capsize=1.5, capthick=0.2)
+
+            # otherwise use shaded significance region
+            else:
+              # test statistical significance versus centralValue
+              if centralValue is None:
+                  significant = np.empty(len(lineVals))
+                  significant[:] = np.NaN
+                  centralValue_ = 0.0
+              else:
+                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                                            np.subtract(linesValsMaxCI[iline], centralValue))
+                  centralValue_ = centralValue
+
+              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+
+              negsiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
+              if len(negsiginds) > 0:
+                  ax.plot(xArr[negsiginds], lineArr[negsiginds],
+                          color=pColor,
+                          ls='',
+                          marker='v',
+                          markersize=0.8)
+
+              possiginds = np.array([i for i,x in enumerate(significant)
+                                     if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
+              if len(possiginds) > 0:
+                  ax.plot(xArr[possiginds], lineArr[possiginds],
+                          color=pColor,
+                          ls='',
+                          marker='^',
+                          markersize=0.8)
+
+              ax.plot(xVals, linesValsMinCI[iline],
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+              ax.plot(xVals, linesValsMaxCI[iline],
+                      color=pColor,
+                      alpha=0.4,
+                      ls='-',
+                      linewidth=significanceLineWidth)
+
+              ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                              color=pColor,
+                              edgecolor=pColor,
+                              linewidth=0.0, alpha = 0.1)
+              ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
+                              where=significant > 0.0,
+                              color=pColor,
+                              edgecolor=pColor,
+                              linewidth=0.2, alpha = 0.3)
 
     if nLines == 0:
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    # standardize y-limits
-    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,plotVals,signdef)
-
-    # add horizontal zero line for unbounded quantities
-    if not signdef:
-        ax.plot([minX, maxX], [0., 0.], ls="--", c=".3", \
+    # add horizontal centralValue line for unbounded quantities
+    if centralValue is not None:
+        ax.plot([minX, maxX], [centralValue, centralValue], ls="--", c=".3",
             linewidth=0.7,markersize=0)
 
     #axes settings
-    if isinstance(xsDates[0],(list,np.ndarray)):
+    if isinstance(xsDates[0], Iterable):
         pu.format_x_for_dates(ax, xsDates[0])
     else:
         pu.format_x_for_dates(ax, xsDates)
 
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-    isLogScale = logscale
-    if logscale:
-        nonzero = np.logical_and(np.greater(np.abs(plotVals), 0.), np.isfinite(plotVals))
+    # standardize data-limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, plotVals, centralValue)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
+
+    #axes settings
+    scaleType = 'linear'
+    if logScale:
+        finite = np.isfinite(plotVals)
+        nonzero = finite
+        nonzero[finite] = np.greater(np.abs(plotVals[finite]), 0.)
         if nonzero.sum() > 0:
             vmin = np.nanmin(np.abs(plotVals[nonzero]))
             vmax = np.nanmax(np.abs(plotVals[nonzero]))
-            if signdef:
+            if centralValue is None:
                 # log tick labels look bad for single decade
-                if vmax / vmin > 10.0:
-                    ax.set_yscale('log')
-                else:
-                    isLogScale = False
+                if vmax / vmin > 10.0 and vmax > 0.:
+                    mindval, maxdval = pu.get_clean_ax_limits(
+                        np.log10(np.nanmax(np.array([vmin, vmax*1.e-3]))),
+                        np.log10(vmax))
+                    mindval = np.power(10., mindval)
+                    maxdval = np.power(10., maxdval)
+                    scaleType = 'log'
+                    maxp = None
+                    if np.isfinite(maxdval):
+                        maxp = maxdval
+                    pint = plotVals.astype(int)
+                    isInt = np.all((plotVals - pint) == 0)
+                    if isInt:
+                        minp = np.nanmax(np.array([1., mindval]))
+                    else:
+                        minp = mindval
+            elif float(centralValue) == 0.:
+                scaleType = 'symlog'
+                if maxp is not None: minp = -maxp
             else:
-                ax.set_yscale('symlog')
+                scaleType = 'log'
+                maxratio = np.max([vmax/centralValue, centralValue/vmin])
+                maxp = maxratio / centralValue
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                maxratio = maxp / centralValue
+                minp = centralValue / maxratio
+
+    # for non-linear axis scales, limits must be set before scale
+    ax.set_ylim(minp, maxp)
+    ax.set_yscale(scaleType)
+
+    if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
+        ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
+        if maxp < 8.0:
+            ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
         else:
-            isLogScale = False
+            ax.yaxis.set_minor_locator(mticker.NullLocator())
+        ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
+        ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
 
-        if isLogScale and np.isfinite(maxdval) and maxdval > 0.:
-            ax.set_ylim(None, maxdval)
-            if np.abs(vmin) > 0.:
-                ax.set_ylim(vmin, None)
-
-    if not isLogScale:
-        if sciticks:
+    if scaleType == 'linear':
+        if sciTicks:
             ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        if (np.isfinite(mindval) and
-            np.isfinite(maxdval)):
-            ax.set_ylim(mindval,maxdval)
-            if maxdval-mindval < 1.0 or \
-               maxdval-mindval > 100.0:
-                ax.tick_params(axis='y',rotation=-35)
         ax.yaxis.get_offset_text().set_fontsize(3)
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     ax.grid()
 
@@ -1017,47 +1296,64 @@ def plotTimeSeries(fig, \
         if legend_inside:
             #INSIDE AXES
             nlcol = np.int(np.ceil(np.sqrt(nLines)))
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+            lh = ax.legend(loc='best',fontsize=3,frameon=True,
                            framealpha=0.4,ncol=nlcol)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False, \
+            ax.legend(loc='upper left',fontsize=3,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
 
     return
 
+# color map and # of levels for various cAxisType's
+cmaps = {
+  'magnitude': 'YlOrBr',
+  'symmetric': 'seismic',
+}
+nlevs = {
+  'magnitude': 18,
+  'symmetric': 28,
+}
 
 ###############################################################################
-def plotTimeSeries2D(fig, \
-                     xDates, yVals, contourVals, \
-                     title="", clabel="", \
-                     sciticks=False, logscale=False, signdef=False, \
-                     dataLabel="y", invert_ind_axis=False, \
-                     ny=1, nx=1, nplots=1, iplot=0, \
-                     dmin=np.NaN, dmax=np.NaN,
-                     interiorLabels=True):
+def plot2D(fig,
+           xVals, yVals, contourVals,
+           title='', xLabel='x', yLabel='y', cLabel='',
+           xConfig=defaultIndepConfig,
+           yConfig=defaultIndepConfig,
+           sciTicks=False, logScale=False, centralValue=None,
+           ny=1, nx=1, nplots=1, iplot=0,
+           dmin=np.NaN, dmax=np.NaN,
+           interiorLabels=True):
 
 # ARGUMENTS
 # fig           - matplotlib figure object
-# xDates        - date x-values (array of float seconds, dt.timedelta, dt.datetime)
-# yVals         - second independent variable
-# contourVals   - dependent variable (2d array)
+# xVals         - x-values (list/array of float, datetime.datetime, or datetime.timedelta)
+# yVals         - y-values
+# contourVals   - dependent variable (2d numpy array), same size as yVals x xVals
 
 # title         - subplot title, optional
-# clabel        - label for dependent variable, optional
-# sciticks      - whether contourVals needs scientific formatting for ticks, optional
-# logscale      - whether contours are spaced logarithmically, optional, overrides sciticks
-# signdef       - whether contourVals is positive/negative definite, optional
-# dataLabel     - label for yVals, optional
-# invert_ind_axis - whether to invert y-axis orientation, optional
+# xLabel        - label for xVals, optional
+# yLabel        - label for yVals, optional
+# cLabel        - label for dependent variable, optional
+# xConfig       - x axis formatting config, optional
+# yConfig       - y axis formatting config, optional
+
+# log_y_axis    - whether y-axis is scaled logarithmically, optional
+# sciTicks      - whether contourVals needs scientific formatting for ticks, optional
+# logScale      - whether contours are spaced logarithmically, optional, overrides sciTicks
+# centralValue  - central value of contourVals, optional
 
 # ny, nx        - number of subplots in x/y direction, optional
 # nplots        - total number of subplots, optional
 # iplot         - this subplot index (starting at 0), optional
 
 # dmin, dmax    - min/max values of contourVals, optional
+# interiorLabels- whether to add titles, axis, and colorbar labels for interior subplots, optional
+
+    global cmaps, nlevs
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -1066,53 +1362,104 @@ def plotTimeSeries2D(fig, \
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    xVals = pu.TDeltas2Seconds(xDates)
+    xVals_ = pu.TDeltas2Seconds(xVals)
 
-    # standardize c-limits
-    mindval, maxdval = pu.get_clean_ax_limits(dmin,dmax,contourVals,signdef)
-    if signdef:
-        cmapName = 'BuPu'
-        nlevs = 18
+    # standardize color limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, contourVals, centralValue, buffr=0.05)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
 
-        # scientific contours
-        cint = contourVals.astype(int)
-        isInt = np.all((contourVals - cint) == 0)
-        if isInt:
-          minscid = np.nanmax(np.array([1., dmin]))
+    # default cAxisType
+    cAxisType = 'magnitude'
+
+    if centralValue is not None and pu.isfloat(centralValue):
+        cAxisType = 'symmetric'
+
+    # log contours
+    isLogScale = logScale
+    finite = np.isfinite(contourVals)
+    nonzero = finite
+    nonzero[finite] = np.greater(np.abs(contourVals[finite]), 0.)
+    if nonzero.sum()==0:
+        isLogScale = False
+
+    elif isLogScale:
+        if centralValue is None:
+            minp_, maxp_ = pu.get_clean_ax_limits(
+                np.log10(np.nanmax(np.array([dmin, dmax*1.e-3]))),
+                np.log10(dmax), np.log10(contourVals[nonzero]), buffr=0.05)
+            minp_ = np.power(10., minp_)
+            maxp_ = np.power(10., maxp_)
+            if maxp_ / minp_ < 20.:
+                isLogScale = False
+            else:
+                minp = minp_
+                maxp = maxp_
+                cint = contourVals.astype(int)
+                isInt = np.all((contourVals - cint) == 0)
+                if isInt:
+                    minp = np.nanmax(np.array([1., minp]))
+                lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+        elif float(centralValue) == 0.:
+            lognorm = colors.SymLogNorm(vmin=minp, vmax=maxp,
+                        linthresh=1.e-3*maxp, linscale=1.3, base=10)
         else:
-          minscid = maxdval*1.e-5
-        lognorm = colors.LogNorm(vmin=minscid, vmax=maxdval)
-    else:
-        cmapName = 'seismic'
-        nlevs = 28
+            vmin = np.nanmin(np.abs(contourVals[nonzero]))
+            vmax = np.nanmax(np.abs(contourVals[nonzero]))
 
-        # scientific contours
-        lognorm = colors.SymLogNorm(vmin=mindval, vmax=maxdval,
-                    linthresh=1.e-3*maxdval, linscale=1.3, base=10)
+            maxratio = np.max([vmax/centralValue, centralValue/vmin])
+            maxp = maxratio / centralValue
+            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue, buffr=0.05)
+            maxratio = maxp / centralValue
+            minp = centralValue / maxratio
+
+            lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
 
     # plot contour
     # option 1: smoothed contours
-    #cp = ax.contourf(xVals, yVals, contourVals, nlevs, cmap=cmapName, extend='both', \
-    #     vmin=mindval, vmax=maxdval)
+    #cp = ax.contourf(xVals_, yVals, contourVals, nlevs[cAxisType], cmap=cmaps[cAxisType], extend='both',
+    #     vmin=minp, vmax=maxp)
 
     # option 2: pixel contours
-    cmap = plt.get_cmap(cmapName)
-    cmap.set_bad(color = 'k', alpha = 1.0)
-    if logscale:
+    cmap = copy(plt.get_cmap(cmaps[cAxisType]))
+    cmap.set_bad(color='gray', alpha=1.0)
+    if isLogScale:
         norm = lognorm
     else:
-        levels = mticker.MaxNLocator(nbins=nlevs).tick_values(mindval,maxdval)
+        levels = mticker.MaxNLocator(nbins=nlevs[cAxisType]).tick_values(minp, maxp)
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
-    xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals,yVals)
+    xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals_,yVals)
     cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm=norm)
 
     #title
     ax.set_title(title,fontsize=5)
 
     #axes settings
-    pu.format_x_for_dates(ax, xDates)
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
+    pu.format_x_for_dates(ax, xVals)
+    #if xConfig['transform'] is None:
+        #ax.set_xscale('linear')
+        #ax.xaxis.set_major_locator(mticker.AutoLocator())
+    #else:
+    if xConfig['transform'] is not None:
+        transform = axisTransform(xConfig['transform'])
+        locator = transform.locator()
+        ax.set_xscale('function', functions=(transform.forward(), transform.inverse()))
+        ax.xaxis.set_major_locator(locator(xVals))
+        ax.tick_params(axis='x', rotation=90)
+
+    if yConfig['transform'] is None:
+        ax.set_yscale('linear')
+        ax.yaxis.set_major_locator(mticker.AutoLocator())
+    else:
+        transform = axisTransform(yConfig['transform'])
+        locator = transform.locator()
+        ax.set_yscale('function', functions=(transform.forward(), transform.inverse()))
+        ax.yaxis.set_major_locator(locator(yVals))
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -1121,26 +1468,42 @@ def plotTimeSeries2D(fig, \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_ylabel(dataLabel,fontsize=4)
+        ax.set_xlabel(xLabel,fontsize=4)
+    if interiorLabels or iy == ny-1:
+        ax.set_ylabel(yLabel,fontsize=4)
+
     if interiorLabels or ix == nx-1:
         #colorbar
         m = plt.cm.ScalarMappable(cmap=cmap)
         m.set_array(contourVals)
         m.set_norm(norm)
-        if (np.isfinite(mindval) and
-            np.isfinite(maxdval) and
-            not logscale):
-            m.set_clim(mindval,maxdval)
+        if not isLogScale:
+            m.set_clim(minp, maxp)
         cb = plt.colorbar(m, ax=ax)
         #scientific formatting
-        if sciticks and not logscale:
+        if sciTicks and not logScale:
             cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
         cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
-        cb.ax.tick_params(labelsize=3)
-        cb.set_label(clabel,fontsize=5)
+        if centralValue is not None and float(centralValue) == 1. and isLogScale:
+            cb.ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
+            if maxp < 8.0:
+                cb.ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
+            else:
+                cb.ax.yaxis.set_minor_locator(mticker.NullLocator())
+            cb.ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
+            cb.ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
 
-    if invert_ind_axis:
+        #cb.ax.tick_params(labelsize=3)
+        cb.ax.tick_params(axis='y', which='major', labelsize=3)
+        cb.ax.tick_params(axis='y', which='minor', labelsize=2)
+
+        cb.set_label(cLabel,fontsize=5)
+
+    if xConfig['invert']:
+        ax.invert_xaxis()
+
+    if yConfig['invert']:
         ax.invert_yaxis()
 
     # optionally add a grid
@@ -1149,9 +1512,199 @@ def plotTimeSeries2D(fig, \
     return
 
 
+
+###############################################################################
+def map2D(fig,
+          lonVals, latVals, contourVals,
+          title='', cLabel='',
+          sciTicks=False, logScale=False, centralValue=None,
+          ny=1, nx=1, nplots=1, iplot=0,
+          dmin=np.NaN, dmax=np.NaN,
+          interiorLabels=True):
+
+# ARGUMENTS
+# fig           - matplotlib figure object
+# lonVals       - longitude
+# latVals       - latitude
+# contourVals   - dependent variable (2d numpy array), same size as latVals x lonVals
+
+# title         - subplot title, optional
+# cLabel        - label for dependent variable, optional
+# sciTicks      - whether contourVals needs scientific formatting for ticks, optional
+# logScale      - whether contours are spaced logarithmically, optional, overrides sciTicks
+# centralValue  - central value of contourVals, optional
+# ny, nx        - number of subplots in x/y direction, optional
+# nplots        - total number of subplots, optional
+# iplot         - this subplot index (starting at 0), optional
+
+# dmin, dmax    - min/max values of contourVals, optional
+# interiorLabels- whether to add titles, axis, and colorbar labels for interior subplots, optional
+
+    global cmaps, nlevs
+
+    # setup map
+    cLon = None
+
+    # Is shortest range of lonVals <= 180 degrees?
+    # check two different total longitude ranges on periodic domain
+
+    # 0 < longitude <= 360
+    lonVals_360 = deepcopy(lonVals)
+    while np.max(lonVals_360) >= 360.0:
+        lonVals_360[lonVals_360 >= 360.0] -= 360.0
+    while np.min(lonVals_360) < 0.0:
+        lonVals_360[lonVals_360 < 0.0] += 360.0
+
+    # -180 < longitude <= 180
+    lonVals_180 = deepcopy(lonVals_360)
+    lonVals_180[lonVals_180 > 180.0] -= 360.0
+
+    for lon in [lonVals_360, lonVals_180]:
+        if np.max(lon) - np.min(lon) <= 180.0:
+            cLon = 0.5*(np.max(lon) + np.min(lon))
+
+    if cLon is None:
+        # plot entire Earth
+        ax = fig.add_subplot(ny, nx, iplot+1, projection=ccrs.Mollweide(0.0))
+
+    else:
+        # plot single projected side of Earth
+        if cLon > 180.0: cLon-=360.0
+        ax = fig.add_subplot(ny, nx, iplot+1, projection=ccrs.Orthographic(cLon))
+
+
+    gl = ax.gridlines(linewidth=0.01, color='gray', alpha=0.5, linestyle='--')
+
+    # all plots
+    gl.left_labels = True
+    gl.ylocator = LatitudeLocator()
+    gl.yformatter = LatitudeFormatter()
+    gl.ylabel_style = {'size': 3, 'color': 'black'}
+    gl.xlabel_style = {'size': 3, 'color': 'black'}
+
+    # only global projections
+    if cLon is None:
+        gl.bottom_labels = True
+        gl.xlocator = LongitudeLocator()
+        gl.xformatter = LongitudeFormatter()
+
+    # standardize color limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, contourVals, centralValue, buffr=0.05)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
+
+    # default cAxisType
+    cAxisType = 'magnitude'
+    if centralValue is not None and pu.isfloat(centralValue):
+      cAxisType = 'symmetric'
+
+    # log contours
+    isLogScale = logScale
+    finite = np.isfinite(contourVals)
+    nonzero = finite
+    nonzero[finite] = np.greater(np.abs(contourVals[finite]), 0.)
+    if nonzero.sum()==0:
+        isLogScale = False
+    elif isLogScale:
+        if centralValue is None:
+            minp_, maxp_ = pu.get_clean_ax_limits(
+                np.log10(np.nanmax(np.array([dmin, dmax*1.e-3]))),
+                np.log10(dmax), np.log10(contourVals[nonzero]), buffr=0.05)
+            minp_ = np.power(10., minp_)
+            maxp_ = np.power(10., maxp_)
+            if maxp_ / minp_ < 20.:
+                isLogScale = False
+            else:
+                minp = minp_
+                maxp = maxp_
+                cint = contourVals.astype(int)
+                isInt = np.all((contourVals - cint) == 0)
+                if isInt:
+                    minp = np.nanmax(np.array([1., minp]))
+                lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+        elif float(centralValue) == 0.:
+            lognorm = colors.SymLogNorm(vmin=minp, vmax=maxp,
+                        linthresh=1.e-3*maxp, linscale=1.3, base=10)
+        else:
+            vmin = np.nanmin(np.abs(contourVals[nonzero]))
+            vmax = np.nanmax(np.abs(contourVals[nonzero]))
+
+            maxratio = np.max([vmax/centralValue, centralValue/vmin])
+            maxp = maxratio / centralValue
+            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue, buffr=0.05)
+            maxratio = maxp / centralValue
+            minp = centralValue / maxratio
+
+            lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+
+
+    cmap = copy(plt.get_cmap(cmaps[cAxisType]))
+    cmap.set_bad(color='gray', alpha=0.)
+    if isLogScale:
+        norm = lognorm
+    else:
+        levels = mticker.MaxNLocator(nbins=nlevs[cAxisType]).tick_values(minp, maxp)
+        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+
+    ## transform to pcolormesh and cartopy conventions
+    # longitude monotonically increasing
+    lonSort = np.argsort(lonVals_180)
+    lonVals_180 = lonVals_180[lonSort]
+    contourVals_ = np.empty_like(contourVals)
+    for ii, jj in enumerate(lonSort):
+      contourVals_[:,ii] = contourVals[:,jj]
+
+    # lat/lon vectors specify corners instead of centers
+    lonVals_pcolor, latVals_pcolor = transformXY_for_pcolor(lonVals_180, latVals)
+
+    cp = ax.pcolormesh(lonVals_pcolor, latVals_pcolor, contourVals_, cmap=cmap, norm=norm,
+        transform=ccrs.PlateCarree())
+
+    #title
+    ax.set_title(title,fontsize=5)
+
+    # show full projection extent
+    ax.set_global()
+
+    # add coastlines
+    ax.coastlines()
+
+    ix = int(iplot)%int(nx)
+    if interiorLabels or ix == nx-1:
+        #colorbar
+        m = plt.cm.ScalarMappable(cmap=cmap)
+        m.set_array(contourVals)
+        m.set_norm(norm)
+        if not isLogScale:
+            m.set_clim(minp, maxp)
+        cb = plt.colorbar(m, ax=ax)
+        #scientific formatting
+        if sciTicks and not logScale:
+            cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+        cb.ax.yaxis.get_offset_text().set_fontsize(3)
+
+        if centralValue is not None and float(centralValue) == 1. and isLogScale:
+            cb.ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
+            if maxp < 8.0:
+                cb.ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
+            else:
+                cb.ax.yaxis.set_minor_locator(mticker.NullLocator())
+            cb.ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
+            cb.ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+
+        #cb.ax.tick_params(labelsize=3)
+        cb.ax.tick_params(axis='y', which='major', labelsize=3)
+        cb.ax.tick_params(axis='y', which='minor', labelsize=2)
+        cb.set_label(cLabel,fontsize=5)
+
+    return
+
+
 ###############################################################################
 def transformXY_for_pcolor(xs,ys):
-    # adjust centered x and y values to edges to work with pcolormesh 
+    # adjust centered x and y values to edges to work with pcolormesh
     # note: works best for regularly spaced data
     xs_diff = xs[1] - xs[0]
     # extend xs by 2
@@ -1186,20 +1739,23 @@ def transformXY_for_pcolor(xs,ys):
 lenWarnPDF = 0
 nanWarnPDF = 0
 def plotPDF(fig,
-             countsVals, xVals,
-             countsLabel,
-             title="",
-             indepLabel="x",
-             ny=1, nx=1, nplots=1, iplot=0,
-             lineAttribOffset=1,
-             legend_inside=True,
-             interiorLabels=True):
+            countsVals, xVals,
+            countLabels,
+            title="",
+            indepLabel="x",
+            ny=1, nx=1, nplots=1, iplot=0,
+            lineAttribOffset=1,
+            legend_inside=True,
+            interiorLabels=True,
+            normalized=True,
+            standardGaussian=False,
+):
 
 # ARGUMENTS
 # fig              - matplotlib figure object
 # countsVals       - list of arrays, each containing counts across xVals
 # xVals            - independent variable on x-axis (array)
-# countsLabel      - legend label for countsVals (list)
+# countLabels      - legend label for countsVals (list)
 
 # title            - subplot title, optional
 # indepLabel       - label for xVals, optional
@@ -1210,6 +1766,9 @@ def plotPDF(fig,
 
 # lineAttribOffset - offset for selecting line attributes, optional
 # legend_inside    - whether legend should be placed inside the subplot, optional
+# interiorLabels   - whether to add titles and axis labels for interior subplots, optional
+# normalized       - whether to normalize countsVals in order to produce a "PDF"
+# standardGaussian - whether to overlay a standard Gaussian distribution
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -1219,55 +1778,66 @@ def plotPDF(fig,
     #add counts
     plotVals = []
     nPDFs = 0
+    jhist = -1
     for ihist, countVals in enumerate(countsVals):
-        if np.all(np.isnan(countVals)):
+        if np.all(np.isnan(countVals)) or np.all(countVals == 0):
             global nanWarnPDF
             if nanWarnPDF==0:
-                _logger.warning("skipping all-NaN data")
-                _logger.warning(title+"; "+indepLabel+"; "+countsLabel[ihist])
+                _logger.warning("skipping all-NaN or all-Zero data")
+                _logger.warning(title+"; "+indepLabel+"; "+countLabels[ihist])
             nanWarnPDF=nanWarnPDF+1
             continue
         if len(countVals)!=len(xVals):
             global lenWarnPDF
             if lenWarnPDF==0:
                 _logger.warning("skipping data where len(x)!=len(y)")
-                _logger.warning(title+"; "+indepLabel+"; "+countsLabel[ihist])
+                _logger.warning(title+"; "+indepLabel+"; "+countLabels[ihist])
             lenWarnPDF=lenWarnPDF+1
             continue
 
+        jhist += 1
+
         # Plot line for each countVals that has non-missing data
+        # only plot non-zero counts
+        yVals = np.array(countVals, dtype=np.float64)
+        positive = np.greater(yVals, 0.)
+        xVals_ = xVals[positive]
+        yVals = yVals[positive]
 
-        # assume constant dx between bins
-        dx = xVals[1] - xVals[0]
+        if normalized:
+          # assume constant dx between bins
+          dx = xVals[1] - xVals[0]
+          yVals = np.divide(yVals,np.sum(countVals[positive])*dx)
 
-        ax.plot(xVals, np.divide(countVals,np.sum(countVals)*dx),
-                color=pu.plotColor(len(countsVals),ihist+lineAttribOffset),
-                label=countsLabel[ihist],
-                ls=pu.plotLineStyle(len(countsVals),ihist+lineAttribOffset),
-                linewidth=0.5)
+        ax.plot(xVals_, yVals,
+                color=pu.plotColor(len(countsVals),jhist+lineAttribOffset),
+                label=countLabels[ihist],
+                ls=pu.plotLineStyle(len(countsVals),jhist+lineAttribOffset),
+                linewidth=commonLineWidth)
         nPDFs = nPDFs + 1
-        plotVals.append(countVals)
-
+        plotVals.append(yVals)
 
     if nPDFs == 0:
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
         return
 
-    # add a standard normal pdf
-    from scipy.stats import norm
-    ax.plot(xVals, norm.pdf(xVals),
-                color='k',
-                ls='-',
-                linewidth=0.35,
-                label='N(0,1)'
-    )
+    # add a standard Gaussian pdf
+    if standardGaussian:
+        from scipy.stats import norm
+        ax.plot(xVals, norm.pdf(xVals),
+                    color='0.4',
+                    ls='-.',
+                    linewidth=0.35,
+                    label='N(0,1)'
+        )
+        ax.set_ylim(bottom=1.e-6)
 
     #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-    plt.yscale('log')
-    ax.set_ylim(bottom=1.e-6)
+    ax.set_yscale('log')
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -1275,19 +1845,22 @@ def plotPDF(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
+
+    yLabel = 'Count'
+    if normalized: yLabel = 'PDF'
     if interiorLabels or ix == 0:
         ax.set_xlabel(indepLabel,fontsize=4)
-        ax.set_ylabel('PDF',fontsize=4)
+        ax.set_ylabel(yLabel,fontsize=4)
 
     #legend
     if legend_inside:
         #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+        lh = ax.legend(loc='best',fontsize=2,frameon=True,
                        framealpha=0.4,ncol=1)
         lh.get_frame().set_linewidth(0.0)
     elif ix==nx-1 or iplot==nplots-1:
         #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False, \
+        ax.legend(loc='upper left',fontsize=2,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     ax.grid()
@@ -1304,7 +1877,7 @@ def plotfitRampComposite(fig,
                meanVals,
                rmsVals,
                stdVals,
-               title="", dataLabel="y", \
+               title="", dataLabel="y",
                indepLabel="x",
                ny=1, nx=1, nplots=1, iplot=0,
                lineAttribOffset=1,
@@ -1365,85 +1938,155 @@ def plotfitRampComposite(fig,
                 color=pColor,
                 label=linesLabel[iline],
                 ls=pu.plotLineStyle(4,iline+lineAttribOffset),
-                linewidth=0.6)
+                linewidth=commonLineWidth)
         nLines += 1
         plotVals.append(lineVals)
 
     if nLines == 0:
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
-        return
+        return None
 
-    # Add fit for stdVals here using info from countVals
-    ind0 = np.argmax(countVals)
+    fitQuantity = deepcopy(stdVals)
+    fitStat = 'STD'
 
-    indexMaxX4Std = 0
-    for ii, std in enumerate(stdVals):
-        if np.isfinite(std): indexMaxX4Std = ii
-    indexMaxX = indexMaxX4Std
-    maxCount = 0
-    for ii, count in enumerate(countVals):
-        if count > maxCount: maxCount = count
-        if count < 0.002*maxCount:
-            indexMaxX = ii
+    #fitQuantity = deepcopy(rmsVals)
+    #fitStat = 'RMS'
+
+    # Add fit for fitQuantity here using info from countVals
+
+    # determine maximum x index for finite values
+    indMaxX4Quant = 0
+    for ii, quant in enumerate(fitQuantity):
+        if np.isfinite(quant):
+            indMaxX4Quant = ii
+        elif indMaxX4Quant==0:
+            continue
+        else:
             break
-    if indexMaxX > indexMaxX4Std:
-        ind1 = np.argmax(stdVals[0:indexMaxX4Std])
-    else:
-        ind1 = np.argmax(stdVals[0:indexMaxX])
 
-    weights = [0.2]*(ind1-ind0+1)
-    weights[0] = 1.0
-    p = np.polyfit(xVals[ind0:ind1+1],stdVals[ind0:ind1+1],1,
-                   w=weights)
+#    indMaxCount = np.argmax(countVals)
 
-    X0 = xVals[ind0]
-    ERR0 = X0 * p[0] + p[1]
+#    # determine maximum x index for linear fit
+#    indMaxXFit = indMaxX4Quant
+#    maxCount = np.nanmax(countVals+[0])
+#    for ii, count in enumerate(countVals):
+#        if float(count) >= 0.002*float(maxCount) and ii >= indMaxCount and ii <= indMaxX4Quant:
+#            indMaxXFit = ii
+#
+#    # determine minimum x index for finite values
+#    indMinX4Quant = 0
+#    for jj, quant in enumerate(np.flip(fitQuantity)):
+#        ii = len(fitQuantity)-jj-1
+#        if np.isfinite(quant) and ii < indMaxX4Quant:
+#            indMinX4Quant = ii
+#        elif indMinX4Quant == 0:
+#            continue
+#        else:
+#            break
+#
+#    # determine minimum x index for linear fit
+#    indMinXFit = indMinX4Quant
+#    for jj, count in enumerate(np.flip(countVals)):
+#        ii = len(countVals)-jj-1
+#        if float(count) >= 0.002*float(maxCount) and ii <= indMaxCount and ii < indMaxXFit and ii >= indMinX4Quant:
+#            indMinXFit = ii
 
-    # X1 = xVals[ind1]
-    # ERR1 = X1 * p[0] + p[1]
-    ERR1 = stdVals[ind1]
-    X1 = (ERR1 - p[1]) / p[0]
+    validQuant = np.isfinite(fitQuantity)
+    validCount = np.greater(countVals,0)
+    valid = np.logical_and(validQuant, validCount)
 
+    qFit = np.array(fitQuantity)[valid]
+    cFit = np.array(countVals)[valid]
+    xFit = np.array(xVals)[valid]
 
-    ERRfitDict = {
-        'bu':{
-            'X':  [round(X0,2),  round(X1,2)],
-            'ERR': [round(ERR0,2), round(ERR1,2)],
-        },
-        'YAML':{
-            'X0': [round(X0,2)],
-            'X1': [round(X1,2)],
-            'ERR0': [round(ERR0,2)],
-            'ERR1': [round(ERR1,2)],
-        },
-    }
+    indMaxCount = np.argmax(cFit)
+    maxCount = np.nanmax(cFit+[0])
 
-    fitX  = np.asarray([0.0]  + ERRfitDict['bu']['X']  + [xVals[indexMaxX4Std]])
-    fitERR = np.asarray([ERR0] + ERRfitDict['bu']['ERR'] + [ERR1])
+    # determine maximum x index for linear fit
+    indMaxXFit = len(qFit)-1
+    for ii, count in enumerate(cFit):
+        if float(count) >= 0.002*float(maxCount) and ii >= indMaxCount:
+            indMaxXFit = ii
 
-    plotVals.append(fitERR)
+    # determine minimum x index for linear fit
+    indMinXFit = 0
+    for jj, count in enumerate(np.flip(cFit)):
+        ii = len(countVals)-jj-1
+        if float(count) >= 0.002*float(maxCount) and ii <= indMaxCount:
+            indMinXFit = ii
 
-    pColor = pu.plotColor(4,1+lineAttribOffset)
+    # should not need finite test after validQuant test above
+    #finite = np.isfinite(qFit[indMinXFit:indMaxXFit+1])
+    #inds = np.arange(indMinXFit, indMaxXFit+1)
+    #indMaxQ = np.argmax(qFit[indMinXFit:indMaxXFit+1][finite])
+    #indMaxQ = inds[finite][indMaxQ]
 
-    ax.plot(fitX, fitERR,
-            color=pColor,
-            label='Fit-STD',
-            ls='-.',
-            linewidth=1.2,
-            marker='+',
-            ms=1.5
-    )
+    inds = np.arange(indMinXFit, indMaxXFit+1)
+    indMaxQ = np.argmax(qFit[indMinXFit:indMaxXFit+1])
+    indMaxQ = inds[indMaxQ]
+
+    ERRfitDict = None
+
+    # only create fit if there is more than 1 point
+    if indMaxQ-indMinXFit+1 > 1:
+      ERRfitDict = {}
+
+      weights = cFit[indMinXFit:indMaxQ+1]
+      weights = weights / weights.sum()
+
+      #print(title+"; "+indepLabel)
+      #print(xFit[indMinXFit:indMaxQ+1])
+      #print(qFit[indMinXFit:indMaxQ+1])
+      #print(weights)
+
+      p = np.polyfit(xFit[indMinXFit:indMaxQ+1],qFit[indMinXFit:indMaxQ+1],1,
+                     w=weights)
+
+      X0 = xFit[indMinXFit]
+      ERR0 = X0 * p[0] + p[1]
+
+      # X1 = xFit[indMaxQ]
+      # ERR1 = X1 * p[0] + p[1]
+      ERR1 = qFit[indMaxQ]
+      X1 = (ERR1 - p[1]) / p[0]
+
+      ERRfitDict['bin_utils'] = {
+          'X':  [round(X0,2),  round(X1,2)],
+          'ERR': [round(ERR0,2), round(ERR1,2)],
+      }
+      ERRfitDict['YAML'] = {
+          'x0': [round(X0,2)],
+          'x1': [round(X1,2)],
+          'err0': [round(ERR0,2)],
+          'err1': [round(ERR1,2)],
+      }
+
+      fitX  = np.asarray([0.0]  + ERRfitDict['bin_utils']['X']  + [xVals[indMaxX4Quant]])
+      fitERR = np.asarray([ERR0] + ERRfitDict['bin_utils']['ERR'] + [ERR1])
+
+      plotVals.append(fitERR)
+
+      pColor = pu.plotColor(4,linesLabel.index(fitStat)+lineAttribOffset)
+
+      ax.plot(fitX, fitERR,
+              color=pColor,
+              label='Fit-'+fitStat,
+              ls='-.',
+              linewidth=commonLineWidth*1.5,
+              marker='+',
+              ms=1.5
+      )
 
     #axes settings
-    ax.xaxis.set_tick_params(labelsize=3)
-    ax.yaxis.set_tick_params(labelsize=3)
-
     # standardize x-limits
     mindval, maxdval = pu.get_clean_ax_limits(plotVals=plotVals)
     if (np.isfinite(mindval) and
         np.isfinite(maxdval)):
-        ax.set_ylim(mindval,maxdval)
+        ax.set_ylim(mindval, maxdval)
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
 
     #handle interior subplot ticks/labels
     if not interiorLabels \
@@ -1457,12 +2100,12 @@ def plotfitRampComposite(fig,
     #legend
     if legend_inside:
         #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,\
+        lh = ax.legend(loc='best',fontsize=3,frameon=True,
                        framealpha=0.4,ncol=1)
         lh.get_frame().set_linewidth(0.0)
     elif ix==nx-1 or iplot==nplots-1:
         #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False, \
+        ax.legend(loc='upper left',fontsize=3,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     ax.grid()
@@ -1472,14 +2115,16 @@ def plotfitRampComposite(fig,
     color = 'black'
     if interiorLabels or ix == nx:
         ax2.set_ylabel('Count',fontsize=4,color=color)
-    ax2.plot(xVals[:indexMaxX4Std], countVals[:indexMaxX4Std],
+    #ax2.plot(xVals[:indMaxX4Quant], countVals[:indMaxX4Quant],
+    ax2.plot(xVals, countVals,
              color=color,
              label='Count',
              ls=':',
-             linewidth=0.5)
+             linewidth=commonLineWidth)
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.yaxis.set_tick_params(labelsize=3)
-    plt.yscale('log')
+    ax2.set_yscale('log')
     ax2.set_ylim(bottom=100.)
+    ax2.tick_params(axis='y', which='major', labelsize=3)
+    ax2.tick_params(axis='y', which='minor', labelsize=2)
 
     return ERRfitDict

@@ -22,6 +22,7 @@ class JobScriptBase():
         optional config parameter(s):
         env - linux environment of the script (e.g., csh, bash, sh, tcsh)
         name - job name
+        filename - job script file name
         nppernode - processors per node
         nnode - number of nodes
         walltime - walltime
@@ -30,7 +31,8 @@ class JobScriptBase():
     '''
     def __init__(self, conf):
         ## job descriptors
-        self.name = conf.get('name','PyJobScript')
+        self.jobname = conf.get('name', 'PyJobScript')
+        self.filename = conf.get('filename', self.jobname)
         self.nppernode = conf.get('nppernode',1)
         self.nnode = conf.get('nnode',1)
         self.walltime = conf.get('walltime','01:00:00')
@@ -43,7 +45,7 @@ class JobScriptBase():
         assert (isinstance(self.basescript,list) or isinstance(self.basescript,str)), \
             "JobScriptBase : basescript must either be a list or a string"
         self.jobpath = Path(conf.get('path','./'))
-        self.script = self.name+'.job.'+self.env
+        self.script = self.filename+'.job.'+self.env
 
         self.command = './'
         self.header = []
@@ -114,7 +116,7 @@ class PBSProCheyenne(JobScriptBase):
         assert self.nppernode <= self.maxnppernode, ("ERROR: PBSProCheyenne requires nppernode <= ", self.maxnppernode)
 
         self.header = [
-            '#PBS -N '+self.name,
+            '#PBS -N '+self.jobname,
             '#PBS -A '+self.account,
             '#PBS -q '+self.queue,
             '#PBS -l select='+str(self.nnode)+':ncpus='+str(self.nppernode)+':mpiprocs='+str(self.nppernode)+':mem='+str(self.memory)+'GB',
@@ -155,7 +157,7 @@ class SLURMCasper(JobScriptBase):
         assert self.nppernode <= self.maxnppernode, ("ERROR: SLURMCasper requires nppernode <= ", self.maxnppernode)
 
         self.header = [
-            '#SBATCH --job-name='+self.name,
+            '#SBATCH --job-name='+self.jobname,
             '#SBATCH --account='+self.account,
             '#SBATCH --ntasks='+str(self.nnode),
             '#SBATCH --cpus-per-task='+str(self.nppernode),

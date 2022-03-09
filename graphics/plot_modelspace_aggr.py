@@ -54,14 +54,14 @@ def readdata():
              stats  = ''.join(title_tmp.split("_")[4:])
              statDiagLabel = stats
              if (stats == 'Mean'):
-                 signDefinite = False
+                 centralValue = 0.0
              else:
-                 signDefinite = True
+                 centralValue = None
 
              #print(region,var,stats)
              indepLabel = 'Vertical level'
              sciTicks = False
-             invert_ind_axis = False
+             logScale = False
              iplot = 0
 
              for k in arraylist:
@@ -70,14 +70,16 @@ def readdata():
                 title = mu.expNames[iplot]  +' var:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+')\
  '+region+' min=' +str(round(valuemin,3))+' max='+str(round(valuemax,3))
 
-                BasicPF.plotTimeSeries2D( fig, \
-                            xlabeltime,ylevels, k, \
-                            title, statDiagLabel, \
-                            sciTicks, signDefinite, \
-                            indepLabel, invert_ind_axis, \
-                            ny, nx, nsubplots, iplot, \
-                            dmin = dmin, dmax = dmax, \
-                            interiorLabels = interiorLabels )
+                BasicPF.plot2D(fig,
+                    xlabeltime,ylevels, k,
+                    title, statDiagLabel, indepLabel,
+                    BasicPF.defaultIndepConfig,
+                    BasicPF.defaultIndepConfig,
+                    sciTicks, logScale, centralValue,
+                    ny, nx, nsubplots, iplot,
+                    dmin = dmin, dmax = dmax,
+                    interiorLabels = interiorLabels,
+                )
                 iplot = iplot +1
                 filename = varNamesListUse+'_TS_2d'
                 pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)

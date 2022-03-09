@@ -16,22 +16,44 @@ csvSEP = ';'
 # variable definitions
 #=====================
 
+## spread diagnostic variable names
+EddT = 'E[dd^T]'
+HBHT = 'HBH^T'
+R = 'R'
+HBHTplusR = '[HBH^T+R]'
+
+DiagnosticVars = {}
+DiagnosticVars[EddT] = 'InnovSpread'
+DiagnosticVars[HBHT] = 'EnsembleSpread'
+DiagnosticVars[R] = 'ObsError'
+DiagnosticVars[HBHTplusR] = 'TotalSpread'
+
 ## NC variable names for MPAS-JEDI
 obsVarAlt     = 'altitude'
 obsVarACI     = 'asymmetric_cloud_impact'
 obsVarBT      = 'brightness_temperature'
+obsVarY       = 'y'
+obsVarH       = 'h'
 obsVarBTClear = obsVarBT+'_assuming_clear_sky'
-obsVarCldFrac = 'cloud_area_fraction'
+obsVarCldFracY = 'cloud_area_fraction'
+obsVarCldFracX = 'cloud_area_fraction_in_atmosphere_layer'
 obsVarDT      = 'datetime'
 obsVarGlint   = 'glint'
 obsVarLT      = 'LocalTime'
 obsVarLandFrac= 'land_area_fraction'
 obsVarLat     = 'latitude'
 obsVarLon     = 'longitude'
-obsVarNormErr = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
+obsVarDep     = 'y-h'
+obsVarClearSkyDep = 'y-hclr'
+obsVarLogDepRatio = 'logDeparture'
+obsVarNormDep = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
+obsVarNormDep = 'ENI' #error-normalized innovation
 obsVarPrs     = 'air_pressure'
 obsVarQC      = 'QCflag'
-obsVarSCI     = 'symmetric_cloud_impact'
+obsVarCI      = 'cloud_impact'
+obsVarLogCI   = 'logarithm_cloud_impact'
+obsVarMCI     = 'modeled_cloud_impact'
+obsVarOCI     = 'observed_cloud_impact'
 obsVarSenZen  = 'sensor_zenith_angle'
 obsVarSenAzi  = 'sensor_azimuth_angle'
 obsVarSolZen  = 'solar_zenith_angle'
@@ -44,6 +66,8 @@ varDictObs = {
     'air_temperature':        [ 'K',     'T'       ],
     'bending_angle':          [ '%',     'Bnd'     ],
     obsVarBT:                 [ 'K',     'BT'      ],
+    obsVarY:                  [ 'K',     obsVarY   ],
+    obsVarH:                  [ 'K',     obsVarH   ],
     'eastward_wind':          [ 'm/s',   'U'       ],
     'northward_wind':         [ 'm/s',   'V'       ],
     'refractivity':           [ '%',     'Ref'     ],
@@ -52,15 +76,19 @@ varDictObs = {
     'virtual_temperature':    [ 'K',     'Tv'      ],
     obsVarAlt:                [ 'm',     'alt'     ],
     obsVarACI:                [ 'K',     'ACI'     ],
-    obsVarCldFrac:            [ miss_s,  'cldfrac' ],
+    obsVarCldFracY:           [ miss_s,  'CFy'     ],
+    obsVarCldFracX:           [ miss_s,  'CFx'     ],
     obsVarLandFrac:           [ miss_s,  'landfrac'],
     obsVarLat:                [ degree,  'lat'     ],
     obsVarLon:                [ degree,  'lon'     ],
     obsVarLT:                 [ 'hr',    obsVarLT  ],
-    obsVarNormErr:            [ miss_s,  obsVarNormErr ],
+    'Normalized departure':   [ miss_s,  obsVarNormDep ],
     obsVarPrs:                [ 'hPa',   'P'       ],
     obsVarQC:                 [ miss_s,  obsVarQC  ],
-    obsVarSCI:                [ 'K',     'SCI'     ],
+    obsVarCI:                 [ 'K',     'CI'     ],
+    obsVarLogCI:              [ 'K',     'Log-CI'  ],
+    obsVarMCI:                [ 'K',     'MCI'     ],
+    obsVarOCI:                [ 'K',     'OCI'     ],
     obsVarSenZen:             [ degree,  'zenith'  ],
     obsVarGlint:              [ degree,  obsVarGlint  ],
 }
@@ -76,8 +104,9 @@ vChanStr = 'varCHAN'
 
 # Dynamic Fixed IODA ObsGroups for observation-type variables
 hofxGroup   = 'hofx'
-qcGroup     = 'EffectiveQC'
 errorGroup  = 'EffectiveError'
+qcGroup     = 'EffectiveQC'
+bcGroup     = 'ObsBias'
 bgIter = '0'
 
 # Fixed IODA ObsGroups for observation-type variables
@@ -95,8 +124,9 @@ geoGroup    = 'GeoVaLs'
 selfObsValue = 'selfObsValue'
 selfDepValue = 'selfDepValue'
 selfHofXValue = 'selfHofXValue'
-selfQCValue = 'selfQCValue'
 selfErrorValue = 'selfErrorValue'
+selfQCValue = 'selfQCValue'
+selfBCValue = 'selfBCValue'
 bgHofXValue = 'bgHofXValue'
 altMeta = 'altMeta'
 cldfracMeta = 'cldfracMeta'
@@ -110,6 +140,7 @@ solzenMeta = 'solzenMeta'
 solaziMeta = 'solaziMeta'
 landfracGeo = 'landfracGeo'
 clrskyBTDiag = 'clrskyBTDiag'
+cldfracGeo = 'cldfracGeo'
 
 # Context-dependent (dynamic) IODA variable names
 ObsGroups = {}
@@ -117,8 +148,9 @@ ObsVars = {}
 ObsGroups[selfObsValue] = obsGroup
 ObsGroups[selfDepValue] = depGroup
 ObsGroups[selfHofXValue] = hofxGroup
-ObsGroups[selfQCValue] = qcGroup
 ObsGroups[selfErrorValue] = errorGroup
+ObsGroups[selfQCValue] = qcGroup
+ObsGroups[selfBCValue] = bcGroup
 
 for key in ObsGroups.keys():
   ObsVars[key] = vNameStr
@@ -128,7 +160,7 @@ ObsVars[bgHofXValue] = vNameStr
 
 # Fixed IODA variable names (MetaData)
 ObsVars[altMeta]      = obsVarAlt
-ObsVars[cldfracMeta]  = obsVarCldFrac
+ObsVars[cldfracMeta]  = obsVarCldFracY
 ObsVars[datetimeMeta] = obsVarDT
 ObsVars[latMeta]      = obsVarLat
 ObsVars[lonMeta]      = obsVarLon
@@ -149,6 +181,9 @@ intSufSeparator = '_'
 # GeoVaLs variable names
 ObsVars[landfracGeo] = obsVarLandFrac
 ObsGroups[landfracGeo] = geoGroup
+
+ObsVars[cldfracGeo] = obsVarCldFracX
+ObsGroups[cldfracGeo] = geoGroup
 
 ObsVars[clrskyBTDiag] = obsVarBTClear+intSufSeparator+vChanStr
 ObsGroups[clrskyBTDiag] = diagGroup
@@ -194,7 +229,7 @@ def appendSuffix(var, suf):
   return var+intSufSeparator+str(suf)
 
 
-def varAttributes(var):
+def obsVarAttributes(var):
   # return short name and units
   dictName, suf = splitIntSuffix(var)
   varAtt = varDictObs.get(dictName,[miss_s,dictName])
@@ -203,58 +238,29 @@ def varAttributes(var):
   return varShort, varUnits
 
 
-# FileFormat-dependent variable name constructors
-def groupSLASHvar(var, group):
-  return group+'/'+var
-
-def varATgroup(var, group):
-  return var+'@'+group
-
-ncFileFormat = 'nc'
-hdfFileFormat = 'hdf'
-IODAVarCtors = {
-  ncFileFormat: varATgroup,
-  hdfFileFormat: groupSLASHvar,
-}
-
-
-#BaseVars describes the file-format-specific generic variable names
-BaseVars = {}
-for fileFormat, ctor in IODAVarCtors.items():
-  BaseVars[fileFormat] = {}
-  for baseVar, ObsVar in ObsVars.items():
-    BaseVars[fileFormat][baseVar] = ctor(ObsVar, ObsGroups[baseVar])
-
-def base2dbVar(baseVar, varName, fileFormat, outerIter = None):
-  # converts baseVar to a context-specific variable name to retrieve from a JediDB object
-  dbVar = BaseVars[fileFormat][baseVar]
-
-  dictName, suf = splitIntSuffix(varName)
-  dbVar = re.sub(vNameStr,varName,dbVar)
-  dbVar = re.sub(vChanStr,suf,dbVar)
-
-  if outerIter is None:
-    iterStr = ''
-  else:
-    iterStr = str(outerIter)
-  for group in [hofxGroup, errorGroup, qcGroup]:
-    # append iterStr if one is not already appended
-    if group in dbVar.split('@') or group in dbVar.split('/'):
-      dbVar = re.sub(group,group+iterStr,dbVar)
-  if iterStr != '':
-    if iterStr == bgIter:
-      dbVar = re.sub(depGroup,depbgGroup,dbVar)
-    else:
-      dbVar = re.sub(depGroup,depanGroup,dbVar)
-  return dbVar
 
 
 ## NC variable names for MPAS-Model
 #modVarAlt = 'zgrid' # --> needs to be interpolated to nVertLevels instead of nVertLevelsP1
-modVarPrs = 'pressure_p'
+modVarPrs = 'pressure'
 modVarLat = 'latCell'
 modVarLon = 'lonCell'
-modVarLev = 'model_level'
+modVarLev = 'modelLevel'
+
+levModel = 'levModel'
+latModel = 'latModel'
+lonModel = 'lonModel'
+
+AllVars = deepcopy(ObsVars)
+AllGroups = deepcopy(ObsGroups)
+
+AllVars[levModel] = modVarLev
+AllVars[latModel] = modVarLat
+AllVars[lonModel] = modVarLon
+
+AllGroups[levModel] = None
+AllGroups[latModel] = None
+AllGroups[lonModel] = None
 
 kgm3 = 'kg/m\N{SUPERSCRIPT THREE}'
 
@@ -267,6 +273,12 @@ varDictModel = {
   'pressure':               [ 'Pa',   'P'    ],
   'q2':                     [ 'g/kg', 'Q2m'  ],
   'qv':                     [ 'g/kg', 'Qv'   ],
+  'qv01to30':               [ 'g/kg', 'Qv01to30' ],
+  'qv01to10':               [ 'g/kg', 'Qv01to10' ],
+  'qv11to20':               [ 'g/kg', 'Qv11to20' ],
+  'qv21to30':               [ 'g/kg', 'Qv21to30' ],
+  'qv31to40':               [ 'g/kg', 'Qv31to40' ],
+  'qv41to55':               [ 'g/kg', 'Qv41to55' ],
   'rho':                    [ kgm3,   'rho'  ],
   'surface_pressure':       [ 'Pa',   'Ps'   ],
   't2m':                    [ 'C',    'T2m'  ],
@@ -288,8 +300,34 @@ varDictModel[noBinVar] = [miss_s, noBinVar]
 modelRegionBinVar = 'ModelRegion'
 varDictModel[modelRegionBinVar] = [miss_s, modelRegionBinVar]
 
-modVarNames2d = ['t2m','surface_pressure','q2','u10','v10']
-modVarNames3d = ['theta','temperature','rho','pressure','uReconstructZonal','uReconstructMeridional','qv','w']
+modVarNames2d = [
+  'q2',
+  'surface_pressure',
+  't2m',
+  'u10',
+  'v10',
+]
+
+modVarNamesBase3d = [
+  'pressure',
+  'qv',
+  'rho',
+  'theta',
+  'temperature',
+  'uReconstructMeridional',
+  'uReconstructZonal',
+  'w',
+]
+
+modVarNames3d = modVarNamesBase3d+[
+  #extra variables
+  'qv01to30',
+  'qv01to10',
+  'qv11to20',
+  'qv21to30',
+  'qv31to40',
+  'qv41to55',
+]
 
 def modelVarAttributes(var):
     # return short name and units
@@ -312,3 +350,70 @@ for var, desc in varDictModel.items():
   else:
     assert desc[0] == varDictAll[var][0], var+' units differ between varDictObs and varDictModel'
     assert desc[1] == varDictAll[var][1], var+' abbreviation differs between varDictObs and varDictModel'
+
+
+def varAttributes(var):
+  # return short name and units
+  dictName, suf = splitIntSuffix(var)
+  varAtt = varDictAll.get(dictName,[miss_s,dictName])
+  varShort = varAtt[1]+suf
+  varUnits = varAtt[0]
+  return varShort, varUnits
+
+
+# FileFormat-dependent variable name constructors
+def groupSLASHvar(var, group):
+  vv = var
+  if group is not None:
+    vv = group+'/'+vv
+  return vv
+
+def varATgroup(var, group):
+  vv = var
+  if group is not None:
+    vv += '@'+group
+  return vv
+
+def rawVar(var, group=None):
+  return var
+
+ncFileFormat = 'nc'
+hdfFileFormat = 'hdf'
+modelFileFormat = 'model'
+AllVarCtors = {
+  ncFileFormat: varATgroup,
+  hdfFileFormat: groupSLASHvar,
+  modelFileFormat: rawVar,
+}
+
+
+#BaseVars describes the file-format-specific generic variable names
+
+BaseVars = {}
+for fileFormat, ctor in AllVarCtors.items():
+  BaseVars[fileFormat] = {}
+  for baseVar, ActualVar in AllVars.items():
+    BaseVars[fileFormat][baseVar] = ctor(ActualVar, AllGroups[baseVar])
+
+def base2dbVar(baseVar, varName, fileFormat, outerIter = None):
+  # converts baseVar to a context-specific variable name to retrieve from a JediDB object
+  dbVar = BaseVars[fileFormat][baseVar]
+
+  dictName, suf = splitIntSuffix(varName)
+  dbVar = re.sub(vNameStr,varName,dbVar)
+  dbVar = re.sub(vChanStr,suf,dbVar)
+
+  if outerIter is None:
+    iterStr = ''
+  else:
+    iterStr = str(outerIter)
+  for group in [hofxGroup, errorGroup, qcGroup, bcGroup]:
+    # append iterStr if one is not already appended
+    if group in dbVar.split('@') or group in dbVar.split('/'):
+      dbVar = re.sub(group,group+iterStr,dbVar)
+  if iterStr != '':
+    if iterStr == bgIter:
+      dbVar = re.sub(depGroup,depbgGroup,dbVar)
+    else:
+      dbVar = re.sub(depGroup,depanGroup,dbVar)
+  return dbVar

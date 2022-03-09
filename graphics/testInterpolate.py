@@ -64,7 +64,10 @@ for meshName, conf in meshConfigs.items():
   gridFiles[meshName] = modelUtils.getGridFile(initDate,
     conf['directory'], conf['nCells'],
   )
-  meshLatDeg[meshName], meshLonDeg[meshName] = modelUtils.readGrid(gridFile=gridFiles[meshName])
+  grid = modelUtils.readGrid(gridFile=gridFiles[meshName])
+  meshLatDeg[meshName] = deepcopy(grid['latitude'])
+  meshLonDeg[meshName] = deepcopy(grid['longitude'])
+  del grid
   meshLat[meshName] = meshLatDeg[meshName] * np.pi / 180.0
   meshLon[meshName] = meshLonDeg[meshName] * np.pi / 180.0
 

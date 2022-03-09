@@ -14,17 +14,35 @@ import pandas as pd
 # figure/plotting definitions
 #============================
 
-colorIterator = ['k','b','g','r','c','m']
+colorIterator = [
+#  [0.6350, 0.0780, 0.1840],
+  [0., 0., 0.],
+  [0.0000, 0.4470, 0.7410],
+  [0.8500, 0.3250, 0.0980],
+  [0.9290, 0.6940, 0.1250],
+  [0.4940, 0.1840, 0.5560],
+  [0.4660, 0.6740, 0.1880],
+  [0.3010, 0.7450, 0.9330],
+  [0.6350, 0.0780, 0.1840],
+]
+greyIterator = [
+  [0.2, 0.2, 0.2],
+  [0.4, 0.4, 0.4],
+  [0.6, 0.6, 0.6],
+  [0.8, 0.8, 0.8],
+]
 
-styleIterator = ['-','--','-.',':']
+styleIterator = ['-', '--', '-.', ':']
 
 # fast varying line colors
+# produces: 'k-', 'b-', 'g-', ..., 'k--', 'b--', 'g--', ..., 'm:'
 defaultPColors = colorIterator*len(styleIterator)
 defaultPLineStyles = []
 for style in styleIterator:
   defaultPLineStyles += [style]*len(colorIterator)
 
 # fast varying line styles
+# produces: 'k-', 'k--', 'k-.', 'k:', ..., 'm-', 'm--', 'm-.', 'm:'
 #defaultPLineStyles = styleIterator*len(colorIterator)
 #defaultPColors = []
 #for color in colorIterator:
@@ -190,36 +208,59 @@ def format_x_for_dates(ax,x):
 
 
 ###############################################################################
-def get_clean_ax_limits(xmin_=np.NaN,xmax_=np.NaN,plotVals=[np.NaN],
-                        signdef=False,symmetric=True):
-    if not np.isnan(xmin_) and not np.isnan(xmax_):
-        xmin = xmin_
-        xmax = xmax_
-    else:
-        if isinstance(plotVals[0], Iterable):
-            xmin = np.nanmin(plotVals[0])
-            xmax = np.nanmax(plotVals[0])
-            for vals in plotVals[1:]:
-                xmin = np.nanmin([np.nanmin(vals),xmin])
-                xmax = np.nanmax([np.nanmin(vals),xmax])
-        else:
-            xmin = np.nanmin(plotVals)
-            xmax = np.nanmax(plotVals)
+def get_clean_ax_limits(xmin_=np.NaN, xmax_=np.NaN, plotVals=[np.NaN],
+                        centralValue=None, buffr=0.2):
 
-    xmaxabs=np.nanmax([abs(xmin),abs(xmax)])*1.2
-    if xmaxabs == 0.0 or np.isnan(xmaxabs):
+    x = np.empty(2)
+    for ii, (func, x_) in enumerate(zip(
+      [np.nanmin, np.nanmax],
+      [xmin_, xmax_],
+    )):
+      if np.isfinite(x_):
+        x[ii] = x_
+      else:
+        if isinstance(plotVals[0], Iterable):
+          x[ii] = func(np.asarray([func(p) for p in plotVals]))
+        else:
+          x[ii] = func(plotVals)
+    xmin = x[0]
+    xmax = x[1]
+    #print(xmin, centralValue, xmax)
+
+    xmaxabs=np.nanmax([abs(xmin), abs(xmax)])*(1.+buffr)
+    if not np.isfinite(xmaxabs) or xmaxabs == 0.0:
         minxval = 0.0
         maxxval = 1.0
     else:
         roundfact = np.round(1. / 10.0 ** np.floor(np.log10(xmaxabs)))
-        if np.isnan(roundfact) or roundfact <= 0.0: roundfact = 1.0
+        if not np.isfinite(roundfact) or roundfact <= 0.0: roundfact = 1.0
 
-        if signdef or not symmetric:
+        if centralValue is None:
             maxxval = np.ceil(    xmax*roundfact ) / roundfact
             minxval = np.floor(   xmin*roundfact ) / roundfact
+        elif xmin < 0. and xmax > 0. and centralValue == 0.0:
+            maxxval = np.ceil(    (xmaxabs)*roundfact ) / roundfact
+            minxval = np.floor( - (xmaxabs)*roundfact ) / roundfact
         else:
-            maxxval = np.ceil(    xmaxabs*roundfact ) / roundfact
-            minxval = np.floor( - xmaxabs*roundfact ) / roundfact
+            if xmax > centralValue:
+                roundfact = np.round(1. / 10.0 ** np.floor(np.log10(xmax - centralValue)))
+                if not np.isfinite(roundfact) or roundfact <= 0.0: roundfact = 1.0
+                delta = np.ceil(  (xmax - centralValue)*roundfact ) / roundfact
+                maxxval = centralValue + delta
+                minxval = centralValue - delta
+            elif xmin < centralValue:
+                roundfact = np.round(1. / 10.0 ** np.floor(np.log10(centralValue - xmin)))
+                if not np.isfinite(roundfact) or roundfact <= 0.0: roundfact = 1.0
+                delta = np.ceil(  (centralValue - xmin)*roundfact ) / roundfact
+                maxxval = centralValue + delta
+                minxval = centralValue - delta
+            else:
+                roundfact = np.round(1. / 10.0 ** np.floor(np.log10(xmax)))
+                maxxval = np.ceil(  xmax*roundfact ) / roundfact
+                minxval = np.floor( xmin*roundfact ) / roundfact
+
+
+
     return minxval, maxxval
 
 
@@ -260,3 +301,11 @@ def isint(value):
         return True
   except ValueError:
     return False
+
+#########################################################
+def prepends(str1: str, str2: str):
+  return str1 == str2[0:min([len(str2), len(str1)])]
+
+#########################################################
+def postpends(str1: str, str2: str):
+  return str1 == str2[-min([len(str2), len(str1)]):]

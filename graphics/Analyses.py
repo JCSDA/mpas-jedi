@@ -4,11 +4,13 @@ import basic_plot_functions as bpf
 import binning_utils as bu
 import predefined_configs as pconf
 from collections.abc import Iterable
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
+from config import DiagSpaceConfig
 from copy import deepcopy
 import collections
 import datetime as dt
 import diag_utils as du
+from fit2D import fit2D, poly2DEquation
 import inspect
 import logging
 import multiprocessing as mp
@@ -19,7 +21,9 @@ import re
 import os
 import stat_utils as su
 import StatisticsDatabase as sdb
+from textwrap import indent
 import var_utils as vu
+import yaml
 
 bootStrapStats = []
 for x in su.sampleableAggStats:
@@ -31,8 +35,8 @@ figureFileType = 'pdf' #['pdf','png']
 interiorLabels = True
 
 
-def anWorkingDir(DiagSpace):
-  return DiagSpace+'_analyses'
+def anWorkingDir(DiagSpace, analysisType):
+  return DiagSpace+'_analyses'+'/'+analysisType
 
 ###################################
 ## Base class for all analysisTypes
@@ -44,6 +48,47 @@ class AnalysisBase():
         self.diagnosticGroupings = diagnosticGroupings
 
         self.logger = logging.getLogger(__name__+'.'+self.DiagSpaceName+'.'+self.analysisType)
+
+        '''
+        use relativeErrorType to choose between three relativeErrorFunction options:
+          disable - use absolute diagnostics for all experiments
+
+          one hundred centered - use oneHundredCenteredPercentDifference of
+            positive-semidefinite diagnostics for non-control experiments
+
+          zero centered (default) - use zeroCenteredPercentDifference of
+            positive-semidefinite diagnostics for non-control experiments
+        '''
+
+        self.relativeErrorType = 'zero centered'
+        assert self.relativeErrorType in ['zero centered', 'one hundred centered', 'disable'], (
+          self.__class__.__name__+': invalid relativeErrorType: '+str(self.relativeErrorType))
+
+        relativeErrorConfigurations = {
+          'disable': {
+            'center': None,
+            'function': None,
+            'labeler': None,
+            'limiter': None,
+          },
+          'one hundred centered': {
+            'center': 100.,
+            'function': self.oneHundredCenteredPercentDifference,
+            'labeler': self.oneHundredCenteredLabeler,
+            'limiter': self.oneHundredCenteredLimiter,
+          },
+          'zero centered': {
+            'center': 0.,
+            'function': self.zeroCenteredPercentDifference,
+            'labeler': self.zeroCenteredLabeler,
+            'limiter': self.zeroCenteredLimiter,
+          },
+        }
+        rconf = relativeErrorConfigurations[self.relativeErrorType]
+        self.relativeErrorCenter = rconf['center']
+        self.relativeErrorFunction = rconf['function']
+        self.relativeErrorLabeler = rconf['labeler']
+        self.relativeErrorLimiter = rconf['limiter']
 
         ## Extract useful variables from the database
         self.db = db
@@ -63,17 +108,47 @@ class AnalysisBase():
         self.cyDTimes = self.db.cyDTimes
         self.nCY = len(self.cyDTimes)
 
-        self.varNames = self.db.varNames
-        self.nVars = len(self.varNames)
+        varNames = np.asarray(self.db.varNames)
+        chlist = np.asarray(self.db.chlist)
+        varUnitss = np.asarray(self.db.varUnitss)
+
+        # use DiagSpaceConfig settings in config.py to select plotting order for variables/channels
+        # only those variables/channels that are in self.db and in DiagSpaceConfig will be
+        # plotted
+        # TODO: alternatively could do this in StatisticsDatabase.py to reduce memory usage
+        # allow for two optionl settings for each DiagSpaceConfig element
+        #  + 'diagnosed channels' or 'diagnosed variables' (when statistics are generated, TODO)
+        #  + 'analyzed channels' or 'analyzed variables' (here, when plots are created)
+        if '' in chlist:
+          dbVarsList = list(varNames)
+          orderConf = 'analyzed variables'
+        else:
+          dbVarsList = list(chlist)
+          orderConf = 'analyzed channels'
+
+        selectOrder = DiagSpaceConfig[self.DiagSpaceName].get(orderConf, dbVarsList)
+        allVarsIndex = np.full_like(selectOrder, -1, dtype=int)
+
+        for ii, value in enumerate(selectOrder):
+          if value in dbVarsList:
+            allVarsIndex[ii] = dbVarsList.index(value)
+
+        allVarsIndex = allVarsIndex[allVarsIndex>=0]
+        varNames = varNames[allVarsIndex]
+        varUnitss = varUnitss[allVarsIndex]
+        chlist = chlist[allVarsIndex]
 
         varLabels = []
-        for (varName, varUnits) in zip(self.varNames, self.db.varUnitss):
+        for (varName, varUnits) in zip(varNames, varUnitss):
             label = varName
             if varUnits != vu.miss_s:
                 label = label+' ('+varUnits+')'
             varLabels.append(label)
+
+        self.varNames = list(varNames)
+        self.chlist = list(chlist)
         self.varMap = list(zip(self.varNames, varLabels))
-        self.chlist = self.db.chlist
+        self.nVars = len(self.varNames)
 
         self.allBinVals = self.db.allBinVals
         self.binNumVals = self.db.binNumVals
@@ -95,21 +170,137 @@ class AnalysisBase():
         self.requestAggDFW = False
         self.blankBinMethodFile = bu.identityBinMethod
 
-        self.subWidth = 2.5
-        self.subAspect = 1.0
+        self.subplotWidth = 2.5
+        self.subplotAspect = 1.0
 
         self.MAX_FC_SUBFIGS = 6
         self.MAX_FC_LINES = 6
 
         ## Setup paths
         CWD = os.getcwd()
-        wd = CWD.split('/')[-1]
-        DSSubDir = anWorkingDir(self.DiagSpaceName)
-        self.DiagSpacePath = Path('./')
-        if wd != DSSubDir:
-            self.DiagSpacePath = self.DiagSpacePath/DSSubDir
-        self.myFigPath = self.DiagSpacePath/self.analysisType
+        workDir = anWorkingDir(self.DiagSpaceName, self.analysisType)
+        nWDPieces = len(workDir.split('/'))
+        localWD = '/'.join(CWD.split('/')[-nWDPieces:])
+        self.WorkPath = Path('./')
+        if localWD != workDir:
+            self.WorkPath = self.WorkPath/workDir
+        self.myFigPath = self.WorkPath
         self.myFigPath.mkdir(parents=True, exist_ok=True)
+
+    def oneHundredCenteredPercentDifference(self,
+      experiment,
+      reference,
+      dmin0 = np.NaN,
+      dmax0 = np.NaN,
+    ):
+      exp = experiment.astype(float)
+      ref = reference.astype(float)
+
+      out = np.full_like(exp, np.NaN)
+
+      validDenom = bu.greatBound(np.abs(ref), 0., False)
+
+      out[validDenom] = 100. * (
+        np.divide(
+          np.subtract(
+            exp[validDenom],
+            ref[validDenom]
+          ),
+          ref[validDenom]
+        ) + 1.0
+      )
+
+      dmin, dmax = self.oneHundredCenteredLimiter(dmin0, dmax0, out)
+
+      centralValue = 100.0
+
+      label = self.oneHundredCenteredLabeler()
+
+      return out, dmin, dmax, centralValue, label
+
+    def oneHundredCenteredLabeler(self):
+        return '100 x [1+\n(EXP-'+self.cntrlExpName+') / \n'+self.cntrlExpName+']'
+        #return '100 x [1+\n(EXP-CONTROL)/\nCONTROL]'
+
+    @staticmethod
+    def initLimits(dmin0=np.NaN, dmax0=np.NaN, d=None):
+      dmin = dmin0
+      dmax = dmax0
+      if d is not None and not (np.isfinite(dmin) or np.isfinite(dmax)):
+        dmin = np.nanmin(d)
+        dmax = np.nanmax(d)
+      return dmin, dmax
+
+    def oneHundredCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+      dmin, dmax = self.initLimits(dmin0, dmax0, d)
+
+      # update dmax, conditional on dmin
+      dmax = np.nanmax([dmax, 100.0/(dmin/100.0)])
+
+      # set absolute min/max in case there are large outliers
+      #if np.isfinite(dmin):
+      dmin = np.nanmax([dmin, 66.7])
+      dmin = np.nanmin([dmin, 98.0])
+
+      #if np.isfinite(dmax):
+      dmax = np.nanmin([dmax, 150.0])
+      dmax = np.nanmax([dmax, 102.0])
+
+      return dmin, dmax
+
+    def zeroCenteredPercentDifference(self,
+      experiment,
+      reference,
+      dmin0 = np.NaN,
+      dmax0 = np.NaN,
+    ):
+      exp = experiment.astype(float)
+      ref = reference.astype(float)
+
+      out = np.full_like(exp, np.NaN)
+
+      validDenom = bu.greatBound(np.abs(ref), 0., False)
+
+      out[validDenom] = 100. * (
+        np.divide(
+          np.subtract(
+            exp[validDenom],
+            ref[validDenom]
+          ),
+        ref[validDenom]
+        )
+      )
+
+      dmin, dmax = self.zeroCenteredLimiter(dmin0, dmax0, out)
+
+      centralValue = 0.0
+
+      label = self.zeroCenteredLabeler()
+
+      return out, dmin, dmax, centralValue, label
+
+    def zeroCenteredLabeler(self):
+      return '100 x (EXP-'+self.cntrlExpName+') / \n'+self.cntrlExpName+''
+      #return '100 x (EXP-CONTROL)/\nCONTROL'
+
+    def zeroCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+      dmin, dmax = self.initLimits(dmin0, dmax0, d)
+
+      # update dmax, conditional on dmin
+      #dmax = np.nanmax([dmax, 100.0/((100.0+dmin)/100.0) - 100.0])
+      dmax = np.nanmax([dmax, 1.0/dmin])
+
+      # set absolute min/max in case there are large outliers
+      #if np.isfinite(dmin):
+      dmin = np.nanmax([dmin, -33.3])
+      dmin = np.nanmin([dmin, -2.0])
+
+      #if np.isfinite(dmax):
+      dmax = np.nanmin([dmax, 50.0])
+      dmax = np.nanmax([dmax, 2.0])
+
+      return dmin, dmax
+
 
     def binMethodFile(self, binMethod, before = True):
         '''
@@ -139,28 +330,41 @@ class AnalysisBase():
         return fcDiagName
 
     def statPlotAttributes(self, diagnosticGroup, statName,
-                           allDiagnosticNames = None):
+                           allDiagnosticNames=None, isDifferencePlot=False, isPercentDiffPlot=False):
         '''
         Define plotting attributes for the combination of diagnosticGroup and statName
         '''
-        ommDiagnostics = ['omb', 'oma', 'omm', 'omf']
-        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo', 'mmgfsan']
+        ommDiagnostics = ['omb', 'oma', 'omm', 'omf',
+                          'rltv_omb', 'rltv_oma', 'rltv_omm', 'rltv_omf']
+        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo', 'mmgfsan', 'rltv_mmgfsan', 'log_mogfsan']
         truncateDiagnostics = ommDiagnostics+mmoDiagnostics
         diagnosticGroup_ = diagnosticGroup
-        for diag in truncateDiagnostics:
-            if diag in diagnosticGroup_:
-                diagnosticGroup_ = diag
+        #for diag in truncateDiagnostics:
+        #    if pu.prepends(diag, diagnosticGroup_) or pu.postpends(diag, diagnosticGroup_):
+        #        diagnosticGroup_ = diag
 
         fcDiagName = self.fcName(diagnosticGroup_)
-        if statName in ['Count']+du.CRStatNames:
+        diagnosticIndependentStatistics = ['Count']+du.bcr_.availableStatistics
+
+        if statName in diagnosticIndependentStatistics:
             statDiagLabel = statName
             fcstatDiagLabel = statName
         else:
-            statDiagLabel = statName+'('+diagnosticGroup_+')'
-            fcstatDiagLabel = statName+'('+fcDiagName+')'
+            if statName == vu.miss_s:
+                statDiagLabel = diagnosticGroup_
+                fcstatDiagLabel = fcDiagName
+            else:
+                statDiagLabel = statName+'('+diagnosticGroup_+')'
+                fcstatDiagLabel = statName+'('+fcDiagName+')'
 
-        #These only apply to unbounded quantities (omb, oma, ana/bak for velocity, differences)
-        signDefinite = True
+        #The following attributes apply to unbounded and/or symmetric plotted quantities
+        # e.g., omb, oma, ana/bak for velocity, differences
+
+        # default axis formatting
+        sciTicks = False
+        logScale = False
+        centralValue = None
+
         allDiagnosticNames_ = deepcopy(allDiagnosticNames)
         if allDiagnosticNames_ is None:
             cntrlDiagnosticName = diagnosticGroup_
@@ -168,26 +372,71 @@ class AnalysisBase():
         else:
             cntrlDiagnosticName = allDiagnosticNames_[0]
 
-        for diag in truncateDiagnostics:
-            if diag in cntrlDiagnosticName:
-                cntrlDiagnosticName = diag
-            for idiag, adiag in enumerate(allDiagnosticNames_):
-                if diag in adiag:
-                    allDiagnosticNames_[idiag] = diag
+        #for diag in truncateDiagnostics:
+        #    if pu.prepends(diag, cntrlDiagnosticName) or pu.postpends(diag, cntrlDiagnosticName):
+        #        cntrlDiagnosticName = diag
+        #    for idiag, adiag in enumerate(allDiagnosticNames_):
+        #        if pu.prepends(diag, adiag) or pu.postpends(diag, adiag):
+        #            allDiagnosticNames_[idiag] = diag
+
+        oneCenteredRatioDiagPrefixes = ['CRy', 'InnovationRatio', 'SpreadRatio', 'OENI']
+        allOneCenteredDiagnostics = statName not in ['Count', 'Mean', 'Skew', 'ExcessKurtosis']
+        for diag in allDiagnosticNames_:
+            oneCentered = False
+            for diagPrefix in oneCenteredRatioDiagPrefixes:
+                oneCentered = oneCentered or pu.prepends(diagPrefix, diag)
+            allOneCenteredDiagnostics = allOneCenteredDiagnostics and oneCentered
+        if allOneCenteredDiagnostics:
+            centralValue = 1.
+            logScale = True
+
+        # TODO: add log-scaling for some diagnostics, need to ensure log range is reasonable,
+        #       including ignoring outliers that over-smooth the rest of the colors
+        # logScaledDiagPrefixes = ['sigmao', 'ideal-sigmao', 'sigma']
+        # allLogScaledDiagnostics = statName not in ['Count', 'Mean']
+        # for diag in allDiagnosticNames_:
+        #     logScaled = False
+        #     for diagPrefix in logScaledDiagPrefixes:
+        #         logScaled = logScaled or pu.prepends(diagPrefix, diag)
+        #     allLogScaledDiagnostics = allLogScaledDiagnostics and logScaled
+        # if allLogScaledDiagnostics:
+        #     logScale = True and not isDifferencePlot
+
+        if statName=='Count':
+            sciTicks = True
+            logScale = True
 
         cntrlExpDiagnosticLabel = expDiagnosticLabel(self.cntrlExpName, cntrlDiagnosticName, allDiagnosticNames_)
-        fcstatDiagDiffLabel = statName+'('+fcDiagName+'): [EXP - '+cntrlExpDiagnosticLabel+']'
-        if statName == 'Mean':
+        statDiagDiffLabel = statDiagLabel+': [EXP-'+cntrlExpDiagnosticLabel+']'
+        fcstatDiagDiffLabel = fcstatDiagLabel+': [EXP-'+cntrlExpDiagnosticLabel+']'
+        statDiagPercentDiffLabel = '100 x [EXP-'+cntrlExpDiagnosticLabel+'] / \n'+cntrlExpDiagnosticLabel
+
+        if statName in ['Mean', 'Skew', 'ExcessKurtosis']:
             if diagnosticGroup_ in ommDiagnostics:
-                signDefinite = False
-                fcstatDiagDiffLabel = statName+': ['+cntrlExpDiagnosticLabel+' - EXP]'
+                centralValue = 0.
+                statDiagDiffLabel = statDiagLabel+': ['+cntrlExpDiagnosticLabel+'-EXP]'
+                fcstatDiagDiffLabel = fcstatDiagLabel+': ['+cntrlExpDiagnosticLabel+'-EXP]'
+                statDiagPercentDiffLabel = '100 x ['+cntrlExpDiagnosticLabel+'-EXP] / \n'+cntrlExpDiagnosticLabel
             if diagnosticGroup_ in mmoDiagnostics:
-                signDefinite = False
-                fcstatDiagDiffLabel = statName+': [EXP - '+cntrlExpDiagnosticLabel+']'
+                centralValue = 0.
 
-        sciTicks = (statName == 'Count')
+            if 'OENI' in diagnosticGroup: centralValue = 0.
+            if 'ACI' in diagnosticGroup: centralValue = 0.
 
-        return statDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite
+        if 'rltv_mmgfsan' in diagnosticGroup_ and statName in ['STD', 'RMS']: logScale = True
+        if 'log_mogfsan' in diagnosticGroup_ and statName in ['Mean']: centralValue = 0.
+
+        #if 'rltv_mmgfsan' in diagnosticGroup_: logScale = True
+
+        if isDifferencePlot:
+          statDiagLabel = statDiagDiffLabel
+          fcstatDiagLabel = fcstatDiagDiffLabel
+
+        if isPercentDiffPlot:
+          statDiagLabel = statDiagPercentDiffLabel
+          fcstatDiagLabel = statDiagPercentDiffLabel
+
+        return statDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue
 
     def UNIONcntrlANDexpCYDTimes(self, dfw, myLoc = {}):
         '''
@@ -213,7 +462,7 @@ class AnalysisBase():
 
     def analyze(self, workers = None):
         self.logger.info('analyze()')
-        if self.blocking:
+        if self.blocking or workers is None:
             # analyses with internal blocking
             self.analyze_()
         elif self.parallelism:
@@ -244,7 +493,7 @@ def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
     category binMethods in the context of a DFWrapper
     '''
 
-    binVar = vu.varDictAll[fullBinVar][1]
+    binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
 
     dbSelect1DBinVals = dfw.levels('binVal')
     binUnitss = dfw.uniquevals('binUnits')
@@ -305,8 +554,11 @@ class CategoryBinMethodBase(AnalysisBase):
         self.binVarDict = {
             (vu.obsVarQC, bu.goodQCMethod): {'binVarTier': 1},
             (vu.obsVarLat, bu.latbandsMethod): {'binVarTier': 1},
-            (vu.obsVarCldFrac, bu.cloudbandsMethod): {'binVarTier': 1},
-#            (vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
+            (vu.obsVarLat, bu.troplatbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFracX, bu.cloudbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFracY, bu.cloudbandsMethod): {'binVarTier': 1},
+            # vu.modVarLat is redundant with vu.obsVarLat (both have varShort=="lat")
+            #(vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
             (vu.noBinVar, bu.noBinMethod): {'binVarTier': 1},
             (vu.obsRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
             (vu.modelRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
@@ -335,7 +587,7 @@ class CategoryBinMethodBase(AnalysisBase):
         # TODO(JJG): construct member Diagnostic objects (create new class) from
         #            diagnosticConfigs instead of referencing dictionary
         #            entries below.
-        # TODO(JJG): use same color, vary line style across diagnosticGroupings
+        # TODO(JJG): use same color, vary line style within diagnosticGroupings
         diagnosticGrouped = {}
         for diag in self.availableDiagnostics:
             diagnosticGrouped[diag] = False
@@ -357,19 +609,24 @@ class CategoryBinMethodBase(AnalysisBase):
             if len(diagnosticNames) > self.maxDiagnosticsPerAnalysis: continue
             if len(set(diagnosticNames) & set(self.availableDiagnostics)) == 0: continue
             diagnosticConfigs = {}
-            analysisStatistics = set([])
+            selectedStatistics = set([])
             for diagnosticName in diagnosticNames:
                 diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
-                analysisStatistics = set(list(analysisStatistics) +
-                                         diagnosticConfigs[diagnosticName]['analysisStatistics'])
-            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
+                selectedStatistics = set(list(selectedStatistics) +
+                                         diagnosticConfigs[diagnosticName]['selectedStatistics'])
+            availableStatistics = set([])
+            for diagnosticName in diagnosticNames:
+                diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
+                availableStatistics = set(list(availableStatistics) +
+                                         diagnosticConfigs[diagnosticName]['availableStatistics'])
+            if not set(self.requiredStatistics).issubset(availableStatistics): continue
 
             diagLoc = {'diagName': diagnosticNames}
             diagBinVars = self.db.dfw.levels('binVar', diagLoc)
             diagBinMethods = self.db.dfw.levels('binMethod', diagLoc)
             for (fullBinVar, binMethod), options in self.binVarDict.items():
                 if options.get('binVarTier', 10) > self.maxBinVarTier: continue
-                binVar = vu.varDictAll[fullBinVar][1]
+                binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
 
@@ -377,15 +634,15 @@ class CategoryBinMethodBase(AnalysisBase):
 
                 if useWorkers:
                     workers.apply_async(self.innerloopsWrapper,
-                        args = (diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options))
+                        args = (diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, selectedStatistics, options))
                 else:
                     self.innerloopsWrapper(
-                        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options)
+                        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, selectedStatistics, options)
 
     def innerloopsWrapper(self,
-        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, analysisStatistics, options):
+        diagnosticGroup, diagnosticConfigs, fullBinVar, binMethod, selectedStatistics, options):
 
-        binVar = vu.varDictAll[fullBinVar][1]
+        binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
 
         # narrow mydfwDict by binVar and binMethod to reduce run-time and memory
         myLoc = {}
@@ -411,8 +668,8 @@ class CategoryBinMethodBase(AnalysisBase):
 
         nxplots, nyplots, nsubplots = self.subplotArrangement(binValsMap)
 
-        for statName in analysisStatistics:
-            if statName not in options.get('onlyStatNames', analysisStatistics): continue
+        for statName in selectedStatistics:
+            if statName not in options.get('onlyStatNames', selectedStatistics): continue
 
             self.innerloops(
                 mydfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
@@ -439,8 +696,8 @@ class CYAxisExpLines(CategoryBinMethodBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
 
-        self.subWidth = 1.9
-        self.subAspect = 0.75
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.75
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
@@ -448,7 +705,7 @@ class CYAxisExpLines(CategoryBinMethodBase):
 
         if self.nCY < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
         myPath = self.myFigPath/diagnosticGroup
@@ -463,7 +720,7 @@ class CYAxisExpLines(CategoryBinMethodBase):
             axisLimitsLoc['fcTDelta'] = fcTDelta
 
             # establish a new figure
-            fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+            fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
             iplot = 0
 
             #subplot loop 1
@@ -503,7 +760,7 @@ class CYAxisExpLines(CategoryBinMethodBase):
                             for cyDTime in lineCYDTimes:
                                 icy = self.cyDTimes.index(cyDTime)
                                 cyLoc['cyDTime'] = cyDTime
-                                lineVals[icy] = dfwDict['dfw'].loc(cyLoc, statName)
+                                lineVals[icy] = dfwDict['dfw'].loc1(cyLoc, statName)
                             linesVals.append(lineVals)
 
                     # define subplot title
@@ -514,7 +771,7 @@ class CYAxisExpLines(CategoryBinMethodBase):
                         fig,
                         self.cyDTimes, linesVals, linesLabel,
                         title, bgstatDiagLabel,
-                        sciTicks, False, signDefinite,
+                        sciTicks, logScale, centralValue,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -549,8 +806,8 @@ class FCAxisExpLines(CategoryBinMethodBase):
 
         self.requestAggDFW = True
 
-        self.subWidth = 1.9
-        self.subAspect = 0.9
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.9
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
@@ -558,7 +815,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
 
         if self.nFC < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -569,7 +826,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
         axisLimitsLoc = {}
 
         # establish a new figure
-        fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+        fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
         iplot = 0
 
         #subplot loop 1
@@ -608,7 +865,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
                         for fcTDelta in lineFCTDeltas:
                             ifc = self.fcTDeltas.index(fcTDelta)
                             fcLoc['fcTDelta'] = fcTDelta
-                            lineVals[ifc] = dfwDict['agg'].loc(fcLoc, statName)
+                            lineVals[ifc] = dfwDict['agg'].loc1(fcLoc, statName)
                         linesVals.append(lineVals)
 
                 # define subplot title
@@ -619,7 +876,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
                     fig,
                     self.fcTDeltas, linesVals, linesLabel,
                     title, fcstatDiagLabel,
-                    sciTicks, False, signDefinite,
+                    sciTicks, logScale, centralValue,
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
                     interiorLabels = interiorLabels)
@@ -656,14 +913,19 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
         # OPTIONAL: implement fine-grained parallelism for bootStrapping
         #self.blocking = True
 
-        self.subWidth = 1.9
-        self.subAspect = 0.9
+        # used for percent ratio plots
+        self.requestAggDFW = True
+
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.9
 
         for key in self.binVarDict:
             if 'onlyStatNames' in self.binVarDict[key]:
                 self.binVarDict[key]['onlyStatNames'] += bootStrapStats
             else:
                 self.binVarDict[key]['onlyStatNames'] = bootStrapStats
+
+        self.requiredStatistics = ['Count']
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, binValsMap, options,
@@ -673,8 +935,8 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
         if self.nExp * len(myLoc['diagName']) < 2: return
         if self.cntrlExpName not in dfwDict['dfw'].levels('expName'): return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
-            self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
+        bgstatDiagLabel_abs, fcstatDiagLabel_abs, sciTicks_abs, logScale_abs, centralValue_abs = \
+            self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'], isDifferencePlot=True)
 
         fcDiagName = self.fcName(diagnosticGroup)
         myPath = self.myFigPath/fcDiagName
@@ -685,9 +947,11 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
         myExpsCYDTimes = self.UNIONcntrlANDexpCYDTimes(dfwDict['dfw'])
 
         # establish a new figure
-        fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+        fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
         iplot = 0
 
+        useRelativeError = (statName in su.posSemiDefiniteStats and
+                            self.relativeErrorType != 'disable')
         binValLoc = {}
         #subplot loop 1
         for (varName, varLabel) in self.varMap:
@@ -699,9 +963,13 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
 
                 # intermediate tempdfw reduces extraction time in inner loops
                 tempdfw = sdb.DFWrapper.fromLoc(dfwDict['dfw'], binValLoc)
+                normdfw = sdb.DFWrapper.fromLoc(dfwDict['agg'], binValLoc)
 
                 cntrlLoc = deepcopy(binValLoc)
                 cntrlLoc['expName'] = self.cntrlExpName
+                cntrlLoc['diagName'] = myLoc['diagName'][0]
+
+                normLoc = deepcopy(cntrlLoc)
 
                 # define subplot title
                 title = varLabel+binTitle
@@ -709,7 +977,6 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                 linesVals = defaultdict(list)
                 linesLabel = []
                 linesGroup = []
-                cntrlLoc['diagName'] = myLoc['diagName'][0]
                 for expName in self.expNames:
                     for diagnosticName in myLoc['diagName']:
                         if (expName == cntrlLoc['expName'] and
@@ -735,8 +1002,20 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                                          n_samples = 10000,
                                          statNames = [statName])
 
+                            # normalizing value for pratio
+                            normLoc['fcTDelta'] = fcTDelta
+                            normalizingStat = normdfw.loc1(normLoc, statName)
+
                             for trait in su.ciTraits:
-                                lineVals[trait] += [ciVals[statName][trait][0]]
+                                t = float(ciVals[statName][trait][0])
+                                # automatically generate relative difference plots for positive-semi-definite statistics
+                                if useRelativeError:
+                                  # divide by cntrlLoc aggregated statName
+                                  t /= normalizingStat
+                                  if self.relativeErrorType == 'one hundred centered':
+                                    t += 1.0
+                                  t *= 100.0
+                                lineVals[trait] += [t]
 
                         for trait in su.ciTraits:
                             linesVals[trait].append(lineVals[trait])
@@ -745,14 +1024,34 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                 dmin = np.nanmin(linesVals[su.cimin])
                 dmax = np.nanmax(linesVals[su.cimax])
 
+                if not (np.isfinite(dmin) or np.isfinite(dmax)):
+                  iplot = iplot + 1
+                  continue
+
+                fcstatDiagLabel = fcstatDiagLabel_abs
+                sciTicks = sciTicks_abs
+                logScale = logScale_abs
+                centralValue = 0.
+
+                if useRelativeError:
+
+                  fcstatDiagLabel = self.relativeErrorLabeler()
+                  fcstatDiagLabel = statName+': '+fcstatDiagLabel
+
+                  dmin, dmax = self.relativeErrorLimiter(dmin, dmax)
+
+                  centralValue = self.relativeErrorCenter
+                  sciTicks = False
+                  logScale = False
+
                 # perform subplot agnostic plotting (all expNames)
                 bpf.plotTimeSeries(
                     fig,
                     self.fcTDeltas, linesVals[su.cimean],
                     linesLabel,
                     title,
-                    fcstatDiagDiffLabel,
-                    False, False, False,
+                    fcstatDiagLabel,
+                    sciTicks, logScale, centralValue,
                     nyplots, nxplots, nsubplots, iplot,
                     linesValsMinCI = linesVals[su.cimin],
                     linesValsMaxCI = linesVals[su.cimax],
@@ -788,8 +1087,8 @@ class CYAxisFCLines(CategoryBinMethodBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
 
-        self.subWidth = 1.9
-        self.subAspect = 0.75
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.75
 
         self.maxDiagnosticsPerAnalysis = 1
 
@@ -799,7 +1098,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
 
         if self.nFC < 2 or self.nCY < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -814,7 +1113,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
             lineLoc['expName'] = expName
 
             # establish a new figure
-            fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+            fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
             iplot = 0
 
             #subplot loop 1
@@ -860,7 +1159,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)
                             cyLoc['cyDTime'] = cyDTime
-                            lineVals[icy] = dfwDict['dfw'].loc(cyLoc, statName)
+                            lineVals[icy] = dfwDict['dfw'].loc1(cyLoc, statName)
 
                         linesVals.append(lineVals)
 
@@ -872,7 +1171,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
                         fig,
                         xsVals, linesVals, self.fcTDeltas_labels,
                         title, bgstatDiagLabel,
-                        sciTicks, False, signDefinite,
+                        sciTicks, logScale, centralValue,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -900,14 +1199,6 @@ class BinValLinesAnalysisType(CategoryBinMethodBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
 
-        # TODO(JJG): allow for multiple binMethods in one figure, such as
-        #self.binVarDict = {
-        #    (vu.obsVarQC, [bu.goodQCMethod, bu.badQCMethod]): {
-        #        'onlyStatNames': ['Count'],
-        #    },
-        #}
-        # OR if this is the only case for which it's needed
-        # TODO: replace badQCMethod with all-encompassing QC Method, e.g., allQCMethod
         self.binVarDict = {
             (vu.obsVarQC, bu.badQCMethod): {
                 'onlyStatNames': ['Count'],
@@ -918,8 +1209,11 @@ class BinValLinesAnalysisType(CategoryBinMethodBase):
                 'binVarTier': 1,
             },
             (vu.obsVarLat, bu.latbandsMethod): {'binVarTier': 1},
-#            (vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
-            (vu.obsVarCldFrac, bu.cloudbandsMethod): {'binVarTier': 1},
+            (vu.obsVarLat, bu.troplatbandsMethod): {'binVarTier': 1},
+            # vu.modVarLat is redundant with vu.obsVarLat (both have varShort=="lat")
+            #(vu.modVarLat, bu.latbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFracX, bu.cloudbandsMethod): {'binVarTier': 1},
+            (vu.obsVarCldFracY, bu.cloudbandsMethod): {'binVarTier': 1},
             (vu.obsVarLandFrac, bu.surfbandsMethod): {'binVarTier': 3},
         }
 
@@ -939,8 +1233,8 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
 
-        self.subWidth = 1.9
-        self.subAspect = 0.75
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.75
 
         self.maxDiagnosticsPerAnalysis = 1
 
@@ -950,7 +1244,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
 
         if self.nCY < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, sciTicks, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
 
@@ -970,7 +1264,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
             axisLimitsLoc['fcTDelta'] = fcTDelta
 
             # establish a new figure
-            fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+            fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
 
             iplot = 0
 
@@ -1001,8 +1295,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)
                             cyLoc['cyDTime'] = cyDTime
-#                            print(dfwDict['dfw'].loc(cyLoc, statName))
-                            lineVals[icy] = dfwDict['dfw'].loc(cyLoc, statName)
+                            lineVals[icy] = dfwDict['dfw'].loc1(cyLoc, statName)
 
                         linesVals.append(lineVals)
 
@@ -1016,7 +1309,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
                         fig,
                         self.cyDTimes, linesVals, binVals,
                         title, bgstatDiagLabel,
-                        sciTicks, False, signDefinite,
+                        sciTicks, logScale, centralValue,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -1043,7 +1336,7 @@ class CYAxisBinValLines(BinValLinesAnalysisType):
 #########################################################
 ## Figures with binVal on one axis, i.e., 2D and profiles
 #########################################################
-class OneDimBinMethodBase(AnalysisBase):
+class MultiDimBinMethodBase(AnalysisBase):
     '''
     Base class used to analyze statistics across binMethods with one-dimensional binValues
       that are assigned numerical values, e.g., altitude, pressure, latitude, cloud fraction
@@ -1051,18 +1344,29 @@ class OneDimBinMethodBase(AnalysisBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
         self.parallelism = True
-        self.maxBinVarTier = 1
+        self.maxBinVarTier = 2
 
-        # default binVars
+        # default 1D binVars
         self.binVarDict = {
             vu.obsVarAlt: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
-            vu.obsVarACI: {'profilefunc': bpf.plotSeries, 'binVarTier': 2},
-            vu.obsVarCldFrac: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
+            vu.obsVarACI: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
+            vu.obsVarCldFracX: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
+            vu.obsVarCldFracY: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
             vu.obsVarLat: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
             vu.obsVarPrs: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
-            vu.obsVarSCI: {'profilefunc': bpf.plotSeries, 'binVarTier': 2},
-#            vu.modVarLat: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
-            vu.modVarLev: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarCI: {'profilefunc': bpf.plotSeries, 'binVarTier': 2},
+            vu.obsVarLogCI: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
+            # vu.modVarLat is redundant with vu.obsVarLat (both have varShort=="lat")
+            #vu.modVarLat: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.modVarLev: {
+              'profilefunc': bpf.plotProfile,
+              'binVarTier': 1,
+              'binFilter': {
+                # maximum model level to show on all figures
+                #'maxvalue': 40,
+              },
+            },
+
             vu.obsVarGlint: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
             vu.obsVarLandFrac: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
             vu.obsVarLT: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
@@ -1093,20 +1397,24 @@ class OneDimBinMethodBase(AnalysisBase):
             if len(diagnosticNames) > self.maxDiagnosticsPerAnalysis: continue
             if len(set(diagnosticNames) & set(self.availableDiagnostics)) == 0: continue
             diagnosticConfigs = {}
-            analysisStatistics = set([])
+            selectedStatistics = set([])
             for diagnosticName in diagnosticNames:
                 diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
-                analysisStatistics = set(list(analysisStatistics) +
-                                         diagnosticConfigs[diagnosticName]['analysisStatistics'])
-            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
+                selectedStatistics = set(list(selectedStatistics) +
+                                         diagnosticConfigs[diagnosticName]['selectedStatistics'])
+            availableStatistics = set([])
+            for diagnosticName in diagnosticNames:
+                diagnosticConfigs[diagnosticName] = deepcopy(self.diagnosticConfigs[diagnosticName])
+                availableStatistics = set(list(availableStatistics) +
+                                         diagnosticConfigs[diagnosticName]['availableStatistics'])
+            if not set(self.requiredStatistics).issubset(availableStatistics): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticNames})
 
             for fullBinVar, options in self.binVarDict.items():
                 if options.get('binVarTier', 10) > self.maxBinVarTier: continue
-                binVar = vu.varDictAll[fullBinVar][1]
+                binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
                 if (binVar not in diagBinVars): continue
-
                 binVarLoc = {}
                 binVarLoc['diagName'] = diagnosticNames
                 binVarLoc['binVar'] = binVar
@@ -1116,17 +1424,20 @@ class OneDimBinMethodBase(AnalysisBase):
                 binMethods = self.db.dfw.levels('binMethod', binVarLoc)
                 for binMethod in binMethods:
 
+                    #TODO: REMOVE, for testing only
+                    #if binMethod != bu.identityBinMethod: continue
+
                     self.logger.info(diagnosticGroup+', '+binVar+', '+binMethod)
 
                     if useWorkers:
                         workers.apply_async(self.innerloopsWrapper,
-                            args = (diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options))
+                            args = (diagnosticGroup, diagnosticConfigs, binVar, binMethod, selectedStatistics, options))
                     else:
                         self.innerloopsWrapper(
-                            diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options)
+                            diagnosticGroup, diagnosticConfigs, binVar, binMethod, selectedStatistics, options)
 
     def innerloopsWrapper(self,
-        diagnosticGroup, diagnosticConfigs, binVar, binMethod, analysisStatistics, options):
+        diagnosticGroup, diagnosticConfigs, binVar, binMethod, selectedStatistics, options):
 
         myLoc = {}
         myLoc['binVar'] = binVar
@@ -1163,9 +1474,39 @@ class OneDimBinMethodBase(AnalysisBase):
             ibin = self.allBinVals.index(binVal)
             binNumVals.append(self.binNumVals[ibin])
 
-            # invert independent variable axis for pressure bins
-            pressure_dict = vu.varDictAll.get(vu.obsVarPrs,['',''])
-            invert_ind_axis = (pressure_dict[1] == binVar)
+        # filter out binVals less than (greater than) minvalue (maxvalue)
+        binFilter = options.get('binFilter', None)
+        # Example to include only values from 3 to 40:
+        # 'binFilter': {
+        #   'minvalue': 3,
+        #   'maxvalue': 40,
+        # }
+        if binFilter is not None:
+          remove = np.full_like(binNumVals, False, bool)
+          minvalue = binFilter.get('minvalue', None)
+          if minvalue is not None:
+            less = bu.lessBound(np.asarray(binNumVals), minvalue)
+            remove[less] = True
+          maxvalue = binFilter.get('maxvalue', None)
+          if maxvalue is not None:
+            great = bu.greatBound(np.asarray(binNumVals), maxvalue)
+            remove[great] = True
+
+          binVals = list(np.asarray(binVals)[~remove])
+          binNumVals = list(np.asarray(binNumVals)[~remove])
+
+        # special independent variable axis configs
+        binVarIs = {}
+        specialBinVars = [vu.obsVarPrs, vu.obsVarMCI, vu.obsVarOCI, vu.obsVarLogCI]
+        for var in specialBinVars:
+            var_dict = vu.varDictAll.get(var,['',''])
+            binVarIs[var] = (var_dict[1] == binVar)
+
+        indepConfig = deepcopy(bpf.defaultIndepConfig)
+        indepConfig['invert'] = binVarIs[vu.obsVarPrs]
+        if binVarIs[vu.obsVarPrs]: indepConfig['transform'] = 'Pressure'
+        if binVarIs[vu.obsVarMCI] or binVarIs[vu.obsVarOCI] or binVarIs[vu.obsVarLogCI]:
+            indepConfig['transform'] = 'CloudImpact'
 
         # sort bins by numeric value
         indices = list(range(len(binNumVals)))
@@ -1177,7 +1518,7 @@ class OneDimBinMethodBase(AnalysisBase):
             'str': binVals,
             'values': binNumVals,
             'indepLabel': indepLabel,
-            'invert_ind_axis': invert_ind_axis,
+            'indepConfig': indepConfig,
         }
         if len(binVals) < 2: return
 
@@ -1185,15 +1526,21 @@ class OneDimBinMethodBase(AnalysisBase):
         nVarsLoc = 0
         varMapLoc = []
         for (varName, varLabel) in self.varMap:
-          countDF = mydfwDict['dfw'].loc({'varName': varName}, 'Count')
-          if countDF.shape[0] > 0:
-            counts = countDF.to_numpy()
-            if np.nansum(counts) > 0:
-              nVarsLoc += 1
-              varMapLoc.append((varName, varLabel))
+          if 'Count' in selectedStatistics:
+              countDF = mydfwDict['dfw'].loc({'varName': varName}, 'Count')
+              if countDF.shape[0] > 0:
+                if np.nansum(countDF.to_numpy()) > 0:
+                  nVarsLoc += 1
+                  varMapLoc.append((varName, varLabel))
+          else:
+              statDF = mydfwDict['dfw'].loc({'varName': varName}, list(selectedStatistics)[0])
+              if statDF.shape[0] > 0:
+                if np.isfinite(statDF.to_numpy()).sum() > 0:
+                  nVarsLoc += 1
+                  varMapLoc.append((varName, varLabel))
 
-        for statName in analysisStatistics:
-            if statName not in options.get('onlyStatNames', analysisStatistics): continue
+        for statName in selectedStatistics:
+            if statName not in options.get('onlyStatNames', selectedStatistics): continue
 
             self.innerloops(
                 mydfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options)
@@ -1206,7 +1553,7 @@ class OneDimBinMethodBase(AnalysisBase):
         raise NotImplementedError()
 
 
-class CYandBinValAxes2D(OneDimBinMethodBase):
+class CYandBinValAxes2D(MultiDimBinMethodBase):
     '''
     Creates raster maps with binVar binVals on y-axis
       - only applicable to binned diagnostics (e.g., vertical dimension, latitude, zenith angle)
@@ -1216,8 +1563,8 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
     def __init__(self, db, analysisType, diagnosticGroupings):
         super().__init__(db, analysisType, diagnosticGroupings)
 
-        self.subWidth = 2.4
-        self.subAspect = 0.65
+        self.subplotWidth = 2.4
+        self.subplotAspect = 0.65
 
         self.maxDiagnosticsPerAnalysis = 1
 
@@ -1226,25 +1573,36 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
 
         if self.nCY < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
+        bgstatDiagLabel_abs, fcstatDiagLabel_abs, sciTicks_abs, logScale_abs, centralValue_abs = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
         myPath = self.myFigPath/diagnosticGroup
         myPath.mkdir(parents=True, exist_ok=True)
 
+        # axes settings
         nxplots = self.nExp
         nyplots = nVarsLoc
         nsubplots = nxplots * nyplots
 
+        xVals = self.cyDTimes
+        xLabel = 'Date'
+        yNumVals = myBinConfigs['values']
+        yVals = myBinConfigs['str']
+        nYVals = len(yVals)
+        yLabel = myBinConfigs['indepLabel']
+
         planeLoc = {}
         axisLimitsLoc = {}
+
+        useRelativeError = (statName in su.posSemiDefiniteStats and
+                            self.relativeErrorType != 'disable')
 
         #file loop 1
         for (fcTDelta, fcTDelta_totmin) in self.fcMap:
             planeLoc['fcTDelta'] = fcTDelta
 
             # establish a new figure
-            fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+            fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
 
             iplot = 0
 
@@ -1255,37 +1613,85 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
 
                 # use common c-axis limits across axisLimitsLoc database locations
                 if statName == 'Count':
-                    dmin = 0.
+                    dmin_abs = 0.
                 else:
-                    dmin = dfwDict['dfw'].min(axisLimitsLoc, statName)
-                dmax = dfwDict['dfw'].max(axisLimitsLoc, statName)
+                    dmin_abs = dfwDict['dfw'].min(axisLimitsLoc, statName)
+                dmax_abs = dfwDict['dfw'].max(axisLimitsLoc, statName)
+
+                # letting cyDTime and binVal vary
+                # extract control experiment
+                cntrlLoc = deepcopy(planeLoc)
+                cntrlLoc['expName'] = self.cntrlExpName
+                cntrlPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', cntrlLoc)
+                cntrlPlaneVals = np.full((nYVals, self.nCY), np.NaN)
+
+                for ibin, binVal in enumerate(yVals):
+                    cntrlLoc['binVal'] = binVal
+                    tmp = dfwDict['dfw'].loc(cntrlLoc, statName).to_numpy()
+                    for jcy, cyDTime in enumerate(cntrlPlaneCYDTimes):
+                        if jcy > len(tmp)-1: continue
+                        icy = self.cyDTimes.index(cyDTime)
+                        cntrlPlaneVals[ibin, icy] = tmp[jcy]
 
                 #subplot loop 2
-                # letting cyDTime and binVal vary
+                dmin_relative = np.NaN
+                dmax_relative = np.NaN
                 for expName in self.expNames:
-                    planeLoc['expName'] = expName
-                    planeCYDTimes = dfwDict['dfw'].levels('cyDTime', planeLoc)
-
-                    planeVals = np.full((len(myBinConfigs['str']), self.nCY), np.NaN)
-                    binLoc = deepcopy(planeLoc)
-                    for ibin, binVal in enumerate(myBinConfigs['str']):
-                        binLoc['binVal'] = binVal
-                        tmp = dfwDict['dfw'].loc(binLoc, statName).to_numpy()
-                        for jcy, cyDTime in enumerate(planeCYDTimes):
-                            if jcy > len(tmp)-1: continue
-                            icy = self.cyDTimes.index(cyDTime)
-                            planeVals[ibin, icy] = tmp[jcy]
+                    expLoc = deepcopy(planeLoc)
+                    expLoc['expName'] = expName
 
                     # define subplot title
                     title = expName+'\n'+varLabel
 
+                    bgstatDiagLabel = bgstatDiagLabel_abs
+                    sciTicks = sciTicks_abs
+                    logScale = logScale_abs
+                    centralValue = centralValue_abs
+                    dmin = dmin_abs
+                    dmax = dmax_abs
+                    if (expName == cntrlLoc['expName']):
+                        planeVals = deepcopy(cntrlPlaneVals)
+                    else:
+                        # letting cyDTime and binVal vary
+                        # extract this experiment
+                        expPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', expLoc)
+                        expPlaneVals = np.full_like(cntrlPlaneVals, np.NaN)
+
+                        for ibin, binVal in enumerate(yVals):
+                            expLoc['binVal'] = binVal
+                            tmp = dfwDict['dfw'].loc(expLoc, statName).to_numpy()
+                            for jcy, cyDTime in enumerate(expPlaneCYDTimes):
+                                if jcy > len(tmp)-1: continue
+                                icy = self.cyDTimes.index(cyDTime)
+                                expPlaneVals[ibin, icy] = tmp[jcy]
+
+                        # automatically generate relative difference plots for positive-semi-definite statistics
+                        if useRelativeError:
+                            sciTicks = False
+                            logScale = False
+
+                            planeVals, dmin_relative, dmax_relative, centralValue, label = self.relativeErrorFunction(
+                              expPlaneVals,
+                              cntrlPlaneVals,
+                              dmin_relative,
+                              dmax_relative,
+                            )
+                            dmin = dmin_relative
+                            dmax = dmax_relative
+                            bgstatDiagLabel = statName+': '+label
+                        else:
+                            planeVals = deepcopy(expPlaneVals)
+
+                    cLabel = bgstatDiagLabel
+
                     # perform subplot agnostic plotting (all expNames)
-                    bpf.plotTimeSeries2D(
+                    bpf.plot2D(
                         fig,
-                        self.cyDTimes, myBinConfigs['values'], planeVals,
-                        title, bgstatDiagLabel,
-                        scilogScale, scilogScale, signDefinite,
-                        myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
+                        xVals, yNumVals, planeVals,
+                        title, xLabel, yLabel, cLabel,
+                        bpf.defaultIndepConfig,
+                        myBinConfigs['indepConfig'],
+                        sciTicks, logScale, centralValue,
                         nyplots, nxplots, nsubplots, iplot,
                         dmin = dmin, dmax = dmax,
                         interiorLabels = interiorLabels)
@@ -1302,7 +1708,7 @@ class CYandBinValAxes2D(OneDimBinMethodBase):
         # end fcTDelta loop
 
 
-class FCandBinValAxes2D(OneDimBinMethodBase):
+class FCandBinValAxes2D(MultiDimBinMethodBase):
     '''
     Creates raster maps with binVar binVals on y-axis
       - only applicable to binned diagnostics (e.g., vertical dimension, latitude, zenith angle)
@@ -1315,8 +1721,8 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
 
         self.requestAggDFW = True
 
-        self.subWidth = 2.4
-        self.subAspect = 0.55
+        self.subplotWidth = 2.4
+        self.subplotAspect = 0.55
 
         self.maxDiagnosticsPerAnalysis = 1
 
@@ -1325,22 +1731,34 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
 
         if self.nFC < 2: return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName)
 
         fcDiagName = self.fcName(diagnosticGroup)
         myPath = self.myFigPath/fcDiagName
         myPath.mkdir(parents=True, exist_ok=True)
 
+        # axes settings
         nxplots = self.nExp
         nyplots = nVarsLoc
         nsubplots = nxplots * nyplots
+
+        xVals = self.fcTDeltas
+        xLabel = 'Lead Time'
+
+        yNumVals = myBinConfigs['values']
+        yVals = myBinConfigs['str']
+        nYVals = len(yVals)
+        yLabel = myBinConfigs['indepLabel']
+
+        cLabel = fcstatDiagLabel
+
 
         planeLoc = {}
         axisLimitsLoc = {}
 
         # establish a new figure
-        fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+        fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
 
         iplot = 0
         #subplot loop 1
@@ -1361,9 +1779,9 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
                 planeLoc['expName'] = expName
                 planeFCTDeltas = dfwDict['agg'].levels('fcTDelta', planeLoc)
 
-                planeVals = np.full((len(myBinConfigs['str']), self.nFC), np.NaN)
+                planeVals = np.full((nYVals, self.nFC), np.NaN)
                 binLoc = deepcopy(planeLoc)
-                for ibin, binVal in enumerate(myBinConfigs['str']):
+                for ibin, binVal in enumerate(yVals):
                     binLoc['binVal'] = binVal
                     tmp = dfwDict['agg'].loc(binLoc, statName).to_numpy()
                     for jfc, fcTDelta in enumerate(planeFCTDeltas):
@@ -1371,16 +1789,19 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
                         ifc = self.fcTDeltas.index(fcTDelta)
                         planeVals[ibin, ifc] = tmp[jfc]
 
+                #TODO: add relative difference plots similar to CYAxisExpLines2D
+
                 # define subplot title
                 title = expName+'\n'+varLabel
 
                 # perform subplot agnostic plotting (all expNames)
-                bpf.plotTimeSeries2D(
+                bpf.plot2D(
                     fig,
-                    self.fcTDeltas, myBinConfigs['values'], planeVals,
-                    title, fcstatDiagLabel,
-                    scilogScale, scilogScale, signDefinite,
-                    myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
+                    xVals, yNumVals, planeVals,
+                    title, xLabel, yLabel, cLabel,
+                    bpf.defaultIndepConfig,
+                    myBinConfigs['indepConfig'],
+                    sciTicks, logScale, centralValue,
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
                     interiorLabels = interiorLabels)
@@ -1396,7 +1817,7 @@ class FCandBinValAxes2D(OneDimBinMethodBase):
         pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels)
 
 
-class BinValAxisProfile(OneDimBinMethodBase):
+class BinValAxisProfile(MultiDimBinMethodBase):
     '''
     Similar to FCandBinValAxes2D, except
       - each vertical column of raster points is plotted as a profile on
@@ -1412,13 +1833,13 @@ class BinValAxisProfile(OneDimBinMethodBase):
 
         self.requestAggDFW = True
 
-        self.subWidth = 1.2
-        self.subAspect = 1.3
+        self.subplotWidth = 1.2
+        self.subplotAspect = 1.3
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
+        bgstatDiagLabel, fcstatDiagLabel, sciTicks, logScale, centralValue = \
             self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
 
         fcDiagName = self.fcName(diagnosticGroup)
@@ -1438,8 +1859,12 @@ class BinValAxisProfile(OneDimBinMethodBase):
         axisLimitsLoc = {}
 
         # establish a new figure
-        fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+        fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
         iplot = 0
+
+        indepNumVals = myBinConfigs['values']
+        indepVals = myBinConfigs['str']
+        indepLabel = myBinConfigs['indepLabel']
 
         #subplot loop 1
         for (varName, varLabel) in varMapLoc:
@@ -1450,10 +1875,6 @@ class BinValAxisProfile(OneDimBinMethodBase):
             for fcTDelta in self.fcTDeltas:
                 ptLoc['fcTDelta'] = fcTDelta
                 axisLimitsLoc['fcTDelta'] = fcTDelta
-
-#                if len(dfwDict['agg'].loc(axisLimitsLoc, statName)) == 0:
-#                  iplot += 1
-#                  continue
 
                 # use common x-axis limits across axisLimitsLoc database locations
                 if statName == 'Count':
@@ -1479,13 +1900,14 @@ class BinValAxisProfile(OneDimBinMethodBase):
                         ptLoc['diagName'] = diagnosticName
 
                         lineVals = []
-                        for binVal in myBinConfigs['str']:
+                        for binVal in indepVals:
                             ptLoc['binVal'] = binVal
-                            pt = dfwDict['agg'].loc(ptLoc, statName).to_numpy()
-                            if len(pt) == 1:
-                              lineVals.append(pt[0])
-                            else:
-                              lineVals.append(np.NaN)
+                            pt = dfwDict['agg'].loc1(ptLoc, statName)
+                            lineVals.append(pt)
+                            #if len(pt) == 1:
+                              #lineVals.append(pt[0])
+                            #else:
+                              #lineVals.append(np.NaN)
 
                         linesVals.append(lineVals)
 
@@ -1495,11 +1917,11 @@ class BinValAxisProfile(OneDimBinMethodBase):
                 # perform subplot agnostic plotting (all expNames)
                 options['profilefunc'](
                     fig,
-                    linesVals, myBinConfigs['values'],
+                    linesVals, indepNumVals,
                     linesLabel,
-                    title, fcstatDiagLabel,
-                    scilogScale, scilogScale, signDefinite,
-                    myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
+                    title, indepLabel, fcstatDiagLabel,
+                    myBinConfigs['indepConfig'],
+                    sciTicks, logScale, centralValue,
                     nyplots, nxplots, nsubplots, iplot,
                     dmin = dmin, dmax = dmax,
                     interiorLabels = interiorLabels)
@@ -1516,7 +1938,7 @@ class BinValAxisProfile(OneDimBinMethodBase):
         pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
 
-class BinValAxisProfileDiffCI(OneDimBinMethodBase):
+class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
     '''
     Similar to BinValAxisProfile, except
       shows difference between experiment(s) and control
@@ -1534,14 +1956,19 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         # OPTIONAL: implement fine-grained parallelism for bootStrapping
         #self.blocking = True
 
+        # used for percent ratio plots
+        self.requestAggDFW = True
+
         for key in self.binVarDict:
             if 'onlyStatNames' in self.binVarDict[key]:
                 self.binVarDict[key]['onlyStatNames'] += bootStrapStats
             else:
                 self.binVarDict[key]['onlyStatNames'] = bootStrapStats
 
-        self.subWidth = 1.2
-        self.subAspect = 1.3
+        self.subplotWidth = 1.2
+        self.subplotAspect = 1.3
+
+        self.requiredStatistics = ['Count']
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
@@ -1549,8 +1976,8 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         if self.nExp * len(myLoc['diagName']) < 2: return
         if self.cntrlExpName not in dfwDict['dfw'].levels('expName'): return
 
-        bgstatDiagLabel, fcstatDiagLabel, fcstatDiagDiffLabel, scilogScale, signDefinite = \
-            self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'])
+        bgstatDiagLabel_abs, fcstatDiagLabel_abs, sciTicks_abs, logScale_abs, centralValue_abs = \
+            self.statPlotAttributes(diagnosticGroup, statName, myLoc['diagName'], isDifferencePlot=True)
 
         fcDiagName = self.fcName(diagnosticGroup)
         myPath = self.myFigPath/fcDiagName
@@ -1570,8 +1997,15 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         myExpsCYDTimes = self.UNIONcntrlANDexpCYDTimes(dfwDict['dfw'])
 
         # establish a new figure
-        fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+        fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
         iplot = 0
+
+        indepNumVals = myBinConfigs['values']
+        indepVals = myBinConfigs['str']
+        indepLabel = myBinConfigs['indepLabel']
+
+        useRelativeError = (statName in su.posSemiDefiniteStats and
+                            self.relativeErrorType != 'disable')
 
         fcLoc = {}
         #subplot loop 1
@@ -1584,9 +2018,13 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
 
                 # intermediate tempdfw reduces extraction time in inner loops
                 tempdfw = sdb.DFWrapper.fromLoc(dfwDict['dfw'], fcLoc)
+                normdfw = sdb.DFWrapper.fromLoc(dfwDict['agg'], fcLoc)
 
                 cntrlLoc = deepcopy(fcLoc)
+                #cntrlLoc = {}
                 cntrlLoc['expName'] = self.cntrlExpName
+                cntrlLoc['diagName'] = myLoc['diagName'][0]
+                normLoc = deepcopy(cntrlLoc)
 
                 #Setting to avoid over-crowding
                 if self.fcTDeltas.index(fcTDelta) > (self.MAX_FC_SUBFIGS-1): continue
@@ -1594,7 +2032,6 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
                 linesVals = defaultdict(list)
                 linesLabel = []
                 linesGroup = []
-                cntrlLoc['diagName'] = myLoc['diagName'][0]
                 for expName in self.expNames:
                     for diagnosticName in myLoc['diagName']:
                         if (expName == cntrlLoc['expName'] and
@@ -1606,7 +2043,7 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
 
                         lineVals = defaultdict(list)
 
-                        for binVal in myBinConfigs['str']:
+                        for binVal in indepVals:
                             cntrlLoc['binVal'] = binVal
                             expLoc = deepcopy(cntrlLoc)
                             expLoc['diagName'] = diagnosticName
@@ -1615,33 +2052,64 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
                             X = tempdfw.loc(expLoc)
                             Y = tempdfw.loc(cntrlLoc)
 
+                            # confidence intervals
                             ciVals = su.bootStrapClusterFunc(
                                          X, Y,
                                          n_samples = 10000,
                                          statNames = [statName])
 
+                            # normalizing value for pratio
+                            normLoc['binVal'] = binVal
+                            normalizingStat = normdfw.loc1(normLoc, statName)
+
                             for trait in su.ciTraits:
-                                lineVals[trait] += [ciVals[statName][trait][0]]
+                                t = float(ciVals[statName][trait][0])
+                                # automatically generate relative difference plots for positive-semi-definite statistics
+                                if useRelativeError:
+                                  # divide by cntrlLoc aggregated statName
+                                  t /= normalizingStat
+                                  if self.relativeErrorType == 'one hundred centered':
+                                    t += 1.0
+                                  t *= 100.0
+                                lineVals[trait] += [t]
 
                         for trait in su.ciTraits:
                             linesVals[trait].append(lineVals[trait])
-
-                # define subplot title
-                title = varLabel+' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+'days'
 
                 # use specific y-axis limits for each varName
                 dmin = np.nanmin(linesVals[su.cimin])
                 dmax = np.nanmax(linesVals[su.cimax])
 
+                if not (np.isfinite(dmin) or np.isfinite(dmax)):
+                  iplot = iplot + 1
+                  continue
+
+                fcstatDiagLabel = fcstatDiagLabel_abs
+                sciTicks = sciTicks_abs
+                logScale = logScale_abs
+                centralValue = 0.
+
+                if useRelativeError:
+                  fcstatDiagLabel = self.relativeErrorLabeler()
+                  fcstatDiagLabel = statName+': '+fcstatDiagLabel
+
+                  dmin, dmax = self.relativeErrorLimiter(dmin, dmax)
+
+                  centralValue = self.relativeErrorCenter
+                  sciTicks = False
+                  logScale = False
+
+                # define subplot title
+                title = varLabel+' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+'days'
+
                 # perform subplot agnostic plotting (all expNames)
                 options['profilefunc'](
                     fig,
-                    linesVals[su.cimean], myBinConfigs['values'],
+                    linesVals[su.cimean], indepNumVals,
                     linesLabel,
-                    title,
-                    fcstatDiagDiffLabel,
-                    scilogScale, scilogScale, False,
-                    myBinConfigs['indepLabel'], myBinConfigs['invert_ind_axis'],
+                    title, indepLabel, fcstatDiagLabel,
+                    myBinConfigs['indepConfig'],
+                    sciTicks, logScale, centralValue,
                     nyplots, nxplots, nsubplots, iplot,
                     linesValsMinCI = linesVals[su.cimin],
                     linesValsMaxCI = linesVals[su.cimax],
@@ -1660,6 +2128,516 @@ class BinValAxisProfileDiffCI(OneDimBinMethodBase):
         pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
 
 
+class BinValAxes2D(MultiDimBinMethodBase):
+    '''
+    Creates raster maps with binVar binVals on both x- and y-axis
+      - applicable to pairs of binned diagnostics (e.g., latitude+vertical dimension, longitude+latitude)
+      - this is a valid plot even for a single cycle and/or forecast length (omb)
+      - subplot: column by experiment, row by DiagSpace variable
+      -    file: combination of binVar2D, (binMethod), statistic, and FC lead time (if applicable)
+    '''
+    def __init__(self, db, analysisType, diagnosticGroupings):
+        super().__init__(db, analysisType, diagnosticGroupings)
+
+        self.maxBinVarTier = 2
+        self.requestAggDFW = True
+
+        # default binVars
+        self.binVarDict = {
+            pconf.LonLat2D: {
+                'plotfunc': bpf.map2D,
+                'binVarTier': 1,
+                'subplotAspect': {
+                    'default': 0.65,
+                    'abi_g16': 1.0,
+                    'ahi_himawari8': 1.0,
+                }
+            },
+            pconf.ModelLonLat2D: {
+                'plotfunc': bpf.map2D,
+                'binVarTier': 1,
+                'subplotAspect': 0.65,
+            },
+            pconf.LatAlt2D: {
+                'plotfunc': bpf.plot2D,
+                'binVarTier': 1,
+                'subplotAspect': 0.65,
+            },
+            pconf.LatPrs2D: {
+                'plotfunc': bpf.plot2D,
+                'binVarTier': 1,
+                'subplotAspect': 0.85,
+            },
+            pconf.ModelLatLev2D: {
+                'plotfunc': bpf.plot2D,
+                'binVarTier': 1,
+                'subplotAspect': 0.65,
+            },
+            pconf.ObsModel2D: {
+                'plotfunc': bpf.plot2D,
+                'binVarTier': 3,
+                'subplotWidth': 3.0,
+            },
+            pconf.CldFrac2D: {
+                'plotfunc': bpf.plot2D,
+                'binVarTier': 1,
+                'subplotWidth': 3.0,
+                # uncomment to enable STD fits (i.e., Poly2DLat)
+                #'twoDFittingStatistics': ['STD'],
+            },
+            #pconf.CloudImpact2D: {
+            #    'plotfunc': bpf.plot2D,
+            #    'binVarTier': 1,
+            #    'subplotWidth': 3.0,
+            #},
+            #pconf.OkamotoCloudImpact2D: {
+            #    'plotfunc': bpf.plot2D,
+            #    'binVarTier': 1,
+            #    'subplotWidth': 3.0,
+            #},
+        }
+        self.maxDiagnosticsPerAnalysis = 1
+
+    def innerloops(self,
+        dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
+
+        # TODO: REMOVE, for testing only
+        #if myLoc['binMethod'] != bu.identityBinMethod: return
+
+        subplotWidth = options.get('subplotWidth', 3.5)
+        subplotAspect = deepcopy(options.get('subplotAspect', 1.0))
+        twoDFittingStatistics = options.get('twoDFittingStatistics', [])
+        if isinstance(subplotAspect, dict):
+            if self.DiagSpaceName in subplotAspect:
+                subplotAspect = subplotAspect[self.DiagSpaceName]
+            else:
+                subplotAspect = subplotAspect.get('default', 1.0)
+
+        bgstatDiagLabel_abs, fcstatDiagLabel_abs, sciTicks_abs, logScale_abs, centralValue_abs = \
+            self.statPlotAttributes(diagnosticGroup, statName)
+
+        myPath = self.myFigPath/diagnosticGroup
+        myPath.mkdir(parents=True, exist_ok=True)
+
+        nxplots = self.nExp
+        nyplots = nVarsLoc
+        nsubplots = nxplots * nyplots
+
+        binLoc = {}
+        axisLimitsLoc = {}
+
+        # retrieve a list of coordinates for all X/Y locations, formatted as strings
+        binCoordsLevels = dfwDict['agg'].levels('binVal')
+
+        # parse comma-separated coordinates into a list of tuples
+        binCoords = list([tuple(c.split(',')) for c in binCoordsLevels])
+
+        # unzip binCoords into independent X tuple and Y tuple
+        xCoords, yCoords = zip(*binCoords)
+
+        # determine the coordinates of the structued X/Y grid points
+        xUnique = np.array(pu.uniqueMembers(xCoords))
+        xVals = np.asarray(xUnique, dtype=np.float)
+        xSort = np.argsort(xVals)
+        xVals = xVals[xSort]
+        nXVals = len(xVals)
+        xValsStr = list(xUnique[xSort])
+
+        yUnique = np.array(pu.uniqueMembers(yCoords))
+        yVals = np.asarray(yUnique, dtype=np.float)
+        ySort = np.argsort(yVals)
+        yVals = yVals[ySort]
+        nYVals = len(yVals)
+        yValsStr = list(yUnique[ySort])
+
+        # determine the X and Y indices of each location on the structured grid
+        xIndex = []
+        yIndex = []
+        for c in binCoords:
+          xIndex.append(xValsStr.index(c[0]))
+          yIndex.append(yValsStr.index(c[1]))
+
+        xUnits, xLabel = tuple(vu.varDictAll[pconf.binVars2D[myLoc['binVar']][0]])
+        xVar = xLabel
+        if xUnits != vu.miss_s:
+            xLabel += ' ('+xUnits+')'
+
+        yUnits, yLabel = tuple(vu.varDictAll[pconf.binVars2D[myLoc['binVar']][1]])
+        yVar = yLabel
+        if yUnits != vu.miss_s:
+            yLabel += ' ('+yUnits+')'
+
+        # special independent variable axes configs
+        xVarIs = {}
+        yVarIs = {}
+        specialBinVars = [vu.obsVarPrs, vu.obsVarMCI, vu.obsVarOCI, vu.obsVarLogCI]
+        for var in specialBinVars:
+            var_dict = vu.varDictAll.get(var,['',''])
+            xVarIs[var] = (var_dict[1] == xVar)
+            yVarIs[var] = (var_dict[1] == yVar)
+
+        # TODO: make these configuration choices in one place, possibly var_utils or bpf
+        xConfig = deepcopy(bpf.defaultIndepConfig)
+        xConfig['invert'] = xVarIs[vu.obsVarPrs]
+        if xVarIs[vu.obsVarPrs]: xConfig['transform'] = 'Pressure'
+        if xVarIs[vu.obsVarMCI] or xVarIs[vu.obsVarOCI] or xVarIs[vu.obsVarLogCI]:
+            xConfig['transform'] = 'CloudImpact'
+
+        yConfig = deepcopy(bpf.defaultIndepConfig)
+        yConfig['invert'] = yVarIs[vu.obsVarPrs]
+        if yVarIs[vu.obsVarMCI] or yVarIs[vu.obsVarOCI] or yVarIs[vu.obsVarLogCI]:
+            yConfig['transform'] = 'CloudImpact'
+
+        useRelativeError = (statName not in twoDFittingStatistics and
+                            statName in su.posSemiDefiniteStats and
+                            self.relativeErrorType != 'disable')
+
+        #file loop 1
+        for (fcTDelta, fcTDelta_totmin) in self.fcMap:
+            binLoc['fcTDelta'] = fcTDelta
+
+            # establish a new figure
+            fig = pu.setup_fig(nxplots, nyplots, subplotWidth, subplotAspect, interiorLabels)
+
+            iplot = 0
+
+            #subplot loop 1
+            polynomialDegrees = np.asarray([4, 6, 8, 10, 12, 14, 16])
+
+            fitEquationConfigs = {}
+            for expName in self.expNames:
+              fitEquationConfigs[expName] = {}
+              for degree in polynomialDegrees:
+                fitEquationConfigs[expName][degree] = OrderedDict()
+
+            for (varName, varLabel) in varMapLoc:
+                binLoc['varName'] = varName
+                axisLimitsLoc['varName'] = varName
+
+                # use common c-axis limits across axisLimitsLoc database locations
+                if statName == 'Count':
+                    dmin_abs = 0.
+                else:
+                    dmin_abs = dfwDict['agg'].min(axisLimitsLoc, statName)
+                dmax_abs = dfwDict['agg'].max(axisLimitsLoc, statName)
+
+
+                # letting binVal vary
+                # extract control experiment
+                cntrlLoc = deepcopy(binLoc)
+                cntrlLoc['expName'] = self.cntrlExpName
+                cntrlPlaneVals = np.full((nYVals, nXVals), np.NaN)
+                for ibin, binVal in enumerate(binCoordsLevels):
+                    cntrlLoc['binVal'] = binVal
+                    cntrlPlaneVals[yIndex[ibin], xIndex[ibin]] = \
+                        dfwDict['agg'].loc1(cntrlLoc, statName)
+
+                #subplot loop 2
+                dmin_relative = np.NaN
+                dmax_relative = np.NaN
+                for expName in self.expNames:
+                    expLoc = deepcopy(binLoc)
+                    expLoc['expName'] = expName
+                    title = expName+'\n'+varLabel
+                    expFileName = re.sub('\.', '', re.sub('\s+', '-', expName))
+
+                    bgstatDiagLabel = bgstatDiagLabel_abs
+                    sciTicks = sciTicks_abs
+                    logScale = logScale_abs
+                    centralValue = centralValue_abs
+                    dmin = dmin_abs
+                    dmax = dmax_abs
+                    if (expName == cntrlLoc['expName']):
+                        planeVals = deepcopy(cntrlPlaneVals)
+                    else:
+                        # letting binVal vary
+                        # extract this experiment
+                        expPlaneVals = np.full_like(cntrlPlaneVals, np.NaN)
+                        for ibin, binVal in enumerate(binCoordsLevels):
+                            expLoc['binVal'] = binVal
+                            expPlaneVals[yIndex[ibin], xIndex[ibin]] = \
+                                dfwDict['agg'].loc1(expLoc, statName)
+
+                        # automatically generate relative difference plots for positive-semi-definite statistics
+                        if useRelativeError:
+                            sciTicks = False
+                            logScale = False
+
+                            planeVals, dmin_relative, dmax_relative, centralValue, label = self.relativeErrorFunction(
+                              expPlaneVals,
+                              cntrlPlaneVals,
+                              dmin_relative,
+                              dmax_relative,
+                            )
+                            dmin = dmin_relative
+                            dmax = dmax_relative
+                            bgstatDiagLabel = statName+': '+label
+
+                            # TODO: add confidence intervals or markers for statistical significance (63%, 95%, 99%)
+                        else:
+                            planeVals = deepcopy(expPlaneVals)
+
+                    cLabel = bgstatDiagLabel
+
+                    if statName in twoDFittingStatistics:
+                        countVals = np.full_like(planeVals, 0, dtype=int)
+                        Y = np.empty_like(planeVals)
+                        X = np.empty_like(planeVals)
+                        for ibin, binVal in enumerate(binCoordsLevels):
+                            X[yIndex[ibin], xIndex[ibin]] = xVals[xIndex[ibin]]
+                            Y[yIndex[ibin], xIndex[ibin]] = yVals[yIndex[ibin]]
+                            expLoc['binVal'] = binVal
+                            c = dfwDict['agg'].loc1(expLoc, 'Count')
+                            if np.isfinite(c):
+                              countVals[yIndex[ibin], xIndex[ibin]] = c
+
+                        counts = countVals.flatten()
+                        xf = X.flatten()
+                        yf = Y.flatten()
+                        zf = planeVals.flatten()
+
+                        ns = counts.sum()
+                        xs = np.empty(ns, dtype=float)
+                        ys = np.empty(ns, dtype=float)
+                        zs = np.empty(ns, dtype=float)
+
+                        NormWeight = countVals.astype(float) / ns
+
+                        ss = 0
+                        for c, x, y, z in zip(counts, xf, yf, zf):
+                            ee = ss+c
+                            xs[ss:ee] = x
+                            ys[ss:ee] = y
+                            zs[ss:ee] = z
+                            ss = ee
+
+                        self.logger.info('varName,expName=>'+varName+','+expName)
+                        L2Norms = {}
+                        L2Norms['values'] = []
+                        weightedL2Norms = {}
+                        weightedL2Norms['values'] = []
+
+                        nxFit = len(polynomialDegrees)+1
+                        nyFit = 3
+                        fitFig = pu.setup_fig(nxFit, nyFit, subplotWidth, subplotAspect, interiorLabels)
+                        fplot = 0
+
+                        # plot statName
+                        bpf.plot2D(
+                            fitFig,
+                            xVals, yVals, planeVals,
+                            'Data, '+title, xLabel, yLabel, cLabel,
+                            xConfig, yConfig,
+                            sciTicks, logScale, centralValue,
+                            nyFit, nxFit, nyFit*nxFit, fplot,
+                            dmin = dmin, dmax = dmax,
+                            interiorLabels = interiorLabels)
+
+                        # plot count
+                        bpf.plot2D(
+                            fitFig,
+                            xVals, yVals, countVals,
+                            'Data, '+title, xLabel, yLabel, 'Count',
+                            xConfig, yConfig,
+                            True, True, None,
+                            nyFit, nxFit, nyFit*nxFit, fplot+nxFit,
+                            dmin = np.NaN, dmax = np.NaN,
+                            interiorLabels = interiorLabels)
+
+                        delta = (dmax - dmin) / 5.
+
+                        for degree in polynomialDegrees:
+                            equation = poly2DEquation(degree)
+
+                            fit = fit2D(xs, ys, zs, equation=equation)
+
+                            exponents, coeffStr = fit.terms(precision=6)
+                            coeffs = fit.coeffs()
+
+                            #self.logger.info('\n'+str(exponents))
+                            self.logger.info('\n '+str(degree)+','+varName+' coeffs: '+str(coeffStr))
+                            self.logger.info('\n '+str(degree)+','+varName+' coeffs[0]: '+str(coeffs[0]))
+                            self.logger.info('\n '+str(degree)+','+varName+' sum(coeffs): '+str(coeffs.sum()))
+
+                            fitEquationConfigs[expName][degree][varName] = fit.terms(precision=6, returnType='dict')['terms']
+                            Z = fit.predict(X, Y)
+
+                            #Plot Z
+                            fplot = fplot+1
+                            bpf.plot2D(
+                                fitFig,
+                                xVals, yVals, Z,
+                                'Degree '+str(degree)+' fit, '+title, xLabel, yLabel, cLabel,
+                                xConfig, yConfig,
+                                sciTicks, logScale, centralValue,
+                                nyFit, nxFit, nyFit*nxFit, fplot,
+                                dmin = dmin, dmax = dmax,
+                                interiorLabels = interiorLabels)
+
+                            Q = Z-planeVals
+
+                            #Plot Q
+                            L2 = np.sqrt(np.nansum(Q**2))
+                            L2Norms[degree] = '{:0.8f}'.format(L2)
+                            L2Norms['values'].append(L2)
+                            fitInfo = 'L2 = '+L2Norms[degree]
+
+                            bpf.plot2D(
+                                fitFig,
+                                xVals, yVals, Q,
+                                fitInfo, xLabel, yLabel, '('+statName+'_fit - '+statName+')',
+                                xConfig, yConfig,
+                                False, False, 0,
+                                nyFit, nxFit, nyFit*nxFit, fplot+nxFit,
+                                dmin = -delta, dmax = delta,
+                                interiorLabels = interiorLabels)
+
+                            #Weighted Q^2
+                            weightedL2 = np.sqrt(np.nansum(Q**2 * NormWeight))
+                            weightedL2Norms[degree] = '{:0.8f}'.format(weightedL2)
+                            weightedL2Norms['values'].append(weightedL2)
+
+                            fitInfo = 'Count-weighted L2 = '+weightedL2Norms[degree]
+                            bpf.plot2D(
+                                fitFig,
+                                xVals, yVals, Q**2 * NormWeight,
+                                fitInfo, xLabel, yLabel, '('+statName+'_fit - '+statName+')^2*W_n',
+                                xConfig, yConfig,
+                                False, True, None,
+                                nyFit, nxFit, nyFit*nxFit, fplot+2*nxFit,
+                                dmin = np.NaN, dmax = delta/5.,
+                                interiorLabels = interiorLabels)
+
+                        self.logger.info('\nfit2D L2 norms: '+str(L2Norms))
+                        self.logger.info('\nfit2D count-weighted L2 norms: '+str(weightedL2Norms))
+
+                        filename = myPath/('%s_%s_fit2D_%s_%s_%s%s_%smin'%(
+                                   varName, expFileName,
+                                   myLoc['binVar'], diagnosticGroup, statName,
+                                   self.binMethodFile(myLoc['binMethod']),
+                                   fcTDelta_totmin))
+
+                        pu.finalize_fig(fitFig, str(filename), figureFileType, interiorLabels, True)
+
+                        # generate plots of l-curves for L2 norms vs. degree to find optimal degree
+                        LFig = pu.setup_fig(2, 1, inch_width=2.0, aspect=1.0, ybuffer=True)
+
+                        bpf.plotSeries(
+                            LFig,
+                            [np.asarray(L2Norms['values'])], polynomialDegrees,
+                            [varName],
+                            'l-curve', 'polynomial degree', 'L2 norm',
+                            bpf.defaultIndepConfig,
+                            False, True, None,
+                            1, 2, 2, 0,
+                            interiorLabels=True)
+
+                        bpf.plotSeries(
+                            LFig,
+                            [np.asarray(weightedL2Norms['values'])], polynomialDegrees,
+                            [varName],
+                            'l-curve', 'polynomial degree', 'count-weighted L2 norm',
+                            bpf.defaultIndepConfig,
+                            False, True, None,
+                            1, 2, 2, 1,
+                            interiorLabels=True)
+
+                        filename = myPath/('%s_%s_L-Curves_%s_%s_%s%s_%smin'%(
+                                   varName, expFileName,
+                                   myLoc['binVar'], diagnosticGroup, statName,
+                                   self.binMethodFile(myLoc['binMethod']),
+                                   fcTDelta_totmin))
+
+                        pu.finalize_fig(LFig, str(filename), figureFileType, True, True)
+
+                    # perform subplot agnostic plotting (all expNames)
+                    if options['plotfunc'] is bpf.map2D:
+                        options['plotfunc'](
+                            fig,
+                            xVals, yVals, planeVals,
+                            title, cLabel,
+                            sciTicks, logScale, centralValue,
+                            nyplots, nxplots, nsubplots, iplot,
+                            dmin = dmin, dmax = dmax,
+                            interiorLabels = interiorLabels)
+
+                    else:
+                        options['plotfunc'](
+                            fig,
+                            xVals, yVals, planeVals,
+                            title, xLabel, yLabel, cLabel,
+                            xConfig, yConfig,
+                            sciTicks, logScale, centralValue,
+                            nyplots, nxplots, nsubplots, iplot,
+                            dmin = dmin, dmax = dmax,
+                            interiorLabels = interiorLabels)
+
+                    iplot = iplot + 1
+
+            filename = myPath/('%s%s_BinValAxes2D_%smin_%s_%s_%s'%(
+                       myLoc['binVar'],
+                       self.binMethodFile(myLoc['binMethod']),
+                       fcTDelta_totmin, self.DiagSpaceName,
+                       diagnosticGroup, statName))
+
+            pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
+
+            if statName in twoDFittingStatistics:
+
+                for expName, e1 in fitEquationConfigs.items():
+                    expFileName = re.sub('\.', '', re.sub('\s+', '-', expName))
+                    for degree, e2 in e1.items():
+                        self.logger.info('\n '+expName+', degree: '+str(degree))
+                        filename = myPath/('%s_degree=%s_fit2D_%s_%s_%s%s_%smin_%s.yaml'%(
+                                   expFileName, str(degree),
+                                   myLoc['binVar'], diagnosticGroup, statName,
+                                   self.binMethodFile(myLoc['binMethod']),
+                                   fcTDelta_totmin, self.DiagSpaceName))
+
+                        fn = str(filename)
+                        anchorKeyParts = [
+                          '_options for',
+                          myLoc['binVar'],
+                          'Terms',
+                          self.DiagSpaceName,
+                          'degree'+str(degree)+':',
+                          '&'+self.DiagSpaceName+'_fit2D_'+myLoc['binVar']+self.binMethodFile(myLoc['binMethod'])+'_degree'+str(degree),
+                        ]
+                        with open(fn, 'w') as file:
+                          file.write(' '.join(anchorKeyParts)+'\n')
+
+                        # create compactAllVarDict entry for all variables
+                        firstVarName = list(e2.keys())[0]
+                        compactAllVarDict = {'polynomial terms': []}
+                        for term in e2[firstVarName]:
+                          t = deepcopy(term)
+                          del t['value']
+                          compactAllVarDict['polynomial terms'].append(t)
+
+                        # append other varName terms to 'values'
+                        compactAllVarDict['polynomial coefficients'] = []
+                        for iVar, (varName, termList) in enumerate(e2.items()):
+                            vv = varName.replace('BT', 'brightness_temperature_')
+                            vv, ch = vu.splitIntSuffix(vv)
+                            compactAllVarDict['polynomial coefficients'].append(
+                              {'name': vv, 'values': []}
+                            )
+                            if ch != '':
+                                compactAllVarDict['polynomial coefficients'][iVar]['channel'] = int(ch)
+                            for term in termList:
+                                compactAllVarDict['polynomial coefficients'][iVar]['values'].append(float(term['value']))
+                        compactAllVarYAML = yaml.safe_dump(
+                          compactAllVarDict,
+                          indent=2,
+                          width=80,
+                          allow_unicode=False,
+                          default_flow_style=None,
+                        )
+                        compactAllVarYAML = indent(compactAllVarYAML, '  ')
+                        with open(fn, 'a') as file:
+                           file.write(compactAllVarYAML)
+
+
 class BinValAxisPDF(AnalysisBase):
     '''
     Similar to BinValAxisProfile, except
@@ -1669,156 +2647,369 @@ class BinValAxisPDF(AnalysisBase):
       - subplot: combination of FC lead time and DiagSpace variable
       -    file: per experiment (if applicable)
     '''
+    statsToPlot = ['Count']
     def __init__(self, db, analysisType, diagnosticGroupings):
-        super().__init__(db, analysisType, diagnosticGroupings)
-        # TODO(JJG): Make a generic version of bpf.plotPDF, which
-        # currently overlays a standard Gaussian model. That should
-        # be a special case only for vu.obsVarNormErr.
-        self.binVarDict = {
-            vu.obsVarNormErr: {'pdffunc': bpf.plotPDF},
-        }
+      super().__init__(db, analysisType, diagnosticGroupings)
+      self.binVarDict = OrderedDict()
 
-        self.requestAggDFW = True
+      ## vu.obsVarNormDep
+      self.binVarDict[vu.obsVarNormDep] = {}
 
-        self.subWidth = 1.2
-        self.subAspect = 1.3
+      # all methods together
+      #self.binVarDict[vu.obsVarNormDep]['all'] = {
+      #  'standard gaussian': True,
+      #}
 
-        self.requiredStatistics = ['Count']
+      # Okamoto
+      self.binVarDict[vu.obsVarNormDep][bu.OkamotoMethod] = {
+        'standard gaussian': True,
+        'binMethodEqualsAny': [bu.identityBinMethod, bu.OkamotoMethod],
+      }
+
+      # ClearCloudMode
+      self.binVarDict[vu.obsVarNormDep][bu.ClearCloudModeMethod] = {
+        'standard gaussian': True,
+        'binMethodPrefix': bu.ClearCloudModeMethod+'=',
+      }
+
+      # ClearCloudMode
+      self.binVarDict[vu.obsVarNormDep][bu.OkamotoMethod+','+bu.ClearCloudModeMethod] = {
+        'standard gaussian': True,
+        'binMethodPrefix': bu.OkamotoMethod+','+bu.ClearCloudModeMethod+'=',
+      }
+
+      # Quadrature
+      #self.binVarDict[vu.obsVarNormDep][bu.QuadratureMethod] = {
+        #'standard gaussian': True,
+        #'binMethodEqualsAny': [bu.identityBinMethod, bu.QuadratureMethod],
+      #}
+
+# useful for diagnosing departures across ClearCloudMode, for different DA cycling scenarios
+#      ## vu.obsVarDep, vu.obsVarLogDepRatio, vu.obsVarClearSkyDep
+#      for departureVar in [vu.obsVarDep]:#, vu.obsVarLogDepRatio, vu.obsVarClearSkyDep]:
+#        self.binVarDict[departureVar] = OrderedDict()
+#
+#        # ClearCloudMode
+#        self.binVarDict[departureVar][bu.ClearCloudModeMethod] = {
+#          'binMethodPrefix': bu.ClearCloudModeMethod+'=',
+#        }
+
+#        # ClearCloud sub-groups
+#        for (v, subgroupLabel, mode, k1, k2) in pconf.ClearCloudSubgroupCases:
+#          self.binVarDict[departureVar][bu.ClearCloudModeMethod+'-'+mode+subgroupLabel] = {
+#            'binMethodPrefix': bu.ClearCloudModeMethod+','+subgroupLabel+'='+mode+',',
+#          }
+
+# useful for diagnosing departures across CI predictor values (e.g., Okamoto CI)
+#      for departureVar in [vu.obsVarDep]:
+#        # Okamoto
+#        self.binVarDict[departureVar][bu.OkamotoMethod] = {
+#          'binMethodPrefix': bu.OkamotoMethod+',SCI=',
+#        }
+
+      self.requestAggDFW = True
+
+      self.subplotWidth = 1.2
+      self.subplotAspect = 1.3
+
+      self.requiredStatistics = ['Count', 'Mean', 'STD']
 
     def analyze_(self, workers = None):
-        for diagnosticName, diagnosticConfig in self.diagnosticConfigs.items():
-            if diagnosticName not in self.db.dfw.levels('diagName'): continue
-            analysisStatistics = diagnosticConfig['analysisStatistics']
-            if not set(self.requiredStatistics).issubset(analysisStatistics): continue
 
-            diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticName})
+      myLoc = {}
+      myLoc['binVal'] = self.binNumVals2DasStr
 
-            for fullBinVar, options in self.binVarDict:
-                binVar = vu.varDictAll[fullBinVar][1]
-                if binVar not in diagBinVars: continue
+      for diagnosticName, diagnosticConfig in self.diagnosticConfigs.items():
+        if diagnosticName not in self.db.dfw.levels('diagName'): continue
+        selectedStatistics = diagnosticConfig['selectedStatistics']
+        availableStatistics = diagnosticConfig['availableStatistics']
+        if not set(self.requiredStatistics).issubset(availableStatistics): continue
 
-                myLoc = {}
-                myLoc['diagName'] = diagnosticName
-                myLoc['binVar'] = binVar
-                myLoc['binVal'] = self.binNumVals2DasStr
+        diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticName})
 
-                # reducing to mydfwDict speeds extractions in innerloops
-                mydfwDict = {'dfw': self.db.loc(myLoc)}
+        myLoc['diagName'] = diagnosticName
 
-                # include aggregated statistics when requested
-                if self.requestAggDFW:
-                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
+        for fullBinVar, binMethodCases in self.binVarDict.items():
+          binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
+          if binVar not in diagBinVars: continue
 
-                ## Get all float/int binVals associated with binVar
-                binMethods = mydfwDict['dfw'].levels('binMethod')
-                binVals = mydfwDict['dfw'].levels('binVal')
-                binUnits = mydfwDict['dfw'].uniquevals('binUnits')[0]
+          myLoc['binVar'] = binVar
 
-                # assume all bins represent same variable/units
-                indepLabel = binVar
-                if binUnits != vu.miss_s:
-                    indepLabel = indepLabel+' ('+binUnits+')'
+          # reducing to dfwDict speeds extractions in innerloops
+          binVarDFW = self.db.loc(myLoc)
 
-                # bin info
-                binNumVals = []
-                for binVal in binVals:
-                    ibin = self.allBinVals.index(binVal)
-                    binNumVals.append(self.binNumVals[ibin])
+          ## Get applicable binMethods
+          allBinMethods = binVarDFW.levels('binMethod')
 
-                # sort bins by numeric value
-                indices = list(range(len(binNumVals)))
-                indices.sort(key=binNumVals.__getitem__)
-                binNumVals = list(map(binNumVals.__getitem__, indices))
-                binVals = list(map(binVals.__getitem__, indices))
+          for binMethodCase, options in binMethodCases.items():
 
-                if len(binVals) < 2: continue
+            pdffunc = options.get('pdffunc', bpf.plotPDF)
+            binMethodPrefix = options.get('binMethodPrefix', None)
+            binMethodEqualsAny = options.get('binMethodEqualsAny', [])
+            binMethodContainsAny = options.get('binMethodContainsAny', [])
+            standardGaussian = options.get('standard gaussian', False)
+            createAllNumericMethod = options.get('create method from all numeric', True)
+            allNumericMethod = 'all'
 
-                self.logger.info('binVar=>'+binVar)
+            # collect binMethod's for this case
+            caseBinMethods = []
+            for binMethod in allBinMethods:
+              # include all by default
+              skip = False
 
-                fcDiagName = self.fcName(diagnosticName)
-                myPath = self.myFigPath/fcDiagName
-                myPath.mkdir(parents=True, exist_ok=True)
+              # exclude if binMethodPrefix not in binMethod
+              if binMethodPrefix is not None:
+                if not pu.prepends(binMethodPrefix, binMethod): skip = True
+                #if binMethodPrefix not in binMethod: skip = True
 
-                if self.nFC > 1:
-                    nxplots = min([self.nFC, self.MAX_FC_SUBFIGS])
-                    nyplots = self.nVars
-                    nsubplots = nxplots * nyplots
-                else:
-                    nsubplots = self.nVars
-                    nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
-                    nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+              # only include if binMethod equals one of binMethodEqualsAny
+              if len(binMethodEqualsAny) > 0: skip = True
+              for isThis in binMethodEqualsAny:
+                if binMethod == isThis: skip = False
 
-                ptLoc = deepcopy(myLoc)
+              # only include if binMethod contains one of binMethodContainsAny
+              if len(binMethodContainsAny) > 0: skip = True
+              for containsThis in binMethodContainsAny:
+                if containsThis in binMethod: skip = False
 
-                #file loop 1
-                for expName in self.expNames:
-                    ptLoc['expName'] = expName
+              if skip: continue
 
-                    # establish a new figure
-                    fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+              caseBinMethods.append(binMethod)
 
-                    iplot = 0
+            if len(caseBinMethods) == 0: continue
 
-                    #subplot loop 1
-                    for (varName, varLabel) in self.varMap:
-                        ptLoc['varName'] = varName
+            caseLoc = deepcopy(myLoc)
+            caseLoc['binMethod'] = caseBinMethods
 
-                        #subplot loop 2
-                        for fcTDelta in self.fcTDeltas:
-                            ptLoc['fcTDelta'] = fcTDelta
+            mydfwDict = {'dfw': sdb.DFWrapper.fromLoc(binVarDFW, caseLoc)}
 
-                            #Setting to avoid over-crowding
-                            if self.fcTDeltas.index(fcTDelta) > (self.MAX_FC_SUBFIGS-1): continue
+            # include aggregated statistics when requested
+            if self.requestAggDFW:
+              mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
 
-                            #collect aggregated statNames, varying across fcTDelta
-                            linesVals = []
-                            binMethodLabels = []
-                            for binMethod in binMethods:
-                                ptLoc['binMethod'] = binMethod
+            binMethodLabels0 = OrderedDict()
+            for binMethod in caseBinMethods:
+              if binMethod == bu.identityBinMethod:
+                binMethodLabels0[binMethod] = 'ObsSpace'
+              else:
+                label = binMethod
+                if binMethodPrefix is not None:
+                  label = label.replace(binMethodPrefix,'')
+                binMethodLabels0[binMethod] = label
 
-                                # if binMethod != bu.identityBinMethod: do something with bu.identityBinMethod
-                                if binMethod == bu.identityBinMethod:
-                                    binMethodLabels.append('ObsSpace')
-                                else:
-                                    binMethodLabels.append(binMethod)
+            # default attribute offset for line color and style
+            lineAttribOffset=1
 
-                                lineVals = []
-                                for binVal in binVals:
-                                    ptLoc['binVal'] = binVal
-                                    lineVals.append(dfwDict['agg'].loc(ptLoc,'Count'))
+            # sort the binMethod lines if all labels are floats
+            if all(pu.isfloat(l) for l in binMethodLabels0.values()):
+              binMethodFloats = np.asarray(list(binMethodLabels0.values()), np.float64)
+              binMethodIndices = list(np.argsort(binMethodFloats))
 
-                                linesVals.append(lineVals)
+            else:
+              createAllNumericMethod = False
+              binMethodIndices = list(np.argsort(list(binMethodLabels0.values())))
 
-                            # define subplot title
-                            title = varLabel+' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+'days'
+            #binMethodLabels0 = list(map(binMethodLabels0.__getitem__, binMethodIndices))
+            caseBinMethods = list(map(caseBinMethods.__getitem__, binMethodIndices))
 
-                            # perform subplot agnostic plotting (all expNames)
-                            options['pdffunc'](
-                                fig,
-                                linesVals, binNumVals,
-                                binMethodLabels,
-                                title,
-                                indepLabel,
-                                nyplots, nxplots, nsubplots, iplot,
-                                interiorLabels = interiorLabels)
+            # create correctly ordered binMethodLabels
+            binMethodLabels = OrderedDict()
 
-                            iplot = iplot + 1
+            # create a pseudo-binMethod that combines counts from all numeric real caseBinMethods
+            if createAllNumericMethod:
+              binMethodLabels[allNumericMethod] = allNumericMethod
+              lineAttribOffset=0
 
-                        # end fcTDelta loop
+            for binMethod in caseBinMethods:
+              binMethodLabels[binMethod] = binMethodLabels0[binMethod]
+            del binMethodLabels0
 
-                    # end varMap loop
+            ## Get all float/int binVals associated with binVar
+            binVals = mydfwDict['dfw'].levels('binVal')
+            binUnits = mydfwDict['dfw'].uniquevals('binUnits')[0]
 
-                    # save each figure
-                    filename = myPath/('%s_BinValAxis_%s-%smin_%s_%s_%s'%(
-                               binVar, self.fcTDeltas_totmin[0], self.fcTDeltas_totmin[-1],
-                               self.DiagSpaceName, fcDiagName, expName))
+            # assume all bins represent same variable/units
+            indepLabel = binVar
+            if binUnits != vu.miss_s:
+              indepLabel = indepLabel+' ('+binUnits+')'
 
-                    pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
+            # bin info
+            binNumVals = []
+            for binVal in binVals:
+              ibin = self.allBinVals.index(binVal)
+              binNumVals.append(self.binNumVals[ibin])
 
-                # end expName loop
+            # sort bins by numeric value
+            indices = list(range(len(binNumVals)))
+            indices.sort(key=binNumVals.__getitem__)
+            binNumVals = np.array(list(map(binNumVals.__getitem__, indices)))
+            binVals = list(map(binVals.__getitem__, indices))
+
+            if len(binVals) < 2: continue
+
+            self.logger.info('binVar,binMethodCase=>'+binVar+','+binMethodCase)
+
+            fcDiagName = self.fcName(diagnosticName)
+            myPath = self.myFigPath/fcDiagName
+            myPath.mkdir(parents=True, exist_ok=True)
+
+            if self.nFC > 1:
+              nxplots = min([self.nFC, self.MAX_FC_SUBFIGS])
+              nyplots = self.nVars
+              nsubplots = nxplots * nyplots
+            else:
+              nsubplots = self.nVars
+              nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+              nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+
+            subplotLoc = deepcopy(caseLoc)
+
+            #file loop 1
+            for expName in self.expNames:
+              subplotLoc['expName'] = expName
+
+              # establish a new figure
+              fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
+              fig_normalized = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
+
+              iplot = 0
+
+              #subplot loop 1
+              for (varName, varLabel) in self.varMap:
+                subplotLoc['varName'] = varName
+
+                #subplot loop 2
+                for fcTDelta in self.fcTDeltas:
+                  subplotLoc['fcTDelta'] = fcTDelta
+
+                  subplotdfw = sdb.DFWrapper.fromLoc(mydfwDict['agg'], subplotLoc)
+
+                  # aggregate across binVal for each binMethod
+                  eachBinMethod = sdb.DFWrapper.fromAggStats(subplotdfw, ['binVal'])
+
+                  #Setting to avoid over-crowding
+                  if self.fcTDeltas.index(fcTDelta) > (self.MAX_FC_SUBFIGS-1): continue
+
+                  #collect aggregated statNames, varying across fcTDelta
+                  statsVals = {}
+                  for statName in self.statsToPlot:
+                    statsVals[statName] = {}
+                    #statsVals[statName] = OrderedDict()
+                    for binMethod in caseBinMethods:
+                      statsVals[statName][binMethod] = np.empty(len(binVals), dtype=su.statDtypes[statName])
+
+                  ptLoc = deepcopy(subplotLoc)
+                  binMethodAggStats = {}
+                  for binMethod in caseBinMethods:
+                    ptLoc['binMethod'] = binMethod
+
+                    for ii, binVal in enumerate(binVals):
+                      ptLoc['binVal'] = binVal
+                      for statName in statsVals.keys():
+                        statsVals[statName][binMethod][ii] = subplotdfw.loc1(ptLoc, statName)
+
+                    # extract gross statistics for each binMethod
+                    binMethodAggStats[binMethod] = {}
+                    for statName in su.aggregatableFileStats:
+                      binMethodAggStats[binMethod][statName] = eachBinMethod.loc1(
+                        {'binMethod': binMethod}, statName)
+
+                  if createAllNumericMethod:
+                    # aggregate across binMethod for each binVal
+                    eachBinVal = sdb.DFWrapper.fromAggStats(subplotdfw, ['binMethod'])
+
+                    # extract self.statsToPlot at each binVal for allNumericMethod
+                    for statName in self.statsToPlot:
+                      statsVals[statName][allNumericMethod] = np.empty(len(binVals), dtype=su.statDtypes[statName])
+                      for ii, binVal in enumerate(binVals):
+                        statsVals[statName][allNumericMethod][ii] = eachBinVal.loc1(
+                          {'binVal': binVal}, statName)
+
+                    # extract gross statistics for allNumericMethod
+                    allNumeric = sdb.DFWrapper.fromAggStats(subplotdfw, ['binMethod', 'binVal'])
+
+                    binMethodAggStats[allNumericMethod] = {}
+                    for statName in su.aggregatableFileStats:
+                      s = allNumeric.var(statName).to_numpy()
+                      if isinstance(s, Iterable):
+                        if len(s) == 1:
+                          binMethodAggStats[allNumericMethod][statName] = s[0]
+                      else:
+                        binMethodAggStats[allNumericMethod][statName] = s
+
+                  # extract counts for easy plotting
+                  countsVals = []
+                  for binMethod in binMethodLabels.keys():
+                    countsVals.append(statsVals['Count'][binMethod])
+
+                  # append Mean, STD, Skew, ExcessKurtosis to labels
+                  binMethodLabelsValues = list(binMethodLabels.values())
+
+                  binMethodLabelsWithMetrics = []
+                  for ii, (binMethod, binMethodLabel) in enumerate(list(binMethodLabels.items())):
+                    label = [binMethodLabel]
+                    label += [r'$\mu=${:.1f}'.format(binMethodAggStats[binMethod]['Mean'])]
+                    label += [r'$\sigma=${:.2f}'.format(binMethodAggStats[binMethod]['STD'])]
+                    #label += [r'$\nu=${:.2f}'.format(binMethodAggStats[binMethod]['Skew'])]
+                    #label += [r'$\kappa=${:.2f}'.format(binMethodAggStats[binMethod]['ExcessKurtosis'])]
+
+                    binMethodLabelsWithMetrics.append(','.join(label))
+
+                  # define subplot title
+                  title = varLabel+' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+'days'
+
+                  # perform subplot agnostic plotting (all expNames)
+                  # raw counts
+                  pdffunc(
+                    fig,
+                    countsVals, binNumVals,
+                    binMethodLabelsValues,
+                    title,
+                    indepLabel,
+                    nyplots, nxplots, nsubplots, iplot,
+                    lineAttribOffset = lineAttribOffset,
+                    interiorLabels = interiorLabels,
+                    normalized = False,
+                    standardGaussian = False,
+                  )
+
+                  # counts normalized by bin-width and total count
+                  pdffunc(
+                    fig_normalized,
+                    countsVals, binNumVals,
+                    binMethodLabelsWithMetrics,
+                    title,
+                    indepLabel,
+                    nyplots, nxplots, nsubplots, iplot,
+                    lineAttribOffset = lineAttribOffset,
+                    interiorLabels = interiorLabels,
+                    normalized = True,
+                    standardGaussian = standardGaussian,
+                  )
+
+                  iplot = iplot + 1
+
+                # end fcTDelta loop
+
+              # end varMap loop
+
+              # save each figure
+              filename = myPath/('%s_%s_BinValAxis_%s-%smin_%s_%s_%s'%(
+                         binVar, binMethodCase, self.fcTDeltas_totmin[0], self.fcTDeltas_totmin[-1],
+                         self.DiagSpaceName, fcDiagName, expName))
+
+              pu.finalize_fig(fig, str(filename), figureFileType, interiorLabels, True)
+
+              filename = myPath/('%s_%s-normalized_BinValAxis_%s-%smin_%s_%s_%s'%(
+                         binVar, binMethodCase, self.fcTDeltas_totmin[0], self.fcTDeltas_totmin[-1],
+                         self.DiagSpaceName, fcDiagName, expName))
+
+              pu.finalize_fig(fig_normalized, str(filename), figureFileType, interiorLabels, True)
+
+              # end expName loop
 
 
-# TODO: generalize as a sub-class of OneDimBinMethodBase
+# TODO: generalize as a sub-class of MultiDimBinMethodBase
 class BinValAxisStatsComposite(AnalysisBase):
     '''
     Similar to BinValAxisProfile, except
@@ -1833,8 +3024,9 @@ class BinValAxisStatsComposite(AnalysisBase):
         self.binVarDict = {
             # TODO(JJG): Make a generic version of bpf.plotComposite, because
             # bpf.plotfitRampComposite also provides parameters for a ramp fitting
-            # function that may not be useful for binVars besides vu.obsVarSCI.
-            vu.obsVarSCI: {'statsfunc': bpf.plotfitRampComposite},
+            # function that may not be useful for binVars besides vu.obsVarCI.
+            vu.obsVarCI: {'statsfunc': bpf.plotfitRampComposite},
+            #vu.obsVarLogCI: {'statsfunc': bpf.plotfitRampComposite},
         }
 
         self.requestAggDFW = True
@@ -1843,21 +3035,22 @@ class BinValAxisStatsComposite(AnalysisBase):
         # TODO(JJG): output to an ascii file and remove this line
         self.blocking = True
 
-        self.subWidth = 1.9
-        self.subAspect = 0.9
+        self.subplotWidth = 1.9
+        self.subplotAspect = 0.9
 
         self.requiredStatistics = ['Count', 'Mean', 'RMS', 'STD']
 
     def analyze_(self, workers = None):
         for diagnosticName, diagnosticConfig in self.diagnosticConfigs.items():
             if diagnosticName not in self.db.dfw.levels('diagName'): continue
-            analysisStatistics = diagnosticConfig['analysisStatistics']
-            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
+            selectedStatistics = diagnosticConfig['selectedStatistics']
+            availableStatistics = diagnosticConfig['availableStatistics']
+            if not set(self.requiredStatistics).issubset(availableStatistics): continue
 
             diagBinVars = self.db.dfw.levels('binVar', {'diagName': diagnosticName})
 
             for fullBinVar, options in self.binVarDict.items():
-                binVar = vu.varDictAll[fullBinVar][1]
+                binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
                 if (binVar not in diagBinVars): continue
 
                 myLoc = {}
@@ -1868,34 +3061,14 @@ class BinValAxisStatsComposite(AnalysisBase):
                 # reducing to mydfwDict speeds extractions in innerloops
                 mydfwDict = {'dfw': self.db.loc(myLoc)}
 
-                # include aggregated statistics when requested
-                if self.requestAggDFW:
-                    mydfwDict['agg'] = sdb.DFWrapper.fromAggStats(mydfwDict['dfw'], ['cyDTime'])
-
                 ## Get all float/int binVals associated with binVar
                 binMethods = mydfwDict['dfw'].levels('binMethod')
-                binVals = mydfwDict['dfw'].levels('binVal')
                 binUnits = mydfwDict['dfw'].uniquevals('binUnits')[0]
 
                 # assume all bins represent same variable/units
                 indepLabel = binVar
                 if binUnits != vu.miss_s:
                     indepLabel = indepLabel+' ('+binUnits+')'
-
-                # bin info
-                binNumVals = []
-                for binVal in binVals:
-                    ibin = self.allBinVals.index(binVal)
-                    binNumVals.append(self.binNumVals[ibin])
-
-                # sort bins by numeric value
-                indices = list(range(len(binNumVals)))
-                indices.sort(key=binNumVals.__getitem__)
-                binNumVals = list(map(binNumVals.__getitem__, indices))
-                binVals = list(map(binVals.__getitem__, indices))
-
-                nBins = len(binVals)
-                if nBins < 2: continue
 
                 fcDiagName = self.fcName(diagnosticName)
                 myPath = self.myFigPath/fcDiagName
@@ -1911,7 +3084,29 @@ class BinValAxisStatsComposite(AnalysisBase):
                 for binMethod in binMethods:
                     ptLoc['binMethod'] = binMethod
 
+                    methodDFW = sdb.DFWrapper.fromLoc(mydfwDict['dfw'], {'binMethod': binMethod})
+
+                    # parse binVals, which may be different for each binMethod
+                    binVals = methodDFW.levels('binVal')
+
+                    # bin info
+                    binNumVals = []
+                    for binVal in binVals:
+                        ibin = self.allBinVals.index(binVal)
+                        binNumVals.append(self.binNumVals[ibin])
+
+                    # sort bins by numeric value
+                    indices = list(range(len(binNumVals)))
+                    indices.sort(key=binNumVals.__getitem__)
+                    binNumVals = list(map(binNumVals.__getitem__, indices))
+                    binVals = list(map(binVals.__getitem__, indices))
+
+                    nBins = len(binVals)
+                    if nBins < 2: continue
+
                     self.logger.info('binVar=>'+binVar+', binMethod=>'+binMethod)
+
+                    methodDFWAgg = sdb.DFWrapper.fromAggStats(methodDFW, ['cyDTime'])
 
                     #file loop 2
                     for expName in self.expNames:
@@ -1922,7 +3117,7 @@ class BinValAxisStatsComposite(AnalysisBase):
                             ptLoc['fcTDelta'] = fcTDelta
 
                             # establish a new figure
-                            fig = pu.setup_fig(nxplots, nyplots, self.subWidth, self.subAspect, interiorLabels)
+                            fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, interiorLabels)
                             iplot = 0
 
                             ERRParams = {}
@@ -1940,10 +3135,10 @@ class BinValAxisStatsComposite(AnalysisBase):
 
                                 for ibin, binVal in enumerate(binVals):
                                     ptLoc['binVal'] = binVal
-                                    countsVals[ibin] = mydfwDict['agg'].loc(ptLoc,'Count').to_numpy()
-                                    meansVals[ibin] = mydfwDict['agg'].loc(ptLoc,'Mean').to_numpy()
-                                    rmssVals[ibin] = mydfwDict['agg'].loc(ptLoc,'RMS').to_numpy()
-                                    stdsVals[ibin] = mydfwDict['agg'].loc(ptLoc,'STD').to_numpy()
+                                    countsVals[ibin] = methodDFWAgg.loc1(ptLoc,'Count')
+                                    meansVals[ibin] = methodDFWAgg.loc1(ptLoc,'Mean')
+                                    rmssVals[ibin] = methodDFWAgg.loc1(ptLoc,'RMS')
+                                    stdsVals[ibin] = methodDFWAgg.loc1(ptLoc,'STD')
 
                                 # define subplot title
                                 title = varLabel
@@ -1964,21 +3159,22 @@ class BinValAxisStatsComposite(AnalysisBase):
 
                                 paramKey = self.chlist[iplot]
                                 if paramKey == '': paramKey = varName
-                                ERRParams[self.DiagSpaceName][(paramKey, binMethod)] = FitParams
+                                if FitParams is not None:
+                                    ERRParams[self.DiagSpaceName][(paramKey, binMethod)] = FitParams
 
                                 iplot = iplot + 1
 
                             YAMLParams = {}
-                            print('\n#For binning_params:')
+                            self.logger.info('#For binning_params('+expName+'):')
                             for key in sorted(ERRParams[self.DiagSpaceName]):
-                                print(binVar+"ErrParams['"+self.DiagSpaceName+"'][", key, "]   = ",
-                                       ERRParams[self.DiagSpaceName][key]['bu'])
+                                self.logger.info(binVar+"ErrParams['"+self.DiagSpaceName+"']["+str(key)+"]   = "+
+                                       str(ERRParams[self.DiagSpaceName][key]['bin_utils']))
                                 for param, val in ERRParams[self.DiagSpaceName][key]['YAML'].items():
                                     if param not in YAMLParams: YAMLParams[param] = []
                                     YAMLParams[param] += val
-                            print('\n#For UFO YAML config:')
+                            self.logger.info('#For UFO YAML config('+expName+'):')
                             for param, val in YAMLParams.items():
-                                print('#  '+param+':', val)
+                                self.logger.info('#  '+param+': '+str(val))
 
                             # save each figure
                             filename = myPath/('%s%s_BinValAxis_%smin_%s_%s_%s'%(
@@ -2016,21 +3212,22 @@ class GrossValues(AnalysisBase):
 
         self.binVarDict = {
             (vu.obsVarQC, bu.goodQCMethod): {},
-            (vu.obsVarCldFrac, bu.cloudbandsMethod): {},
+            (vu.obsVarCldFracY, bu.cloudbandsMethod): {},
         }
 
     def analyze_(self, workers = None):
         for diagnosticName, diagnosticConfig in self.diagnosticConfigs.items():
             if diagnosticName not in self.db.dfw.levels('diagName'): continue
-            analysisStatistics = diagnosticConfig['analysisStatistics']
-            if not set(self.requiredStatistics).issubset(set(analysisStatistics)): continue
+            selectedStatistics = diagnosticConfig['selectedStatistics']
+            availableStatistics = diagnosticConfig['availableStatistics']
+            if not set(self.requiredStatistics).issubset(availableStatistics): continue
 
             diagLoc = {'diagName': diagnosticName}
             diagBinVars = self.db.dfw.levels('binVar', diagLoc)
             diagBinMethods = self.db.dfw.levels('binMethod', diagLoc)
 
             for (fullBinVar, binMethod), options in self.binVarDict.items():
-                binVar = vu.varDictAll[fullBinVar][1]
+                binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
                 if (binVar not in diagBinVars or
                     binMethod not in diagBinMethods): continue
 
@@ -2070,7 +3267,7 @@ class GrossValues(AnalysisBase):
                         for expName in self.expNames:
                             statsLoc['expName'] = expName
                             statsDFW = sdb.DFWrapper.fromLoc(mydfwDict['agg'], statsLoc)
-                            for statName in analysisStatistics:
+                            for statName in selectedStatistics:
                                 GrossValues[(statName, expName, varName)] = statsDFW.var(statName).to_numpy()
                     for expName in self.expNames:
                         print('Gross statistics for')
@@ -2079,7 +3276,7 @@ class GrossValues(AnalysisBase):
                             print('binVal=>'+binVal)
                         print(' variables: ', self.varNames)
 
-                        for statName in analysisStatistics:
+                        for statName in selectedStatistics:
                             print(statName)
                             tmp = np.asarray([])
                             for varName in self.varNames:
@@ -2093,13 +3290,12 @@ AnalysisTypeDict = {
     'FCAxisExpLinesDiffCI': FCAxisExpLinesDiffCI,
     'CYAxisFCLines': CYAxisFCLines,
     'CYAxisBinValLines': CYAxisBinValLines,
-    #Derived from OneDimBinMethodBase(AnalysisBase)
+    #Derived from MultiDimBinMethodBase(AnalysisBase)
     'CYandBinValAxes2D': CYandBinValAxes2D,
     'FCandBinValAxes2D': FCandBinValAxes2D,
     'BinValAxisProfile': BinValAxisProfile,
     'BinValAxisProfileDiffCI': BinValAxisProfileDiffCI,
-    # TODO(JJG): TwoDimBinMethodBase(AnalysisBase)
-    #'BinValAxes2D': BinValAxes2D,
+    'BinValAxes2D': BinValAxes2D,
     #Derived from AnalysisBase
     'BinValAxisPDF': BinValAxisPDF,
     'BinValAxisStatsComposite': BinValAxisStatsComposite,

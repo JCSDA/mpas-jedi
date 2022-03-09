@@ -4,8 +4,12 @@ from collections.abc import Iterable
 from copy import deepcopy
 import os
 import itertools
+import logging
+import multiprocessing as mp
 import numpy as np
 from scipy.spatial import cKDTree
+
+_logger = logging.getLogger(__name__)
 
 class InterpolateCartesian:
   eps = 1.e-10
@@ -77,6 +81,20 @@ class InterpolateCartesian:
     self.TreeIn = cKDTree(list(zip(XIn, YIn, ZIn)))
     self.nInterpPoints = nInterpPoints
     self.nnInterpInds = []
+
+  @staticmethod
+  def getWorkers(nprocs):
+    if nprocs > 1:
+      workers = mp.Pool(processes = nprocs)
+    else:
+      workers = None
+    return workers
+
+  @staticmethod
+  def finalizeWorkers(workers):
+    if workers is not None:
+      workers.close()
+      workers.join()
 
   def initNeighbors(self, XOut, YOut, ZOut):
     self.XOut = XOut
@@ -520,7 +538,7 @@ class InterpolateCartesian:
       if nTargets == 0: break
       if self.calculateDiagnostics:
         self.combinationUsed[KeepSearchingInds] = ii+1
-      print(nTargets, subsetInds)
+      #print(nTargets, subsetInds)
 
       nnSubsetInds = self.nnInterpInds[KeepSearchingInds,:]
       nnSubsetInds = nnSubsetInds[:,subsetInds]
@@ -726,23 +744,47 @@ class InterpolateLonLat(InterpolateCartesian):
     self.Scale = self.Radius
     self.distanceMethods['greatcircle'] = self.greatcircleInDistances
 
-  def initNeighbors(self, LonOut, LatOut):
+  def initNeighbors(self, LonOut, LatOut, nprocs=1):
     XOut, YOut, ZOut = LonLat2Cartesian(LonOut, LatOut, self.Radius)
+    #_logger.info('Initializing Neighbors')
     super().initNeighbors(XOut, YOut, ZOut)
 
-    if self.distanceMethod == 'greatcircle':
-      # find nearest neighbor great circle distances
-      self.nnInterpDistances = np.empty((len(LatOut), self.nInterpPoints))
-      for kk, (nnInds, lon, lat) in enumerate(
-        list(zip(self.nnInterpInds, LonOut, LatOut))):
-        self.nnInterpDistances[kk, :] = HaversineDistance(
-          lon, lat,
-          self.LonIn[nnInds], self.LatIn[nnInds],
-          self.Radius)
+    workers = self.getWorkers(nprocs)
 
-  def initWeights(self, LonOut, LatOut, updateNeighbors = False):
+    if self.distanceMethod == 'greatcircle':
+      #_logger.info('Calculating great circle distances')
+      # find nearest neighbor great circle distances
+      if workers is None:
+        self.nnInterpDistances = np.empty((len(LatOut), self.nInterpPoints))
+        for kk, (nnInds, lon, lat) in enumerate(
+          list(zip(self.nnInterpInds, LonOut, LatOut))):
+          self.nnInterpDistances[kk, :] = HaversineDistance(
+            lon, lat,
+            self.LonIn[nnInds], self.LatIn[nnInds],
+            self.Radius)
+      else:
+        distances = []
+        for kk, (nnInds, lon, lat) in enumerate(
+          list(zip(self.nnInterpInds, LonOut, LatOut))):
+          distances.append(workers.apply_async(HaversineDistancePar,
+            args = (kk,
+              lon, lat,
+              self.LonIn[nnInds], self.LatIn[nnInds],
+              self.Radius,
+            )
+          ))
+
+        self.finalizeWorkers(workers)
+
+        self.nnInterpDistances = np.empty((len(LatOut), self.nInterpPoints))
+        for d_ in distances:
+          d = d_.get()
+          self.nnInterpDistances[d['kk'], :] = d['d']
+
+
+  def initWeights(self, LonOut, LatOut, updateNeighbors = False, nprocs=1):
     if len(self.nnInterpInds) != len(LatOut) or updateNeighbors:
-      self.initNeighbors(LonOut, LatOut)
+      self.initNeighbors(LonOut, LatOut, nprocs)
     super().initWeights()
 
   def greatcircleInDistances(self, Inds1, Inds2):
@@ -766,6 +808,9 @@ def LonLat2Cartesian(lon, lat, R = 1.):
 
 def CartesianDistance(X1, X2, Y1, Y2, Z1, Z2):
   return np.sqrt((X2 - X1)**2 + (Y2 - Y1)**2 + (Z2 - Z1)**2)
+
+def HaversineDistancePar(kk, lon1, lat1, lon2, lat2, R = 1.):
+  return {'kk': kk, 'd': HaversineDistance(lon1, lat1, lon2, lat2, R)}
 
 def HaversineDistance(lon1, lat1, lon2, lat2, R = 1.):
     #https://janakiev.com/blog/gps-points-distance-python/

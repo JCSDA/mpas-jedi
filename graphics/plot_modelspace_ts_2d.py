@@ -65,18 +65,17 @@ def readdata():
           title_tmp = ''.join(varNamesListAll[i])
           region = ''.join(title_tmp.split("_")[2:][:-2])
           var    = ''.join(title_tmp.split("_")[3:][:-1])
-          stats  = ''.join(title_tmp.split("_")[4:])
+          statistic = ''.join(title_tmp.split("_")[4:])
           FCDay  = ''.join(title_tmp.split("_")[1:][:-3])
-          statDiagLabel = stats
-          if (stats == 'Mean'):
-              signDefinite = False
+          xLabel = stats
+          if (statistic == 'Mean'):
+              centralValue = 0.0
           else:
-              signDefinite = True
-          #print(region,var,stats)
-          indepLabel = 'Vertical level'
+              centralValue = None
+          #print(region,var,statistic)
+          yLabel = 'Vertical level'
           sciTicks = False
-          logscale = False
-          invert_ind_axis = False
+          logScale = False
           iplot = 0
 
           for k in arraylist:
@@ -85,14 +84,17 @@ def readdata():
                 title = mu.expNames[iplot] +' var:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+')\
  '+region+' min=' +str(round(valuemin,3))+' max='+str(round(valuemax,3))
 
-                BasicPF.plotTimeSeries2D( fig, \
-                              xlabeltime,ylevels, k, \
-                              title, statDiagLabel, \
-                              sciTicks, logscale, signDefinite, \
-                              indepLabel, invert_ind_axis, \
-                              ny, nx, nsubplots, iplot, \
-                              dmin = dmin, dmax = dmax, \
-                              interiorLabels = interiorLabels )
+                BasicPF.plot2D(fig,
+                    xlabeltime, ylevels, k,
+                    title, xLabel, yLabel,
+                    BasicPF.defaultIndepConfig,
+                    BasicPF.defaultIndepConfig,
+                    sciTicks, logScale, centralValue,
+                    ny, nx, nsubplots, iplot,
+                    dmin = dmin, dmax = dmax,
+                    interiorLabels = interiorLabels,
+                )
+
                 iplot = iplot +1
                 filename = ''.join(varNamesListAll[i])
                 pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
@@ -116,14 +118,16 @@ def readdata():
                       title = 'Diff var:'+vu.varDictModel[var][1]+'('+ vu.varDictModel[var][0]+') min=' +str(round(valuemin,3))+' max='+str(round(valuemax,3))
                       fig = pu.setup_fig(nx, ny, subplot_size, aspect, FULL_SUBPLOT_LABELS)
 
-                      BasicPF.plotTimeSeries2D( fig, \
-                              xlabeltime,ylevels, alldiffdata, \
-                              title, statDiagLabel, \
-                              sciTicks, logscale, signDefinite, \
-                              indepLabel, invert_ind_axis, \
-                              ny, nx, nsubplots, iplot, \
-                              dmin = valuemin, dmax = valuemax, \
-                              interiorLabels = interiorLabels )
+                      BasicPF.plot2D(fig,
+                          xlabeltime, ylevels, alldiffdata,
+                          title, xLabel, yLabel,
+                          BasicPF.defaultIndepConfig,
+                          BasicPF.defaultIndepConfig,
+                          sciTicks, logScale, centralValue=0.0,
+                          ny, nx, nsubplots, iplot,
+                          dmin = valuemin, dmax = valuemax,
+                          interiorLabels = interiorLabels,
+                      )
                       iplot = iplot + 1
                       filename = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0] #''.join(varNamesListAll[i])+'_TS_2d'
                       pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)

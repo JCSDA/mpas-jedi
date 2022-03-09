@@ -16,7 +16,9 @@ def write_diag_stats():
     path = os.getcwd()
     date = path.split('/')[-2]
     initDate = datetime.strptime(date,"%Y%m%d%H")
-    lats, lons = mu.readGrid()
+    grid = mu.readGrid()
+    lats = grid['latitude']
+    lons = grid['longitude']
 
     for varName in mu.varNames:
         for latBand in range(0, len(mu.latBands)):
