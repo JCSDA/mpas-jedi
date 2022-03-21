@@ -179,7 +179,7 @@ def plotDistri(lats,lons,values,
     plt.colorbar(p,cax=cax,orientation='horizontal') #,cax=cax,ax=ax,orientation='horizontal')
 
 #set title  ===================================================================
-    if nstation == 0 or ObsType == 'satwind' or ObsType == 'satwindBufr':
+    if nstation == 0 or ObsType == 'satwind' or ObsType == 'satwnd':
         plt.text(0.5, 1.15, '%s   %s %s nlocs:%s'
             %(ObsType,VarName,var_unit,len(values[~np.isnan(values)])),
             horizontalalignment='center',

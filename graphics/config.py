@@ -326,7 +326,7 @@ DiagSpaceConfig = {
         'binVarConfigs': satwindBinVars,
         'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
     },
-    'satwindBufr': {
+    'satwnd': {
         'DiagSpaceGrp': profile_s,
         'process': True,
         'anGrp': convGrp,

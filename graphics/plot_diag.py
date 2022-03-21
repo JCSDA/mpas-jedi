@@ -82,7 +82,7 @@ def readdata():
     'sondes',
     'aircraft',
     'satwind',
-    'satwindBufr',
+    'satwnd',
     'gnssroref',
     'gnssrobndropp1d',
   ]
