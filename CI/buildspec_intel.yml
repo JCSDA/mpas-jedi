@@ -43,6 +43,10 @@ phases:
       - cd CI
       - . /etc/profile.d/intel.sh
 
+      # read cdash url from s3
+      - wget https://ci-test-cdash-url.s3.amazonaws.com/cdash_url.txt
+      - CDASH_URL=$(cat cdash_url.txt)
+
       #  Set crtm branch name
       - export CRTM_JEDI_BRANCH="release/crtm_jedi"
 
@@ -102,6 +106,7 @@ phases:
       - cp -r cmake /jcsda/mpas-bundle/
       # cdash upload setup
       - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle
+      - sed -i "s@CDASH_URL@$CDASH_URL@g" /jcsda/mpas-bundle/CTestConfig.cmake
 
 
       - chmod -R 777 /jcsda/mpas-bundle
@@ -157,8 +162,7 @@ phases:
       # upload find cdash url and upload it as CodeBuild artifact to S3
       - if [ "$BUILD_STATUS" = "1" ];
         then echo "Build & tests passed, find cdash url";
-        bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing;
-        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing);
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing $CDASH_URL);
         echo $url;
         echo ${url} > /jcsda/artifacts/cdash-url.txt;
         cat /jcsda/artifacts/cdash-url.txt;
