@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 2.0e-7
+  float relative tolerance: 4.0e-6
   integer tolerance: 0
   reference filename: testoutput/3denvar_amsua_bc.ref
   log output filename: testoutput/3denvar_amsua_bc.run

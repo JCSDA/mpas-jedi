@@ -35,17 +35,6 @@ list( APPEND mpasjedi_src_files
     mpas2ufo_vars_mod.F90
     mpas4da_mod.F90
     mpas_kinds_mod.F90
-    getvalues/mpasjedi_getvalues_mod.F90
-    getvalues/mpasjedi_lineargetvalues_mod.F90
-    getvalues/GetValues.cc
-    getvalues/GetValues.h
-    getvalues/LinearGetValues.cc
-    getvalues/LinearGetValues.h
-    getvalues/GetValues.interface.h
-    getvalues/GetValues.interface.F90
-    getvalues/LinearGetValues.interface.h
-    getvalues/LinearGetValues.interface.F90
-    getvalues/mpasjedi_unstructured_interp_mod.F90
     LinearVariableChange/LinearVariableChange.cc
     LinearVariableChange/LinearVariableChange.h
     LinearVariableChange/Base/LinearVariableChangeBase.cc
@@ -69,6 +58,8 @@ list( APPEND mpasjedi_src_files
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.cc
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.h
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.interface.h
+    util/mpasjedi_unstructured_interp_mod.F90
+    util/slow_oops_unstructured_interpolation_mod.F90
     )
 
 #Create target

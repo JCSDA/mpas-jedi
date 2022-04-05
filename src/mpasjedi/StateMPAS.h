@@ -90,6 +90,9 @@ class StateMPAS : public util::Printable,
   const oops::Variables & variables() const {return vars_;}
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
+// Get values as Atlas FieldSet
+  void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+
   int & toFortran() {return keyState_;}
   const int & toFortran() const {return keyState_;}
 

@@ -1,6 +1,6 @@
 test:
   float relative tolerance: 0.00000001
-  integer tolerance: 0
+  integer tolerance: 1
   reference filename: testoutput/hofx3d.ref
   log output filename: testoutput/hofx3d.run
   test output filename: testoutput/hofx3d.run.ref

@@ -1,23 +1,23 @@
 CostJb   : Nonlinear Jb = 0
-CostJo   : Nonlinear Jo(Radiosonde) = 928.397, nobs = 969, Jo/n = 0.958098, err = 1.98542
-CostJo   : Nonlinear Jo(Aircraft) = 1399.05, nobs = 1596, Jo/n = 0.8766, err = 2.31173
-CostJo   : Nonlinear Jo(GnssroRef) = 5.268, nobs = 3, Jo/n = 1.756, err = 2.00376
-CostJo   : Nonlinear Jo(SfcPCorrected) = 460.338, nobs = 50, Jo/n = 9.20676, err = 145.712
-CostFunction: Nonlinear J = 2793.06
-DRIPCGMinimizer: reduction in residual norm = 5.02532e-06
+CostJo   : Nonlinear Jo(Radiosonde) = 928.63, nobs = 960, Jo/n = 0.967323, err = 1.98669
+CostJo   : Nonlinear Jo(Aircraft) = 1419.02, nobs = 1612, Jo/n = 0.880283, err = 2.29489
+CostJo   : Nonlinear Jo(GnssroRef) = 6.0095, nobs = 3, Jo/n = 2.00317, err = 2.00376
+CostJo   : Nonlinear Jo(SfcPCorrected) = 464.799, nobs = 50, Jo/n = 9.29599, err = 145.712
+CostFunction: Nonlinear J = 2818.46
+DRIPCGMinimizer: reduction in residual norm = 1.04684e-06
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=2.039797627e+02, Max=3.064794644e+02, RMS=2.440524032e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.837909959e-02, RMS=4.527962338e-03 : spechum
-Fld=3  Min=-4.049605064e+01, Max=8.046045919e+01, RMS=1.664491645e+01 : uReconstructZonal
-Fld=4  Min=-4.702233624e+01, Max=5.293025077e+01, RMS=9.082253651e+00 : uReconstructMeridional
-Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863998978e+04 : surface_pressure
-Fld=6  Min=2.515557309e+02, Max=7.252925692e+02, RMS=4.410434814e+02 : theta
-Fld=7  Min=2.526892444e-02, Max=1.333133191e+00, RMS=6.197645605e-01 : rho
-Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374075049e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587570608e-03 : qv
-Fld=10  Min=1.507231976e+03, Max=9.751265300e+04, RMS=4.931043131e+04 : pressure
+Fld=1  Min=2.039797627e+02, Max=3.064794644e+02, RMS=2.440524805e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.837909959e-02, RMS=4.527930730e-03 : spechum
+Fld=3  Min=-4.049605064e+01, Max=8.046045919e+01, RMS=1.664485501e+01 : uReconstructZonal
+Fld=4  Min=-4.702233624e+01, Max=5.293025077e+01, RMS=9.082045650e+00 : uReconstructMeridional
+Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863981276e+04 : surface_pressure
+Fld=6  Min=2.515557309e+02, Max=7.252925692e+02, RMS=4.410436842e+02 : theta
+Fld=7  Min=2.526892444e-02, Max=1.333133191e+00, RMS=6.197633673e-01 : rho
+Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374065659e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587538689e-03 : qv
+Fld=10  Min=1.507231976e+03, Max=9.751265300e+04, RMS=4.931035099e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.342793147e-01 : snowc
@@ -33,16 +33,16 @@ Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.904163538e-01 : smois
 Fld=23  Min=2.182704144e+02, Max=3.151087778e+02, RMS=2.752686162e+02 : tslb
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=1.996103430e+02, Max=3.052475047e+02, RMS=2.439655370e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.630437883e-03 : spechum
-Fld=3  Min=-4.416110238e+01, Max=8.300288464e+01, RMS=1.765420680e+01 : uReconstructZonal
-Fld=4  Min=-4.553588571e+01, Max=5.860794126e+01, RMS=9.002372281e+00 : uReconstructMeridional
-Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867386214e+04 : surface_pressure
-Fld=6  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410318832e+02 : theta
-Fld=7  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201688865e-01 : rho
-Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434589438e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693254327e-03 : qv
-Fld=10  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931335141e+04 : pressure
+Fld=1  Min=1.996103430e+02, Max=3.052475047e+02, RMS=2.439656358e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.630422611e-03 : spechum
+Fld=3  Min=-4.416110238e+01, Max=8.300288464e+01, RMS=1.765416470e+01 : uReconstructZonal
+Fld=4  Min=-4.553588571e+01, Max=5.860794126e+01, RMS=9.002225568e+00 : uReconstructMeridional
+Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867368286e+04 : surface_pressure
+Fld=6  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410320839e+02 : theta
+Fld=7  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201675642e-01 : rho
+Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434583381e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693238783e-03 : qv
+Fld=10  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931327256e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.336989268e-01 : snowc
@@ -58,16 +58,16 @@ Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Fld=23  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
   Valid time: 2018-04-15T03:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=1.942344484e+02, Max=3.047237936e+02, RMS=2.438992413e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.999899300e-02, RMS=4.713957654e-03 : spechum
-Fld=3  Min=-3.976868381e+01, Max=8.492761306e+01, RMS=1.678443682e+01 : uReconstructZonal
-Fld=4  Min=-4.348997395e+01, Max=5.860260976e+01, RMS=8.845821007e+00 : uReconstructMeridional
-Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868466852e+04 : surface_pressure
-Fld=6  Min=2.513192280e+02, Max=7.288611056e+02, RMS=4.409665420e+02 : theta
-Fld=7  Min=2.466921541e-02, Max=1.330803997e+00, RMS=6.202060909e-01 : rho
-Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374655514e+01 : u
-Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779684417e-03 : qv
-Fld=10  Min=1.456081793e+03, Max=9.747400144e+04, RMS=4.931715306e+04 : pressure
+Fld=1  Min=1.942344484e+02, Max=3.047237936e+02, RMS=2.438992910e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.999899300e-02, RMS=4.713921744e-03 : spechum
+Fld=3  Min=-3.976868381e+01, Max=8.492761306e+01, RMS=1.678438041e+01 : uReconstructZonal
+Fld=4  Min=-4.348997395e+01, Max=5.860260976e+01, RMS=8.845837034e+00 : uReconstructMeridional
+Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868449694e+04 : surface_pressure
+Fld=6  Min=2.513192280e+02, Max=7.288611056e+02, RMS=4.409667519e+02 : theta
+Fld=7  Min=2.466921541e-02, Max=1.330803997e+00, RMS=6.202049486e-01 : rho
+Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374653710e+01 : u
+Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779648064e-03 : qv
+Fld=10  Min=1.456081793e+03, Max=9.747400144e+04, RMS=4.931707351e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.332789696e-01 : snowc
@@ -81,26 +81,32 @@ Fld=20  Min=-2.124470751e+01, Max=1.740645396e+01, RMS=5.329119566e+00 : v10
 Fld=21  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00 : lai
 Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903726700e-01 : smois
 Fld=23  Min=2.188704143e+02, Max=3.110358324e+02, RMS=2.751886309e+02 : tslb
-CostJb   : Nonlinear Jb = 82.7961
-CostJo   : Nonlinear Jo(Radiosonde) = 783.657, nobs = 968, Jo/n = 0.809563, err = 1.9853
-CostJo   : Nonlinear Jo(Aircraft) = 1103.77, nobs = 1596, Jo/n = 0.691586, err = 2.31173
-CostJo   : Nonlinear Jo(GnssroRef) = 3.63412, nobs = 3, Jo/n = 1.21137, err = 2.00376
-CostJo   : Nonlinear Jo(SfcPCorrected) = 213.135, nobs = 50, Jo/n = 4.26271, err = 145.712
-CostFunction: Nonlinear J = 2186.99
-DRIPCGMinimizer: reduction in residual norm = 6.4669e-07
+
+
+
+
+
+
+CostJb   : Nonlinear Jb = 83.0086
+CostJo   : Nonlinear Jo(Radiosonde) = 792.709, nobs = 959, Jo/n = 0.826599, err = 1.98657
+CostJo   : Nonlinear Jo(Aircraft) = 1154.02, nobs = 1611, Jo/n = 0.716336, err = 2.29476
+CostJo   : Nonlinear Jo(GnssroRef) = 4.48047, nobs = 3, Jo/n = 1.49349, err = 2.00376
+CostJo   : Nonlinear Jo(SfcPCorrected) = 233.847, nobs = 50, Jo/n = 4.67693, err = 145.712
+CostFunction: Nonlinear J = 2268.06
+DRIPCGMinimizer: reduction in residual norm = 2.7128e-07
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=2.039797627e+02, Max=3.064794644e+02, RMS=2.440524040e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.837909959e-02, RMS=4.527962153e-03 : spechum
-Fld=3  Min=-4.049605064e+01, Max=8.046045919e+01, RMS=1.664490971e+01 : uReconstructZonal
-Fld=4  Min=-4.702233624e+01, Max=5.293025077e+01, RMS=9.082253746e+00 : uReconstructMeridional
-Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863999018e+04 : surface_pressure
-Fld=6  Min=2.515557309e+02, Max=7.252925692e+02, RMS=4.410434798e+02 : theta
-Fld=7  Min=2.526892444e-02, Max=1.333133191e+00, RMS=6.197645772e-01 : rho
-Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374074597e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587570424e-03 : qv
-Fld=10  Min=1.507231976e+03, Max=9.751265300e+04, RMS=4.931043135e+04 : pressure
+Fld=1  Min=2.039797627e+02, Max=3.064794644e+02, RMS=2.440524795e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.837909959e-02, RMS=4.527925890e-03 : spechum
+Fld=3  Min=-4.049605064e+01, Max=8.046045919e+01, RMS=1.664485972e+01 : uReconstructZonal
+Fld=4  Min=-4.702233624e+01, Max=5.293025077e+01, RMS=9.082045768e+00 : uReconstructMeridional
+Fld=5  Min=5.710640325e+04, Max=1.044590745e+05, RMS=9.863981329e+04 : surface_pressure
+Fld=6  Min=2.515557309e+02, Max=7.252925692e+02, RMS=4.410436865e+02 : theta
+Fld=7  Min=2.526892444e-02, Max=1.333133191e+00, RMS=6.197634192e-01 : rho
+Fld=8  Min=-7.828729606e+01, Max=7.878838647e+01, RMS=1.374065930e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.872321543e-02, RMS=4.587533839e-03 : qv
+Fld=10  Min=1.507231976e+03, Max=9.751265300e+04, RMS=4.931035062e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.342793147e-01 : snowc
@@ -116,16 +122,16 @@ Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.904163538e-01 : smois
 Fld=23  Min=2.182704144e+02, Max=3.151087778e+02, RMS=2.752686162e+02 : tslb
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=1.996103430e+02, Max=3.052475047e+02, RMS=2.439655383e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.630437847e-03 : spechum
-Fld=3  Min=-4.416110238e+01, Max=8.300288464e+01, RMS=1.765419879e+01 : uReconstructZonal
-Fld=4  Min=-4.553588571e+01, Max=5.860794126e+01, RMS=9.002371963e+00 : uReconstructMeridional
-Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867386263e+04 : surface_pressure
-Fld=6  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410318806e+02 : theta
-Fld=7  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201689118e-01 : rho
-Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434588870e+01 : u
-Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693254296e-03 : qv
-Fld=10  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931335138e+04 : pressure
+Fld=1  Min=1.996103430e+02, Max=3.052475047e+02, RMS=2.439656342e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.896837080e-02, RMS=4.630416671e-03 : spechum
+Fld=3  Min=-4.416110238e+01, Max=8.300288464e+01, RMS=1.765417874e+01 : uReconstructZonal
+Fld=4  Min=-4.553588571e+01, Max=5.860794126e+01, RMS=9.002225232e+00 : uReconstructMeridional
+Fld=5  Min=5.698552890e+04, Max=1.046925496e+05, RMS=9.867368353e+04 : surface_pressure
+Fld=6  Min=2.518240246e+02, Max=7.253309394e+02, RMS=4.410320879e+02 : theta
+Fld=7  Min=2.483897628e-02, Max=1.333928331e+00, RMS=6.201676450e-01 : rho
+Fld=8  Min=-9.022912504e+01, Max=8.058084961e+01, RMS=1.434584217e+01 : u
+Fld=9  Min=0.000000000e+00, Max=1.933512666e-02, RMS=4.693232839e-03 : qv
+Fld=10  Min=1.472270575e+03, Max=9.806689270e+04, RMS=4.931327188e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.336989268e-01 : snowc
@@ -141,16 +147,16 @@ Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903909247e-01 : smois
 Fld=23  Min=2.186198409e+02, Max=3.145079915e+02, RMS=2.751963415e+02 : tslb
   Valid time: 2018-04-15T03:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
-Fld=1  Min=1.942344484e+02, Max=3.047237936e+02, RMS=2.438992436e+02 : temperature
-Fld=2  Min=0.000000000e+00, Max=1.999899300e-02, RMS=4.713957815e-03 : spechum
-Fld=3  Min=-3.976868381e+01, Max=8.492761306e+01, RMS=1.678442743e+01 : uReconstructZonal
-Fld=4  Min=-4.348997395e+01, Max=5.860260976e+01, RMS=8.845820600e+00 : uReconstructMeridional
-Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868466890e+04 : surface_pressure
-Fld=6  Min=2.513192280e+02, Max=7.288611056e+02, RMS=4.409665394e+02 : theta
-Fld=7  Min=2.466921541e-02, Max=1.330803997e+00, RMS=6.202061053e-01 : rho
-Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374654881e+01 : u
-Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779684581e-03 : qv
-Fld=10  Min=1.456081793e+03, Max=9.747400144e+04, RMS=4.931715318e+04 : pressure
+Fld=1  Min=1.942344484e+02, Max=3.047237936e+02, RMS=2.438992909e+02 : temperature
+Fld=2  Min=0.000000000e+00, Max=1.999899300e-02, RMS=4.713917649e-03 : spechum
+Fld=3  Min=-3.976868381e+01, Max=8.492761306e+01, RMS=1.678440021e+01 : uReconstructZonal
+Fld=4  Min=-4.348997395e+01, Max=5.860260976e+01, RMS=8.845836504e+00 : uReconstructMeridional
+Fld=5  Min=5.670609072e+04, Max=1.041708206e+05, RMS=9.868449749e+04 : surface_pressure
+Fld=6  Min=2.513192280e+02, Max=7.288611056e+02, RMS=4.409667532e+02 : theta
+Fld=7  Min=2.466921541e-02, Max=1.330803997e+00, RMS=6.202049924e-01 : rho
+Fld=8  Min=-8.744781533e+01, Max=8.835863266e+01, RMS=1.374654902e+01 : u
+Fld=9  Min=0.000000000e+00, Max=2.040711475e-02, RMS=4.779643980e-03 : qv
+Fld=10  Min=1.456081793e+03, Max=9.747400144e+04, RMS=4.931707328e+04 : pressure
 Fld=11  Min=0.000000000e+00, Max=1.000000000e+00, RMS=5.036943921e-01 : landmask
 Fld=12  Min=0.000000000e+00, Max=1.000000000e+00, RMS=2.217663813e-01 : xice
 Fld=13  Min=0.000000000e+00, Max=1.000000000e+00, RMS=3.332789696e-01 : snowc
@@ -164,9 +170,15 @@ Fld=20  Min=-2.124470751e+01, Max=1.740645396e+01, RMS=5.329119566e+00 : v10
 Fld=21  Min=0.000000000e+00, Max=6.479932160e+00, RMS=1.333870939e+00 : lai
 Fld=22  Min=2.000000000e-02, Max=1.000000000e+00, RMS=8.903726700e-01 : smois
 Fld=23  Min=2.188704143e+02, Max=3.110358324e+02, RMS=2.751886309e+02 : tslb
-CostJb   : Nonlinear Jb = 82.7208
-CostJo   : Nonlinear Jo(Radiosonde) = 783.18, nobs = 968, Jo/n = 0.80907, err = 1.9853
-CostJo   : Nonlinear Jo(Aircraft) = 1101.67, nobs = 1596, Jo/n = 0.69027, err = 2.31173
-CostJo   : Nonlinear Jo(GnssroRef) = 3.63304, nobs = 3, Jo/n = 1.21101, err = 2.00376
-CostJo   : Nonlinear Jo(SfcPCorrected) = 213.219, nobs = 50, Jo/n = 4.26439, err = 145.712
-CostFunction: Nonlinear J = 2184.42
+
+
+
+
+
+
+CostJb   : Nonlinear Jb = 82.9315
+CostJo   : Nonlinear Jo(Radiosonde) = 792.231, nobs = 959, Jo/n = 0.826101, err = 1.98657
+CostJo   : Nonlinear Jo(Aircraft) = 1149.66, nobs = 1611, Jo/n = 0.713634, err = 2.29476
+CostJo   : Nonlinear Jo(GnssroRef) = 4.47951, nobs = 3, Jo/n = 1.49317, err = 2.00376
+CostJo   : Nonlinear Jo(SfcPCorrected) = 233.934, nobs = 50, Jo/n = 4.67868, err = 145.712
+CostFunction: Nonlinear J = 2263.24

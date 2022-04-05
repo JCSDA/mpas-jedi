@@ -11,8 +11,7 @@ use fckit_mpi_module,               only: fckit_mpi_comm, &
                                        &  fckit_mpi_max, &
                                        &  fckit_mpi_min
 ! oops
-use unstructured_interpolation_mod, only: unstrc_interp
-
+use  slow_oops_unstructured_interpolation_mod, only: unstrc_interp
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod

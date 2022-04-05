@@ -12,8 +12,6 @@
 
 #include "mpasjedi/ErrorCovarianceMPAS.h"
 #include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/getvalues/GetValues.h"
-#include "mpasjedi/getvalues/LinearGetValues.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
 #include "mpasjedi/ModelBiasCovarianceMPAS.h"
@@ -33,14 +31,9 @@ struct MPASTraits {
   typedef mpas::GeometryMPAS             Geometry;
   typedef mpas::IncrementMPAS            Increment;
   typedef mpas::StateMPAS                State;
-
   typedef mpas::ModelBiasMPAS            ModelAuxControl;
   typedef mpas::ModelBiasIncrementMPAS   ModelAuxIncrement;
   typedef mpas::ModelBiasCovarianceMPAS  ModelAuxCovariance;
-
-  typedef mpas::GetValues                GetValues;
-  typedef mpas::LinearGetValues          LinearGetValues;
-
   typedef mpas::LinearVariableChange     LinearVariableChange;
   typedef mpas::VariableChange           VariableChange;
 };

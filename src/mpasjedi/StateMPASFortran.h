@@ -15,6 +15,12 @@ namespace eckit {
   class Configuration;
 }
 
+namespace atlas {
+namespace field {
+  class FieldSetImpl;
+}
+}
+
 namespace oops {
   class Variables;
 }
@@ -57,7 +63,10 @@ extern "C" {
                                     const eckit::Configuration &,
                                     util::DateTime &);
   void mpas_state_sizes_f90(const F90state &, int &, int &);
-
+  void mpas_state_set_atlas_f90(const F90inc &, const F90geom &, const oops::Variables &,
+                                   atlas::field::FieldSetImpl *, const bool &);
+  void mpas_state_to_atlas_f90(const F90inc &, const F90geom &, const oops::Variables &,
+                               atlas::field::FieldSetImpl *, const bool &, const bool &);
 
 };  // extern "C"
 // -----------------------------------------------------------------------------

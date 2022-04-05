@@ -10,13 +10,12 @@
 #include <iostream>
 #include <vector>
 
-#include "oops/util/Duration.h"
+// ygyu #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
 #include "mpasjedi/IncrementMPAS.h"
 #include "mpasjedi/StateMPAS.h"
-
 
 namespace mpas {
 
@@ -97,6 +96,18 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
   vars_ = rhs.vars_;
   return *this;
 }
+
+// -----------------------------------------------------------------------------
+
+void StateMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
+  const bool include_halo = true;
+  const bool flip_vert_lev = true;
+  mpas_state_set_atlas_f90(keyState_, geom_->toFortran(), vars, fset.get(), include_halo);
+  mpas_state_to_atlas_f90(keyState_, geom_->toFortran(), vars, fset.get(), include_halo,
+                          flip_vert_lev);
+  oops::Log::trace() << "State getFieldSet done" << std::endl;
+}
+
 // -----------------------------------------------------------------------------
 /// Interpolate full state
 // -----------------------------------------------------------------------------

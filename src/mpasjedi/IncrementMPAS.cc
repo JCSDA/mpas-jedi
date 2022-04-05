@@ -7,9 +7,14 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <ios>
 #include <iostream>
+#include <numeric>
+#include <sstream>
+#include <string>
 #include <vector>
 
+//?  #include "oops/generic/InterpolatorUnstructured.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
@@ -28,7 +33,7 @@ IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom,
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_zero_f90(keyInc_);
-  oops::Log::trace() << "IncrementMPAS constructed." << std::endl;
+  oops::Log::trace() << "Increment::Increment (from geom, vars and time) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
@@ -37,7 +42,7 @@ IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
-  oops::Log::trace() << "IncrementMPAS constructed from other." << std::endl;
+  oops::Log::trace() << "Increment::Increment (from geom/resol and other) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
@@ -49,7 +54,7 @@ IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
   } else {
     mpas_increment_zero_f90(keyInc_);
   }
-  oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
+  oops::Log::trace() << "Increment::Increment (from other and bool copy) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
@@ -57,7 +62,7 @@ IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_copy_f90(keyInc_, other.keyInc_);
-  oops::Log::trace() << "IncrementMPAS copy-created." << std::endl;
+  oops::Log::trace() << "Increment::Increment (from other) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 IncrementMPAS::~IncrementMPAS() {
@@ -154,22 +159,48 @@ double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
 void IncrementMPAS::random() {
   mpas_increment_random_f90(keyInc_);
 }
+
 // -----------------------------------------------------------------------------
 /// ATLAS
 // -----------------------------------------------------------------------------
+// Here toAtlas and fromAtlas are used in saber (B^-1 term) without halo or vertical flip
 void IncrementMPAS::setAtlas(atlas::FieldSet * afieldset) const {
-  mpas_increment_set_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-    afieldset->get());
+  oops::Log::trace() << "mpasjedi::Increment::setAtlas starting" << std::endl;
+  mpas_increment_set_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false);
+  oops::Log::trace() << "mpasjedi::Increment::setAtlas done" << std::endl;
 }
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 void IncrementMPAS::toAtlas(atlas::FieldSet * afieldset) const {
-  mpas_increment_to_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-    afieldset->get());
+  oops::Log::trace() << "mpasjedi::Increment::toAtlas starting" << std::endl;
+  mpas_increment_to_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
+  oops::Log::trace() << "mpasjedi::Increment::toAtlas done" << std::endl;
 }
-// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
-  mpas_increment_from_atlas_f90(toFortran(), geom_->toFortran(), vars_,
-    afieldset->get());
+  oops::Log::trace() << "mpasjedi::Increment::fromAtlas starting" << std::endl;
+  mpas_increment_from_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
+  oops::Log::trace() << "mpasjedi::Increment::fromAtlas done" << std::endl;
+}
+// -------------------------------------------------------------------------------------------------
+void IncrementMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
+  // Quenstionable : true for halo and flip_vert_lev
+  const bool include_halo = true;
+  const bool flip_vert_lev = true;
+  oops::Log::trace() << "mpasjedi::Increment:::getFieldSet starting" << std::endl;
+  mpas_increment_set_atlas_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo);
+  mpas_increment_to_atlas_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo,
+                              flip_vert_lev);
+  oops::Log::trace() << "mpasjedi::Increment::getFieldSet done" << std::endl;
+}
+// -------------------------------------------------------------------------------------------------
+void IncrementMPAS::getFieldSetAD(const oops::Variables & vars, const atlas::FieldSet & fset) {
+  // Quenstionable : true for halo and flip_vert_lev
+  const bool include_halo = true;
+  const bool flip_vert_lev = true;
+  oops::Log::trace() << "mpasjedi::Increment:::getFieldSetAD starting" << std::endl;
+  mpas_increment_to_atlas_ad_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo,
+                                 flip_vert_lev);
+  oops::Log::trace() << "mpasjedi::Increment::getFieldSetAD done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
@@ -196,7 +227,6 @@ size_t IncrementMPAS::serialSize() const {
   nn += time_.serialSize();
   return nn;
 }
-
 // -----------------------------------------------------------------------------
 constexpr double SerializeCheckValue = -54321.98765;
 void IncrementMPAS::serialize(std::vector<double> & vect) const {

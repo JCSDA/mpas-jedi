@@ -5,6 +5,10 @@
 
 module mpas_fields_mod
 
+! atlas
+use atlas_module, only: atlas_field, atlas_fieldset, atlas_real, atlas_metadata
+
+! fckit
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only: fckit_log
 use iso_c_binding
@@ -14,13 +18,13 @@ use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use string_utils, only: swap_name_member
-use unstructured_interpolation_mod
+use slow_oops_unstructured_interpolation_mod, only : unstrc_interp
 
 ! saber
 use interpolatorbump_mod, only: bump_interpolator
 
 !ufo
-use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
+use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex, var_prsi
 use ufo_locations_mod
 use ufo_geovals_mod, only: ufo_geovals
 
@@ -32,6 +36,7 @@ use mpas_kind_types, only: StrKIND
 use mpas_pool_routines
 use mpas_stream_manager
 use mpas_timekeeping
+use mpas_dmpar, only : mpas_dmpar_exch_halo_field, mpas_dmpar_exch_halo_adj_field
 
 !mpas-jedi
 use mpas_constants_mod
@@ -93,7 +98,10 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: serial_size  => serial_size
      procedure :: serialize    => serialize_fields
      procedure :: deserialize  => deserialize_fields
-
+     procedure :: set_atlas
+     procedure :: to_atlas
+     procedure :: from_atlas
+     procedure :: to_atlas_ad     
      !has
      generic, public :: has => has_field, has_fields
      procedure :: has_field
@@ -161,7 +169,8 @@ public :: mpas_fields, mpas_fields_registry, &
         push_back_other_pool_field, &
         push_back_other_pool
 
-   end type mpas_fields
+
+  end type mpas_fields
 
 !   abstract interface
 !
@@ -710,7 +719,7 @@ subroutine dot_prod_(self,fld,zprod)
 
 end subroutine dot_prod_
 
-! ------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
 
 !> \brief Populates subfields of self using rhs
 !!
@@ -875,8 +884,8 @@ subroutine initialize_uns_interp(geom_to, geom_from, unsinterp)
    ! ---------------
    nn = 3 ! number of nearest neigbors
    call unsinterp%create(geom_from%f_comm, nn, wtype, &
-                         ngrid_from, lats_from, lons_from, &
-                         ngrid_to, lats_to, lons_to)
+        ngrid_from, lats_from, lons_from, &
+        ngrid_to, lats_to, lons_to)
 
    ! Release memory
    ! --------------
@@ -1405,5 +1414,360 @@ subroutine push_back_other_fields(self, key, other)
   class(mpas_fields), intent(in) :: other
   call self%push_back(key, other%subFields, key)
 end subroutine push_back_other_fields
+
+
+! ------------------------------------------------------------------------------
+
+subroutine set_atlas(self, geom, vars, afieldset, opt_include_halo)
+
+   implicit none
+
+   class(mpas_fields),    intent(in)    :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(atlas_fieldset), intent(inout) :: afieldset
+   logical, optional,     intent(in)    :: opt_include_halo
+   
+   integer :: jvar, nlevels
+   logical :: var_found
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
+
+   logical :: include_halo
+   if (present(opt_include_halo)) then
+      include_halo = opt_include_halo
+   else
+      include_halo = .false.
+   endif
+   
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            if (.not.afieldset%has_field(vars%variable(jvar))) then
+               ! Create field
+               if (poolItr%nDims==1) then
+                  nlevels = 0
+               else if (poolItr%nDims==2) then
+                  !
+                  ! global vert level set
+                  !
+                  nlevels = getVertLevels(self%subFields, vars%variable(jvar))
+               else if (poolItr%nDims==3) then
+                  call abor1_ftn('not implemented yet')
+               end if
+               if (include_halo) then
+                  afield = geom%afunctionspace_incl_halo%create_field &
+                       (name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
+               else
+                  afield = geom%afunctionspace%create_field &
+                       (name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
+               endif
+               
+               ! Add field
+               call afieldset%add(afield)
+
+               ! Release pointer
+               call afield%final()
+            end if
+
+            ! Set flag
+            var_found = .true.
+            exit
+         end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+   end do
+
+end subroutine set_atlas
+
+
+subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
+
+   implicit none
+
+   class(mpas_fields),   intent(in)    :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(atlas_fieldset), intent(inout) :: afieldset
+   logical,               intent(in)    :: include_halo
+   logical,               intent(in)    :: flip_vert_lev
+
+   integer :: jvar, nlevels
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   integer, pointer :: i1d_ptr_a(:), i2d_ptr_a(:,:)
+   logical :: var_found
+   type(atlas_field) :: afield
+   type(atlas_metadata) :: meta
+   type(mpas_pool_iterator_type) :: poolItr
+
+   type(mpas_pool_data_type), pointer :: data_aux 
+   type(field1DReal), pointer :: r1
+   type(field2DReal), pointer :: r2
+   type(field1DInteger), pointer :: i1
+   type(field2DInteger), pointer :: i2
+   integer :: nx, ilev, jlev
+
+   ! note:  update-halo for mpas-field, flip_vert_level, pass data to atlas field
+   !        assign 'default, interp_type' in atlas's metadata
+   
+   if (include_halo) then
+      nx=geom%nCells
+   else
+      nx=geom%nCellsSolve
+   endif
+
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            if (afieldset%has_field(vars%variable(jvar))) then
+               ! Get Atlas field
+               afield = afieldset%field(vars%variable(jvar))
+            else
+               call abor1_ftn("to_atlas abort, due to vars%ariable(jvar) does not exist in afieldset, &
+               in this case, we suspect  set_atlas is not being properly called &
+               or we should consider create additional afield in afieldset")
+            endif
+            !
+            nlevels = getVertLevels(self%subFields, vars%variable(jvar))
+            call self%get_data(poolItr%memberName, data_aux)
+            ! equiv. ref. data_aux = pool_get_member(self % subFields, poolItr%memberName, MPAS_POOL_FIELD)
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               if (poolItr%nDims==1) then
+                  if (include_halo) then
+                     r1 => data_aux%r1
+                     call mpas_dmpar_exch_halo_field(r1)
+                  endif
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
+                  call afield%data(real_ptr_1)
+                  real_ptr_1(1:nx) = r1d_ptr_a(1:nx)
+                  !
+               else if (poolItr%nDims==2) then
+                  if (include_halo) then
+                     r2 => data_aux%r2
+                     call mpas_dmpar_exch_halo_field(r2)
+                  end if
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
+                  call afield%data(real_ptr_2)
+                  ! for CRTM: vertical level flip
+                  do jlev = 1, nlevels
+                     if (flip_vert_lev) then
+                        ilev = nlevels - jlev + 1
+                     else
+                        ilev = jlev
+                     endif
+                     real_ptr_2(ilev,1:nx) = r2d_ptr_a(jlev,1:nx)
+                  enddo
+               end if
+            elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
+               if (poolItr%nDims==1) then
+                  if (include_halo) then
+                     i1 => data_aux%i1
+                     call mpas_dmpar_exch_halo_field(i1)
+                  end if
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), i1d_ptr_a)
+                  call afield%data(real_ptr_1)
+                  real_ptr_1(1:nx) = i1d_ptr_a(1:nx)*1.0
+               else if (poolItr%nDims==2) then
+                  write(message,*) '--> fill_geovals: nDims == 2:  not handled for integers'
+                  call abor1_ftn(message)
+               end if
+            else
+               STOP 'poolItr % dataType neither real nor integer'
+            endif
+               
+            meta = afield%metadata()
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               call meta%set('interp_type', 'default')
+            elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
+               call meta%set('interp_type', 'integer')
+            else
+               call abor1_ftn('poolItr % dataType .NE. real OR integer, unexpected')
+            endif
+
+            ! Release pointer
+            call afield%final()
+
+            ! Set flag
+            var_found = .true.
+            exit
+         end if   ! if (trim(vars%variable(jvar))==trim(poolItr%memberName))
+      end do      ! mpas_pool_get_next_member
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+   end do         ! do jvar=1, vars%nvars()
+end subroutine to_atlas
+
+
+subroutine from_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
+
+   implicit none
+
+   class(mpas_fields),   intent(inout) :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(atlas_fieldset), intent(in)    :: afieldset
+   logical,              intent(in)    :: include_halo
+   logical,              intent(in)    :: flip_vert_lev
+   
+   integer :: jvar
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   logical :: var_found
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
+
+   type(mpas_pool_data_type), pointer :: data_aux 
+   type(field1DReal), pointer :: r1
+   type(field2DReal), pointer :: r2
+
+
+   integer :: nlevels, nx, ilev, jlev
+   ! Note:
+   !   1. pass data from atlas_field to MPAS field
+   !      a. real-type(afield) --> real/integer (MPAS type), bc atlas has only real
+   !      b. flip back vertical levels
+   !   2. no-halo exchange in this case for saber useage
+
+   if (include_halo) then
+      nx=geom%nCells
+   else
+      nx=geom%nCellsSolve
+   endif
+            
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            ! Get atlas field
+            afield = afieldset%field(vars%variable(jvar))
+            ! Get MPAS data (pool_data_type) 
+            call self%get_data(poolItr%memberName, data_aux)
+            nlevels = getVertLevels(self%subFields, vars%variable(jvar))
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               if (poolItr%nDims==1) then
+                  call afield%data(real_ptr_1)
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
+                  r1d_ptr_a(1:nx) = real_ptr_1(1:nx)
+               else if (poolItr%nDims==2) then
+                  call afield%data(real_ptr_2)
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
+                  ! for CRTM: vertical level flip 
+                  do jlev = 1, nlevels
+                     if (flip_vert_lev) then
+                        ilev = nlevels - jlev + 1
+                     else
+                        ilev = jlev
+                     endif
+                     r2d_ptr_a(jlev,1:nx) = real_ptr_2(ilev,1:nx) 
+                  enddo
+               end if
+            elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
+                  write(message,*) 'from_atlas error: integers are not handled here'
+                  call abor1_ftn(message)
+            else
+               call abor1_ftn('poolItr % dataType neither real nor integer')
+            endif
+
+            ! Release pointer
+            call afield%final()
+
+            ! Set flag
+            var_found = .true.
+            exit
+         end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+   end do
+end subroutine from_atlas
+
+! ------------------------------------------------------------------------------
+
+subroutine to_atlas_ad (self, geom, vars, afieldset, include_halo, flip_vert_lev)
+
+   implicit none
+
+   class(mpas_fields),   intent(inout) :: self
+   type(mpas_geom),      intent(in)    :: geom
+   type(oops_variables), intent(in)    :: vars
+   type(atlas_fieldset), intent(in)    :: afieldset
+   logical,              intent(in)    :: include_halo
+   logical,              intent(in)    :: flip_vert_lev
+   
+   integer :: jvar
+   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   logical :: var_found
+   type(atlas_field) :: afield
+   type(mpas_pool_iterator_type) :: poolItr
+
+   type(mpas_pool_data_type), pointer :: data_aux 
+   type(field1DReal), pointer :: r1
+   type(field2DReal), pointer :: r2
+
+   integer :: nlevels, nx, ilev, jlev
+   ! Note:
+   !   this is the adjoint of to_atlas, so reverse the code instruction order
+   !   1. do assignment (Y_atlas=X_mpas --> X_mpas* = X* + Y* ) in vertical level flip
+   !   2. exch_halo_ad :  AD code for MPI exch_halo 
+   
+   if (include_halo) then
+      nx=geom%nCells
+   else
+      nx=geom%nCellsSolve
+      call abor1_ftn('Error in subroutine to_atlas_ad, must have halo here')
+   endif
+            
+   do jvar = 1,vars%nvars()
+      var_found = .false.
+      call mpas_pool_begin_iteration(self%subFields)
+      do while (mpas_pool_get_next_member(self%subFields, poolItr))
+         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
+            ! Get atlas field
+            afield = afieldset%field(vars%variable(jvar))
+            ! Get MPAS data (pool_data_type) 
+            call self%get_data(poolItr%memberName, data_aux)
+            nlevels = getVertLevels(self%subFields, vars%variable(jvar))
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               if (poolItr%nDims==1) then
+                  call afield%data(real_ptr_1)
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
+                  r1d_ptr_a(1:nx) = r1d_ptr_a(1:nx) + real_ptr_1(1:nx)  
+                  r1 => data_aux%r1
+                  call mpas_dmpar_exch_halo_adj_field(r1)
+               else if (poolItr%nDims==2) then
+                  call afield%data(real_ptr_2)
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
+                  ! for CRTM: vertical level flip
+                  do jlev = nlevels, 1, -1
+                     if (flip_vert_lev) then
+                        ilev = nlevels - jlev + 1
+                     else
+                        ilev = jlev
+                     endif
+                     r2d_ptr_a(jlev,1:nx) = r2d_ptr_a(jlev,1:nx) + real_ptr_2(ilev,1:nx) 
+                  enddo
+                  r2 => data_aux%r2
+                  call mpas_dmpar_exch_halo_adj_field(r2)
+               end if
+            elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
+               call abor1_ftn('to_atlas_ad integer should not happen, stop')
+            endif
+            ! Release pointer
+            call afield%final()
+
+            ! Set flag
+            var_found = .true.
+            exit
+         end if
+      end do
+      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
+   end do
+end subroutine to_atlas_ad
+
 
 end module mpas_fields_mod

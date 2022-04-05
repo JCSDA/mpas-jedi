@@ -1,2 +1,3 @@
 # Ignore these files anywhere in the tree
 *.pyc
+*~

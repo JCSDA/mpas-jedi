@@ -106,9 +106,6 @@ list( APPEND mpas_testinput
   testinput/parameters_bumploc.yaml
   testinput/rtpp.yaml
   testinput/state.yaml
-  testinput/getvalues_bumpinterp.yaml
-  testinput/getvalues_unsinterp.yaml
-  testinput/lineargetvalues.yaml
 )
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
@@ -712,9 +709,6 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    add_mpasjedi_unit_test( CLASS GetValues NAME getvalues_bumpinterp YAMLFILE getvalues_bumpinterp )
-    add_mpasjedi_unit_test( CLASS GetValues NAME getvalues_unsinterp  YAMLFILE getvalues_unsinterp )
-    add_mpasjedi_unit_test( CLASS LinearGetValues YAMLFILE lineargetvalues )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output

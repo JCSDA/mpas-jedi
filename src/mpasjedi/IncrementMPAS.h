@@ -14,8 +14,10 @@
 #include <vector>
 
 #include "atlas/field.h"
+#include "atlas/functionspace.h"
 
-#include "oops/base/Variables.h"
+#include "oops/base/LocalIncrement.h"
+#include "oops/base/WriteParametersBase.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/dot_product.h"
 #include "oops/util/Duration.h"
@@ -37,7 +39,6 @@ namespace oops {
 
 namespace mpas {
   class GeometryMPAS;
-  class GetValuesTrajMPAS;
   class StateMPAS;
 
 /// Increment Class: Difference between two states
@@ -87,6 +88,8 @@ class IncrementMPAS : public util::Printable,
   void setAtlas(atlas::FieldSet *) const;
   void toAtlas(atlas::FieldSet *) const;
   void fromAtlas(atlas::FieldSet *);
+  void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+  void getFieldSetAD(const oops::Variables &, const atlas::FieldSet &);
 
 /// I/O and diagnostics
   void read(const ReadParameters_ &);
@@ -97,6 +100,11 @@ class IncrementMPAS : public util::Printable,
 
 /// Other
   void accumul(const double &, const StateMPAS &);
+
+/// Serialize and deserialize
+  size_t serialSize() const override;
+  void serialize(std::vector<double> &) const override;
+  void deserialize(const std::vector<double> &, size_t &) override;
 
   std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}
@@ -109,10 +117,6 @@ class IncrementMPAS : public util::Printable,
   int & toFortran() {return keyInc_;}
   const int & toFortran() const {return keyInc_;}
 
-/// Serialization
-  size_t serialSize() const override;
-  void serialize(std::vector<double> &) const override;
-  void deserialize(const std::vector<double> &, size_t &) override;
 
 /// Data
  private:

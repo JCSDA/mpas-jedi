@@ -9,6 +9,7 @@ module mpas_state_interface_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
+use atlas_module, only: atlas_fieldset
 
 !oops
 use datetime_mod
@@ -375,6 +376,64 @@ call self%deserialize(c_vsize, c_vect_inc, c_index)
 end subroutine mpas_state_deserialize_c
 
 ! ------------------------------------------------------------------------------
+
+subroutine mpas_state_set_atlas_c(c_key_self, c_key_geom, c_vars, c_afieldset, c_include_halo) &
+  & bind (c,name='mpas_state_set_atlas_f90')
+
+implicit none
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+type(c_ptr), value, intent(in) :: c_vars
+type(c_ptr), intent(in), value :: c_afieldset
+logical, intent(in)        :: c_include_halo
+
+type(mpas_fields), pointer :: self
+type(mpas_geom),  pointer :: geom
+type(oops_variables) :: vars
+type(atlas_fieldset) :: afieldset
+
+call mpas_fields_registry%get(c_key_self, self)
+call mpas_geom_registry%get(c_key_geom, geom)
+vars = oops_variables(c_vars)
+afieldset = atlas_fieldset(c_afieldset)
+
+call self%set_atlas(geom, vars, afieldset, c_include_halo)
+
+end subroutine mpas_state_set_atlas_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_state_to_atlas_c(c_key_self, c_key_geom, c_vars, c_afieldset, c_include_halo, c_flip_vert_lev) &
+ & bind (c,name='mpas_state_to_atlas_f90')
+
+implicit none
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_geom
+type(c_ptr), value, intent(in) :: c_vars
+type(c_ptr), intent(in), value :: c_afieldset
+logical(c_bool), intent(in)    :: c_include_halo
+logical(c_bool), intent(in)    :: c_flip_vert_lev
+
+type(mpas_fields), pointer :: self
+type(mpas_geom),  pointer :: geom
+type(oops_variables) :: vars
+type(atlas_fieldset) :: afieldset
+logical :: include_halo
+logical :: flip_vert_lev
+
+call mpas_fields_registry%get(c_key_self, self)
+call mpas_geom_registry%get(c_key_geom, geom)
+vars = oops_variables(c_vars)
+afieldset = atlas_fieldset(c_afieldset)
+
+include_halo = c_include_halo
+flip_vert_lev = c_flip_vert_lev
+
+call self%to_atlas(geom, vars, afieldset, include_halo, flip_vert_lev)
+
+end subroutine mpas_state_to_atlas_c
+
+! --------------------------------------------------------------------------------------------------
 
 end module mpas_state_interface_mod
 

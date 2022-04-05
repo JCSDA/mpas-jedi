@@ -23,15 +23,20 @@ GeometryMPAS::GeometryMPAS(const GeometryMPASParameters & params,
 
   // Set ATLAS lon/lat field
   atlasFieldSet_.reset(new atlas::FieldSet());
-  mpas_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet_->get());
-  atlas::Field atlasField = atlasFieldSet_->field("lonlat");
+  const bool include_halo = true;  // include halo so we can set up both function spaces
+  mpas_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet_->get(), include_halo);
 
   // Create ATLAS function space
+  const atlas::Field atlasField = atlasFieldSet_->field("lonlat");
   atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(atlasField));
+  ASSERT(include_halo);
+  // Create ATLAS function space with halo
+  const atlas::Field atlasFieldInclHalo = atlasFieldSet_->field("lonlat_including_halo");
+  atlasFunctionSpaceIncludingHalo_.reset(new atlas::functionspace::PointCloud(atlasFieldInclHalo));
 
   // Set ATLAS function space pointer in Fortran
-  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
-    atlasFunctionSpace_->get());
+  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_, atlasFunctionSpace_->get(),
+                                               atlasFunctionSpaceIncludingHalo_->get());
 
   // Fill ATLAS fieldset
   atlasFieldSet_.reset(new atlas::FieldSet());
@@ -45,11 +50,15 @@ GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) : comm_(other.comm_) {
   oops::Log::trace() << "========= GeometryMPAS mpas_geo_clone_f90   =========="
                      << std::endl;
   mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
+
   atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
-                              other.atlasFunctionSpace_->lonlat()));
-  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_,
-    atlasFunctionSpace_->get());
+                                       other.atlasFunctionSpace_->lonlat()));
+  atlasFunctionSpaceIncludingHalo_.reset(new atlas::functionspace::PointCloud(
+                            other.atlasFunctionSpaceIncludingHalo_->lonlat()));
+  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_, atlasFunctionSpace_->get(),
+                                               atlasFunctionSpaceIncludingHalo_->get());
   atlasFieldSet_.reset(new atlas::FieldSet());
+
   for (int jfield = 0; jfield < other.atlasFieldSet_->size(); ++jfield) {
     atlas::Field atlasField = other.atlasFieldSet_->field(jfield);
     atlasFieldSet_->add(atlasField);
@@ -75,6 +84,25 @@ std::vector<size_t> GeometryMPAS::variableSizes(const oops::Variables & vars) co
   mpas_geo_vars_nlevels_f90(keyGeom_, vars, vars.size(), varSizes[0]);
 
   return varSizes;
+}
+// -----------------------------------------------------------------------------
+void GeometryMPAS::latlon(std::vector<double> & lats, std::vector<double> & lons,
+                      const bool halo) const {
+  const atlas::functionspace::PointCloud * fspace;
+  if (halo) {
+    fspace = atlasFunctionSpaceIncludingHalo_.get();
+  } else {
+    fspace = atlasFunctionSpace_.get();
+  }
+  const auto lonlat = atlas::array::make_view<double, 2>(fspace->lonlat());
+  const size_t npts = fspace->size();
+  lats.resize(npts);
+  lons.resize(npts);
+  for (size_t jj = 0; jj < npts; ++jj) {
+    lats[jj] = lonlat(jj, 1);
+    lons[jj] = lonlat(jj, 0);
+    if (lons[jj] < 0.0) lons[jj] += 360.0;
+  }
 }
 // -----------------------------------------------------------------------------
 void GeometryMPAS::print(std::ostream & os) const {

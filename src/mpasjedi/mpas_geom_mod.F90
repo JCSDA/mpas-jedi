@@ -5,7 +5,7 @@
 
 module mpas_geom_mod
 
-use atlas_module, only: atlas_functionspace, atlas_fieldset, atlas_field, atlas_real
+use atlas_module, only: atlas_field, atlas_fieldset, atlas_real, atlas_functionspace
 use fckit_configuration_module, only: fckit_configuration, fckit_YAMLConfiguration
 use fckit_pathname_module, only: fckit_pathname
 use fckit_log_module, only: fckit_log
@@ -90,7 +90,8 @@ type :: mpas_geom
    type(fckit_mpi_comm) :: f_comm
 
    type(atlas_functionspace) :: afunctionspace
-
+   type(atlas_functionspace) :: afunctionspace_incl_halo
+   
    type(templated_field), allocatable :: templated_fields(:)
 
    contains
@@ -353,23 +354,39 @@ end subroutine geo_setup
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine geo_set_atlas_lonlat(self, afieldset)
+subroutine geo_set_atlas_lonlat(self, afieldset, include_halo)
 
    implicit none
 
    type(mpas_geom),  intent(inout) :: self
    type(atlas_fieldset), intent(inout) :: afieldset
-
+   logical,              intent(in) :: include_halo
+   
+   !Locals
    real(kind_real), pointer :: real_ptr(:,:)
-   type(atlas_field) :: afield
-
+   type(atlas_field) :: afield, afield_incl_halo
+   integer :: nx
+   
    ! Create lon/lat field
-   afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,self%nCellsSolve/))
+   nx=self%nCellsSolve
+   afield = atlas_field(name="lonlat", kind=atlas_real(kind_real), shape=(/2,nx/))   
    call afield%data(real_ptr)
-   real_ptr(1,:) = self%lonCell(1:self%nCellsSolve) * MPAS_JEDI_RAD2DEG_kr
-   real_ptr(2,:) = self%latCell(1:self%nCellsSolve) * MPAS_JEDI_RAD2DEG_kr
+   real_ptr(1,:) = self%lonCell(1:nx) * MPAS_JEDI_RAD2DEG_kr
+   real_ptr(2,:) = self%latCell(1:nx) * MPAS_JEDI_RAD2DEG_kr
    call afieldset%add(afield)
 
+   if (include_halo) then
+      nullify(real_ptr)
+      nx=self%nCells      
+      ! Create an additional lon/lat field containing owned points (as above) and also halo
+      afield_incl_halo = atlas_field(name="lonlat_including_halo", kind=atlas_real(kind_real), &
+           shape=(/2,nx/))
+      call afield_incl_halo%data(real_ptr)
+      real_ptr(1,:) = self%lonCell(1:nx) * MPAS_JEDI_RAD2DEG_kr
+      real_ptr(2,:) = self%latCell(1:nx) * MPAS_JEDI_RAD2DEG_kr
+      call afieldset%add(afield_incl_halo)
+   endif
+   
 end subroutine geo_set_atlas_lonlat
 
 ! --------------------------------------------------------------------------------------------------
@@ -616,6 +633,9 @@ subroutine geo_clone(self, other)
    self % areaTriangle      = other % areaTriangle
    self % angleEdge         = other % angleEdge
 
+   self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
+   self%afunctionspace_incl_halo = atlas_functionspace(other%afunctionspace_incl_halo%c_ptr())
+
    call fckit_log%debug('====> copy of geom corelist and domain')
 
    self % corelist => other % corelist
@@ -686,6 +706,9 @@ subroutine geo_delete(self)
          end if
       end if
    end do
+   
+   call self%afunctionspace%final()
+   call self%afunctionspace_incl_halo%final()
 
 end subroutine geo_delete
 

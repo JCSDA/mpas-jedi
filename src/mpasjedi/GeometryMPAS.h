@@ -43,11 +43,11 @@ class GeometryMPAS : public util::Printable,
   F90geom & toFortran() {return keyGeom_;}
   const F90geom & toFortran() const {return keyGeom_;}
   const eckit::mpi::Comm & getComm() const {return comm_;}
-
-  atlas::FunctionSpace * atlasFunctionSpace() const
-    {return atlasFunctionSpace_.get();}
-  atlas::FieldSet * atlasFieldSet() const
-    {return atlasFieldSet_.get();}
+  atlas::FunctionSpace * atlasFunctionSpace() const {return atlasFunctionSpace_.get();}
+  atlas::FunctionSpace * atlasFunctionSpaceIncludingHalo() const {
+      return atlasFunctionSpaceIncludingHalo_.get();}
+  atlas::FieldSet * atlasFieldSet() const {return atlasFieldSet_.get();}
+  void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
 
   bool isEqual(const GeometryMPAS &) const;
 
@@ -59,6 +59,7 @@ class GeometryMPAS : public util::Printable,
   F90geom keyGeom_;
   const eckit::mpi::Comm & comm_;
   std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
+  std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpaceIncludingHalo_;
   std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
 };
 // -----------------------------------------------------------------------------

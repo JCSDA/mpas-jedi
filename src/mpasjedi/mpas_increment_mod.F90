@@ -5,7 +5,7 @@
 
 module mpas_increment_mod
 
-use atlas_module, only: atlas_geometry, atlas_field, atlas_fieldset, atlas_real
+use atlas_module, only: atlas_geometry
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only: fckit_log
 
@@ -36,8 +36,7 @@ implicit none
 
 private
 
-public :: diff_incr, dirac, &
-        & set_atlas, to_atlas, from_atlas
+public :: diff_incr, dirac
 
 integer, parameter    :: max_string=8000
 character(max_string) :: message
@@ -241,175 +240,6 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
       end do
    end do
 end function nearest_cell
-
-! ------------------------------------------------------------------------------
-
-subroutine set_atlas(self, geom, vars, afieldset)
-
-   implicit none
-
-   type(mpas_fields),    intent(in)    :: self
-   type(mpas_geom),      intent(in)    :: geom
-   type(oops_variables), intent(in)    :: vars
-   type(atlas_fieldset), intent(inout) :: afieldset
-
-   integer :: jvar, nlevels
-   logical :: var_found
-   type(atlas_field) :: afield
-   type(mpas_pool_iterator_type) :: poolItr
-
-   do jvar = 1,vars%nvars()
-      var_found = .false.
-      call mpas_pool_begin_iteration(self%subFields)
-      do while (mpas_pool_get_next_member(self%subFields, poolItr))
-         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
-            if (.not.afieldset%has_field(vars%variable(jvar))) then
-               ! Create field
-               if (poolItr%nDims==1) then
-                  nlevels = 0
-               else if (poolItr%nDims==2) then
-                  nlevels = geom%nVertLevels
-               else if (poolItr%nDims==3) then
-                  call abor1_ftn('not implemented yet')
-               end if
-               afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
-
-               ! Add field
-               call afieldset%add(afield)
-
-               ! Release pointer
-               call afield%final()
-            end if
-
-            ! Set flag
-            var_found = .true.
-            exit
-         end if
-      end do
-      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
-   end do
-
-end subroutine set_atlas
-
-! ------------------------------------------------------------------------------
-
-subroutine to_atlas(self, geom, vars, afieldset)
-
-   implicit none
-
-   type(mpas_fields),    intent(in)    :: self
-   type(mpas_geom),      intent(in)    :: geom
-   type(oops_variables), intent(in)    :: vars
-   type(atlas_fieldset), intent(inout) :: afieldset
-
-   integer :: jvar, nlevels
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
-   logical :: var_found
-   type(atlas_field) :: afield
-   type(mpas_pool_iterator_type) :: poolItr
-
-   do jvar = 1,vars%nvars()
-      var_found = .false.
-      call mpas_pool_begin_iteration(self%subFields)
-      do while (mpas_pool_get_next_member(self%subFields, poolItr))
-         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
-            if (afieldset%has_field(vars%variable(jvar))) then
-               ! Get field
-               afield = afieldset%field(vars%variable(jvar))
-            else
-               ! Create field
-               if (poolItr%nDims==1) then
-                  nlevels = 0
-               else if (poolItr%nDims==2) then
-                  nlevels = geom%nVertLevels
-               else if (poolItr%nDims==3) then
-                  call abor1_ftn('not implemented yet')
-               end if
-               afield = geom%afunctionspace%create_field(name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
-
-               ! Add field
-               call afieldset%add(afield)
-            end if
-
-            ! Copy data
-            if (poolItr%nDims==1) then
-               call afield%data(real_ptr_1)
-               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-               real_ptr_1 = r1d_ptr_a(1:geom%nCellsSolve)
-            else if (poolItr%nDims==2) then
-               call afield%data(real_ptr_2)
-               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
-               real_ptr_2 = r2d_ptr_a(1:geom%nVertLevels,1:geom%nCellsSolve)
-            end if
-
-            ! Release pointer
-            call afield%final()
-
-            ! Set flag
-            var_found = .true.
-            exit
-         end if
-      end do
-      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
-   end do
-
-end subroutine to_atlas
-
-! ------------------------------------------------------------------------------
-
-subroutine from_atlas(self, geom, vars, afieldset)
-
-   implicit none
-
-   type(mpas_fields),    intent(inout) :: self
-   type(mpas_geom),      intent(in)    :: geom
-   type(oops_variables), intent(in)    :: vars
-   type(atlas_fieldset), intent(in)    :: afieldset
-
-   integer :: jvar
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
-   logical :: var_found
-   type(atlas_field) :: afield
-   type(mpas_pool_iterator_type) :: poolItr
-
-   do jvar = 1,vars%nvars()
-      var_found = .false.
-      call mpas_pool_begin_iteration(self%subFields)
-      do while (mpas_pool_get_next_member(self%subFields, poolItr))
-         if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
-            ! Get field
-            afield = afieldset%field(vars%variable(jvar))
-
-            ! Copy data
-            if (poolItr%nDims==1) then
-               call afield%data(real_ptr_1)
-               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-               r1d_ptr_a(1:geom%nCellsSolve) = real_ptr_1
-            else if (poolItr%nDims==2) then
-               call afield%data(real_ptr_2)
-               call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
-               r2d_ptr_a(1:geom%nVertLevels,1:geom%nCellsSolve) = real_ptr_2
-            else if (poolItr%nDims==3) then
-               call abor1_ftn('not implemented yet')
-            end if
-
-            ! Release pointer
-            call afield%final()
-
-            ! Set flag
-            var_found = .true.
-            exit
-         end if
-      end do
-      if (.not.var_found) call abor1_ftn('variable '//trim(vars%variable(jvar))//' not found in increment')
-   end do
-
-   ! TODO: Since only local locations are updated/transferred from ug, 
-   !       need MPAS HALO comms before using these fields in MPAS
-
-end subroutine from_atlas
 
 ! ------------------------------------------------------------------------------
 
