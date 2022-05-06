@@ -399,7 +399,6 @@ class JediDB:
         del allFiles
 
         # error checking
-        self.nObsFiles = {}
         self.loggers = {}
         for osKey, fileTypes in self.Files.items():
             self.loggers[osKey] = logging.getLogger(__name__+'.'+osKey)
@@ -410,18 +409,6 @@ class JediDB:
                            There are no '''+obsFKey+'''
                            feedback files with prefix '''+self.filePrefixes[obsFKey]+'''
                            osKey = '''+osKey)
-            self.nObsFiles[osKey] = nObsFiles
-            # force crash when # of non-obs files is > 0 but != # of obsFKey files
-            for key, prefix in self.filePrefixes.items():
-                if key == obsFKey: continue
-                nFiles = len(fileTypes.get(key,[]))
-                if nFiles > 0 and nFiles < nObsFiles:
-                    self.loggers[osKey].error('''
-                               There are not enough '''+key+'''
-                               feedback files with prefix '''+prefix+'''
-                               #'''+obsFKey+' = '+str(nObsFiles)+'''
-                               #'''+key+' = '+str(nFiles)+'''
-                               osKey = '''+osKey)
 
         # eliminate osKeys that are designated to not be processed
         self.ObsSpaceName = {}
@@ -478,9 +465,8 @@ class JediDB:
         self.Handles[osKey] = {}
 
         for fileType, files in self.Files[osKey].items():
-            if len(files) == self.nObsFiles[osKey]:
-                self.loggers[osKey].info(' fileType = '+fileType)
-                self.Handles[osKey][fileType] = FileHandles(files, 'r')
+            self.loggers[osKey].info(' fileType = '+fileType)
+            self.Handles[osKey][fileType] = FileHandles(files, 'r')
 
 
     def destroyHandles(self, osKey):
