@@ -262,10 +262,6 @@ double IncrementMPAS::norm() const {
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::print(std::ostream & os) const {
-  // store os fmt state
-  std::ios oldState(nullptr);
-  oldState.copyfmt(os);
-
   int nc = 0;
   int nf = 0;
   mpas_increment_sizes_f90(keyInc_, nc, nf);
@@ -275,16 +271,11 @@ void IncrementMPAS::print(std::ostream & os) const {
      ", nFields = " << nf;
   std::vector<double> zstat(3*nf);
   mpas_increment_gpnorm_f90(keyInc_, nf, zstat[0]);
-  os << std::setprecision(9);
-  os << std::scientific;
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
        << ", Max=" << zstat[3*jj+1] << ", RMS=" << zstat[3*jj+2]
        << " : " << vars_[jj];
   }
-
-  // restore os fmt state
-  os.copyfmt(oldState);
 }
 // -----------------------------------------------------------------------------
 void IncrementMPAS::dirac(const DiracParameters & params) {
