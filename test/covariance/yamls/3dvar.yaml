@@ -63,1829 +63,1830 @@ cost function:
       output variables: *incvars
 
   observations:
-  - obs space:
-      name: Radiosonde
-      obsdatain:
-        obsfile: Data/sondes_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_sonde.h5
-      simulated variables: [air_temperature, virtual_temperature, eastward_wind, northward_wind, specific_humidity]
-    obs operator:
-      name: VertInterp
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: PreQC
-      maxvalue: 3
-      apply at iterations: 0
-    - filter: Background Check
-      threshold: 3
-    get values:
-      interpolation type: unstructured
-  - obs space:
-      name: Satwind
-      obsdatain:
-        obsfile: Data/satwind_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_satwind.h5
-      simulated variables: [eastward_wind, northward_wind]
-      obs perturbations seed: 1
-    obs operator:
-      name: VertInterp
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: PreQC
-      maxvalue: 3
-    - filter: Background Check
-      threshold: 3.0
-      apply at iterations: 0, 1
-  #  - filter: Thinning
-  #    amount: 0.98
-  #    random_seed: 0
-  #  - filter: Gaussian_Thinning
-  #    horizontal_mesh: 200.0 #km
-    get values:
-      interpolation type: unstructured
-  - obs space:
-      name: Satwnd
-      obsdatain:
-        obsfile: Data/satwnd_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_satwnd.h5
-      simulated variables: [eastward_wind, northward_wind]
-      obs perturbations seed: 1
-    obs operator:
-      name: VertInterp
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: PreQC
-      maxvalue: 3 
-    - filter: Background Check
-      threshold: 3
-      apply at iterations: 0, 1
-    # Assign the initial observation error, based on height/pressure
-    - filter: BlackList
-      filter variables:
-      - name: eastward_wind
-      - name: northward_wind
-#      minvalue: -135
-#      maxvalue: 135
-      action:
-        name: assign error
-        error function:
-          name: ObsErrorModelStepwiseLinear@ObsFunction
-          options:
-            xvar:
-              name: air_pressure@MetaData
-            xvals: [100000, 95000, 80000, 65000, 60000, 55000, 50000, 45000, 40000, 35000, 30000, 25000, 20000, 15000, 10000]
-            errors: [1.4, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.3, 2.6, 2.8, 3.0, 3.2, 2.7, 2.4, 2.1]
-    # All satellite platforms, reject when pressure greater than 950 mb.
-    - filter: Bounds Check
-      filter variables:
-      - name: eastward_wind
-      - name: northward_wind
-      test variables:
-      - name: air_pressure@MetaData
-      maxvalue: 95000
-      action:
-        name: reject
+    observers:
+    - obs space:
+        name: Radiosonde
+        obsdatain:
+          obsfile: Data/sondes_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_sonde.h5
+        simulated variables: [air_temperature, virtual_temperature, eastward_wind, northward_wind, specific_humidity]
+      obs operator:
+        name: VertInterp
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+        apply at iterations: 0
+      - filter: Background Check
+        threshold: 3
+      get values:
+        interpolation type: unstructured
+    - obs space:
+        name: Satwind
+        obsdatain:
+          obsfile: Data/satwind_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_satwind.h5
+        simulated variables: [eastward_wind, northward_wind]
+        obs perturbations seed: 1
+      obs operator:
+        name: VertInterp
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Background Check
+        threshold: 3.0
+        apply at iterations: 0, 1
+    #  - filter: Thinning
+    #    amount: 0.98
+    #    random_seed: 0
+    #  - filter: Gaussian_Thinning
+    #    horizontal_mesh: 200.0 #km
+      get values:
+        interpolation type: unstructured
+    - obs space:
+        name: Satwnd
+        obsdatain:
+          obsfile: Data/satwnd_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_satwnd.h5
+        simulated variables: [eastward_wind, northward_wind]
+        obs perturbations seed: 1
+      obs operator:
+        name: VertInterp
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3 
+      - filter: Background Check
+        threshold: 3
+        apply at iterations: 0, 1
+      # Assign the initial observation error, based on height/pressure
+      - filter: BlackList
+        filter variables:
+        - name: eastward_wind
+        - name: northward_wind
+#        minvalue: -135
+#        maxvalue: 135
+        action:
+          name: assign error
+          error function:
+            name: ObsErrorModelStepwiseLinear@ObsFunction
+            options:
+              xvar:
+                name: air_pressure@MetaData
+              xvals: [100000, 95000, 80000, 65000, 60000, 55000, 50000, 45000, 40000, 35000, 30000, 25000, 20000, 15000, 10000]
+              errors: [1.4, 1.5, 1.6, 1.8, 1.9, 2.0, 2.1, 2.3, 2.6, 2.8, 3.0, 3.2, 2.7, 2.4, 2.1]
+      # All satellite platforms, reject when pressure greater than 950 mb.
+      - filter: Bounds Check
+        filter variables:
+        - name: eastward_wind
+        - name: northward_wind
+        test variables:
+        - name: air_pressure@MetaData
+        maxvalue: 95000
+        action:
+          name: reject
 
-    get values:
-      interpolation type: unstructured
-  - obs space:
-      name: Aircraft
-      obsdatain:
-        obsfile: Data/aircraft_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_aircraft.h5
-      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-    obs operator:
-      name: VertInterp
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: PreQC
-      maxvalue: 3
-      apply at iterations: 0
-    - filter: Background Check
-      threshold: 3
-    get values:
-      interpolation type: unstructured
-  - obs space:
-      name: SfcPCorrected
-      obsdatain:
-        obsfile: Data/sfc_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_sfc.h5
-      simulated variables: [surface_pressure]
-      obs perturbations seed: 1
-    obs operator:
-      name: SfcPCorrected
-      da_psfc_scheme: UKMO   # or WRFDA
-    linear obs operator:
-      name: Identity
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: PreQC
-      maxvalue: 3
-    - filter: Difference Check
-      reference: station_elevation@MetaData
-      value: surface_altitude@GeoVaLs
-      threshold: 200.0
-      apply at iterations: 0, 1
-    - filter: Background Check
-      threshold: 3.0
-      apply at iterations: 0, 1
-    get values:
-      interpolation type: unstructured
-
-  - obs space:
-      name: GnssroRef
-      obsdatain:
-        obsfile: Data/gnssro_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_gnssroref.h5
-      simulated variables: [refractivity]
-    obs operator:
-      name: GnssroRef
-      obs options:
-        use_compress: 0
-    obs error:
-      covariance model: diagonal
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: altitude@MetaData
-        minvalue: 0
-        maxvalue: 30000
-      - variable:
-          name: earth_radius_of_curvature@MetaData
-        minvalue: 6250000
-        maxvalue: 6450000
-      - variable:
-          name: geoid_height_above_reference_ellipsoid@MetaData
-        minvalue: -200
-        maxvalue: 200
-    - filter: Background Check
-      threshold: 3.0
-    - filter: ROobserror
-      variable: refractivity
-      errmodel: NBAM
-    get values:
-      interpolation type: unstructured
-
-  - obs space:
-      name: amsua_n19
-      obsdatain:
-        obsfile: Data/amsua_n19_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_amsua_n19.h5
-      simulated variables: [brightness_temperature]
-      channels: &all_channels 1-15 
-    obs error:
-      covariance model: diagonal
-    obs operator: &clramsuacrtm
-      name: CRTM
-      Absorbers: [H2O,O3]
-      SurfaceWindGeoVars: 'uv'
+      get values:
+        interpolation type: unstructured
+    - obs space:
+        name: Aircraft
+        obsdatain:
+          obsfile: Data/aircraft_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_aircraft.h5
+        simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+      obs operator:
+        name: VertInterp
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+        apply at iterations: 0
+      - filter: Background Check
+        threshold: 3
+      get values:
+        interpolation type: unstructured
+    - obs space:
+        name: SfcPCorrected
+        obsdatain:
+          obsfile: Data/sfc_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_sfc.h5
+        simulated variables: [surface_pressure]
+        obs perturbations seed: 1
+      obs operator:
+        name: SfcPCorrected
+        da_psfc_scheme: UKMO   # or WRFDA
       linear obs operator:
-        Absorbers: [H2O]
-      obs options: &clramsuacrtmopts
-        Sensor_ID: &Sensor_ID amsua_n19
-        EndianType: little_endian
-        CoefficientPath: /glade/work/jban/pandac/fixed_input/crtm_bin/
+        name: Identity
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Difference Check
+        reference: station_elevation@MetaData
+        value: surface_altitude@GeoVaLs
+        threshold: 200.0
+        apply at iterations: 0, 1
+      - filter: Background Check
+        threshold: 3.0
+        apply at iterations: 0, 1
+      get values:
+        interpolation type: unstructured
+
+    - obs space:
+        name: GnssroRef
+        obsdatain:
+          obsfile: Data/gnssro_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_gnssroref.h5
+        simulated variables: [refractivity]
+      obs operator:
+        name: GnssroRef
+        obs options:
+          use_compress: 0
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: altitude@MetaData
+          minvalue: 0
+          maxvalue: 30000
+        - variable:
+            name: earth_radius_of_curvature@MetaData
+          minvalue: 6250000
+          maxvalue: 6450000
+        - variable:
+            name: geoid_height_above_reference_ellipsoid@MetaData
+          minvalue: -200
+          maxvalue: 200
+      - filter: Background Check
+        threshold: 3.0
+      - filter: ROobserror
+        variable: refractivity
+        errmodel: NBAM
+      get values:
+        interpolation type: unstructured
+
+    - obs space:
+        name: amsua_n19
+        obsdatain:
+          obsfile: Data/amsua_n19_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_amsua_n19.h5
+        simulated variables: [brightness_temperature]
+        channels: &all_channels 1-15 
+      obs error:
+        covariance model: diagonal
+      obs operator: &clramsuacrtm
+        name: CRTM
+        Absorbers: [H2O,O3]
+        SurfaceWindGeoVars: 'uv'
+        linear obs operator:
+          Absorbers: [H2O]
+        obs options: &clramsuacrtmopts
+          Sensor_ID: &Sensor_ID amsua_n19
+          EndianType: little_endian
+          CoefficientPath: /glade/work/jban/pandac/fixed_input/crtm_bin/
   
-    obs bias:
-      input file: Data/satbias_amsua_n19.nc4
-#      output file: Data/satbias_amsua_n19_out.nc4
-      variational bc:
-        predictors: &predictors1
-        - name: constant
-        - name: lapse_rate
-          order: 2
-          tlapse: &amsua19tlap Data/amsua_n19_tlapmean.txt
-        - name: lapse_rate
-          tlapse: *amsua19tlap
-        - name: emissivity
-        - name: scan_angle
-          order: 4
-        - name: scan_angle
-          order: 3
-        - name: scan_angle
-          order: 2
-        - name: scan_angle
+      obs bias:
+        input file: Data/satbias_amsua_n19.nc4
+#        output file: Data/satbias_amsua_n19_out.nc4
+        variational bc:
+          predictors: &predictors1
+          - name: constant
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsua19tlap Data/amsua_n19_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsua19tlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
   
-      covariance:
-        minimal required obs number: 20
-        variance range: [1.0e-6, 10.]
-        step size: 1.0e-4
-        largest analysis variance: 10000.0
-        prior:
-          input file: Data/satbias_cov_amsua_n19.nc4
-          inflation:
-            ratio: 1.1
-            ratio for small dataset: 2.0
-#        output file: Data/satbias_cov_amsua_n19_out.nc4
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: sensor_zenith_angle@MetaData
-        maxvalue: 45.0
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [ObsValue]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [HofX]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #   passedBenchmark: 1472
-  #  Hydrometeor Check (cloud/precipitation affected chanels)
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: HydrometeorCheckAMSUA@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
-                             0.230, 0.230, 0.250, 0.250, 0.350,
-                             0.400, 0.550, 0.800, 3.000, 3.500]
-          clwret_function:
-            name: CLWRetMW@ObsFunction
-            options:
-              clwret_ch238: 1
-              clwret_ch314: 2
-              clwret_types: [ObsValue]
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
-                options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-      maxvalue: 0.0
-      action:
-        name: reject
-  #   passedBenchmark: 1272
-  
-  #  Topography check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTopoRad@ObsFunction
-          channels: *all_channels
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/satbias_cov_amsua_n19.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+#          output file: Data/satbias_cov_amsua_n19_out.nc4
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: sensor_zenith_angle@MetaData
+          maxvalue: 45.0
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
           options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-  #  Transmittnace Top Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTransmitTopRad@ObsFunction
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [ObsValue]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [HofX]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #   passedBenchmark: 1472
+    #  Hydrometeor Check (cloud/precipitation affected chanels)
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: HydrometeorCheckAMSUA@ObsFunction
           channels: *all_channels
           options:
             channels: *all_channels
-  #  Surface Jacobian check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSurfJacobianRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-            obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
-            obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
-  #   passedBenchmark: 1272
-  #  Situation dependent Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSituDependMW@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-            clwobs_function:
+            obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
+                               0.230, 0.230, 0.250, 0.250, 0.350,
+                               0.400, 0.550, 0.800, 3.000, 3.500]
+            clwret_function:
               name: CLWRetMW@ObsFunction
               options:
                 clwret_ch238: 1
                 clwret_ch314: 2
                 clwret_types: [ObsValue]
-            clwbkg_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [HofX]
-                bias_application: HofX
-            scatobs_function:
-              name: SCATRetMW@ObsFunction
-              options:
-                scatret_ch238: 1
-                scatret_ch314: 2
-                scatret_ch890: 15
-                scatret_types: [ObsValue]
-                bias_application: HofX
-            clwmatchidx_function:
-              name: CLWMatchIndexMW@ObsFunction
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
               options:
                 channels: *all_channels
-                clwobs_function:
-                  name: CLWRetMW@ObsFunction
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
                   options:
                     clwret_ch238: 1
                     clwret_ch314: 2
-                    clwret_types: [ObsValue]
-                clwbkg_function:
-                  name: CLWRetMW@ObsFunction
-                  options:
-                    clwret_ch238: 1
-                    clwret_ch314: 2
-                    clwret_types: [HofX]
-                    bias_application: HofX
-                clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
-                                  0.100, 0.000, 0.000, 0.000, 0.000,
-                                  0.000, 0.000, 0.000, 0.000, 0.030]
-            obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
-                              0.230, 0.230, 0.250, 0.250, 0.350,
-                              0.400, 0.550, 0.800, 3.000, 3.500]
-  #   passedBenchmark: 1272
-  #  Gross check
-  #  - filter: Background Check
-  #    threshold: 3
-    - filter: Background Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      function absolute threshold:
-      - name: ObsErrorBoundMW@ObsFunction
-        channels: *all_channels
-        options:
-          sensor: *Sensor_ID
+                    clwret_types: [ObsValue, HofX]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+        maxvalue: 0.0
+        action:
+          name: reject
+    #   passedBenchmark: 1272
+  
+    #  Topography check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          obserr_bound_latitude:
-            name: ObsErrorFactorLatRad@ObsFunction
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTopoRad@ObsFunction
+            channels: *all_channels
             options:
-              latitude_parameters: [25.0, 0.25, 0.04, 3.0]
-          obserr_bound_transmittop:
+              sensor: *Sensor_ID
+              channels: *all_channels
+    #  Transmittnace Top Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
-          obserr_bound_topo:
-            name: ObsErrorFactorTopoRad@ObsFunction
+    #  Surface Jacobian check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
+              obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
+              obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
+    #   passedBenchmark: 1272
+    #  Situation dependent Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSituDependMW@ObsFunction
+            channels: *all_channels
+            options:
               sensor: *Sensor_ID
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
               channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              clwobs_function:
+                name: CLWRetMW@ObsFunction
                 options:
                   clwret_ch238: 1
                   clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
+                  clwret_types: [ObsValue]
+              clwbkg_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [HofX]
                   bias_application: HofX
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-          obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
-                             2.0, 2.0, 2.0, 2.0, 2.0,
-                             2.5, 3.5, 4.5, 4.5, 4.5]
-      action:
-        name: reject
-  #   passedBenchmark: 1212
-  #  Inter-channel check #amsua-n19
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: InterChannelConsistencyCheck@ObsFunction
-        channels: *all_channels
-        options:
+              scatobs_function:
+                name: SCATRetMW@ObsFunction
+                options:
+                  scatret_ch238: 1
+                  scatret_ch314: 2
+                  scatret_ch890: 15
+                  scatret_types: [ObsValue]
+                  bias_application: HofX
+              clwmatchidx_function:
+                name: CLWMatchIndexMW@ObsFunction
+                channels: *all_channels
+                options:
+                  channels: *all_channels
+                  clwobs_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [ObsValue]
+                  clwbkg_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [HofX]
+                      bias_application: HofX
+                  clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
+                                    0.100, 0.000, 0.000, 0.000, 0.000,
+                                    0.000, 0.000, 0.000, 0.000, 0.030]
+              obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
+                                0.230, 0.230, 0.250, 0.250, 0.350,
+                                0.400, 0.550, 0.800, 3.000, 3.500]
+    #   passedBenchmark: 1272
+    #  Gross check
+    #  - filter: Background Check
+    #    threshold: 3
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          sensor: *Sensor_ID
-          use_flag: [ -1,  -1,  -1,  -1,  1,
-                      1,  1, -1,  1,  -1,
-                     -1, -1, -1, -1, -1 ]
-      maxvalue: 1.0e-12
-      action:
-        name: reject
-  #   passedBenchmark: 1206
-  #  Useflag check #amsua-n19
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
-        channels: *all_channels
-        options:
+        function absolute threshold:
+        - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
-          use_flag: [ -1, -1, -1, -1,  1,
-                      1,  1, -1,  1, -1,
-                     -1, -1, -1, -1, -1 ]
-      minvalue: 1.0e-12
-      action:
-        name: reject
-    - filter: Gaussian_Thinning
-      horizontal_mesh:   145 #km      
-    get values:
-      interpolation type: unstructured
+          options:
+            sensor: *Sensor_ID
+            channels: *all_channels
+            obserr_bound_latitude:
+              name: ObsErrorFactorLatRad@ObsFunction
+              options:
+                latitude_parameters: [25.0, 0.25, 0.04, 3.0]
+            obserr_bound_transmittop:
+              name: ObsErrorFactorTransmitTopRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+            obserr_bound_topo:
+              name: ObsErrorFactorTopoRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                sensor: *Sensor_ID
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
+                  options:
+                    clwret_ch238: 1
+                    clwret_ch314: 2
+                    clwret_types: [ObsValue, HofX]
+                    bias_application: HofX
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+            obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
+                               2.0, 2.0, 2.0, 2.0, 2.0,
+                               2.5, 3.5, 4.5, 4.5, 4.5]
+        action:
+          name: reject
+    #   passedBenchmark: 1212
+    #  Inter-channel check #amsua-n19
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: InterChannelConsistencyCheck@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            sensor: *Sensor_ID
+            use_flag: [ -1,  -1,  -1,  -1,  1,
+                        1,  1, -1,  1,  -1,
+                       -1, -1, -1, -1, -1 ]
+        maxvalue: 1.0e-12
+        action:
+          name: reject
+    #   passedBenchmark: 1206
+    #  Useflag check #amsua-n19
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: ChannelUseflagCheckRad@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            use_flag: [ -1, -1, -1, -1,  1,
+                        1,  1, -1,  1, -1,
+                       -1, -1, -1, -1, -1 ]
+        minvalue: 1.0e-12
+        action:
+          name: reject
+      - filter: Gaussian_Thinning
+        horizontal_mesh:   145 #km      
+      get values:
+        interpolation type: unstructured
   
-  - obs space:
-      name: amsua_n15
-      obsdatain:
-        obsfile: Data/amsua_n15_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_amsua_n15.h5
-      simulated variables: [brightness_temperature]
-      channels: &all_channels 1-15 
-    obs error:
-      covariance model: diagonal
-    obs operator:
-      <<: *clramsuacrtm
-      obs options:
-        <<: *clramsuacrtmopts
-        Sensor_ID: &Sensor_ID amsua_n15
+    - obs space:
+        name: amsua_n15
+        obsdatain:
+          obsfile: Data/amsua_n15_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_amsua_n15.h5
+        simulated variables: [brightness_temperature]
+        channels: &all_channels 1-15 
+      obs error:
+        covariance model: diagonal
+      obs operator:
+        <<: *clramsuacrtm
+        obs options:
+          <<: *clramsuacrtmopts
+          Sensor_ID: &Sensor_ID amsua_n15
  
-    obs bias:
-      input file: Data/satbias_amsua_n15.nc4
-#      output file: Data/satbias_amsua_n15_out.nc4
-      variational bc:
-        predictors: &predictors2
-        - name: constant
-#        - name: cosine_of_latitude_times_orbit_node
-#          options:
-#            preconditioner: 0.01
-#        - name: sine_of_latitude
-        - name: lapse_rate
-          order: 2
-          tlapse: &amsua15tlap Data/amsua_n15_tlapmean.txt
-        - name: lapse_rate
-          tlapse: *amsua15tlap
-        - name: emissivity
-        - name: scan_angle
-          order: 4
-        - name: scan_angle
-          order: 3
-        - name: scan_angle
-          order: 2
-        - name: scan_angle
+      obs bias:
+        input file: Data/satbias_amsua_n15.nc4
+#        output file: Data/satbias_amsua_n15_out.nc4
+        variational bc:
+          predictors: &predictors2
+          - name: constant
+#          - name: cosine_of_latitude_times_orbit_node
+#            options:
+#              preconditioner: 0.01
+#          - name: sine_of_latitude
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsua15tlap Data/amsua_n15_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsua15tlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
 
-      covariance:
-        minimal required obs number: 20
-        variance range: [1.0e-6, 10.]
-        step size: 1.0e-4
-        largest analysis variance: 10000.0
-        prior:
-          input file: Data/satbias_cov_amsua_n15.nc4
-          inflation:
-            ratio: 1.1
-            ratio for small dataset: 2.0
-#        output file: Data/satbias_cov_amsua_n15_out.nc4
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: sensor_zenith_angle@MetaData
-        maxvalue: 45.0
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [ObsValue]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [HofX]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #   passedBenchmark: 1472
-  #  Hydrometeor Check (cloud/precipitation affected chanels)
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: HydrometeorCheckAMSUA@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          obserr_clearsky: [ 3.000, 2.200, 2.000, 0.600, 0.300,
-                             0.230, 0.250, 0.275, 0.340, 0.400,
-                             0.600, 1.000, 1.500, 2.000, 3.500]
-          clwret_function:
-            name: CLWRetMW@ObsFunction
-            options:
-              clwret_ch238: 1
-              clwret_ch314: 2
-              clwret_types: [ObsValue]
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
-                options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
-                       0.230,  0.250,  0.275,  0.340,  0.400, 
-                       0.600,  1.000,  1.500,  2.000,  3.500]
-              err1:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
-                       0.230,  0.250,  0.275,  0.340,  0.400,
-                       0.600,  1.000,  1.500,  2.000,  3.500]
-      maxvalue: 0.0
-      action:
-        name: reject
-  #   passedBenchmark: 1272
-  
-  #  Topography check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTopoRad@ObsFunction
-          channels: *all_channels
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/satbias_cov_amsua_n15.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+#          output file: Data/satbias_cov_amsua_n15_out.nc4
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: sensor_zenith_angle@MetaData
+          maxvalue: 45.0
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
           options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-  #  Transmittnace Top Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTransmitTopRad@ObsFunction
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [ObsValue]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [HofX]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #   passedBenchmark: 1472
+    #  Hydrometeor Check (cloud/precipitation affected chanels)
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: HydrometeorCheckAMSUA@ObsFunction
           channels: *all_channels
           options:
             channels: *all_channels
-  #  Surface Jacobian check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSurfJacobianRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-            obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
-            obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
-  #   passedBenchmark: 1272
-  #  Situation dependent Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSituDependMW@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-            clwobs_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [ObsValue]
-            clwbkg_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [HofX]
-                bias_application: HofX
-            scatobs_function:
-              name: SCATRetMW@ObsFunction
-              options:
-                scatret_ch238: 1
-                scatret_ch314: 2
-                scatret_ch890: 15
-                scatret_types: [ObsValue]
-                bias_application: HofX
-            clwmatchidx_function:
-              name: CLWMatchIndexMW@ObsFunction
-              channels: *all_channels
-              options:
-                channels: *all_channels
-                clwobs_function:
-                  name: CLWRetMW@ObsFunction
-                  options:
-                    clwret_ch238: 1
-                    clwret_ch314: 2
-                    clwret_types: [ObsValue]
-                clwbkg_function:
-                  name: CLWRetMW@ObsFunction
-                  options:
-                    clwret_ch238: 1
-                    clwret_ch314: 2
-                    clwret_types: [HofX]
-                    bias_application: HofX
-                clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
-                                  0.100, 0.000, 0.000, 0.000, 0.000,
-                                  0.000, 0.000, 0.000, 0.000, 0.030]
             obserr_clearsky: [ 3.000, 2.200, 2.000, 0.600, 0.300,
-                              0.230, 0.250, 0.275, 0.340, 0.400,
-                              0.600, 1.000, 1.500, 2.000, 3.500]
-  #   passedBenchmark: 1272
-  #  Gross check
-  #  - filter: Background Check
-  #    threshold: 3
-    - filter: Background Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      function absolute threshold:
-      - name: ObsErrorBoundMW@ObsFunction
-        channels: *all_channels
-        options:
-          sensor: *Sensor_ID
-          channels: *all_channels
-          obserr_bound_latitude:
-            name: ObsErrorFactorLatRad@ObsFunction
-            options:
-              latitude_parameters: [25.0, 0.25, 0.04, 3.0]
-          obserr_bound_transmittop:
-            name: ObsErrorFactorTransmitTopRad@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-          obserr_bound_topo:
-            name: ObsErrorFactorTopoRad@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              sensor: *Sensor_ID
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
-                options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-                  bias_application: HofX
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
-                       0.230,  0.250,  0.275,  0.340,  0.400,
-                       0.600,  1.000,  1.500,  2.000,  3.500]
-              err1:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
-                       0.230,  0.250,  0.275,  0.340,  0.400,
-                       0.600,  1.000,  1.500,  2.000,  3.500]
-          obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
-                             2.0, 2.0, 2.0, 2.0, 2.0,
-                             2.5, 3.5, 4.5, 4.5, 4.5]
-      action:
-        name: reject
-  #   passedBenchmark: 1212
-  #  Inter-channel check #amsua-n15
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: InterChannelConsistencyCheck@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          sensor: *Sensor_ID
-          use_flag: [ -1,  -1,  -1,  -1,  1,
-                      1,  1,  1,  1,  -1,
-                     -1, -1, -1, -1, -1 ]
-      maxvalue: 1.0e-12
-      action:
-        name: reject
-  #   passedBenchmark: 1206
-  #  Useflag check #amsua-n15
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          use_flag: [ -1, -1, -1, -1,  1,
-                      1,  1,  1,  1, -1,
-                     -1, -1, -1, -1, -1 ]
-      minvalue: 1.0e-12
-      action:
-        name: reject
-    - filter: Gaussian_Thinning
-      horizontal_mesh:   145 #km
-    get values:
-      interpolation type: unstructured
-  
-  - obs space:
-      name: amsua_n18
-      obsdatain:
-        obsfile: Data/amsua_n18_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_amsua_n18.h5
-      simulated variables: [brightness_temperature]
-      channels: &all_channels 1-15
-    obs error:
-      covariance model: diagonal
-    obs operator:
-      <<: *clramsuacrtm
-      obs options:
-        <<: *clramsuacrtmopts
-        Sensor_ID: &Sensor_ID amsua_n18
-
-    obs bias:
-      input file: Data/satbias_amsua_n18.nc4
-#      output file: Data/satbias_amsua_n18_out.nc4
-      variational bc:
-        predictors: &predictors3
-        - name: constant
-#        - name: cosine_of_latitude_times_orbit_node
-#          options:
-#            preconditioner: 0.01
-#        - name: sine_of_latitude
-        - name: lapse_rate
-          order: 2
-          tlapse: &amsua18tlap Data/amsua_n18_tlapmean.txt
-        - name: lapse_rate
-          tlapse: *amsua18tlap
-        - name: emissivity
-        - name: scan_angle
-          order: 4
-        - name: scan_angle
-          order: 3
-        - name: scan_angle
-          order: 2
-        - name: scan_angle
-
-      covariance:
-        minimal required obs number: 20
-        variance range: [1.0e-6, 10.]
-        step size: 1.0e-4
-        largest analysis variance: 10000.0
-        prior:
-          input file: Data/satbias_cov_amsua_n18.nc4
-          inflation:
-            ratio: 1.1
-            ratio for small dataset: 2.0
-#        output file: Data/satbias_cov_amsua_n18_out.nc4
-
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: sensor_zenith_angle@MetaData
-        maxvalue: 45.0
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [ObsValue]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [HofX]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #   passedBenchmark: 1472
-  #  Hydrometeor Check (cloud/precipitation affected chanels)
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: HydrometeorCheckAMSUA@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
-                             0.230, 0.230, 0.250, 0.250, 0.350,
-                             0.400, 0.550, 0.800, 3.000, 3.500]
-          clwret_function:
-            name: CLWRetMW@ObsFunction
-            options:
-              clwret_ch238: 1
-              clwret_ch314: 2
-              clwret_types: [ObsValue]
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
-                options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-      maxvalue: 0.0
-      action:
-        name: reject
-  #   passedBenchmark: 1272
-  
-  #  Topography check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTopoRad@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-  #  Transmittnace Top Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTransmitTopRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-  #  Surface Jacobian check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSurfJacobianRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-            obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
-            obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
-  #   passedBenchmark: 1272
-  #  Situation dependent Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSituDependMW@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-            clwobs_function:
+                               0.230, 0.250, 0.275, 0.340, 0.400,
+                               0.600, 1.000, 1.500, 2.000, 3.500]
+            clwret_function:
               name: CLWRetMW@ObsFunction
               options:
                 clwret_ch238: 1
                 clwret_ch314: 2
                 clwret_types: [ObsValue]
-            clwbkg_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [HofX]
-                bias_application: HofX
-            scatobs_function:
-              name: SCATRetMW@ObsFunction
-              options:
-                scatret_ch238: 1
-                scatret_ch314: 2
-                scatret_ch890: 15
-                scatret_types: [ObsValue]
-                bias_application: HofX
-            clwmatchidx_function:
-              name: CLWMatchIndexMW@ObsFunction
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
               options:
                 channels: *all_channels
-                clwobs_function:
-                  name: CLWRetMW@ObsFunction
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
                   options:
                     clwret_ch238: 1
                     clwret_ch314: 2
-                    clwret_types: [ObsValue]
-                clwbkg_function:
-                  name: CLWRetMW@ObsFunction
-                  options:
-                    clwret_ch238: 1
-                    clwret_ch314: 2
-                    clwret_types: [HofX]
-                    bias_application: HofX
-                clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
-                                  0.100, 0.000, 0.000, 0.000, 0.000,
-                                  0.000, 0.000, 0.000, 0.000, 0.030]
-            obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
-                              0.230, 0.230, 0.250, 0.250, 0.350,
-                              0.400, 0.550, 0.800, 3.000, 3.500]
-  #   passedBenchmark: 1272
-  #  Gross check
-  #  - filter: Background Check
-  #    threshold: 3
-    - filter: Background Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      function absolute threshold:
-      - name: ObsErrorBoundMW@ObsFunction
-        channels: *all_channels
-        options:
-          sensor: *Sensor_ID
+                    clwret_types: [ObsValue, HofX]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
+                         0.230,  0.250,  0.275,  0.340,  0.400, 
+                         0.600,  1.000,  1.500,  2.000,  3.500]
+                err1:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
+                         0.230,  0.250,  0.275,  0.340,  0.400,
+                         0.600,  1.000,  1.500,  2.000,  3.500]
+        maxvalue: 0.0
+        action:
+          name: reject
+    #   passedBenchmark: 1272
+  
+    #  Topography check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          obserr_bound_latitude:
-            name: ObsErrorFactorLatRad@ObsFunction
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTopoRad@ObsFunction
+            channels: *all_channels
             options:
-              latitude_parameters: [25.0, 0.25, 0.04, 3.0]
-          obserr_bound_transmittop:
+              sensor: *Sensor_ID
+              channels: *all_channels
+    #  Transmittnace Top Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
-          obserr_bound_topo:
-            name: ObsErrorFactorTopoRad@ObsFunction
+    #  Surface Jacobian check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
+              obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
+              obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
+    #   passedBenchmark: 1272
+    #  Situation dependent Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSituDependMW@ObsFunction
+            channels: *all_channels
+            options:
               sensor: *Sensor_ID
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
               channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              clwobs_function:
+                name: CLWRetMW@ObsFunction
                 options:
                   clwret_ch238: 1
                   clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
+                  clwret_types: [ObsValue]
+              clwbkg_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [HofX]
                   bias_application: HofX
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-          obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
-                             2.0, 2.0, 2.0, 2.0, 2.0,
-                             2.5, 3.5, 4.5, 4.5, 4.5]
-      action:
-        name: reject
-  #   passedBenchmark: 1212
-  #  Inter-channel check #amsua-n18
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: InterChannelConsistencyCheck@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          sensor: *Sensor_ID
-          use_flag: [ -1,  -1,  -1,  -1,  1,
-                      1, 1, 1,  1,  -1,
-                     -1, -1, -1, -1, -1 ]
-      maxvalue: 1.0e-12
-      action:
-        name: reject
-  #   passedBenchmark: 1206
-  #  Useflag check  #amsua-n18
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          use_flag: [ -1, -1, -1, -1,  1,
-                      1, 1, 1,  1, -1,
-                     -1, -1, -1, -1, -1 ]
-      minvalue: 1.0e-12
-      action:
-        name: reject
-    - filter: Gaussian_Thinning
-      horizontal_mesh:   145 #km
-  
-    get values:
-      interpolation type: unstructured
-  
-  - obs space:
-      name: amsua_metop-a
-      obsdatain:
-        obsfile: Data/amsua_metop-a_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_amsua_metop-a.h5
-      simulated variables: [brightness_temperature]
-      channels: &all_channels 1-15 
-    obs error:
-      covariance model: diagonal
-    obs operator:
-      <<: *clramsuacrtm
-      obs options:
-        <<: *clramsuacrtmopts
-        Sensor_ID: &Sensor_ID amsua_metop-a
-
-    obs bias:
-      input file: Data/satbias_amsua_metop-a.nc4
-#      output file: Data/satbias_amsua_metop-a_out.nc4
-      variational bc:
-        predictors: &predictors4
-        - name: constant
-#        - name: cosine_of_latitude_times_orbit_node
-#          options:
-#            preconditioner: 0.01
-#        - name: sine_of_latitude
-        - name: lapse_rate
-          order: 2
-          tlapse: &amsuametopatlap Data/amsua_metop-a_tlapmean.txt
-        - name: lapse_rate
-          tlapse: *amsuametopatlap
-        - name: emissivity
-        - name: scan_angle
-          order: 4
-        - name: scan_angle
-          order: 3
-        - name: scan_angle
-          order: 2
-        - name: scan_angle
-
-      covariance:
-        minimal required obs number: 20
-        variance range: [1.0e-6, 10.]
-        step size: 1.0e-4
-        largest analysis variance: 10000.0
-        prior:
-          input file: Data/satbias_cov_amsua_metop-a.nc4
-          inflation:
-            ratio: 1.1
-            ratio for small dataset: 2.0
-#        output file: Data/satbias_cov_amsua_metop-a_out.nc4
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: sensor_zenith_angle@MetaData
-        maxvalue: 45.0
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [ObsValue]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [HofX]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #   passedBenchmark: 1472
-  #  Hydrometeor Check (cloud/precipitation affected chanels)
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: HydrometeorCheckAMSUA@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
-                             0.230, 0.230, 0.250, 0.250, 0.350,
-                             0.400, 0.550, 0.800, 3.000, 3.500]
-          clwret_function:
-            name: CLWRetMW@ObsFunction
-            options:
-              clwret_ch238: 1
-              clwret_ch314: 2
-              clwret_types: [ObsValue]
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              scatobs_function:
+                name: SCATRetMW@ObsFunction
                 options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-      maxvalue: 0.0
-      action:
-        name: reject
-  #   passedBenchmark: 1272
+                  scatret_ch238: 1
+                  scatret_ch314: 2
+                  scatret_ch890: 15
+                  scatret_types: [ObsValue]
+                  bias_application: HofX
+              clwmatchidx_function:
+                name: CLWMatchIndexMW@ObsFunction
+                channels: *all_channels
+                options:
+                  channels: *all_channels
+                  clwobs_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [ObsValue]
+                  clwbkg_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [HofX]
+                      bias_application: HofX
+                  clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
+                                    0.100, 0.000, 0.000, 0.000, 0.000,
+                                    0.000, 0.000, 0.000, 0.000, 0.030]
+              obserr_clearsky: [ 3.000, 2.200, 2.000, 0.600, 0.300,
+                                0.230, 0.250, 0.275, 0.340, 0.400,
+                                0.600, 1.000, 1.500, 2.000, 3.500]
+    #   passedBenchmark: 1272
+    #  Gross check
+    #  - filter: Background Check
+    #    threshold: 3
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        function absolute threshold:
+        - name: ObsErrorBoundMW@ObsFunction
+          channels: *all_channels
+          options:
+            sensor: *Sensor_ID
+            channels: *all_channels
+            obserr_bound_latitude:
+              name: ObsErrorFactorLatRad@ObsFunction
+              options:
+                latitude_parameters: [25.0, 0.25, 0.04, 3.0]
+            obserr_bound_transmittop:
+              name: ObsErrorFactorTransmitTopRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+            obserr_bound_topo:
+              name: ObsErrorFactorTopoRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                sensor: *Sensor_ID
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
+                  options:
+                    clwret_ch238: 1
+                    clwret_ch314: 2
+                    clwret_types: [ObsValue, HofX]
+                    bias_application: HofX
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
+                         0.230,  0.250,  0.275,  0.340,  0.400,
+                         0.600,  1.000,  1.500,  2.000,  3.500]
+                err1:  [ 3.000,  2.200,  2.000,  0.600,  0.300,
+                         0.230,  0.250,  0.275,  0.340,  0.400,
+                         0.600,  1.000,  1.500,  2.000,  3.500]
+            obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
+                               2.0, 2.0, 2.0, 2.0, 2.0,
+                               2.5, 3.5, 4.5, 4.5, 4.5]
+        action:
+          name: reject
+    #   passedBenchmark: 1212
+    #  Inter-channel check #amsua-n15
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: InterChannelConsistencyCheck@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            sensor: *Sensor_ID
+            use_flag: [ -1,  -1,  -1,  -1,  1,
+                        1,  1,  1,  1,  -1,
+                       -1, -1, -1, -1, -1 ]
+        maxvalue: 1.0e-12
+        action:
+          name: reject
+    #   passedBenchmark: 1206
+    #  Useflag check #amsua-n15
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: ChannelUseflagCheckRad@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            use_flag: [ -1, -1, -1, -1,  1,
+                        1,  1,  1,  1, -1,
+                       -1, -1, -1, -1, -1 ]
+        minvalue: 1.0e-12
+        action:
+          name: reject
+      - filter: Gaussian_Thinning
+        horizontal_mesh:   145 #km
+      get values:
+        interpolation type: unstructured
   
-  #  Topography check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTopoRad@ObsFunction
+    - obs space:
+        name: amsua_n18
+        obsdatain:
+          obsfile: Data/amsua_n18_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_amsua_n18.h5
+        simulated variables: [brightness_temperature]
+        channels: &all_channels 1-15
+      obs error:
+        covariance model: diagonal
+      obs operator:
+        <<: *clramsuacrtm
+        obs options:
+          <<: *clramsuacrtmopts
+          Sensor_ID: &Sensor_ID amsua_n18
+
+      obs bias:
+        input file: Data/satbias_amsua_n18.nc4
+#        output file: Data/satbias_amsua_n18_out.nc4
+        variational bc:
+          predictors: &predictors3
+          - name: constant
+#          - name: cosine_of_latitude_times_orbit_node
+#            options:
+#              preconditioner: 0.01
+#          - name: sine_of_latitude
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsua18tlap Data/amsua_n18_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsua18tlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
+
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/satbias_cov_amsua_n18.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+#          output file: Data/satbias_cov_amsua_n18_out.nc4
+
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: sensor_zenith_angle@MetaData
+          maxvalue: 45.0
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [ObsValue]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [HofX]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #   passedBenchmark: 1472
+    #  Hydrometeor Check (cloud/precipitation affected chanels)
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: HydrometeorCheckAMSUA@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
             channels: *all_channels
-  #  Transmittnace Top Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTransmitTopRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-  #  Surface Jacobian check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSurfJacobianRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-            obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
-            obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
-  #   passedBenchmark: 1272
-  #  Situation dependent Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSituDependMW@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-            clwobs_function:
+            obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
+                               0.230, 0.230, 0.250, 0.250, 0.350,
+                               0.400, 0.550, 0.800, 3.000, 3.500]
+            clwret_function:
               name: CLWRetMW@ObsFunction
               options:
                 clwret_ch238: 1
                 clwret_ch314: 2
                 clwret_types: [ObsValue]
-            clwbkg_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [HofX]
-                bias_application: HofX
-            scatobs_function:
-              name: SCATRetMW@ObsFunction
-              options:
-                scatret_ch238: 1
-                scatret_ch314: 2
-                scatret_ch890: 15
-                scatret_types: [ObsValue]
-                bias_application: HofX
-            clwmatchidx_function:
-              name: CLWMatchIndexMW@ObsFunction
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
               options:
                 channels: *all_channels
-                clwobs_function:
-                  name: CLWRetMW@ObsFunction
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
                   options:
                     clwret_ch238: 1
                     clwret_ch314: 2
-                    clwret_types: [ObsValue]
-                clwbkg_function:
-                  name: CLWRetMW@ObsFunction
-                  options:
-                    clwret_ch238: 1
-                    clwret_ch314: 2
-                    clwret_types: [HofX]
-                    bias_application: HofX
-                clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
-                                  0.100, 0.000, 0.000, 0.000, 0.000,
-                                  0.000, 0.000, 0.000, 0.000, 0.030]
-            obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
-                              0.230, 0.230, 0.250, 0.250, 0.350,
-                              0.400, 0.550, 0.800, 3.000, 3.500]
-  #   passedBenchmark: 1272
-  #  Gross check
-  #  - filter: Background Check
-  #    threshold: 3
-    - filter: Background Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      function absolute threshold:
-      - name: ObsErrorBoundMW@ObsFunction
-        channels: *all_channels
-        options:
-          sensor: *Sensor_ID
+                    clwret_types: [ObsValue, HofX]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+        maxvalue: 0.0
+        action:
+          name: reject
+    #   passedBenchmark: 1272
+  
+    #  Topography check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          obserr_bound_latitude:
-            name: ObsErrorFactorLatRad@ObsFunction
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTopoRad@ObsFunction
+            channels: *all_channels
             options:
-              latitude_parameters: [25.0, 0.25, 0.04, 3.0]
-          obserr_bound_transmittop:
+              sensor: *Sensor_ID
+              channels: *all_channels
+    #  Transmittnace Top Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
-          obserr_bound_topo:
-            name: ObsErrorFactorTopoRad@ObsFunction
+    #  Surface Jacobian check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
+              obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
+              obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
+    #   passedBenchmark: 1272
+    #  Situation dependent Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSituDependMW@ObsFunction
+            channels: *all_channels
+            options:
               sensor: *Sensor_ID
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
               channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              clwobs_function:
+                name: CLWRetMW@ObsFunction
                 options:
                   clwret_ch238: 1
                   clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
+                  clwret_types: [ObsValue]
+              clwbkg_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [HofX]
                   bias_application: HofX
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000,  3.500]
-              err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
-                       0.230,  0.230,  0.250,  0.250,  0.350,
-                       0.400,  0.550,  0.800,  3.000, 18.000]
-          obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
-                             2.0, 2.0, 2.0, 2.0, 2.0,
-                             2.5, 3.5, 4.5, 4.5, 4.5]
-      action:
-        name: reject
-   # passedBenchmark: 1212
-  #  Inter-channel check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: InterChannelConsistencyCheck@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          sensor: *Sensor_ID
-          use_flag: [ -1,  -1,  -1,  -1,  1,
-                      1, -1, -1,  1,  -1,
-                     -1, -1, -1, -1, -1 ]
-      maxvalue: 1.0e-12
-      action:
-        name: reject
-  #   passedBenchmark: 1206
-  #  Useflag check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          use_flag: [ -1, -1, -1, -1,  1,
-                      1, -1, -1,  1, -1,
-                     -1, -1, -1, -1, -1 ]
-      minvalue: 1.0e-12
-      action:
-        name: reject
-    - filter: Gaussian_Thinning
-      horizontal_mesh:   145 #km
-  
-    get values:
-      interpolation type: unstructured
-  - obs space:
-      name: amsua_aqua
-      obsdatain:
-        obsfile: Data/amsua_aqua_obs_2018041500.h5
-      obsdataout:
-        obsfile: Data/obsout_variational_amsua_aqua.h5
-      simulated variables: [brightness_temperature]
-      channels: &all_channels 1-15
-    obs error:
-      covariance model: diagonal
-    obs operator:
-      <<: *clramsuacrtm
-      obs options:
-        <<: *clramsuacrtmopts
-        Sensor_ID: &Sensor_ID amsua_aqua
-
-    obs bias:
-      input file: Data/satbias_amsua_aqua.nc4
-#      output file: Data/satbias_amsua_aqua_out.nc4
-      variational bc:
-        predictors: &predictors5
-        - name: constant
-#        - name: cosine_of_latitude_times_orbit_node
-#          options:
-#            preconditioner: 0.01
-#        - name: sine_of_latitude
-        - name: lapse_rate
-          order: 2
-          tlapse: &amsuaaquatlap Data/amsua_aqua_tlapmean.txt
-        - name: lapse_rate
-          tlapse: *amsuaaquatlap
-        - name: emissivity
-        - name: scan_angle
-          order: 4
-        - name: scan_angle
-          order: 3
-        - name: scan_angle
-          order: 2
-        - name: scan_angle
-
-      covariance:
-        minimal required obs number: 20
-        variance range: [1.0e-6, 10.]
-        step size: 1.0e-4
-        largest analysis variance: 10000.0
-        prior:
-          input file: Data/satbias_cov_amsua_aqua.nc4
-          inflation:
-            ratio: 1.1
-            ratio for small dataset: 2.0
-#        output file: Data/satbias_cov_amsua_aqua_out.nc4
-    obs filters:
-    - filter: Domain Check
-      where:
-      - variable:
-          name: sensor_zenith_angle@MetaData
-        maxvalue: 45.0
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [ObsValue]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #  CLW Retrieval Check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: 1-6, 15
-      test variables:
-      - name: CLWRetMW@ObsFunction
-        options:
-          clwret_ch238: 1
-          clwret_ch314: 2
-          clwret_types: [HofX]
-      maxvalue: 999.0
-      action:
-        name: reject
-  #   passedBenchmark: 1472
-  #  Hydrometeor Check (cloud/precipitation affected chanels)
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: HydrometeorCheckAMSUA@ObsFunction
-        channels: *all_channels
-        options:
-          channels: *all_channels
-          obserr_clearsky: [ 2.500, 2.000, 2.000, 0.500, 0.400,
-                             0.400, 0.500, 0.300, 0.350, 0.350,
-                             0.450, 1.000, 1.500, 2.500, 2.500]
-          clwret_function:
-            name: CLWRetMW@ObsFunction
-            options:
-              clwret_ch238: 1
-              clwret_ch314: 2
-              clwret_types: [ObsValue]
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
-              channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              scatobs_function:
+                name: SCATRetMW@ObsFunction
                 options:
-                  clwret_ch238: 1
-                  clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.200,  2.000,  0.500,  0.400,
-                       0.400,  0.500,  0.300,  0.350,  0.350,
-                       0.450,  1.000,  1.500,  2.500,  2.500]
-              err1:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
-                       0.400,  0.500,  0.300,  0.350,  0.350,                      
-                       0.450,  1.000,  1.500,  2.500,  2.500]
-      maxvalue: 0.0
-      action:
-        name: reject
-  #   passedBenchmark: 1272
+                  scatret_ch238: 1
+                  scatret_ch314: 2
+                  scatret_ch890: 15
+                  scatret_types: [ObsValue]
+                  bias_application: HofX
+              clwmatchidx_function:
+                name: CLWMatchIndexMW@ObsFunction
+                channels: *all_channels
+                options:
+                  channels: *all_channels
+                  clwobs_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [ObsValue]
+                  clwbkg_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [HofX]
+                      bias_application: HofX
+                  clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
+                                    0.100, 0.000, 0.000, 0.000, 0.000,
+                                    0.000, 0.000, 0.000, 0.000, 0.030]
+              obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
+                                0.230, 0.230, 0.250, 0.250, 0.350,
+                                0.400, 0.550, 0.800, 3.000, 3.500]
+    #   passedBenchmark: 1272
+    #  Gross check
+    #  - filter: Background Check
+    #    threshold: 3
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        function absolute threshold:
+        - name: ObsErrorBoundMW@ObsFunction
+          channels: *all_channels
+          options:
+            sensor: *Sensor_ID
+            channels: *all_channels
+            obserr_bound_latitude:
+              name: ObsErrorFactorLatRad@ObsFunction
+              options:
+                latitude_parameters: [25.0, 0.25, 0.04, 3.0]
+            obserr_bound_transmittop:
+              name: ObsErrorFactorTransmitTopRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+            obserr_bound_topo:
+              name: ObsErrorFactorTopoRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                sensor: *Sensor_ID
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
+                  options:
+                    clwret_ch238: 1
+                    clwret_ch314: 2
+                    clwret_types: [ObsValue, HofX]
+                    bias_application: HofX
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+            obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
+                               2.0, 2.0, 2.0, 2.0, 2.0,
+                               2.5, 3.5, 4.5, 4.5, 4.5]
+        action:
+          name: reject
+    #   passedBenchmark: 1212
+    #  Inter-channel check #amsua-n18
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: InterChannelConsistencyCheck@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            sensor: *Sensor_ID
+            use_flag: [ -1,  -1,  -1,  -1,  1,
+                        1, 1, 1,  1,  -1,
+                       -1, -1, -1, -1, -1 ]
+        maxvalue: 1.0e-12
+        action:
+          name: reject
+    #   passedBenchmark: 1206
+    #  Useflag check  #amsua-n18
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: ChannelUseflagCheckRad@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            use_flag: [ -1, -1, -1, -1,  1,
+                        1, 1, 1,  1, -1,
+                       -1, -1, -1, -1, -1 ]
+        minvalue: 1.0e-12
+        action:
+          name: reject
+      - filter: Gaussian_Thinning
+        horizontal_mesh:   145 #km
   
-  #  Topography check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTopoRad@ObsFunction
+      get values:
+        interpolation type: unstructured
+  
+    - obs space:
+        name: amsua_metop-a
+        obsdatain:
+          obsfile: Data/amsua_metop-a_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_amsua_metop-a.h5
+        simulated variables: [brightness_temperature]
+        channels: &all_channels 1-15 
+      obs error:
+        covariance model: diagonal
+      obs operator:
+        <<: *clramsuacrtm
+        obs options:
+          <<: *clramsuacrtmopts
+          Sensor_ID: &Sensor_ID amsua_metop-a
+
+      obs bias:
+        input file: Data/satbias_amsua_metop-a.nc4
+#        output file: Data/satbias_amsua_metop-a_out.nc4
+        variational bc:
+          predictors: &predictors4
+          - name: constant
+#          - name: cosine_of_latitude_times_orbit_node
+#            options:
+#              preconditioner: 0.01
+#          - name: sine_of_latitude
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsuametopatlap Data/amsua_metop-a_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsuametopatlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
+
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/satbias_cov_amsua_metop-a.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+#          output file: Data/satbias_cov_amsua_metop-a_out.nc4
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: sensor_zenith_angle@MetaData
+          maxvalue: 45.0
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [ObsValue]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [HofX]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #   passedBenchmark: 1472
+    #  Hydrometeor Check (cloud/precipitation affected chanels)
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: HydrometeorCheckAMSUA@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
             channels: *all_channels
-  #  Transmittnace Top Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorTransmitTopRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-  #  Surface Jacobian check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSurfJacobianRad@ObsFunction
-          channels: *all_channels
-          options:
-            channels: *all_channels
-            obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
-            obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
-  #   passedBenchmark: 1272
-  #  Situation dependent Check
-    - filter: BlackList
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      action:
-        name: inflate error
-        inflation variable:
-          name: ObsErrorFactorSituDependMW@ObsFunction
-          channels: *all_channels
-          options:
-            sensor: *Sensor_ID
-            channels: *all_channels
-            clwobs_function:
+            obserr_clearsky: [ 2.500, 2.200, 2.000, 0.550, 0.300,
+                               0.230, 0.230, 0.250, 0.250, 0.350,
+                               0.400, 0.550, 0.800, 3.000, 3.500]
+            clwret_function:
               name: CLWRetMW@ObsFunction
               options:
                 clwret_ch238: 1
                 clwret_ch314: 2
                 clwret_types: [ObsValue]
-            clwbkg_function:
-              name: CLWRetMW@ObsFunction
-              options:
-                clwret_ch238: 1
-                clwret_ch314: 2
-                clwret_types: [HofX]
-                bias_application: HofX
-            scatobs_function:
-              name: SCATRetMW@ObsFunction
-              options:
-                scatret_ch238: 1
-                scatret_ch314: 2
-                scatret_ch890: 15
-                scatret_types: [ObsValue]
-                bias_application: HofX
-            clwmatchidx_function:
-              name: CLWMatchIndexMW@ObsFunction
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
               options:
                 channels: *all_channels
-                clwobs_function:
-                  name: CLWRetMW@ObsFunction
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
                   options:
                     clwret_ch238: 1
                     clwret_ch314: 2
-                    clwret_types: [ObsValue]
-                clwbkg_function:
-                  name: CLWRetMW@ObsFunction
+                    clwret_types: [ObsValue, HofX]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+        maxvalue: 0.0
+        action:
+          name: reject
+    #   passedBenchmark: 1272
+  
+    #  Topography check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTopoRad@ObsFunction
+            channels: *all_channels
+            options:
+              sensor: *Sensor_ID
+              channels: *all_channels
+    #  Transmittnace Top Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTransmitTopRad@ObsFunction
+            channels: *all_channels
+            options:
+              channels: *all_channels
+    #  Surface Jacobian check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSurfJacobianRad@ObsFunction
+            channels: *all_channels
+            options:
+              channels: *all_channels
+              obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
+              obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
+    #   passedBenchmark: 1272
+    #  Situation dependent Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSituDependMW@ObsFunction
+            channels: *all_channels
+            options:
+              sensor: *Sensor_ID
+              channels: *all_channels
+              clwobs_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [ObsValue]
+              clwbkg_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [HofX]
+                  bias_application: HofX
+              scatobs_function:
+                name: SCATRetMW@ObsFunction
+                options:
+                  scatret_ch238: 1
+                  scatret_ch314: 2
+                  scatret_ch890: 15
+                  scatret_types: [ObsValue]
+                  bias_application: HofX
+              clwmatchidx_function:
+                name: CLWMatchIndexMW@ObsFunction
+                channels: *all_channels
+                options:
+                  channels: *all_channels
+                  clwobs_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [ObsValue]
+                  clwbkg_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [HofX]
+                      bias_application: HofX
+                  clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
+                                    0.100, 0.000, 0.000, 0.000, 0.000,
+                                    0.000, 0.000, 0.000, 0.000, 0.030]
+              obserr_clearsky: [2.500, 2.200, 2.000, 0.550, 0.300,
+                                0.230, 0.230, 0.250, 0.250, 0.350,
+                                0.400, 0.550, 0.800, 3.000, 3.500]
+    #   passedBenchmark: 1272
+    #  Gross check
+    #  - filter: Background Check
+    #    threshold: 3
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        function absolute threshold:
+        - name: ObsErrorBoundMW@ObsFunction
+          channels: *all_channels
+          options:
+            sensor: *Sensor_ID
+            channels: *all_channels
+            obserr_bound_latitude:
+              name: ObsErrorFactorLatRad@ObsFunction
+              options:
+                latitude_parameters: [25.0, 0.25, 0.04, 3.0]
+            obserr_bound_transmittop:
+              name: ObsErrorFactorTransmitTopRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+            obserr_bound_topo:
+              name: ObsErrorFactorTopoRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                sensor: *Sensor_ID
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
                   options:
                     clwret_ch238: 1
                     clwret_ch314: 2
-                    clwret_types: [HofX]
+                    clwret_types: [ObsValue, HofX]
                     bias_application: HofX
-                clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
-                                  0.100, 0.000, 0.000, 0.000, 0.000,
-                                  0.000, 0.000, 0.000, 0.000, 0.030]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.550,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000,  3.500]
+                err1:  [20.000, 18.000, 12.000,  3.000,  0.300,
+                         0.230,  0.230,  0.250,  0.250,  0.350,
+                         0.400,  0.550,  0.800,  3.000, 18.000]
+            obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
+                               2.0, 2.0, 2.0, 2.0, 2.0,
+                               2.5, 3.5, 4.5, 4.5, 4.5]
+        action:
+          name: reject
+     # passedBenchmark: 1212
+    #  Inter-channel check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: InterChannelConsistencyCheck@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            sensor: *Sensor_ID
+            use_flag: [ -1,  -1,  -1,  -1,  1,
+                        1, -1, -1,  1,  -1,
+                       -1, -1, -1, -1, -1 ]
+        maxvalue: 1.0e-12
+        action:
+          name: reject
+    #   passedBenchmark: 1206
+    #  Useflag check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: ChannelUseflagCheckRad@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            use_flag: [ -1, -1, -1, -1,  1,
+                        1, -1, -1,  1, -1,
+                       -1, -1, -1, -1, -1 ]
+        minvalue: 1.0e-12
+        action:
+          name: reject
+      - filter: Gaussian_Thinning
+        horizontal_mesh:   145 #km
+  
+      get values:
+        interpolation type: unstructured
+    - obs space:
+        name: amsua_aqua
+        obsdatain:
+          obsfile: Data/amsua_aqua_obs_2018041500.h5
+        obsdataout:
+          obsfile: Data/obsout_variational_amsua_aqua.h5
+        simulated variables: [brightness_temperature]
+        channels: &all_channels 1-15
+      obs error:
+        covariance model: diagonal
+      obs operator:
+        <<: *clramsuacrtm
+        obs options:
+          <<: *clramsuacrtmopts
+          Sensor_ID: &Sensor_ID amsua_aqua
+
+      obs bias:
+        input file: Data/satbias_amsua_aqua.nc4
+#        output file: Data/satbias_amsua_aqua_out.nc4
+        variational bc:
+          predictors: &predictors5
+          - name: constant
+#          - name: cosine_of_latitude_times_orbit_node
+#            options:
+#              preconditioner: 0.01
+#          - name: sine_of_latitude
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsuaaquatlap Data/amsua_aqua_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsuaaquatlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
+
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/satbias_cov_amsua_aqua.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+#          output file: Data/satbias_cov_amsua_aqua_out.nc4
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: sensor_zenith_angle@MetaData
+          maxvalue: 45.0
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [ObsValue]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #  CLW Retrieval Check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-6, 15
+        test variables:
+        - name: CLWRetMW@ObsFunction
+          options:
+            clwret_ch238: 1
+            clwret_ch314: 2
+            clwret_types: [HofX]
+        maxvalue: 999.0
+        action:
+          name: reject
+    #   passedBenchmark: 1472
+    #  Hydrometeor Check (cloud/precipitation affected chanels)
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: HydrometeorCheckAMSUA@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
             obserr_clearsky: [ 2.500, 2.000, 2.000, 0.500, 0.400,
-                              0.400, 0.500, 0.300, 0.350, 0.350,
-                              0.450, 1.000, 1.500, 2.500, 2.500]
-  #   passedBenchmark: 1272
-  #  Gross check
-  #  - filter: Background Check
-  #    threshold: 3
-    - filter: Background Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      function absolute threshold:
-      - name: ObsErrorBoundMW@ObsFunction
-        channels: *all_channels
-        options:
-          sensor: *Sensor_ID
+                               0.400, 0.500, 0.300, 0.350, 0.350,
+                               0.450, 1.000, 1.500, 2.500, 2.500]
+            clwret_function:
+              name: CLWRetMW@ObsFunction
+              options:
+                clwret_ch238: 1
+                clwret_ch314: 2
+                clwret_types: [ObsValue]
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
+                  options:
+                    clwret_ch238: 1
+                    clwret_ch314: 2
+                    clwret_types: [ObsValue, HofX]
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.200,  2.000,  0.500,  0.400,
+                         0.400,  0.500,  0.300,  0.350,  0.350,
+                         0.450,  1.000,  1.500,  2.500,  2.500]
+                err1:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
+                         0.400,  0.500,  0.300,  0.350,  0.350,                      
+                         0.450,  1.000,  1.500,  2.500,  2.500]
+        maxvalue: 0.0
+        action:
+          name: reject
+    #   passedBenchmark: 1272
+  
+    #  Topography check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          obserr_bound_latitude:
-            name: ObsErrorFactorLatRad@ObsFunction
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorTopoRad@ObsFunction
+            channels: *all_channels
             options:
-              latitude_parameters: [25.0, 0.25, 0.04, 3.0]
-          obserr_bound_transmittop:
+              sensor: *Sensor_ID
+              channels: *all_channels
+    #  Transmittnace Top Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
-          obserr_bound_topo:
-            name: ObsErrorFactorTopoRad@ObsFunction
+    #  Surface Jacobian check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
               channels: *all_channels
+              obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
+              obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
+    #   passedBenchmark: 1272
+    #  Situation dependent Check
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        action:
+          name: inflate error
+          inflation variable:
+            name: ObsErrorFactorSituDependMW@ObsFunction
+            channels: *all_channels
+            options:
               sensor: *Sensor_ID
-          obserr_function:
-            name: ObsErrorModelRamp@ObsFunction
-            channels: *all_channels
-            options:
               channels: *all_channels
-              xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+              clwobs_function:
+                name: CLWRetMW@ObsFunction
                 options:
                   clwret_ch238: 1
                   clwret_ch314: 2
-                  clwret_types: [ObsValue, HofX]
+                  clwret_types: [ObsValue]
+              clwbkg_function:
+                name: CLWRetMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [HofX]
                   bias_application: HofX
-              x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.030]
-              x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.000,
-                       0.000,  0.000,  0.000,  0.000,  0.200]
-              err0:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
-                       0.400,  0.500,  0.300,  0.350,  0.350,
-                       0.450,  1.000,  1.500,  2.500,  2.500]
-              err1:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
-                       0.400,  0.500,  0.300,  0.350,  0.350,
-                       0.450,  1.000,  1.500,  2.500,  2.500]
-          obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
-                             2.0, 2.0, 2.0, 2.0, 2.0,
-                             2.5, 3.5, 4.5, 4.5, 4.5]
-      action:
-        name: reject
-  #   passedBenchmark: 1212
-  #  Inter-channel check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: InterChannelConsistencyCheck@ObsFunction
-        channels: *all_channels
-        options:
+              scatobs_function:
+                name: SCATRetMW@ObsFunction
+                options:
+                  scatret_ch238: 1
+                  scatret_ch314: 2
+                  scatret_ch890: 15
+                  scatret_types: [ObsValue]
+                  bias_application: HofX
+              clwmatchidx_function:
+                name: CLWMatchIndexMW@ObsFunction
+                channels: *all_channels
+                options:
+                  channels: *all_channels
+                  clwobs_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [ObsValue]
+                  clwbkg_function:
+                    name: CLWRetMW@ObsFunction
+                    options:
+                      clwret_ch238: 1
+                      clwret_ch314: 2
+                      clwret_types: [HofX]
+                      bias_application: HofX
+                  clwret_clearsky: [0.050, 0.030, 0.030, 0.020, 0.000,
+                                    0.100, 0.000, 0.000, 0.000, 0.000,
+                                    0.000, 0.000, 0.000, 0.000, 0.030]
+              obserr_clearsky: [ 2.500, 2.000, 2.000, 0.500, 0.400,
+                                0.400, 0.500, 0.300, 0.350, 0.350,
+                                0.450, 1.000, 1.500, 2.500, 2.500]
+    #   passedBenchmark: 1272
+    #  Gross check
+    #  - filter: Background Check
+    #    threshold: 3
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
           channels: *all_channels
-          sensor: *Sensor_ID
-          use_flag: [ -1,  -1,  -1,  -1,  -1,
-                      -1, -1, 1,  1,  -1,
-                     -1, -1, -1, -1, -1 ]
-      maxvalue: 1.0e-12
-      action:
-        name: reject
-  #   passedBenchmark: 1206
-  #  Useflag check
-    - filter: Bounds Check
-      filter variables:
-      - name: brightness_temperature
-        channels: *all_channels
-      test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
-        channels: *all_channels
-        options:
+        function absolute threshold:
+        - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
-          use_flag: [ -1, -1, -1, -1, -1,
-                      -1, -1, 1,  1, -1,
-                     -1, -1, -1, -1, -1 ]
-      minvalue: 1.0e-12
-      action:
-        name: reject
-    - filter: Gaussian_Thinning
-      horizontal_mesh:   145 #km
+          options:
+            sensor: *Sensor_ID
+            channels: *all_channels
+            obserr_bound_latitude:
+              name: ObsErrorFactorLatRad@ObsFunction
+              options:
+                latitude_parameters: [25.0, 0.25, 0.04, 3.0]
+            obserr_bound_transmittop:
+              name: ObsErrorFactorTransmitTopRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+            obserr_bound_topo:
+              name: ObsErrorFactorTopoRad@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                sensor: *Sensor_ID
+            obserr_function:
+              name: ObsErrorModelRamp@ObsFunction
+              channels: *all_channels
+              options:
+                channels: *all_channels
+                xvar:
+                  name: CLWRetSymmetricMW@ObsFunction
+                  options:
+                    clwret_ch238: 1
+                    clwret_ch314: 2
+                    clwret_types: [ObsValue, HofX]
+                    bias_application: HofX
+                x0:    [ 0.050,  0.030,  0.030,  0.020,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.030]
+                x1:    [ 0.600,  0.450,  0.400,  0.450,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.000,
+                         0.000,  0.000,  0.000,  0.000,  0.200]
+                err0:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
+                         0.400,  0.500,  0.300,  0.350,  0.350,
+                         0.450,  1.000,  1.500,  2.500,  2.500]
+                err1:  [ 2.500,  2.000,  2.000,  0.500,  0.400,
+                         0.400,  0.500,  0.300,  0.350,  0.350,
+                         0.450,  1.000,  1.500,  2.500,  2.500]
+            obserr_bound_max: [4.5, 4.5, 4.5, 2.5, 2.0,
+                               2.0, 2.0, 2.0, 2.0, 2.0,
+                               2.5, 3.5, 4.5, 4.5, 4.5]
+        action:
+          name: reject
+    #   passedBenchmark: 1212
+    #  Inter-channel check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: InterChannelConsistencyCheck@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            sensor: *Sensor_ID
+            use_flag: [ -1,  -1,  -1,  -1,  -1,
+                        -1, -1, 1,  1,  -1,
+                       -1, -1, -1, -1, -1 ]
+        maxvalue: 1.0e-12
+        action:
+          name: reject
+    #   passedBenchmark: 1206
+    #  Useflag check
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: *all_channels
+        test variables:
+        - name: ChannelUseflagCheckRad@ObsFunction
+          channels: *all_channels
+          options:
+            channels: *all_channels
+            use_flag: [ -1, -1, -1, -1, -1,
+                        -1, -1, 1,  1, -1,
+                       -1, -1, -1, -1, -1 ]
+        minvalue: 1.0e-12
+        action:
+          name: reject
+      - filter: Gaussian_Thinning
+        horizontal_mesh:   145 #km
   
-    get values:
-      interpolation type: unstructured
+      get values:
+        interpolation type: unstructured
 
 output:
   filename: "./analysis.$Y-$M-$D_$h.$m.$s.nc"

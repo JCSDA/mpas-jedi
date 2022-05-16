@@ -146,7 +146,7 @@ phases:
         && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
         && sed -i 's/home\/jedi/home\/jedi\/mpas-jedi/' DartConfiguration.tcl
         && cat DartConfiguration.tcl
-        && make -j3"
+        && make -j2"
 
       - echo $CODEBUILD_BUILD_SUCCEEDING
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
