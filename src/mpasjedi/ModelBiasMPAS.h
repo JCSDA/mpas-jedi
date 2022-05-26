@@ -49,7 +49,7 @@ class ModelBiasMPAS : public util::Printable,
 /// I/O and diagnostics
   void read(const eckit::Configuration &) {}
   void write(const eckit::Configuration &) const {}
-  double norm() const {return 0.0;}
+  real_type norm() const {return 0.0;}
 
  private:
   void print(std::ostream & os) const {}

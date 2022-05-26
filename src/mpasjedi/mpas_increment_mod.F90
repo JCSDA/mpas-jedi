@@ -83,13 +83,14 @@ subroutine dirac(self, f_conf)
    character(len=3)       :: idirchar
    character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-   real (kind=kind_real), dimension(:), pointer   :: r1d_ptr_a
+   real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+   real (kind=RKIND), dimension(:), pointer   :: r1d_ptr_a
    integer :: nearestCell
    integer, allocatable, dimension(:) :: dirOwned, dirOwnedGlobal
    real (kind=kind_real), allocatable, dimension(:) :: dirLats
    real (kind=kind_real), allocatable, dimension(:) :: dirLons
    integer, allocatable, dimension(:) :: dirCells
+   real (kind=RKIND) :: x1, y1
 
    ! Get number and positions of Diracs
    call f_conf%get_or_die("ndir",ndir)
@@ -110,8 +111,9 @@ subroutine dirac(self, f_conf)
    ndirlocal = 0
    do idir=1,ndir
       nearestCell = self % geom % nCellsSolve
-      nearestCell = nearest_cell( (dirLats(idir) * MPAS_JEDI_DEG2RAD_kr), &
-                                  (dirLons(idir) * MPAS_JEDI_DEG2RAD_kr), &
+      x1=real(dirLats(idir) * MPAS_JEDI_DEG2RAD_kr, kind=RKIND)
+      y1=real(dirLons(idir) * MPAS_JEDI_DEG2RAD_kr, kind=RKIND)
+      nearestCell = nearest_cell( x1, y1, &
                                   nearestCell, self % geom % nCells, self % geom % maxEdges, &
                                   self % geom % nEdgesOnCell, self % geom % cellsOnCell, &
                                   self % geom % latCell, self % geom % lonCell )
@@ -204,12 +206,12 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
 
    implicit none
 
-   real (kind=kind_real), intent(in) :: target_lat, target_lon
+   real (kind=RKIND), intent(in) :: target_lat, target_lon
    integer, intent(in) :: start_cell
    integer, intent(in) :: nCells, maxEdges
    integer, dimension(nCells), intent(in) :: nEdgesOnCell
    integer, dimension(maxEdges,nCells), intent(in) :: cellsOnCell
-   real (kind=kind_real), dimension(nCells), intent(in) :: latCell, lonCell
+   real (kind=RKIND), dimension(nCells), intent(in) :: latCell, lonCell
 
    integer :: i
    integer :: iCell
@@ -217,6 +219,8 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
    real (kind=kind_real) :: current_distance, d
    real (kind=kind_real) :: nearest_distance
    type (atlas_geometry) :: ageometry
+   
+   real (kind=kind_real) :: x1, y1, x2, y2
 
    nearest_cell = start_cell
    current_cell = -1
@@ -225,13 +229,17 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
 
    do while (nearest_cell /= current_cell)
       current_cell = nearest_cell
-      current_distance = ageometry%distance(lonCell(current_cell), latCell(current_cell),  target_lon, target_lat)
+!      current_distance = ageometry%distance(lonCell(current_cell), latCell(current_cell),  target_lon, target_lat)
+      x1=lonCell(current_cell); y1=latCell(current_cell); x2=target_lon; y2=target_lat
+      current_distance = ageometry%distance(x1,y1,x2,y2)
       nearest_cell = current_cell
       nearest_distance = current_distance
       do i = 1, nEdgesOnCell(current_cell)
          iCell = cellsOnCell(i,current_cell)
          if (iCell <= nCells) then
-            d = ageometry%distance(lonCell(iCell), latCell(iCell), target_lon, target_lat)
+            x1=lonCell(iCell); y1=latCell(iCell); x2=target_lon; y2=target_lat
+            !d = ageometry%distance(lonCell(iCell), latCell(iCell), target_lon, target_lat)
+            d = ageometry%distance(x1,y1,x2,y2)
             if (d < nearest_distance) then
                nearest_cell = iCell
                nearest_distance = d

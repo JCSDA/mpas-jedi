@@ -24,9 +24,9 @@ extern "C" {
   void mpas_increment_copy_f90(const F90inc &, const F90inc &);
   void mpas_increment_zero_f90(const F90inc &);
   void mpas_increment_ones_f90(const F90inc &);
-  void mpas_increment_axpy_inc_f90(const F90inc &, const double &,
+  void mpas_increment_axpy_inc_f90(const F90inc &, const real_type &,
                                    const F90inc &);
-  void mpas_increment_axpy_state_f90(const F90inc &, const double &,
+  void mpas_increment_axpy_state_f90(const F90inc &, const real_type &,
                                      const F90state &);
   void mpas_increment_change_resol_f90(const F90inc &, const F90inc &);
   void mpas_increment_read_file_f90(const F90inc &,
@@ -35,14 +35,14 @@ extern "C" {
   void mpas_increment_write_file_f90(const F90inc &,
                                  const eckit::Configuration &,
                                  const util::DateTime &);
-  void mpas_increment_gpnorm_f90(const F90inc &, const int &, double &);
-  void mpas_increment_rms_f90(const F90inc &, double &);
+  void mpas_increment_gpnorm_f90(const F90inc &, const int &, real_type &);
+  void mpas_increment_rms_f90(const F90inc &, real_type &);
   void mpas_increment_diff_incr_f90(const F90inc &, const F90state &,
                                     const F90state &);
   void mpas_increment_self_add_f90(const F90inc &, const F90inc &);
   void mpas_increment_self_sub_f90(const F90inc &, const F90inc &);
-  void mpas_increment_self_mul_f90(const F90inc &, const double &);
-  void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, double &);
+  void mpas_increment_self_mul_f90(const F90inc &, const real_type &);
+  void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, real_type &);
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
   void mpas_increment_set_atlas_f90(const F90inc &,
@@ -73,9 +73,9 @@ extern "C" {
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);
   void mpas_increment_serial_size_f90(const F90inc &, std::size_t &);
   void mpas_increment_serialize_f90(const F90inc &, const std::size_t &,
-                                    double[]);
+                                    real_type[]);
   void mpas_increment_deserialize_f90(const F90inc &, const std::size_t &,
-                                      const double[], const std::size_t &);
+                                      const real_type[], const std::size_t &);
 
 };  // extern "C"
 // -----------------------------------------------------------------------------

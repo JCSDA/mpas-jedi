@@ -49,7 +49,7 @@ void TlmMPAS::setTrajectory(const StateMPAS & xx, StateMPAS & xlr,
   traj_[xx.validTime()] = ftraj;
 
 // should be in print method
-  std::vector<double> zstat(15);
+  std::vector<real_type> zstat(15);
 //  mpas_traj_minmaxrms_f90(ftraj, zstat[0]);
   oops::Log::debug() << "TlmMPAS trajectory at time " << xx.validTime()
                      << std::endl;

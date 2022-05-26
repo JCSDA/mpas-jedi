@@ -43,19 +43,19 @@ class ModelBiasIncrementMPAS : public util::Printable,
                                      {return *this;}
   ModelBiasIncrementMPAS & operator-=(const ModelBiasIncrementMPAS &)
                                      {return *this;}
-  ModelBiasIncrementMPAS & operator*=(const double) {return *this;}
-  void axpy(const double, const ModelBiasIncrementMPAS &) {}
-  double dot_product_with(const ModelBiasIncrementMPAS &) const {return 0.0;}
+  ModelBiasIncrementMPAS & operator*=(const real_type) {return *this;}
+  void axpy(const real_type, const ModelBiasIncrementMPAS &) {}
+  real_type dot_product_with(const ModelBiasIncrementMPAS &) const {return 0.0;}
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &) {}
   void write(const eckit::Configuration &) const {}
-  double norm() const {return 0.0;}
+  real_type norm() const {return 0.0;}
 
 /// Serialization
   size_t serialSize() const override { return 0; }
-  void serialize(std::vector<double> &) const override {}
-  void deserialize(const std::vector<double> &, size_t &) override {}
+  void serialize(std::vector<real_type> &) const override {}
+  void deserialize(const std::vector<real_type> &, size_t &) override {}
 
  private:
   explicit ModelBiasIncrementMPAS(const ModelBiasCovarianceMPAS &);

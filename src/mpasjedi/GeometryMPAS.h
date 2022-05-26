@@ -47,7 +47,7 @@ class GeometryMPAS : public util::Printable,
   atlas::FunctionSpace * atlasFunctionSpaceIncludingHalo() const {
       return atlasFunctionSpaceIncludingHalo_.get();}
   atlas::FieldSet * atlasFieldSet() const {return atlasFieldSet_.get();}
-  void latlon(std::vector<double> &, std::vector<double> &, const bool) const;
+  void latlon(std::vector<real_type> &, std::vector<real_type> &, const bool) const;
 
   bool isEqual(const GeometryMPAS &) const;
 

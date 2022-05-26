@@ -104,9 +104,9 @@ subroutine multiply(self, geom, dxm, dxg)
   type(mpas_pool_data_type), pointer :: gdata
 
   ! reusable arrays
-  real(kind=kind_real), dimension(:), pointer :: ptrr1_a
-  real(kind=kind_real), dimension(:,:), pointer :: ptrr2_a, ptrr2_b, traj_ptrr2_a, traj_ptrr2_b
-  real(kind=kind_real), dimension(:,:), allocatable :: r2, trajr2
+  real(kind=RKIND), dimension(:), pointer :: ptrr1_a
+  real(kind=RKIND), dimension(:,:), pointer :: ptrr2_a, ptrr2_b, traj_ptrr2_a, traj_ptrr2_b
+  real(kind=RKIND), dimension(:,:), allocatable :: r2, trajr2
 
   ! iteration-specific variables
   character(len=MAXVARLEN) :: geovar
@@ -114,7 +114,7 @@ subroutine multiply(self, geom, dxm, dxg)
   integer :: iVar
 
   ! air pressure on w levels
-  real(kind=kind_real), allocatable :: plevels(:,:)
+  real(kind=RKIND), allocatable :: plevels(:,:)
 
   ! convenient local variables
   mFields_tl => dxm % subFields
@@ -237,9 +237,9 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
   type(mpas_pool_data_type), pointer :: gdata
 
   ! reusable array pointers
-  real(kind=kind_real), dimension(:), pointer :: ptrr1_a
-  real(kind=kind_real), dimension(:,:), pointer :: ptrr2_a, ptrr2_b, traj_ptrr2_a, traj_ptrr2_b
-  real(kind=kind_real), dimension(:,:), allocatable :: r2, trajr2
+  real(kind=RKIND), dimension(:), pointer :: ptrr1_a
+  real(kind=RKIND), dimension(:,:), pointer :: ptrr2_a, ptrr2_b, traj_ptrr2_a, traj_ptrr2_b
+  real(kind=RKIND), dimension(:,:), allocatable :: r2, trajr2
 
   ! iteration-specific variables
   character(len=MAXVARLEN) :: geovar
@@ -247,7 +247,7 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
   integer :: iVar
 
   ! air pressure on w levels
-  real(kind=kind_real), allocatable :: plevels(:,:)
+  real(kind=RKIND), allocatable :: plevels(:,:)
 
   ! convenient local variables
   mFields_ad => dxm % subFields

@@ -63,7 +63,7 @@ class StateMPAS : public util::Printable,
 
   StateMPAS & operator=(const StateMPAS &);
   void zero();
-  void accumul(const double &, const StateMPAS &);
+  void accumul(const real_type &, const StateMPAS &);
 
 /// Interpolate full fields
   void changeResolution(const StateMPAS & xx);
@@ -73,13 +73,13 @@ class StateMPAS : public util::Printable,
 
 /// Serialization
   size_t serialSize() const override;
-  void serialize(std::vector<double> &) const override;
-  void deserialize(const std::vector<double> &, size_t &) override;
+  void serialize(std::vector<real_type> &) const override;
+  void deserialize(const std::vector<real_type> &, size_t &) override;
 
 /// I/O and diagnostics
   void read(const Parameters_ &);
   void write(const WriteParameters_ &) const;
-  double norm() const;
+  real_type norm() const;
 
   std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
 

@@ -43,6 +43,7 @@ use mpas_constants_mod
 use mpas_geom_mod
 use mpas4da_mod
 use mpas2ufo_vars_mod, only: w_to_q, theta_to_temp
+use mpas_kinds, only : c_real_type
 
 implicit none
 
@@ -622,7 +623,7 @@ subroutine gpnorm_(self, nf, pstat)
    implicit none
    class(mpas_fields),   intent(in)  :: self
    integer,              intent(in)  :: nf
-   real(kind=kind_real), intent(out) :: pstat(3, nf)
+   real(kind=RKIND), intent(out) :: pstat(3, nf)
 
    call da_gpnorm(self % subFields, self % geom % domain % dminfo, nf, pstat, fld_select = self % fldnames_ci(1:nf))
 
@@ -634,7 +635,7 @@ subroutine rms_(self, prms)
 
    implicit none
    class(mpas_fields),   intent(in)  :: self
-   real(kind=kind_real), intent(out) :: prms
+   real(kind=RKIND), intent(out) :: prms
 
    call da_fldrms(self % subFields, self % geom % domain % dminfo, prms, fld_select = self % fldnames_ci)
 
@@ -688,7 +689,7 @@ subroutine self_mult_(self,zz)
 
    implicit none
    class(mpas_fields),   intent(inout) :: self
-   real(kind=kind_real), intent(in)    :: zz
+   real(kind=RKIND), intent(in)    :: zz
 
    call da_self_mult(self % subFields, zz)
 
@@ -700,7 +701,7 @@ subroutine axpy_(self,zz,rhs)
 
    implicit none
    class(mpas_fields),   intent(inout) :: self
-   real(kind=kind_real), intent(in)    :: zz
+   real(kind=RKIND), intent(in)    :: zz
    class(mpas_fields),   intent(in)    :: rhs
 
    call da_axpy(self % subFields, rhs % subFields, zz, fld_select = self % fldnames_ci)
@@ -713,7 +714,7 @@ subroutine dot_prod_(self,fld,zprod)
 
    implicit none
    class(mpas_fields),    intent(in)    :: self, fld
-   real(kind=kind_real),  intent(inout) :: zprod
+   real(kind=RKIND),  intent(inout) :: zprod
 
    call da_dot_product(self % subFields, fld % subFields, self % geom % domain % dminfo, zprod)
 
@@ -738,8 +739,8 @@ subroutine interpolate_fields(self,rhs)
   type(unstrc_interp)     :: unsinterp
   type (mpas_pool_iterator_type) :: poolItr
   real(kind=kind_real), allocatable :: interp_in(:,:), interp_out(:,:)
-  real (kind=kind_real), dimension(:), pointer :: r1d_ptr
-  real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr
+  real (kind=RKIND), dimension(:), pointer :: r1d_ptr
+  real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr
   integer :: rhs_nCells, self_nCells, maxlevels, nlevels, jlev
   character(len=StrKIND) :: interp_type
   integer, allocatable :: rhsDims(:)
@@ -931,15 +932,15 @@ subroutine serialize_fields(self, vsize, vect_inc)
    ! Passed variables
    class(mpas_fields),intent(in) :: self          !< Increment
    integer(c_size_t),intent(in) :: vsize          !< Size
-   real(kind_real),intent(out) :: vect_inc(vsize) !< Vector
+   real(c_real_type),intent(out) :: vect_inc(vsize) !< Vector
 
    ! Local variables
    integer :: index, nvert, nhoriz, vv, hh
    type (mpas_pool_iterator_type) :: poolItr
    integer, allocatable :: dimSizes(:)
 
-   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+   real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+   real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
    integer, dimension(:), pointer :: i1d_ptr_a
    integer, dimension(:,:), pointer :: i2d_ptr_a
 
@@ -955,7 +956,7 @@ subroutine serialize_fields(self, vsize, vect_inc)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
                do hh = 1, nhoriz
-                  vect_inc(index + 1) = real(i1d_ptr_a(hh), kind=kind_real)
+                  vect_inc(index + 1) = real(i1d_ptr_a(hh), kind=c_real_type)
                   index = index + 1
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -972,7 +973,7 @@ subroutine serialize_fields(self, vsize, vect_inc)
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
                do vv = 1, nvert
                   do hh = 1, nhoriz
-                     vect_inc(index + 1) = real(i2d_ptr_a(vv, hh), kind=kind_real)
+                     vect_inc(index + 1) = real(i2d_ptr_a(vv, hh), kind=c_real_type)
                      index = index + 1
                   enddo
                enddo
@@ -1004,7 +1005,7 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
    ! Passed variables
    class(mpas_fields),intent(inout) :: self      !< Increment
    integer(c_size_t),intent(in) :: vsize         !< Size
-   real(kind_real),intent(in) :: vect_inc(vsize) !< Vector
+   real(c_real_type),intent(in) :: vect_inc(vsize) !< Vector
    integer(c_size_t),intent(inout) :: index      !< Index
 
    ! Local variables
@@ -1012,8 +1013,8 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
    type (mpas_pool_iterator_type) :: poolItr
    integer, allocatable :: dimSizes(:)
 
-   real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-   real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
+   real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+   real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
    integer, dimension(:), pointer :: i1d_ptr_a
    integer, dimension(:,:), pointer :: i2d_ptr_a
 
@@ -1155,8 +1156,9 @@ end subroutine get_array_i2
 subroutine get_array_r1(self, key, r1)
    class(mpas_fields), intent(in) :: self
    character (len=*), intent(in) :: key
-   real(kind=kind_real), pointer, intent(out) :: r1(:)
+   real(kind=RKIND), pointer, intent(out) :: r1(:)
    type(mpas_pool_data_type), pointer :: data
+
    call self%get(key, data)
    r1 => data%r1%array
 end subroutine get_array_r1
@@ -1164,7 +1166,7 @@ end subroutine get_array_r1
 subroutine get_array_r2(self, key, r2)
    class(mpas_fields), intent(in) :: self
    character (len=*), intent(in) :: key
-   real(kind=kind_real), pointer, intent(out) :: r2(:,:)
+   real(kind=RKIND), pointer, intent(out) :: r2(:,:)
    type(mpas_pool_data_type), pointer :: data
    call self%get(key, data)
    r2 => data%r2%array
@@ -1496,7 +1498,7 @@ subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
 
    integer :: jvar, nlevels
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    integer, pointer :: i1d_ptr_a(:), i2d_ptr_a(:,:)
    logical :: var_found
    type(atlas_field) :: afield
@@ -1509,6 +1511,7 @@ subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    type(field1DInteger), pointer :: i1
    type(field2DInteger), pointer :: i2
    integer :: nx, ilev, jlev
+   integer :: j
 
    ! note:  update-halo for mpas-field, flip_vert_level, pass data to atlas field
    !        assign 'default, interp_type' in atlas's metadata
@@ -1544,7 +1547,7 @@ subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                   endif
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
                   call afield%data(real_ptr_1)
-                  real_ptr_1(1:nx) = r1d_ptr_a(1:nx)
+                  real_ptr_1(1:nx) = real(r1d_ptr_a(1:nx), kind_real)
                   !
                else if (poolItr%nDims==2) then
                   if (include_halo) then
@@ -1560,7 +1563,7 @@ subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      else
                         ilev = jlev
                      endif
-                     real_ptr_2(ilev,1:nx) = r2d_ptr_a(jlev,1:nx)
+                     real_ptr_2(ilev,1:nx) = real(r2d_ptr_a(jlev,1:nx), kind_real)
                   enddo
                end if
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
@@ -1571,7 +1574,7 @@ subroutine to_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                   end if
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), i1d_ptr_a)
                   call afield%data(real_ptr_1)
-                  real_ptr_1(1:nx) = i1d_ptr_a(1:nx)*1.0
+                  real_ptr_1(1:nx) = real(i1d_ptr_a(1:nx), kind_real)
                else if (poolItr%nDims==2) then
                   write(message,*) '--> fill_geovals: nDims == 2:  not handled for integers'
                   call abor1_ftn(message)
@@ -1615,7 +1618,7 @@ subroutine from_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    
    integer :: jvar
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
@@ -1652,7 +1655,7 @@ subroutine from_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                if (poolItr%nDims==1) then
                   call afield%data(real_ptr_1)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-                  r1d_ptr_a(1:nx) = real_ptr_1(1:nx)
+                  r1d_ptr_a(1:nx) = real(real_ptr_1(1:nx), RKIND)
                else if (poolItr%nDims==2) then
                   call afield%data(real_ptr_2)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
@@ -1663,7 +1666,7 @@ subroutine from_atlas(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      else
                         ilev = jlev
                      endif
-                     r2d_ptr_a(jlev,1:nx) = real_ptr_2(ilev,1:nx) 
+                     r2d_ptr_a(jlev,1:nx) = real(real_ptr_2(ilev,1:nx), RKIND) 
                   enddo
                end if
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
@@ -1700,7 +1703,7 @@ subroutine to_atlas_ad (self, geom, vars, afieldset, include_halo, flip_vert_lev
    
    integer :: jvar
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
@@ -1736,7 +1739,7 @@ subroutine to_atlas_ad (self, geom, vars, afieldset, include_halo, flip_vert_lev
                if (poolItr%nDims==1) then
                   call afield%data(real_ptr_1)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-                  r1d_ptr_a(1:nx) = r1d_ptr_a(1:nx) + real_ptr_1(1:nx)  
+                  r1d_ptr_a(1:nx) = r1d_ptr_a(1:nx) + real(real_ptr_1(1:nx), RKIND)
                   r1 => data_aux%r1
                   call mpas_dmpar_exch_halo_adj_field(r1)
                else if (poolItr%nDims==2) then
@@ -1749,7 +1752,7 @@ subroutine to_atlas_ad (self, geom, vars, afieldset, include_halo, flip_vert_lev
                      else
                         ilev = jlev
                      endif
-                     r2d_ptr_a(jlev,1:nx) = r2d_ptr_a(jlev,1:nx) + real_ptr_2(ilev,1:nx) 
+                     r2d_ptr_a(jlev,1:nx) = r2d_ptr_a(jlev,1:nx) + real(real_ptr_2(ilev,1:nx), RKIND) 
                   enddo
                   r2 => data_aux%r2
                   call mpas_dmpar_exch_halo_adj_field(r2)

@@ -109,9 +109,9 @@ subroutine multiply(self,geom,xctl,xana)
    type (field2DReal), pointer :: fld2d_sf, fld2d_vp, fld2d_uRz, fld2d_uRm, fld2d_traj_qs
    type (field2DReal), pointer :: fld2d_v_src, fld2d_sf_v, fld2d_e_src, fld2d_u
 
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
 
    integer :: k, ngrid, nCells, nVertices, nEdges
 
@@ -201,9 +201,9 @@ subroutine multiplyadjoint(self,geom,xana,xctl)
    type (field2DReal), pointer :: fld2d_sf, fld2d_vp, fld2d_uRz, fld2d_uRm, fld2d_traj_qs
    type (field2DReal), pointer :: fld2d_v_src, fld2d_sf_v, fld2d_e_src, fld2d_u
 
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
    integer :: k, ngrid, nCells, nVertices, nEdges
 
    write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyadjoint: xana % fldnames(:) =",xana % fldnames(:)
@@ -295,9 +295,9 @@ subroutine multiplyinverse(self,geom,xana,xctl)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: fld2d_traj_qs
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh
    integer :: ngrid
 
    write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverse: xana % fldnames(:) =",xana % fldnames(:)
@@ -362,9 +362,9 @@ subroutine multiplyinverseadjoint(self,geom,xctl,xana)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field2DReal), pointer :: fld2d_traj_qs
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh, ptrr2_traj_qs
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_ctl, ptrr1_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_ctl, ptrr2_ana
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_sh, ptrr2_rh, ptrr2_traj_qs
    integer :: ngrid
 
    write(message,*) "DEBUG: mpasjedi_linvarcha_c2a_multiplyinverseadjoint: xana % fldnames(:) =",xana % fldnames(:)
@@ -616,11 +616,11 @@ subroutine psichi_to_uv_center(geom, psi, chi, u, v)
 
    implicit none
    type (mpas_geom),                                               intent(in)  :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(in)  :: psi, chi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(out) :: u, v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(in)  :: psi, chi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(out) :: u, v
 
    integer :: iC, iE, j
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
               psi_line_intg_dx, psi_line_intg_dy, chi_line_intg_dx, chi_line_intg_dy
 
    psi_line_intg_dx=MPAS_JEDI_ZERO_kr
@@ -659,11 +659,11 @@ subroutine psichi_to_uv_centerAD(geom, psi, chi, u, v)
 
    implicit none
    type (mpas_geom),                                               intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: psi, chi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: psi, chi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
    integer :: iC, iE, j
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCellsSolve) :: &
               psi_line_intg_dx, psi_line_intg_dy, chi_line_intg_dx, chi_line_intg_dy
 
    psi_line_intg_dx=MPAS_JEDI_ZERO_kr
@@ -713,8 +713,8 @@ subroutine psichi_to_uv_edge_step1(geom, psi, psi_v)
 
    implicit none
    type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: psi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: psi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
 
    integer :: iC, iV, j
 
@@ -738,9 +738,9 @@ subroutine psichi_to_uv_edge_step2(geom, psi_v, chi, edge_normal_wind)
 
    implicit none
    type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(in)    :: psi_v
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: chi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(in)    :: psi_v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: chi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
 
    integer :: iE
 
@@ -764,10 +764,10 @@ subroutine psichi_to_uv_edge_step3(geom, edge_normal_wind, u, v)
 
    implicit none
    type (mpas_geom),                                               intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges), intent(in)    :: edge_normal_wind
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges), intent(in)    :: edge_normal_wind
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
-   real (kind=kind_real), dimension(:,:), allocatable :: &
+   real (kind=RKIND), dimension(:,:), allocatable :: &
                                         uReconstructX, uReconstructY, uReconstructZ
    type (mpas_pool_type), pointer :: mesh
 
@@ -793,8 +793,8 @@ subroutine psichi_to_uv_edge_step1AD(geom, psi, psi_v)
 
    implicit none
    type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: psi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: psi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
 
    integer :: iC, iV, j
 
@@ -816,9 +816,9 @@ subroutine psichi_to_uv_edge_step2AD(geom, psi_v, chi, edge_normal_wind)
 
    implicit none
    type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: chi
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: chi
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
 
    integer :: iE
 
@@ -842,10 +842,10 @@ subroutine psichi_to_uv_edge_step3AD(geom, edge_normal_wind, u, v)
 
    implicit none
    type (mpas_geom),                                               intent(in)    :: geom         !< geometry
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nEdges), intent(inout) :: edge_normal_wind
-   real (kind=kind_real), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges), intent(inout) :: edge_normal_wind
+   real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
-   real (kind=kind_real), dimension(:,:), allocatable :: &
+   real (kind=RKIND), dimension(:,:), allocatable :: &
                                         uReconstructX, uReconstructY, uReconstructZ
    type (mpas_pool_type), pointer :: mesh
 
@@ -872,9 +872,9 @@ end subroutine psichi_to_uv_edge_step3AD
 elemental subroutine pseudorh_to_spechum(pseudorh,spechum,saturation_spechum)
 
    implicit none
-   real (kind=kind_real), intent(in)  :: pseudorh
-   real (kind=kind_real), intent(out) :: spechum
-   real (kind=kind_real), intent(in)  :: saturation_spechum
+   real (kind=RKIND), intent(in)  :: pseudorh
+   real (kind=RKIND), intent(out) :: spechum
+   real (kind=RKIND), intent(in)  :: saturation_spechum
 
    spechum = pseudorh * saturation_spechum / MPAS_JEDI_HUNDRED_kr
 
@@ -883,9 +883,9 @@ end subroutine pseudorh_to_spechum
 elemental subroutine pseudorh_to_spechumAD(pseudorh,spechum,saturation_spechum)
 
    implicit none
-   real (kind=kind_real), intent(inout) :: pseudorh
-   real (kind=kind_real), intent(inout) :: spechum
-   real (kind=kind_real), intent(in)    :: saturation_spechum
+   real (kind=RKIND), intent(inout) :: pseudorh
+   real (kind=RKIND), intent(inout) :: spechum
+   real (kind=RKIND), intent(in)    :: saturation_spechum
 
    pseudorh = pseudorh + spechum * saturation_spechum / MPAS_JEDI_HUNDRED_kr
    spechum = MPAS_JEDI_ZERO_kr
@@ -895,9 +895,9 @@ end subroutine pseudorh_to_spechumAD
 elemental subroutine pseudorh_to_spechum_inverse(pseudorh,spechum,saturation_spechum)
 
    implicit none
-   real (kind=kind_real), intent(out) :: pseudorh
-   real (kind=kind_real), intent(in)  :: spechum
-   real (kind=kind_real), intent(in)  :: saturation_spechum
+   real (kind=RKIND), intent(out) :: pseudorh
+   real (kind=RKIND), intent(in)  :: spechum
+   real (kind=RKIND), intent(in)  :: saturation_spechum
 
    pseudorh = spechum / saturation_spechum * MPAS_JEDI_HUNDRED_kr
 
@@ -906,9 +906,9 @@ end subroutine pseudorh_to_spechum_inverse
 elemental subroutine pseudorh_to_spechum_inverseAD(pseudorh,spechum,saturation_spechum)
 
    implicit none
-   real (kind=kind_real), intent(inout) :: pseudorh
-   real (kind=kind_real), intent(inout) :: spechum
-   real (kind=kind_real), intent(in)    :: saturation_spechum
+   real (kind=RKIND), intent(inout) :: pseudorh
+   real (kind=RKIND), intent(inout) :: spechum
+   real (kind=RKIND), intent(in)    :: saturation_spechum
 
    spechum = spechum + pseudorh / saturation_spechum * MPAS_JEDI_HUNDRED_kr
    pseudorh = MPAS_JEDI_ZERO_kr
@@ -926,11 +926,11 @@ elemental subroutine da_tp_to_qs( t, p, qs)
 
    implicit none
 
-   real (kind=kind_real), intent(in)  :: t, p
-   real (kind=kind_real), intent(out) :: qs
+   real (kind=RKIND), intent(in)  :: t, p
+   real (kind=RKIND), intent(out) :: qs
 
-   real (kind=kind_real) :: es
-   real (kind=kind_real) :: t_c              ! T in degreesC.
+   real (kind=RKIND) :: es
+   real (kind=RKIND) :: t_c              ! T in degreesC.
 
    !---------------------------------------------------------------------------
    ! [1.0] initialise:

@@ -112,7 +112,7 @@ IncrementMPAS & IncrementMPAS::operator-=(const IncrementMPAS & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS & IncrementMPAS::operator*=(const double & zz) {
+IncrementMPAS & IncrementMPAS::operator*=(const real_type & zz) {
   mpas_increment_self_mul_f90(keyInc_, zz);
   return *this;
 }
@@ -130,19 +130,19 @@ void IncrementMPAS::ones() {
   mpas_increment_ones_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::axpy(const double & zz, const IncrementMPAS & dx,
+void IncrementMPAS::axpy(const real_type & zz, const IncrementMPAS & dx,
                        const bool check) {
   ASSERT(!check || this->validTime() == dx.validTime());
   mpas_increment_axpy_inc_f90(keyInc_, zz, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::axpy(const double & zz, const StateMPAS & xx,
+void IncrementMPAS::axpy(const real_type & zz, const StateMPAS & xx,
                        const bool check) {
   ASSERT(!check || this->validTime() == xx.validTime());
   mpas_increment_axpy_inc_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::accumul(const double & zz, const StateMPAS & xx) {
+void IncrementMPAS::accumul(const real_type & zz, const StateMPAS & xx) {
   mpas_increment_axpy_state_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
@@ -150,8 +150,8 @@ void IncrementMPAS::schur_product_with(const IncrementMPAS & dx) {
   mpas_increment_self_schur_f90(keyInc_, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
-double IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
-  double zz;
+real_type IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
+  real_type zz;
   mpas_increment_dot_prod_f90(keyInc_, other.keyInc_, zz);
   return zz;
 }
@@ -228,12 +228,12 @@ size_t IncrementMPAS::serialSize() const {
   return nn;
 }
 // -----------------------------------------------------------------------------
-constexpr double SerializeCheckValue = -54321.98765;
-void IncrementMPAS::serialize(std::vector<double> & vect) const {
+constexpr real_type SerializeCheckValue = -54321.98765;
+void IncrementMPAS::serialize(std::vector<real_type> & vect) const {
   // Serialize the field
   size_t nn;
   mpas_increment_serial_size_f90(keyInc_, nn);
-  std::vector<double> vect_field(nn, 0.0);
+  std::vector<real_type> vect_field(nn, 0.0);
   mpas_increment_serialize_f90(keyInc_, nn, vect_field.data());
   vect.insert(vect.end(), vect_field.begin(), vect_field.end());
 
@@ -244,7 +244,7 @@ void IncrementMPAS::serialize(std::vector<double> & vect) const {
   time_.serialize(vect);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::deserialize(const std::vector<double> & vect,
+void IncrementMPAS::deserialize(const std::vector<real_type> & vect,
   size_t & index) {
   mpas_increment_deserialize_f90(keyInc_, vect.size(), vect.data(), index);
 
@@ -255,8 +255,8 @@ void IncrementMPAS::deserialize(const std::vector<double> & vect,
   time_.deserialize(vect, index);
 }
 // -----------------------------------------------------------------------------
-double IncrementMPAS::norm() const {
-  double zz = 0.0;
+real_type IncrementMPAS::norm() const {
+  real_type zz = 0.0;
   mpas_increment_rms_f90(keyInc_, zz);
   return zz;
 }
@@ -269,7 +269,7 @@ void IncrementMPAS::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime();
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", nFields = " << nf;
-  std::vector<double> zstat(3*nf);
+  std::vector<real_type> zstat(3*nf);
   mpas_increment_gpnorm_f90(keyInc_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]

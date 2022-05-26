@@ -9,6 +9,9 @@
 if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
   add_definitions( -DNDEBUG )
 endif( )
+if( NOT MPAS_DOUBLE_PRECISION )
+  add_definitions( -DSINGLE_PRECISION )
+endif()
 
 #######################################################################################
 # Fortran

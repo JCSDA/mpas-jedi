@@ -10,7 +10,6 @@
 #include <iostream>
 #include <vector>
 
-// ygyu #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/GeometryMPAS.h"
@@ -144,12 +143,12 @@ size_t StateMPAS::serialSize() const {
 }
 
 // -----------------------------------------------------------------------------
-constexpr double SerializeCheckValue = -54321.98765;
-void StateMPAS::serialize(std::vector<double> & vect) const {
+constexpr real_type SerializeCheckValue = -54321.98765;
+void StateMPAS::serialize(std::vector<real_type> & vect) const {
   // Serialize the field
   size_t nn;
   mpas_state_serial_size_f90(keyState_, nn);
-  std::vector<double> vect_field(nn, 0);
+  std::vector<real_type> vect_field(nn, 0);
   mpas_state_serialize_f90(keyState_, nn, vect_field.data());
   vect.insert(vect.end(), vect_field.begin(), vect_field.end());
 
@@ -160,7 +159,7 @@ void StateMPAS::serialize(std::vector<double> & vect) const {
   time_.serialize(vect);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::deserialize(const std::vector<double> & vect, size_t & index) {
+void StateMPAS::deserialize(const std::vector<real_type> & vect, size_t & index) {
   // Deserialize the field
   mpas_state_deserialize_f90(keyState_, vect.size(), vect.data(), index);
 
@@ -196,7 +195,7 @@ void StateMPAS::print(std::ostream & os) const {
   os << std::endl << "  Valid time: " << validTime();
   os << std::endl << "  Resolution: nCellsGlobal = " << nc <<
      ", nFields = " << nf;
-  std::vector<double> zstat(3*nf);
+  std::vector<real_type> zstat(3*nf);
   mpas_state_gpnorm_f90(keyState_, nf, zstat[0]);
   for (int jj = 0; jj < nf; ++jj) {
     os << std::endl << "Fld=" << jj+1 << "  Min=" << zstat[3*jj]
@@ -211,12 +210,12 @@ void StateMPAS::zero() {
   mpas_state_zero_f90(keyState_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::accumul(const double & zz, const StateMPAS & xx) {
+void StateMPAS::accumul(const real_type & zz, const StateMPAS & xx) {
   mpas_state_axpy_f90(keyState_, zz, xx.keyState_);
 }
 // -----------------------------------------------------------------------------
-double StateMPAS::norm() const {
-  double zz = 0.0;
+real_type StateMPAS::norm() const {
+  real_type zz = 0.0;
   mpas_state_rms_f90(keyState_, zz);
   return zz;
 }

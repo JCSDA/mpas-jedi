@@ -42,7 +42,7 @@ type :: mpas_model
    ! from mpas_fields
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
-   real (kind=kind_real) :: dt
+   real (kind=RKIND) :: dt
 end type mpas_model
 
 integer, parameter    :: max_string=8000
@@ -79,7 +79,7 @@ subroutine model_setup(self, geom, f_conf)
    character(len=20) :: ststep
    type(duration) :: dtstep
 
-   real (kind=kind_real), pointer :: config_dt
+   real (kind=RKIND), pointer :: config_dt
    character (len=StrKIND), pointer :: config_start_time
    character (len=StrKIND), pointer :: config_restart_timestamp_name
    character (len=StrKIND), pointer :: config_run_duration
@@ -167,7 +167,7 @@ subroutine model_prepare_integration(self, jedi_state)
    type(mpas_fields) :: jedi_state
    logical, pointer :: config_do_restart, config_do_DAcycling, config_dt
    integer :: ierr = 0
-   real (kind=kind_real), pointer :: dt
+   real (kind=RKIND), pointer :: dt
    type (block_type), pointer :: block
 
    character(len=StrKIND) :: startTimeStamp, stopTimeStamp, nowTimeStamp

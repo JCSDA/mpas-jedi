@@ -86,7 +86,7 @@ std::vector<size_t> GeometryMPAS::variableSizes(const oops::Variables & vars) co
   return varSizes;
 }
 // -----------------------------------------------------------------------------
-void GeometryMPAS::latlon(std::vector<double> & lats, std::vector<double> & lons,
+void GeometryMPAS::latlon(std::vector<real_type> & lats, std::vector<real_type> & lons,
                       const bool halo) const {
   const atlas::functionspace::PointCloud * fspace;
   if (halo) {
@@ -94,7 +94,7 @@ void GeometryMPAS::latlon(std::vector<double> & lats, std::vector<double> & lons
   } else {
     fspace = atlasFunctionSpace_.get();
   }
-  const auto lonlat = atlas::array::make_view<double, 2>(fspace->lonlat());
+  const auto lonlat = atlas::array::make_view<real_type, 2>(fspace->lonlat());
   const size_t npts = fspace->size();
   lats.resize(npts);
   lons.resize(npts);

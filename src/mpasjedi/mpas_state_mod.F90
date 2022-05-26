@@ -73,10 +73,10 @@ subroutine add_incr(self, increment)
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer :: fld2d_pb, fld2d_u, fld2d_u_inc, fld2d_uRm, fld2d_uRz
    type (field2DReal), pointer :: fld2d_p, fld2d_dp, fld2d_drho, fld2d_dth, fld2d_dqv
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_qv, ptrr2_sh
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_p, ptrr2_rho, ptrr2_t, ptrr2_th, ptrr2_pp
-   real(kind=kind_real), dimension(:,:), pointer :: ptrr2_dp, ptrr2_drho, ptrr2_dt, ptrr2_dth, ptrr2_dsh
-   real(kind=kind_real), dimension(:), pointer :: ptrr1_ps, ptrr1_dps
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_qv, ptrr2_sh
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_p, ptrr2_rho, ptrr2_t, ptrr2_th, ptrr2_pp
+   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_dp, ptrr2_drho, ptrr2_dt, ptrr2_dth, ptrr2_dsh
+   real(kind=RKIND), dimension(:), pointer :: ptrr1_ps, ptrr1_dps
 
    ! Difference with self_add other is that self%subFields can contain extra fields
    ! beyond increment%subFields and the resolution of increment can be different.

@@ -14,6 +14,7 @@ use iso_c_binding
 
 !oops
 use oops_variables_mod, only: oops_variables
+use kinds, only : kind_real
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
@@ -22,7 +23,6 @@ use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
 use mpas_derived_types
 use mpas_kind_types
 use mpas_constants
-use kinds, only : kind_real
 use mpas_dmpar, only: mpas_dmpar_sum_int
 use mpas_subdriver
 use atm_core
@@ -68,21 +68,21 @@ type :: mpas_geom
    logical :: deallocate_nonda_fields
    character(len=StrKIND) :: fields_to_fields_interp_type
    character(len=StrKIND) :: bump_vunit
-   real(kind=kind_real), dimension(:),   allocatable :: latCell, lonCell
-   real(kind=kind_real), dimension(:),   allocatable :: areaCell
-   real(kind=kind_real), dimension(:),   allocatable :: latEdge, lonEdge
-   real(kind=kind_real), dimension(:,:), allocatable :: edgeNormalVectors
-   real(kind=kind_real), dimension(:,:), allocatable :: zgrid
-   real(kind=kind_real), dimension(:,:), allocatable :: scaleheight
+   real(kind=RKIND), dimension(:),   allocatable :: latCell, lonCell
+   real(kind=RKIND), dimension(:),   allocatable :: areaCell
+   real(kind=RKIND), dimension(:),   allocatable :: latEdge, lonEdge
+   real(kind=RKIND), dimension(:,:), allocatable :: edgeNormalVectors
+   real(kind=RKIND), dimension(:,:), allocatable :: zgrid
+   real(kind=RKIND), dimension(:,:), allocatable :: scaleheight
    integer, allocatable :: nEdgesOnCell(:)
    integer, allocatable :: cellsOnCell(:,:)
    integer, allocatable :: edgesOnCell(:,:)
    integer, allocatable :: cellsOnVertex(:,:)
    integer, allocatable :: cellsOnEdge(:,:)
    integer, allocatable :: verticesOnEdge(:,:)
-   real(kind=kind_real), DIMENSION(:), ALLOCATABLE :: dcEdge, dvEdge
-   real(kind=kind_real), DIMENSION(:), ALLOCATABLE :: areaTriangle, angleEdge
-   real(kind=kind_real), DIMENSION(:,:), ALLOCATABLE :: kiteAreasOnVertex, edgesOnCell_sign
+   real(kind=RKIND), DIMENSION(:), ALLOCATABLE :: dcEdge, dvEdge
+   real(kind=RKIND), DIMENSION(:), ALLOCATABLE :: areaTriangle, angleEdge
+   real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: kiteAreasOnVertex, edgesOnCell_sign
 
    type (domain_type), pointer :: domain => null()
    type (core_type), pointer :: corelist => null()
@@ -151,7 +151,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    type(fckit_configuration) :: template_conf
    type(fckit_configuration), allocatable :: fields_conf(:)
 
-   real (kind=kind_real), pointer :: r1d_ptr(:), r2d_ptr(:,:)
+   real (kind=RKIND), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
 
    type(idcounter), allocatable :: prev_count(:)
@@ -400,13 +400,13 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
 
    integer :: i, jz
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
-   real(kind=kind_real), pointer :: pressure_base(:,:)
+   real(kind=RKIND), pointer :: pressure_base(:,:)
    type(atlas_field) :: afield
 
    ! Add area
    afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
    call afield%data(real_ptr_1)
-   real_ptr_1 = self%areaCell(1:self%nCellsSolve)
+   real_ptr_1 = real(self%areaCell(1:self%nCellsSolve), kind_real)
    call afieldset%add(afield)
    call afield%final()
 
@@ -422,7 +422,7 @@ subroutine geo_fill_atlas_fieldset(self, afieldset)
       else if (trim(self % bump_vunit) .eq. 'scaleheight') then
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
-         real_ptr_2(jz,1:self%nCellsSolve) = log( pressure_base(jz,1:self%nCellsSolve) )
+         real_ptr_2(jz,1:self%nCellsSolve) = log(real(pressure_base(jz,1:self%nCellsSolve), kind_real))
       end if
    end do
    call afieldset%add(afield)

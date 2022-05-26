@@ -57,6 +57,13 @@ typedef int F90getvalues;
 // LinearGetValues key
 typedef int F90lineargetvalues;
 
+typedef double real_type;
+/*
+ * Above, double is consistent with OOPS interface.
+ * typedef float real_type will not work here, however,
+ * branch feature/sp_t1 gives an example on how this works.
+ */
+
 /// Interface to Fortran MPAS model
 /*!
  * The core of the MPAS model is coded in Fortran.

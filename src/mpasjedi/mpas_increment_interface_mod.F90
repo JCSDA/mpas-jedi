@@ -13,13 +13,15 @@ use atlas_module, only: atlas_fieldset
 
 !oops
 use datetime_mod
-use kinds, only: kind_real
 use oops_variables_mod
+
+use mpas_kind_types, only: RKIND
 
 !mpas-jedi
 use mpas_geom_mod
 use mpas_increment_mod
 use mpas_fields_mod
+use mpas_kinds, only : c_real_type
 
 implicit none
 private
@@ -197,12 +199,12 @@ subroutine mpas_increment_self_mul_c(c_key_self,c_zz) &
       bind(c,name='mpas_increment_self_mul_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-real(c_double), intent(in) :: c_zz
+real(c_real_type), intent(in) :: c_zz
 type(mpas_fields), pointer :: self
-real(kind=kind_real) :: zz
+real(kind=RKIND) :: zz
 
 call mpas_fields_registry%get(c_key_self,self)
-zz = c_zz
+zz = real(c_zz, kind=RKIND)
 
 call self%self_mult(zz)
 
@@ -214,17 +216,16 @@ subroutine mpas_increment_axpy_inc_c(c_key_self,c_zz,c_key_rhs) &
       bind(c,name='mpas_increment_axpy_inc_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-real(c_double), intent(in) :: c_zz
+real(c_real_type), intent(in) :: c_zz
 integer(c_int), intent(in) :: c_key_rhs
 
 type(mpas_fields), pointer :: self
 type(mpas_fields), pointer :: rhs
-real(kind=kind_real) :: zz
+real(kind=RKIND) :: zz
 
 call mpas_fields_registry%get(c_key_self,self)
 call mpas_fields_registry%get(c_key_rhs,rhs)
-zz = c_zz
-
+zz = real(c_zz, kind=RKIND)
 call self%axpy(zz,rhs)
 
 end subroutine mpas_increment_axpy_inc_c
@@ -235,16 +236,16 @@ subroutine mpas_increment_axpy_state_c(c_key_self,c_zz,c_key_rhs) &
       bind(c,name='mpas_increment_axpy_state_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_self
-real(c_double), intent(in) :: c_zz
+real(c_real_type), intent(in) :: c_zz
 integer(c_int), intent(in) :: c_key_rhs
 
 type(mpas_fields), pointer :: self
 type(mpas_fields), pointer :: rhs
-real(kind=kind_real) :: zz
+real(kind=RKIND) :: zz
 
 call mpas_fields_registry%get(c_key_self,self)
 call mpas_fields_registry%get(c_key_rhs,rhs)
-zz = c_zz
+zz = real(c_zz, kind=RKIND)
 
 call self%axpy(zz,rhs)
 
@@ -256,8 +257,8 @@ subroutine mpas_increment_dot_prod_c(c_key_inc1,c_key_inc2,c_prod) &
       bind(c,name='mpas_increment_dot_prod_f90')
 implicit none
 integer(c_int), intent(in)    :: c_key_inc1, c_key_inc2
-real(c_double), intent(inout) :: c_prod
-real(kind=kind_real) :: zz
+real(c_real_type), intent(inout) :: c_prod
+real(kind=RKIND) :: zz
 type(mpas_fields), pointer :: inc1, inc2
 
 call mpas_fields_registry%get(c_key_inc1,inc1)
@@ -265,7 +266,7 @@ call mpas_fields_registry%get(c_key_inc2,inc2)
 
 call inc1%dot_prod(inc2,zz)
 
-c_prod = zz
+c_prod = real(zz, kind=c_real_type)
 
 end subroutine mpas_increment_dot_prod_c
 
@@ -469,10 +470,10 @@ subroutine mpas_increment_gpnorm_c(c_key_inc, kf, pstat) &
 implicit none
 integer(c_int), intent(in) :: c_key_inc
 integer(c_int), intent(in) :: kf
-real(c_double), intent(inout) :: pstat(3*kf)
+real(c_real_type), intent(inout) :: pstat(3*kf)
 
 type(mpas_fields), pointer :: self
-real(kind=kind_real) :: zstat(3, kf)
+real(kind=RKIND) :: zstat(3, kf)
 integer :: jj, js, jf
 
 call mpas_fields_registry%get(c_key_inc,self)
@@ -482,7 +483,7 @@ jj=0
 do jf = 1, kf
   do js = 1, 3
     jj=jj+1
-    pstat(jj) = zstat(js,jf)
+    pstat(jj) = real(zstat(js,jf), kind=c_real_type)
   enddo
 enddo
 
@@ -494,16 +495,16 @@ subroutine mpas_increment_rms_c(c_key_inc, prms) &
       bind(c,name='mpas_increment_rms_f90')
 implicit none
 integer(c_int), intent(in) :: c_key_inc
-real(c_double), intent(inout) :: prms
+real(c_real_type), intent(inout) :: prms
 
 type(mpas_fields), pointer :: self
-real(kind=kind_real) :: zz
+real(kind=RKIND) :: zz
 
 call mpas_fields_registry%get(c_key_inc,self)
 
 call self%rms(zz)
 
-prms = zz
+prms = real(zz, kind=c_real_type)
 
 end subroutine mpas_increment_rms_c
 
@@ -565,7 +566,7 @@ implicit none
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self           !< Increment
 integer(c_size_t),intent(in) :: c_vsize           !< Size
-real(c_double),intent(out) :: c_vect_inc(c_vsize) !< Vector
+real(c_real_type),intent(out) :: c_vect_inc(c_vsize) !< Vector
 
 type(mpas_fields),pointer :: self
 
@@ -585,7 +586,7 @@ implicit none
 ! Passed variables
 integer(c_int),intent(in) :: c_key_self          !< Increment
 integer(c_size_t),intent(in) :: c_vsize          !< Size
-real(c_double),intent(in) :: c_vect_inc(c_vsize) !< Vector
+real(c_real_type),intent(in) :: c_vect_inc(c_vsize) !< Vector
 integer(c_size_t), intent(inout):: c_index       !< Index
 
 type(mpas_fields),pointer :: self

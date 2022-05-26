@@ -21,7 +21,6 @@ use ufo_vars_mod
 !MPAS-Model
 use mpas_derived_types
 use mpas_field_routines
-use mpas_kind_types, only: RKIND
 use mpas_pool_routines
 
 !mpas-jedi
@@ -86,15 +85,16 @@ subroutine changevar(self, geom, xm, xg)
   type(field2DReal), pointer :: fieldr2_a, fieldr2_b
 
   ! reusable arrays
-  real(kind=kind_real), dimension(:), pointer :: ptrr1_a, ptrr1_b
-  real(kind=kind_real), dimension(:,:), pointer :: ptrr2_a, ptrr2_b
-  real(kind=kind_real), dimension(:,:), allocatable :: r2_a, r2_b
+  real(kind=RKIND), dimension(:), pointer :: ptrr1_a, ptrr1_b
+  real(kind=RKIND), dimension(:,:), pointer :: ptrr2_a, ptrr2_b
+  real(kind=RKIND), dimension(:,:), allocatable :: r2_a, r2_b
 
   ! iteration-specific variables
   character(len=MAXVARLEN) :: geovar
   integer :: nCells, nVertLevels, nVertLevelsP1
   integer :: iVar, iCell, iLevel
-  real (kind=kind_real) :: lat
+  real (kind=RKIND) :: lat
+  real (kind=kind_real) :: rz
 
   ! surface variables
   character(len=MAXVARLEN), parameter :: &
@@ -111,10 +111,10 @@ subroutine changevar(self, geom, xm, xg)
     AllCRTMLandTypeNames(3) = &
       [var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, var_sfc_landtyp_npoess]
   integer, dimension(:), pointer :: vegtyp, soiltyp
-  real(kind=kind_real), dimension(:), pointer :: wfrac, lfrac, ifrac, sfrac
+  real(kind=RKIND), dimension(:), pointer :: wfrac, lfrac, ifrac, sfrac
 
   ! air pressure on w levels
-  real(kind=kind_real), allocatable :: plevels(:,:)
+  real(kind=RKIND), allocatable :: plevels(:,:)
 
   ! config members
   character(len=StrKIND), pointer :: &
@@ -429,7 +429,9 @@ subroutine changevar(self, geom, xm, xg)
           do iCell = 1, nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
             do iLevel = 1, nVertLevels
-               call geometric2geop(lat, r2_a(iLevel,iCell), gdata%r2%array(iLevel,iCell))
+!               call geometric2geop(lat, r2_a(iLevel,iCell), gdata%r2%array(iLevel,iCell))
+               call geometric2geop(real(lat,kind=kind_real), real(r2_a(iLevel,iCell),kind=kind_real), rz)
+               gdata%r2%array(iLevel,iCell)=rz
             enddo
           enddo
           deallocate(r2_a)
@@ -443,7 +445,8 @@ subroutine changevar(self, geom, xm, xg)
         case ( var_sfc_z ) !-surface_geopotential_height
           do iCell=1,nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-            call geometric2geop(lat, geom%zgrid(1,iCell), gdata%r1%array(iCell))
+            call geometric2geop(real(lat,kind=kind_real), real(geom%zgrid(1,iCell),kind=kind_real), rz)
+            gdata%r1%array(iCell)=rz
           enddo
 
         case ( var_sfc_geomz ) !-surface_altitude

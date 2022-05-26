@@ -76,10 +76,10 @@ class IncrementMPAS : public util::Printable,
   IncrementMPAS & operator =(const IncrementMPAS &);
   IncrementMPAS & operator+=(const IncrementMPAS &);
   IncrementMPAS & operator-=(const IncrementMPAS &);
-  IncrementMPAS & operator*=(const double &);
-  void axpy(const double &, const IncrementMPAS &, const bool check = true);
-  void axpy(const double &, const StateMPAS &, const bool check = true);
-  double dot_product_with(const IncrementMPAS &) const;
+  IncrementMPAS & operator*=(const real_type &);
+  void axpy(const real_type &, const IncrementMPAS &, const bool check = true);
+  void axpy(const real_type &, const StateMPAS &, const bool check = true);
+  real_type dot_product_with(const IncrementMPAS &) const;
   void schur_product_with(const IncrementMPAS &);
   void random();
   void dirac(const DiracParameters_ &);
@@ -94,17 +94,17 @@ class IncrementMPAS : public util::Printable,
 /// I/O and diagnostics
   void read(const ReadParameters_ &);
   void write(const WriteParameters_ &) const;
-  double norm() const;
+  real_type norm() const;
 
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
 /// Other
-  void accumul(const double &, const StateMPAS &);
+  void accumul(const real_type &, const StateMPAS &);
 
 /// Serialize and deserialize
   size_t serialSize() const override;
-  void serialize(std::vector<double> &) const override;
-  void deserialize(const std::vector<double> &, size_t &) override;
+  void serialize(std::vector<real_type> &) const override;
+  void deserialize(const std::vector<real_type> &, size_t &) override;
 
   std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}

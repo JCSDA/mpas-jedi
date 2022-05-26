@@ -7,9 +7,9 @@ module mpas_kinds
   use, intrinsic :: iso_c_binding
   implicit none
 
+  public kind_double, c_real_type
   private
-  public kind_real, kind_double
-  
-  integer, parameter :: kind_real=c_double
-  integer, parameter :: kind_double=c_double
+  integer, parameter :: kind_double=c_double   ! for special micro-physics accuracy
+  integer, parameter :: c_real_type=c_double
+  ! note in oops ./util/kinds.F90 :  kind_float = c_float
 end module mpas_kinds

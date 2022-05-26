@@ -43,22 +43,22 @@ extern "C" {
   void mpas_state_delete_f90(F90state &);
   void mpas_state_copy_f90(const F90state &, const F90state &);
   void mpas_state_zero_f90(const F90state &);
-  void mpas_state_axpy_f90(const F90state &, const double &, const F90state &);
+  void mpas_state_axpy_f90(const F90state &, const real_type &, const F90state &);
   void mpas_state_add_incr_f90(const F90state &, const F90inc &);
   void mpas_state_change_resol_f90(const F90state &, const F90state &);
   void mpas_state_serial_size_f90(const F90state &, std::size_t &);
   void mpas_state_serialize_f90(const F90state &, const std::size_t &,
-                                double[]);
+                                real_type[]);
   void mpas_state_deserialize_f90(const F90state &, const std::size_t &,
-                                  const double[], const std::size_t &);
+                                  const real_type[], const std::size_t &);
   void mpas_state_read_file_f90(const F90state &,
                                 const eckit::Configuration &,
                                 util::DateTime &);
   void mpas_state_write_file_f90(const F90state &,
                                  const eckit::Configuration &,
                                  const util::DateTime &);
-  void mpas_state_gpnorm_f90(const F90state &, const int &, double &);
-  void mpas_state_rms_f90(const F90state &, double &);
+  void mpas_state_gpnorm_f90(const F90state &, const int &, real_type &);
+  void mpas_state_rms_f90(const F90state &, real_type &);
   void mpas_state_analytic_init_f90(const F90state &,
                                     const eckit::Configuration &,
                                     util::DateTime &);

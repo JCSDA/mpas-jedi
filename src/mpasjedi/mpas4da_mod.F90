@@ -22,8 +22,6 @@ use fckit_log_module, only: fckit_log
 
 !oops
 use kinds, only: kind_real
-
-!saber?
 use random_mod, only: normal_distribution
 
 !ufo
@@ -232,10 +230,10 @@ contains
       type (mpas_pool_type), pointer :: pool_a, pool_b
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
@@ -303,9 +301,9 @@ contains
       type (domain_type), pointer, intent(in) :: domain
 
       type (mpas_pool_iterator_type) :: poolItr_a, poolItr_b
-      real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
       integer, pointer :: index_scalar
 
       type (field2DReal), pointer :: field2d
@@ -402,9 +400,9 @@ contains
       type (domain_type), pointer, intent(inout) :: domain
 
       type (mpas_pool_iterator_type) :: poolItr_a, poolItr_b
-      real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
       integer, pointer :: index_scalar
 
       type (field2DReal), pointer :: field2d
@@ -738,16 +736,19 @@ contains
 
       integer, parameter :: rseed = 7
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
+      !loc
+      real (kind=RKIND) :: zero, one
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
       !
       call mpas_pool_begin_iteration(pool_a)
+      one=real(1.0, RKIND); zero=real(0.0, RKIND)
 
       do while ( mpas_pool_get_next_member(pool_a, poolItr) )
 
@@ -766,16 +767,15 @@ contains
                ! the correct type
                if (poolItr % nDims == 0) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r0d_ptr_a)
-                  !call normal_distribution(r0d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
                else if (poolItr % nDims == 1) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r1d_ptr_a)
-                  call normal_distribution(r1d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
+                  call normal_distribution(r1d_ptr_a, zero, one, rseed)
                else if (poolItr % nDims == 2) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r2d_ptr_a)
-                  call normal_distribution(r2d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
+                  call normal_distribution(r2d_ptr_a, zero, one, rseed)
                else if (poolItr % nDims == 3) then
                   call mpas_pool_get_array(pool_a, trim(poolItr % memberName), r3d_ptr_a)
-                  call normal_distribution(r3d_ptr_a, MPAS_JEDI_ZERO_kr, MPAS_JEDI_ONE_kr, rseed)
+                  call normal_distribution(r3d_ptr_a, zero, one, rseed)
                end if
 
             end if
@@ -808,10 +808,10 @@ contains
       character (len=*), optional :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b, r0d_ptr_c
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b, r1d_ptr_c
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b, r3d_ptr_c
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b, r0d_ptr_c
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b, r1d_ptr_c
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b, r2d_ptr_c
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b, r3d_ptr_c
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
@@ -973,13 +973,13 @@ contains
       implicit none
 
       type (mpas_pool_type), pointer :: pool_a
-      real (kind=kind_real) :: zz
+      real (kind=RKIND) :: zz
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
@@ -1038,10 +1038,10 @@ contains
       character (len=*), optional,    intent(in)    :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
 
       call mpas_pool_begin_iteration(pool_a)
 
@@ -1098,10 +1098,10 @@ contains
       character (len=*), optional,    intent(in)    :: fld_select(:)
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
@@ -1162,10 +1162,10 @@ contains
       real (kind=kind_real) :: zz
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a
+      real (kind=RKIND), pointer :: r0d_ptr_a
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
@@ -1227,16 +1227,16 @@ contains
       implicit none
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
       type (mpas_pool_type), pointer, intent(in)    :: pool_b
-      real (kind=kind_real), intent(in) :: zz
+      real (kind=RKIND), intent(in) :: zz
       character (len=*), optional, intent(in) :: fld_select(:)
 
 
 
       type (mpas_pool_iterator_type) :: poolItr
-      real (kind=kind_real), pointer :: r0d_ptr_a, r0d_ptr_b
-      real (kind=kind_real), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
-      real (kind=kind_real), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
-      real (kind=kind_real), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
+      real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr_a, r3d_ptr_b
 
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
@@ -1303,14 +1303,14 @@ contains
    type (dm_info), pointer,        intent(in)  :: dminfo
    integer,                        intent(in)  :: nf
    character (len=*),              intent(in)  :: fld_select(nf)
-   real(kind=kind_real),           intent(out) :: pstat(3, nf)
+   real(kind=RKIND),               intent(out) :: pstat(3, nf)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DInteger), pointer :: ifield1d
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
-   real(kind=kind_real) :: globalSum, globalMin, globalMax, dimtot, dimtot_global, prodtot
+   real(kind=RKIND) :: globalSum, globalMin, globalMax, dimtot, dimtot_global, prodtot
 
    integer :: jj, ndims
    integer :: dim1, dim2, dim3
@@ -1392,8 +1392,8 @@ contains
                prodtot = sum( real(ifield1d % array(1:dim1))**2 )
                call mpas_dmpar_sum_real(dminfo, dimtot, dimtot_global)
                call mpas_dmpar_sum_real(dminfo, prodtot, globalSum)
-               call mpas_dmpar_min_real(dminfo, real(minval(ifield1d % array(1:dim1)),kind_real), globalMin)
-               call mpas_dmpar_max_real(dminfo, real(maxval(ifield1d % array(1:dim1)),kind_real), globalMax)
+               call mpas_dmpar_min_real(dminfo, real(minval(ifield1d % array(1:dim1)),RKIND), globalMin)
+               call mpas_dmpar_max_real(dminfo, real(maxval(ifield1d % array(1:dim1)),RKIND), globalMax)
                pstat(1,jj) = globalMin
                pstat(2,jj) = globalMax
                pstat(3,jj) = sqrt( globalSum / dimtot_global )
@@ -1423,14 +1423,14 @@ contains
    implicit none
    type (mpas_pool_type), pointer, intent(in)  :: pool_a
    type (dm_info), pointer,        intent(in)  :: dminfo
-   real(kind=kind_real),           intent(out) :: fldrms
+   real(kind=RKIND),           intent(out) :: fldrms
    character (len=*), optional,    intent(in)  :: fld_select(:)
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
    type (field3DReal), pointer :: field3d
-   real(kind=kind_real) :: dimtot, dimtot_global, prodtot, prodtot_global
+   real(kind=RKIND) :: dimtot, dimtot_global, prodtot, prodtot_global
 
    integer :: ndims
    integer :: dim1, dim2, dim3
@@ -1501,13 +1501,13 @@ contains
    implicit none
    type (mpas_pool_type), pointer, intent(in)  :: pool_a, pool_b
    type (dm_info), pointer,        intent(in)  :: dminfo
-   real(kind=kind_real),           intent(out) :: zprod
+   real(kind=RKIND),           intent(out) :: zprod
 
    type (mpas_pool_iterator_type) :: poolItr
    type (field1DReal), pointer :: field1d_a, field1d_b
    type (field2DReal), pointer :: field2d_a, field2d_b
    type (field3DReal), pointer :: field3d_a, field3d_b
-   real(kind=kind_real) :: fieldSum_local, zprod_local
+   real(kind=RKIND) :: fieldSum_local, zprod_local
 
    integer :: ndims
    integer :: dim1, dim2, dim3
@@ -1557,7 +1557,6 @@ contains
    end do
 
    call mpas_dmpar_sum_real(dminfo, zprod_local, zprod)
-
    end subroutine da_dot_product
 
 
@@ -1672,14 +1671,14 @@ subroutine uv_cell_to_edges(domain, u_field, v_field, du, lonCell, latCell, &
    type (field2DReal), pointer, intent(in) :: u_field    ! u wind updated from filter
    type (field2DReal), pointer, intent(in) :: v_field    ! v wind updated from filter
    type (field2DReal), pointer, intent(inout) :: du       ! normal velocity increment on the edges
-   real(kind_real), intent(in) :: lonCell(1:nCells), latCell(1:nCells) ! lon, lat at cell centers in radians
-   real(kind_real), intent(in) :: edgeNormalVectors(:,:)
+   real(RKIND), intent(in) :: lonCell(1:nCells), latCell(1:nCells) ! lon, lat at cell centers in radians
+   real(RKIND), intent(in) :: edgeNormalVectors(:,:)
    integer, intent(in) :: nEdgesOnCell(:), edgesOnCell(:,:)
    integer, intent(in) :: nCells, nVertLevels
 
    ! Local variables
    integer, parameter :: R3 = 3
-   real(kind_real), dimension(:,:), allocatable :: east, north
+   real(RKIND), dimension(:,:), allocatable :: east, north
    integer  :: iCell, iEdge, jEdge, k
 
    ! allocation
@@ -1731,8 +1730,8 @@ subroutine r3_normalize(ax, ay, az)
 
    implicit none
 
-   real(kind_real), intent(inout) :: ax, ay, az
-   real(kind_real) :: mi
+   real(RKIND), intent(inout) :: ax, ay, az
+   real(RKIND) :: mi
 
    mi = MPAS_JEDI_ONE_kr / sqrt(ax**2 + ay**2 + az**2)
 

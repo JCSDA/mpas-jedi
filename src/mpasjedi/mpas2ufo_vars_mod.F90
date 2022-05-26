@@ -173,9 +173,9 @@ end function convert_type_veg_igbp
 !   real (kind=kind_real), intent(out) :: wind10_direction
 !   real (kind=kind_real)              :: windratio, windangle
 !   integer                            :: iquadrant
-!   real(kind=kind_real),parameter:: windscale = 999999.0_kind_real
-!   real(kind=kind_real),parameter:: windlimit = 0.0001_kind_real
-!   real(kind=kind_real),parameter:: quadcof  (4, 2  ) = &
+!   real(kind=RKIND),parameter:: windscale = 999999.0_kind_real
+!   real(kind=RKIND),parameter:: windlimit = 0.0001_kind_real
+!   real(kind=RKIND),parameter:: quadcof  (4, 2  ) = &
 !      reshape((/MPAS_JEDI_ZERO_kr,  MPAS_JEDI_ONE_kr,  MPAS_JEDI_ONE_kr,  MPAS_JEDI_TWO_kr, &
 !                MPAS_JEDI_ONE_kr,  -MPAS_JEDI_ONE_kr,  MPAS_JEDI_ONE_kr, -MPAS_JEDI_ONE_kr/), (/4, 2/))
 !
@@ -199,34 +199,34 @@ end function convert_type_veg_igbp
 !-------------------------------------------------------------------------------------------
 elemental subroutine w_to_q(mixing_ratio, specific_humidity)
    implicit none
-   real (kind=kind_real), intent(in)  :: mixing_ratio
-   real (kind=kind_real), intent(out) :: specific_humidity
+   real (kind=RKIND), intent(in)  :: mixing_ratio
+   real (kind=RKIND), intent(out) :: specific_humidity
 
    specific_humidity = mixing_ratio / (MPAS_JEDI_ONE_kr + mixing_ratio)
 end subroutine w_to_q
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w(specific_humidity, mixing_ratio)
    implicit none
-   real (kind=kind_real), intent(in)  :: specific_humidity
-   real (kind=kind_real), intent(out) :: mixing_ratio
+   real (kind=RKIND), intent(in)  :: specific_humidity
+   real (kind=RKIND), intent(out) :: mixing_ratio
 
    mixing_ratio = specific_humidity / (MPAS_JEDI_ONE_kr - specific_humidity)
 end subroutine q_to_w
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w_tl(specific_humidity_tl, sh_traj, mixing_ratio_tl)
    implicit none
-   real (kind=kind_real), intent(in)  :: specific_humidity_tl
-   real (kind=kind_real), intent(in)  :: sh_traj
-   real (kind=kind_real), intent(out) :: mixing_ratio_tl
+   real (kind=RKIND), intent(in)  :: specific_humidity_tl
+   real (kind=RKIND), intent(in)  :: sh_traj
+   real (kind=RKIND), intent(out) :: mixing_ratio_tl
 
    mixing_ratio_tl = specific_humidity_tl / (MPAS_JEDI_ONE_kr - sh_traj)**2
 end subroutine q_to_w_tl
 !-------------------------------------------------------------------------------------------
 elemental subroutine q_to_w_ad(specific_humidity_ad, sh_traj, mixing_ratio_ad)
    implicit none
-   real (kind=kind_real), intent(inout) :: specific_humidity_ad
-   real (kind=kind_real), intent(in)    :: sh_traj
-   real (kind=kind_real), intent(in)    :: mixing_ratio_ad
+   real (kind=RKIND), intent(inout) :: specific_humidity_ad
+   real (kind=RKIND), intent(in)    :: sh_traj
+   real (kind=RKIND), intent(in)    :: mixing_ratio_ad
 
    specific_humidity_ad = specific_humidity_ad + &
                  MPAS_JEDI_ONE_kr / ( MPAS_JEDI_ONE_kr - sh_traj)**2 * mixing_ratio_ad
@@ -234,9 +234,9 @@ end subroutine q_to_w_ad
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv(temperature,mixing_ratio,virtual_temperature)
    implicit none
-   real (kind=kind_real), intent(in)  :: temperature
-   real (kind=kind_real), intent(in)  :: mixing_ratio
-   real (kind=kind_real), intent(out) :: virtual_temperature
+   real (kind=RKIND), intent(in)  :: temperature
+   real (kind=RKIND), intent(in)  :: mixing_ratio
+   real (kind=RKIND), intent(out) :: virtual_temperature
 
    virtual_temperature = temperature * &
                   ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*mixing_ratio )
@@ -244,11 +244,11 @@ end subroutine tw_to_tv
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv_tl(temperature_tl,mixing_ratio_tl,t_traj,m_traj,virtual_temperature_tl)
    implicit none
-   real (kind=kind_real), intent(in)  :: temperature_tl
-   real (kind=kind_real), intent(in)  :: mixing_ratio_tl
-   real (kind=kind_real), intent(in)  :: t_traj
-   real (kind=kind_real), intent(in)  :: m_traj
-   real (kind=kind_real), intent(out) :: virtual_temperature_tl
+   real (kind=RKIND), intent(in)  :: temperature_tl
+   real (kind=RKIND), intent(in)  :: mixing_ratio_tl
+   real (kind=RKIND), intent(in)  :: t_traj
+   real (kind=RKIND), intent(in)  :: m_traj
+   real (kind=RKIND), intent(out) :: virtual_temperature_tl
 
    virtual_temperature_tl = temperature_tl * &
                   ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*m_traj )  + &
@@ -257,11 +257,11 @@ end subroutine tw_to_tv_tl
 !-------------------------------------------------------------------------------------------
 elemental subroutine tw_to_tv_ad(temperature_ad,mixing_ratio_ad,t_traj,m_traj,virtual_temperature_ad)
    implicit none
-   real (kind=kind_real), intent(inout) :: temperature_ad
-   real (kind=kind_real), intent(inout) :: mixing_ratio_ad
-   real (kind=kind_real), intent(in)    :: t_traj
-   real (kind=kind_real), intent(in)    :: m_traj
-   real (kind=kind_real), intent(in)    :: virtual_temperature_ad
+   real (kind=RKIND), intent(inout) :: temperature_ad
+   real (kind=RKIND), intent(inout) :: mixing_ratio_ad
+   real (kind=RKIND), intent(in)    :: t_traj
+   real (kind=RKIND), intent(in)    :: m_traj
+   real (kind=RKIND), intent(in)    :: virtual_temperature_ad
 
    temperature_ad = temperature_ad + virtual_temperature_ad * &
                   ( MPAS_JEDI_ONE_kr + (rv/rgas - MPAS_JEDI_ONE_kr)*m_traj )
@@ -271,9 +271,10 @@ end subroutine tw_to_tv_ad
 !-------------------------------------------------------------------------------------------
 elemental subroutine theta_to_temp(theta,pressure,temperature)
    implicit none
-   real (kind=kind_real), intent(in)  :: theta
-   real (kind=kind_real), intent(in)  :: pressure
-   real (kind=kind_real), intent(out) :: temperature
+   real (kind=RKIND), intent(in)  :: theta
+   real (kind=RKIND), intent(in)  :: pressure
+   real (kind=RKIND), intent(out) :: temperature
+
    temperature = theta / &
              ( MPAS_JEDI_P0_kr / pressure ) ** ( rgas / cp )
    !TODO: Following formula would give the same result with the formular above,
@@ -303,14 +304,14 @@ end subroutine theta_to_temp
 !-------------------------------------------------------------------------------------------
 subroutine pressure_half_to_full(pressure, zgrid, surface_pressure, nC, nV, pressure_f)
    implicit none
-   real (kind=kind_real), dimension(nV,nC), intent(in) :: pressure
-   real (kind=kind_real), dimension(nV+1,nC), intent(in) :: zgrid
-   real (kind=kind_real), dimension(nC), intent(in) :: surface_pressure
+   real (kind=RKIND), dimension(nV,nC), intent(in) :: pressure
+   real (kind=RKIND), dimension(nV+1,nC), intent(in) :: zgrid
+   real (kind=RKIND), dimension(nC), intent(in) :: surface_pressure
    integer, intent(in) :: nC, nV
-   real (kind=kind_real), dimension(nV+1,nC), intent(out) :: pressure_f
+   real (kind=RKIND), dimension(nV+1,nC), intent(out) :: pressure_f
 
-   real (kind=kind_real), dimension(nC,nV) :: fzm_p, fzp_p
-   real (kind=kind_real) :: tem1, z0, z1, z2, w1, w2
+   real (kind=RKIND), dimension(nC,nV) :: fzm_p, fzp_p
+   real (kind=RKIND) :: tem1, z0, z1, z2, w1, w2
    integer :: i, k, its, ite, kts, kte
 
         !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
@@ -368,20 +369,20 @@ subroutine hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, rho, theta)
 !--------------------------------------------------------------------------
    implicit none
    integer,                                            intent(in)  :: ncells, nlevels
-   real (kind=kind_real), dimension(nlevels+1,ncells), intent(in)  :: zw    ! physical height m at w levels
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: t     ! temperature, K
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: qv    ! mixing ratio, kg/kg
-   real (kind=kind_real), dimension(ncells),           intent(in)  :: ps    ! surface P, Pa
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: p     ! 3D P, Pa
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: rho   ! dry air density, kg/m^3
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: theta ! dry potential T, K
+   real (kind=RKIND), dimension(nlevels+1,ncells), intent(in)  :: zw    ! physical height m at w levels
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: t     ! temperature, K
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: qv    ! mixing ratio, kg/kg
+   real (kind=RKIND), dimension(ncells),           intent(in)  :: ps    ! surface P, Pa
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: p     ! 3D P, Pa
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: rho   ! dry air density, kg/m^3
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: theta ! dry potential T, K
 
    integer                :: icell, k
-   real (kind=kind_real)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
-   real (kind=kind_real), dimension(nlevels)   :: tv_h  ! half level virtual T
-   real (kind=kind_real), dimension(nlevels+1) :: pf    ! full level pressure
-   real (kind=kind_real), dimension(nlevels)   :: zu    ! physical height at u level
-   real (kind=kind_real)  :: tv_f, tv, w
+   real (kind=RKIND)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
+   real (kind=RKIND), dimension(nlevels)   :: tv_h  ! half level virtual T
+   real (kind=RKIND), dimension(nlevels+1) :: pf    ! full level pressure
+   real (kind=RKIND), dimension(nlevels)   :: zu    ! physical height at u level
+   real (kind=RKIND)  :: tv_f, tv, w
 
       rvordm1 = rv/rgas - MPAS_JEDI_ONE_kr
 
@@ -442,24 +443,24 @@ subroutine linearized_hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, dt,
 
    implicit none
    integer,                                            intent(in)  :: ncells, nlevels
-   real (kind=kind_real), dimension(nlevels+1,ncells), intent(in)  :: zw     ! physical height m at w levels
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: t      ! temperature, K
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: qv     ! mixing ratio, kg/kg      ! background
-   real (kind=kind_real), dimension(ncells),           intent(in)  :: ps     ! surface P, Pa            ! background
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: p      ! 3D P, Pa                 ! background
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: dt     ! temperature, K           ! increment
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(in)  :: dqv    ! mixing ratio, kg/kg      ! increment
-   real (kind=kind_real), dimension(ncells),           intent(in)  :: dps    ! surface P, Pa            ! increment
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: dp     ! 3D P, Pa                 ! increment
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: drho   ! dry air density, kg/m^3  ! increment
-   real (kind=kind_real), dimension(nlevels,ncells),   intent(out) :: dtheta ! dry potential T, K       ! increment
+   real (kind=RKIND), dimension(nlevels+1,ncells), intent(in)  :: zw     ! physical height m at w levels
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: t      ! temperature, K
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: qv     ! mixing ratio, kg/kg      ! background
+   real (kind=RKIND), dimension(ncells),           intent(in)  :: ps     ! surface P, Pa            ! background
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: p      ! 3D P, Pa                 ! background
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: dt     ! temperature, K           ! increment
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(in)  :: dqv    ! mixing ratio, kg/kg      ! increment
+   real (kind=RKIND), dimension(ncells),           intent(in)  :: dps    ! surface P, Pa            ! increment
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: dp     ! 3D P, Pa                 ! increment
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: drho   ! dry air density, kg/m^3  ! increment
+   real (kind=RKIND), dimension(nlevels,ncells),   intent(out) :: dtheta ! dry potential T, K       ! increment
 
    integer                :: icell, k
-   real (kind=kind_real)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
-   real (kind=kind_real), dimension(nlevels)   :: tv_h, dtv_h  ! half level virtual T
-   real (kind=kind_real), dimension(nlevels+1) :: pf, dpf      ! full level pressure
-   real (kind=kind_real), dimension(nlevels)   :: zu           ! physical height at u level
-   real (kind=kind_real)  :: tv_f, dtv_f, tv, dtv, w
+   real (kind=RKIND)  :: rvordm1   ! rv/rd - 1. = 461.6/287-1 ~= 0.60836
+   real (kind=RKIND), dimension(nlevels)   :: tv_h, dtv_h  ! half level virtual T
+   real (kind=RKIND), dimension(nlevels+1) :: pf, dpf      ! full level pressure
+   real (kind=RKIND), dimension(nlevels)   :: zu           ! physical height at u level
+   real (kind=RKIND)  :: tv_f, dtv_f, tv, dtv, w
 
       rvordm1 = rv/rgas - MPAS_JEDI_ONE_kr
 
@@ -548,9 +549,9 @@ end subroutine linearized_hydrostatic_balance
 !-------------------------------------------------------------------------------------------
 subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
    implicit none
-   real (kind=kind_real), dimension(nV+1,nC), intent(in) :: zgrid_f
+   real (kind=RKIND), dimension(nV+1,nC), intent(in) :: zgrid_f
    integer, intent(in) :: nC, nV
-   real (kind=kind_real), dimension(nV,nC), intent(out) :: zgrid
+   real (kind=RKIND), dimension(nV,nC), intent(out) :: zgrid
    integer :: i, k
 
 !  calculate midpoint geometricZ:
@@ -568,12 +569,12 @@ subroutine q_fields_forward(mqName, modelFields, qGeo, plevels, nCells, nVertLev
    character (len=*),              intent(in)    :: mqName
    type (mpas_pool_type), pointer, intent(in)    :: modelFields  !< model state fields
    type (field2DReal),    pointer, intent(inout) :: qGeo      !< geovar q field
-   real (kind=kind_real),          intent(in)    :: plevels(nVertLevels+1,nCells)
+   real (kind=RKIND),          intent(in)    :: plevels(nVertLevels+1,nCells)
    integer,                        intent(in)    :: nCells       !< number of grid cells
    integer,                        intent(in)    :: nVertLevels
 
-   real (kind=kind_real), pointer :: qModel(:,:)
-   real (kind=kind_real) :: kgkg_kgm2
+   real (kind=RKIND), pointer :: qModel(:,:)
+   real (kind=RKIND) :: kgkg_kgm2
    integer :: i, k
 
    call mpas_pool_get_array(modelFields, mqName, qModel) !- [kg/kg]
@@ -603,12 +604,12 @@ subroutine q_fields_TL(mqName, modelFields_tl, qGeo_tl, plevels, nCells, nVertLe
    character (len=*),              intent(in)    :: mqName
    type (mpas_pool_type), pointer, intent(in)    :: modelFields_tl !< model state fields
    type (field2DReal),    pointer, intent(inout) :: qGeo_tl        !< geovar q field
-   real (kind=kind_real),          intent(in)    :: plevels(nVertLevels+1,nCells)
+   real (kind=RKIND),          intent(in)    :: plevels(nVertLevels+1,nCells)
    integer,                        intent(in)    :: nCells          !< number of grid cells
    integer,                        intent(in)    :: nVertLevels
 
-   real (kind=kind_real), pointer :: qModel_tl(:,:)
-   real (kind=kind_real) :: kgkg_kgm2
+   real (kind=RKIND), pointer :: qModel_tl(:,:)
+   real (kind=RKIND) :: kgkg_kgm2
    integer :: i, k
 
    call mpas_pool_get_array(modelFields_tl, mqName, qModel_tl) !- [kg/kg]
@@ -628,12 +629,12 @@ subroutine q_fields_AD(mqName, modelFields_ad, qGeo_ad, plevels, nCells, nVertLe
    character (len=*),              intent(in)    :: mqName
    type (mpas_pool_type), pointer, intent(inout) :: modelFields_ad !< model state fields
    type (field2DReal),    pointer, intent(in)    :: qGeo_ad        !< geovar q field
-   real (kind=kind_real),          intent(in)    :: plevels(nVertLevels+1,nCells)
+   real (kind=RKIND),          intent(in)    :: plevels(nVertLevels+1,nCells)
    integer,                        intent(in)    :: nCells         !< number of grid cells
    integer,                        intent(in)    :: nVertLevels
 
-   real (kind=kind_real), pointer :: qModel_ad(:,:)
-   real (kind=kind_real) :: kgkg_kgm2
+   real (kind=RKIND), pointer :: qModel_ad(:,:)
+   real (kind=RKIND) :: kgkg_kgm2
    integer :: i, k
 
    call mpas_pool_get_array(modelFields_ad, mqName, qModel_ad) !- [kg/kg]
@@ -691,11 +692,11 @@ subroutine effectRad_rainwater (qr, rho, nr, re_qr, mp_scheme, ngrid, nVertLevel
 
 implicit none
 
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in)  :: qr, rho
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in)  :: nr
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(in)  :: qr, rho
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(in)  :: nr
 integer,                                               intent(in)  :: ngrid, nVertLevels
 character(len=StrKIND),                                intent(in)  :: mp_scheme
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out) :: re_qr
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(out) :: re_qr
 
 !Local variables
 ! constants
@@ -769,10 +770,10 @@ subroutine effectRad_graupel (qg, rho, re_qg, mp_scheme, ngrid, nVertLevels)
 
 implicit none
 
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(in) :: qg, rho
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(in) :: qg, rho
 integer,                                               intent(in) :: ngrid, nVertLevels
 character (len=StrKIND),                               intent(in) :: mp_scheme
-real(kind=kind_real), dimension( nVertLevels, ngrid ), intent(out):: re_qg
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(out):: re_qg
 
 !Local variables
 integer                :: i, k
