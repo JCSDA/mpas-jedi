@@ -10,6 +10,7 @@ import logsetup
 import multiprocessing as mp
 import numpy as np
 import modelsp_utils as mu
+import os
 import predefined_configs as pconf
 import stat_utils as su
 import var_utils as vu
@@ -34,19 +35,55 @@ class DiagnoseModelStatistics():
     initDate = datetime.strptime(date,'%Y%m%d%H')
     fileDate= initDate.strftime('%Y-%m-%d_%H.%M.%S')
 
-    #mean/deterministic states
-    #TODO: allow for entire ReferenceStateFile and MPASStateFile as args instead of date
+    # mean/deterministic states
+    #TODO: allow for entire ReferenceStateFile and MeanStateFile as args instead of date
     self.ReferenceStateFile = str(self.args.referenceState)+'.'+fileDate+'.nc'
-    self.MPASStateFile = str(self.args.mpasState)+'.'+fileDate+'.nc'
+    self.MeanStateFile = str(self.args.meanState)+'.'+fileDate+'.nc'
 
     self.logger.info('ReferenceState: '+self.ReferenceStateFile)
-    self.logger.info('MPASState: '+self.MPASStateFile)
+    self.logger.info('MeanState: '+self.MeanStateFile)
 
-    #TODO: enable ensemble statistics similar to DiagnoseObsStatistics
-    # for member in list(range(1, self.args.nMembers+1)):
-    #   ensemblePath = str(self.args.ensemblePath).format(member)
-    #   self.logger.info('adding member database: '+ensemblePath)
+    # ensemble member states
+    # background
+    self.bgEnsembleFiles = []
+    ensemblePath = (str(self.args.bgEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
+    for member in list(range(1, self.args.nMembers+1)):
+      file = ensemblePath.format(member)
+      if os.path.exists(file):
+        self.logger.info('adding background member file: '+file)
+        self.bgEnsembleFiles.append(file)
 
+    # analysis
+    self.anEnsembleFiles = []
+    ensemblePath = (str(self.args.anEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
+    for member in list(range(1, self.args.nMembers+1)):
+      file = ensemblePath.format(member)
+      if os.path.exists(file):
+        self.logger.info('adding analysis member file: '+file)
+        self.anEnsembleFiles.append(file)
+
+    # inflated
+    self.inflatedEnsembleFiles = []
+    ensemblePath = (str(self.args.inflatedEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
+    for member in list(range(1, self.args.nMembers+1)):
+      file = ensemblePath.format(member)
+      if os.path.exists(file):
+        self.logger.info('adding inflated member file: '+file)
+        self.inflatedEnsembleFiles.append(file)
+
+    # account for when there is no inflation
+    if len(self.anEnsembleFiles) == 0 and self.args.nMembers > 1:
+      self.logger.info('no valid analysis member files; assuming inflated members are identical to analysis members')
+      self.anEnsembleFiles = deepcopy(self.inflatedEnsembleFiles)
+      self.inflatedEnsembleFiles = []
+
+    # forecast
+#    self.fcEnsembleFiles = []
+#    ensemblePath = (str(self.args.fcEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
+#    for member in list(range(1, self.args.nMembers+1)):
+#      file = ensemblePath.format(member)
+#      self.logger.info('adding member file: '+file)
+#      self.fcEnsembleFiles.append(file)
 
   def diagnose(self):
 
@@ -54,7 +91,20 @@ class DiagnoseModelStatistics():
 
     # initialize netcdf4 Dataset's
     ReferenceState = mu.getNCData(self.ReferenceStateFile)
-    MPASState = mu.getNCData(self.MPASStateFile)
+    MeanState = mu.getNCData(self.MeanStateFile)
+    bgEnsemble = []
+    for file in self.bgEnsembleFiles:
+      bgEnsemble.append(mu.getNCData(file))
+    anEnsemble = []
+    for file in self.anEnsembleFiles:
+      anEnsemble.append(mu.getNCData(file))
+    inflatedEnsemble = []
+    for file in self.inflatedEnsembleFiles:
+      inflatedEnsemble.append(mu.getNCData(file))
+
+#    fcEnsemble = []
+#    for file in self.fcEnsembleFiles:
+#      fcEnsemble.append(mu.getNCData(file))
 
     # read "metadata" fields that are used for binning and
     #  create reshaped copies to fit 1D and 2D arrays
@@ -89,10 +139,11 @@ class DiagnoseModelStatistics():
     ## Extract constructor info about the DiagSpace
     ###############################################
 
-    spaceKey = 'mpas'
-    DiagSpaceInfo  = conf.DiagSpaceConfig[spaceKey]
-    DiagSpaceGrp   = DiagSpaceInfo['DiagSpaceGrp']
+    DiagSpaceName = 'mpas'
+    DiagSpaceInfo = conf.DiagSpaceConfig[DiagSpaceName]
+    DiagSpaceGrp = DiagSpaceInfo['DiagSpaceGrp']
     binVarConfigs = DiagSpaceInfo.get('binVarConfigs',{})
+    selectDiagNames = DiagSpaceInfo.get('diagNames',{})
 
     modelVars = vu.modVarNames2d+vu.modVarNames3d
 
@@ -113,11 +164,23 @@ class DiagnoseModelStatistics():
             if (len(config['values']) < 1 or
                 len(config['filters']) < 1): continue
 
-            config['osName'] = spaceKey
+            config['dsName'] = DiagSpaceName
             config['fileFormat'] = 'model'
 
             binMethods[(binVarKey, binMethodName)] = bu.BinMethod(config)
 
+#    ######################################
+#    ## Construct diagnostic configurations
+#    ######################################
+#
+#    logger.info('Initializing diagnosticConfigs')
+#
+#    nMembers = 1
+#
+#    diagnosticConfigs = du.diagnosticConfigs(
+#        selectDiagNames, ObsSpaceName,
+#        includeEnsembleDiagnostics = (nMembers > 1),
+#        fileFormat = 'model')
 
     ######################################
     ## Collect statistics for all modelVars
@@ -131,15 +194,25 @@ class DiagnoseModelStatistics():
     self.logger.info('Calculating diagnostic statistics')
     self.logger.info("with "+str(self.nprocs)+" out of "+str(mp.cpu_count())+" processors")
 
+    fieldsDB = {
+      'ReferenceState': ReferenceState,
+      'MeanState': MeanState,
+      'bgEnsemble': bgEnsemble,
+      'anEnsemble': anEnsemble,
+      'infEnsemble': inflatedEnsemble,
+#      'fcEnsemble': fcEnsemble,
+    }
+
     subStats = []
     for varName in modelVars: 
 
-      for diagName in mu.variableSpecificDiagnostics(varName):
+      for diagName in mu.variableSpecificDiagnostics(varName, len(bgEnsemble)):
         # TODO(JJG): extend to ACC diagnostic, e.g., for 500mb geopotential height
 
-        diagFunction = mu.diagnosticFunctions[diagName]
         modelVarName = mu.aggModelVariable(varName)
-        diagnostic = np.asarray(diagFunction(modelVarName, ReferenceState, MPASState))
+
+        diagFunction = mu.diagnosticFunctions[diagName]
+        diagnostic = diagFunction.evaluate(modelVarName, fieldsDB)
 
         dShape = diagnostic.shape
         nDims = len(dShape)
@@ -222,11 +295,13 @@ class DiagnoseModelStatistics():
             statsDict[name] += values
 
     ReferenceState.close()
-    MPASState.close()
+    MeanState.close()
+    for f in bgEnsemble+anEnsemble+inflatedEnsemble:
+      f.close()
 
     self.logger.info('Writing statistics file')
 
-    stats = su.BinnedStatisticsFile(statSpace=spaceKey)
+    stats = su.BinnedStatisticsFile(statSpace=DiagSpaceName)
     stats.write(statsDict)
 
     self.logger.info('Finished')

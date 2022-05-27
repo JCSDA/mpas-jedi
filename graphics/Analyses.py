@@ -61,6 +61,7 @@ class AnalysisBase():
         '''
 
         self.relativeErrorType = 'zero centered'
+
         assert self.relativeErrorType in ['zero centered', 'one hundred centered', 'disable'], (
           self.__class__.__name__+': invalid relativeErrorType: '+str(self.relativeErrorType))
 
@@ -343,19 +344,27 @@ class AnalysisBase():
         #    if pu.prepends(diag, diagnosticGroup_) or pu.postpends(diag, diagnosticGroup_):
         #        diagnosticGroup_ = diag
 
-        fcDiagName = self.fcName(diagnosticGroup_)
-        diagnosticIndependentStatistics = ['Count']+du.bcr_.availableStatistics
+        allDiagnosticNames_ = deepcopy(allDiagnosticNames)
+        if allDiagnosticNames_ is None:
+            cntrlDiagnosticName = diagnosticGroup_
+            allDiagnosticNames_ = [diagnosticGroup_]
+        else:
+            cntrlDiagnosticName = allDiagnosticNames_[0]
 
-        if statName in diagnosticIndependentStatistics:
+        fcDiagName = self.fcName(diagnosticGroup_)
+
+        if statName in du.diagnosticIndependentStatistics:
             statDiagLabel = statName
             fcstatDiagLabel = statName
+        elif statName == vu.miss_s:
+            statDiagLabel = diagnosticGroup_
+            fcstatDiagLabel = fcDiagName
+        elif set(allDiagnosticNames_).issubset(set(du.statisticDependentDiagnostics)):
+            statDiagLabel = diagnosticGroup_+'('+statName+')'
+            fcstatDiagLabel = fcDiagName+'('+statName+')'
         else:
-            if statName == vu.miss_s:
-                statDiagLabel = diagnosticGroup_
-                fcstatDiagLabel = fcDiagName
-            else:
-                statDiagLabel = statName+'('+diagnosticGroup_+')'
-                fcstatDiagLabel = statName+'('+fcDiagName+')'
+            statDiagLabel = statName+'('+diagnosticGroup_+')'
+            fcstatDiagLabel = statName+'('+fcDiagName+')'
 
         #The following attributes apply to unbounded and/or symmetric plotted quantities
         # e.g., omb, oma, ana/bak for velocity, differences
@@ -365,13 +374,6 @@ class AnalysisBase():
         logScale = False
         centralValue = None
 
-        allDiagnosticNames_ = deepcopy(allDiagnosticNames)
-        if allDiagnosticNames_ is None:
-            cntrlDiagnosticName = diagnosticGroup_
-            allDiagnosticNames_ = [diagnosticGroup_]
-        else:
-            cntrlDiagnosticName = allDiagnosticNames_[0]
-
         #for diag in truncateDiagnostics:
         #    if pu.prepends(diag, cntrlDiagnosticName) or pu.postpends(diag, cntrlDiagnosticName):
         #        cntrlDiagnosticName = diag
@@ -379,7 +381,7 @@ class AnalysisBase():
         #        if pu.prepends(diag, adiag) or pu.postpends(diag, adiag):
         #            allDiagnosticNames_[idiag] = diag
 
-        oneCenteredRatioDiagPrefixes = ['CRy', 'InnovationRatio', 'SpreadRatio', 'OENI']
+        oneCenteredRatioDiagPrefixes = ['CRx', 'CRy', 'InnovationRatio', 'SRx', 'SRy', 'OENI']
         allOneCenteredDiagnostics = statName not in ['Count', 'Mean', 'Skew', 'ExcessKurtosis']
         for diag in allDiagnosticNames_:
             oneCentered = False

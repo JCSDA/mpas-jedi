@@ -63,8 +63,8 @@ class GenerateABEIFactors:
       if inst == '': continue
       message = self.__class__.__name__+'.__init__: '+inst+' not included in JediDB'
       assert inst in dbOSNames, message
-      for osKey, osName in self.db.ObsSpaceName.items():
-        if inst == osName:
+      for osKey, dsName in self.db.ObsSpaceName.items():
+        if inst == dsName:
           self.osKeys.append(osKey)
           break
 
@@ -123,7 +123,7 @@ class GenerateABEIFactors:
             if (len(config['values']) < 1 or
                 len(config['filters']) < 1): continue
 
-            config['osName'] = ObsSpaceName
+            config['dsName'] = ObsSpaceName
             config['fileFormat'] = fileFormat
             binMethods[(binVarKey,binMethodKey)] = bu.BinMethod(config)
 

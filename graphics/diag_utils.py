@@ -59,6 +59,19 @@ class BiasCorrectedObsMinusModel:
         return np.negative(bcdep)
 
 
+class NonBiasCorrectedObsMinusModel(bu.InsituLocFunction):
+    def _initBaseVars(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfBCValue)
+
+    def _get(self):
+        bcdep = self._variables[vu.selfDepValue]
+        bc = self._variables[vu.selfBCValue]
+
+        return np.negative(np.add(bcdep, bc))
+
+
 class RelativeBiasCorrectedObsMinusModel:
     def __init__(self):
         self.baseVars = []
@@ -168,9 +181,13 @@ class DerivedDiagnostic:
     in the derived class.
     '''
     def __init__(self):
-        self.availableStatistics = su.allFileStats
-        self.diagname = 'DerivedDiagnostic'
-        self.requiredDiagnostics = []
+        '''
+        virtual method
+        '''
+        raise NotImplementedError()
+        # Child.__init__() must define the following:
+        #self.availableStatistics = su.allFileStats
+        #self.diagname = 'DerivedDiagnostic'
 
     @staticmethod
     def retrieveDiagnosticStat(dfw, diagnostic, statistic):
@@ -232,11 +249,11 @@ class idealSigmao(DerivedDiagnostic):
     Calculates ideal sigmao for the
     background, analysis, or forecast states
     '''
+    availableStatistics = ['MS', 'RMS']
     def __init__(self, stateType):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
         assert stateType in ['b', 'a', 'f'], 'idealSigmao: wrong stateType => '+stateType
         self.diagname = 'ideal-sigmao'+stateType
-        self.availableStatistics = ['MS', 'RMS']
 
         self.label = '$ideal-sigmao_{'+stateType+'}$',
         self.omm = 'om'+stateType
@@ -279,11 +296,12 @@ class ObsSpaceConsistencyRatio(DerivedDiagnostic):
     CRh = 'CRh'
     invCRo = 'invCRo'
     invCRh = 'invCRh'
+    availableStatistics = [CRd, CRo, CRh, invCRo, invCRh]
+
     def __init__(self, stateType):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
         assert stateType in ['b', 'a', 'f'], 'ObsSpaceConsistencyRatio: wrong stateType => '+stateType
         self.diagname = 'CRy'+stateType
-        self.availableStatistics = [self.CRd, self.CRo, self.CRh, self.invCRo, self.invCRh]
 
         self.label = '$CR_{y,'+stateType+'}$',
         self.omm = 'om'+stateType
@@ -347,6 +365,64 @@ class ObsSpaceConsistencyRatio(DerivedDiagnostic):
                 Stats[statistic] = negativeSafeSqrt(Stat)
 
         return self.templateDFfromStats(dfw, self.omm, Stats)
+
+
+class ModelSpaceConsistencyRatio(DerivedDiagnostic):
+    '''
+    Calculates multiple forms of the model-space ensemble consistency ratio for the
+    background, analysis, inflated, or forecast states
+    '''
+    CR = 'CR'
+    invCR = 'invCR'
+    availableStatistics = [CR, invCR]
+
+    def __init__(self, stateType):
+    # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
+        assert stateType in ['b', 'a', 'inf', 'f'], 'ObsSpaceConsistencyRatio: wrong stateType => '+stateType
+        self.diagname = 'CRx'+stateType
+
+        self.label = '$CR_{x,'+stateType+'}$',
+        self.mmref = 'mmgfsan'
+        self.sigmam = 'sigmax'+stateType
+
+        self.requiredDiagnostics = [self.mmref, self.sigmam]
+
+    def evaluate(self, dfw):
+        diagNamesAvailableInSlice = dfw.levels('diagName')
+        for diag in self.requiredDiagnostics:
+            if diag not in diagNamesAvailableInSlice: return None
+
+        # get the statistics needed as numpy arrays
+        mmref = self.retrieveDiagnosticStat(dfw, self.mmref, 'MS')
+        sigmam = self.retrieveDiagnosticStat(dfw, self.sigmam, 'MS')
+
+        Stats = {}
+        for statName in self.availableStatistics:
+            Stats[statName] = np.full_like(mmref, np.NaN)
+
+        p = np.logical_and(np.isfinite(mmref), np.isfinite(sigmam))
+        if p.sum() > 0:
+            #For each subpopulation, the consistency ratio can be written two different
+            # ways, depending on the quantity of interest in the analysis. In the
+            # following formulae, MS ≡ Mean Squared Value.
+
+            #(1) CR = SQRT( MS(SIGMAMOD) / MS(MODEL-REF) )
+            # denominator zero check, q
+            q = np.logical_and(bu.greatBound(np.absolute(mmref), 0.0), p)
+            Stats[self.CR][q] = sigmam[q] / mmref[q]
+            # utility: reveals actual spread skill (too large or too small by specific factor)
+
+            #(2) invCRh = SQRT( [MS(OBS-MODEL) - MS(SIGMAOBS)] / MS(SIGMAMOD) )
+            q = np.logical_and(bu.greatBound(np.absolute(sigmam), 0.0), p)
+            Stats[self.invCR][q] = mmref[q] / sigmam[q]
+            # utility: gives scaling factors for adjusting the spread of self.stateType
+
+            # perform the sqrt operation for all CR's where positive-semi-definite
+            for statistic, Stat in Stats.items():
+                Stats[statistic] = negativeSafeSqrt(Stat)
+
+        return self.templateDFfromStats(dfw, self.mmref, Stats)
+
 
 class SumDiagnosticsStatisticsPairs(DerivedDiagnostic):
     '''
@@ -464,12 +540,11 @@ class ObsErrorNormalizedInnovation(DerivedDiagnostic):
     Calculates the ratio of [y - h(x)]/ObsError for the
     background, analysis, or forecast states
     '''
+    availableStatistics = ['Mean', 'MS', 'RMS']
     def __init__(self, stateType):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
         assert stateType in ['b', 'a', 'f'], 'ObsErrorNormalizedInnovation: wrong stateType => '+stateType
         self.diagname = 'OENI'+stateType
-        self.availableStatistics = ['Mean', 'MS', 'RMS']
-
 
         self.label = '$OENI_{'+stateType+'}$',
         self.omm = 'om'+stateType
@@ -516,10 +591,9 @@ class InnovationRatio(DerivedDiagnostic):
     Calculates the ratio of Statistic(OMA)/Statistic(OMB)
     note: for Mean, the absolute ratio is calculated in order to make plots easier to decipher
     '''
+    diagname = 'InnovationRatio'
+    availableStatistics = ['AbsMean', 'MS', 'RMS']
     def __init__(self):
-        self.diagname = 'InnovationRatio'
-        self.availableStatistics = ['AbsMean', 'MS', 'RMS']
-
         self.label = '$\frac{OMA}{OMB}$',
         self.omb = 'omb'
         self.oma = 'oma'
@@ -565,17 +639,15 @@ class InnovationRatio(DerivedDiagnostic):
 
 class SpreadRatio(DerivedDiagnostic):
     '''
-    Calculates the observation-space ensemble spread reduction ratio
+    Calculates the ensemble spread ratio
     both for variance (MS) and standard deviation (RMS)
     '''
-    def __init__(self):
-        self.diagname = 'SpreadRatio'
-        self.availableStatistics = ['VAR', 'STD']
-
-        #self.label = '$\frac{\sigma_{h_a}}{\sigma_{h_b}}$',
-        self.label = '$SpreadRatio$',
-        self.sigmab = 'sigmab'
-        self.sigmaa = 'sigmaa'
+    availableStatistics = ['STD']
+    def __init__(self, diagname, sigmab, sigmaa):
+        self.diagname = diagname
+        self.label = '$'+diagname+'$'
+        self.sigmab = sigmab
+        self.sigmaa = sigmaa
         self.requiredDiagnostics = [self.sigmab, self.sigmaa]
 
     def evaluate(self, dfw):
@@ -597,8 +669,8 @@ class SpreadRatio(DerivedDiagnostic):
         p = np.logical_and(np.isfinite(sigmaaMS), np.isfinite(sigmabMS))
         if p.sum() > 0:
             #(1) SpreadRatio['VAR'] = MS(SIGMAA) / MS(SIGMAB)
-            q = np.logical_and(bu.greatBound(np.absolute(sigmabMS), 0.0), p)
-            Stats['VAR'][q] = sigmaaMS[q] / sigmabMS[q]
+            #q = np.logical_and(bu.greatBound(np.absolute(sigmabMS), 0.0), p)
+            #Stats['VAR'][q] = sigmaaMS[q] / sigmabMS[q]
 
             #(2) SpreadRatio['STD'] = RMS(SIGMAA) / RMS(SIGMAB)
             q = np.logical_and(bu.greatBound(np.absolute(sigmabRMS), 0.0), p)
@@ -615,7 +687,7 @@ class SpreadRatio(DerivedDiagnostic):
 #          ('bg', 'an', int, default: None OR vu.bgIter depending on appName)
 #        vu.mean (optional): whether to apply this diagnostic to the mean state (default: True)
 #        vu.ensemble (optional): whether this diagnostic requires variables from ensemble IODA files (default: False)
-#        onlyObsSpaces (optional): list of ObsSpaces for which this diag applies
+#        onlyDiagSpaces (optional): list of DiagSpaces for which this diag applies
 #            see config.DiagSpaceConfig keys for available options
 #        analyze (optional): whether to analyze this diagnostic (defualt: True).  Useful for turning
 #            off analyses for diagnostics that are not of particular interest or that are not available
@@ -643,9 +715,14 @@ aiso_ = idealSigmao('a')
 fiso_ = idealSigmao('f')
 
 # consistency ratio
-bcr_ = ObsSpaceConsistencyRatio('b')
-acr_ = ObsSpaceConsistencyRatio('a')
-fcr_ = ObsSpaceConsistencyRatio('f')
+bcry_ = ObsSpaceConsistencyRatio('b')
+acry_ = ObsSpaceConsistencyRatio('a')
+fcry_ = ObsSpaceConsistencyRatio('f')
+
+bcrx_ = ModelSpaceConsistencyRatio('b')
+acrx_ = ModelSpaceConsistencyRatio('a')
+icrx_ = ModelSpaceConsistencyRatio('inf')
+fcrx_ = ModelSpaceConsistencyRatio('f')
 
 # innovation (omb, oma, omf) normalized by σ_o
 boeni_ = ObsErrorNormalizedInnovation('b')
@@ -656,7 +733,13 @@ foeni_ = ObsErrorNormalizedInnovation('f')
 innovratio_ = InnovationRatio()
 
 # ratio of σ_h(x_a) / σ_h(x_b)
-spreadratio_ = SpreadRatio()
+sry_ = SpreadRatio('SRy', 'sigmab', 'sigmaa')
+
+# ratio of σ_{x_a} / σ_{x_b}
+srxeda_ = SpreadRatio('SRx-eda', 'sigmaxb', 'sigmaxa')
+
+# ratio of σ_{x_inf} / σ_{x_a}
+srxrtpp_ = SpreadRatio('SRx-rtpp', 'sigmaxa', 'sigmaxinf')
 
 # components of departure spread equation:
 #   E[dd^T] = HBH^T + R,
@@ -665,6 +748,23 @@ departurespread_ = DepartureRMS('f')
 ensspread_ = EnsembleSpread('f')
 obserror_ = ObsError('f')
 totalspread_ = TotalSpread('f')
+
+diagnosticIndependentStatistics = ['Count'] \
+  + ObsSpaceConsistencyRatio.availableStatistics \
+  + ModelSpaceConsistencyRatio.availableStatistics
+
+statisticDependentDiagnostics = [
+  biso_.diagname,
+  aiso_.diagname,
+  fiso_.diagname,
+  boeni_.diagname,
+  aoeni_.diagname,
+  foeni_.diagname,
+  innovratio_.diagname,
+  sry_.diagname,
+  srxeda_.diagname,
+  srxrtpp_.diagname,
+]
 
 availableDiagnostics = {
     'bc': {
@@ -700,22 +800,59 @@ availableDiagnostics = {
     },
     'rltv_mmgfsan': {
         'offline': True,
+        'analyze': False,
         'label': '$\frac{x - x_{a,GFS}}{x_{a,GFS}}$',
         'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     'log_mogfsan': {
         'offline': True,
+        'analyze': False,
         'label': '$\log{\frac{x}{x_{a,GFS}}}$',
         'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
-
+    #NOTE: a failure results when 'analyze' is True under sigmax*, any one of the experiments
+    # does not have sigmax* (i.e., a non-ensemble-DA experiment), and any one of the experiments
+    # does have sigmax*
+    'sigmaxf': {
+        'offline': True,
+        'analyze': True,
+        vu.mean: False,
+        vu.ensemble: True,
+        'label': '$\sigma_{x_f}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'sigmaxb': {
+        'offline': True,
+        'analyze': True,
+        vu.mean: False,
+        vu.ensemble: True,
+        'label': '$\sigma_{x_b}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'sigmaxa': {
+        'offline': True,
+        'analyze': True,
+        vu.mean: False,
+        vu.ensemble: True,
+        'label': '$\sigma_{x_a}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'sigmaxinf': {
+        # inf == inflated analysis, e.g., after RTPP
+        'offline': True,
+        'analyze': True,
+        vu.mean: False,
+        vu.ensemble: True,
+        'label': '$\sigma_{x_inf}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
     'omb_nobc': {
-        'variable': ObsMinusModel,
+        'variable': NonBiasCorrectedObsMinusModel,
         'iter': 'bg',
         'label': '$y - x_b$',
     },
     'oma_nobc': {
-        'variable': ObsMinusModel,
+        'variable': NonBiasCorrectedObsMinusModel,
         'iter': 'an',
         'label': '$y - x_a$',
     },
@@ -818,7 +955,7 @@ availableDiagnostics = {
     # does have sigmaf
     'sigmaf': {
         'variable': bu.STDofHofX,
-        'analyze': False,
+        'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
         'label': '$\sigma_{h_f}$',
@@ -828,34 +965,34 @@ availableDiagnostics = {
     'SCI-'+bu.OkamotoMethod: {
         'variable': bu.SCIOkamoto,
         'analyze': False,
-        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'ACI-'+bu.MZ19Method: {
         'variable': bu.ACIMZ19,
         'analyze': False,
-        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'MCI': {
         'variable': bu.MCI,
         'analyze': False,
-        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'CFy': {
         'variable': vu.cldfracMeta,
         'analyze': False,
-        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'ABEILambda': {
         'variable': bu.ABEILambda,
-        'onlyObsSpaces': ['abi_g16', 'ahi_himawari8'],
+        'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
         'label': '$\lambda_{ABEI}$',
     },
 # DerivedDiagnostics
-    'ideal-sigmaob': {
+    biso_.diagname: {
         'iter': 'bg',
         'analyze': False,
         'DerivedDiagnostic': biso_,
@@ -863,7 +1000,7 @@ availableDiagnostics = {
         'availableStatistics': biso_.availableStatistics,
         'label': biso_.label,
     },
-    'ideal-sigmaoa': {
+    aiso_.diagname: {
         'iter': 'an',
         'analyze': False,
         'DerivedDiagnostic': aiso_,
@@ -874,40 +1011,72 @@ availableDiagnostics = {
     #NOTE: a failure results when 'analyze' is True under ideal-sigmaof, any one of the experiments
     # does not have sigmaf (i.e., a non-ensemble-DA experiment), and any one of the experiments
     # does have sigmaf
-    'ideal-sigmaof': {
+    fiso_.diagname: {
         'DerivedDiagnostic': fiso_,
         'analyze': False,
         'requiredDiagnostics': fiso_.requiredDiagnostics,
         'availableStatistics': fiso_.availableStatistics,
         'label': fiso_.label,
     },
+    #NOTE: a failure results when 'analyze' is True under CR*, any one of the experiments
+    # does not have CR* (i.e., a non-ensemble-DA experiment), and any one of the experiments
+    # does have CR*
+    #CRy*
     'CRyb': {
         'iter': 'bg',
         'analyze': False,
-        'DerivedDiagnostic': bcr_,
-        'requiredDiagnostics': bcr_.requiredDiagnostics,
-        'availableStatistics': bcr_.availableStatistics,
-        'label': bcr_.label,
+        'DerivedDiagnostic': bcry_,
+        'requiredDiagnostics': bcry_.requiredDiagnostics,
+        'availableStatistics': bcry_.availableStatistics,
+        'label': bcry_.label,
     },
     'CRya': {
         'iter': 'an',
         'analyze': False,
-        'DerivedDiagnostic': acr_,
-        'requiredDiagnostics': acr_.requiredDiagnostics,
-        'availableStatistics': acr_.availableStatistics,
-        'label': acr_.label,
+        'DerivedDiagnostic': acry_,
+        'requiredDiagnostics': acry_.requiredDiagnostics,
+        'availableStatistics': acry_.availableStatistics,
+        'label': acry_.label,
     },
-    #NOTE: a failure results when 'analyze' is True under CRyf, any one of the experiments
-    # does not have sigmaf (i.e., a non-ensemble-DA experiment), and any one of the experiments
-    # does have sigmaf
     'CRyf': {
-        'DerivedDiagnostic': fcr_,
-        'analyze': False,
-        'requiredDiagnostics': fcr_.requiredDiagnostics,
-        'availableStatistics': fcr_.availableStatistics,
-        'label': fcr_.label,
+        'DerivedDiagnostic': fcry_,
+        'analyze': True,
+        'requiredDiagnostics': fcry_.requiredDiagnostics,
+        'availableStatistics': fcry_.availableStatistics,
+        'label': fcry_.label,
     },
-    'OENIb': {
+    # CRx*
+    'CRxb': {
+        'iter': 'bg',
+        'analyze': True,
+        'DerivedDiagnostic': bcrx_,
+        'requiredDiagnostics': bcrx_.requiredDiagnostics,
+        'availableStatistics': bcrx_.availableStatistics,
+        'label': bcrx_.label,
+    },
+    'CRxa': {
+        'iter': 'an',
+        'analyze': False,
+        'DerivedDiagnostic': acrx_,
+        'requiredDiagnostics': acrx_.requiredDiagnostics,
+        'availableStatistics': acrx_.availableStatistics,
+        'label': acrx_.label,
+    },
+    'CRxf': {
+        'DerivedDiagnostic': fcrx_,
+        'analyze': False,
+        'requiredDiagnostics': fcrx_.requiredDiagnostics,
+        'availableStatistics': fcrx_.availableStatistics,
+        'label': fcrx_.label,
+    },
+    'CRxinf': {
+        'DerivedDiagnostic': icrx_,
+        'analyze': False,
+        'requiredDiagnostics': icrx_.requiredDiagnostics,
+        'availableStatistics': icrx_.availableStatistics,
+        'label': icrx_.label,
+    },
+    boeni_.diagname: {
         'iter': 'bg',
         'DerivedDiagnostic': boeni_,
         'analyze': False,
@@ -915,7 +1084,7 @@ availableDiagnostics = {
         'availableStatistics': boeni_.availableStatistics,
         'label': boeni_.label,
     },
-    'OENIa': {
+    aoeni_.diagname: {
         'iter': 'an',
         'DerivedDiagnostic': aoeni_,
         'analyze': False,
@@ -923,26 +1092,40 @@ availableDiagnostics = {
         'availableStatistics': aoeni_.availableStatistics,
         'label': aoeni_.label,
     },
-    'OENIf': {
+    foeni_.diagname: {
         'DerivedDiagnostic': foeni_,
         'analyze': False,
         'requiredDiagnostics': foeni_.requiredDiagnostics,
         'availableStatistics': foeni_.availableStatistics,
         'label': foeni_.label,
     },
-    'InnovationRatio': {
+    innovratio_.diagname: {
         'DerivedDiagnostic': innovratio_,
         'analyze': False,
         'requiredDiagnostics': innovratio_.requiredDiagnostics,
         'availableStatistics': innovratio_.availableStatistics,
         'label': innovratio_.label,
     },
-    'SpreadRatio': {
-        'DerivedDiagnostic': spreadratio_,
+    sry_.diagname: {
+        'DerivedDiagnostic': sry_,
         'analyze': False,
-        'requiredDiagnostics': spreadratio_.requiredDiagnostics,
-        'availableStatistics': spreadratio_.availableStatistics,
-        'label': spreadratio_.label,
+        'requiredDiagnostics': sry_.requiredDiagnostics,
+        'availableStatistics': sry_.availableStatistics,
+        'label': sry_.label,
+    },
+    srxeda_.diagname: {
+        'DerivedDiagnostic': srxeda_,
+        'analyze': True,
+        'requiredDiagnostics': srxeda_.requiredDiagnostics,
+        'availableStatistics': srxeda_.availableStatistics,
+        'label': srxeda_.label,
+    },
+    srxrtpp_.diagname: {
+        'DerivedDiagnostic': srxrtpp_,
+        'analyze': True,
+        'requiredDiagnostics': srxrtpp_.requiredDiagnostics,
+        'availableStatistics': srxrtpp_.availableStatistics,
+        'label': srxrtpp_.label,
     },
     departurespread_.diagname: {
         'DerivedDiagnostic': departurespread_,
@@ -976,7 +1159,7 @@ availableDiagnostics = {
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
-def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics=True,
+def diagnosticConfigs(diagnosticNames_, DiagSpaceName, includeEnsembleDiagnostics=True,
                       selectedStatistics = su.allFileStats, fileFormat=vu.hdfFileFormat):
 
     diagnosticConfigs = {}
@@ -995,7 +1178,7 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
         config['offline'] = config.get('offline', False)
         config[vu.mean] = config.get(vu.mean, True)
         config[vu.ensemble] = (config.get(vu.ensemble, False) and includeEnsembleDiagnostics)
-        config['onlyObsSpaces'] = config.get('onlyObsSpaces',[])
+        config['onlyDiagSpaces'] = config.get('onlyDiagSpaces',[])
         config['availableStatistics'] = config.get('availableStatistics', selectedStatistics)
         config['selectedStatistics'] = config.get('selectedStatistics', config['availableStatistics'])
         config['label'] = config.get('label',diagnosticName)
@@ -1003,10 +1186,10 @@ def diagnosticConfigs(diagnosticNames_, ObsSpaceName, includeEnsembleDiagnostics
 
         # diagnosticConfig is undefined for the following cases
         if (not config[vu.mean] and not config[vu.ensemble]): continue
-        if (len(config['onlyObsSpaces']) > 0 and
-            ObsSpaceName not in config['onlyObsSpaces']): continue
+        if (len(config['onlyDiagSpaces']) > 0 and
+            DiagSpaceName not in config['onlyDiagSpaces']): continue
 
-        config['osName'] = ObsSpaceName
+        config['dsName'] = DiagSpaceName
         config['fileFormat'] = fileFormat
         # add this diagnosticConfig to the list
         diagnosticConfigs[diagnosticName] = deepcopy(config)

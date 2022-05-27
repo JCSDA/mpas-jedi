@@ -295,6 +295,8 @@ class StatsDB:
         # add non-aggregated derived diagnostics as needed
         createORreplaceDerivedDiagnostics(self.dfw, self.diagnosticConfigs)
 
+        self.logger.info('availableDiagnostics: '+str(self.dfw.levels('diagName')))
+
     def initAttributes(self):
         ## diagnostics (currently unused)
         #self.containedDiagNames = self.dfw.levels('diagName')

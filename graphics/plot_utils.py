@@ -238,7 +238,7 @@ def get_clean_ax_limits(xmin_=np.NaN, xmax_=np.NaN, plotVals=[np.NaN],
         if centralValue is None:
             maxxval = np.ceil(    xmax*roundfact ) / roundfact
             minxval = np.floor(   xmin*roundfact ) / roundfact
-        elif xmin < 0. and xmax > 0. and centralValue == 0.0:
+        elif np.abs(centralValue) < 1.e-6:
             maxxval = np.ceil(    (xmaxabs)*roundfact ) / roundfact
             minxval = np.floor( - (xmaxabs)*roundfact ) / roundfact
         else:
@@ -254,6 +254,9 @@ def get_clean_ax_limits(xmin_=np.NaN, xmax_=np.NaN, plotVals=[np.NaN],
                 delta = np.ceil(  (centralValue - xmin)*roundfact ) / roundfact
                 maxxval = centralValue + delta
                 minxval = centralValue - delta
+            elif xmin==xmax and xmin==centralValue:
+                maxxval = centralValue*3./2.
+                minxval = centralValue*2./3.
             else:
                 roundfact = np.round(1. / 10.0 ** np.floor(np.log10(xmax)))
                 maxxval = np.ceil(  xmax*roundfact ) / roundfact

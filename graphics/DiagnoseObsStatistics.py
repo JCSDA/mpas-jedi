@@ -100,7 +100,7 @@ class DiagnoseObsStatistics:
             if (len(config['values']) < 1 or
                 len(config['filters']) < 1): continue
 
-            config['osName'] = ObsSpaceName
+            config['dsName'] = ObsSpaceName
             config['fileFormat'] = jdbs[vu.mean].fileFormat(osKey, obsFKey)
 
             binMethods[(binVarKey, binMethodName)] = bu.BinMethod(config)

@@ -448,43 +448,71 @@ class axisTransform:
         return axisTransforms[self.tname]['locator']
 
 
-## axis locators and formatters for one-centered ratios
-#TODO: make the locators adjustable so that only 1 or 2 decades are shown at once
-#      otherwise can be difficult to see tick marks
-#TODO: optionally allow for values very close to 1., e.g., 1.+0.001*baseRatios
-baseRatios = np.array([2., 3., 5., 8., 10.]) #Fibonacci-like sequence
-decades = np.arange(0, 4)
+class OneCenteredAxisTicks():
+  '''
+  produces axis locators and formatters for a one-centered axis, e.g., for ratios
+  '''
+  fineBaseRatios = np.array([2., 3., 5., 8., 10.]) #Fibonacci-like sequence
+  coarseBaseRatios = np.array([2., 5., 10.]) #coarser sequence
 
-#Major
-oneCenteredRatiosRight = np.array([])
-majorRight = []
-for decade in decades:
-  majorRight += list(baseRatios * (10.**decade))
-oneCenteredRatiosRight = np.array(majorRight)
-oneCenteredRatiosLeft = np.flip(np.divide(1.,oneCenteredRatiosRight))
-oneCenteredRatios = np.append(oneCenteredRatiosLeft, np.array([1.]))
-oneCenteredRatios = np.append(oneCenteredRatios, oneCenteredRatiosRight)
+  nDecades = 1
+  def __init__(self, maxLim):
+    maxDecade = np.log10(np.max(np.array([maxLim, 1.00001]))-1.0)
+    maxDecade = int(np.round(maxDecade))
 
-oneCenteredRatiosMajorLocator = mticker.FixedLocator(oneCenteredRatios)
-oneCenteredRatiosMajorFormatter = mticker.FormatStrFormatter('%.2f')
+    allDecades = np.arange(maxDecade-self.nDecades, maxDecade+1)
 
-#Minor - fractally divides baseRatios using a 10% reduction
-minorRight = []
-lastR = 1.
-for thisR in oneCenteredRatiosRight:
-  diff = thisR - lastR
-  for r in 0.1*baseRatios:
-    minorRight.append(lastR + r*diff)
+    nDecimalDigits = str(int(np.max(np.array([0, 2-allDecades[-1]]))))
+    self.majorFormatter = mticker.FormatStrFormatter('%.'+nDecimalDigits+'f')
+    self.minorFormatter = mticker.NullFormatter()
 
-  lastR = thisR
+    def baseRatios(decade):
+      if decade >= 0:
+        return self.fineBaseRatios
+      else:
+        return self.coarseBaseRatios
 
-oneCenteredRatiosRight = np.array(minorRight)
-oneCenteredRatiosLeft = np.flip(np.divide(1.,oneCenteredRatiosRight))
-oneCenteredRatios = np.append(oneCenteredRatiosLeft, np.array([1.]))
-oneCenteredRatios = np.append(oneCenteredRatios, oneCenteredRatiosRight)
+    def decadeRatios(decade):
+      if decade >= 0:
+        return list(baseRatios(decade) * (10.**decade))
+      else:
+        return list(1. + baseRatios(decade) * (10.**decade))
 
-oneCenteredRatiosMinorLocator = mticker.FixedLocator(oneCenteredRatios)
-oneCenteredRatiosMinorFormatter = mticker.NullFormatter()
+    #MajorLocator
+    ratiosUpper = np.array([])
+    majorRatiosUpper = []
+    for decade in allDecades:
+      majorRatiosUpper += decadeRatios(decade)
+
+    ratiosUpper = np.array(majorRatiosUpper)
+    ratiosLower = np.flip(np.divide(1.,ratiosUpper))
+    ratios = np.append(ratiosLower, np.array([1.]))
+    ratios = np.append(ratios, ratiosUpper)
+    self.majorLocator = mticker.FixedLocator(ratios)
+
+    #MinorLocator - fractally divides baseRatios(minorDecade) using a 10x reduction relative to
+    #               minorDecade
+    minorDecade = allDecades[0]
+    minorUpper = []
+    lastRatio = 1.
+    for thisRatio in decadeRatios(minorDecade):
+      diff = thisRatio - lastRatio
+      for r in 0.1*baseRatios(minorDecade):
+        minorUpper.append(lastRatio + r*diff)
+      lastRatio = thisRatio
+
+    ratiosUpper = np.array(minorUpper)
+    ratiosLower = np.flip(np.divide(1.,ratiosUpper))
+    ratios = np.append(ratiosLower, np.array([1.]))
+    ratios = np.append(ratios, ratiosUpper)
+    self.minorLocator = mticker.FixedLocator(ratios)
+
+  def setTicks(self, axis):
+    axis.set_major_locator(self.majorLocator)
+    axis.set_minor_locator(self.minorLocator)
+    axis.set_major_formatter(self.majorFormatter)
+    axis.set_minor_formatter(self.minorFormatter)
+
 
 # maximum number of legend entries for line-style plots
 maxLegendEntries = 12
@@ -697,22 +725,20 @@ def plotSeries(fig,
                 scaleType = 'log'
                 maxratio = np.max([vmax/centralValue, centralValue/vmin])
                 maxp = maxratio / centralValue
-                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
                 maxratio = maxp / centralValue
                 minp = centralValue / maxratio
+                if minp == maxp:
+                    minp = dmin
+                    maxp = dmax
 
     # for non-linear axis scales, limits must be set before scale
     ax.set_ylim(minp, maxp)
     ax.set_yscale(scaleType)
 
     if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
-        ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
-        if maxp < 8.0:
-            ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
-        else:
-            ax.yaxis.set_minor_locator(mticker.NullLocator())
-        ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
-        ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(ax.yaxis)
 
     if scaleType == 'linear':
         if sciTicks:
@@ -776,7 +802,8 @@ def plotProfile(fig,
                 dmin=np.NaN, dmax=np.NaN,
                 lineAttribOffset=0,
                 legend_inside=True,
-                interiorLabels=True):
+                interiorLabels=True,
+                marker=None):
 
 # ARGUMENTS
 # fig              - matplotlib figure object
@@ -837,7 +864,8 @@ def plotProfile(fig,
                 color=pColor,
                 label=linesLabel[iline],
                 ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
-                linewidth=commonLineWidth)
+                linewidth=commonLineWidth,
+                marker=marker)
         nLines += 1
         plotVals = np.append(plotVals,lineVals)
 
@@ -963,22 +991,20 @@ def plotProfile(fig,
                 scaleType = 'log'
                 maxratio = np.max([vmax/centralValue, centralValue/vmin])
                 maxp = maxratio / centralValue
-                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
                 maxratio = maxp / centralValue
                 minp = centralValue / maxratio
+                if minp == maxp:
+                    minp = dmin
+                    maxp = dmax
 
     # for non-linear axis scales, limits must be set before scale
     ax.set_xlim(minp, maxp)
     ax.set_xscale(scaleType)
 
     if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
-        ax.xaxis.set_major_locator(oneCenteredRatiosMajorLocator)
-        if maxp < 8.0:
-            ax.xaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
-        else:
-            ax.xaxis.set_minor_locator(mticker.NullLocator())
-        ax.xaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
-        ax.xaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(ax.xaxis)
         ax.tick_params(axis='x', rotation=90)
 
     if scaleType == 'linear':
@@ -1255,22 +1281,20 @@ def plotTimeSeries(fig,
                 scaleType = 'log'
                 maxratio = np.max([vmax/centralValue, centralValue/vmin])
                 maxp = maxratio / centralValue
-                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue)
+                p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
                 maxratio = maxp / centralValue
                 minp = centralValue / maxratio
+                if minp == maxp:
+                    minp = dmin
+                    maxp = dmax
 
     # for non-linear axis scales, limits must be set before scale
     ax.set_ylim(minp, maxp)
     ax.set_yscale(scaleType)
 
     if centralValue is not None and float(centralValue) == 1. and scaleType == 'log':
-        ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
-        if maxp < 8.0:
-            ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
-        else:
-            ax.yaxis.set_minor_locator(mticker.NullLocator())
-        ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
-        ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(ax.yaxis)
 
     if scaleType == 'linear':
         if sciTicks:
@@ -1314,7 +1338,7 @@ cmaps = {
 }
 nlevs = {
   'magnitude': 18,
-  'symmetric': 28,
+  'symmetric': 29,
 }
 
 ###############################################################################
@@ -1411,7 +1435,7 @@ def plot2D(fig,
 
             maxratio = np.max([vmax/centralValue, centralValue/vmin])
             maxp = maxratio / centralValue
-            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue, buffr=0.05)
+            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
             maxratio = maxp / centralValue
             minp = centralValue / maxratio
 
@@ -1486,13 +1510,8 @@ def plot2D(fig,
         cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
         if centralValue is not None and float(centralValue) == 1. and isLogScale:
-            cb.ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
-            if maxp < 8.0:
-                cb.ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
-            else:
-                cb.ax.yaxis.set_minor_locator(mticker.NullLocator())
-            cb.ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
-            cb.ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+            axTicks = OneCenteredAxisTicks(maxp)
+            axTicks.setTicks(cb.ax.yaxis)
 
         #cb.ax.tick_params(labelsize=3)
         cb.ax.tick_params(axis='y', which='major', labelsize=3)
@@ -1633,7 +1652,7 @@ def map2D(fig,
 
             maxratio = np.max([vmax/centralValue, centralValue/vmin])
             maxp = maxratio / centralValue
-            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue, buffr=0.05)
+            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
             maxratio = maxp / centralValue
             minp = centralValue / maxratio
 
@@ -1686,13 +1705,8 @@ def map2D(fig,
         cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
         if centralValue is not None and float(centralValue) == 1. and isLogScale:
-            cb.ax.yaxis.set_major_locator(oneCenteredRatiosMajorLocator)
-            if maxp < 8.0:
-                cb.ax.yaxis.set_minor_locator(oneCenteredRatiosMinorLocator)
-            else:
-                cb.ax.yaxis.set_minor_locator(mticker.NullLocator())
-            cb.ax.yaxis.set_major_formatter(oneCenteredRatiosMajorFormatter)
-            cb.ax.yaxis.set_minor_formatter(oneCenteredRatiosMinorFormatter)
+            axTicks = OneCenteredAxisTicks(maxp)
+            axTicks.setTicks(cb.ax.yaxis)
 
         #cb.ax.tick_params(labelsize=3)
         cb.ax.tick_params(axis='y', which='major', labelsize=3)

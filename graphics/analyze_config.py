@@ -295,16 +295,8 @@ experiments = OrderedDict()
 # 6-hr forecasts from GEFS
 #experiments['gefs-cold'] = 'guerrett_eda_3denvar_NMEM20_OIE120km_GEFSVerify'+ensembleVerifyDir
 
-#experiments['LOO20-RTPP80'] = \
-#  'guerrett_eda_3denvar_NMEM20_RTPP0.80_LeaveOneOut_OIE120km_memberSpecificTemplate_GEFSSeaUpdate' + \
-#  ensembleVerifyDir
-
-#experiments['LOO40-RTPP80'] = \
-#  'guerrett_eda_3denvar_NMEM40_RTPP0.80_LeaveOneOut_OIE120km_memberSpecificTemplate_GEFSSeaUpdate' + \
-#  ensembleVerifyDir
-
-#experiments['LOO80-RTPP80'] = \
-#  'guerrett_eda_3denvar_NMEM80_RTPP0.80_LeaveOneOut_OIE120km_memberSpecificTemplate_GEFSSeaUpdate' + \
+#experiments['120km-20rtpp80'] = \
+#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.8_LeaveOneOut_OIE120km_WarmStart' + \
 #  ensembleVerifyDir
 
 #experiments['Bloo20'] = 'guerrett_3denvar_OIE120km_B-LOO20+RTPP80'+deterministicVerifyDir
@@ -345,6 +337,13 @@ experiments['clrama'] = \
 #  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Polynomial2DByLatBand_ITCZ_regeneratedObsError' + \
 #  deterministicVerifyDir
 
+#experiments['60km-rtpp40'] = \
+#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.4_LeaveOneOut_OIE60km_WarmStart' + \
+#  ensembleVerifyDir
+
+#experiments['60km-rtpp70'] = \
+#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.7_LeaveOneOut_OIE60km_WarmStart' + \
+#  ensembleVerifyDir
 
 ## ================================================================================================
 ## The settings below are automatically populated from the above configurations
@@ -431,12 +430,17 @@ diagnosticGroupings = {}
 diagnosticGroupings['omm'] = ['omb', 'oma']
 diagnosticGroupings['rltv_omm'] = ['rltv_omb', 'rltv_oma']
 #diagnosticGroupings['ObsError'] = ['omb', 'oma', 'sigmaob']
-#diagnosticGroupings['d'] = ['omf', 'sigmaof', 'sigmaf']
-#diagnosticGroupings['d'] = ['omf', 'sigmaof']
+#diagnosticGroupings['dy'] = ['omf', 'sigmaof', 'sigmaf']
+#diagnosticGroupings['dy'] = ['omf', 'sigmaof']
 diagnosticGroupings['sigmao'] = ['sigmaof', 'ideal-sigmaof']
+#diagnosticGroupings['sigmax'] = ['sigmaxb', 'sigmaxa', 'sigmainf']
+#diagnosticGroupings['dx'] = ['mmgfsan', 'sigmaxb']
 diagnosticGroupings['RelativeObsError'] = ['rltv_omb', 'rltv_oma', 'OENIb']
 diagnosticGroupings['ErrorRatios'] = ['OENIb', 'OENIa', 'InnovationRatio']
 diagnosticGroupings['CRy'] = ['CRyb', 'CRya']
+#diagnosticGroupings['CRx'] = ['CRxb', 'CRxa']
+#diagnosticGroupings['SRx'] = ['SRx-eda', 'SRx-rtpp']
+
 #SpreadDiagnostics = [vu.EddT, vu.HBHT, vu.R]
 SpreadDiagnostics = [vu.EddT, vu.HBHTplusR]
 diagnosticGroupings['error'] = [vu.DiagnosticVars[d]+'_f' for d in SpreadDiagnostics]

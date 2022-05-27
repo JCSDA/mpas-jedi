@@ -396,7 +396,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [8,9],
     },
     'amsua_metop-a': {
@@ -404,7 +404,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [5,6,9],
     },
     'amsua_metop-b': {
@@ -412,7 +412,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [],
     },
     'amsua_n15': {
@@ -420,7 +420,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [5,6,7,8,9],
     },
     'amsua_n18': {
@@ -428,7 +428,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [5,6,7,8,9],
     },
     'amsua_n19': {
@@ -436,7 +436,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': [5,6,7,9],
     },
     'amsua_n19--hydro': {
@@ -527,7 +527,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': range(1,6),
     },
     'mhs_metop-b': {
@@ -535,7 +535,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': range(1,6),
     },
     'mhs_n18': {
@@ -543,7 +543,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': range(1,6),
     },
     'mhs_n19': {
@@ -551,7 +551,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': mhsGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
         'channels': range(1,6),
     },
     'seviri_m08': {

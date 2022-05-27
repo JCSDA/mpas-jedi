@@ -331,9 +331,9 @@ class BaseLocFunction:
 
 
 class UniformLocFunction(BaseLocFunction):
-  '''LocFunction that is uniform for each osName across all other insituParameters'''
+  '''LocFunction that is uniform for each dsName across all other insituParameters'''
   def _coords(self, insituParameters):
-    return (self.__class__.__name__, insituParameters['osName'])
+    return (self.__class__.__name__, insituParameters['dsName'])
 
 
 class InsituLocFunction(BaseLocFunction):
@@ -580,14 +580,14 @@ class ABEILambda:
         self.baseVars = pu.uniqueMembers(self.baseVars + self.ACI.baseVars)
 
     def evaluate(self, dbVals, insituParameters):
-        osName = insituParameters['osName']
-        if osName is None or osName not in ABEIParams:
-            _logger.error('osName not available in ABEIParams => '+osName)
+        dsName = insituParameters['dsName']
+        if dsName is None or dsName not in ABEIParams:
+            _logger.error('dsName not available in ABEIParams => '+dsName)
             os._exit(1)
 
         # varName, ch = vu.splitIntSuffix(insituParameters[vu.selfDepValue])
         varName, ch = vu.splitIntSuffix(insituParameters[vu.selfHofXValue])
-        LambdaOverACI = ABEIParams[osName][(int(ch))]['LambdaOverACI']
+        LambdaOverACI = ABEIParams[dsName][(int(ch))]['LambdaOverACI']
 
         ACI = self.ACI.evaluate(dbVals, insituParameters)
         out = np.ones(ACI.shape)
@@ -771,20 +771,20 @@ class CITotalSpread(TotalSpread):
         #         .   .
         #        CI0 CI1
         #---------------------------------------------
-        osName = insituParameters['osName']
+        dsName = insituParameters['dsName']
         CIErrParams = deepcopy(allCIErrParams[
-                           (self.CIVariable, self.mpasFCRes, self.biasCorrectType.get(osName,None))
+                           (self.CIVariable, self.mpasFCRes, self.biasCorrectType.get(dsName,None))
                        ])
 
-        if osName is None or osName not in CIErrParams:
-            _logger.error('osName not available in CIErrParams => '+osName)
+        if dsName is None or dsName not in CIErrParams:
+            _logger.error('dsName not available in CIErrParams => '+dsName)
             os._exit(1)
 
         varName, ch = vu.splitIntSuffix(insituParameters[vu.selfHofXValue])
-        STD0 = CIErrParams[osName][(int(ch), self.CIName)]['ERR'][0]
-        STD1 = CIErrParams[osName][(int(ch), self.CIName)]['ERR'][1]
-        CI0  = CIErrParams[osName][(int(ch), self.CIName)]['X'][0]
-        CI1  = CIErrParams[osName][(int(ch), self.CIName)]['X'][1]
+        STD0 = CIErrParams[dsName][(int(ch), self.CIName)]['ERR'][0]
+        STD1 = CIErrParams[dsName][(int(ch), self.CIName)]['ERR'][1]
+        CI0  = CIErrParams[dsName][(int(ch), self.CIName)]['X'][0]
+        CI1  = CIErrParams[dsName][(int(ch), self.CIName)]['X'][1]
         slope = (STD1 - STD0) / (CI1 - CI0)
 
         CI = self.CI.evaluate(dbVals, insituParameters)
@@ -949,7 +949,7 @@ class BinFunction(BaseBinFunction):
 
 class BinFunctionWrapper:
     def __init__(self, config):
-        self.osName = config['osName']
+        self.dsName = config['dsName']
         self.fileFormat = config['fileFormat']
 
         variable = config['variable']
@@ -973,8 +973,8 @@ class BinFunctionWrapper:
         for baseVar in self.function.baseVarsStr:
             insituParameters[baseVar] = vu.base2dbVar(
                     baseVar, varName, self.fileFormat, outerIter)
-        insituParameters['osName'] = self.osName
-        insituParameters['coords'] = (varName, self.fileFormat, outerIter, self.osName)
+        insituParameters['dsName'] = self.dsName
+        insituParameters['coords'] = (varName, self.fileFormat, outerIter, self.dsName)
 
         # evaluate the function
         self.result = self.function.evaluate(dbVals, insituParameters)
@@ -1436,7 +1436,7 @@ class BinMethod:
           self.__class__.__name__+'.__init__: invalid self._includeVars: '+str(self._includeVars))
 
         fconf = {}
-        fconf['osName'] = config['osName']
+        fconf['dsName'] = config['dsName']
         fconf['fileFormat'] = config['fileFormat']
         fconf['nBins'] = len(self.__values)
 

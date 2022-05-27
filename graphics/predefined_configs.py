@@ -22,7 +22,15 @@ appName = jediAppName
 #=============================================================
 
 ## model-space diagnostics
-modelDiags = ['mmgfsan', 'rltv_mmgfsan', 'log_mogfsan']
+modelDiags = [
+  'mmgfsan',
+  'rltv_mmgfsan', 'log_mogfsan',
+  'sigmaxb',
+  'sigmaxa', 'sigmaxf', 'sigmaxinf',
+  'SRx-eda', 'SRx-rtpp',
+  'CRxb',
+  #'CRxa', 'CRxf', 'CRxinf',
+]
 
 ## difference diagnostics
 diffDiagnostics_ = defaultdict(list)
@@ -39,6 +47,10 @@ absoluteDiagnostics_ = defaultdict(list)
 absoluteDiagnostics_['variational'] += ['obs', 'bak']
 absoluteDiagnostics_['hofx'] += ['obs', 'h(x)']
 
+## non-bias-corrected diagnostics
+nobcDiagnostics_ = defaultdict(list)
+nobcDiagnostics_['variational'] += ['omb_nobc']
+
 ## cloudy radiance diagnostics
 cloudyRadDiagnostics = [
   'SCI-'+bu.OkamotoMethod,
@@ -49,22 +61,38 @@ cloudyRadDiagnostics = [
 
 ## STD diagnostics
 sigmaDiagnostics_ = defaultdict(list)
-sigmaDiagnostics_['variational'] = ['omb','sigmaob', 'sigmab', 'ideal-sigmaob', 'CRyb', 'OENIb']
-sigmaDiagnostics_['hofx'] = ['omf','sigmaof', 'sigmaf', 'ideal-sigmaof', 'CRyf', 'OENIf']
+sigmaDiagnostics_['variational'] = [
+  'omb',
+  'sigmaob',
+  'sigmab',
+  #'ideal-sigmaob', 'OENIb',
+  #'CRyb', 'CRya',
+  #'SRy',
+]
+sigmaDiagnostics_['hofx'] = [
+  'omf',
+  'sigmaof',
+  'sigmaf',
+  #'ideal-sigmaof',
+  #'OENIf',
+  'CRyf',
+]
 spreadDiagnostics = [vu.DiagnosticVars[var]+'_f' for var in [vu.EddT, vu.HBHT, vu.R, vu.HBHTplusR]]
 sigmaDiagnostics_['hofx'] += spreadDiagnostics
 
 # variational analysis diagnostics
 if nOuterIter > 0:
     diffDiagnostics_['variational'] += ['oma', 'InnovationRatio']
+    nobcDiagnostics_['variational'] += ['oma_nobc']
     relativeDiagnostics_['variational'] += ['rltv_oma']
     absoluteDiagnostics_['variational'] += ['ana']
-    sigmaDiagnostics_['variational'] += ['oma','sigmaoa','sigmaa', 'ideal-sigmaoa', 'CRya', 'OENIa', 'SpreadRatio', 'InnovationRatio']
+    sigmaDiagnostics_['variational'] += ['oma','sigmaoa','sigmaa', 'ideal-sigmaoa', 'CRya', 'OENIa', 'SRy', 'InnovationRatio']
 
 diffDiagnostics = diffDiagnostics_[jediAppName]
 relativeDiagnostics = relativeDiagnostics_[jediAppName]
 absoluteDiagnostics = absoluteDiagnostics_[jediAppName]
 sigmaDiagnostics = sigmaDiagnostics_[jediAppName]
+nobcDiagnostics = nobcDiagnostics_[jediAppName]
 
 defaultDiagnostics = diffDiagnostics
 

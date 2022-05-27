@@ -295,39 +295,93 @@ def headerOnlyFileFromTemplate(template, outfile, date):
 
   dst.close()
 
-def varDiff(varName, ncData1, ncData2):
-  var1 = varRead(varName, ncData1)
-  var2 = varRead(varName, ncData2)
-  return var2 - var1
 
-def varRelativeDiff(varName, ncData1, ncData2):
-  # only valid for positive-definite ncData1
-  var1 = varRead(varName, ncData1)
-  var2 = varRead(varName, ncData2)
+## field functions for a single varName
+#class fieldFunction():
+#  def evaluate(self, varName, fieldsDB):
+#    '''
+#    virtual method
+#    '''
+#    raise NotImplementedError()
 
-  d = np.empty_like(var1)
-  valid = bu.greatBound(np.abs(var1), 0.)
-  d[valid] = (var2[valid] - var1[valid]) / var1[valid]
 
-  return np.multiply(d, 100.0)
+class fieldSpread():
+  def __init__(self, stateType: str):
+    self.stateType = stateType
 
-def varLogRatio(varName, ncData1, ncData2):
-  # only valid for positive-definite ncData1 and ncData2
-  var1 = varRead(varName, ncData1)
-  var2 = varRead(varName, ncData2)
+  def evaluate(self, varName: str, fieldsDB):
+    exp = varRead(varName, fieldsDB['MeanState'])
+    nLocs = exp.size
+    ensemble = fieldsDB[self.stateType+'Ensemble']
 
-  d = np.empty_like(var1)
-  valid = bu.greatBound(var1, 0.)
-  valid = np.logical_and(bu.greatBound(var2, 0.), valid)
+    nEns = len(ensemble)
+    if nEns > 1:
+      exps = np.full((nEns, nLocs), np.NaN)
+      for ii, member in enumerate(ensemble):
+        exps[ii,:] = varRead(varName, member).flatten()
 
-  d[valid] = np.log10(np.divide(var2[valid], var1[valid]))
+      std = np.nanstd(exps, axis=0, ddof=1).reshape(exp.shape)
 
-  return d
+      del exps
+
+    else:
+      std = np.full(exp.shape, np.NaN)
+
+    return np.asarray(std)
+
+
+class fieldDiff():
+  def __init__(self):
+    pass
+
+  def evaluate(self, varName: str, fieldsDB):
+    ref = varRead(varName, fieldsDB['ReferenceState'])
+    exp = varRead(varName, fieldsDB['MeanState'])
+    return np.asarray(exp - ref)
+
+
+class fieldRelativeDiff():
+  def __init__(self):
+    pass
+
+  def evaluate(self, varName: str, fieldsDB):
+    # only valid for positive-definite ReferenceState
+    ref = varRead(varName, fieldsDB['ReferenceState'])
+    exp = varRead(varName, fieldsDB['MeanState'])
+
+    d = np.empty_like(ref)
+    valid = bu.greatBound(np.abs(ref), 0.)
+    d[valid] = (exp[valid] - ref[valid]) / ref[valid]
+
+    return np.asarray(np.multiply(d, 100.0))
+
+
+class fieldLogRatio():
+  def __init__(self):
+    pass
+
+  def evaluate(self, varName: str, fieldsDB):
+    # only valid for positive-definite ReferenceState and MeanState
+    ref = varRead(varName, fieldsDB['ReferenceState'])
+    exp = varRead(varName, fieldsDB['MeanState'])
+
+    d = np.empty_like(ref)
+    valid = bu.greatBound(ref, 0.)
+    valid = np.logical_and(bu.greatBound(exp, 0.), valid)
+
+    d[valid] = np.log10(np.divide(exp[valid], ref[valid]))
+
+    return np.asarray(d)
+
 
 diagnosticFunctions = {
-  'mmgfsan': varDiff,
-  'rltv_mmgfsan': varRelativeDiff,
-  'log_mogfsan': varLogRatio,
+  'mmgfsan': fieldDiff(),
+  'rltv_mmgfsan': fieldRelativeDiff(),
+  'log_mogfsan': fieldLogRatio(),
+  'sigmaxb': fieldSpread('bg'),
+  'sigmaxa': fieldSpread('an'),
+  'sigmaxinf': fieldSpread('inf'),
+  'sigmaxf': fieldSpread('fc'),
 }
 
 variableSpecificDiagnosticConfigs = {
@@ -342,8 +396,15 @@ variableSpecificDiagnosticConfigs = {
   'qv41to55': ['mmgfsan', 'log_mogfsan'],
 }
 
-def variableSpecificDiagnostics(varName):
-  return variableSpecificDiagnosticConfigs.get(varName, ['mmgfsan'])
+def variableSpecificDiagnostics(varName: str, nEns: int):
+  diags = variableSpecificDiagnosticConfigs.get(varName, ['mmgfsan'])
+  if nEns > 1:
+    diags.append('sigmaxb')
+    diags.append('sigmaxa')
+    diags.append('sigmaxinf')
+    #diags.append('sigmaxf')
+
+  return diags
 
 aggregatedVariableConfig = {
   'qv01to30': {
@@ -377,20 +438,20 @@ aggregatedVariableConfig = {
   },
 }
 
-def aggVariableConfig(aggVarName):
+def aggVariableConfig(varName: str):
   return aggregatedVariableConfig.get(
-    aggVarName,
-    {'model variable': aggVarName}
+    varName,
+    {'model variable': varName}
   )
 
-def aggModelVariable(aggVarName):
-  return aggVariableConfig(aggVarName)['model variable']
+def aggModelVariable(varName: str):
+  return aggVariableConfig(varName)['model variable']
 
-def aggMinLevel(aggVarName):
-  return np.max([aggVariableConfig(aggVarName).get('min level', 1), 1])
+def aggMinLevel(varName: str):
+  return np.max([aggVariableConfig(varName).get('min level', 1), 1])
 
-def aggMaxLevel(aggVarName, nLevels):
-  return np.min([aggVariableConfig(aggVarName).get('max level', nLevels), nLevels])
+def aggMaxLevel(varName: str, nLevels: int):
+  return np.min([aggVariableConfig(varName).get('max level', nLevels), nLevels])
 
 
 def main():
