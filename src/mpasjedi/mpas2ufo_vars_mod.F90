@@ -60,6 +60,8 @@ public :: effectrad_graupel, &
 public :: pressure_half_to_full
 public :: geometricz_full_to_half
 public :: convert_type_soil, convert_type_veg_usgs, convert_type_veg_igbp
+public :: tropopause_pressure_th
+public :: tropopause_pressure_wmo
 !public :: uv_to_wdir
 
 ! model2geovars+tlad
@@ -561,6 +563,127 @@ subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
       enddo
    enddo
 end subroutine geometricZ_full_to_half
+!-------------------------------------------------------------------------------------------
+subroutine tropopause_pressure_th(p, z, t, nCells, nVertLevels, tprs)
+   !..Adapted from FV3-JEDI tropprs_th subroutine written by Greg Thompson
+   !..Find tropopause height based on delta-Theta / delta-Z. The 10/1500 ratio
+   !.. approximates a vertical line on typical SkewT chart near typical (mid-latitude)
+   !.. tropopause height.  Since messy data could give us a false signal of such a
+   !.. transition, do the check over at least 35 mb delta-pres, not just a level-to-level
+   !.. check.  This method has potential failure in arctic-like conditions with extremely
+   !.. low tropopause height, as would any other diagnostic, so ensure resulting k_tropo
+   !.. level is above 700hPa.
+
+   implicit none
+
+   real(kind=kind_real), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
+   real(kind=kind_real), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
+   real(kind=kind_real), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
+   real(kind=kind_real), intent(out) :: tprs(nCells)             !Tropopause pressure [Pa]
+   integer,              intent(in ) :: nCells                   !number of grid cells
+   integer,              intent(in ) :: nVertLevels              !number of vertical levels
+
+   ! Local
+   integer :: k1, k2, k_p50, k_p150, k_tropo
+   real(kind=kind_real) :: theta(nVertLevels)
+   integer :: iCell, iLevel
+
+   ! Compute tropopause pressure
+   do iCell = 1, nCells
+      k_p150 = 0
+      k_p50  = 0
+      do iLevel = nVertLevels, 1, -1
+        theta(iLevel) = t(iLevel,iCell)*((MPAS_JEDI_P0_kr/p(iLevel,iCell))**(rgas/cp))
+        if (p(iLevel,iCell) .gt. 4999.0  .and. k_p50  .eq. 0) k_p50  = iLevel
+        if (p(iLevel,iCell) .gt. 14999.0 .and. k_p150 .eq. 0) k_p150 = iLevel
+      enddo
+      if ( (k_p50-k_p150) .lt. 3) k_p150 = k_p50-3
+      do iLevel = k_p150-2, 1, -1
+        k1 = iLevel
+        k2 = k1+2
+        do while (k1.gt.1 .and. (p(k1,iCell)-p(k2,iCell)).lt.3500.0 .and. p(k1,iCell).lt.70000.)
+          k1 = k1-1
+        enddo
+        if ( ((theta(k2)-theta(k1))/(z(k2,iCell)-z(k1,iCell))) .lt. 10./1500.) exit
+      enddo
+      k_tropo = max(3, min(nint(0.5*(k1+k2+1)), k_p50-1))
+      tprs(iCell) = p(k_tropo,iCell)
+   enddo
+end subroutine tropopause_pressure_th
+!-------------------------------------------------------------------------------------------
+subroutine tropopause_pressure_wmo(p, z, t, nCells, nVertLevels, tropk)
+   ! Adapted from WRFDA
+   !----------------------------------------------------------------------------
+   ! * Computes tropopause T, P, and/or level based on code from Cameron Homeyer
+   !     and WMO definition
+   !
+   ! * WMO tropopause definition:
+   !     The boundary between the troposphere and the stratosphere, where an
+   !     abrupt change in lapse rate usually occurs. It is defined as the lowest
+   !     level at which the lapse rate decreases to 2 °C/km or less, provided
+   !     that the average lapse rate between this level and all higher levels
+   !     within 2 km does not exceed 2 °C/km.
+   !----------------------------------------------------------------------------
+
+   implicit none
+
+   real(kind=kind_real), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
+   real(kind=kind_real), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
+   real(kind=kind_real), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
+   real(kind=kind_real), intent(out) :: tropk(nCells)            !Tropopause pressure [Pa]
+   integer,              intent(in ) :: nCells                   !number of grid cells
+   integer,              intent(in ) :: nVertLevels              !number of vertical levels
+
+   ! Local
+   real    :: dtdz, laps  !LAPS
+   integer :: dtdztest(nVertLevels), ztest(nVertLevels)
+   integer :: i, j, k, kk, ktrop, iCell
+
+   !Loop over levels to find tropopause (single column)
+   do iCell = 1, nCells
+       ktrop = nVertLevels-1
+       do  k = 1, nVertLevels-1  ! trop_loop
+          if ( p(k,iCell) .le. 50000.0 ) then
+             ! Compute lapse rate (-dT/dz)
+             dtdz = ( t(k+1,iCell) - t(k,iCell)   ) / &
+                    ( z(k,iCell)   - z(k+1,iCell) )
+          else
+             ! Set lapse rate for p > 500 hPa
+             dtdz = 999.9
+          endif
+          !Check if local lapse rate <= 2 K/km
+          if (dtdz .le. 0.002) then
+             ! Initialize lapse rate and altitude test arrays
+             dtdztest = 0
+             ztest = 0
+
+             ! Compute average lapse rate across levels above current candidate
+             do kk = k+1, nVertLevels-1
+                dtdz = ( t(kk+1,iCell) - t(k,iCell)   ) / &
+                       ( z(k,iCell)    - z(kk+1,iCell) )
+
+                !If avg. lapse rate <= 2 K/km and z <= trop + 2 km, set pass flag
+                if ( ( dtdz .le. 0.002 ) .and. &
+                     ( (z(k,iCell) - z(kk,iCell)) .le. 2000.0 ) ) then
+                   dtdztest(kk) = 1
+                endif
+
+                ! If z <= trop + 2 km, set pass flag
+                if ( (z(k,iCell) - z(kk,iCell)) .le. 2000.0 ) then
+                   ztest(kk) = 1
+                endif
+             enddo   !kk loop
+             laps=dtdz !LAPS
+             if (sum(dtdztest) .eq. sum(ztest)) then
+                ! If qualified as tropopause, set altitude index and return value
+                ktrop = k
+                exit
+             endif
+          endif
+       enddo  ! trop_loop
+       tropk(iCell) = p(ktrop,iCell)
+   enddo
+end subroutine tropopause_pressure_wmo
 !-------------------------------------------------------------------------------------------
 subroutine q_fields_forward(mqName, modelFields, qGeo, plevels, nCells, nVertLevels)
 

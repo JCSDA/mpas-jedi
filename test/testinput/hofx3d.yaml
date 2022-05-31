@@ -112,13 +112,46 @@ observations:
       obsdataout:
         obsfile: Data/os/obsout_hofx3d_iasi_metop-a.nc4
       simulated variables: [brightness_temperature]
-      channels: 16,29,32,35,38,41,44
+      channels: &iasi_metop-a_channels 16,29,32,35,38,41,44
     obs operator:
       <<: *crtmobsoper
       obs options:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
         IRVISlandCoeff: USGS
+#    get values:
+#      tropopause pressure method: wmo
+    obs filters:
+#  Cloud Detection Check
+    - filter: Bounds Check
+      filter variables:
+      - name: brightness_temperature
+        channels: *iasi_metop-a_channels
+      test variables:
+      - name: CloudDetectMinResidualIR@ObsFunction
+        channels: *iasi_metop-a_channels
+        options:
+          channels: *iasi_metop-a_channels
+          use_flag: &use_flag_list [1,-1,-1,-1,1,-1,-1]
+          use_flag_clddet: *use_flag_list
+          obserr_dtempf: [0.50,2.00,4.00,2.00,4.00]
+      maxvalue: 1.0e-12
+      action:
+        name: reject
+#  Useflag Check
+    - filter: Bounds Check
+      filter variables:
+      - name: brightness_temperature
+        channels: *iasi_metop-a_channels
+      test variables:
+      - name: ChannelUseflagCheckRad@ObsFunction
+        channels: *iasi_metop-a_channels
+        options:
+          channels: *iasi_metop-a_channels
+          use_flag: *use_flag_list
+      minvalue: 1.0e-12
+      action:
+        name: reject
 #    - obs space:
 #        name: ATMS-NPP--ch5-15
 #        obsdatain:

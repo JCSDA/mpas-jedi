@@ -39,6 +39,7 @@ private
 public :: mpasjedi_vc_model2geovars
 
 type :: mpasjedi_vc_model2geovars
+  character(len=10) :: tropprs_method
  contains
   procedure, public :: create
   procedure, public :: delete
@@ -56,6 +57,13 @@ subroutine create(self, geom, conf)
 class(mpasjedi_vc_model2geovars), intent(inout) :: self
 type(mpas_geom),                  intent(in)    :: geom
 type(fckit_configuration),        intent(in)    :: conf
+
+character(len=10) :: str
+
+! Method to use for tropopause pressure ([gsi] or thompson)
+!if (.not. conf%get("tropopause pressure method", str)) str = 'thompson'
+
+self%tropprs_method = 'thompson'
 
 end subroutine create
 
@@ -440,6 +448,20 @@ subroutine changevar(self, geom, xm, xg)
           ! calculate midpoint geometricZ (unit: m):
           call geometricZ_full_to_half(geom%zgrid(:,1:nCells), nCells, &
                                        nVertLevels, gdata%r2%array(:,1:nCells))
+
+        case ( var_tropprs ) !-tropopause pressure
+          call xm%get('pressure',    ptrr2_a)
+          call xm%get('temperature', ptrr2_b)
+          if (trim(self%tropprs_method) == "thompson") then
+            call tropopause_pressure_th(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr2_b(:,1:nCells), &
+                                        nCells, nVertLevels, gdata%r1%array(1:nCells))
+          !elseif (trim(self%tropprs_method) == "wmo") then
+          !  call tropopause_pressure_wmo(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr2_b(:,1:nCells), &
+          !                               nCells, nVertLevels, gdata%r1%array(1:nCells))
+          else
+            call abor1_ftn('mpasjedi_vc_model2geovars::changevar: invalid tropopause pressure determination method, &
+                           & must be one of [thompson]')
+          endif
 
 !! begin surface variables
         case ( var_sfc_z ) !-surface_geopotential_height

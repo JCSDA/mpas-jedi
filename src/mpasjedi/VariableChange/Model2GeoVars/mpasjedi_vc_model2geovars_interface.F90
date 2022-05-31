@@ -68,7 +68,7 @@ conf = fckit_configuration(c_conf)
 
 ! Implementation
 ! --------------
-!call self%create(geom, conf)
+call self%create(geom, conf)
 
 end subroutine c_mpasjedi_vc_model2geovars_create
 
