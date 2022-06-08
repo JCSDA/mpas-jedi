@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_MODELBIASMPAS_H_
-#define MPASJEDI_MODELBIASMPAS_H_
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -18,8 +17,8 @@
 #include "oops/util/Printable.h"
 
 namespace mpas {
-  class GeometryMPAS;
-  class ModelBiasIncrementMPAS;
+  class Geometry;
+  class ModelBiasIncrement;
 
 /// Model error for the MPAS model.
 /*!
@@ -33,18 +32,18 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-class ModelBiasMPAS : public util::Printable,
+class ModelBias : public util::Printable,
                        private eckit::NonCopyable,
-                       private util::ObjectCounter<ModelBiasMPAS> {
+                       private util::ObjectCounter<ModelBias> {
  public:
-  static const std::string classname() {return "mpas::ModelBiasMPAS";}
+  static const std::string classname() {return "mpas::ModelBias";}
 
-  ModelBiasMPAS(const GeometryMPAS &, const eckit::Configuration &) {}
-  ModelBiasMPAS(const GeometryMPAS &, const ModelBiasMPAS &) {}
-  ModelBiasMPAS(const ModelBiasMPAS &, const bool) {}
-  ~ModelBiasMPAS() {}
+  ModelBias(const Geometry &, const eckit::Configuration &) {}
+  ModelBias(const Geometry &, const ModelBias &) {}
+  ModelBias(const ModelBias &, const bool) {}
+  ~ModelBias() {}
 
-  ModelBiasMPAS & operator+=(const ModelBiasIncrementMPAS &) {return *this;}
+  ModelBias & operator+=(const ModelBiasIncrement &) {return *this;}
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &) {}
@@ -58,5 +57,3 @@ class ModelBiasMPAS : public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_MODELBIASMPAS_H_

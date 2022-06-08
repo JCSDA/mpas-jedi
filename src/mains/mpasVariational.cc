@@ -15,15 +15,15 @@
 #include <ufo/instantiateObsFilterFactory.h>
 #include <ufo/ObsTraits.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateCovarFactory<mpas::MPASTraits>();
-  saber::instantiateLocalizationFactory<mpas::MPASTraits>();
-  saber::instantiateSaberBlockFactory<mpas::MPASTraits>();
+  saber::instantiateCovarFactory<mpas::Traits>();
+  saber::instantiateLocalizationFactory<mpas::Traits>();
+  saber::instantiateSaberBlockFactory<mpas::Traits>();
   ufo::instantiateObsFilterFactory();
-  oops::Variational<mpas::MPASTraits, ufo::ObsTraits> var;
+  oops::Variational<mpas::Traits, ufo::ObsTraits> var;
   return run.execute(var);
 }
 

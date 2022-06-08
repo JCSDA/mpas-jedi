@@ -13,7 +13,7 @@
 
 #include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
 #include "mpasjedi/LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.interface.h"
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 // Forward declarations
 namespace eckit {
@@ -21,9 +21,9 @@ namespace eckit {
 }
 
 namespace mpas {
-  class GeometryMPAS;
-  class IncrementMPAS;
-  class StateMPAS;
+  class Geometry;
+  class Increment;
+  class State;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -32,17 +32,17 @@ class LinVarChaModel2GeoVars : public LinearVariableChangeBase,
  public:
   static const std::string classname() {return "mpas::LinVarChaModel2GeoVars";}
 
-  explicit LinVarChaModel2GeoVars(const StateMPAS &, const StateMPAS &, const GeometryMPAS &,
+  explicit LinVarChaModel2GeoVars(const State &, const State &, const Geometry &,
                          const eckit::LocalConfiguration &);
   ~LinVarChaModel2GeoVars();
 
-  void multiply(const IncrementMPAS &, IncrementMPAS &) const override;
-  void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const override;
-  void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const override;
-  void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const override;
+  void multiply(const Increment &, Increment &) const override;
+  void multiplyInverse(const Increment &, Increment &) const override;
+  void multiplyAD(const Increment &, Increment &) const override;
+  void multiplyInverseAD(const Increment &, Increment &) const override;
 
  private:
-  std::shared_ptr<const GeometryMPAS> geom_;
+  std::shared_ptr<const Geometry> geom_;
   F90lvc_M2G keyFtnConfig_;
   void print(std::ostream &) const override;
 };

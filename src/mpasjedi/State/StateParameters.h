@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_STATEMPASPARAMETERS_H_
-#define MPASJEDI_STATEMPASPARAMETERS_H_
+#pragma once
 
 #include <string>
 
@@ -41,8 +40,8 @@ class AnalyticInitParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 // Configuration options recognized by mpas_state_mod and mpas_fields_mod
-class StateMPASParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(StateMPASParameters, Parameters)
+class StateParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(StateParameters, Parameters)
 
  public:
   oops::RequiredParameter<oops::Variables> state_variables{"state variables", this};
@@ -60,8 +59,8 @@ class StateMPASParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 /// Configuration options recognized by mpas_fields_mod for write_fields
-class StateMPASWriteParameters : public oops::WriteParametersBase {
-  OOPS_CONCRETE_PARAMETERS(StateMPASWriteParameters, WriteParametersBase)
+class StateWriteParameters : public oops::WriteParametersBase {
+  OOPS_CONCRETE_PARAMETERS(StateWriteParameters, WriteParametersBase)
 
  public:
   // Write parameters
@@ -72,5 +71,3 @@ class StateMPASWriteParameters : public oops::WriteParametersBase {
 // -------------------------------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_STATEMPASPARAMETERS_H_

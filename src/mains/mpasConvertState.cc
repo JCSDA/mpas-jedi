@@ -10,11 +10,11 @@
 
 #include <saber/oops/instantiateSaberBlockFactory.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateSaberBlockFactory<mpas::MPASTraits>();
-  oops::ConvertState<mpas::MPASTraits> cs;
+  saber::instantiateSaberBlockFactory<mpas::Traits>();
+  oops::ConvertState<mpas::Traits> cs;
   return run.execute(cs);
 }

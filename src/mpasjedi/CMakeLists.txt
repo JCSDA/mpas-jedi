@@ -1,40 +1,23 @@
 list( APPEND mpasjedi_src_files
-    ErrorCovarianceMPAS.cc
-    ErrorCovarianceMPAS.h
+    Covariance/ErrorCovariance.cc
+    Covariance/ErrorCovariance.h
+    Covariance/ErrorCovariance.interface.h
+    Covariance/mpas_covariance_interface.F90
+    Covariance/mpas_covariance_mod.F90
+    Fields/mpas_fields_mod.F90
     Fortran.h
-    GeometryMPAS.cc
-    GeometryMPAS.h
-    GeometryMPASParameters.h
-    IncrementMPAS.cc
-    IncrementMPAS.h
-    IncrementMPASFortran.h
-    MPASTraits.h
-    ModelBiasCovarianceMPAS.h
-    ModelBiasIncrementMPAS.h
-    ModelBiasMPAS.h
-    ModelMPAS.cc
-    ModelMPAS.h
-    StateMPAS.cc
-    StateMPAS.h
-    StateMPASFortran.h
-    TlmMPAS.cc
-    TlmMPAS.h
-    mpas_constants_mod.F90
-    mpas_covariance_interface.F90
-    mpas_covariance_mod.F90
-    mpas_fields_mod.F90
-    mpas_geom_interface.F90
-    mpas_geom_mod.F90
-    mpas_increment_interface_mod.F90
-    mpas_increment_mod.F90
-    mpas_model_interface.F90
-    mpas_model_mod.F90
-    mpas_state_interface_mod.F90
-    mpas_state_mod.F90
-    mpas_trajectories.F90
-    mpas2ufo_vars_mod.F90
-    mpas4da_mod.F90
-    mpas_kinds_mod.F90
+    Geometry/Geometry.cc
+    Geometry/Geometry.h
+    Geometry/GeometryParameters.h
+    Geometry/Geometry.interface.h
+    Geometry/mpas_geom_interface.F90
+    Geometry/mpas_geom_mod.F90
+    Increment/Increment.cc
+    Increment/Increment.h
+    Increment/IncrementParameters.h
+    Increment/Increment.interface.h
+    Increment/mpas_increment_interface_mod.F90
+    Increment/mpas_increment_mod.F90
     LinearVariableChange/LinearVariableChange.cc
     LinearVariableChange/LinearVariableChange.h
     LinearVariableChange/Base/LinearVariableChangeBase.cc
@@ -49,6 +32,26 @@ list( APPEND mpasjedi_src_files
     LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.cc
     LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.h
     LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.interface.h
+    Model/Model.cc
+    Model/Model.h
+    Model/ModelParameters.h
+    Model/Model.interface.h
+    Model/mpas_model_interface.F90
+    Model/mpas_model_mod.F90
+    Model/mpas_trajectories.F90
+    ModelBias/ModelBiasCovariance.h
+    ModelBias/ModelBiasIncrement.h
+    ModelBias/ModelBias.h
+    State/State.cc
+    State/State.h
+    State/State.interface.h
+    State/StateParameters.h 
+    State/mpas_state_interface_mod.F90
+    State/mpas_state_mod.F90
+    Tlm/Tlm.cc
+    Tlm/Tlm.h
+    Tlm/TlmParameters.h
+    Traits.h
     VariableChange/VariableChange.cc
     VariableChange/VariableChange.h
     VariableChange/Base/VariableChangeBase.cc
@@ -58,8 +61,12 @@ list( APPEND mpasjedi_src_files
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.cc
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.h
     VariableChange/Model2GeoVars/VarChaModel2GeoVars.interface.h
-    util/mpasjedi_unstructured_interp_mod.F90
-    util/slow_oops_unstructured_interpolation_mod.F90
+    Utilities/mpas2ufo_vars_mod.F90
+    Utilities/mpas4da_mod.F90
+    Utilities/mpas_constants_mod.F90
+    Utilities/mpas_kinds_mod.F90
+    Utilities/mpasjedi_unstructured_interp_mod.F90
+    Utilities/slow_oops_unstructured_interpolation_mod.F90
     )
 
 #Create target

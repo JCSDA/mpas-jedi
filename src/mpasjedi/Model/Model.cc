@@ -8,61 +8,60 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/Fortran.h"
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/ModelBiasMPAS.h"
-#include "mpasjedi/ModelMPAS.h"
-#include "mpasjedi/ModelMPASParameters.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Model/Model.h"
+#include "mpasjedi/Model/ModelParameters.h"
+#include "mpasjedi/ModelBias/ModelBias.h"
+#include "mpasjedi/State/State.h"
 
 namespace mpas {
 // -----------------------------------------------------------------------------
-static oops::interface::ModelMaker<MPASTraits, ModelMPAS> makermodel_("MPAS");
+static oops::interface::ModelMaker<Traits, Model> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
-ModelMPAS::ModelMPAS(const GeometryMPAS & resol,
-                     const ModelMPASParameters & params)
+Model::Model(const Geometry & resol,
+                     const ModelParameters & params)
   : keyModel_(0), tstep_(params.tstep), geom_(resol),
     vars_(params.vars)
 {
-  oops::Log::trace() << "ModelMPAS::ModelMPAS" << std::endl;
+  oops::Log::trace() << "Model::Model" << std::endl;
   tstep_ = util::Duration(params.tstep);
-  oops::Log::trace() << "ModelMPAS::tstep_" << tstep_ << std::endl;
+  oops::Log::trace() << "Model::tstep_" << tstep_ << std::endl;
   mpas_model_setup_f90(params.toConfiguration(), geom_.toFortran(), keyModel_);
-  oops::Log::trace() << "ModelMPAS created" << std::endl;
+  oops::Log::trace() << "Model created" << std::endl;
 }
 // -----------------------------------------------------------------------------
-ModelMPAS::~ModelMPAS() {
+Model::~Model() {
   mpas_model_delete_f90(keyModel_);
-  oops::Log::trace() << "ModelMPAS destructed" << std::endl;
+  oops::Log::trace() << "Model destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void ModelMPAS::initialize(StateMPAS & xx) const {
+void Model::initialize(State & xx) const {
   mpas_model_prepare_integration_f90(keyModel_, xx.toFortran());
-  oops::Log::debug() << "ModelMPAS::initialize" << xx << std::endl;
+  oops::Log::debug() << "Model::initialize" << xx << std::endl;
 }
 // -----------------------------------------------------------------------------
-void ModelMPAS::step(StateMPAS & xx, const ModelBiasMPAS &) const {
-  oops::Log::debug() << "ModelMPAS::step state in" << xx << std::endl;
+void Model::step(State & xx, const ModelBias &) const {
+  oops::Log::debug() << "Model::step state in" << xx << std::endl;
   mpas_model_propagate_f90(keyModel_, xx.toFortran());
   xx.validTime() += tstep_;
-  oops::Log::debug() << "ModelMPAS::step state out" << xx << std::endl;
+  oops::Log::debug() << "Model::step state out" << xx << std::endl;
 }
 // -----------------------------------------------------------------------------
-void ModelMPAS::finalize(StateMPAS & xx) const {
-  oops::Log::debug() << "ModelMPAS::finalize" << xx << std::endl;
+void Model::finalize(State & xx) const {
+  oops::Log::debug() << "Model::finalize" << xx << std::endl;
 }
 // -----------------------------------------------------------------------------
-int ModelMPAS::saveTrajectory(StateMPAS & xx, const ModelBiasMPAS &) const {
+int Model::saveTrajectory(State & xx, const ModelBias &) const {
   int ftraj = 0;
-  oops::Log::debug() << "ModelMPAS::saveTrajectory state in" << xx << std::endl;
+  oops::Log::debug() << "Model::saveTrajectory state in" << xx << std::endl;
   mpas_model_prop_traj_f90(keyModel_, xx.toFortran(), ftraj);
   ASSERT(ftraj != 0);
-  oops::Log::debug() << "ModelMPAS::saveTrajectory state out" << xx <<std::endl;
+  oops::Log::debug() << "Model::saveTrajectory state out" << xx <<std::endl;
   return ftraj;
 }
 // -----------------------------------------------------------------------------
-void ModelMPAS::print(std::ostream & os) const {
-  os << "ModelMPAS::print not implemented";
+void Model::print(std::ostream & os) const {
+  os << "Model::print not implemented";
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas

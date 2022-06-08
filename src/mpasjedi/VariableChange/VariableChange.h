@@ -41,11 +41,11 @@ class VariableChange : public util::Printable {
 
   typedef VariableChangeParameters Parameters_;
 
-  explicit VariableChange(const Parameters_ &, const GeometryMPAS &);
+  explicit VariableChange(const Parameters_ &, const Geometry &);
   ~VariableChange();
 
-  void changeVar(StateMPAS &, const oops::Variables &) const;
-  void changeVarInverse(StateMPAS &, const oops::Variables &) const;
+  void changeVar(State &, const oops::Variables &) const;
+  void changeVarInverse(State &, const oops::Variables &) const;
 
  private:
   void print(std::ostream &) const override;

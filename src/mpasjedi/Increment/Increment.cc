@@ -17,35 +17,35 @@
 //?  #include "oops/generic/InterpolatorUnstructured.h"
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/IncrementMPAS.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Increment/Increment.h"
+#include "mpasjedi/State/State.h"
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & geom,
+Increment::Increment(const Geometry & geom,
                              const oops::Variables & vars,
                              const util::DateTime & time):
-  geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
+  geom_(new Geometry(geom)), vars_(vars), time_(time)
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_zero_f90(keyInc_);
   oops::Log::trace() << "Increment::Increment (from geom, vars and time) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const GeometryMPAS & resol,
-                             const IncrementMPAS & other)
-  : geom_(new GeometryMPAS(resol)), vars_(other.vars_), time_(other.time_)
+Increment::Increment(const Geometry & resol,
+                             const Increment & other)
+  : geom_(new Geometry(resol)), vars_(other.vars_), time_(other.time_)
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
   mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "Increment::Increment (from geom/resol and other) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
+Increment::Increment(const Increment & other, const bool copy)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
@@ -57,7 +57,7 @@ IncrementMPAS::IncrementMPAS(const IncrementMPAS & other, const bool copy)
   oops::Log::trace() << "Increment::Increment (from other and bool copy) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
+Increment::Increment(const Increment & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
   mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
@@ -65,98 +65,98 @@ IncrementMPAS::IncrementMPAS(const IncrementMPAS & other)
   oops::Log::trace() << "Increment::Increment (from other) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS::~IncrementMPAS() {
+Increment::~Increment() {
   mpas_increment_delete_f90(keyInc_);
-  oops::Log::trace() << "IncrementMPAS destructed" << std::endl;
+  oops::Log::trace() << "Increment destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
-void IncrementMPAS::diff(const StateMPAS & x1, const StateMPAS & x2) {
+void Increment::diff(const State & x1, const State & x2) {
   ASSERT(this->validTime() == x1.validTime());
   ASSERT(this->validTime() == x2.validTime());
-  oops::Log::debug() << "IncrementMPAS:diff x1 " << x1.toFortran() << std::endl;
-  oops::Log::debug() << "IncrementMPAS:diff x2 " << x2.toFortran() << std::endl;
+  oops::Log::debug() << "Increment:diff x1 " << x1.toFortran() << std::endl;
+  oops::Log::debug() << "Increment:diff x2 " << x2.toFortran() << std::endl;
 
   // If the states x1, x2 have a different geometry than the increment, need to
   // convert them.
-  std::shared_ptr<const GeometryMPAS> stateGeom = x1.geometry();
+  std::shared_ptr<const Geometry> stateGeom = x1.geometry();
   ASSERT(stateGeom->isEqual(*(x2.geometry())));
   if (geom_->isEqual(*stateGeom)) {
     mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
   } else {
   // Note: this is likely a high-to-low resolution interpolation that should
   //       probably not be done with barycentric?
-    StateMPAS x1_ir(*geom_, x1);
-    StateMPAS x2_ir(*geom_, x2);
+    State x1_ir(*geom_, x1);
+    State x2_ir(*geom_, x2);
     mpas_increment_diff_incr_f90(keyInc_, x1_ir.toFortran(), x2_ir.toFortran());
   }
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS & IncrementMPAS::operator=(const IncrementMPAS & rhs) {
+Increment & Increment::operator=(const Increment & rhs) {
   mpas_increment_copy_f90(keyInc_, rhs.keyInc_);
   time_ = rhs.time_;
   vars_ = rhs.vars_;
   return *this;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS & IncrementMPAS::operator+=(const IncrementMPAS & dx) {
+Increment & Increment::operator+=(const Increment & dx) {
   ASSERT(this->validTime() == dx.validTime());
   mpas_increment_self_add_f90(keyInc_, dx.keyInc_);
   return *this;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS & IncrementMPAS::operator-=(const IncrementMPAS & dx) {
+Increment & Increment::operator-=(const Increment & dx) {
   ASSERT(this->validTime() == dx.validTime());
   mpas_increment_self_sub_f90(keyInc_, dx.keyInc_);
   return *this;
 }
 // -----------------------------------------------------------------------------
-IncrementMPAS & IncrementMPAS::operator*=(const real_type & zz) {
+Increment & Increment::operator*=(const real_type & zz) {
   mpas_increment_self_mul_f90(keyInc_, zz);
   return *this;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::zero() {
+void Increment::zero() {
   mpas_increment_zero_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::zero(const util::DateTime & vt) {
+void Increment::zero(const util::DateTime & vt) {
   mpas_increment_zero_f90(keyInc_);
   time_ = vt;
 }
 // ------------------------------------------------------------------------------
-void IncrementMPAS::ones() {
+void Increment::ones() {
   mpas_increment_ones_f90(keyInc_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::axpy(const real_type & zz, const IncrementMPAS & dx,
+void Increment::axpy(const real_type & zz, const Increment & dx,
                        const bool check) {
   ASSERT(!check || this->validTime() == dx.validTime());
   mpas_increment_axpy_inc_f90(keyInc_, zz, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::axpy(const real_type & zz, const StateMPAS & xx,
+void Increment::axpy(const real_type & zz, const State & xx,
                        const bool check) {
   ASSERT(!check || this->validTime() == xx.validTime());
   mpas_increment_axpy_inc_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::accumul(const real_type & zz, const StateMPAS & xx) {
+void Increment::accumul(const real_type & zz, const State & xx) {
   mpas_increment_axpy_state_f90(keyInc_, zz, xx.toFortran());
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::schur_product_with(const IncrementMPAS & dx) {
+void Increment::schur_product_with(const Increment & dx) {
   mpas_increment_self_schur_f90(keyInc_, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
-real_type IncrementMPAS::dot_product_with(const IncrementMPAS & other) const {
+real_type Increment::dot_product_with(const Increment & other) const {
   real_type zz;
   mpas_increment_dot_prod_f90(keyInc_, other.keyInc_, zz);
   return zz;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::random() {
+void Increment::random() {
   mpas_increment_random_f90(keyInc_);
 }
 
@@ -164,25 +164,25 @@ void IncrementMPAS::random() {
 /// ATLAS
 // -----------------------------------------------------------------------------
 // Here toAtlas and fromAtlas are used in saber (B^-1 term) without halo or vertical flip
-void IncrementMPAS::setAtlas(atlas::FieldSet * afieldset) const {
+void Increment::setAtlas(atlas::FieldSet * afieldset) const {
   oops::Log::trace() << "mpasjedi::Increment::setAtlas starting" << std::endl;
   mpas_increment_set_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false);
   oops::Log::trace() << "mpasjedi::Increment::setAtlas done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void IncrementMPAS::toAtlas(atlas::FieldSet * afieldset) const {
+void Increment::toAtlas(atlas::FieldSet * afieldset) const {
   oops::Log::trace() << "mpasjedi::Increment::toAtlas starting" << std::endl;
   mpas_increment_to_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
   oops::Log::trace() << "mpasjedi::Increment::toAtlas done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void IncrementMPAS::fromAtlas(atlas::FieldSet * afieldset) {
+void Increment::fromAtlas(atlas::FieldSet * afieldset) {
   oops::Log::trace() << "mpasjedi::Increment::fromAtlas starting" << std::endl;
   mpas_increment_from_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
   oops::Log::trace() << "mpasjedi::Increment::fromAtlas done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void IncrementMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
+void Increment::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
   // Quenstionable : true for halo and flip_vert_lev
   const bool include_halo = true;
   const bool flip_vert_lev = true;
@@ -193,7 +193,7 @@ void IncrementMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & 
   oops::Log::trace() << "mpasjedi::Increment::getFieldSet done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void IncrementMPAS::getFieldSetAD(const oops::Variables & vars, const atlas::FieldSet & fset) {
+void Increment::getFieldSetAD(const oops::Variables & vars, const atlas::FieldSet & fset) {
   // Quenstionable : true for halo and flip_vert_lev
   const bool include_halo = true;
   const bool flip_vert_lev = true;
@@ -205,17 +205,17 @@ void IncrementMPAS::getFieldSetAD(const oops::Variables & vars, const atlas::Fie
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void IncrementMPAS::read(const IncrementMPASReadParameters & params) {
+void Increment::read(const IncrementReadParameters & params) {
   mpas_increment_read_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::write(const IncrementMPASWriteParameters & params) const {
+void Increment::write(const IncrementWriteParameters & params) const {
   mpas_increment_write_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
 /// Serialization
 // -----------------------------------------------------------------------------
-size_t IncrementMPAS::serialSize() const {
+size_t Increment::serialSize() const {
   // Field
   size_t nn;
   mpas_increment_serial_size_f90(keyInc_, nn);
@@ -229,7 +229,7 @@ size_t IncrementMPAS::serialSize() const {
 }
 // -----------------------------------------------------------------------------
 constexpr real_type SerializeCheckValue = -54321.98765;
-void IncrementMPAS::serialize(std::vector<real_type> & vect) const {
+void Increment::serialize(std::vector<real_type> & vect) const {
   // Serialize the field
   size_t nn;
   mpas_increment_serial_size_f90(keyInc_, nn);
@@ -244,7 +244,7 @@ void IncrementMPAS::serialize(std::vector<real_type> & vect) const {
   time_.serialize(vect);
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::deserialize(const std::vector<real_type> & vect,
+void Increment::deserialize(const std::vector<real_type> & vect,
   size_t & index) {
   mpas_increment_deserialize_f90(keyInc_, vect.size(), vect.data(), index);
 
@@ -255,13 +255,13 @@ void IncrementMPAS::deserialize(const std::vector<real_type> & vect,
   time_.deserialize(vect, index);
 }
 // -----------------------------------------------------------------------------
-real_type IncrementMPAS::norm() const {
+real_type Increment::norm() const {
   real_type zz = 0.0;
   mpas_increment_rms_f90(keyInc_, zz);
   return zz;
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::print(std::ostream & os) const {
+void Increment::print(std::ostream & os) const {
   int nc = 0;
   int nf = 0;
   mpas_increment_sizes_f90(keyInc_, nc, nf);
@@ -278,7 +278,7 @@ void IncrementMPAS::print(std::ostream & os) const {
   }
 }
 // -----------------------------------------------------------------------------
-void IncrementMPAS::dirac(const DiracParameters & params) {
+void Increment::dirac(const DiracParameters & params) {
   mpas_increment_dirac_f90(keyInc_, params.toConfiguration());
 }
 // -----------------------------------------------------------------------------

@@ -10,16 +10,16 @@
 
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/State/State.h"
+#include "mpasjedi/Traits.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
 
 namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-VariableChange::VariableChange(const Parameters_ & params, const GeometryMPAS & geometry) {
+VariableChange::VariableChange(const Parameters_ & params, const Geometry & geometry) {
   // Create the variable change
   variableChange_.reset(VariableChangeFactory::create(geometry,
                         params.variableChangeParametersWrapper.variableChangeParameters.value()));
@@ -31,7 +31,7 @@ VariableChange::~VariableChange() {}
 
 // -------------------------------------------------------------------------------------------------
 
-void VariableChange::changeVar(StateMPAS & x, const oops::Variables & vars) const {
+void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // Trace
   oops::Log::trace() << "VariableChange::changeVar starting" << std::endl;
 
@@ -43,7 +43,7 @@ void VariableChange::changeVar(StateMPAS & x, const oops::Variables & vars) cons
 
   oops::Log::trace() << "VariableChange::changeVar, vars" << vars << std::endl;
   // Create output state
-  StateMPAS xout(*x.geometry(), vars, x.time());
+  State xout(*x.geometry(), vars, x.time());
 
   // Call variable change
   variableChange_->changeVar(x, xout);
@@ -57,7 +57,7 @@ void VariableChange::changeVar(StateMPAS & x, const oops::Variables & vars) cons
 
 // -------------------------------------------------------------------------------------------------
 
-void VariableChange::changeVarInverse(StateMPAS & x, const oops::Variables & vars) const {
+void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) const {
   // Trace
   oops::Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
 
@@ -68,7 +68,7 @@ void VariableChange::changeVarInverse(StateMPAS & x, const oops::Variables & var
   }
 
   // Create output state
-  StateMPAS xout(*x.geometry(), vars, x.time());
+  State xout(*x.geometry(), vars, x.time());
 
   // Call variable change
   variableChange_->changeVarInverse(x, xout);

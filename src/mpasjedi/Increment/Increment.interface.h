@@ -5,11 +5,28 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_INCREMENTMPASFORTRAN_H_
-#define MPASJEDI_INCREMENTMPASFORTRAN_H_
+#pragma once
 
-#include "atlas/field.h"
 #include "mpasjedi/Fortran.h"
+
+// Forward declarations
+namespace atlas {
+  namespace field {
+    class FieldSetImpl;
+  }
+}
+
+namespace eckit {
+  class Configuration;
+}
+
+namespace oops {
+  class Variables;
+}
+
+namespace util {
+  class DateTime;
+}
 
 namespace mpas {
 
@@ -81,4 +98,3 @@ extern "C" {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_INCREMENTMPASFORTRAN_H_

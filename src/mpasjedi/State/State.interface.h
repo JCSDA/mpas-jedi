@@ -5,20 +5,19 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_STATEMPASFORTRAN_H_
-#define MPASJEDI_STATEMPASFORTRAN_H_
+#pragma once
 
 #include "mpasjedi/Fortran.h"
 
 // Forward declarations
-namespace eckit {
-  class Configuration;
+namespace atlas {
+  namespace field {
+    class FieldSetImpl;
+  }
 }
 
-namespace atlas {
-namespace field {
-  class FieldSetImpl;
-}
+namespace eckit {
+  class Configuration;
 }
 
 namespace oops {
@@ -27,7 +26,6 @@ namespace oops {
 
 namespace util {
   class DateTime;
-  class Duration;
 }
 
 namespace mpas {
@@ -72,4 +70,3 @@ extern "C" {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_STATEMPASFORTRAN_H_

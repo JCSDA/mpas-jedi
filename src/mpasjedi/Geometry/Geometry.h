@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_GEOMETRYMPAS_H_
-#define MPASJEDI_GEOMETRYMPAS_H_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -22,23 +21,23 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
-#include "mpasjedi/Fortran.h"
-#include "mpasjedi/GeometryMPASParameters.h"
+#include "mpasjedi/Geometry/Geometry.interface.h"
+#include "mpasjedi/Geometry/GeometryParameters.h"
 
 namespace mpas {
 
 // -----------------------------------------------------------------------------
-/// GeometryMPAS handles geometry for MPAS model.
+/// Geometry handles geometry for MPAS model.
 
-class GeometryMPAS : public util::Printable,
-                      private util::ObjectCounter<GeometryMPAS> {
+class Geometry : public util::Printable,
+                      private util::ObjectCounter<Geometry> {
  public:
-  typedef GeometryMPASParameters Parameters_;
-  static const std::string classname() {return "mpas::GeometryMPAS";}
+  typedef GeometryParameters Parameters_;
+  static const std::string classname() {return "mpas::Geometry";}
 
-  GeometryMPAS(const Parameters_ &, const eckit::mpi::Comm &);
-  GeometryMPAS(const GeometryMPAS &);
-  ~GeometryMPAS();
+  Geometry(const Parameters_ &, const eckit::mpi::Comm &);
+  Geometry(const Geometry &);
+  ~Geometry();
 
   F90geom & toFortran() {return keyGeom_;}
   const F90geom & toFortran() const {return keyGeom_;}
@@ -49,12 +48,12 @@ class GeometryMPAS : public util::Printable,
   atlas::FieldSet * atlasFieldSet() const {return atlasFieldSet_.get();}
   void latlon(std::vector<real_type> &, std::vector<real_type> &, const bool) const;
 
-  bool isEqual(const GeometryMPAS &) const;
+  bool isEqual(const Geometry &) const;
 
   std::vector<size_t> variableSizes(const oops::Variables &) const;
 
  private:
-  GeometryMPAS & operator=(const GeometryMPAS &);
+  Geometry & operator=(const Geometry &);
   void print(std::ostream &) const;
   F90geom keyGeom_;
   const eckit::mpi::Comm & comm_;
@@ -65,5 +64,3 @@ class GeometryMPAS : public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_GEOMETRYMPAS_H_

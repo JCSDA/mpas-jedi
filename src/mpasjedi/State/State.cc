@@ -12,9 +12,9 @@
 
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/IncrementMPAS.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Increment/Increment.h"
+#include "mpasjedi/State/State.h"
 
 namespace mpas {
 
@@ -22,21 +22,21 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Constructor, destructor
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & geom,
+State::State(const Geometry & geom,
                      const oops::Variables & vars,
                      const util::DateTime & time)
-  : geom_(new GeometryMPAS(geom)), vars_(vars), time_(time)
+  : geom_(new Geometry(geom)), vars_(vars), time_(time)
 {
-  oops::Log::trace() << "StateMPAS::StateMPAS create." << std::endl;
+  oops::Log::trace() << "State::State create." << std::endl;
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
-  oops::Log::trace() << "StateMPAS::StateMPAS created." << std::endl;
+  oops::Log::trace() << "State::State created." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & geom,
-                     const StateMPASParameters & params)
-  : geom_(new GeometryMPAS(geom)), time_(util::DateTime())
+State::State(const Geometry & geom,
+                     const StateParameters & params)
+  : geom_(new Geometry(geom)), time_(util::DateTime())
 {
-  oops::Log::trace() << "StateMPAS::StateMPAS create and read." << std::endl;
+  oops::Log::trace() << "State::State create and read." << std::endl;
 
   // Set up vars
   vars_ = oops::Variables(params.state_variables.value());
@@ -51,15 +51,15 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
     read(params);
   }
 
-  oops::Log::trace() << "StateMPAS::StateMPAS created and read in."
+  oops::Log::trace() << "State::State created and read in."
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const GeometryMPAS & geom,
-                     const StateMPAS & other)
-  : geom_(new GeometryMPAS(geom)), vars_(other.vars_), time_(other.time_)
+State::State(const Geometry & geom,
+                     const State & other)
+  : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
 {
-  oops::Log::trace() << "StateMPAS::StateMPAS create by interpolation."
+  oops::Log::trace() << "State::State create by interpolation."
                      << std::endl;
 
   // create new state with geom
@@ -68,28 +68,28 @@ StateMPAS::StateMPAS(const GeometryMPAS & geom,
   // interpolate other to geom
   changeResolution(other);
 
-  oops::Log::trace() << "StateMPAS::StateMPAS created by interpolation."
+  oops::Log::trace() << "State::State created by interpolation."
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::StateMPAS(const StateMPAS & other)
+State::State(const State & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  oops::Log::trace() << "StateMPAS::StateMPAS before copied." << std::endl;
+  oops::Log::trace() << "State::State before copied." << std::endl;
 
   mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
   mpas_state_copy_f90(keyState_, other.keyState_);
-  oops::Log::trace() << "StateMPAS::StateMPAS copied." << std::endl;
+  oops::Log::trace() << "State::State copied." << std::endl;
 }
 // -----------------------------------------------------------------------------
-StateMPAS::~StateMPAS() {
+State::~State() {
   mpas_state_delete_f90(keyState_);
-  oops::Log::trace() << "StateMPAS::StateMPAS destructed." << std::endl;
+  oops::Log::trace() << "State::State destructed." << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Basic operators
 // -----------------------------------------------------------------------------
-StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
+State & State::operator=(const State & rhs) {
   mpas_state_copy_f90(keyState_, rhs.keyState_);
   time_ = rhs.time_;
   vars_ = rhs.vars_;
@@ -98,7 +98,7 @@ StateMPAS & StateMPAS::operator=(const StateMPAS & rhs) {
 
 // -----------------------------------------------------------------------------
 
-void StateMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
+void State::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
   mpas_state_set_atlas_f90(keyState_, geom_->toFortran(), vars, fset.get(), include_halo);
@@ -110,26 +110,26 @@ void StateMPAS::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset
 // -----------------------------------------------------------------------------
 /// Interpolate full state
 // -----------------------------------------------------------------------------
-void StateMPAS::changeResolution(const StateMPAS & other) {
+void State::changeResolution(const State & other) {
   mpas_state_change_resol_f90(keyState_, other.toFortran());
-  oops::Log::trace() << "StateMPAS changed resolution" << std::endl;
+  oops::Log::trace() << "State changed resolution" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// Interactions with Increments
 // -----------------------------------------------------------------------------
-StateMPAS & StateMPAS::operator+=(const IncrementMPAS & dx) {
-  oops::Log::trace() << "StateMPAS add increment starting" << std::endl;
+State & State::operator+=(const Increment & dx) {
+  oops::Log::trace() << "State add increment starting" << std::endl;
   ASSERT(validTime() == dx.validTime());
   // Interpolate increment to state resolution
-  IncrementMPAS dx_sr(*geom_, dx);
+  Increment dx_sr(*geom_, dx);
   mpas_state_add_incr_f90(keyState_, dx_sr.toFortran());
-  oops::Log::trace() << "StateMPAS add increment done" << std::endl;
+  oops::Log::trace() << "State add increment done" << std::endl;
   return *this;
 }
 // -----------------------------------------------------------------------------
 /// Serialization
 // -----------------------------------------------------------------------------
-size_t StateMPAS::serialSize() const {
+size_t State::serialSize() const {
   // Field
   size_t nn;
   mpas_state_serial_size_f90(keyState_, nn);
@@ -144,7 +144,7 @@ size_t StateMPAS::serialSize() const {
 
 // -----------------------------------------------------------------------------
 constexpr real_type SerializeCheckValue = -54321.98765;
-void StateMPAS::serialize(std::vector<real_type> & vect) const {
+void State::serialize(std::vector<real_type> & vect) const {
   // Serialize the field
   size_t nn;
   mpas_state_serial_size_f90(keyState_, nn);
@@ -159,7 +159,7 @@ void StateMPAS::serialize(std::vector<real_type> & vect) const {
   time_.serialize(vect);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::deserialize(const std::vector<real_type> & vect, size_t & index) {
+void State::deserialize(const std::vector<real_type> & vect, size_t & index) {
   // Deserialize the field
   mpas_state_deserialize_f90(keyState_, vect.size(), vect.data(), index);
 
@@ -173,21 +173,21 @@ void StateMPAS::deserialize(const std::vector<real_type> & vect, size_t & index)
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void StateMPAS::read(const StateMPASParameters & params) {
+void State::read(const StateParameters & params) {
   mpas_state_read_file_f90(keyState_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::analytic_init(const StateMPASParameters & params) {
-  oops::Log::trace() << "StateMPAS analytic init starting" << std::endl;
+void State::analytic_init(const StateParameters & params) {
+  oops::Log::trace() << "State analytic init starting" << std::endl;
   mpas_state_analytic_init_f90(keyState_, params.toConfiguration(), time_);
-  oops::Log::trace() << "StateMPAS analytic init done" << std::endl;
+  oops::Log::trace() << "State analytic init done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::write(const StateMPASWriteParameters & params) const {
+void State::write(const StateWriteParameters & params) const {
   mpas_state_write_file_f90(keyState_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::print(std::ostream & os) const {
+void State::print(std::ostream & os) const {
   int nc = 0;
   int nf = 0;
   mpas_state_sizes_f90(keyState_, nc, nf);
@@ -206,22 +206,22 @@ void StateMPAS::print(std::ostream & os) const {
 // -----------------------------------------------------------------------------
 /// For accumulator
 // -----------------------------------------------------------------------------
-void StateMPAS::zero() {
+void State::zero() {
   mpas_state_zero_f90(keyState_);
 }
 // -----------------------------------------------------------------------------
-void StateMPAS::accumul(const real_type & zz, const StateMPAS & xx) {
+void State::accumul(const real_type & zz, const State & xx) {
   mpas_state_axpy_f90(keyState_, zz, xx.keyState_);
 }
 // -----------------------------------------------------------------------------
-real_type StateMPAS::norm() const {
+real_type State::norm() const {
   real_type zz = 0.0;
   mpas_state_rms_f90(keyState_, zz);
   return zz;
 }
 // -----------------------------------------------------------------------------
 
-oops::Variables StateMPAS::stateVars()
+oops::Variables State::stateVars()
 {
   // ---------------------------------------------------------------------------
   /// Temporary Auxilliary Variable Definitions

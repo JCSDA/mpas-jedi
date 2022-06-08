@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_MODELMPAS_H_
-#define MPASJEDI_MODELMPAS_H_
+#pragma once
 
 #include <ostream>
 #include <string>
@@ -15,9 +14,8 @@
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/ModelMPASParameters.h"
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Model/Model.interface.h"
+#include "mpasjedi/Traits.h"
 
 // Forward declarations
 
@@ -26,8 +24,10 @@ namespace oops {
 }
 
 namespace mpas {
-  class ModelBiasMPAS;
-  class StateMPAS;
+  class Geometry;
+  class ModelBias;
+  class ModelParameters;
+  class State;
 
 // -----------------------------------------------------------------------------
 /// MPAS model definition.
@@ -35,25 +35,25 @@ namespace mpas {
  *  MPAS nonlinear model definition and configuration parameters.
  */
 
-class ModelMPAS: public oops::interface::ModelBase<MPASTraits>,
-                 private util::ObjectCounter<ModelMPAS> {
+class Model: public oops::interface::ModelBase<Traits>,
+                 private util::ObjectCounter<Model> {
  public:
-  static const std::string classname() {return "mpas::ModelMPAS";}
+  static const std::string classname() {return "mpas::Model";}
 
-  typedef ModelMPASParameters Parameters_;
+  typedef ModelParameters Parameters_;
 
-  ModelMPAS(const GeometryMPAS &, const ModelMPASParameters &);
-  ~ModelMPAS();
+  Model(const Geometry &, const ModelParameters &);
+  ~Model();
 
 /// Prepare model integration
-  void initialize(StateMPAS &) const;
+  void initialize(State &) const;
 
 /// Model integration
-  void step(StateMPAS &, const ModelBiasMPAS &) const;
-  int saveTrajectory(StateMPAS &, const ModelBiasMPAS &) const;
+  void step(State &, const ModelBias &) const;
+  int saveTrajectory(State &, const ModelBias &) const;
 
 /// Finish model integration
-  void finalize(StateMPAS &) const;
+  void finalize(State &) const;
 
 /// Utilities
   const util::Duration & timeResolution() const {return tstep_;}
@@ -63,10 +63,9 @@ class ModelMPAS: public oops::interface::ModelBase<MPASTraits>,
   void print(std::ostream &) const;
   F90model keyModel_;
   util::Duration tstep_;
-  const GeometryMPAS geom_;
+  const Geometry geom_;
   const oops::Variables vars_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_MODELMPAS_H_

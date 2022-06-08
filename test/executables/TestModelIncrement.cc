@@ -8,11 +8,11 @@
 #include <oops/test/base/ModelIncrement.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(const int argc, const char ** argv) {
   oops::Run run(argc, argv);
-  test::ModelIncrement<mpas::MPASTraits> tests;
+  test::ModelIncrement<mpas::Traits> tests;
   return run.execute(tests);
 }
 

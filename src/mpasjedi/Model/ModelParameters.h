@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_MODELMPASPARAMETERS_H_
-#define MPASJEDI_MODELMPASPARAMETERS_H_
+#pragma once
 
 #include "oops/interface/ModelBase.h"
 #include "oops/util/Duration.h"
@@ -20,8 +19,8 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Model Parameters Class.
 
-class ModelMPASParameters : public oops::ModelParametersBase {
-  OOPS_CONCRETE_PARAMETERS(ModelMPASParameters, ModelParametersBase)
+class ModelParameters : public oops::ModelParametersBase {
+  OOPS_CONCRETE_PARAMETERS(ModelParameters, ModelParametersBase)
 
  public:
 /// The property 'name' is already part of the default schema
@@ -33,4 +32,3 @@ class ModelMPASParameters : public oops::ModelParametersBase {
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_MODELMPASPARAMETERS_H_

@@ -10,18 +10,18 @@
 
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/IncrementMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Increment/Increment.h"
 #include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
-#include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/State/State.h"
+#include "mpasjedi/Traits.h"
 
 namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-LinearVariableChange::LinearVariableChange(const GeometryMPAS & geom, const Parameters_ & params)
-  : geom_(new GeometryMPAS(geom)), params_(params), linearVariableChange_() {}
+LinearVariableChange::LinearVariableChange(const Geometry & geom, const Parameters_ & params)
+  : geom_(new Geometry(geom)), params_(params), linearVariableChange_() {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ LinearVariableChange::~LinearVariableChange() {}
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::setTrajectory(const StateMPAS & xbg, const StateMPAS & xfg) {
+void LinearVariableChange::setTrajectory(const State & xbg, const State & xfg) {
   oops::Log::trace() << "LinearVariableChange::setTrajectory starting" << std::endl;
   // Create the variable change
   linearVariableChange_.reset(LinearVariableChangeFactory::create(xbg, xfg, *geom_,
@@ -39,7 +39,7 @@ void LinearVariableChange::setTrajectory(const StateMPAS & xbg, const StateMPAS 
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::multiply(IncrementMPAS & dx, const oops::Variables & vars) const {
+void LinearVariableChange::multiply(Increment & dx, const oops::Variables & vars) const {
   oops::Log::trace() << "LinearVariableChange::multiply starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
@@ -49,7 +49,7 @@ void LinearVariableChange::multiply(IncrementMPAS & dx, const oops::Variables & 
   }
 
   // Create output increment
-  IncrementMPAS dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change
   linearVariableChange_->multiply(dx, dxout);
@@ -62,7 +62,7 @@ void LinearVariableChange::multiply(IncrementMPAS & dx, const oops::Variables & 
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyInverse(IncrementMPAS & dx, const oops::Variables & vars) const {
+void LinearVariableChange::multiplyInverse(Increment & dx, const oops::Variables & vars) const {
   oops::Log::trace() << "LinearVariableChange::multiplyInverse starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
@@ -72,7 +72,7 @@ void LinearVariableChange::multiplyInverse(IncrementMPAS & dx, const oops::Varia
   }
 
   // Create output increment
-  IncrementMPAS dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change
   linearVariableChange_->multiplyInverse(dx, dxout);
@@ -85,7 +85,7 @@ void LinearVariableChange::multiplyInverse(IncrementMPAS & dx, const oops::Varia
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyAD(IncrementMPAS & dx, const oops::Variables & vars) const {
+void LinearVariableChange::multiplyAD(Increment & dx, const oops::Variables & vars) const {
   oops::Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
 
   // If all variables already in incoming increment just remove the no longer needed fields
@@ -95,7 +95,7 @@ void LinearVariableChange::multiplyAD(IncrementMPAS & dx, const oops::Variables 
   }
 
   // Create output increment
-  IncrementMPAS dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change
   linearVariableChange_->multiplyAD(dx, dxout);
@@ -108,7 +108,7 @@ void LinearVariableChange::multiplyAD(IncrementMPAS & dx, const oops::Variables 
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::multiplyInverseAD(IncrementMPAS & dx,
+void LinearVariableChange::multiplyInverseAD(Increment & dx,
                                              const oops::Variables & vars) const {
   oops::Log::trace() << "LinearVariableChange::multiplyInverseAD starting" << std::endl;
 
@@ -119,7 +119,7 @@ void LinearVariableChange::multiplyInverseAD(IncrementMPAS & dx,
   }
 
   // Create output increment
-  IncrementMPAS dxout(*dx.geometry(), vars, dx.time());
+  Increment dxout(*dx.geometry(), vars, dx.time());
 
   // Call variable change
   linearVariableChange_->multiplyInverseAD(dx, dxout);

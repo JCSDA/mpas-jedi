@@ -26,9 +26,9 @@
 #include "oops/util/Printable.h"
 
 namespace mpas {
-  class GeometryMPAS;
-  class IncrementMPAS;
-  class StateMPAS;
+  class Geometry;
+  class Increment;
+  class State;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -54,10 +54,10 @@ class LinearVariableChangeBase : public util::Printable, private boost::noncopya
  public:
   LinearVariableChangeBase() {}
   virtual ~LinearVariableChangeBase() {}
-  virtual void multiply(const IncrementMPAS &, IncrementMPAS &) const = 0;
-  virtual void multiplyInverse(const IncrementMPAS &, IncrementMPAS &) const = 0;
-  virtual void multiplyAD(const IncrementMPAS &, IncrementMPAS &) const = 0;
-  virtual void multiplyInverseAD(const IncrementMPAS &, IncrementMPAS &) const = 0;
+  virtual void multiply(const Increment &, Increment &) const = 0;
+  virtual void multiplyInverse(const Increment &, Increment &) const = 0;
+  virtual void multiplyAD(const Increment &, Increment &) const = 0;
+  virtual void multiplyInverseAD(const Increment &, Increment &) const = 0;
 
  private:
   virtual void print(std::ostream &) const = 0;
@@ -80,8 +80,8 @@ class LinearVariableChangeParametersWrapper : public oops::Parameters {
 
 class LinearVariableChangeFactory {
  public:
-  static LinearVariableChangeBase * create(const StateMPAS & xbg, const StateMPAS & xfg,
-                                           const GeometryMPAS & geom,
+  static LinearVariableChangeBase * create(const State & xbg, const State & xfg,
+                                           const Geometry & geom,
                                            const LinearVariableChangeParametersBase & params);
 
   static std::unique_ptr<LinearVariableChangeParametersBase> createParameters(const
@@ -97,8 +97,8 @@ class LinearVariableChangeFactory {
   explicit LinearVariableChangeFactory(const std::string &name);
 
  private:
-  virtual LinearVariableChangeBase * make(const StateMPAS &, const StateMPAS &,
-                                          const GeometryMPAS &,
+  virtual LinearVariableChangeBase * make(const State &, const State &,
+                                          const Geometry &,
                                           const LinearVariableChangeParametersBase &) = 0;
 
   virtual std::unique_ptr<LinearVariableChangeParametersBase> makeParameters() const = 0;
@@ -116,8 +116,8 @@ class LinearVariableChangeMaker : public LinearVariableChangeFactory {
   typedef oops::TParameters_IfAvailableElseFallbackType_t<T, GenericLinearVariableChangeParameters>
     Parameters_;
 
-  LinearVariableChangeBase * make(const StateMPAS & xbg, const StateMPAS & xfg,
-                             const GeometryMPAS & geom,
+  LinearVariableChangeBase * make(const State & xbg, const State & xfg,
+                             const Geometry & geom,
                              const LinearVariableChangeParametersBase & params) override {
     const auto &stronglyTypedParams = dynamic_cast<const Parameters_&>(params);
     return new T(xbg, xfg, geom, oops::parametersOrConfiguration<oops::HasParameters_<T>::value>(

@@ -27,8 +27,8 @@ LinearVariableChangeFactory::LinearVariableChangeFactory(const std::string & nam
 
 // -------------------------------------------------------------------------------------------------
 
-LinearVariableChangeBase * LinearVariableChangeFactory::create(const StateMPAS & xbg,
-     const StateMPAS & xfg, const GeometryMPAS & geom,
+LinearVariableChangeBase * LinearVariableChangeFactory::create(const State & xbg,
+     const State & xfg, const Geometry & geom,
      const LinearVariableChangeParametersBase & params) {
   oops::Log::trace() << "LinearVariableChangeBase::create starting" << std::endl;
   const std::string &id = params.name.value().value();

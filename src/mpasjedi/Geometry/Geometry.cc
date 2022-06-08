@@ -10,14 +10,14 @@
 
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/GeometryMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const GeometryMPASParameters & params,
+Geometry::Geometry(const GeometryParameters & params,
                            const eckit::mpi::Comm & comm) : comm_(comm) {
-  oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 1 =========="
+  oops::Log::trace() << "========= Geometry::Geometry step 1 =========="
                      << std::endl;
   mpas_geo_setup_f90(keyGeom_, params.toConfiguration(), &comm);
 
@@ -42,12 +42,12 @@ GeometryMPAS::GeometryMPAS(const GeometryMPASParameters & params,
   atlasFieldSet_.reset(new atlas::FieldSet());
   mpas_geo_fill_atlas_fieldset_f90(keyGeom_, atlasFieldSet_->get());
 
-  oops::Log::trace() << "========= GeometryMPAS::GeometryMPAS step 2 =========="
+  oops::Log::trace() << "========= Geometry::Geometry step 2 =========="
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
-GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) : comm_(other.comm_) {
-  oops::Log::trace() << "========= GeometryMPAS mpas_geo_clone_f90   =========="
+Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
+  oops::Log::trace() << "========= Geometry mpas_geo_clone_f90   =========="
                      << std::endl;
   mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
 
@@ -65,11 +65,11 @@ GeometryMPAS::GeometryMPAS(const GeometryMPAS & other) : comm_(other.comm_) {
   }
 }
 // -----------------------------------------------------------------------------
-GeometryMPAS::~GeometryMPAS() {
+Geometry::~Geometry() {
   mpas_geo_delete_f90(keyGeom_);
 }
 // -----------------------------------------------------------------------------
-bool GeometryMPAS::isEqual(const GeometryMPAS & other) const {
+bool Geometry::isEqual(const Geometry & other) const {
   bool isEqual;
 
   mpas_geo_is_equal_f90(isEqual, keyGeom_, other.keyGeom_);
@@ -77,7 +77,7 @@ bool GeometryMPAS::isEqual(const GeometryMPAS & other) const {
   return isEqual;
 }
 // -----------------------------------------------------------------------------
-std::vector<size_t> GeometryMPAS::variableSizes(const oops::Variables & vars) const {
+std::vector<size_t> Geometry::variableSizes(const oops::Variables & vars) const {
   // vector of level counts
   std::vector<size_t> varSizes(vars.size());
 
@@ -86,7 +86,7 @@ std::vector<size_t> GeometryMPAS::variableSizes(const oops::Variables & vars) co
   return varSizes;
 }
 // -----------------------------------------------------------------------------
-void GeometryMPAS::latlon(std::vector<real_type> & lats, std::vector<real_type> & lons,
+void Geometry::latlon(std::vector<real_type> & lats, std::vector<real_type> & lons,
                       const bool halo) const {
   const atlas::functionspace::PointCloud * fspace;
   if (halo) {
@@ -105,7 +105,7 @@ void GeometryMPAS::latlon(std::vector<real_type> & lats, std::vector<real_type> 
   }
 }
 // -----------------------------------------------------------------------------
-void GeometryMPAS::print(std::ostream & os) const {
+void Geometry::print(std::ostream & os) const {
   int nCellsGlobal;
   int nCells;
   int nCellsSolve;

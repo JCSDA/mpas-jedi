@@ -8,11 +8,11 @@
 #include <oops/test/interface/ModelAuxCovariance.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::ModelAuxCovariance<mpas::MPASTraits> tests;
+  test::ModelAuxCovariance<mpas::Traits> tests;
   return run.execute(tests);
 }
 

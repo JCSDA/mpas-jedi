@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_INCREMENTMPASPARAMETERS_H_
-#define MPASJEDI_INCREMENTMPASPARAMETERS_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -36,8 +35,8 @@ class DiracParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 /// Configuration options recognized by mpas_fields_mod for read_fields
-class IncrementMPASReadParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(IncrementMPASReadParameters, Parameters)
+class IncrementReadParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(IncrementReadParameters, Parameters)
 
  public:
   // Read parameters
@@ -49,8 +48,8 @@ class IncrementMPASReadParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 /// Configuration options recognized by mpas_fields_mod for write_fields
-class IncrementMPASWriteParameters : public oops::WriteParametersBase {
-  OOPS_CONCRETE_PARAMETERS(IncrementMPASWriteParameters, WriteParametersBase)
+class IncrementWriteParameters : public oops::WriteParametersBase {
+  OOPS_CONCRETE_PARAMETERS(IncrementWriteParameters, WriteParametersBase)
 
  public:
   // Write parameters
@@ -61,5 +60,3 @@ class IncrementMPASWriteParameters : public oops::WriteParametersBase {
 // -------------------------------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_INCREMENTMPASPARAMETERS_H_

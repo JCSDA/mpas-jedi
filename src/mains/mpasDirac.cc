@@ -11,12 +11,12 @@
 #include <oops/runs/Dirac.h>
 #include <oops/runs/Run.h>
 #include <saber/oops/instantiateCovarFactory.h>
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateCovarFactory<mpas::MPASTraits>();
-  oops::Dirac<mpas::MPASTraits> dir;
+  saber::instantiateCovarFactory<mpas::Traits>();
+  oops::Dirac<mpas::Traits> dir;
   return run.execute(dir);
 }

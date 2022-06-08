@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_MODELBIASINCREMENTMPAS_H_
-#define MPASJEDI_MODELBIASINCREMENTMPAS_H_
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -17,35 +16,35 @@
 #include "oops/util/Serializable.h"
 
 namespace mpas {
-  class ModelBiasMPAS;
-  class ModelBiasCovarianceMPAS;
-  class GeometryMPAS;
+  class ModelBias;
+  class ModelBiasCovariance;
+  class Geometry;
 
 
 // -----------------------------------------------------------------------------
 
-class ModelBiasIncrementMPAS : public util::Printable,
+class ModelBiasIncrement : public util::Printable,
                                public util::Serializable {
  public:
 /// Constructor, destructor
-  ModelBiasIncrementMPAS(const GeometryMPAS &, const eckit::Configuration &) {}
-  ModelBiasIncrementMPAS(const ModelBiasIncrementMPAS &, const bool) {}
-  ModelBiasIncrementMPAS(const ModelBiasIncrementMPAS &,
+  ModelBiasIncrement(const Geometry &, const eckit::Configuration &) {}
+  ModelBiasIncrement(const ModelBiasIncrement &, const bool) {}
+  ModelBiasIncrement(const ModelBiasIncrement &,
                          const eckit::Configuration &) {}
-  ~ModelBiasIncrementMPAS() {}
+  ~ModelBiasIncrement() {}
 
 /// Linear algebra operators
-  void diff(const ModelBiasMPAS &, const ModelBiasMPAS &) {}
+  void diff(const ModelBias &, const ModelBias &) {}
   void zero() {}
-  ModelBiasIncrementMPAS & operator=(const ModelBiasIncrementMPAS &)
+  ModelBiasIncrement & operator=(const ModelBiasIncrement &)
                                     {return *this;}
-  ModelBiasIncrementMPAS & operator+=(const ModelBiasIncrementMPAS &)
+  ModelBiasIncrement & operator+=(const ModelBiasIncrement &)
                                      {return *this;}
-  ModelBiasIncrementMPAS & operator-=(const ModelBiasIncrementMPAS &)
+  ModelBiasIncrement & operator-=(const ModelBiasIncrement &)
                                      {return *this;}
-  ModelBiasIncrementMPAS & operator*=(const real_type) {return *this;}
-  void axpy(const real_type, const ModelBiasIncrementMPAS &) {}
-  real_type dot_product_with(const ModelBiasIncrementMPAS &) const {return 0.0;}
+  ModelBiasIncrement & operator*=(const real_type) {return *this;}
+  void axpy(const real_type, const ModelBiasIncrement &) {}
+  real_type dot_product_with(const ModelBiasIncrement &) const {return 0.0;}
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &) {}
@@ -58,12 +57,10 @@ class ModelBiasIncrementMPAS : public util::Printable,
   void deserialize(const std::vector<real_type> &, size_t &) override {}
 
  private:
-  explicit ModelBiasIncrementMPAS(const ModelBiasCovarianceMPAS &);
+  explicit ModelBiasIncrement(const ModelBiasCovariance &);
   void print(std::ostream & os) const override {}
 };
 
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_MODELBIASINCREMENTMPAS_H_

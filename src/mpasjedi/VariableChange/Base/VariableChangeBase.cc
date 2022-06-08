@@ -27,7 +27,7 @@ VariableChangeFactory::VariableChangeFactory(const std::string & name) {
 
 // -------------------------------------------------------------------------------------------------
 
-VariableChangeBase * VariableChangeFactory::create(const GeometryMPAS & geom,
+VariableChangeBase * VariableChangeFactory::create(const Geometry & geom,
                                                    const VariableChangeParametersBase & params) {
   oops::Log::trace() << "VariableChangeBase::create starting" << std::endl;
 

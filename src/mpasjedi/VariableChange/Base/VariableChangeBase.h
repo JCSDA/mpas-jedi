@@ -26,8 +26,8 @@
 #include "oops/util/Printable.h"
 
 namespace mpas {
-  class GeometryMPAS;
-  class StateMPAS;
+  class Geometry;
+  class State;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -52,8 +52,8 @@ class VariableChangeBase : public util::Printable, private boost::noncopyable {
   VariableChangeBase() {}
   virtual ~VariableChangeBase() {}
 
-  virtual void changeVar(const StateMPAS &, StateMPAS &) const = 0;
-  virtual void changeVarInverse(const StateMPAS &, StateMPAS &) const = 0;
+  virtual void changeVar(const State &, State &) const = 0;
+  virtual void changeVarInverse(const State &, State &) const = 0;
 
  private:
   virtual void print(std::ostream &) const = 0;
@@ -76,7 +76,7 @@ class VariableChangeParametersWrapper : public oops::Parameters {
 
 class VariableChangeFactory {
  public:
-  static VariableChangeBase * create(const GeometryMPAS & geom,
+  static VariableChangeBase * create(const Geometry & geom,
                                       const VariableChangeParametersBase & params);
 
   static std::unique_ptr<VariableChangeParametersBase> createParameters(const std::string &name);
@@ -91,7 +91,7 @@ class VariableChangeFactory {
   explicit VariableChangeFactory(const std::string &name);
 
  private:
-  virtual VariableChangeBase * make(const GeometryMPAS &, const VariableChangeParametersBase &) = 0;
+  virtual VariableChangeBase * make(const Geometry &, const VariableChangeParametersBase &) = 0;
 
   virtual std::unique_ptr<VariableChangeParametersBase> makeParameters() const = 0;
 
@@ -108,7 +108,7 @@ class VariableChangeMaker : public VariableChangeFactory {
   typedef oops::TParameters_IfAvailableElseFallbackType_t<T, GenericVariableChangeParameters>
     Parameters_;
 
-  VariableChangeBase * make(const GeometryMPAS & geom,
+  VariableChangeBase * make(const Geometry & geom,
                              const VariableChangeParametersBase & params) override {
     const auto &stronglyTypedParams = dynamic_cast<const Parameters_&>(params);
     return new T(geom, oops::parametersOrConfiguration<oops::HasParameters_<T>::value>(

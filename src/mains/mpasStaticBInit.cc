@@ -8,10 +8,10 @@
 #include <oops/runs/Run.h>
 #include <oops/runs/StaticBInit.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::StaticBInit<mpas::MPASTraits> bmat;
+  oops::StaticBInit<mpas::Traits> bmat;
   return run.execute(bmat);
 }

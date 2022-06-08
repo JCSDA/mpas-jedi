@@ -8,10 +8,10 @@
 #include <oops/runs/RTPP.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::RTPP<mpas::MPASTraits> rtpp;
+  oops::RTPP<mpas::Traits> rtpp;
   return run.execute(rtpp);
 }

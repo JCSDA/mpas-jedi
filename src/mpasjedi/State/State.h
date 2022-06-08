@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_STATEMPAS_H_
-#define MPASJEDI_STATEMPAS_H_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -19,8 +18,8 @@
 #include "oops/util/Printable.h"
 #include "oops/util/Serializable.h"
 
-#include "mpasjedi/StateMPASFortran.h"
-#include "mpasjedi/StateMPASParameters.h"
+#include "mpasjedi/State/State.interface.h"
+#include "mpasjedi/State/StateParameters.h"
 
 namespace ufo {
   class GeoVaLs;
@@ -32,9 +31,9 @@ namespace oops {
 }
 
 namespace mpas {
-  class GeometryMPAS;
+  class Geometry;
   class GetValuesTrajMPAS;
-  class IncrementMPAS;
+  class Increment;
 
 /// MPAS model state
 /*!
@@ -43,33 +42,33 @@ namespace mpas {
  */
 
 // -----------------------------------------------------------------------------
-class StateMPAS : public util::Printable,
+class State : public util::Printable,
                   public util::Serializable,
-                  private util::ObjectCounter<StateMPAS> {
+                  private util::ObjectCounter<State> {
  public:
-  static const std::string classname() {return "mpas::StateMPAS";}
+  static const std::string classname() {return "mpas::State";}
 
-  typedef StateMPASParameters Parameters_;
-  typedef StateMPASWriteParameters WriteParameters_;
+  typedef StateParameters Parameters_;
+  typedef StateWriteParameters WriteParameters_;
 
 /// Constructor, destructor
-  StateMPAS(const GeometryMPAS &, const oops::Variables &,
+  State(const Geometry &, const oops::Variables &,
             const util::DateTime &);  // Is it used?
-  StateMPAS(const GeometryMPAS &, const Parameters_ &);
-  StateMPAS(const GeometryMPAS &, const StateMPAS &);
-  StateMPAS(const StateMPAS &);
-  ~StateMPAS();
-//  virtual ~StateMPAS();
+  State(const Geometry &, const Parameters_ &);
+  State(const Geometry &, const State &);
+  State(const State &);
+  ~State();
+//  virtual ~State();
 
-  StateMPAS & operator=(const StateMPAS &);
+  State & operator=(const State &);
   void zero();
-  void accumul(const real_type &, const StateMPAS &);
+  void accumul(const real_type &, const State &);
 
 /// Interpolate full fields
-  void changeResolution(const StateMPAS & xx);
+  void changeResolution(const State & xx);
 
 /// Interactions with Increment
-  StateMPAS & operator+=(const IncrementMPAS &);
+  State & operator+=(const Increment &);
 
 /// Serialization
   size_t serialSize() const override;
@@ -81,7 +80,7 @@ class StateMPAS : public util::Printable,
   void write(const WriteParameters_ &) const;
   real_type norm() const;
 
-  std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
+  std::shared_ptr<const Geometry> geometry() const {return geom_;}
 
   const util::DateTime & time() const {return time_;}
   util::DateTime & time() {return time_;}
@@ -102,7 +101,7 @@ class StateMPAS : public util::Printable,
 
   void print(std::ostream &) const override;
   F90state keyState_;
-  std::shared_ptr<const GeometryMPAS> geom_;
+  std::shared_ptr<const Geometry> geom_;
   oops::Variables vars_;
   util::DateTime time_;
 
@@ -112,5 +111,3 @@ class StateMPAS : public util::Printable,
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_STATEMPAS_H_

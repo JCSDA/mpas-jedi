@@ -8,11 +8,11 @@
 #include <oops/test/interface/LinearVariableChange.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::LinearVariableChange<mpas::MPASTraits> tests;
+  test::LinearVariableChange<mpas::Traits> tests;
   return run.execute(tests);
 }
 

@@ -11,11 +11,11 @@
 
 #include <ufo/ObsTraits.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   oops::EnsembleApplication< oops::HofX4D
-    <mpas::MPASTraits, ufo::ObsTraits> > enshofx;
+    <mpas::Traits, ufo::ObsTraits> > enshofx;
   return run.execute(enshofx);
 }

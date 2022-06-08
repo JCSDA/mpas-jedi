@@ -12,64 +12,65 @@
 #include "oops/base/Variables.h"
 #include "oops/util/Logger.h"
 
-#include "mpasjedi/ErrorCovarianceMPAS.h"
-#include "mpasjedi/IncrementMPAS.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Covariance/ErrorCovariance.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Increment/Increment.h"
+#include "mpasjedi/State/State.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
 
-ErrorCovarianceMPAS::ErrorCovarianceMPAS(const GeometryMPAS & resol,
+ErrorCovariance::ErrorCovariance(const Geometry & resol,
                                          const oops::Variables &,
                                          const eckit::Configuration & config,
-                                         const StateMPAS &,
-                                         const StateMPAS & ) {
+                                         const State &,
+                                         const State & ) {
   time_ = util::DateTime(config.getString("date"));
   mpas_b_setup_f90(keyErrCov_, config, resol.toFortran());
-  oops::Log::trace() << "ErrorCovarianceMPAS created" << std::endl;
+  oops::Log::trace() << "ErrorCovariance created" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
-ErrorCovarianceMPAS::~ErrorCovarianceMPAS() {
+ErrorCovariance::~ErrorCovariance() {
   mpas_b_delete_f90(keyErrCov_);
-  oops::Log::trace() << "ErrorCovarianceMPAS destructed" << std::endl;
+  oops::Log::trace() << "ErrorCovariance destructed" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::linearize(const StateMPAS &,
-                                    const GeometryMPAS & resol) {
-  geom_.reset(new GeometryMPAS(resol));
+void ErrorCovariance::linearize(const State &,
+                                    const Geometry & resol) {
+  geom_.reset(new Geometry(resol));
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::multiply(const IncrementMPAS & dxin,
-                                   IncrementMPAS & dxout) const {
+void ErrorCovariance::multiply(const Increment & dxin,
+                                   Increment & dxout) const {
   mpas_b_mult_f90(keyErrCov_, dxin.toFortran(),
                   dxout.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::inverseMultiply(const IncrementMPAS & dxin,
-                                           IncrementMPAS & dxout) const {
+void ErrorCovariance::inverseMultiply(const Increment & dxin,
+                                           Increment & dxout) const {
   mpas_b_invmult_f90(keyErrCov_, dxin.toFortran(),
                                dxout.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::randomize(IncrementMPAS & dx) const {
+void ErrorCovariance::randomize(Increment & dx) const {
   mpas_b_randomize_f90(keyErrCov_, dx.toFortran());
 }
 
 // -----------------------------------------------------------------------------
 
-void ErrorCovarianceMPAS::print(std::ostream & os) const {
-  os << "ErrorCovarianceMPAS::print not implemented";
+void ErrorCovariance::print(std::ostream & os) const {
+  os << "ErrorCovariance::print not implemented";
 }
 
 // -----------------------------------------------------------------------------

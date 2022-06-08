@@ -8,10 +8,10 @@
 #include <oops/runs/GenEnsPertB.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::GenEnsPertB<mpas::MPASTraits> ensgen;
+  oops::GenEnsPertB<mpas::Traits> ensgen;
   return run.execute(ensgen);
 }

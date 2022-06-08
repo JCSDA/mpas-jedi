@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_TLMMPAS_H_
-#define MPASJEDI_TLMMPAS_H_
+#pragma once
 
 #include <map>
 #include <ostream>
@@ -17,15 +16,17 @@
 #include "oops/interface/LinearModelBase.h"
 
 #include "mpasjedi/Fortran.h"
-#include "mpasjedi/ModelMPAS.h"
-#include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/TlmMPASParameters.h"
+#include "mpasjedi/Model/Model.h"
+#include "mpasjedi/Tlm/TlmParameters.h"
+#include "mpasjedi/Traits.h"
 
 // Forward declarations
 
 namespace mpas {
-  class StateMPAS;
-  class IncrementMPAS;
+  class State;
+  class Increment;
+  // class ModelBias;
+  // class ModelBiasIncrement;
 
 // -----------------------------------------------------------------------------
 /// MPAS linear model definition.
@@ -33,32 +34,32 @@ namespace mpas {
  *  MPAS linear model definition and configuration parameters.
  */
 
-class TlmMPAS: public oops::interface::LinearModelBase<MPASTraits>,
-                private util::ObjectCounter<TlmMPAS> {
+class Tlm: public oops::interface::LinearModelBase<Traits>,
+                private util::ObjectCounter<Tlm> {
  public:
-  static const std::string classname() {return "mpas::TlmMPAS";}
+  static const std::string classname() {return "mpas::Tlm";}
 
-  typedef TlmMPASParameters Parameters_;
+  typedef TlmParameters Parameters_;
 
-  TlmMPAS(const GeometryMPAS &, const  TlmMPASParameters &);
-  ~TlmMPAS();
+  Tlm(const Geometry &, const  TlmParameters &);
+  ~Tlm();
 
 /// Model trajectory computation
-  void setTrajectory(const StateMPAS &, StateMPAS &, const ModelBiasMPAS &)
+  void setTrajectory(const State &, State &, const ModelBias &)
                     override;
 
 /// Run TLM and its adjoint
-  void initializeTL(IncrementMPAS &) const override;
-  void stepTL(IncrementMPAS &, const ModelBiasIncrementMPAS &) const override;
-  void finalizeTL(IncrementMPAS &) const override;
+  void initializeTL(Increment &) const override;
+  void stepTL(Increment &, const ModelBiasIncrement &) const override;
+  void finalizeTL(Increment &) const override;
 
-  void initializeAD(IncrementMPAS &) const override;
-  void stepAD(IncrementMPAS &, ModelBiasIncrementMPAS &) const override;
-  void finalizeAD(IncrementMPAS &) const override;
+  void initializeAD(Increment &) const override;
+  void stepAD(Increment &, ModelBiasIncrement &) const override;
+  void finalizeAD(Increment &) const override;
 
 /// Other utilities
   const util::Duration & timeResolution() const override {return tstep_;}
-  const GeometryMPAS & resolution() const {return resol_;}
+  const Geometry & resolution() const {return resol_;}
   const oops::Variables & variables() const override {return linvars_;}
 
  private:
@@ -69,12 +70,11 @@ class TlmMPAS: public oops::interface::LinearModelBase<MPASTraits>,
 // Data
   F90model keyConfig_;
   util::Duration tstep_;
-  const GeometryMPAS resol_;
+  const Geometry resol_;
   std::map< util::DateTime, F90traj> traj_;
-  const ModelMPAS lrmodel_;
+  const Model lrmodel_;
   const oops::Variables linvars_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-#endif  // MPASJEDI_TLMMPAS_H_

@@ -8,11 +8,11 @@
 #include <oops/test/interface/Geometry.h>
 #include <oops/runs/Run.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::Geometry<mpas::MPASTraits> tests;
+  test::Geometry<mpas::Traits> tests;
   return run.execute(tests);
 }
 

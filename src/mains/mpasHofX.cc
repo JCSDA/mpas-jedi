@@ -11,12 +11,12 @@
 #include <ufo/instantiateObsFilterFactory.h>
 #include <ufo/ObsTraits.h>
 
-#include "mpasjedi/MPASTraits.h"
+#include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   ufo::instantiateObsFilterFactory();
-  oops::HofX4D<mpas::MPASTraits, ufo::ObsTraits> hofx;
+  oops::HofX4D<mpas::Traits, ufo::ObsTraits> hofx;
   return run.execute(hofx);
 }
 

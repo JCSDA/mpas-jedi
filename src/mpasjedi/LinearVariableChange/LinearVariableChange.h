@@ -41,19 +41,19 @@ class LinearVariableChange : public util::Printable {
 
   typedef LinearVariableChangeParameters Parameters_;
 
-  explicit LinearVariableChange(const GeometryMPAS &, const Parameters_ &);
+  explicit LinearVariableChange(const Geometry &, const Parameters_ &);
   ~LinearVariableChange();
 
-  void setTrajectory(const StateMPAS &, const StateMPAS &);
+  void setTrajectory(const State &, const State &);
 
-  void multiply(IncrementMPAS &, const oops::Variables &) const;
-  void multiplyInverse(IncrementMPAS &, const oops::Variables &) const;
-  void multiplyAD(IncrementMPAS &, const oops::Variables &) const;
-  void multiplyInverseAD(IncrementMPAS &, const oops::Variables &) const;
+  void multiply(Increment &, const oops::Variables &) const;
+  void multiplyInverse(Increment &, const oops::Variables &) const;
+  void multiplyAD(Increment &, const oops::Variables &) const;
+  void multiplyInverseAD(Increment &, const oops::Variables &) const;
 
  private:
   void print(std::ostream &) const override;
-  std::shared_ptr<const GeometryMPAS> geom_;
+  std::shared_ptr<const Geometry> geom_;
   Parameters_ params_;
   std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
 };

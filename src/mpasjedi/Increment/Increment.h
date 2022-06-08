@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#ifndef MPASJEDI_INCREMENTMPAS_H_
-#define MPASJEDI_INCREMENTMPAS_H_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -25,8 +24,8 @@
 #include "oops/util/Printable.h"
 #include "oops/util/Serializable.h"
 
-#include "mpasjedi/IncrementMPASFortran.h"
-#include "mpasjedi/IncrementMPASParameters.h"
+#include "mpasjedi/Increment/Increment.interface.h"
+#include "mpasjedi/Increment/IncrementParameters.h"
 
 namespace ufo {
   class GeoVaLs;
@@ -38,8 +37,8 @@ namespace oops {
 }
 
 namespace mpas {
-  class GeometryMPAS;
-  class StateMPAS;
+  class Geometry;
+  class State;
 
 /// Increment Class: Difference between two states
 /*!
@@ -50,37 +49,37 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-class IncrementMPAS : public util::Printable,
+class Increment : public util::Printable,
                       public util::Serializable,
-                      private util::ObjectCounter<IncrementMPAS> {
+                      private util::ObjectCounter<Increment> {
  public:
-  static const std::string classname() {return "mpas::IncrementMPAS";}
+  static const std::string classname() {return "mpas::Increment";}
 
-  typedef IncrementMPASReadParameters ReadParameters_;
-  typedef IncrementMPASWriteParameters WriteParameters_;
+  typedef IncrementReadParameters ReadParameters_;
+  typedef IncrementWriteParameters WriteParameters_;
   typedef DiracParameters DiracParameters_;
 
 /// Constructor, destructor
-  IncrementMPAS(const GeometryMPAS &, const oops::Variables &,
+  Increment(const Geometry &, const oops::Variables &,
                 const util::DateTime &);
-  IncrementMPAS(const GeometryMPAS &, const IncrementMPAS &);
-  IncrementMPAS(const IncrementMPAS &, const bool);
-  IncrementMPAS(const IncrementMPAS &);
-  virtual ~IncrementMPAS();
+  Increment(const Geometry &, const Increment &);
+  Increment(const Increment &, const bool);
+  Increment(const Increment &);
+  virtual ~Increment();
 
 /// Basic operators
-  void diff(const StateMPAS &, const StateMPAS &);
+  void diff(const State &, const State &);
   void zero();
   void zero(const util::DateTime &);
   void ones();
-  IncrementMPAS & operator =(const IncrementMPAS &);
-  IncrementMPAS & operator+=(const IncrementMPAS &);
-  IncrementMPAS & operator-=(const IncrementMPAS &);
-  IncrementMPAS & operator*=(const real_type &);
-  void axpy(const real_type &, const IncrementMPAS &, const bool check = true);
-  void axpy(const real_type &, const StateMPAS &, const bool check = true);
-  real_type dot_product_with(const IncrementMPAS &) const;
-  void schur_product_with(const IncrementMPAS &);
+  Increment & operator =(const Increment &);
+  Increment & operator+=(const Increment &);
+  Increment & operator-=(const Increment &);
+  Increment & operator*=(const real_type &);
+  void axpy(const real_type &, const Increment &, const bool check = true);
+  void axpy(const real_type &, const State &, const bool check = true);
+  real_type dot_product_with(const Increment &) const;
+  void schur_product_with(const Increment &);
   void random();
   void dirac(const DiracParameters_ &);
 
@@ -99,14 +98,14 @@ class IncrementMPAS : public util::Printable,
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
 /// Other
-  void accumul(const real_type &, const StateMPAS &);
+  void accumul(const real_type &, const State &);
 
 /// Serialize and deserialize
   size_t serialSize() const override;
   void serialize(std::vector<real_type> &) const override;
   void deserialize(const std::vector<real_type> &, size_t &) override;
 
-  std::shared_ptr<const GeometryMPAS> geometry() const {return geom_;}
+  std::shared_ptr<const Geometry> geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}
 
   const util::DateTime & time() const {return time_;}
@@ -122,12 +121,10 @@ class IncrementMPAS : public util::Printable,
  private:
   void print(std::ostream &) const override;
   F90inc keyInc_;
-  std::shared_ptr<const GeometryMPAS> geom_;
+  std::shared_ptr<const Geometry> geom_;
   oops::Variables vars_;
   util::DateTime time_;
 };
 // -----------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_INCREMENTMPAS_H_

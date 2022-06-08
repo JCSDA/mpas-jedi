@@ -13,9 +13,9 @@
 #include "oops/util/Logger.h"
 #include "oops/util/Timer.h"
 
-#include "mpasjedi/GeometryMPAS.h"
-#include "mpasjedi/MPASTraits.h"
-#include "mpasjedi/StateMPAS.h"
+#include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/State/State.h"
+#include "mpasjedi/Traits.h"
 #include "mpasjedi/VariableChange/Model2GeoVars/VarChaModel2GeoVars.h"
 
 namespace mpas {
@@ -25,8 +25,8 @@ static VariableChangeMaker<VarChaModel2GeoVars>
 static VariableChangeMaker<VarChaModel2GeoVars>
   makerVarChaDefault_("default");
 // -------------------------------------------------------------------------------------------------
-VarChaModel2GeoVars::VarChaModel2GeoVars(const GeometryMPAS & geom,
- const eckit::LocalConfiguration & config) : VariableChangeBase(), geom_(new GeometryMPAS(geom)) {
+VarChaModel2GeoVars::VarChaModel2GeoVars(const Geometry & geom,
+ const eckit::LocalConfiguration & config) : VariableChangeBase(), geom_(new Geometry(geom)) {
   util::Timer timer(classname(), "VarChaModel2GeoVars");
   oops::Log::trace() << classname() << " constructor starting" << std::endl;
   mpasjedi_vc_model2geovars_create_f90(keyFtnConfig_, geom_->toFortran(), config);
@@ -40,7 +40,7 @@ VarChaModel2GeoVars::~VarChaModel2GeoVars() {
   oops::Log::trace() << classname() << " destructor done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void VarChaModel2GeoVars::changeVar(const StateMPAS & xin, StateMPAS & xout) const {
+void VarChaModel2GeoVars::changeVar(const State & xin, State & xout) const {
   util::Timer timer(classname(), "changeVar");
   oops::Log::trace() << classname() << " changeVar starting" << std::endl;
   mpasjedi_vc_model2geovars_changevar_f90(keyFtnConfig_, geom_->toFortran(), xin.toFortran(),
@@ -49,7 +49,7 @@ void VarChaModel2GeoVars::changeVar(const StateMPAS & xin, StateMPAS & xout) con
   oops::Log::trace() << classname() << " changeVar done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void VarChaModel2GeoVars::changeVarInverse(const StateMPAS & xin, StateMPAS & xout) const {
+void VarChaModel2GeoVars::changeVarInverse(const State & xin, State & xout) const {
   util::Timer timer(classname(), "changeVarInverse");
   oops::Log::trace() << classname() << " changeVarInverse starting" << std::endl;
   xout = xin;

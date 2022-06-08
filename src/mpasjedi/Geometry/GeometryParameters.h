@@ -5,8 +5,7 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#ifndef MPASJEDI_GEOMETRYMPASPARAMETERS_H_
-#define MPASJEDI_GEOMETRYMPASPARAMETERS_H_
+#pragma once
 
 #include <string>
 
@@ -19,8 +18,8 @@ namespace mpas {
 // -------------------------------------------------------------------------------------------------
 
 /// Configuration options recognized by mpas_geom_mod
-class GeometryMPASParameters : public oops::Parameters {
-  OOPS_CONCRETE_PARAMETERS(GeometryMPASParameters, Parameters)
+class GeometryParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(GeometryParameters, Parameters)
 
  public:
   /// namelist filename to be used in mpas_init
@@ -49,5 +48,3 @@ class GeometryMPASParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 }  // namespace mpas
-
-#endif  // MPASJEDI_GEOMETRYMPASPARAMETERS_H_
