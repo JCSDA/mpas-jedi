@@ -7,10 +7,8 @@
 
 #include "atlas/grid.h"
 #include "atlas/util/Config.h"
-
-#include "oops/util/Logger.h"
-
 #include "mpasjedi/Geometry/Geometry.h"
+#include "oops/util/Logger.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
@@ -21,26 +19,26 @@ Geometry::Geometry(const GeometryParameters & params,
                      << std::endl;
   mpas_geo_setup_f90(keyGeom_, params.toConfiguration(), &comm);
 
-  // Set ATLAS lon/lat field
-  atlasFieldSet_.reset(new atlas::FieldSet());
-  const bool include_halo = true;  // include halo so we can set up both function spaces
-  mpas_geo_set_atlas_lonlat_f90(keyGeom_, atlasFieldSet_->get(), include_halo);
+  // Set ATLAS lon/lat field with halo
+  atlas::FieldSet fs;
+  const bool include_halo = true;
+  mpas_geo_set_lonlat_f90(keyGeom_, fs.get(), include_halo);
 
-  // Create ATLAS function space
-  const atlas::Field atlasField = atlasFieldSet_->field("lonlat");
-  atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(atlasField));
-  ASSERT(include_halo);
-  // Create ATLAS function space with halo
-  const atlas::Field atlasFieldInclHalo = atlasFieldSet_->field("lonlat_including_halo");
-  atlasFunctionSpaceIncludingHalo_.reset(new atlas::functionspace::PointCloud(atlasFieldInclHalo));
+  // Create function space
+  const atlas::Field lonlatField = fs.field("lonlat");
+  functionSpace_ = atlas::functionspace::PointCloud(lonlatField);
+
+  // Create function space with halo
+  const atlas::Field lonlatFieldInclHalo = fs.field("lonlat_including_halo");
+  functionSpaceIncludingHalo_ = atlas::functionspace::PointCloud(lonlatFieldInclHalo);
 
   // Set ATLAS function space pointer in Fortran
-  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_, atlasFunctionSpace_->get(),
-                                               atlasFunctionSpaceIncludingHalo_->get());
+  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
+                                             functionSpaceIncludingHalo_.get());
 
-  // Fill ATLAS fieldset
-  atlasFieldSet_.reset(new atlas::FieldSet());
-  mpas_geo_fill_atlas_fieldset_f90(keyGeom_, atlasFieldSet_->get());
+  // Fill extra fieldset : for saber vunit
+  extraFields_ =  atlas::FieldSet();
+  mpas_geo_fill_extra_fields_f90(keyGeom_, extraFields_.get());
 
   oops::Log::trace() << "========= Geometry::Geometry step 2 =========="
                      << std::endl;
@@ -50,18 +48,14 @@ Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
   oops::Log::trace() << "========= Geometry mpas_geo_clone_f90   =========="
                      << std::endl;
   mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
-
-  atlasFunctionSpace_.reset(new atlas::functionspace::PointCloud(
-                                       other.atlasFunctionSpace_->lonlat()));
-  atlasFunctionSpaceIncludingHalo_.reset(new atlas::functionspace::PointCloud(
-                            other.atlasFunctionSpaceIncludingHalo_->lonlat()));
-  mpas_geo_set_atlas_functionspace_pointer_f90(keyGeom_, atlasFunctionSpace_->get(),
-                                               atlasFunctionSpaceIncludingHalo_->get());
-  atlasFieldSet_.reset(new atlas::FieldSet());
-
-  for (int jfield = 0; jfield < other.atlasFieldSet_->size(); ++jfield) {
-    atlas::Field atlasField = other.atlasFieldSet_->field(jfield);
-    atlasFieldSet_->add(atlasField);
+  functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_.lonlat());
+  functionSpaceIncludingHalo_ = atlas::functionspace::PointCloud(
+    other.functionSpaceIncludingHalo_.lonlat());
+  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
+                                         functionSpaceIncludingHalo_.get());
+  extraFields_ = atlas::FieldSet();
+  for (auto & field : other.extraFields_) {
+    extraFields_->add(field);
   }
 }
 // -----------------------------------------------------------------------------
@@ -88,11 +82,11 @@ std::vector<size_t> Geometry::variableSizes(const oops::Variables & vars) const 
 // -----------------------------------------------------------------------------
 void Geometry::latlon(std::vector<real_type> & lats, std::vector<real_type> & lons,
                       const bool halo) const {
-  const atlas::functionspace::PointCloud * fspace;
+  const atlas::FunctionSpace * fspace;
   if (halo) {
-    fspace = atlasFunctionSpaceIncludingHalo_.get();
+    fspace = &functionSpaceIncludingHalo_;
   } else {
-    fspace = atlasFunctionSpace_.get();
+    fspace = &functionSpace_;
   }
   const auto lonlat = atlas::array::make_view<real_type, 2>(fspace->lonlat());
   const size_t npts = fspace->size();

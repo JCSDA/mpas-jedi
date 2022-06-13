@@ -62,7 +62,7 @@ end subroutine c_mpas_geo_delete
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_set_atlas_lonlat(c_key_self, c_afieldset, c_include_halo) bind(c,name='mpas_geo_set_atlas_lonlat_f90')
+subroutine c_mpas_geo_set_lonlat(c_key_self, c_afieldset, c_include_halo) bind(c,name='mpas_geo_set_lonlat_f90')
 use atlas_module, only: atlas_fieldset
 use iso_c_binding
 use mpas_geom_mod
@@ -76,14 +76,14 @@ type(atlas_fieldset) :: afieldset
 call mpas_geom_registry%get(c_key_self, self)
 afieldset = atlas_fieldset(c_afieldset)
 
-call geo_set_atlas_lonlat(self, afieldset, c_include_halo)
+call geo_set_lonlat(self, afieldset, c_include_halo)
 
-end subroutine c_mpas_geo_set_atlas_lonlat
+end subroutine c_mpas_geo_set_lonlat
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_set_atlas_functionspace_pointer(c_key_self,c_afunctionspace,c_afunctionspace_incl_halo) &
- & bind(c,name='mpas_geo_set_atlas_functionspace_pointer_f90')
+subroutine c_mpas_geo_set_functionspace_pointer(c_key_self,c_afunctionspace,c_afunctionspace_incl_halo) &
+ & bind(c,name='mpas_geo_set_functionspace_pointer_f90')
 !!use atlas_module, only: atlas_functionspace_pointcloud
 use atlas_module, only: atlas_fieldset, atlas_functionspace
 use iso_c_binding
@@ -98,12 +98,12 @@ call mpas_geom_registry%get(c_key_self, self)
 self%afunctionspace = atlas_functionspace(c_afunctionspace)
 self%afunctionspace_incl_halo = atlas_functionspace(c_afunctionspace_incl_halo)
 
-end subroutine c_mpas_geo_set_atlas_functionspace_pointer
+end subroutine c_mpas_geo_set_functionspace_pointer
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_fill_atlas_fieldset(c_key_self, c_afieldset) &
- & bind(c,name='mpas_geo_fill_atlas_fieldset_f90')
+subroutine c_mpas_geo_fill_extra_fields(c_key_self, c_afieldset) &
+ & bind(c,name='mpas_geo_fill_extra_fields_f90')
 use atlas_module, only: atlas_fieldset
 use iso_c_binding
 use mpas_geom_mod
@@ -116,9 +116,9 @@ type(atlas_fieldset) :: afieldset
 call mpas_geom_registry%get(c_key_self, self)
 afieldset = atlas_fieldset(c_afieldset)
 
-call geo_fill_atlas_fieldset(self, afieldset)
+call geo_fill_extra_fields(self, afieldset)
 
-end subroutine c_mpas_geo_fill_atlas_fieldset
+end subroutine c_mpas_geo_fill_extra_fields
 
 ! ------------------------------------------------------------------------------
 

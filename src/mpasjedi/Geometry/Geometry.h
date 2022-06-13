@@ -42,10 +42,10 @@ class Geometry : public util::Printable,
   F90geom & toFortran() {return keyGeom_;}
   const F90geom & toFortran() const {return keyGeom_;}
   const eckit::mpi::Comm & getComm() const {return comm_;}
-  atlas::FunctionSpace * atlasFunctionSpace() const {return atlasFunctionSpace_.get();}
-  atlas::FunctionSpace * atlasFunctionSpaceIncludingHalo() const {
-      return atlasFunctionSpaceIncludingHalo_.get();}
-  atlas::FieldSet * atlasFieldSet() const {return atlasFieldSet_.get();}
+  const atlas::FunctionSpace & functionSpace() const {return functionSpaceIncludingHalo_;}
+  atlas::FunctionSpace & functionSpace() {return functionSpaceIncludingHalo_;}
+  const atlas::FieldSet & extraFields() const {return extraFields_;}
+  atlas::FieldSet & extraFields() {return extraFields_;}
   void latlon(std::vector<real_type> &, std::vector<real_type> &, const bool) const;
 
   bool isEqual(const Geometry &) const;
@@ -57,9 +57,9 @@ class Geometry : public util::Printable,
   void print(std::ostream &) const;
   F90geom keyGeom_;
   const eckit::mpi::Comm & comm_;
-  std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpace_;
-  std::unique_ptr<atlas::functionspace::PointCloud> atlasFunctionSpaceIncludingHalo_;
-  std::unique_ptr<atlas::FieldSet> atlasFieldSet_;
+  atlas::FunctionSpace functionSpace_;
+  atlas::FunctionSpace functionSpaceIncludingHalo_;
+  atlas::FieldSet extraFields_;
 };
 // -----------------------------------------------------------------------------
 

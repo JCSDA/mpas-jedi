@@ -95,18 +95,22 @@ State & State::operator=(const State & rhs) {
   vars_ = rhs.vars_;
   return *this;
 }
-
 // -----------------------------------------------------------------------------
-
-void State::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
+void State::toFieldSet(atlas::FieldSet & fset) const {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
-  mpas_state_set_atlas_f90(keyState_, geom_->toFortran(), vars, fset.get(), include_halo);
-  mpas_state_to_atlas_f90(keyState_, geom_->toFortran(), vars, fset.get(), include_halo,
+  mpas_state_to_fieldset_f90(keyState_, geom_->toFortran(), vars_, fset.get(), include_halo,
                           flip_vert_lev);
-  oops::Log::trace() << "State getFieldSet done" << std::endl;
+  oops::Log::trace() << "State toFieldSet done" << std::endl;
 }
-
+// -----------------------------------------------------------------------------
+void State::fromFieldSet(const atlas::FieldSet & fset) {
+  const bool include_halo = false;  /* always false, only fill ceter of domain */
+  const bool flip_vert_lev = true;
+  mpas_state_from_fieldset_f90(keyState_, geom_->toFortran(), vars_, fset.get(), include_halo,
+                          flip_vert_lev);
+  oops::Log::trace() << "State fromFieldSet done" << std::endl;
+}
 // -----------------------------------------------------------------------------
 /// Interpolate full state
 // -----------------------------------------------------------------------------
@@ -141,7 +145,6 @@ size_t State::serialSize() const {
   nn += time_.serialSize();
   return nn;
 }
-
 // -----------------------------------------------------------------------------
 constexpr real_type SerializeCheckValue = -54321.98765;
 void State::serialize(std::vector<real_type> & vect) const {
@@ -220,7 +223,6 @@ real_type State::norm() const {
   return zz;
 }
 // -----------------------------------------------------------------------------
-
 oops::Variables State::stateVars()
 {
   // ---------------------------------------------------------------------------
@@ -234,5 +236,4 @@ oops::Variables State::stateVars()
   return statevars;
 }
 // -----------------------------------------------------------------------------
-
 }  // namespace mpas

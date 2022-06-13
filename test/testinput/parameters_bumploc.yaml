@@ -60,6 +60,7 @@ bump:
   dc: 1000000
   nl0r: 1
   ne: 5
+  lev2d: last
   local_diag: true
   local_rad: 1000000
   resol: 4

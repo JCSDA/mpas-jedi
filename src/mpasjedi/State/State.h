@@ -32,7 +32,6 @@ namespace oops {
 
 namespace mpas {
   class Geometry;
-  class GetValuesTrajMPAS;
   class Increment;
 
 /// MPAS model state
@@ -89,8 +88,9 @@ class State : public util::Printable,
   const oops::Variables & variables() const {return vars_;}
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
-// Get values as Atlas FieldSet
-  void getFieldSet(const oops::Variables &, atlas::FieldSet &) const;
+  // Accessors to the ATLAS fieldset
+  void toFieldSet(atlas::FieldSet &) const;
+  void fromFieldSet(const atlas::FieldSet &);
 
   int & toFortran() {return keyState_;}
   const int & toFortran() const {return keyState_;}

@@ -5,7 +5,7 @@
 
 module mpas_geom_mod
 
-use atlas_module, only: atlas_field, atlas_fieldset, atlas_real, atlas_functionspace
+use atlas_module, only: atlas_field, atlas_fieldset, atlas_integer, atlas_real, atlas_functionspace
 use fckit_configuration_module, only: fckit_configuration, fckit_YAMLConfiguration
 use fckit_pathname_module, only: fckit_pathname
 use fckit_log_module, only: fckit_log
@@ -14,7 +14,7 @@ use iso_c_binding
 
 !oops
 use oops_variables_mod, only: oops_variables
-use kinds, only : kind_real
+use kinds, only : kind_int, kind_real
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
@@ -35,7 +35,7 @@ implicit none
 private
 public :: mpas_geom, &
           geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
-          geo_set_atlas_lonlat, geo_fill_atlas_fieldset, pool_has_field, &
+          geo_set_lonlat, geo_fill_extra_fields, pool_has_field, &
           getSolveDimSizes, getSolveDimNames, getVertLevels
 
 public :: mpas_geom_registry
@@ -354,7 +354,7 @@ end subroutine geo_setup
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine geo_set_atlas_lonlat(self, afieldset, include_halo)
+subroutine geo_set_lonlat(self, afieldset, include_halo)
 
    implicit none
 
@@ -387,48 +387,72 @@ subroutine geo_set_atlas_lonlat(self, afieldset, include_halo)
       call afieldset%add(afield_incl_halo)
    endif
    
-end subroutine geo_set_atlas_lonlat
+end subroutine geo_set_lonlat
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine geo_fill_atlas_fieldset(self, afieldset)
+subroutine geo_fill_extra_fields(self, afieldset)
 
    implicit none
 
    type(mpas_geom),  intent(inout) :: self
    type(atlas_fieldset), intent(inout) :: afieldset
 
-   integer :: i, jz
+   integer :: i, iz, jz
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
    real(kind=RKIND), pointer :: pressure_base(:,:)
    type(atlas_field) :: afield
 
+   integer :: nx, nx2
+   integer, allocatable :: hmask_1(:)
+   integer, pointer :: int_ptr(:)
+   ! subroutine for saber, always include halo
+   
+   nx = self%nCells        ! rank with halo
+   nx2= self%nCellsSolve   !      without
+
+   ! Add halo mask
+   afield = self%afunctionspace_incl_halo%create_field &
+        (name='hmask', kind=atlas_integer(kind_int), levels=0)
+   call afield%data(int_ptr)
+   allocate( hmask_1(nx) )
+   hmask_1(1:nx2)=1
+   if (nx2<nx) hmask_1(nx2+1:nx)=0
+   int_ptr(1:nx) = hmask_1(1:nx)
+   call afieldset%add(afield)
+   call afield%final()
+   deallocate (hmask_1)
+   
    ! Add area
-   afield = self%afunctionspace%create_field(name='area', kind=atlas_real(kind_real), levels=0)
+   afield = self%afunctionspace_incl_halo%create_field &
+        (name='area', kind=atlas_real(kind_real), levels=0)
    call afield%data(real_ptr_1)
-   real_ptr_1 = real(self%areaCell(1:self%nCellsSolve), kind_real)
+   real_ptr_1(1:nx) = real(self%areaCell(1:nx), kind_real)
    call afieldset%add(afield)
    call afield%final()
 
+   
    ! Add vertical unit
-   afield = self%afunctionspace%create_field(name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
+   afield = self%afunctionspace_incl_halo%create_field &
+        (name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
    call afield%data(real_ptr_2)
    do jz=1,self%nVertLevels
+      iz = self%nVertLevels - jz + 1
       if (trim(self % bump_vunit) .eq. 'modellevel') then
-         real_ptr_2(jz,:) = real(jz, kind_real)
+         real_ptr_2(jz,:) = real(iz, kind_real)
       else if (trim(self % bump_vunit) .eq. 'height') then
-         real_ptr_2(jz,1:self%nCellsSolve) = MPAS_JEDI_HALF_kr * &
-         ( self%zgrid(jz,1:self%nCellsSolve) + self%zgrid(jz+1,1:self%nCellsSolve) )
+         real_ptr_2(jz,1:nx) = MPAS_JEDI_HALF_kr * &
+         ( self%zgrid(jz,1:nx) + self%zgrid(jz+1,1:nx) )
       else if (trim(self % bump_vunit) .eq. 'scaleheight') then
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
-         real_ptr_2(jz,1:self%nCellsSolve) = log(real(pressure_base(jz,1:self%nCellsSolve), kind_real))
+         real_ptr_2(jz,1:nx) = log(real(pressure_base(jz,1:nx), kind_real))
       end if
    end do
    call afieldset%add(afield)
    call afield%final()
 
-end subroutine geo_fill_atlas_fieldset
+end subroutine geo_fill_extra_fields
 
 ! ------------------------------------------------------------------------------
 subroutine geo_deallocate_nonda_fields(domain)

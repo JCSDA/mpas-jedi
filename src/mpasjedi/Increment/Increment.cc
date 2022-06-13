@@ -163,44 +163,35 @@ void Increment::random() {
 // -----------------------------------------------------------------------------
 /// ATLAS
 // -----------------------------------------------------------------------------
-// Here toAtlas and fromAtlas are used in saber (B^-1 term) without halo or vertical flip
-void Increment::setAtlas(atlas::FieldSet * afieldset) const {
-  oops::Log::trace() << "mpasjedi::Increment::setAtlas starting" << std::endl;
-  mpas_increment_set_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false);
-  oops::Log::trace() << "mpasjedi::Increment::setAtlas done" << std::endl;
+//
+//
+// -------------------------------------------------------------------------------------------------
+void Increment::fromFieldSet(const atlas::FieldSet & fset) {
+  const bool include_halo = false;  /* always false, only fill ceter of domain */
+  const bool flip_vert_lev = true;
+  oops::Log::trace() << "mpasjedi::Increment::fromFieldSet starting" << std::endl;
+  mpas_increment_from_fieldset_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
+                                   flip_vert_lev);
+  oops::Log::trace() << "mpasjedi::Increment::fromFieldSet done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void Increment::toAtlas(atlas::FieldSet * afieldset) const {
-  oops::Log::trace() << "mpasjedi::Increment::toAtlas starting" << std::endl;
-  mpas_increment_to_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
-  oops::Log::trace() << "mpasjedi::Increment::toAtlas done" << std::endl;
-}
-// -------------------------------------------------------------------------------------------------
-void Increment::fromAtlas(atlas::FieldSet * afieldset) {
-  oops::Log::trace() << "mpasjedi::Increment::fromAtlas starting" << std::endl;
-  mpas_increment_from_atlas_f90(keyInc_, geom_->toFortran(), vars_, afieldset->get(), false, false);
-  oops::Log::trace() << "mpasjedi::Increment::fromAtlas done" << std::endl;
-}
-// -------------------------------------------------------------------------------------------------
-void Increment::getFieldSet(const oops::Variables & vars, atlas::FieldSet & fset) const {
-  // Quenstionable : true for halo and flip_vert_lev
+void Increment::toFieldSet(atlas::FieldSet & fset) const {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
-  oops::Log::trace() << "mpasjedi::Increment:::getFieldSet starting" << std::endl;
-  mpas_increment_set_atlas_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo);
-  mpas_increment_to_atlas_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo,
+  oops::Log::trace() << "mpasjedi::Increment:::toFieldSet starting" << std::endl;
+  mpas_increment_to_fieldset_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
                               flip_vert_lev);
-  oops::Log::trace() << "mpasjedi::Increment::getFieldSet done" << std::endl;
+  oops::Log::trace() << "mpasjedi::Increment::toFieldSet done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void Increment::getFieldSetAD(const oops::Variables & vars, const atlas::FieldSet & fset) {
+void Increment::toFieldSetAD(const atlas::FieldSet & fset) {
   // Quenstionable : true for halo and flip_vert_lev
   const bool include_halo = true;
   const bool flip_vert_lev = true;
-  oops::Log::trace() << "mpasjedi::Increment:::getFieldSetAD starting" << std::endl;
-  mpas_increment_to_atlas_ad_f90(keyInc_, geom_->toFortran(), vars, fset.get(), include_halo,
+  oops::Log::trace() << "mpasjedi::Increment:::toFieldSetAD starting" << std::endl;
+  mpas_increment_to_fieldset_ad_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
                                  flip_vert_lev);
-  oops::Log::trace() << "mpasjedi::Increment::getFieldSetAD done" << std::endl;
+  oops::Log::trace() << "mpasjedi::Increment::toFieldSetAD done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics

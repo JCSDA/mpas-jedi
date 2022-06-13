@@ -62,24 +62,19 @@ extern "C" {
   void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, real_type &);
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
-  void mpas_increment_set_atlas_f90(const F90inc &,
-                                    const F90geom &,
-                                    const oops::Variables &,
-                                    const atlas::field::FieldSetImpl *,
-                                    const bool &);
-  void mpas_increment_to_atlas_f90(const F90inc &,
+  void mpas_increment_to_fieldset_f90(const F90inc &,
                                    const F90geom &,
                                    const oops::Variables &,
-                                   const atlas::field::FieldSetImpl *,
+                                   atlas::field::FieldSetImpl *,
                                    const bool &,
                                    const bool &);
-  void mpas_increment_from_atlas_f90(const F90inc &,
+  void mpas_increment_from_fieldset_f90(const F90inc &,
                                      const F90geom &,
                                      const oops::Variables &,
                                      const atlas::field::FieldSetImpl *,
                                      const bool &,
                                      const bool &);
-  void mpas_increment_to_atlas_ad_f90(const F90inc &,
+  void mpas_increment_to_fieldset_ad_f90(const F90inc &,
                                      const F90geom &,
                                      const oops::Variables &,
                                      const atlas::field::FieldSetImpl *,
