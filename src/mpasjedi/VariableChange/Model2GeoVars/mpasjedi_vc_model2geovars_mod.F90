@@ -310,6 +310,11 @@ subroutine changevar(self, geom, xm, xg)
         case ( var_prsi ) !-air_pressure_levels
           gdata%r2%array(1:nVertLevelsP1,1:nCells) = plevels(1:nVertLevelsP1,1:nCells)
 
+        case ( var_w ) !-upward_air_velocity
+          call xm%get('w', ptrr2_a)
+          call full_to_half_levels(ptrr2_a(:,1:nCells), nCells, &
+                                       nVertLevels, gdata%r2%array(:,1:nCells))
+
         case ( var_oz ) !-mole_fraction_of_ozone_in_air :TODO: not directly available from MPAS
           !call xm%get('o3', mdata)
           gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr !mdata%r2%array(:,1:nCells)
@@ -432,7 +437,7 @@ subroutine changevar(self, geom, xm, xg)
         case ( var_z ) !-geopotential_height, geopotential heights at midpoint
           ! calculate midpoint geometricZ (unit: m):
           allocate(r2_a(1:nVertLevels,1:nCells))
-          call geometricZ_full_to_half(geom%zgrid(:,1:nCells), nCells, &
+          call full_to_half_levels(geom%zgrid(:,1:nCells), nCells, &
                                        nVertLevels, r2_a(:,1:nCells))
           do iCell = 1, nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
@@ -444,9 +449,9 @@ subroutine changevar(self, geom, xm, xg)
           enddo
           deallocate(r2_a)
 
-        case ( var_geomz ) !-height
+        case ( var_geomz, var_zm ) !-height
           ! calculate midpoint geometricZ (unit: m):
-          call geometricZ_full_to_half(geom%zgrid(:,1:nCells), nCells, &
+          call full_to_half_levels(geom%zgrid(:,1:nCells), nCells, &
                                        nVertLevels, gdata%r2%array(:,1:nCells))
 
         case ( var_tropprs ) !-tropopause pressure

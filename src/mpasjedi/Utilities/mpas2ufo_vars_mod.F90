@@ -58,7 +58,7 @@ public :: linearized_hydrostatic_balance
 public :: effectrad_graupel, &
           effectrad_rainwater
 public :: pressure_half_to_full
-public :: geometricz_full_to_half
+public :: full_to_half_levels
 public :: convert_type_soil, convert_type_veg_usgs, convert_type_veg_igbp
 public :: tropopause_pressure_th
 public :: tropopause_pressure_wmo
@@ -549,20 +549,20 @@ subroutine linearized_hydrostatic_balance(ncells, nlevels, zw, t, qv, ps, p, dt,
 
 end subroutine linearized_hydrostatic_balance
 !-------------------------------------------------------------------------------------------
-subroutine geometricZ_full_to_half(zgrid_f, nC, nV, zgrid)
+subroutine full_to_half_levels(var_f, nC, nV, var)
    implicit none
-   real (kind=RKIND), dimension(nV+1,nC), intent(in) :: zgrid_f
+   real (kind=RKIND), dimension(nV+1,nC), intent(in) :: var_f
    integer, intent(in) :: nC, nV
-   real (kind=RKIND), dimension(nV,nC), intent(out) :: zgrid
+   real (kind=RKIND), dimension(nV,nC), intent(out) :: var
    integer :: i, k
 
-!  calculate midpoint geometricZ:
+!  calculate half level values of a variable at full levels:
    do i=1,nC
       do k=1,nV
-         zgrid(k,i) = ( zgrid_f(k,i) + zgrid_f(k+1,i) ) * MPAS_JEDI_HALF_kr
+         var(k,i) = ( var_f(k,i) + var_f(k+1,i) ) * MPAS_JEDI_HALF_kr
       enddo
    enddo
-end subroutine geometricZ_full_to_half
+end subroutine full_to_half_levels
 !-------------------------------------------------------------------------------------------
 subroutine tropopause_pressure_th(p, z, t, nCells, nVertLevels, tprs)
    !..Adapted from FV3-JEDI tropprs_th subroutine written by Greg Thompson
