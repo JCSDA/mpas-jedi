@@ -1,3 +1,2 @@
-Norm of loc_coef - 1 at 2018-04-15T00:00:00Z: 6.5557597588403904e-01
-Norm of loc_rh - 1 at 2018-04-15T00:00:00Z: 6.5931112808138281e+06
-Norm of loc_rv - 1 at 2018-04-15T00:00:00Z: 0.0000000000000000e+00
+Norm of BUMP output parameter loc_rh - 1: 6.5931112808138281e+06
+Norm of BUMP output parameter loc_rv - 1: 0.0000000000000000e+00

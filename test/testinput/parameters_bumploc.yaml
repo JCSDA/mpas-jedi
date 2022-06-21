@@ -67,10 +67,6 @@ bump:
   diag_rhflt: 3000000
   write_nicas_grids: true
   output:
-  - parameter: loc_coef
-    filename: Data/bump/mpas.hyb_loc_coef.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
   - parameter: loc_rh
     filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
     date: *date
