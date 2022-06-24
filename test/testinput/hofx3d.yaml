@@ -45,7 +45,6 @@ observations:
     obs operator:
       name: GnssroRef
       obs options:
-        ro_top_meter: 30000
         use_compress: 0
   - obs space:
       name: AMSUA-NOAA19--nohydro
