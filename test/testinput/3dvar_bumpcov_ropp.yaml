@@ -111,6 +111,8 @@ cost function:
         simulated variables: [bending_angle]
       obs operator:
         name: GnssroBndROPP1D
+        obs options:
+          use_compress: 0
       obs error:
         covariance model: diagonal
       obs filters:

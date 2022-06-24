@@ -26,3 +26,5 @@ observations:
       simulated variables: [bending_angle]
     obs operator:
       name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
