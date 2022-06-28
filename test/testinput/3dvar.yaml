@@ -68,14 +68,14 @@ cost function:
         threshold: 3
         apply at iterations: 0,1
     - obs space:
-        name: GnssroRef
+        name: GnssroRefNCEP
         obsdatain:
           obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         obsdataout:
           obsfile: Data/os/obsout_3dvar_gnssroref.nc4
         simulated variables: [refractivity]
       obs operator:
-        name: GnssroRef
+        name: GnssroRefNCEP
         obs options:
           use_compress: 0
       obs error:
@@ -101,7 +101,7 @@ cost function:
       - filter: ROobserror
         apply at iterations: 0,1
         variable: refractivity
-        errmodel: NBAM
+        errmodel: NCEP
     - obs space:
         name: SfcPCorrected
         obsdatain:

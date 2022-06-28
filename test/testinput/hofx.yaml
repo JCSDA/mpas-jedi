@@ -43,14 +43,14 @@ observations:
     obs operator:
       name: VertInterp
   - obs space:
-      name: GnssroRef
+      name: GnssroRefNCEP
       obsdatain:
         obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
         obsfile: Data/os/obsout_hofx_gnssroref.nc4
       simulated variables: [refractivity]
     obs operator:
-      name: GnssroRef
+      name: GnssroRefNCEP
       obs options:
         ro_top_meter: 30000
         use_compress: 0
