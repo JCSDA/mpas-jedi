@@ -576,16 +576,16 @@ subroutine tropopause_pressure_th(p, z, t, nCells, nVertLevels, tprs)
 
    implicit none
 
-   real(kind=kind_real), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
-   real(kind=kind_real), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
-   real(kind=kind_real), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
-   real(kind=kind_real), intent(out) :: tprs(nCells)             !Tropopause pressure [Pa]
+   real(kind=RKIND), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
+   real(kind=RKIND), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
+   real(kind=RKIND), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
+   real(kind=RKIND), intent(out) :: tprs(nCells)             !Tropopause pressure [Pa]
    integer,              intent(in ) :: nCells                   !number of grid cells
    integer,              intent(in ) :: nVertLevels              !number of vertical levels
 
    ! Local
    integer :: k1, k2, k_p50, k_p150, k_tropo
-   real(kind=kind_real) :: theta(nVertLevels)
+   real(kind=RKIND) :: theta(nVertLevels)
    integer :: iCell, iLevel
 
    ! Compute tropopause pressure
@@ -627,10 +627,10 @@ subroutine tropopause_pressure_wmo(p, z, t, nCells, nVertLevels, tropk)
 
    implicit none
 
-   real(kind=kind_real), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
-   real(kind=kind_real), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
-   real(kind=kind_real), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
-   real(kind=kind_real), intent(out) :: tropk(nCells)            !Tropopause pressure [Pa]
+   real(kind=RKIND), intent(in ) :: p(nVertLevels, nCells)   !Pressure, midpoint [Pa]
+   real(kind=RKIND), intent(in ) :: t(nVertLevels, nCells)   !Temperature [K]
+   real(kind=RKIND), intent(in ) :: z(nVertLevels, nCells)   !Height/altitude [m]
+   real(kind=RKIND), intent(out) :: tropk(nCells)            !Tropopause pressure [Pa]
    integer,              intent(in ) :: nCells                   !number of grid cells
    integer,              intent(in ) :: nVertLevels              !number of vertical levels
 
