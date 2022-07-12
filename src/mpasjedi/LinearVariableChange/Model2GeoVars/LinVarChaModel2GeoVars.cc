@@ -45,38 +45,38 @@ LinVarChaModel2GeoVars::~LinVarChaModel2GeoVars() {
   oops::Log::trace() << classname() << " destructor done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void LinVarChaModel2GeoVars::multiply(const Increment & dxin, Increment & dxout)
+void LinVarChaModel2GeoVars::changeVarTL(const Increment & dxin, Increment & dxout)
   const {
-  util::Timer timer(classname(), "multiply");
-  oops::Log::trace() << classname() << " multiply starting" << std::endl;
+  util::Timer timer(classname(), "changeVarTL");
+  oops::Log::trace() << classname() << " changeVarTL starting" << std::endl;
   mpasjedi_lvc_model2geovars_multiply_f90(keyFtnConfig_, geom_->toFortran(),
                                          dxin.toFortran(), dxout.toFortran());
-  oops::Log::trace() << classname() << " multiply done" << std::endl;
+  oops::Log::trace() << classname() << " changeVarTL done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void LinVarChaModel2GeoVars::multiplyInverse(const Increment & dxin, Increment & dxout)
+void LinVarChaModel2GeoVars::changeVarInverseTL(const Increment & dxin, Increment & dxout)
   const {
-  util::Timer timer(classname(), "multiplyInverse");
-  oops::Log::trace() << classname() << " multiplyInverse starting" << std::endl;
+  util::Timer timer(classname(), "changeVarInverseTL");
+  oops::Log::trace() << classname() << " changeVarInverseTL starting" << std::endl;
   dxout = dxin;
-  oops::Log::trace() << classname() << " multiplyInverse done" << std::endl;
+  oops::Log::trace() << classname() << " changeVarInverseTL done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void LinVarChaModel2GeoVars::multiplyAD(const Increment & dxin, Increment & dxout)
+void LinVarChaModel2GeoVars::changeVarAD(const Increment & dxin, Increment & dxout)
   const {
-  util::Timer timer(classname(), "multiplyAD");
-  oops::Log::trace() << classname() << " multiplyAD starting" << dxin << std::endl;
+  util::Timer timer(classname(), "changeVarAD");
+  oops::Log::trace() << classname() << " changeVarAD starting" << dxin << std::endl;
   mpasjedi_lvc_model2geovars_multiplyadjoint_f90(keyFtnConfig_, geom_->toFortran(),
                                                 dxin.toFortran(), dxout.toFortran());
-  oops::Log::trace() << classname() << " multiplyAD done" << dxout << std::endl;
+  oops::Log::trace() << classname() << " changeVarAD done" << dxout << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void LinVarChaModel2GeoVars::multiplyInverseAD(const Increment & dxin, Increment & dxout)
+void LinVarChaModel2GeoVars::changeVarInverseAD(const Increment & dxin, Increment & dxout)
   const {
-  util::Timer timer(classname(), "multiplyInverseAD");
-  oops::Log::trace() << classname() << " multiplyInverseAD starting" << std::endl;
+  util::Timer timer(classname(), "changeVarInverseAD");
+  oops::Log::trace() << classname() << " changeVarInverseAD starting" << std::endl;
   dxout = dxin;
-  oops::Log::trace() << classname() << " multiplyInverseAD done" << std::endl;
+  oops::Log::trace() << classname() << " changeVarInverseAD done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
 void LinVarChaModel2GeoVars::print(std::ostream & os)
