@@ -102,7 +102,7 @@ class Increment : public util::Printable,
   void serialize(std::vector<real_type> &) const override;
   void deserialize(const std::vector<real_type> &, size_t &) override;
 
-  std::shared_ptr<const Geometry> geometry() const {return geom_;}
+  const Geometry & geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}
 
   const util::DateTime & time() const {return time_;}
@@ -118,7 +118,7 @@ class Increment : public util::Printable,
  private:
   void print(std::ostream &) const override;
   F90inc keyInc_;
-  std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   oops::Variables vars_;
   util::DateTime time_;
 };

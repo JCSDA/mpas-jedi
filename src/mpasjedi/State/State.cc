@@ -2,7 +2,7 @@
  * (C) Copyright 2017-2022 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
- * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
 #include <algorithm>
@@ -25,23 +25,23 @@ namespace mpas {
 State::State(const Geometry & geom,
                      const oops::Variables & vars,
                      const util::DateTime & time)
-  : geom_(new Geometry(geom)), vars_(vars), time_(time)
+  : geom_(geom), vars_(vars), time_(time)
 {
   oops::Log::trace() << "State::State create." << std::endl;
-  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
+  mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
   oops::Log::trace() << "State::State created." << std::endl;
 }
 // -----------------------------------------------------------------------------
 State::State(const Geometry & geom,
                      const StateParameters & params)
-  : geom_(new Geometry(geom)), time_(util::DateTime())
+  : geom_(geom), time_(util::DateTime())
 {
   oops::Log::trace() << "State::State create and read." << std::endl;
 
   // Set up vars
   vars_ = oops::Variables(params.state_variables.value());
 
-  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
+  mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
 
   if (params.analytic_init.value() != boost::none) {
     analytic_init(params);
@@ -57,13 +57,13 @@ State::State(const Geometry & geom,
 // -----------------------------------------------------------------------------
 State::State(const Geometry & geom,
                      const State & other)
-  : geom_(new Geometry(geom)), vars_(other.vars_), time_(other.time_)
+  : geom_(geom), vars_(other.vars_), time_(other.time_)
 {
   oops::Log::trace() << "State::State create by interpolation."
                      << std::endl;
 
   // create new state with geom
-  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
+  mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
 
   // interpolate other to geom
   changeResolution(other);
@@ -77,7 +77,7 @@ State::State(const State & other)
 {
   oops::Log::trace() << "State::State before copied." << std::endl;
 
-  mpas_state_create_f90(keyState_, geom_->toFortran(), stateVars(), vars_);
+  mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
   mpas_state_copy_f90(keyState_, other.keyState_);
   oops::Log::trace() << "State::State copied." << std::endl;
 }
@@ -99,7 +99,7 @@ State & State::operator=(const State & rhs) {
 void State::toFieldSet(atlas::FieldSet & fset) const {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
-  mpas_state_to_fieldset_f90(keyState_, geom_->toFortran(), vars_, fset.get(), include_halo,
+  mpas_state_to_fieldset_f90(keyState_, geom_.toFortran(), vars_, fset.get(), include_halo,
                           flip_vert_lev);
   oops::Log::trace() << "State toFieldSet done" << std::endl;
 }
@@ -107,7 +107,7 @@ void State::toFieldSet(atlas::FieldSet & fset) const {
 void State::fromFieldSet(const atlas::FieldSet & fset) {
   const bool include_halo = false;  /* always false, only fill ceter of domain */
   const bool flip_vert_lev = true;
-  mpas_state_from_fieldset_f90(keyState_, geom_->toFortran(), vars_, fset.get(), include_halo,
+  mpas_state_from_fieldset_f90(keyState_, geom_.toFortran(), vars_, fset.get(), include_halo,
                           flip_vert_lev);
   oops::Log::trace() << "State fromFieldSet done" << std::endl;
 }
@@ -115,6 +115,7 @@ void State::fromFieldSet(const atlas::FieldSet & fset) {
 /// Interpolate full state
 // -----------------------------------------------------------------------------
 void State::changeResolution(const State & other) {
+  oops::Log::trace() << "State changed resolution starting" << std::endl;
   mpas_state_change_resol_f90(keyState_, other.toFortran());
   oops::Log::trace() << "State changed resolution" << std::endl;
 }
@@ -125,7 +126,7 @@ State & State::operator+=(const Increment & dx) {
   oops::Log::trace() << "State add increment starting" << std::endl;
   ASSERT(validTime() == dx.validTime());
   // Interpolate increment to state resolution
-  Increment dx_sr(*geom_, dx);
+  Increment dx_sr(geom_, dx);
   mpas_state_add_incr_f90(keyState_, dx_sr.toFortran());
   oops::Log::trace() << "State add increment done" << std::endl;
   return *this;

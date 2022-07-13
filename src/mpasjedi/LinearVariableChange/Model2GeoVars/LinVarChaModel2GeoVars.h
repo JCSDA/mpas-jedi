@@ -42,7 +42,7 @@ class LinVarChaModel2GeoVars : public LinearVariableChangeBase,
   void changeVarInverseAD(const Increment &, Increment &) const override;
 
  private:
-  std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   F90lvc_M2G keyFtnConfig_;
   void print(std::ostream &) const override;
 };

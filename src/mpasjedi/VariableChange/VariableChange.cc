@@ -43,7 +43,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
   oops::Log::trace() << "VariableChange::changeVar, vars" << vars << std::endl;
   // Create output state
-  State xout(*x.geometry(), vars, x.time());
+  State xout(x.geometry(), vars, x.time());
 
   // Call variable change
   variableChange_->changeVar(x, xout);
@@ -68,7 +68,7 @@ void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) c
   }
 
   // Create output state
-  State xout(*x.geometry(), vars, x.time());
+  State xout(x.geometry(), vars, x.time());
 
   // Call variable change
   variableChange_->changeVarInverse(x, xout);

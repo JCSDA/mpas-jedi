@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-//?  #include "oops/generic/InterpolatorUnstructured.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -29,18 +28,18 @@ namespace mpas {
 Increment::Increment(const Geometry & geom,
                              const oops::Variables & vars,
                              const util::DateTime & time):
-  geom_(new Geometry(geom)), vars_(vars), time_(time)
+  geom_(geom), vars_(vars), time_(time)
 {
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
+  mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_zero_f90(keyInc_);
   oops::Log::trace() << "Increment::Increment (from geom, vars and time) done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 Increment::Increment(const Geometry & resol,
                              const Increment & other)
-  : geom_(new Geometry(resol)), vars_(other.vars_), time_(other.time_)
+  : geom_(resol), vars_(other.vars_), time_(other.time_)
 {
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
+  mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "Increment::Increment (from geom/resol and other) done" << std::endl;
 }
@@ -48,7 +47,7 @@ Increment::Increment(const Geometry & resol,
 Increment::Increment(const Increment & other, const bool copy)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
+  mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   if (copy) {
     mpas_increment_copy_f90(keyInc_, other.keyInc_);
   } else {
@@ -60,7 +59,7 @@ Increment::Increment(const Increment & other, const bool copy)
 Increment::Increment(const Increment & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {
-  mpas_increment_create_f90(keyInc_, geom_->toFortran(), vars_);
+  mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_copy_f90(keyInc_, other.keyInc_);
   oops::Log::trace() << "Increment::Increment (from other) done" << std::endl;
 }
@@ -77,18 +76,17 @@ void Increment::diff(const State & x1, const State & x2) {
   ASSERT(this->validTime() == x2.validTime());
   oops::Log::debug() << "Increment:diff x1 " << x1.toFortran() << std::endl;
   oops::Log::debug() << "Increment:diff x2 " << x2.toFortran() << std::endl;
-
   // If the states x1, x2 have a different geometry than the increment, need to
   // convert them.
-  std::shared_ptr<const Geometry> stateGeom = x1.geometry();
-  ASSERT(stateGeom->isEqual(*(x2.geometry())));
-  if (geom_->isEqual(*stateGeom)) {
+  const Geometry & stateGeom = x1.geometry();
+  ASSERT(stateGeom.isEqual(x2.geometry()));
+  if (geom_.isEqual(stateGeom)) {
     mpas_increment_diff_incr_f90(keyInc_, x1.toFortran(), x2.toFortran());
   } else {
   // Note: this is likely a high-to-low resolution interpolation that should
   //       probably not be done with barycentric?
-    State x1_ir(*geom_, x1);
-    State x2_ir(*geom_, x2);
+    State x1_ir(geom_, x1);
+    State x2_ir(geom_, x2);
     mpas_increment_diff_incr_f90(keyInc_, x1_ir.toFortran(), x2_ir.toFortran());
   }
 }
@@ -163,14 +161,11 @@ void Increment::random() {
 // -----------------------------------------------------------------------------
 /// ATLAS
 // -----------------------------------------------------------------------------
-//
-//
-// -------------------------------------------------------------------------------------------------
 void Increment::fromFieldSet(const atlas::FieldSet & fset) {
   const bool include_halo = false;  /* always false, only fill ceter of domain */
   const bool flip_vert_lev = true;
   oops::Log::trace() << "mpasjedi::Increment::fromFieldSet starting" << std::endl;
-  mpas_increment_from_fieldset_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
+  mpas_increment_from_fieldset_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
                                    flip_vert_lev);
   oops::Log::trace() << "mpasjedi::Increment::fromFieldSet done" << std::endl;
 }
@@ -179,7 +174,7 @@ void Increment::toFieldSet(atlas::FieldSet & fset) const {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
   oops::Log::trace() << "mpasjedi::Increment:::toFieldSet starting" << std::endl;
-  mpas_increment_to_fieldset_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
+  mpas_increment_to_fieldset_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
                               flip_vert_lev);
   oops::Log::trace() << "mpasjedi::Increment::toFieldSet done" << std::endl;
 }
@@ -189,7 +184,7 @@ void Increment::toFieldSetAD(const atlas::FieldSet & fset) {
   const bool include_halo = true;
   const bool flip_vert_lev = true;
   oops::Log::trace() << "mpasjedi::Increment:::toFieldSetAD starting" << std::endl;
-  mpas_increment_to_fieldset_ad_f90(keyInc_, geom_->toFortran(), vars_, fset.get(), include_halo,
+  mpas_increment_to_fieldset_ad_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
                                  flip_vert_lev);
   oops::Log::trace() << "mpasjedi::Increment::toFieldSetAD done" << std::endl;
 }

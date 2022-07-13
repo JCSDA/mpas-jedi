@@ -26,10 +26,10 @@ static VariableChangeMaker<VarChaModel2GeoVars>
   makerVarChaDefault_("default");
 // -------------------------------------------------------------------------------------------------
 VarChaModel2GeoVars::VarChaModel2GeoVars(const Geometry & geom,
- const eckit::LocalConfiguration & config) : VariableChangeBase(), geom_(new Geometry(geom)) {
+ const eckit::LocalConfiguration & config) : VariableChangeBase(), geom_(geom) {
   util::Timer timer(classname(), "VarChaModel2GeoVars");
   oops::Log::trace() << classname() << " constructor starting" << std::endl;
-  mpasjedi_vc_model2geovars_create_f90(keyFtnConfig_, geom_->toFortran(), config);
+  mpasjedi_vc_model2geovars_create_f90(keyFtnConfig_, geom_.toFortran(), config);
   oops::Log::trace() << classname() << " constructor done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ VarChaModel2GeoVars::~VarChaModel2GeoVars() {
 void VarChaModel2GeoVars::changeVar(const State & xin, State & xout) const {
   util::Timer timer(classname(), "changeVar");
   oops::Log::trace() << classname() << " changeVar starting" << std::endl;
-  mpasjedi_vc_model2geovars_changevar_f90(keyFtnConfig_, geom_->toFortran(), xin.toFortran(),
+  mpasjedi_vc_model2geovars_changevar_f90(keyFtnConfig_, geom_.toFortran(), xin.toFortran(),
                                          xout.toFortran());
   xout.validTime() = xin.validTime();
   oops::Log::trace() << classname() << " changeVar done" << std::endl;

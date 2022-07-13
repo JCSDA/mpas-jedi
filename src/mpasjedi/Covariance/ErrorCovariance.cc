@@ -10,6 +10,7 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/base/Variables.h"
+#include "oops/util/abor1_cpp.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Covariance/ErrorCovariance.h"
@@ -41,8 +42,8 @@ ErrorCovariance::~ErrorCovariance() {
 // -----------------------------------------------------------------------------
 
 void ErrorCovariance::linearize(const State &,
-                                    const Geometry & resol) {
-  geom_.reset(new Geometry(resol));
+                                const Geometry & resol)  {
+  ABORT("ErrorCovariance::linearize not implemented");
 }
 
 // -----------------------------------------------------------------------------

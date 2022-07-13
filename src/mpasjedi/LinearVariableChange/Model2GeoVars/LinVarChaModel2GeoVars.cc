@@ -30,10 +30,10 @@ static LinearVariableChangeMaker<LinVarChaModel2GeoVars>
 LinVarChaModel2GeoVars::LinVarChaModel2GeoVars(
   const State & bg, const State & fg, const Geometry & resol,
   const eckit::LocalConfiguration & config) : LinearVariableChangeBase(),
-  geom_(new Geometry(resol)) {
+  geom_(resol) {
   util::Timer timer(classname(), "LinVarChaModel2GeoVars");
   oops::Log::trace() << classname() << " constructor starting" << std::endl;
-  mpasjedi_lvc_model2geovars_create_f90(keyFtnConfig_, geom_->toFortran(), bg.toFortran(),
+  mpasjedi_lvc_model2geovars_create_f90(keyFtnConfig_, geom_.toFortran(), bg.toFortran(),
                                        fg.toFortran(), config);
   oops::Log::trace() << classname() << " constructor done" << std::endl;
 }
@@ -49,7 +49,7 @@ void LinVarChaModel2GeoVars::changeVarTL(const Increment & dxin, Increment & dxo
   const {
   util::Timer timer(classname(), "changeVarTL");
   oops::Log::trace() << classname() << " changeVarTL starting" << std::endl;
-  mpasjedi_lvc_model2geovars_multiply_f90(keyFtnConfig_, geom_->toFortran(),
+  mpasjedi_lvc_model2geovars_multiply_f90(keyFtnConfig_, geom_.toFortran(),
                                          dxin.toFortran(), dxout.toFortran());
   oops::Log::trace() << classname() << " changeVarTL done" << std::endl;
 }
@@ -66,7 +66,7 @@ void LinVarChaModel2GeoVars::changeVarAD(const Increment & dxin, Increment & dxo
   const {
   util::Timer timer(classname(), "changeVarAD");
   oops::Log::trace() << classname() << " changeVarAD starting" << dxin << std::endl;
-  mpasjedi_lvc_model2geovars_multiplyadjoint_f90(keyFtnConfig_, geom_->toFortran(),
+  mpasjedi_lvc_model2geovars_multiplyadjoint_f90(keyFtnConfig_, geom_.toFortran(),
                                                 dxin.toFortran(), dxout.toFortran());
   oops::Log::trace() << classname() << " changeVarAD done" << dxout << std::endl;
 }

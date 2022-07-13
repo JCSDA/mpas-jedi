@@ -34,7 +34,7 @@ class VarChaModel2GeoVars : public VariableChangeBase,
 
  private:
   F90vc_M2G keyFtnConfig_;
-  std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   void print(std::ostream &) const override;
 };
 

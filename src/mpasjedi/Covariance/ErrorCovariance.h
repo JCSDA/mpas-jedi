@@ -52,7 +52,6 @@ class ErrorCovariance : public util::Printable,
  private:
   void print(std::ostream &) const;
   F90bmat keyErrCov_;
-  std::unique_ptr<const Geometry> geom_;
   util::DateTime time_;
 };
 // -----------------------------------------------------------------------------

@@ -53,7 +53,7 @@ class LinearVariableChange : public util::Printable {
 
  private:
   void print(std::ostream &) const override;
-  std::shared_ptr<const Geometry> geom_;
+  const Geometry & geom_;
   Parameters_ params_;
   std::unique_ptr<LinearVariableChangeBase> linearVariableChange_;
 };
