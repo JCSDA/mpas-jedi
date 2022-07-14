@@ -1,6 +1,7 @@
 geometry:
   nml_file: "./namelist.atmosphere"
   streams_file: "./streams.atmosphere"
+  bump vunit: "avgheight"
 input variables: &vars
 - stream_function
 - velocity_potential

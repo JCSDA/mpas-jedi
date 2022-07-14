@@ -23,7 +23,7 @@ use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
 use mpas_derived_types
 use mpas_kind_types
 use mpas_constants
-use mpas_dmpar, only: mpas_dmpar_sum_int
+use mpas_dmpar, only: mpas_dmpar_sum_int, mpas_dmpar_sum_real
 use mpas_subdriver
 use atm_core
 use mpas_pool_routines
@@ -401,6 +401,7 @@ subroutine geo_fill_extra_fields(self, afieldset)
    integer :: i, iz, jz
    real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
    real(kind=RKIND), pointer :: pressure_base(:,:)
+   real(kind=RKIND) :: var_local, var_global
    type(atlas_field) :: afield
 
    integer :: nx, nx2
@@ -442,11 +443,16 @@ subroutine geo_fill_extra_fields(self, afieldset)
          real_ptr_2(jz,:) = real(iz, kind_real)
       else if (trim(self % bump_vunit) .eq. 'height') then
          real_ptr_2(jz,1:nx) = MPAS_JEDI_HALF_kr * &
-         ( self%zgrid(jz,1:nx) + self%zgrid(jz+1,1:nx) )
+         ( self%zgrid(iz,1:nx) + self%zgrid(iz+1,1:nx) )
+      else if (trim(self % bump_vunit) .eq. 'avgheight') then
+         var_local = MPAS_JEDI_HALF_kr * ( sum(self%zgrid(iz,1:self%nCellsSolve)) &
+                                         + sum(self%zgrid(iz+1,1:self%nCellsSolve)) )
+         call mpas_dmpar_sum_real(self%domain%dminfo,var_local,var_global)
+         real_ptr_2(jz,:) = real(var_global / self%nCellsGlobal , kind_real)
       else if (trim(self % bump_vunit) .eq. 'scaleheight') then
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
-         real_ptr_2(jz,1:nx) = log(real(pressure_base(jz,1:nx), kind_real))
+         real_ptr_2(jz,1:nx) = log(real(pressure_base(iz,1:nx), kind_real))
       end if
    end do
    call afieldset%add(afield)

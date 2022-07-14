@@ -42,7 +42,7 @@ class GeometryParameters : public oops::Parameters {
 
   /// vertical coordinate for BUMP to be used in the parameter estimate application
   /// not needed for hofx and variational applications
-  /// available options are modellevel, height, and scaleheight
+  /// available options are modellevel, height, avgheight, and scaleheight
   oops::Parameter<std::string> bump_vunit{ "bump vunit", "modellevel", this};
 };
 // -------------------------------------------------------------------------------------------------
