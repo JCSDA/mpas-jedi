@@ -101,7 +101,7 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: deserialize  => deserialize_fields
      procedure :: to_fieldset
      procedure :: from_fieldset
-     procedure :: to_fieldset_ad     
+     procedure :: to_fieldset_ad
      !has
      generic, public :: has => has_field, has_fields
      procedure :: has_field
@@ -1429,7 +1429,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    logical,               intent(in)    :: flip_vert_lev
 
    integer :: jvar, nlevels
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    integer, pointer :: i1d_ptr_a(:), i2d_ptr_a(:,:)
    logical :: var_found
@@ -1437,7 +1437,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    type(atlas_metadata) :: meta
    type(mpas_pool_iterator_type) :: poolItr
 
-   type(mpas_pool_data_type), pointer :: data_aux 
+   type(mpas_pool_data_type), pointer :: data_aux
    type(field1DReal), pointer :: r1
    type(field2DReal), pointer :: r2
    type(field1DInteger), pointer :: i1
@@ -1445,10 +1445,10 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    integer :: nx, ilev, jlev
    integer :: j
 
-   ! note:  
-   ! get-or-create atlas field, exch-halo in mpas-field, flip_vert_level, 
+   ! note:
+   ! get-or-create atlas field, exch-halo in mpas-field, flip_vert_level,
    ! pass data/field to atlas, assign 'default, interp_type' in atlas's metadata
-   
+
    if (include_halo) then
       nx=geom%nCells
    else
@@ -1466,7 +1466,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             ! Is there a purpose for this setup in getVertLevels ?
             !
             if (poolItr%nDims==1) then
-               nlevels = 0
+               nlevels = 1
             else if (poolItr%nDims==2) then
                nlevels = getVertLevels(self%subFields, vars%variable(jvar))
             else if (poolItr%nDims==3) then
@@ -1498,8 +1498,8 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      call mpas_dmpar_exch_halo_field(r1)
                   endif
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-                  call afield%data(real_ptr_1)
-                  real_ptr_1(1:nx) = real(r1d_ptr_a(1:nx), kind_real)
+                  call afield%data(real_ptr)
+                  real_ptr(1,1:nx) = real(r1d_ptr_a(1:nx), kind_real)
                   !
                else if (poolItr%nDims==2) then
                   if (include_halo) then
@@ -1507,7 +1507,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      call mpas_dmpar_exch_halo_field(r2)
                   end if
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
-                  call afield%data(real_ptr_2)
+                  call afield%data(real_ptr)
                   ! for CRTM: vertical level flip
                   do jlev = 1, nlevels
                      if (flip_vert_lev) then
@@ -1515,7 +1515,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      else
                         ilev = jlev
                      endif
-                     real_ptr_2(ilev,1:nx) = real(r2d_ptr_a(jlev,1:nx), kind_real)
+                     real_ptr(ilev,1:nx) = real(r2d_ptr_a(jlev,1:nx), kind_real)
                   enddo
                end if
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
@@ -1525,8 +1525,8 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                      call mpas_dmpar_exch_halo_field(i1)
                   end if
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), i1d_ptr_a)
-                  call afield%data(real_ptr_1)
-                  real_ptr_1(1:nx) = real(i1d_ptr_a(1:nx), kind_real)
+                  call afield%data(real_ptr)
+                  real_ptr(1,1:nx) = real(i1d_ptr_a(1:nx), kind_real)
                else if (poolItr%nDims==2) then
                   write(message,*) '--> fill_geovals: nDims == 2:  not handled for integers'
                   call abor1_ftn(message)
@@ -1534,7 +1534,8 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             else
                STOP 'poolItr % dataType neither real nor integer'
             endif
-               
+
+
             meta = afield%metadata()
             if (poolItr % dataType == MPAS_POOL_REAL) then
                call meta%set('interp_type', 'default')
@@ -1567,15 +1568,15 @@ subroutine from_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_le
    type(atlas_fieldset), intent(in)    :: afieldset
    logical,              intent(in)    :: include_halo
    logical,              intent(in)    :: flip_vert_lev
-   
+
    integer :: jvar
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
 
-   type(mpas_pool_data_type), pointer :: data_aux 
+   type(mpas_pool_data_type), pointer :: data_aux
    type(field1DReal), pointer :: r1
    type(field2DReal), pointer :: r2
 
@@ -1592,7 +1593,7 @@ subroutine from_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_le
    else
       nx=geom%nCellsSolve
    endif
-            
+
    do jvar = 1,vars%nvars()
       var_found = .false.
       call mpas_pool_begin_iteration(self%subFields)
@@ -1600,25 +1601,25 @@ subroutine from_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_le
          if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
             ! Get atlas field
             afield = afieldset%field(vars%variable(jvar))
-            ! Get MPAS data (pool_data_type) 
+            ! Get MPAS data (pool_data_type)
             call self%get_data(poolItr%memberName, data_aux)
             nlevels = getVertLevels(self%subFields, vars%variable(jvar))
             if (poolItr % dataType == MPAS_POOL_REAL) then
                if (poolItr%nDims==1) then
-                  call afield%data(real_ptr_1)
+                  call afield%data(real_ptr)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-                  r1d_ptr_a(1:nx) = real(real_ptr_1(1:nx), RKIND)
+                  r1d_ptr_a(1:nx) = real(real_ptr(1,1:nx), RKIND)
                else if (poolItr%nDims==2) then
-                  call afield%data(real_ptr_2)
+                  call afield%data(real_ptr)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
-                  ! for CRTM: vertical level flip 
+                  ! for CRTM: vertical level flip
                   do jlev = 1, nlevels
                      if (flip_vert_lev) then
                         ilev = nlevels - jlev + 1
                      else
                         ilev = jlev
                      endif
-                     r2d_ptr_a(jlev,1:nx) = real(real_ptr_2(ilev,1:nx), RKIND) 
+                     r2d_ptr_a(jlev,1:nx) = real(real_ptr(ilev,1:nx), RKIND)
                   enddo
                end if
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
@@ -1652,15 +1653,15 @@ subroutine to_fieldset_ad (self, geom, vars, afieldset, include_halo, flip_vert_
    type(atlas_fieldset), intent(in)    :: afieldset
    logical,              intent(in)    :: include_halo
    logical,              intent(in)    :: flip_vert_lev
-   
+
    integer :: jvar
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
    logical :: var_found
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
 
-   type(mpas_pool_data_type), pointer :: data_aux 
+   type(mpas_pool_data_type), pointer :: data_aux
    type(field1DReal), pointer :: r1
    type(field2DReal), pointer :: r2
 
@@ -1668,15 +1669,15 @@ subroutine to_fieldset_ad (self, geom, vars, afieldset, include_halo, flip_vert_
    ! Note:
    !   this is the adjoint of to_fieldset, so reverse the code instruction order
    !   1. do assignment (Y_atlas=X_mpas --> X_mpas* = X* + Y* ) in vertical level flip
-   !   2. exch_halo_ad :  AD code for MPI exch_halo 
-   
+   !   2. exch_halo_ad :  AD code for MPI exch_halo
+
    if (include_halo) then
       nx=geom%nCells
    else
       nx=geom%nCellsSolve
       call abor1_ftn('Error in subroutine to_fieldset_ad, must have halo here')
    endif
-            
+
    do jvar = 1,vars%nvars()
       var_found = .false.
       call mpas_pool_begin_iteration(self%subFields)
@@ -1684,18 +1685,18 @@ subroutine to_fieldset_ad (self, geom, vars, afieldset, include_halo, flip_vert_
          if (trim(vars%variable(jvar))==trim(poolItr%memberName)) then
             ! Get atlas field
             afield = afieldset%field(vars%variable(jvar))
-            ! Get MPAS data (pool_data_type) 
+            ! Get MPAS data (pool_data_type)
             call self%get_data(poolItr%memberName, data_aux)
             nlevels = getVertLevels(self%subFields, vars%variable(jvar))
             if (poolItr % dataType == MPAS_POOL_REAL) then
                if (poolItr%nDims==1) then
-                  call afield%data(real_ptr_1)
+                  call afield%data(real_ptr)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r1d_ptr_a)
-                  r1d_ptr_a(1:nx) = r1d_ptr_a(1:nx) + real(real_ptr_1(1:nx), RKIND)
+                  r1d_ptr_a(1:nx) = r1d_ptr_a(1:nx) + real(real_ptr(1,1:nx), RKIND)
                   r1 => data_aux%r1
                   call mpas_dmpar_exch_halo_adj_field(r1)
                else if (poolItr%nDims==2) then
-                  call afield%data(real_ptr_2)
+                  call afield%data(real_ptr)
                   call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), r2d_ptr_a)
                   ! for CRTM: vertical level flip
                   do jlev = nlevels, 1, -1
@@ -1704,7 +1705,7 @@ subroutine to_fieldset_ad (self, geom, vars, afieldset, include_halo, flip_vert_
                      else
                         ilev = jlev
                      endif
-                     r2d_ptr_a(jlev,1:nx) = r2d_ptr_a(jlev,1:nx) + real(real_ptr_2(ilev,1:nx), RKIND) 
+                     r2d_ptr_a(jlev,1:nx) = r2d_ptr_a(jlev,1:nx) + real(real_ptr(ilev,1:nx), RKIND)
                   enddo
                   r2 => data_aux%r2
                   call mpas_dmpar_exch_halo_adj_field(r2)

@@ -399,14 +399,14 @@ subroutine geo_fill_extra_fields(self, afieldset)
    type(atlas_fieldset), intent(inout) :: afieldset
 
    integer :: i, iz, jz
-   real(kind=kind_real), pointer :: real_ptr_1(:), real_ptr_2(:,:)
+   real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: pressure_base(:,:)
    real(kind=RKIND) :: var_local, var_global
    type(atlas_field) :: afield
 
    integer :: nx, nx2
    integer, allocatable :: hmask_1(:)
-   integer, pointer :: int_ptr(:)
+   integer, pointer :: int_ptr(:,:)
    ! subroutine for saber, always include halo
    
    nx = self%nCells        ! rank with halo
@@ -414,21 +414,21 @@ subroutine geo_fill_extra_fields(self, afieldset)
 
    ! Add halo mask
    afield = self%afunctionspace_incl_halo%create_field &
-        (name='hmask', kind=atlas_integer(kind_int), levels=0)
+        (name='hmask', kind=atlas_integer(kind_int), levels=1)
    call afield%data(int_ptr)
    allocate( hmask_1(nx) )
    hmask_1(1:nx2)=1
    if (nx2<nx) hmask_1(nx2+1:nx)=0
-   int_ptr(1:nx) = hmask_1(1:nx)
+   int_ptr(1,1:nx) = hmask_1(1:nx)
    call afieldset%add(afield)
    call afield%final()
    deallocate (hmask_1)
    
    ! Add area
    afield = self%afunctionspace_incl_halo%create_field &
-        (name='area', kind=atlas_real(kind_real), levels=0)
-   call afield%data(real_ptr_1)
-   real_ptr_1(1:nx) = real(self%areaCell(1:nx), kind_real)
+        (name='area', kind=atlas_real(kind_real), levels=1)
+   call afield%data(real_ptr)
+   real_ptr(1,1:nx) = real(self%areaCell(1:nx), kind_real)
    call afieldset%add(afield)
    call afield%final()
 
@@ -436,23 +436,24 @@ subroutine geo_fill_extra_fields(self, afieldset)
    ! Add vertical unit
    afield = self%afunctionspace_incl_halo%create_field &
         (name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
-   call afield%data(real_ptr_2)
+   call afield%data(real_ptr)
    do jz=1,self%nVertLevels
       iz = self%nVertLevels - jz + 1
       if (trim(self % bump_vunit) .eq. 'modellevel') then
-         real_ptr_2(jz,:) = real(iz, kind_real)
+         real_ptr(jz,1:nx) = real(iz, kind_real)
       else if (trim(self % bump_vunit) .eq. 'height') then
-         real_ptr_2(jz,1:nx) = MPAS_JEDI_HALF_kr * &
+         real_ptr(jz,1:nx) = MPAS_JEDI_HALF_kr * &
          ( self%zgrid(iz,1:nx) + self%zgrid(iz+1,1:nx) )
       else if (trim(self % bump_vunit) .eq. 'avgheight') then
-         var_local = MPAS_JEDI_HALF_kr * ( sum(self%zgrid(iz,1:self%nCellsSolve)) &
-                                         + sum(self%zgrid(iz+1,1:self%nCellsSolve)) )
+         ! find avgheight by averaging across MPI processes, of course without halo
+         var_local = MPAS_JEDI_HALF_kr * ( sum(self%zgrid(iz,  1:nx2)) &
+                                         + sum(self%zgrid(iz+1,1:nx2)) )
          call mpas_dmpar_sum_real(self%domain%dminfo,var_local,var_global)
-         real_ptr_2(jz,:) = real(var_global / self%nCellsGlobal , kind_real)
+         real_ptr(jz,1:nx) = real(var_global / self%nCellsGlobal , kind_real)
       else if (trim(self % bump_vunit) .eq. 'scaleheight') then
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
-         real_ptr_2(jz,1:nx) = log(real(pressure_base(iz,1:nx), kind_real))
+         real_ptr(jz,1:nx) = log(real(pressure_base(iz,1:nx), kind_real))
       end if
    end do
    call afieldset%add(afield)
