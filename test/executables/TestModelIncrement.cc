@@ -6,7 +6,7 @@
  */
 
 #include <oops/test/base/ModelIncrement.h>
-#include <oops/runs/Run.h>
+#include "oops/runs/Run.h"
 
 #include "mpasjedi/Traits.h"
 

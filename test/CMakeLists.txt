@@ -106,6 +106,7 @@ list( APPEND mpas_testinput
   testinput/parameters_bumploc.yaml
   testinput/rtpp.yaml
   testinput/state.yaml
+  testinput/unsinterp.yaml
 )
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
@@ -381,7 +382,7 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${mpas_test_480km} )
 # multi_pe_480: list of processor counts for which to run multi-PE 480km tests
 # options: 2, 4, 6, 8, 12, 16
-list(APPEND multi_pe_480 2 )
+list(APPEND multi_pe_480 2)
 list(APPEND mpas_test_partition_480km x1.2562.graph.info)
 foreach(THIS_NPE ${multi_pe_480})
     if( THIS_NPE GREATER 1 )
@@ -392,6 +393,11 @@ endforeach()
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}
            ${mpas_test_partition_480km} )
+# Singularity for unsinterp: NPE=8 : adhoc
+link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
+           ${CMAKE_CURRENT_BINARY_DIR}
+           x1.2562.graph.info.part.4 )
+
 
 #480km_2stream tests
 list( APPEND mpas_test_480km_2stream
@@ -709,6 +715,7 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
+    add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output

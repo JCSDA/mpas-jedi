@@ -7,12 +7,11 @@
 
 #include "mpasjedi/Traits.h"
 #include "oops/runs/Run.h"
-#include "test/interface/State.h"
-
+#include "test/interface/UnstructuredInterpolator.h"
 
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  test::State<mpas::Traits> tests;
+  test::UnstructuredInterpolator<mpas::Traits> tests;
   return run.execute(tests);
 }

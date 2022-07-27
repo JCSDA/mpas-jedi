@@ -5,14 +5,14 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include <oops/test/interface/ModelAuxIncrement.h>
-#include <oops/runs/Run.h>
-
 #include "mpasjedi/Traits.h"
+#include "oops/runs/Run.h"
+#include "test/interface/ModelAuxIncrement.h"
+
+
 
 int main(const int argc, const char ** argv) {
   oops::Run run(argc, argv);
   test::ModelAuxIncrement<mpas::Traits> tests;
   return run.execute(tests);
 }
-

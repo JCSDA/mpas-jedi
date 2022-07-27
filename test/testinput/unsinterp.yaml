@@ -1,0 +1,12 @@
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+#  deallocate non-da fields: true
+
+number of target points: 30
+latitude bounds of target points: [-90.0, 90.0]
+longitude bounds of target points: [0.0, 360.0]
+number of levels: 3
+variable name: air_temperature
+
+tolerance interpolation: 1.e-2

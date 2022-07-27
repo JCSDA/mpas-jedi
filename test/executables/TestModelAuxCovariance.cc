@@ -5,14 +5,12 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include <oops/test/interface/ModelAuxCovariance.h>
-#include <oops/runs/Run.h>
-
 #include "mpasjedi/Traits.h"
+#include "oops/runs/Run.h"
+#include "test/interface/ModelAuxCovariance.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   test::ModelAuxCovariance<mpas::Traits> tests;
   return run.execute(tests);
 }
-

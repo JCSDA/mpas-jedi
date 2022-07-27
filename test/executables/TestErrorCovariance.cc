@@ -5,8 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
  */
 
-#include <oops/test/interface/ErrorCovariance.h>
-#include <oops/runs/Run.h>
+#include "test/interface/ErrorCovariance.h"
+#include "oops/runs/Run.h"
 
 #include "mpasjedi/Traits.h"
 
