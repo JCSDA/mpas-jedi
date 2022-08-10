@@ -67,7 +67,8 @@ public :: tropopause_pressure_wmo
 ! model2geovars+tlad
 public :: q_to_w, &
           tw_to_tv, &
-          q_fields_forward
+          q_fields_forward, &
+          dryrho_to_moistrho
 public :: tw_to_tv_tl, tw_to_tv_ad, &
           q_to_w_tl, q_to_w_ad, &
           q_fields_tl, q_fields_ad
@@ -973,6 +974,27 @@ endif
 
 end subroutine effectRad_graupel
 
+!-------------------------------------------------------------------------------------------
+subroutine dryrho_to_moistrho (rho,qv,ngrid,nVertLevels)
+
+!----------------------------------------------------------------------
+! compute density of moist air from dry air density
+!-----------------------------------------------------------------------
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(inout) :: rho  ! kg/m^3
+real(kind=RKIND), dimension( nVertLevels, ngrid ), intent(in)    :: qv   ! kg/kg
+          !qc,qi,qr,qs,qg    ! kg/kg
+integer,                                           intent(in)    :: ngrid, nVertLevels
+
+integer  :: i, k
+
+ do i = 1, ngrid
+   do k = 1, nVertLevels
+     rho(k,i) = rho(k,i) * ( MPAS_JEDI_ONE_kr + qv(k,i) ) !+ qc(k,i) &
+                                   ! + qi(k,i) + qr(k,i) + qs(k,i) + qg(k,i) )
+   enddo
+ enddo
+
+end subroutine dryrho_to_moistrho
 !-------------------------------------------------------------------------------------------
 
 end module mpas2ufo_vars_mod

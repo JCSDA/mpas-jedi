@@ -307,6 +307,12 @@ subroutine changevar(self, geom, xm, xg)
             gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr
           end where
 
+        case ( var_airdens ) ! moist_air_density
+          call xm%get('rho', ptrr2_a) ! dry air density, kg/m^3
+          call xm%get('qv',  ptrr2_b) ! water vapor mixing ratio, kg/kg
+          call dryrho_to_moistrho(ptrr2_a, ptrr2_b, nCells, nVertLevels)
+          gdata%r2%array(:,1:nCells) = ptrr2_a(:,1:nCells)
+
         case ( var_prsi ) !-air_pressure_levels
           gdata%r2%array(1:nVertLevelsP1,1:nCells) = plevels(1:nVertLevelsP1,1:nCells)
 
