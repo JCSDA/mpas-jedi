@@ -41,7 +41,7 @@ type :: mpasjedi_linvarcha_c2a
     procedure, public :: multiplyinverseadjoint
 end type mpasjedi_linvarcha_c2a
 
-character(len=1024) :: message
+character(len=2048) :: message
 
 ! ------------------------------------------------------------------------------
 contains
