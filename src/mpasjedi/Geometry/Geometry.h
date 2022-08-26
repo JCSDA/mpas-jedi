@@ -49,6 +49,11 @@ class Geometry : public util::Printable,
   void latlon(std::vector<real_type> &, std::vector<real_type> &, const bool) const;
 
   bool isEqual(const Geometry &) const;
+  // The bool levelsAreTopDown=true is a fixed parameter here (cannot be false);
+  // it is a required parameter to be passed to oops::Geometry -> getvalue -> ufo
+  // - MPAS-Model levels are bottom-to-up, differs from CRTM: Top-to-Bottom
+  // - In mpas-jedi, flip happens in toFieldSet/fromFieldSet(atlas)/geo_fill_extra_fields(saber)
+  const bool levelsAreTopDown() const {return true;}
 
   std::vector<size_t> variableSizes(const oops::Variables &) const;
 
