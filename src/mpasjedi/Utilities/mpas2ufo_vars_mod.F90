@@ -853,11 +853,11 @@ obmr = MPAS_JEDI_ONE_kr/bm_r
 
 do i = 1, ngrid
    do k = 1, nVertLevels
-      rqr(k,i) = max(R1, qr(k,i)*rho(k,i))
+      rqr(k,i) = max(R1, real(qr(k,i),kind=kind_real) * real(rho(k,i),kind=kind_real))
    enddo
 enddo
 
-if (any(rqr > R1)) then
+
    do i = 1, ngrid
       do k = 1, nVertLevels
          re_qr(k,i) = 99.e-6
@@ -875,7 +875,7 @@ if (any(rqr > R1)) then
          end select
       enddo
    enddo
-endif
+
 
 end subroutine effectRad_rainwater
 
@@ -938,11 +938,10 @@ endif
 
 do i = 1, ngrid
    do k = 1, nVertLevels
-      rqg(k,i) = max(R1, qg(k,i)*rho(k,i))
+      rqg(k,i) = max(R1, real(qg(k,i), kind=kind_real) * real(rho(k,i), kind=kind_real))
    enddo
 enddo
 
-if (any( rqg > R1 )) then
    select case (trim(mp_scheme))
    case ('mp_wsm6')
       re_qg = 49.7e-6
@@ -970,7 +969,7 @@ if (any( rqg > R1 )) then
    case default
       re_qg = 600.e-6
    end select
-endif
+
 
 end subroutine effectRad_graupel
 
