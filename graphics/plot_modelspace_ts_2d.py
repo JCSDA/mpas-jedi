@@ -97,7 +97,7 @@ def readdata():
 
                 iplot = iplot +1
                 filename = ''.join(varNamesListAll[i])
-                pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
+                pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, 0.6)
 
           #plot diff between two exp for RMS:
           if (mu.diff2exp == 'True' and ''.join(varNamesListAll[i])[-3:] == 'RMS'):
@@ -130,7 +130,7 @@ def readdata():
                       )
                       iplot = iplot + 1
                       filename = ''.join(varNamesListAll[i])+mu.expNames[iexp]+'-RMS'+mu.expNames[0] #''.join(varNamesListAll[i])+'_TS_2d'
-                      pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
+                      pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, 0.6)
 def main():
     readdata()
 

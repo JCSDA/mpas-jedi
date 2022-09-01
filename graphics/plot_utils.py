@@ -32,6 +32,45 @@ greyIterator = [
   [0.8, 0.8, 0.8],
 ]
 
+subplotIterator = [
+'a', 'b', 'c', 'd', 'e',
+'f', 'g', 'h', 'i', 'j',
+'k', 'l', 'm', 'n', 'o',
+'p', 'q', 'r', 's', 't',
+'y', 'v', 'w', 'x', 'y',
+'z',
+'A', 'B', 'C', 'D', 'E',
+'F', 'G', 'H', 'I', 'J',
+'K', 'L', 'M', 'N', 'O',
+'P', 'Q', 'R', 'S', 'T',
+'Y', 'V', 'W', 'X', 'Y',
+'Z',
+'aa', 'ab', 'ac', 'ad', 'ae',
+'af', 'ag', 'ah', 'ai', 'aj',
+'ak', 'al', 'am', 'an', 'ao',
+'ap', 'aq', 'ar', 'as', 'at',
+'ay', 'av', 'aw', 'ax', 'ay',
+'az',
+'ba', 'bb', 'bc', 'bd', 'be',
+'bf', 'bg', 'bh', 'bi', 'bj',
+'bk', 'bl', 'bm', 'bn', 'bo',
+'bp', 'bq', 'br', 'bs', 'bt',
+'by', 'bv', 'bw', 'bx', 'by',
+'bz',
+'ca', 'cb', 'cc', 'cd', 'ce',
+'cf', 'cg', 'ch', 'ci', 'cj',
+'ck', 'cl', 'cm', 'cn', 'co',
+'cp', 'cq', 'cr', 'cs', 'ct',
+'cy', 'cv', 'cw', 'cx', 'cy',
+'cz',
+'da', 'db', 'dc', 'dd', 'de',
+'df', 'dg', 'dh', 'di', 'dj',
+'dk', 'dl', 'dm', 'dn', 'do',
+'dp', 'dq', 'dr', 'ds', 'dt',
+'dy', 'dv', 'dw', 'dx', 'dy',
+'dz',
+]
+
 styleIterator = ['-', '--', '-.', ':']
 
 # fast varying line colors
@@ -66,6 +105,12 @@ def plotLineStyle(nLines = 1, index = 0, nSpaghetti = None):
   else:
     return defaultPLineStyles[np.mod(index,len(defaultPLineStyles))]
 
+def subplotLabel(index = 0):
+  if index < 0:
+    return ''
+  else:
+    return '('+subplotIterator[np.mod(index,len(subplotIterator))]+')'
+
 plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*',
              'k--+','b--+','g--+','r--+','c--+','m--+']
 plotMarkers = ['*','*','*','*','*','*',
@@ -95,15 +140,15 @@ def setup_fig(nx=1, ny=1, inch_width=1.5, aspect=1.0, ybuffer=True):
 
 ###############################################################################
 def finalize_fig(fig, filename='temporary_figure', filetype='png',
-                 ybuffer=True, xbuffer=False):
+                 ybuffer=True, xbuffer=0.35):
 #INPUTS
 # fig - plt.figure() type
 # filename - name of figure file without extension
 # filetype - file extension, e.g., 'png'
-# x/ybuffer - whether to give extra x/y space for labeling
+# ybuffer - whether to give extra y space for labeling
+# xbuffer - percentage of extra x space for labeling
 
-    wspace = 0.35
-    if xbuffer: wspace = 0.6
+    wspace = xbuffer
 
     hspace = 0.40
     if ybuffer: hspace = 0.70

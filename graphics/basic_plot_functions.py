@@ -16,6 +16,7 @@ import matplotlib.colors as colors
 from matplotlib.colors import BoundaryNorm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import matplotlib.transforms as mtransforms
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import plot_utils as pu
@@ -462,7 +463,7 @@ class OneCenteredAxisTicks():
 
     allDecades = np.arange(maxDecade-self.nDecades, maxDecade+1)
 
-    nDecimalDigits = str(int(np.max(np.array([0, 2-allDecades[-1]]))))
+    nDecimalDigits = str(int(np.max(np.array([1, 1+np.abs(allDecades[-1])]))))
     self.majorFormatter = mticker.FormatStrFormatter('%.'+nDecimalDigits+'f')
     self.minorFormatter = mticker.NullFormatter()
 
@@ -519,8 +520,14 @@ maxLegendEntries = 12
 
 # common line width for "ax.plot"
 commonLineWidth = 0.92
-significanceLineWidth = 0.5
-errorbarLineWidth = 0.3
+significanceLineWidth = 0.3
+errorbarLineWidth = 0.38
+
+titleFontSize = 5.0
+cbarLabelFontSize = 3.8
+axisLabelFontSize = 4.0
+legendLabelFontSize1 = 2.8
+legendLabelFontSize2 = 2
 
 ###############################################################################
 lenWarnSer = 0
@@ -568,7 +575,8 @@ def plotSeries(fig,
     ax = fig.add_subplot(ny, nx, iplot+1)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -765,26 +773,32 @@ def plotSeries(fig,
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=4)
+        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(dataLabel,fontsize=4)
+        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,
+            lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
                            framealpha=0.4,ncol=1)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False,
+            ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     if indepConfig['invert']:
         ax.invert_xaxis()
 
     ax.grid()
+
+    # label physical distance to the left and up:
+    #label = pu.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
@@ -836,7 +850,8 @@ def plotProfile(fig,
     ax = fig.add_subplot(ny, nx, iplot+1)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -1036,26 +1051,32 @@ def plotProfile(fig,
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_xlabel(dataLabel,fontsize=4)
+        ax.set_xlabel(dataLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(indepLabel,fontsize=4)
+        ax.set_ylabel(indepLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,
+            lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
                            framealpha=0.4,ncol=1)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False,
+            ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     if indepConfig['invert']:
         ax.invert_yaxis()
 
     ax.grid()
+
+    # label physical distance to the left and up:
+    #label = pu.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
@@ -1104,7 +1125,8 @@ def plotTimeSeries(fig,
     ax = fig.add_subplot(ny, nx, iplot+1)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -1313,21 +1335,26 @@ def plotTimeSeries(fig,
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_ylabel(dataLabel,fontsize=4)
+        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
             nlcol = np.int(np.ceil(np.sqrt(nLines)))
-            lh = ax.legend(loc='best',fontsize=3,frameon=True,
+            lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
                            framealpha=0.4,ncol=nlcol)
             lh.get_frame().set_linewidth(0.0)
         elif ix==nx-1 or iplot==nplots-1:
             #OUTSIDE AXES
-            ax.legend(loc='upper left',fontsize=3,frameon=False,
+            ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
+    # label physical distance to the left and up:
+    #label = pu.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
@@ -1458,7 +1485,8 @@ def plot2D(fig,
     cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm=norm)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #axes settings
     pu.format_x_for_dates(ax, xVals)
@@ -1492,9 +1520,9 @@ def plot2D(fig,
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_xlabel(xLabel,fontsize=4)
+        ax.set_xlabel(xLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(yLabel,fontsize=4)
+        ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
 
     if interiorLabels or ix == nx-1:
         #colorbar
@@ -1517,7 +1545,7 @@ def plot2D(fig,
         cb.ax.tick_params(axis='y', which='major', labelsize=3)
         cb.ax.tick_params(axis='y', which='minor', labelsize=2)
 
-        cb.set_label(cLabel,fontsize=5)
+        cb.set_label(cLabel,fontsize=cbarLabelFontSize)
 
     if xConfig['invert']:
         ax.invert_xaxis()
@@ -1527,6 +1555,12 @@ def plot2D(fig,
 
     # optionally add a grid
     #ax.grid()
+
+    # label physical distance to the left and up:
+    #label = pu.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
@@ -1682,7 +1716,8 @@ def map2D(fig,
         transform=ccrs.PlateCarree())
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     # show full projection extent
     ax.set_global()
@@ -1711,7 +1746,13 @@ def map2D(fig,
         #cb.ax.tick_params(labelsize=3)
         cb.ax.tick_params(axis='y', which='major', labelsize=3)
         cb.ax.tick_params(axis='y', which='minor', labelsize=2)
-        cb.set_label(cLabel,fontsize=5)
+        cb.set_label(cLabel,fontsize=cbarLabelFontSize)
+
+    # label physical distance to the left and up:
+    #label = pu.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
@@ -1787,7 +1828,8 @@ def plotPDF(fig,
     ax = fig.add_subplot(ny, nx, iplot+1)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #add counts
     plotVals = []
@@ -1863,18 +1905,18 @@ def plotPDF(fig,
     yLabel = 'Count'
     if normalized: yLabel = 'PDF'
     if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=4)
-        ax.set_ylabel(yLabel,fontsize=4)
+        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
+        ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
 
     #legend
     if legend_inside:
         #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=2,frameon=True,
+        lh = ax.legend(loc='best',fontsize=legendLabelFontSize2,frameon=True,
                        framealpha=0.4,ncol=1)
         lh.get_frame().set_linewidth(0.0)
     elif ix==nx-1 or iplot==nplots-1:
         #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=2,frameon=False,
+        ax.legend(loc='upper left',fontsize=legendLabelFontSize2,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     ax.grid()
@@ -1923,7 +1965,8 @@ def plotfitRampComposite(fig,
     iy = int(iplot)/int(nx)
 
     #title
-    ax.set_title(title,fontsize=5)
+    label = pu.subplotLabel(iplot)
+    ax.set_title(label+' '+title,fontsize=titleFontSize)
 
     #add lines
     plotVals = []
@@ -2107,19 +2150,19 @@ def plotfitRampComposite(fig,
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
     if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=4)
+        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(dataLabel,fontsize=4)
+        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if legend_inside:
         #INSIDE AXES
-        lh = ax.legend(loc='best',fontsize=3,frameon=True,
+        lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
                        framealpha=0.4,ncol=1)
         lh.get_frame().set_linewidth(0.0)
     elif ix==nx-1 or iplot==nplots-1:
         #OUTSIDE AXES
-        ax.legend(loc='upper left',fontsize=3,frameon=False,
+        ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     ax.grid()
@@ -2128,7 +2171,7 @@ def plotfitRampComposite(fig,
     ax2 = ax.twinx()
     color = 'black'
     if interiorLabels or ix == nx:
-        ax2.set_ylabel('Count',fontsize=4,color=color)
+        ax2.set_ylabel('Count',fontsize=axisLabelFontSize,color=color)
     #ax2.plot(xVals[:indMaxX4Quant], countVals[:indMaxX4Quant],
     ax2.plot(xVals, countVals,
              color=color,

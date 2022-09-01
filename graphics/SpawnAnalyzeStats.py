@@ -49,8 +49,15 @@ end
 # ===========
 module purge
 module load python
-module list
 source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
+#module load ncarenv/1.3
+#module load gnu/10.1.0
+#module load ncarcompilers/0.5.0
+#module load netcdf/4.8.1
+#module load conda/latest
+#conda activate npl
+setenv PYTHONDONTWRITEBYTECODE 1 # avoid __pycache__ creation
+module list
 
 set success = 1
 set try = 0

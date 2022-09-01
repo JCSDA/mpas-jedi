@@ -82,7 +82,7 @@ def readdata():
                 )
                 iplot = iplot +1
                 filename = varNamesListUse+'_TS_2d'
-                pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, True)
+                pu.finalize_fig(fig, filename, 'png', FULL_SUBPLOT_LABELS, 0.6)
 
              #plot diff between target and control exp for RMS:
              if (mu.diff2exp == 'True' and varNamesListUse[-3:] == 'RMS'):

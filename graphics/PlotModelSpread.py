@@ -217,10 +217,10 @@ class PlotModelSpread():
       iplot += 1
 
     filename = 'sigmax_'+self.fileDate
-    pu.finalize_fig(spreadFig, str(filename), 'pdf', True, True)
+    pu.finalize_fig(spreadFig, str(filename), 'pdf', True, 0.6)
 
     filename = 'SpreadRatio_'+self.fileDate
-    pu.finalize_fig(srFig, str(filename), 'pdf', True, True)
+    pu.finalize_fig(srFig, str(filename), 'pdf', True, 0.6)
 
     ReferenceState.close()
     MeanState.close()
