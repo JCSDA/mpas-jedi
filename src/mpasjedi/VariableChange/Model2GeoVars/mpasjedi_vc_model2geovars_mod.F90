@@ -191,36 +191,40 @@ subroutine changevar(self, geom, xm, xg)
       call xm%copy_to('ivgtyp', RequestedCRTMSfcFields, var_sfc_landtyp_igbp)
     end if
 
+    ! veg type
+    ! uses ivgtyp as input
+    if (RequestedCRTMSfcNames%has(var_sfc_vegtyp)) then
+      call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_vegtyp, vegtyp)
+      call xm%get('ivgtyp', mdata)
+
+      select case (trim(mminlu))
+        case ('USGS')
+          do iCell = 1, nCells
+            vegtyp(iCell) = convert_type_veg_usgs(mdata%i1%array(iCell))
+          end do
+        case ('MODIFIED_IGBP_MODIS_NOAH')
+          do iCell = 1, nCells
+            vegtyp(iCell) = convert_type_veg_igbp(mdata%i1%array(iCell))
+          end do
+        case default
+          call abor1_ftn('mpasjedi_vc_model2geovars::changevar: invalid mminlu, must be one of'&
+                        &'[USGS, MODIFIED_IGBP_MODIS_NOAH]')
+      end select
+    end if
+
+    ! soil type
+    if (RequestedCRTMSfcNames%has(var_sfc_soiltyp)) then
+      call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_soiltyp, soiltyp)
+      call xm%get('isltyp', mdata)
+      do iCell = 1, nCells
+        soiltyp(iCell) = convert_type_soil(mdata%i1%array(iCell))
+      end do
+    end if
+
     ! For now, destruct RequestedCRTMSfcNames here, assuming that the ValidCRTMSfcNames referenced below are
     ! requested in "xg". RequestedCRTMSfcNames could be used below for more error/consistency checking if UFO
     ! GeoVar requests become more heterogeneous.
     call RequestedCRTMSfcNames%destruct()
-
-    ! veg type
-    ! uses ivgtyp as input
-    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_vegtyp, vegtyp)
-    call xm%get('ivgtyp', mdata)
-
-    select case (trim(mminlu))
-      case ('USGS')
-        do iCell = 1, nCells
-          vegtyp(iCell) = convert_type_veg_usgs(mdata%i1%array(iCell))
-        end do
-      case ('MODIFIED_IGBP_MODIS_NOAH')
-        do iCell = 1, nCells
-          vegtyp(iCell) = convert_type_veg_igbp(mdata%i1%array(iCell))
-        end do
-      case default
-        call abor1_ftn('mpasjedi_vc_model2geovars::changevar: invalid mminlu, must be one of'&
-                      &'[USGS, MODIFIED_IGBP_MODIS_NOAH]')
-    end select
-
-    ! soil type
-    call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_soiltyp, soiltyp)
-    call xm%get('isltyp', mdata)
-    do iCell = 1, nCells
-      soiltyp(iCell) = convert_type_soil(mdata%i1%array(iCell))
-    end do
 
     !! surface fractions
     ! land, will be adjusted later
