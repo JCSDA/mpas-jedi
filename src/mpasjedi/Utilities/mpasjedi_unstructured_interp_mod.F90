@@ -53,8 +53,8 @@ subroutine unsinterp_integer_apply(unsinterp, field_in, field_out)
   call unsinterp%apply(field_in, field_out_tmp, field_neighbors)
 
   ! Global min and max integers in field
-  maxtypel = int(maxval(field_in))
-  mintypel = int(minval(field_in))
+  maxtypel = nint(maxval(field_in))
+  mintypel = nint(minval(field_in))
   call unsinterp%comm%allreduce(maxtypel,maxtype,fckit_mpi_max())
   call unsinterp%comm%allreduce(mintypel,mintype,fckit_mpi_min())
 
@@ -65,7 +65,7 @@ subroutine unsinterp_integer_apply(unsinterp, field_in, field_out)
   do i = 1,ngrid_out
     field_types = 0.0
     do n = 1, unsinterp%nn
-      index = int(field_neighbors(n,i))
+      index = nint(field_neighbors(n,i))
       field_types(index) = field_types(index) + unsinterp%interp_w(n,i)
     enddo
     field_out(i) = real(maxloc(field_types,1)+(mintype-1),kind_real)

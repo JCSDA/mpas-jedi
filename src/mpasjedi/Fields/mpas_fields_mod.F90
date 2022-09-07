@@ -1026,7 +1026,7 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
             if (poolItr % dataType == MPAS_POOL_INTEGER) then
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i1d_ptr_a)
                do hh = 1, nhoriz
-                  i1d_ptr_a(hh) = int ( vect_inc(index + 1) )
+                  i1d_ptr_a(hh) = nint ( vect_inc(index + 1) )
                   index = index + 1
                enddo
             else if (poolItr % dataType == MPAS_POOL_REAL) then
@@ -1043,7 +1043,7 @@ subroutine deserialize_fields(self, vsize, vect_inc, index)
                call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), i2d_ptr_a)
                do vv = 1, nvert
                   do hh = 1, nhoriz
-                     i2d_ptr_a(vv, hh) = int ( vect_inc(index + 1) )
+                     i2d_ptr_a(vv, hh) = nint ( vect_inc(index + 1) )
                      index = index + 1
                   enddo
                enddo
