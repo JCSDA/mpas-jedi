@@ -20,14 +20,15 @@ locations:
   obs space:
     name: Random Locations
     simulated variables: *ufoVars
-    generate:
-      random:
+    obsdatain:
+      engine:
+        type: GenRandom
         nobs: 100
         lat1: -90
         lat2: 90
         lon1: 0
         lon2: 360
         random seed: 560921
-      obs errors:
-      - 1.5
-      - 2.1
+        obs errors:
+        - 1.5
+        - 2.1

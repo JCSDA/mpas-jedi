@@ -67,9 +67,13 @@ cost function:
     - obs space:
         name: Radiosonde
         obsdatain:
-          obsfile: Data/sondes_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/sondes_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_sonde.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_sonde.h5
         simulated variables: [air_temperature, virtual_temperature, eastward_wind, northward_wind, specific_humidity]
       obs operator:
         name: VertInterp
@@ -86,9 +90,13 @@ cost function:
     - obs space:
         name: Satwind
         obsdatain:
-          obsfile: Data/satwind_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/satwind_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_satwind.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_satwind.h5
         simulated variables: [eastward_wind, northward_wind]
         obs perturbations seed: 1
       obs operator:
@@ -111,9 +119,13 @@ cost function:
     - obs space:
         name: Satwnd
         obsdatain:
-          obsfile: Data/satwnd_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/satwnd_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_satwnd.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_satwnd.h5
         simulated variables: [eastward_wind, northward_wind]
         obs perturbations seed: 1
       obs operator:
@@ -158,9 +170,13 @@ cost function:
     - obs space:
         name: Aircraft
         obsdatain:
-          obsfile: Data/aircraft_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/aircraft_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_aircraft.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_aircraft.h5
         simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       obs operator:
         name: VertInterp
@@ -177,9 +193,13 @@ cost function:
     - obs space:
         name: SfcPCorrected
         obsdatain:
-          obsfile: Data/sfc_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/sfc_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_sfc.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_sfc.h5
         simulated variables: [surface_pressure]
         obs perturbations seed: 1
       obs operator:
@@ -206,9 +226,13 @@ cost function:
     - obs space:
         name: GnssroRef
         obsdatain:
-          obsfile: Data/gnssro_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/gnssro_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_gnssroref.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_gnssroref.h5
         simulated variables: [refractivity]
       obs operator:
         name: GnssroRef
@@ -242,9 +266,13 @@ cost function:
     - obs space:
         name: amsua_n19
         obsdatain:
-          obsfile: Data/amsua_n19_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/amsua_n19_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_amsua_n19.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_amsua_n19.h5
         simulated variables: [brightness_temperature]
         channels: &all_channels 1-15 
       obs error:
@@ -572,9 +600,13 @@ cost function:
     - obs space:
         name: amsua_n15
         obsdatain:
-          obsfile: Data/amsua_n15_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/amsua_n15_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_amsua_n15.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_amsua_n15.h5
         simulated variables: [brightness_temperature]
         channels: &all_channels 1-15 
       obs error:
@@ -901,9 +933,13 @@ cost function:
     - obs space:
         name: amsua_n18
         obsdatain:
-          obsfile: Data/amsua_n18_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/amsua_n18_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_amsua_n18.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_amsua_n18.h5
         simulated variables: [brightness_temperature]
         channels: &all_channels 1-15
       obs error:
@@ -1232,9 +1268,13 @@ cost function:
     - obs space:
         name: amsua_metop-a
         obsdatain:
-          obsfile: Data/amsua_metop-a_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/amsua_metop-a_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_amsua_metop-a.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_amsua_metop-a.h5
         simulated variables: [brightness_temperature]
         channels: &all_channels 1-15 
       obs error:
@@ -1561,9 +1601,13 @@ cost function:
     - obs space:
         name: amsua_aqua
         obsdatain:
-          obsfile: Data/amsua_aqua_obs_2018041500.h5
+          engine:
+            type: H5File
+            obsfile: Data/amsua_aqua_obs_2018041500.h5
         obsdataout:
-          obsfile: Data/obsout_variational_amsua_aqua.h5
+          engine:
+            type: H5File
+            obsfile: Data/obsout_variational_amsua_aqua.h5
         simulated variables: [brightness_temperature]
         channels: &all_channels 1-15
       obs error:

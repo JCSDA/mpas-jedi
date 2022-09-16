@@ -36,9 +36,13 @@ cost function:
     - obs space:
         name: Radiosonde
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_sondes.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_sondes.nc4
         simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       obs operator:
         name: VertInterp
@@ -53,9 +57,13 @@ cost function:
     - obs space:
         name: Aircraft
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_aircraft.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_aircraft.nc4
         simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       obs operator:
         name: VertInterp
@@ -70,9 +78,13 @@ cost function:
     - obs space:
         name: GnssroRefNCEP
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_gnssroref.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_gnssroref.nc4
         simulated variables: [refractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -105,9 +117,13 @@ cost function:
     - obs space:
         name: SfcPCorrected
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_sfc.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_sfc.nc4
         simulated variables: [surface_pressure]
       obs operator:
         name: SfcPCorrected
@@ -135,9 +151,13 @@ cost function:
     - obs space:
         name: AMSUA-NOAA19--nohydro
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
         simulated variables: [brightness_temperature]
         channels: 4-7,9-14
       obs error:
@@ -159,9 +179,13 @@ cost function:
     - obs space:
         name: AMSUA-NOAA19--hydro
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_amsua_amsua_n19--hydro.nc4
         simulated variables: [brightness_temperature]
         channels: 1-3,15
       obs error:

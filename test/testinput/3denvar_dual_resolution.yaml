@@ -56,9 +56,13 @@ cost function:
     - obs space:
         name: Radiosonde
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3denvar_dual_sondes.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_dual_sondes.nc4
         simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
       obs operator:
         name: VertInterp
@@ -75,9 +79,13 @@ cost function:
     - obs space:
         name: Satwind
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3denvar_dual_satwind.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_dual_satwind.nc4
         simulated variables: [eastward_wind, northward_wind]
       obs operator:
         name: VertInterp
@@ -94,9 +102,13 @@ cost function:
     - obs space:
         name: GnssroRefNCEP
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3denvar_dual_gnssroref.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_dual_gnssroref.nc4
         simulated variables: [refractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -131,9 +143,13 @@ cost function:
     - obs space:
         name: SfcPCorrected
         obsdatain:
-          obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
         obsdataout:
-          obsfile: Data/os/obsout_3denvar_dual_sfc.nc4
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_dual_sfc.nc4
         simulated variables: [surface_pressure]
       obs operator:
         name: SfcPCorrected

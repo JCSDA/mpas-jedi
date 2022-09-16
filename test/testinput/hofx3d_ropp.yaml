@@ -20,9 +20,13 @@ observations:
   - obs space:
       name: GnssroBndROPP1D
       obsdatain:
-        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
       obsdataout:
-        obsfile: Data/os/obsout_hofx3d_gnssrobndropp1d.nc4
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_gnssrobndropp1d.nc4
       simulated variables: [bending_angle]
     obs operator:
       name: GnssroBndROPP1D
