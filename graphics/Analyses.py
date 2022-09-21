@@ -1364,7 +1364,14 @@ class MultiDimBinMethodBase(AnalysisBase):
 
         # default 1D binVars
         self.binVarDict = {
-            vu.obsVarAlt: {'profilefunc': bpf.plotProfile, 'binVarTier': 1},
+            vu.obsVarAlt: {
+              'profilefunc': bpf.plotProfile,
+              'binVarTier': 1,
+              'binFilter': {
+                # maximum altitude to show on all figures
+                'maxvalue': 30000,
+              },
+            },
             vu.obsVarACI: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
             vu.obsVarCldFracX: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
             vu.obsVarCldFracY: {'profilefunc': bpf.plotSeries, 'binVarTier': 1},
