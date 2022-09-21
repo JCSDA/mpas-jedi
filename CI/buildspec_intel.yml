@@ -41,7 +41,11 @@ phases:
       - echo "CODEBUILD_SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}"
 
       - cd CI
-      - . /etc/profile.d/intel.sh
+
+      - source /etc/profile.d/z10_spack_environment.sh
+      - cat /etc/profile.d/z10_spack_environment.sh
+      - source /opt/intel/oneapi/compiler/latest/env/vars.sh
+      - source /opt/intel/oneapi/mpi/latest/env/vars.sh
 
       # read cdash url from s3
       - wget https://ci-test-cdash-url.s3.amazonaws.com/cdash_url.txt
@@ -134,20 +138,18 @@ phases:
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
-      - su - jedi -c "export CC=mpiicc
-        && export FC=mpiifort
-        && export CXX=mpiicpc
-        && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        && export PATH=/usr/local/lib:$PATH
-        && cd /home/jedi
-        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelwithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
-        && cd /home/jedi/mpas-jedi
-        && cp ../DartConfiguration.tcl .
-        && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
-        && sed -i 's/home\/jedi/home\/jedi\/mpas-jedi/' DartConfiguration.tcl
-        && cat DartConfiguration.tcl
-        && make -j2"
+      - mkdir /build_container
+      - chmod 777 /build_container
+      
+      - cd /build_container
+      - ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelwithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_SYSTEM_NAME=IntelContainer -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
 
+      - cd /build_container/mpas-jedi
+      - cp ../DartConfiguration.tcl .
+      - sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
+      - sed -i 's/build_container/build_container\/mpas-jedi/' DartConfiguration.tcl
+      - make -j2
+ 
       - echo $CODEBUILD_BUILD_SUCCEEDING
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
         then export BUILD_STATUS="1";
@@ -155,19 +157,13 @@ phases:
         fi
       - echo $BUILD_STATUS
 
-      - su - jedi -c "export CC=mpiicc
-        && export FC=mpiifort
-        && export CXX=mpiicpc
-        && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-        && export PATH=/usr/local/lib:$PATH
-        && cd /home/jedi/mpas-jedi
-        && ctest -C RelWithDebInfo -D ExperimentalTest"
+      - cd /build_container/mpas-jedi
+      - ctest -C RelWithDebInfo -D ExperimentalTest
 
     finally:
       # upload ctest report to CDASH
-      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /home/jedi/mpas-jedi
-        && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
+      - cd /build_container/mpas-jedi
+      - ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous
 
   post_build:
     commands:
@@ -178,7 +174,7 @@ phases:
       # upload find cdash url and upload it as CodeBuild artifact to S3
       - if [ "$BUILD_STATUS" = "1" ];
         then echo "Build & tests passed, find cdash url";
-        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing $CDASH_URL);
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /build_container/mpas-jedi/Testing $CDASH_URL);
         echo $url;
         echo ${url} > /jcsda/artifacts/cdash-url.txt;
         cat /jcsda/artifacts/cdash-url.txt;

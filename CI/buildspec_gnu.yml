@@ -140,18 +140,18 @@ phases:
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
-      - su - jedi -c "cd /home/jedi
+      - su - nonroot -c "cd /home/nonroot
         && echo $CC
         && echo $CXX
         && echo $FC
         && CC=mpicc CXX=mpicxx FC=mpifort
         && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
 
-      - su - jedi -c "cd /home/jedi/mpas-jedi
+      - su - nonroot -c "cd /home/nonroot/mpas-jedi
         && CC=mpicc CXX=mpicxx FC=mpifort
         && cp ../DartConfiguration.tcl .
         && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
-        && sed -i 's/home\/jedi/home\/jedi\/mpas-jedi/' DartConfiguration.tcl
+        && sed -i 's/home\/nonroot/home\/nonroot\/mpas-jedi/' DartConfiguration.tcl
         && cat DartConfiguration.tcl
         && make -j4"
 
@@ -162,14 +162,14 @@ phases:
       - echo $BUILD_STATUS
 
       # run ctest
-      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /home/jedi/mpas-jedi
+      - su - nonroot -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/nonroot/mpas-jedi
         && ctest  -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx"
 
     finally:
       # upload ctest report to CDASH
-      - su - jedi -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /home/jedi/mpas-jedi
+      - su - nonroot -c "CC=mpicc CXX=mpicxx FC=mpifort
+        && cd /home/nonroot/mpas-jedi
         && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
 
   post_build:
@@ -181,7 +181,7 @@ phases:
       # upload find cdash url and upload it as CodeBuild artifact to S3
       - if [ "$BUILD_STATUS" = "1" ];
         then echo "Build & tests passed, find cdash url";
-        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/jedi/mpas-jedi/Testing $CDASH_URL);
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/nonroot/mpas-jedi/Testing $CDASH_URL);
         echo $url;
         echo ${url} > /jcsda/artifacts/cdash-url.txt;
         cat /jcsda/artifacts/cdash-url.txt;
