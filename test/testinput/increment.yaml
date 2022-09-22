@@ -11,3 +11,4 @@ inc variables:
 - theta
 increment test:
   date: '2018-04-15T00:00:00Z'
+  skip rms by level test: true

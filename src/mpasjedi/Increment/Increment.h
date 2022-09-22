@@ -82,6 +82,7 @@ class Increment : public util::Printable,
   void schur_product_with(const Increment &);
   void random();
   void dirac(const DiracParameters_ &);
+  std::vector<double> rmsByLevel(const std::string &) const;
 
   void toFieldSet(atlas::FieldSet &) const;
   void toFieldSetAD(const atlas::FieldSet &);
@@ -112,7 +113,6 @@ class Increment : public util::Printable,
 
   int & toFortran() {return keyInc_;}
   const int & toFortran() const {return keyInc_;}
-
 
 /// Data
  private:

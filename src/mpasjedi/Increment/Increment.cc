@@ -157,7 +157,11 @@ real_type Increment::dot_product_with(const Increment & other) const {
 void Increment::random() {
   mpas_increment_random_f90(keyInc_);
 }
-
+// -----------------------------------------------------------------------------
+std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
+  throw eckit::NotImplemented("mpasjedi::Increment::rmsByLevel not implemented yet",
+                              Here());
+}
 // -----------------------------------------------------------------------------
 /// ATLAS
 // -----------------------------------------------------------------------------
