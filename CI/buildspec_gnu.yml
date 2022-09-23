@@ -110,9 +110,6 @@ phases:
       # mpas-jedi-data
       - ./clone.sh jcsda-internal/mpas-jedi-data $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle mpas-jedi-data ${GIT_BASE_BRANCH} develop
 
-      # jedi-cmake
-      - ./clone.sh jcsda-internal/jedi-cmake $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle jedicmake ${GIT_BASE_BRANCH} develop
-
       # ropp
       - ./clone.sh jcsda-internal/ropp-test $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle ropp-ufo ${GIT_BASE_BRANCH} develop
 
@@ -141,14 +138,10 @@ phases:
       - echo $BUILD_STATUS
 
       - su - nonroot -c "cd /home/nonroot
-        && echo $CC
-        && echo $CXX
-        && echo $FC
-        && CC=mpicc CXX=mpicxx FC=mpifort
-        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
+        && export jedi_cmake_ROOT=/opt/view
+        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_SYSTEM_NAME=GNUContainer -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
 
       - su - nonroot -c "cd /home/nonroot/mpas-jedi
-        && CC=mpicc CXX=mpicxx FC=mpifort
         && cp ../DartConfiguration.tcl .
         && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
         && sed -i 's/home\/nonroot/home\/nonroot\/mpas-jedi/' DartConfiguration.tcl
@@ -162,14 +155,12 @@ phases:
       - echo $BUILD_STATUS
 
       # run ctest
-      - su - nonroot -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /home/nonroot/mpas-jedi
+      - su - nonroot -c "cd /home/nonroot/mpas-jedi
         && ctest  -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx"
 
     finally:
       # upload ctest report to CDASH
-      - su - nonroot -c "CC=mpicc CXX=mpicxx FC=mpifort
-        && cd /home/nonroot/mpas-jedi
+      - su - nonroot -c "cd /home/nonroot/mpas-jedi
         && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
 
   post_build:

@@ -21,14 +21,6 @@ find_package(ecbuild)
 include( ecbuild_bundle )
 ecbuild_bundle_initialize()
 
-ecbuild_bundle( PROJECT jedicmake GIT "https://github.com/jcsda-internal/jedi-cmake.git" )
-
-# ecmwf repos are already available in CI containers. Disabled here
-#option(BUNDLE_SKIP_ECKIT "Don't build eckit" "OFF" ) # Build eckit unless user passes -DBUNDLE_SKIP_ECKIT=ON
-#ecbuild_bundle( PROJECT eckit     GIT "https://github.com/ecmwf/eckit.git" )
-#ecbuild_bundle( PROJECT fckit     GIT "https://github.com/ecmwf/fckit.git" )
-#ecbuild_bundle( PROJECT atlas     GIT "https://github.com/ecmwf/atlas.git" )
-
 #TODO: When mpas-bundle becomes a public repo, consider changing the default value of BUNDLE_SKIP_ROPP-UFO to "ON"
 
 option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=ON
