@@ -97,7 +97,7 @@ class GenerateABEIFactors:
     # create observed variable list by selecting those variables in the
     # obs feedback files (obsFKey) with the proper suffix
 #    if self.args.jediAppName == 'variational':
-#        markerSuffix = vu.depbgGroup
+#        markerSuffix = vu.ombgGroup
 #    elif self.args.jediAppName == 'hofx':
 #        markerSuffix = vu.hofxGroup
 #    else:

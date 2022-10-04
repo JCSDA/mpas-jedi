@@ -77,7 +77,7 @@ class DiagnoseObsStatistics:
     # create observed variable list by selecting those variables in the
     # obs feedback files (obsFKey) with the proper suffix
     if self.args.jediAppName == 'variational':
-        markerGroup = vu.depbgGroup
+        markerGroup = vu.ombgGroup
     elif self.args.jediAppName == 'hofx':
         markerGroup = vu.hofxGroup
     else:

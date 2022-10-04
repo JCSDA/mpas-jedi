@@ -123,8 +123,8 @@ def readdata():
   ApplicationObsGroups = {
     variationalApp: {
       'obsGroup': 'ObsValue',
-      'depbgGroup': 'depbg',
-      'depanGroup': 'depan',
+      'ombgGroup': 'ombg',
+      'omanGroup': 'oman',
       'qcbgGroup': 'EffectiveQC0',
       'qcanGroup': 'EffectiveQC'+NOUTER,
       'obserrGroup': 'ObsError',
@@ -238,11 +238,11 @@ def readdata():
       nch = len(nchans)
 
     # applicationType: type of jedi application (hofx, variational)
-    # assume hofx at first, then check for presence of 'depbgGroup'
+    # assume hofx at first, then check for presence of 'ombgGroup'
     applicationType = hofxApp
     ncVarList = []
     for group in ncDB.groups:
-      if group == ApplicationObsGroups[variationalApp]['depbgGroup']:
+      if group == ApplicationObsGroups[variationalApp]['ombgGroup']:
         applicationType = variationalApp
       for var in ncDB.groups[group].variables:
         ncVarList+= [group+'/'+var]
@@ -250,8 +250,8 @@ def readdata():
     ncDB.close()
 
     obsGroup = ApplicationObsGroups[applicationType].get('obsGroup', None)
-    depbgGroup = ApplicationObsGroups[applicationType].get('depbgGroup', None)
-    depanGroup = ApplicationObsGroups[applicationType].get('depanGroup', None)
+    ombgGroup = ApplicationObsGroups[applicationType].get('ombgGroup', None)
+    omanGroup = ApplicationObsGroups[applicationType].get('omanGroup', None)
     hofxGroup = ApplicationObsGroups[applicationType].get('hofxGroup', None)
     qcbgGroup = ApplicationObsGroups[applicationType].get('qcbgGroup', None)
     qcanGroup = ApplicationObsGroups[applicationType].get('qcanGroup', None)
@@ -261,7 +261,7 @@ def readdata():
     # select all variables that were simulated
     # only simulated variables are relevant to OMB & OMA diagnostics
     simulatedGroup = None
-    for g in [depbgGroup, hofxGroup, depanGroup, errstartGroup]:
+    for g in [ombgGroup, hofxGroup, omanGroup, errstartGroup]:
       if g is not None:
         simulatedGroup = g
         simulatedVariables = [
@@ -307,15 +307,15 @@ def readdata():
       obsVars = [obs, obserror, qcb, errstart]
 
       # read ObsGroups for which presence is application-dependent
-      depbg = None
-      if depbgGroup is not None:
-        depbg = depbgGroup+'/'+varName
-        obsVars += [depbg]
+      ombg = None
+      if ombgGroup is not None:
+        ombg = ombgGroup+'/'+varName
+        obsVars += [ombg]
 
-      depan = None
-      if depanGroup is not None:
-        depan = depanGroup+'/'+varName
-        obsVars += [depan]
+      oman = None
+      if omanGroup is not None:
+        oman = omanGroup+'/'+varName
+        obsVars += [oman]
 
       qca = None
       if qcanGroup is not None:
@@ -401,42 +401,42 @@ def readdata():
           db[pressure] = np.divide(db[pressure], 100.0)
 
       # background qc checks
-      for var in [obs, depbg, hofx, obserror, errstart]:
+      for var in [obs, ombg, hofx, obserror, errstart]:
         if var is None: continue
         db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.NaN
         db[var][failbg] = np.NaN
 
       # analysis QC checks
-      for var in [depan]:
+      for var in [oman]:
         if var is None: continue
         db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.NaN
         db[var][failan] = np.NaN
 
       # create equivalent bg/an departures for hofx application
       if hofx is not None:
-        if depbg is None:
-          depbg = 'depbg/'+varName
-          db[depbg] = db[hofx] - db[obs]
+        if ombg is None:
+          ombg = 'ombg/'+varName
+          db[ombg] = db[obs] - db[hofx]
 
-        if depan is None:
-          depan = 'depan/'+varName
-          db[depan] = db[hofx] - db[obs]
+        if oman is None:
+          oman = 'oman/'+varName
+          db[oman] = db[obs] - db[hofx]
 
       # convert departures to omb/oma and bkg/ana
       omb = 'omb/'+varName
-      db[omb] = -db[depbg]
+      db[omb] = db[ombg]
       bkg = 'bkg/'+varName
       db[bkg] = db[obs] - db[omb]
       passbg = np.logical_and(~failbg, np.isfinite(db[omb]))
-      for var in [obs, depbg, obserror, errstart, omb, bkg]:
+      for var in [obs, ombg, obserror, errstart, omb, bkg]:
         db[var][~passbg] = np.NaN
 
       oma = 'oma/'+varName
-      db[oma] = -db[depan]
+      db[oma] = db[oman]
       ana = 'ana/'+varName
       db[ana] = db[obs] - db[oma]
       passan = np.logical_and(~failan, np.isfinite(db[oma]))
-      for var in [depan, oma, ana]:
+      for var in [oman, oma, ana]:
         db[var][~passan] = np.NaN
 
       if not np.isfinite(db[omb]).any():

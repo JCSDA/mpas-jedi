@@ -101,14 +101,14 @@ def readdata():
     #observations
     obs_var = 'ObsValue'
 
-    #departures
-    depbg_var = 'depbg'
-    depan_var = 'depan'
+    # observation minus model
+    ombg_var = 'ombg'
+    oman_var = 'oman'
 
     #quality control
     NOUTER=str(os.getenv('NOUTER',2)) #set equal to number of outer iterations
-    qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for depbg_var
-    qcan_var  = 'EffectiveQC'+NOUTER #EffectiveQCi, where i is the iteration for depan_var
+    qcbg_var  = 'EffectiveQC0' #EffectiveQCi, where i is the iteration for ombg_var
+    qcan_var  = 'EffectiveQC'+NOUTER #EffectiveQCi, where i is the iteration for oman_var
 
     err_obs  = 'ObsError'
     errstart_var = 'EffectiveError0'
@@ -161,7 +161,7 @@ def readdata():
            print('obstype not selected, skipping data: '+expt_obs)
            continue
 
-        # Select variables with the suffix depbg_var (required for OMB)
+        # Select variables with the suffix ombg_var (required for OMB)
         nc = h5.File(exob_group[1], 'r')
         varlist = []
         for node in nc:
@@ -169,7 +169,7 @@ def readdata():
             for var in nc[node]:
               varlist += [node+'/'+var]
 
-        bglist = [var for var in varlist if (var[:][:5] == depbg_var)]
+        bglist = [var for var in varlist if (var[:][:5] == ombg_var)]
         # Define a channel list for radiance_group
         if ''.join(obstype) in radiance_group:
             chlist = []
@@ -181,16 +181,16 @@ def readdata():
 
         # Loop over variables with omb suffix
         nvars = len(bglist)
-        for ivar, depbg in enumerate(bglist):
-            varname = ''.join(depbg.split("/")[1:])
-            obs=obs_var+'/'+''.join(depbg.split("/")[1:])
-            depan=depan_var+'/'+''.join(depbg.split("/")[1:])
-            qcb = qcbg_var+'/'+''.join(depbg.split("/")[1:])
-            qca = qcan_var+'/'+''.join(depbg.split("/")[1:])
-            obserror = err_obs+'/'+''.join(depbg.split("/")[1:])
-            errstart = errstart_var+'/'+''.join(depbg.split("/")[1:])
-            errend   = errend_var+'/'+''.join(depbg.split("/")[1:])
-            print("obs=",obs,"depbg=",depbg,"depan=",depan)
+        for ivar, ombg in enumerate(bglist):
+            varname = ''.join(ombg.split("/")[1:])
+            obs=obs_var+'/'+''.join(ombg.split("/")[1:])
+            oman=oman_var+'/'+''.join(ombg.split("/")[1:])
+            qcb = qcbg_var+'/'+''.join(ombg.split("/")[1:])
+            qca = qcan_var+'/'+''.join(ombg.split("/")[1:])
+            obserror = err_obs+'/'+''.join(ombg.split("/")[1:])
+            errstart = errstart_var+'/'+''.join(ombg.split("/")[1:])
+            errend   = errend_var+'/'+''.join(ombg.split("/")[1:])
+            print("obs=",obs,"ombg=",ombg,"oman=",oman)
 
             obsnc = np.asarray([])
             bkgnc = np.asarray([])
@@ -229,8 +229,8 @@ def readdata():
                     stationId_baknc = np.append( stationId_baknc, station_id )
                     stationId_ananc = np.append( stationId_ananc, station_id )
                 obsnc = np.append( obsnc, nc[obs] )
-                ombnc = np.append( ombnc, np.negative( nc[depbg] ) ) # omb = (-) depbg
-                omanc = np.append( omanc, np.negative( nc[depan] ) ) # oma = (-) depan
+                ombnc = np.append( ombnc, nc[ombg] )
+                omanc = np.append( omanc, nc[oman]  )
                 qcbnc  = np.append( qcbnc,  nc[qcb]  )
                 qcanc  = np.append( qcanc,  nc[qca]  )
                 obserrornc = np.append(obserrornc, nc[obserror])

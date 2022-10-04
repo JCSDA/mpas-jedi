@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
-from jediApplicationArgs import depbgGroup, depanGroup
+from jediApplicationArgs import ombgGroup, omanGroup
 import numpy as np
 import os
 import re
@@ -114,7 +114,7 @@ obsGroup    = 'ObsValue'
 metaGroup   = 'MetaData'
 
 # Dynamic MPAS-Workflow ObsGroups for observation-type variables
-depGroup    = 'depIter'
+ommGroup    = 'ommIter'
 
 # GeoVaLs ObsGroups only used in post-processing, not in files
 diagGroup   = 'ObsDiag'
@@ -122,7 +122,7 @@ geoGroup    = 'GeoVaLs'
 
 # Generic variable names used as baseVar
 selfObsValue = 'selfObsValue'
-selfDepValue = 'selfDepValue'
+selfOMMValue = 'selfOMMValue'
 selfHofXValue = 'selfHofXValue'
 selfErrorValue = 'selfErrorValue'
 selfQCValue = 'selfQCValue'
@@ -146,7 +146,7 @@ cldfracGeo = 'cldfracGeo'
 ObsGroups = {}
 ObsVars = {}
 ObsGroups[selfObsValue] = obsGroup
-ObsGroups[selfDepValue] = depGroup
+ObsGroups[selfOMMValue] = ommGroup
 ObsGroups[selfHofXValue] = hofxGroup
 ObsGroups[selfErrorValue] = errorGroup
 ObsGroups[selfQCValue] = qcGroup
@@ -413,7 +413,7 @@ def base2dbVar(baseVar, varName, fileFormat, outerIter = None):
       dbVar = re.sub(group,group+iterStr,dbVar)
   if iterStr != '':
     if iterStr == bgIter:
-      dbVar = re.sub(depGroup,depbgGroup,dbVar)
+      dbVar = re.sub(ommGroup,ombgGroup,dbVar)
     else:
-      dbVar = re.sub(depGroup,depanGroup,dbVar)
+      dbVar = re.sub(ommGroup,omanGroup,dbVar)
   return dbVar

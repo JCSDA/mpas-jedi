@@ -26,68 +26,67 @@ def negativeSafeSqrt(q):
 class BiasCorrectedObs:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfOMMValue)
         self.baseVars.append(vu.selfHofXValue)
 
     def evaluate(self, dbVals, insituParameters):
-        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        omm_bc = dbVals[insituParameters[vu.selfOMMValue]]
         mod = dbVals[insituParameters[vu.selfHofXValue]]
-        return np.subtract(mod, bcdep)
+        return np.add(mod, omm_bc)
 
 
 class BiasCorrection:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfOMMValue)
         self.baseVars.append(vu.selfHofXValue)
         self.baseVars.append(vu.selfObsValue)
 
     def evaluate(self, dbVals, insituParameters):
-        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        omm_bc = dbVals[insituParameters[vu.selfOMMValue]]
         mod = dbVals[insituParameters[vu.selfHofXValue]]
         obs = dbVals[insituParameters[vu.selfObsValue]]
-        return np.subtract(np.subtract(mod, bcdep), obs)
+        return np.subtract(np.add(mod, omm_bc), obs)
 
 
 class BiasCorrectedObsMinusModel:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfOMMValue)
 
     def evaluate(self, dbVals, insituParameters):
-        bcdep = dbVals[insituParameters[vu.selfDepValue]]
-        return np.negative(bcdep)
+        omm_bc = deepcopy(dbVals[insituParameters[vu.selfOMMValue]])
+        return omm_bc
 
 
 class NonBiasCorrectedObsMinusModel(bu.InsituLocFunction):
     def _initBaseVars(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfOMMValue)
         self.baseVars.append(vu.selfBCValue)
 
     def _get(self):
-        bcdep = self._variables[vu.selfDepValue]
+        omm_bc = self._variables[vu.selfOMMValue]
         bc = self._variables[vu.selfBCValue]
 
-        return np.negative(np.add(bcdep, bc))
+        return np.subtract(omm_bc, bc)
 
 
 class RelativeBiasCorrectedObsMinusModel:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfDepValue)
+        self.baseVars.append(vu.selfOMMValue)
         self.baseVars.append(vu.selfObsValue)
 
     def evaluate(self, dbVals, insituParameters):
-        bcdep = dbVals[insituParameters[vu.selfDepValue]]
+        omm_bc = deepcopy(dbVals[insituParameters[vu.selfOMMValue]])
         obs = dbVals[insituParameters[vu.selfObsValue]]
 
-        OMM = np.negative(bcdep)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
-        OMM[valid] = np.divide(OMM[valid], obs[valid])
-        OMM[~valid] = np.NaN
+        omm_bc[valid] = np.divide(omm_bc[valid], obs[valid])
+        omm_bc[~valid] = np.NaN
 
-        return np.multiply(OMM, 100.0)
+        return np.multiply(omm_bc, 100.0)
 
 
 class ObsMinusModel:

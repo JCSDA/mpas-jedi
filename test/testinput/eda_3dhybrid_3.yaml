@@ -185,7 +185,7 @@ variational:
     gradient norm reduction: 1e-10
     test: 'on'
     diagnostics:
-      departures: depbg
+      departures: ombg
     obs perturbations: true
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041500"
@@ -196,4 +196,4 @@ variational:
     test: 'on'
 final:
   diagnostics:
-    departures: depan
+    departures: oman
