@@ -10,7 +10,6 @@
 
 #include <saber/oops/instantiateCovarFactory.h>
 #include <saber/oops/instantiateLocalizationFactory.h>
-#include <saber/oops/instantiateSaberBlockFactory.h>
 
 #include <ufo/instantiateObsFilterFactory.h>
 #include <ufo/ObsTraits.h>
@@ -21,7 +20,6 @@ int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   saber::instantiateCovarFactory<mpas::Traits>();
   saber::instantiateLocalizationFactory<mpas::Traits>();
-  saber::instantiateSaberBlockFactory<mpas::Traits>();
   ufo::instantiateObsFilterFactory();
   oops::Variational<mpas::Traits, ufo::ObsTraits> var;
   return run.execute(var);

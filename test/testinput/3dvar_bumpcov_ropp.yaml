@@ -25,12 +25,8 @@ cost function:
     date: &analysisdate '2018-04-15T00:00:00Z'
   background error:
     covariance model: SABER
-    saber blocks:
-    - saber block name: BUMP_NICAS
-      saber central block: true
-      iterative inverse: true
-      input variables: *incvars
-      output variables: *incvars
+    saber central block:
+      saber block name: BUMP_NICAS
       bump:
         strategy: specific_univariate
         load_nicas_local: true
@@ -40,13 +36,14 @@ cost function:
           variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
         - prefix: Data/bump/mpas_parametersbump_cov_2D
           variables: [surface_pressure]
+    saber outer blocks:
     - saber block name: StdDev
-      input variables: *incvars
-      output variables: *incvars
-      file:
-        filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-        date: *analysisdate
-        stream name: control
+      input fields:
+      - parameter: StdDev
+        file:
+          filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+          date: *analysisdate
+          stream name: control
   observations:
     observers:
     - obs space:

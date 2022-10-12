@@ -41,7 +41,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -49,7 +49,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -57,7 +57,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -65,7 +65,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -73,7 +73,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -81,7 +81,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -89,7 +89,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -97,7 +97,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -105,7 +105,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -113,7 +113,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -121,7 +121,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -129,7 +129,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -137,7 +137,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -145,7 +145,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -153,7 +153,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -161,7 +161,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -169,7 +169,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -177,7 +177,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -185,7 +185,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -193,7 +193,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -201,7 +201,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -209,7 +209,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -217,7 +217,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -225,7 +225,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -233,7 +233,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -241,7 +241,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -249,7 +249,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -257,7 +257,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -265,7 +265,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -273,7 +273,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -281,7 +281,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -289,7 +289,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -297,7 +297,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -305,7 +305,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -313,7 +313,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -321,7 +321,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018030918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -329,7 +329,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -337,7 +337,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -345,7 +345,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -353,7 +353,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -361,7 +361,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -369,7 +369,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -377,7 +377,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -385,7 +385,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -393,7 +393,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -401,7 +401,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -409,7 +409,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -417,7 +417,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -425,7 +425,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -433,7 +433,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -441,7 +441,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -449,7 +449,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -457,7 +457,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -465,7 +465,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -473,7 +473,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -481,7 +481,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -489,7 +489,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -497,7 +497,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -505,7 +505,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -513,7 +513,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -521,7 +521,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -529,7 +529,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -537,7 +537,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -545,7 +545,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -553,7 +553,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -561,7 +561,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -569,7 +569,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -577,7 +577,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -585,7 +585,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -593,7 +593,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -601,7 +601,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -609,7 +609,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -617,7 +617,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -625,7 +625,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -633,7 +633,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -641,7 +641,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018031918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -649,7 +649,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -657,7 +657,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -665,7 +665,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -673,7 +673,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -681,7 +681,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -689,7 +689,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -697,7 +697,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -705,7 +705,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -713,7 +713,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -721,7 +721,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -729,7 +729,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -737,7 +737,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -745,7 +745,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -753,7 +753,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -761,7 +761,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -769,7 +769,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -777,7 +777,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -785,7 +785,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -793,7 +793,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -801,7 +801,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -809,7 +809,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -817,7 +817,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -825,7 +825,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -833,7 +833,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -841,7 +841,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -849,7 +849,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -857,7 +857,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -865,7 +865,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -873,7 +873,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -881,7 +881,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -889,7 +889,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -897,7 +897,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -905,7 +905,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -913,7 +913,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -921,7 +921,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -929,7 +929,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -937,7 +937,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -945,7 +945,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -953,7 +953,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -961,7 +961,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018032918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -969,7 +969,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -977,7 +977,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -985,7 +985,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -993,7 +993,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1001,7 +1001,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1009,7 +1009,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1017,7 +1017,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1025,7 +1025,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018033118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1033,7 +1033,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1041,7 +1041,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1049,7 +1049,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1057,7 +1057,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1065,7 +1065,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1073,7 +1073,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1081,7 +1081,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1089,7 +1089,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1097,7 +1097,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1105,7 +1105,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1113,7 +1113,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1121,7 +1121,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1129,7 +1129,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1137,7 +1137,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1145,7 +1145,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1153,7 +1153,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1161,7 +1161,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1169,7 +1169,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1177,7 +1177,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1185,7 +1185,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1193,7 +1193,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1201,7 +1201,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1209,7 +1209,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1217,7 +1217,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1225,7 +1225,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1233,7 +1233,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1241,7 +1241,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1249,7 +1249,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1257,7 +1257,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1265,7 +1265,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1273,7 +1273,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1281,7 +1281,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1289,7 +1289,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1297,7 +1297,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1305,7 +1305,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1313,7 +1313,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018040918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1321,7 +1321,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1329,7 +1329,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1337,7 +1337,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1345,7 +1345,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1353,7 +1353,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1361,7 +1361,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1369,7 +1369,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1377,7 +1377,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1385,7 +1385,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1393,7 +1393,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1401,7 +1401,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1409,7 +1409,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1417,7 +1417,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1425,7 +1425,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1433,7 +1433,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1441,7 +1441,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1449,7 +1449,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1457,7 +1457,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1465,7 +1465,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1473,7 +1473,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1481,7 +1481,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1489,7 +1489,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1497,7 +1497,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1505,7 +1505,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1513,7 +1513,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1521,7 +1521,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1529,7 +1529,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1537,7 +1537,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1545,7 +1545,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1553,7 +1553,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1561,7 +1561,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1569,7 +1569,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1577,7 +1577,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1585,7 +1585,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1593,7 +1593,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1601,7 +1601,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1609,7 +1609,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1617,7 +1617,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1625,7 +1625,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1633,7 +1633,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018041918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1641,7 +1641,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1649,7 +1649,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1657,7 +1657,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1665,7 +1665,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1673,7 +1673,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1681,7 +1681,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1689,7 +1689,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1697,7 +1697,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1705,7 +1705,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1713,7 +1713,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1721,7 +1721,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1729,7 +1729,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1737,7 +1737,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1745,7 +1745,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1753,7 +1753,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1761,7 +1761,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1769,7 +1769,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1777,7 +1777,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1785,7 +1785,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1793,7 +1793,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1801,7 +1801,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1809,7 +1809,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1817,7 +1817,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1825,7 +1825,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1833,7 +1833,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1841,7 +1841,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1849,7 +1849,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1857,7 +1857,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1865,7 +1865,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1873,7 +1873,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1881,7 +1881,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1889,7 +1889,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1897,7 +1897,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1905,7 +1905,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1913,7 +1913,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1921,7 +1921,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1929,7 +1929,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1937,7 +1937,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1945,7 +1945,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1953,7 +1953,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018042918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1961,7 +1961,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1969,7 +1969,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1977,7 +1977,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1985,7 +1985,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018043018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -1993,7 +1993,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2001,7 +2001,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2009,7 +2009,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2017,7 +2017,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2025,7 +2025,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2033,7 +2033,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2041,7 +2041,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2049,7 +2049,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2057,7 +2057,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2065,7 +2065,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2073,7 +2073,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2081,7 +2081,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2089,7 +2089,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2097,7 +2097,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2105,7 +2105,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2113,7 +2113,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2121,7 +2121,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2129,7 +2129,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2137,7 +2137,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2145,7 +2145,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2153,7 +2153,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2161,7 +2161,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2169,7 +2169,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2177,7 +2177,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2185,7 +2185,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2193,7 +2193,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2201,7 +2201,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2209,7 +2209,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2217,7 +2217,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2225,7 +2225,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2233,7 +2233,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2241,7 +2241,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2249,7 +2249,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2257,7 +2257,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2265,7 +2265,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2273,7 +2273,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018050918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2281,7 +2281,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2289,7 +2289,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2297,7 +2297,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2305,7 +2305,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2313,7 +2313,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2321,7 +2321,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2329,7 +2329,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2337,7 +2337,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2345,7 +2345,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2353,7 +2353,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2361,7 +2361,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2369,7 +2369,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2377,7 +2377,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2385,7 +2385,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2393,7 +2393,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2401,7 +2401,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2409,7 +2409,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2417,7 +2417,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2425,7 +2425,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2433,7 +2433,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2441,7 +2441,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2449,7 +2449,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2457,7 +2457,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2465,7 +2465,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2473,7 +2473,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2481,7 +2481,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2489,7 +2489,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2497,7 +2497,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2505,7 +2505,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2513,7 +2513,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2521,7 +2521,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2529,7 +2529,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051718/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051718/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2537,7 +2537,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2545,7 +2545,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2553,7 +2553,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2561,7 +2561,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051818/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051818/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2569,7 +2569,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2577,7 +2577,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2585,7 +2585,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2593,7 +2593,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018051918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2601,7 +2601,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2609,7 +2609,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2617,7 +2617,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2625,7 +2625,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2633,7 +2633,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2641,7 +2641,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2649,7 +2649,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2657,7 +2657,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2665,7 +2665,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052200/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052200/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2673,7 +2673,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052206/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052206/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2681,7 +2681,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052212/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052212/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2689,7 +2689,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052218/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052218/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2697,7 +2697,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052300/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052300/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2705,7 +2705,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052306/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052306/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2713,7 +2713,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052312/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052312/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2721,7 +2721,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052318/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052318/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2729,7 +2729,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052400/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052400/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2737,7 +2737,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052406/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052406/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2745,7 +2745,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052412/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052412/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2753,7 +2753,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052418/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052418/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2761,7 +2761,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052500/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052500/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2769,7 +2769,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052506/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052506/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2777,7 +2777,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052512/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052512/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2785,7 +2785,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052518/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052518/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2793,7 +2793,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052600/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052600/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2801,7 +2801,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052606/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052606/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2809,7 +2809,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052612/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052612/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2817,7 +2817,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052618/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052618/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2825,7 +2825,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052700/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052700/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2833,7 +2833,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052706/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052706/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2841,7 +2841,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052712/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052712/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
 #  - input:
@@ -2849,7 +2849,7 @@ bump:
 #      <<: *memberConfig
 #    bump operators: [inverseMultiplyVbal]
 #    output:
-#      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052718/PTB_f48mf24_unbal_0218.nc
+#      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052718/PTB_f48mf24_unbal_1006.nc
 #      <<: *memberConfig
 #    date: *date
   - input:
@@ -2857,7 +2857,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052800/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052800/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2865,7 +2865,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052806/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052806/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2873,7 +2873,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052812/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052812/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
 #  - input:
@@ -2881,7 +2881,7 @@ bump:
 #      <<: *memberConfig
 #    bump operators: [inverseMultiplyVbal]
 #    output:
-#      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052818/PTB_f48mf24_unbal_0218.nc
+#      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052818/PTB_f48mf24_unbal_1006.nc
 #      <<: *memberConfig
 #    date: *date
   - input:
@@ -2889,7 +2889,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052900/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052900/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2897,7 +2897,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052906/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052906/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2905,7 +2905,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052912/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052912/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2913,7 +2913,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052918/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018052918/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2921,7 +2921,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053000/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053000/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2929,7 +2929,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053006/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053006/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2937,7 +2937,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053012/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053012/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2945,7 +2945,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053018/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053018/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2953,7 +2953,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053100/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053100/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2961,7 +2961,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053106/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053106/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2969,7 +2969,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053112/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053112/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   - input:
@@ -2977,7 +2977,7 @@ bump:
       <<: *memberConfig
     bump operators: [inverseMultiplyVbal]
     output:
-      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053118/PTB_f48mf24_unbal_0218.nc
+      filename: /glade/scratch/bjung/ncl_product/NMC_gfs_f24_f12/2018053118/PTB_f48mf24_unbal_1006.nc
       <<: *memberConfig
     date: *date
   ensemble:

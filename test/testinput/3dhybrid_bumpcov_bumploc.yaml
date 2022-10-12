@@ -32,11 +32,8 @@ cost function:
     components:
     - covariance:
         covariance model: SABER
-        saber blocks:
-        - saber block name: BUMP_NICAS
-          saber central block: true
-          input variables: *incvars
-          output variables: *incvars
+        saber central block:
+          saber block name: BUMP_NICAS
           bump:
             strategy: specific_univariate
             load_nicas_local: true
@@ -46,23 +43,23 @@ cost function:
               variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
             - prefix: Data/bump/mpas_parametersbump_cov_2D
               variables: [surface_pressure]
+        saber outer blocks:
         - saber block name: StdDev
-          input variables: *incvars
-          output variables: *incvars
-          file:
-            filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-            date: *analysisdate
-            stream name: control
+          input fields:
+          - parameter: StdDev
+            file:
+              filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+              date: *analysisdate
+              stream name: control
       weight:
         value: 0.5
     - covariance:
         covariance model: ensemble
         localization:
           localization method: SABER
-          saber block:
+          saber central block:
             saber block name: BUMP_NICAS
-            input variables: *incvars
-            output variables: *incvars
+            active variables: *incvars
             bump:
               prefix: Data/bump/mpas_parametersbump_loc
               strategy: common

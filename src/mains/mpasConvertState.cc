@@ -8,13 +8,10 @@
 #include <oops/runs/ConvertState.h>
 #include <oops/runs/Run.h>
 
-#include <saber/oops/instantiateSaberBlockFactory.h>
-
 #include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  saber::instantiateSaberBlockFactory<mpas::Traits>();
   oops::ConvertState<mpas::Traits> cs;
   return run.execute(cs);
 }

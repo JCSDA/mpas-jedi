@@ -19,39 +19,33 @@ cost function:
     date: &date '2018-04-15T00:00:00Z'
   background error:
     covariance model: SABER
-    full inverse: true
-    saber blocks:
-    - saber block name: BUMP_NICAS
-      saber central block: true
-      iterative inverse: true
-      input variables: &ctlvars
+    saber central block:
+      saber block name: BUMP_NICAS
+      bump:
+        datadir: /glade/scratch/bjung/pandac/20221006_feature/60km.NICAS_00
+        prefix: mpas_parametersbump_cov
+        strategy: specific_univariate
+        load_nicas_local: true
+        verbosity: main
+      active variables: &ctlvars
       - stream_function
       - velocity_potential
       - temperature
       - spechum
       - surface_pressure
-      output variables: *ctlvars
-      bump:
-        datadir: /glade/scratch/bjung/pandac/20220218_develop/bumpcov_tune
-        prefix: mpas_parametersbump_cov
-        strategy: specific_univariate
-        load_nicas_local: true
-        verbosity: main
+    saber outer blocks:
     - saber block name: StdDev
-      input variables: *ctlvars
-      output variables: *ctlvars
-      file:
-        filename: /glade/scratch/bjung/pandac/20220218_develop/bumpcov_tune/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-        date: *date
-        stream name: control
+      input fields:
+      - parameter: StdDev
+        file:
+          filename: /glade/scratch/bjung/pandac/20221006_feature/60km.CMAT_00/mpas.stddev_0p33.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
     - saber block name: BUMP_VerticalBalance
-      input variables: *ctlvars
-      output variables: *ctlvars
       bump:
-        datadir: /glade/scratch/bjung/pandac/20220218_develop/bumpcov_tune
+        datadir: /glade/scratch/bjung/pandac/20221006_feature/60km.VBAL_00
         prefix: mpas_vbal
         load_vbal: true
-        #load_samp_global: true
         load_samp_local: true
         vbal_block:     [ true,  true,false, false,false,false,  true,false,false,false]
         vbal_diag_reg:  [ true, false,false, false,false,false, false,false,false,false]
@@ -117,15 +111,15 @@ cost function:
       get values:
         interpolation type: unstructured
     - obs space:
-        name: Satwnd
+        name: Satwind
         obsdatain:
           engine:
             type: H5File
-            obsfile: Data/satwnd_obs_2018041500.h5
+            obsfile: Data/satwind_obs_2018041500.h5
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/obsout_variational_satwnd.h5
+            obsfile: Data/obsout_variational_satwind.h5
         simulated variables: [eastward_wind, northward_wind]
         obs perturbations seed: 1
       obs operator:
@@ -139,7 +133,7 @@ cost function:
         threshold: 3
         apply at iterations: 0, 1
       # Assign the initial observation error, based on height/pressure
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: eastward_wind
         - name: northward_wind
@@ -224,7 +218,7 @@ cost function:
         interpolation type: unstructured
 
     - obs space:
-        name: GnssroRef
+        name: GnssroRefNCEP
         obsdatain:
           engine:
             type: H5File
@@ -235,7 +229,7 @@ cost function:
             obsfile: Data/obsout_variational_gnssroref.h5
         simulated variables: [refractivity]
       obs operator:
-        name: GnssroRef
+        name: GnssroRefNCEP
         obs options:
           use_compress: 0
       obs error:
@@ -256,10 +250,12 @@ cost function:
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
+        apply at iterations: 0, 1
         threshold: 3.0
       - filter: ROobserror
+        apply at iterations: 0, 1
         variable: refractivity
-        errmodel: NBAM
+        errmodel: NCEP
       get values:
         interpolation type: unstructured
 
@@ -289,7 +285,7 @@ cost function:
           CoefficientPath: /glade/work/jban/pandac/fixed_input/crtm_bin/
   
       obs bias:
-        input file: Data/satbias_amsua_n19.nc4
+        input file: Data/satbias_amsua_n19.h5
 #        output file: Data/satbias_amsua_n19_out.nc4
         variational bc:
           predictors: &predictors1
@@ -314,7 +310,7 @@ cost function:
           step size: 1.0e-4
           largest analysis variance: 10000.0
           prior:
-            input file: Data/satbias_cov_amsua_n19.nc4
+            input file: Data/satbias_cov_amsua_n19.h5
             inflation:
               ratio: 1.1
               ratio for small dataset: 2.0
@@ -402,7 +398,7 @@ cost function:
     #   passedBenchmark: 1272
   
     #  Topography check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -415,7 +411,7 @@ cost function:
               sensor: *Sensor_ID
               channels: *all_channels
     #  Transmittnace Top Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -425,9 +421,10 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
     #  Surface Jacobian check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -437,12 +434,13 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
     #   passedBenchmark: 1272
     #  Situation dependent Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -618,7 +616,7 @@ cost function:
           Sensor_ID: &Sensor_ID amsua_n15
  
       obs bias:
-        input file: Data/satbias_amsua_n15.nc4
+        input file: Data/satbias_amsua_n15.h5
 #        output file: Data/satbias_amsua_n15_out.nc4
         variational bc:
           predictors: &predictors2
@@ -647,7 +645,7 @@ cost function:
           step size: 1.0e-4
           largest analysis variance: 10000.0
           prior:
-            input file: Data/satbias_cov_amsua_n15.nc4
+            input file: Data/satbias_cov_amsua_n15.h5
             inflation:
               ratio: 1.1
               ratio for small dataset: 2.0
@@ -735,7 +733,7 @@ cost function:
     #   passedBenchmark: 1272
   
     #  Topography check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -748,7 +746,7 @@ cost function:
               sensor: *Sensor_ID
               channels: *all_channels
     #  Transmittnace Top Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -758,9 +756,10 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
     #  Surface Jacobian check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -770,12 +769,13 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
     #   passedBenchmark: 1272
     #  Situation dependent Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -951,7 +951,7 @@ cost function:
           Sensor_ID: &Sensor_ID amsua_n18
 
       obs bias:
-        input file: Data/satbias_amsua_n18.nc4
+        input file: Data/satbias_amsua_n18.h5
 #        output file: Data/satbias_amsua_n18_out.nc4
         variational bc:
           predictors: &predictors3
@@ -980,7 +980,7 @@ cost function:
           step size: 1.0e-4
           largest analysis variance: 10000.0
           prior:
-            input file: Data/satbias_cov_amsua_n18.nc4
+            input file: Data/satbias_cov_amsua_n18.h5
             inflation:
               ratio: 1.1
               ratio for small dataset: 2.0
@@ -1069,7 +1069,7 @@ cost function:
     #   passedBenchmark: 1272
   
     #  Topography check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1082,7 +1082,7 @@ cost function:
               sensor: *Sensor_ID
               channels: *all_channels
     #  Transmittnace Top Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1092,9 +1092,10 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
     #  Surface Jacobian check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1104,12 +1105,13 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
     #   passedBenchmark: 1272
     #  Situation dependent Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1286,7 +1288,7 @@ cost function:
           Sensor_ID: &Sensor_ID amsua_metop-a
 
       obs bias:
-        input file: Data/satbias_amsua_metop-a.nc4
+        input file: Data/satbias_amsua_metop-a.h5
 #        output file: Data/satbias_amsua_metop-a_out.nc4
         variational bc:
           predictors: &predictors4
@@ -1315,7 +1317,7 @@ cost function:
           step size: 1.0e-4
           largest analysis variance: 10000.0
           prior:
-            input file: Data/satbias_cov_amsua_metop-a.nc4
+            input file: Data/satbias_cov_amsua_metop-a.h5
             inflation:
               ratio: 1.1
               ratio for small dataset: 2.0
@@ -1403,7 +1405,7 @@ cost function:
     #   passedBenchmark: 1272
   
     #  Topography check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1416,7 +1418,7 @@ cost function:
               sensor: *Sensor_ID
               channels: *all_channels
     #  Transmittnace Top Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1426,9 +1428,10 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
     #  Surface Jacobian check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1438,12 +1441,13 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
     #   passedBenchmark: 1272
     #  Situation dependent Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1619,7 +1623,7 @@ cost function:
           Sensor_ID: &Sensor_ID amsua_aqua
 
       obs bias:
-        input file: Data/satbias_amsua_aqua.nc4
+        input file: Data/satbias_amsua_aqua.h5
 #        output file: Data/satbias_amsua_aqua_out.nc4
         variational bc:
           predictors: &predictors5
@@ -1648,7 +1652,7 @@ cost function:
           step size: 1.0e-4
           largest analysis variance: 10000.0
           prior:
-            input file: Data/satbias_cov_amsua_aqua.nc4
+            input file: Data/satbias_cov_amsua_aqua.h5
             inflation:
               ratio: 1.1
               ratio for small dataset: 2.0
@@ -1736,7 +1740,7 @@ cost function:
     #   passedBenchmark: 1272
   
     #  Topography check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1749,7 +1753,7 @@ cost function:
               sensor: *Sensor_ID
               channels: *all_channels
     #  Transmittnace Top Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1759,9 +1763,10 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
     #  Surface Jacobian check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels
@@ -1771,12 +1776,13 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
+              sensor: *Sensor_ID
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
     #   passedBenchmark: 1272
     #  Situation dependent Check
-      - filter: BlackList
+      - filter: Perform Action
         filter variables:
         - name: brightness_temperature
           channels: *all_channels

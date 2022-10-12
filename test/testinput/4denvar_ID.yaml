@@ -46,10 +46,9 @@ cost function:
     covariance model: ensemble
     localization:
       localization method: SABER
-      saber block:
+      saber central block:
         saber block name: ID
-        input variables: *stvars
-        output variables: *stvars
+        active variables: *incvars
     members:
     - states:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc

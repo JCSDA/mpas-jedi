@@ -20,10 +20,9 @@ background error:
   covariance model: ensemble
   localization:
     localization method: SABER
-    saber block:
+    saber central block:
       saber block name: BUMP_NICAS
-      input variables: *vars
-      output variables: *vars
+      active variables: *vars
       bump:
         prefix: Data/bump/mpas_parametersbump_loc
         strategy: common

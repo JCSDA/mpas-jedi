@@ -24,17 +24,20 @@ bump:
   network: false
   write_nicas_grids: true
   verbosity: main
-  input:
-  - parameter: rh
+input fields:
+- parameter: rh
+  file:
     filename: ./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  - parameter: rv
+- parameter: rv
+  file:
     filename: ./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  output:
-  - parameter: nicas_norm
+output:
+- parameter: nicas_norm
+  file:
     filename: ./mpas.nicas_norm.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control

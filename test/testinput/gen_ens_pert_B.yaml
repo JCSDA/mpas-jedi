@@ -18,11 +18,8 @@ members: 5
 Covariance:
   covariance: SABER
   date: &date '2018-04-15T00:00:00Z'
-  saber blocks:
-  - saber block name: BUMP_NICAS
-    saber central block: true
-    input variables: *vars
-    output variables: *vars
+  saber central block:
+    saber block name: BUMP_NICAS
     bump:
       strategy: specific_univariate
       load_nicas_local: true
@@ -32,19 +29,14 @@ Covariance:
         variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
       - prefix: Data/bump/mpas_parametersbump_cov_2D
         variables: [surface_pressure]
+  saber outer blocks:
   - saber block name: StdDev
-    input variables: *vars
-    output variables: *vars
-    bump:
-      verbosity: main
-      grids:
-      - variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
-      - variables: [surface_pressure]
-    input:
-    - parameter: stddev
-      filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-      date: *date
-      stream name: control
+    input fields:
+    - parameter: StdDev
+      file:
+        filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+        date: *date
+        stream name: control
 model:
   name: MPAS
   tstep: PT30M

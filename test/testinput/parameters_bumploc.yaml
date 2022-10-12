@@ -66,12 +66,14 @@ bump:
   resol: 4
   diag_rhflt: 3000000
   write_nicas_grids: true
-  output:
-  - parameter: loc_rh
+output:
+- parameter: loc_rh
+  file:
     filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  - parameter: loc_rv
+- parameter: loc_rv
+  file:
     filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control

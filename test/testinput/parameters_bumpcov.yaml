@@ -73,16 +73,19 @@ bump:
     variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
   - prefix: Data/bump/mpas_parametersbump_cov_2D
     variables: [surface_pressure]
-  output:
-  - parameter: stddev
+output:
+- parameter: stddev
+  file:
     filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  - parameter: cor_rh
+- parameter: cor_rh
+  file:
     filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control
-  - parameter: cor_rv
+- parameter: cor_rv
+  file:
     filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control

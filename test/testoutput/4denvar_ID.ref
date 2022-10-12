@@ -1,10 +1,10 @@
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(Radiosonde) = 9.2863048187030540e+02, nobs = 960, Jo/n = 9.6732341861490145e-01, err = 1.9866876136302725e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.4190161088310178e+03, nobs = 1612, Jo/n = 8.8028294592494905e-01, err = 2.2948887360473900e+00
-CostJo   : Nonlinear Jo(GnssroRef) = 6.0094985603126361e+00, nobs = 3, Jo/n = 2.0031661867708785e+00, err = 2.0037573715628203e+00
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 6.0094985603126361e+00, nobs = 3, Jo/n = 2.0031661867708785e+00, err = 2.0037573715628203e+00
 CostJo   : Nonlinear Jo(SfcPCorrected) = 4.6479941047820216e+02, nobs = 50, Jo/n = 9.2959882095640438e+00, err = 1.4571204480069588e+02
 CostFunction: Nonlinear J = 2.8184554997398382e+03
-DRIPCGMinimizer: reduction in residual norm = 1.0468361245092352e-06
+DRIPCGMinimizer: reduction in residual norm = 1.0468361245092396e-06
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
@@ -84,10 +84,10 @@ Fld=23  Min=2.1887041426635304e+02, Max=3.1103583243186711e+02, RMS=2.7518863093
 CostJb   : Nonlinear Jb = 8.3008606495094341e+01
 CostJo   : Nonlinear Jo(Radiosonde) = 7.9270864160166548e+02, nobs = 959, Jo/n = 8.2659920917796192e-01, err = 1.9865660836161334e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.1540176552610342e+03, nobs = 1611, Jo/n = 7.1633622300498712e-01, err = 2.2947557232397835e+00
-CostJo   : Nonlinear Jo(GnssroRef) = 4.4804682774048192e+00, nobs = 3, Jo/n = 1.4934894258016065e+00, err = 2.0037573715628203e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 2.3384655545949144e+02, nobs = 50, Jo/n = 4.6769311091898285e+00, err = 1.4571204480069588e+02
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 4.4804682774048192e+00, nobs = 3, Jo/n = 1.4934894258016065e+00, err = 2.0037573715628203e+00
+CostJo   : Nonlinear Jo(SfcPCorrected) = 2.3384655545949116e+02, nobs = 50, Jo/n = 4.6769311091898231e+00, err = 1.4571204480069588e+02
 CostFunction: Nonlinear J = 2.2680619270946900e+03
-DRIPCGMinimizer: reduction in residual norm = 2.7128026359300388e-07
+DRIPCGMinimizer: reduction in residual norm = 2.7128026359300452e-07
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 23
@@ -167,6 +167,6 @@ Fld=23  Min=2.1887041426635304e+02, Max=3.1103583243186711e+02, RMS=2.7518863093
 CostJb   : Nonlinear Jb = 8.2931525734808403e+01
 CostJo   : Nonlinear Jo(Radiosonde) = 7.9223094396060367e+02, nobs = 959, Jo/n = 8.2610108859291309e-01, err = 1.9865660836161334e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.1496638039002046e+03, nobs = 1611, Jo/n = 7.1363364612054914e-01, err = 2.2947557232397835e+00
-CostJo   : Nonlinear Jo(GnssroRef) = 4.4795142839808744e+00, nobs = 3, Jo/n = 1.4931714279936248e+00, err = 2.0037573715628203e+00
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 4.4795142839808744e+00, nobs = 3, Jo/n = 1.4931714279936248e+00, err = 2.0037573715628203e+00
 CostJo   : Nonlinear Jo(SfcPCorrected) = 2.3393396836981273e+02, nobs = 50, Jo/n = 4.6786793673962546e+00, err = 1.4571204480069588e+02
 CostFunction: Nonlinear J = 2.2632397562494107e+03
