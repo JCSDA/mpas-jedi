@@ -59,6 +59,57 @@ observations:
       obs options:
         use_compress: 0
   - obs space:
+      name: GnssroBndNBAM
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
+        obsgrouping:
+          group variables: [ record_number ]
+          sort variable: impact_height
+          sort order: ascending
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_gnssrobndnbam.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndNBAM
+      obs options:
+        use_compress: 1
+        sr_steps: 2
+        vertlayer: full
+        super_ref_qc: NBAM
+  - obs space:
+      name: GnssroBendMetOffice
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
+        obsgrouping:
+          group variables: [ record_number ]
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_gnssrobndmetoffice.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBendMetOffice
+      vert_interp_ops: true
+      pseudo_ops: true
+      min_temp_grad: 1.0e-6
+# need to use different obs file for GnssroRefMetOffice
+# that has obs_height instead of altitude MetaData
+#  - obs space:
+#      name: GnssroRefMetOffice
+#      obsdatain:
+#        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
+#      obsdataout:
+#        obsfile: Data/os/obsout_hofx3d_gnssroref.nc4
+#      simulated variables: [refractivity]
+#    obs operator:
+#      name: GnssroRefMetOffice
+  - obs space:
       name: AMSUA-NOAA19--nohydro
       obsdatain:
         engine:

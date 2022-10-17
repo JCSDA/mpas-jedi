@@ -313,41 +313,45 @@ subroutine pressure_half_to_full(pressure, zgrid, surface_pressure, nC, nV, pres
    integer, intent(in) :: nC, nV
    real (kind=RKIND), dimension(nV+1,nC), intent(out) :: pressure_f
 
-   real (kind=RKIND), dimension(nC,nV) :: fzm_p, fzp_p
-   real (kind=RKIND) :: tem1, z0, z1, z2, w1, w2
+   real (kind=RKIND) :: z0, z1, z2, w1, w2
    integer :: i, k, its, ite, kts, kte
 
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F   >> dimension Line 644.
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F >> formula   Line 365.
-        !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F      >> declarations
-        ! This routine needs to access GEOM (dimension, zgrid )
-        ! TODO: Check: ite = nCells??  nCellsSolve???  MPI consideration ???
-        !              Seems to be nCellsSolve
-        its=1 ; ite = nC
-        kts=1 ; kte = nV
+   ! 07OCT2022:
+   !-- linearly interpolate/extrapolate log(p) following natural variation of pressure with height
 
-        do k = kts+1,kte
-        do i = its,ite
-          tem1 = MPAS_JEDI_ONE_kr/(zgrid(k+1,i)- zgrid(k-1,i))
-          fzm_p(i,k) = ( zgrid(k,i)- zgrid(k-1,i)) * tem1
-          fzp_p(i,k) = ( zgrid(k+1,i)- zgrid(k,i)) * tem1
-          pressure_f(k,i) = fzm_p(i,k)*pressure(k,i) + fzp_p(i,k)*pressure(k-1,i)
-        enddo
-        enddo
-        k = kte+1
-        do i = its,ite
-          z0 = zgrid(k,i)
-          z1 = MPAS_JEDI_HALF_kr*(zgrid(k,i)+zgrid(k-1,i))
-          z2 = MPAS_JEDI_HALF_kr*(zgrid(k-1,i)+zgrid(k-2,i))
-          w1 = (z0-z2)/(z1-z2)
-          w2 = MPAS_JEDI_ONE_kr-w1
-          !use log of pressure to avoid occurrences of negative top-of-the-model pressure.
-          pressure_f(k,i) = exp( w1*log(pressure(k-1,i)) + w2*log(pressure(k-1,i)) )
-        enddo
-        k = kts
-        do i = its,ite
-          pressure_f(k,i) = surface_pressure(i)
-        enddo
+   ! Before 07OCT2022; linear interpolation of P:
+   !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_manager.F
+   !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_interface.F
+   !-- ~/libs/MPAS-Release/src/core_atmosphere/physics/mpas_atmphys_vars.F
+
+   its=1 ; ite = nC
+   kts=1 ; kte = nV
+
+   ! bottom
+   k = kts
+   do i = its,ite
+     pressure_f(k,i) = surface_pressure(i)
+   enddo
+
+   ! internal levels (interpolation)
+   do k = kts+1,kte
+     do i = its,ite
+       w1 = ( zgrid(k,i) - zgrid(k-1,i)) / (zgrid(k+1,i) - zgrid(k-1,i))
+       w2 = MPAS_JEDI_ONE_kr - w1
+       pressure_f(k,i) = exp( w1*log(pressure(k,i)) + w2*log(pressure(k-1,i)) )
+     enddo
+   enddo
+
+   ! top (extrapolation)
+   k = kte+1
+   do i = its,ite
+     z0 = zgrid(k,i)
+     z1 = MPAS_JEDI_HALF_kr*(zgrid(k,i)+zgrid(k-1,i))
+     z2 = MPAS_JEDI_HALF_kr*(zgrid(k-1,i)+zgrid(k-2,i))
+     w1 = (z0-z2)/(z1-z2)
+     w2 = MPAS_JEDI_ONE_kr-w1
+     pressure_f(k,i) = exp( w1*log(pressure(k-1,i)) + w2*log(pressure(k-2,i)) )
+   enddo
 
 end subroutine pressure_half_to_full
 !-------------------------------------------------------------------------------------------

@@ -452,12 +452,20 @@ subroutine changevar(self, geom, xm, xg)
           do iCell = 1, nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
             do iLevel = 1, nVertLevels
-!               call geometric2geop(lat, r2_a(iLevel,iCell), gdata%r2%array(iLevel,iCell))
                call geometric2geop(real(lat,kind=kind_real), real(r2_a(iLevel,iCell),kind=kind_real), rz)
                gdata%r2%array(iLevel,iCell)=rz
             enddo
           enddo
           deallocate(r2_a)
+
+        case ( var_zi ) !-geopotential_height_levels, geopotential heights at w levels
+          do iCell = 1, nCells
+            lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
+            do iLevel = 1, nVertLevelsP1
+               call geometric2geop(real(lat,kind=kind_real), real(geom%zgrid(iLevel,iCell),kind=kind_real), rz)
+               gdata%r2%array(iLevel,iCell)=rz
+            enddo
+          enddo
 
         case ( var_geomz, var_zm ) !-height
           ! calculate midpoint geometricZ (unit: m):
