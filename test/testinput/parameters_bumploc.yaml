@@ -41,14 +41,9 @@ ensemble:
     date: *date
     state variables: *vars
     stream name: ensemble
-background error:
-  covariance model: MPASstatic
-  date: *date
-  randomization_size: 10
 bump:
   prefix: Data/bump/mpas_parametersbump_loc
   method: loc  #hyb-rnd
-  verbosity: main
   strategy: common
   new_hdiag: true
   new_nicas: true
@@ -75,5 +70,10 @@ output:
 - parameter: loc_rv
   file:
     filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
+    date: *date
+    stream name: control
+- parameter: nicas_norm
+  file:
+    filename: Data/bump/mpas.hyb_nicas_norm.$Y-$M-$D_$h.$m.$s.nc
     date: *date
     stream name: control

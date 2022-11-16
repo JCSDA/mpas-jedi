@@ -30,7 +30,6 @@ cost function:
       bump:
         strategy: specific_univariate
         load_nicas_local: true
-        verbosity: main
         grids:
         - prefix: Data/bump/mpas_parametersbump_cov_3D
           variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]

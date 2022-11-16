@@ -829,20 +829,7 @@ subroutine initialize_bumpinterp(geom_to, geom_from, bumpinterp)
    class(mpas_geom), intent(in)           :: geom_from   !< geometry interpolating from
    type(bump_interpolator), intent(inout) :: bumpinterp  !< bump interpolator
 
-   real(kind=kind_real), allocatable :: lats_to(:), lons_to(:)
-
-   allocate( lats_to(geom_to%nCellsSolve) )
-   allocate( lons_to(geom_to%nCellsSolve) )
-   lats_to(:) = geom_to%latCell( 1:geom_to%nCellsSolve ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-   lons_to(:) = geom_to%lonCell( 1:geom_to%nCellsSolve ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-
-   call bumpinterp%init(geom_from%f_comm,afunctionspace_in=geom_from%afunctionspace,lon_out=lons_to,lat_out=lats_to, &
-      & nl0=geom_from%nVertLevels)
-
-   ! Release memory
-   ! --------------
-   deallocate(lats_to)
-   deallocate(lons_to)
+   call bumpinterp%init(geom_from%f_comm,geom_from%afunctionspace,geom_to%afunctionspace,geom_from%nVertLevels)
 
 end subroutine initialize_bumpinterp
 

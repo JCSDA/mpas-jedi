@@ -43,7 +43,6 @@ ensemble:
 bump:
   method: cor
   strategy: specific_univariate
-  verbosity: main
   new_var: true
   new_hdiag: true
   new_nicas: true

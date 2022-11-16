@@ -32,7 +32,6 @@ cost function:
           bump:
             strategy: specific_univariate
             load_nicas_local: true
-            verbosity: main
             grids:
             - prefix: Data/bump/mpas_parametersbump_cov_3D
               variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
@@ -59,7 +58,6 @@ cost function:
               prefix: Data/bump/mpas_parametersbump_loc
               strategy: common
               load_nicas_local: true
-              verbosity: main
         members:
         - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
           <<: *memberConfig
