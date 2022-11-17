@@ -7,6 +7,13 @@ _member config: &memberConfig
   - uReconstructMeridional
   - surface_pressure
   stream name: ensemble
+_obs error diagonal: &ObsErrorDiagonal
+  covariance model: diagonal
+  # recenter perturbation mean around 0
+  # Note: the same 'obs perturbations seed' must be used for all members for the 'zero-mean perturbations' option to work
+  zero-mean perturbations: true
+  member: 2
+  number of members: 4
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -58,20 +65,19 @@ cost function:
               prefix: Data/bump/mpas_parametersbump_loc
               strategy: common
               load_nicas_local: true
-        members:
-        - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-          <<: *memberConfig
+        members from template:
+          template:
+            <<: *memberConfig
+            filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
+          pattern: %iMember%
+          start: 1
+          zero padding: 2
+          nmembers: 4
+          except: [2] # chooses 1, 3, 4, 5
       weight:
         value: 0.5
   observations:
+    obs perturbations: true
     observers:
     - obs space:
         name: Radiosonde
@@ -84,11 +90,10 @@ cost function:
             type: H5File
             obsfile: Data/os/ensemble/mem002/obsout_eda_3dhybrid_sondes.nc4
         simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-        obs perturbations seed: 2
+        obs perturbations seed: 1
       obs operator:
         name: VertInterp
-      obs error:
-        covariance model: diagonal
+      obs error: *ObsErrorDiagonal
       obs filters:
       - filter: PreQC
         maxvalue: 3
@@ -106,13 +111,12 @@ cost function:
             type: H5File
             obsfile: Data/os/ensemble/mem002/obsout_eda_3dhybrid_gnssroref.nc4
         simulated variables: [refractivity]
-        obs perturbations seed: 2
+        obs perturbations seed: 1
       obs operator:
         name: GnssroRefNCEP
         obs options:
           use_compress: 0
-      obs error:
-        covariance model: diagonal
+      obs error: *ObsErrorDiagonal
       obs filters:
       - filter: Domain Check
         where:
@@ -146,14 +150,13 @@ cost function:
             type: H5File
             obsfile: Data/os/ensemble/mem002/obsout_eda_3dhybrid_sfc.nc4
         simulated variables: [surface_pressure]
-        obs perturbations seed: 2
+        obs perturbations seed: 1
       obs operator:
         name: SfcPCorrected
         da_psfc_scheme: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
-      obs error:
-        covariance model: diagonal
+      obs error: *ObsErrorDiagonal
       obs filters:
       - filter: PreQC
         maxvalue: 3
@@ -181,7 +184,6 @@ variational:
     test: 'on'
     diagnostics:
       departures: ombg
-    obs perturbations: true
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041500"
       streams_file: "./Data/480km/streams.atmosphere"
