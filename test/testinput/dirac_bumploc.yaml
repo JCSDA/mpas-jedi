@@ -24,9 +24,11 @@ background error:
       saber block name: BUMP_NICAS
       active variables: *vars
       bump:
-        prefix: Data/bump/mpas_parametersbump_loc
-        strategy: common
-        load_nicas_local: true
+        io:
+          files prefix: Data/bump/mpas_parametersbump_loc
+        drivers:
+          multivariate strategy: common
+          read local nicas: true
   members:
   - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
     date: *date

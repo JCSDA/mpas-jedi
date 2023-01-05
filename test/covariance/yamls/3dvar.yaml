@@ -22,11 +22,12 @@ cost function:
     saber central block:
       saber block name: BUMP_NICAS
       bump:
-        datadir: /glade/scratch/bjung/pandac/20221006_feature/60km.NICAS_00
-        prefix: mpas_parametersbump_cov
-        strategy: specific_univariate
-        load_nicas_local: true
-        verbosity: main
+        io:
+          data directory: /glade/scratch/bjung/pandac/20221006_feature/60km.NICAS_00
+          files prefix: mpas_parametersbump_cov
+        drivers:
+          multivariate strategy: specific_univariate
+          read local nicas: true
       active variables: &ctlvars
       - stream_function
       - velocity_potential
@@ -43,14 +44,21 @@ cost function:
           stream name: control
     - saber block name: BUMP_VerticalBalance
       bump:
-        datadir: /glade/scratch/bjung/pandac/20221006_feature/60km.VBAL_00
-        prefix: mpas_vbal
-        load_vbal: true
-        load_samp_local: true
-        vbal_block:     [ true,  true,false, false,false,false,  true,false,false,false]
-        vbal_diag_reg:  [ true, false,false, false,false,false, false,false,false,false]
-        vbal_diag_auto: [false, false,false, false,false,false, false,false,false,false]
-        verbosity: main
+        io:
+          data directory: /glade/scratch/bjung/pandac/20221006_feature/60km.VBAL_00
+          files prefix: mpas_vbal
+        drivers:
+          read local sampling: true
+          read vertical balance: true
+        vertical balance:
+          vbal:
+          - balanced variable: velocity_potential
+            unbalanced variable: stream_function
+            diagonal regression: true
+          - balanced variable: temperature
+            unbalanced variable: stream_function
+          - balanced variable: surface_pressure
+            unbalanced variable: stream_function
     linear variable change:
       linear variable change name: Control2Analysis
       input variables: *ctlvars
@@ -280,7 +288,7 @@ cost function:
         linear obs operator:
           Absorbers: [H2O]
         obs options: &clramsuacrtmopts
-          Sensor_ID: &Sensor_ID amsua_n19
+          Sensor_ID: amsua_n19
           EndianType: little_endian
           CoefficientPath: /glade/work/jban/pandac/fixed_input/crtm_bin/
   
@@ -408,7 +416,7 @@ cost function:
             name: ObsErrorFactorTopoRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n19
               channels: *all_channels
     #  Transmittnace Top Check
       - filter: Perform Action
@@ -421,7 +429,7 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n19
               channels: *all_channels
     #  Surface Jacobian check
       - filter: Perform Action
@@ -434,7 +442,7 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n19
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
@@ -450,7 +458,7 @@ cost function:
             name: ObsErrorFactorSituDependMW@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n19
               channels: *all_channels
               clwobs_function:
                 name: CLWRetMW@ObsFunction
@@ -509,7 +517,7 @@ cost function:
         - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
+            sensor: amsua_n19
             channels: *all_channels
             obserr_bound_latitude:
               name: ObsErrorFactorLatRad@ObsFunction
@@ -525,7 +533,7 @@ cost function:
               channels: *all_channels
               options:
                 channels: *all_channels
-                sensor: *Sensor_ID
+                sensor: amsua_n19
             obserr_function:
               name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
@@ -566,7 +574,7 @@ cost function:
           channels: *all_channels
           options:
             channels: *all_channels
-            sensor: *Sensor_ID
+            sensor: amsua_n19
             use_flag: [ -1,  -1,  -1,  -1,  1,
                         1,  1, -1,  1,  -1,
                        -1, -1, -1, -1, -1 ]
@@ -606,14 +614,14 @@ cost function:
             type: H5File
             obsfile: Data/obsout_variational_amsua_n15.h5
         simulated variables: [brightness_temperature]
-        channels: &all_channels 1-15 
+        channels: *all_channels
       obs error:
         covariance model: diagonal
       obs operator:
         <<: *clramsuacrtm
         obs options:
           <<: *clramsuacrtmopts
-          Sensor_ID: &Sensor_ID amsua_n15
+          Sensor_ID: amsua_n15
  
       obs bias:
         input file: Data/satbias_amsua_n15.h5
@@ -743,7 +751,7 @@ cost function:
             name: ObsErrorFactorTopoRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n15
               channels: *all_channels
     #  Transmittnace Top Check
       - filter: Perform Action
@@ -756,7 +764,7 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n15
               channels: *all_channels
     #  Surface Jacobian check
       - filter: Perform Action
@@ -769,7 +777,7 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n15
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
@@ -785,7 +793,7 @@ cost function:
             name: ObsErrorFactorSituDependMW@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n15
               channels: *all_channels
               clwobs_function:
                 name: CLWRetMW@ObsFunction
@@ -844,7 +852,7 @@ cost function:
         - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
+            sensor: amsua_n15
             channels: *all_channels
             obserr_bound_latitude:
               name: ObsErrorFactorLatRad@ObsFunction
@@ -860,7 +868,7 @@ cost function:
               channels: *all_channels
               options:
                 channels: *all_channels
-                sensor: *Sensor_ID
+                sensor: amsua_n15
             obserr_function:
               name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
@@ -901,7 +909,7 @@ cost function:
           channels: *all_channels
           options:
             channels: *all_channels
-            sensor: *Sensor_ID
+            sensor: amsua_n15
             use_flag: [ -1,  -1,  -1,  -1,  1,
                         1,  1,  1,  1,  -1,
                        -1, -1, -1, -1, -1 ]
@@ -941,14 +949,14 @@ cost function:
             type: H5File
             obsfile: Data/obsout_variational_amsua_n18.h5
         simulated variables: [brightness_temperature]
-        channels: &all_channels 1-15
+        channels: *all_channels
       obs error:
         covariance model: diagonal
       obs operator:
         <<: *clramsuacrtm
         obs options:
           <<: *clramsuacrtmopts
-          Sensor_ID: &Sensor_ID amsua_n18
+          Sensor_ID: amsua_n18
 
       obs bias:
         input file: Data/satbias_amsua_n18.h5
@@ -1079,7 +1087,7 @@ cost function:
             name: ObsErrorFactorTopoRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n18
               channels: *all_channels
     #  Transmittnace Top Check
       - filter: Perform Action
@@ -1092,7 +1100,7 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n18
               channels: *all_channels
     #  Surface Jacobian check
       - filter: Perform Action
@@ -1105,7 +1113,7 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n18
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
@@ -1121,7 +1129,7 @@ cost function:
             name: ObsErrorFactorSituDependMW@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_n18
               channels: *all_channels
               clwobs_function:
                 name: CLWRetMW@ObsFunction
@@ -1180,7 +1188,7 @@ cost function:
         - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
+            sensor: amsua_n18
             channels: *all_channels
             obserr_bound_latitude:
               name: ObsErrorFactorLatRad@ObsFunction
@@ -1196,7 +1204,7 @@ cost function:
               channels: *all_channels
               options:
                 channels: *all_channels
-                sensor: *Sensor_ID
+                sensor: amsua_n18
             obserr_function:
               name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
@@ -1237,7 +1245,7 @@ cost function:
           channels: *all_channels
           options:
             channels: *all_channels
-            sensor: *Sensor_ID
+            sensor: amsua_n18
             use_flag: [ -1,  -1,  -1,  -1,  1,
                         1, 1, 1,  1,  -1,
                        -1, -1, -1, -1, -1 ]
@@ -1278,14 +1286,14 @@ cost function:
             type: H5File
             obsfile: Data/obsout_variational_amsua_metop-a.h5
         simulated variables: [brightness_temperature]
-        channels: &all_channels 1-15 
+        channels: *all_channels
       obs error:
         covariance model: diagonal
       obs operator:
         <<: *clramsuacrtm
         obs options:
           <<: *clramsuacrtmopts
-          Sensor_ID: &Sensor_ID amsua_metop-a
+          Sensor_ID: amsua_metop-a
 
       obs bias:
         input file: Data/satbias_amsua_metop-a.h5
@@ -1415,7 +1423,7 @@ cost function:
             name: ObsErrorFactorTopoRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_metop-a
               channels: *all_channels
     #  Transmittnace Top Check
       - filter: Perform Action
@@ -1428,7 +1436,7 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_metop-a
               channels: *all_channels
     #  Surface Jacobian check
       - filter: Perform Action
@@ -1441,7 +1449,7 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_metop-a
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
@@ -1457,7 +1465,7 @@ cost function:
             name: ObsErrorFactorSituDependMW@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_metop-a
               channels: *all_channels
               clwobs_function:
                 name: CLWRetMW@ObsFunction
@@ -1516,7 +1524,7 @@ cost function:
         - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
+            sensor: amsua_metop-a
             channels: *all_channels
             obserr_bound_latitude:
               name: ObsErrorFactorLatRad@ObsFunction
@@ -1532,7 +1540,7 @@ cost function:
               channels: *all_channels
               options:
                 channels: *all_channels
-                sensor: *Sensor_ID
+                sensor: amsua_metop-a
             obserr_function:
               name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
@@ -1573,7 +1581,7 @@ cost function:
           channels: *all_channels
           options:
             channels: *all_channels
-            sensor: *Sensor_ID
+            sensor: amsua_metop-a
             use_flag: [ -1,  -1,  -1,  -1,  1,
                         1, -1, -1,  1,  -1,
                        -1, -1, -1, -1, -1 ]
@@ -1613,14 +1621,14 @@ cost function:
             type: H5File
             obsfile: Data/obsout_variational_amsua_aqua.h5
         simulated variables: [brightness_temperature]
-        channels: &all_channels 1-15
+        channels: *all_channels
       obs error:
         covariance model: diagonal
       obs operator:
         <<: *clramsuacrtm
         obs options:
           <<: *clramsuacrtmopts
-          Sensor_ID: &Sensor_ID amsua_aqua
+          Sensor_ID: amsua_aqua
 
       obs bias:
         input file: Data/satbias_amsua_aqua.h5
@@ -1750,7 +1758,7 @@ cost function:
             name: ObsErrorFactorTopoRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_aqua
               channels: *all_channels
     #  Transmittnace Top Check
       - filter: Perform Action
@@ -1763,7 +1771,7 @@ cost function:
             name: ObsErrorFactorTransmitTopRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_aqua
               channels: *all_channels
     #  Surface Jacobian check
       - filter: Perform Action
@@ -1776,7 +1784,7 @@ cost function:
             name: ObsErrorFactorSurfJacobianRad@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_aqua
               channels: *all_channels
               obserr_demisf: [0.010, 0.020, 0.015, 0.020, 0.200]
               obserr_dtempf: [0.500, 2.000, 1.000, 2.000, 4.500]
@@ -1792,7 +1800,7 @@ cost function:
             name: ObsErrorFactorSituDependMW@ObsFunction
             channels: *all_channels
             options:
-              sensor: *Sensor_ID
+              sensor: amsua_aqua
               channels: *all_channels
               clwobs_function:
                 name: CLWRetMW@ObsFunction
@@ -1851,7 +1859,7 @@ cost function:
         - name: ObsErrorBoundMW@ObsFunction
           channels: *all_channels
           options:
-            sensor: *Sensor_ID
+            sensor: amsua_aqua
             channels: *all_channels
             obserr_bound_latitude:
               name: ObsErrorFactorLatRad@ObsFunction
@@ -1867,7 +1875,7 @@ cost function:
               channels: *all_channels
               options:
                 channels: *all_channels
-                sensor: *Sensor_ID
+                sensor: amsua_aqua
             obserr_function:
               name: ObsErrorModelRamp@ObsFunction
               channels: *all_channels
@@ -1908,7 +1916,7 @@ cost function:
           channels: *all_channels
           options:
             channels: *all_channels
-            sensor: *Sensor_ID
+            sensor: amsua_aqua
             use_flag: [ -1,  -1,  -1,  -1,  -1,
                         -1, -1, 1,  1,  -1,
                        -1, -1, -1, -1, -1 ]

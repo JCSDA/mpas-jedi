@@ -37,13 +37,23 @@ cost function:
         saber central block:
           saber block name: BUMP_NICAS
           bump:
-            strategy: specific_univariate
-            load_nicas_local: true
+            drivers:
+              multivariate strategy: specific_univariate
+              read local nicas: true
             grids:
-            - prefix: Data/bump/mpas_parametersbump_cov_3D
-              variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
-            - prefix: Data/bump/mpas_parametersbump_cov_2D
-              variables: [surface_pressure]
+            - model:
+                variables:
+                - temperature
+                - spechum
+                - uReconstructZonal
+                - uReconstructMeridional
+              io:
+                files prefix: Data/bump/mpas_parametersbump_cov_3D
+            - model:
+                variables:
+                - surface_pressure
+              io:
+                files prefix: Data/bump/mpas_parametersbump_cov_2D
         saber outer blocks:
         - saber block name: StdDev
           input fields:
@@ -62,14 +72,16 @@ cost function:
             saber block name: BUMP_NICAS
             active variables: *incvars
             bump:
-              prefix: Data/bump/mpas_parametersbump_loc
-              strategy: common
-              load_nicas_local: true
+              io:
+                files prefix: Data/bump/mpas_parametersbump_loc
+              drivers:
+                multivariate strategy: common
+                read local nicas: true
         members from template:
           template:
             <<: *memberConfig
             filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
-          pattern: %iMember%
+          pattern: '%iMember%'
           start: 1
           zero padding: 2
           nmembers: 4

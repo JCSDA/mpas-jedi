@@ -42,25 +42,34 @@ ensemble:
     state variables: *vars
     stream name: ensemble
 bump:
-  prefix: Data/bump/mpas_parametersbump_loc
-  method: loc  #hyb-rnd
-  strategy: common
-  new_hdiag: true
-  new_nicas: true
-  write_nicas_local: true
-  write_nicas_global: true
-  nc1: 1024
-  nc2: 200
-  nc3: 10
-  dc: 1000000
-  nl0r: 1
-  ne: 5
-  lev2d: last
-  local_diag: true
-  local_rad: 1000000
-  resol: 4
-  diag_rhflt: 3000000
-  write_nicas_grids: true
+  io:
+    files prefix: Data/bump/mpas_parametersbump_loc
+  drivers:
+    compute covariance: true
+    compute correlation: true
+    compute localization: true
+    multivariate strategy: common
+    compute moments: true
+    compute nicas: true
+    write local nicas: true
+    write global nicas: true
+    write nicas grids: true
+  model:
+    level for 2d variables: last
+  sampling:
+    computation grid size: 1024
+    diagnostic grid size: 200
+    distance classes: 10
+    distance class width: 1000000
+    reduced levels: 1
+    local diagnostic: true
+    averaging length-scale: 1000000
+  diagnostics:
+    target ensemble size: 5
+  fit:
+    horizontal filtering length-scale: 3000000
+  nicas:
+    resolution: 4
 output:
 - parameter: loc_rh
   file:

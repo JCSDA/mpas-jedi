@@ -21,13 +21,23 @@ Covariance:
   saber central block:
     saber block name: BUMP_NICAS
     bump:
-      strategy: specific_univariate
-      load_nicas_local: true
+      drivers:
+        multivariate strategy: specific_univariate
+        read local nicas: true
       grids:
-      - prefix: Data/bump/mpas_parametersbump_cov_3D
-        variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
-      - prefix: Data/bump/mpas_parametersbump_cov_2D
-        variables: [surface_pressure]
+      - model:
+          variables:
+          - temperature
+          - spechum
+          - uReconstructZonal
+          - uReconstructMeridional
+        io:
+          files prefix: Data/bump/mpas_parametersbump_cov_3D
+      - model:
+          variables:
+          - surface_pressure
+        io:
+          files prefix: Data/bump/mpas_parametersbump_cov_2D
   saber outer blocks:
   - saber block name: StdDev
     input fields:

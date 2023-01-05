@@ -13,17 +13,18 @@ background:
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: &date '2018-04-15T00:00:00Z'
 bump:
-  prefix: mpas_parametersbump_cov
-  method: cor
-  strategy: specific_univariate
-  new_nicas: true
-  write_nicas_local: true
-  write_nicas_global: true
-  nc1: 4096
-  resol: 8 #6 #8 #4
-  network: false
-  write_nicas_grids: true
-  verbosity: main
+  io:
+    files prefix: mpas_parametersbump_cov
+  drivers:
+    multivariate strategy: specific_univariate
+    compute nicas: true
+    write local nicas: true
+    write global nicas: true
+    write nicas grids: true
+  sampling:
+    computation grid size: 4096
+  nicas:
+    resolution: 8
 input fields:
 - parameter: rh
   file:

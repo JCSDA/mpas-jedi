@@ -20,133 +20,133 @@ initial condition:
   date: *date
 observations:
   observers:
-    - obs space:
-        name: Radiosonde
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_sondes.nc4
-        simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      obs operator:
-        name: VertInterp
-      obs bias: {}
-    - obs space:
-        name: Aircraft
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_aircraft.nc4
-        simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
-      obs operator:
-        name: VertInterp
-      obs bias: {}
-    - obs space:
-        name: Satwind
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_satwind.nc4
-        simulated variables: [eastward_wind, northward_wind]
-      obs operator:
-        name: VertInterp
-      obs bias: {}
-    - obs space:
-        name: GnssroRefNCEP
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssroref.nc4
-        simulated variables: [refractivity]
-      obs operator:
-        name: GnssroRefNCEP
-        obs options:
-          ro_top_meter: 30000
-          use_compress: 0
-      obs bias: {}
-    - obs space:
-        name: GnssroBndROPP1D
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssrobndropp1d.nc4
-        simulated variables: [bending_angle]
-      obs operator:
-        name: GnssroBndROPP1D
-        obs options:
-          use_compress: 0
-      obs bias: {}
-    - obs operator:
-        name: CRTM
-        Absorbers: [H2O,O3]
-        Clouds: [Water, Ice, Rain, Snow, Graupel]
-        Cloud_Fraction: 1.0
-        SurfaceWindGeoVars: uv
-        obs options:
-          Sensor_ID: amsua_n19
-          EndianType: little_endian
-          CoefficientPath: Data/
-      obs space:
-        name: CRTM
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/ensemble/mem004/obsout_enshofx_amsua.nc4
-        simulated variables: [brightness_temperature]
-        channels: 1-15
-      obs bias: {}
-    - obs space:
-          name: SfcPCorrected
-          obsdatain:
-            engine:
-              type: H5File
-              obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
-          obsdataout:
-            engine:
-              type: H5File
-              obsfile: Data/os/ensemble/mem004/obsout_enshofx_sfc.nc4
-          simulated variables: [surface_pressure]
-        obs operator:
-          name: SfcPCorrected
-          da_psfc_scheme: UKMO   # or WRFDA
-        linear obs operator:
-          name: Identity
-        obs error:
-          covariance model: diagonal
-        obs filters:
-        - filter: PreQC
-          maxvalue: 3
-          apply at iterations: 0
-        - filter: Difference Check
-          reference: station_elevation@MetaData
-          value: surface_altitude@GeoVaLs
-          threshold: 500
-        - filter: Background Check
-          filter variables:
-          - name: surface_pressure
-          threshold: 10
+  - obs space:
+      name: Radiosonde
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_sondes.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: Aircraft
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/aircraft_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_aircraft.nc4
+      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: Satwind
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_satwind.nc4
+      simulated variables: [eastward_wind, northward_wind]
+    obs operator:
+      name: VertInterp
+    obs bias: {}
+  - obs space:
+      name: GnssroRefNCEP
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssroref.nc4
+      simulated variables: [refractivity]
+    obs operator:
+      name: GnssroRefNCEP
+      obs options:
+        ro_top_meter: 30000
+        use_compress: 0
+    obs bias: {}
+  - obs space:
+      name: GnssroBndROPP1D
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssrobndropp1d.nc4
+      simulated variables: [bending_angle]
+    obs operator:
+      name: GnssroBndROPP1D
+      obs options:
+        use_compress: 0
+    obs bias: {}
+  - obs operator:
+      name: CRTM
+      Absorbers: [H2O,O3]
+      Clouds: [Water, Ice, Rain, Snow, Graupel]
+      Cloud_Fraction: 1.0
+      SurfaceWindGeoVars: uv
+      obs options:
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/
+    obs space:
+      name: CRTM
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_amsua.nc4
+      simulated variables: [brightness_temperature]
+      channels: 1-15
+    obs bias: {}
+  - obs space:
+      name: SfcPCorrected
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/ensemble/mem004/obsout_enshofx_sfc.nc4
+      simulated variables: [surface_pressure]
+    obs operator:
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
+    linear obs operator:
+      name: Identity
+    obs error:
+      covariance model: diagonal
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+      apply at iterations: 0
+    - filter: Difference Check
+      reference: station_elevation@MetaData
+      value: surface_altitude@GeoVaLs
+      threshold: 500
+    - filter: Background Check
+      filter variables:
+      - name: surface_pressure
+      threshold: 10
 prints:
   frequency: PT3H

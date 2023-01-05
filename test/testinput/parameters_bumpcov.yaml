@@ -41,37 +41,55 @@ ensemble:
     state variables: *vars
     stream name: ensemble
 bump:
-  method: cor
-  strategy: specific_univariate
-  new_var: true
-  new_hdiag: true
-  new_nicas: true
-  write_nicas_local: true
-  write_nicas_global: true
-  nc1: 512
-  nc2: 150
-  nc3: 5
-  dc: 1000000
-  nl0r: 1
-  ne: 5
-  local_diag: true
-  local_rad: 1000000
-  resol: 4
-  diag_rhflt: 3000000
-  write_nicas_grids: true
-  var_filter: true
-  var_niter: 1
-  var_rhflt:
-    temperature: [3000.0e3]
-    spechum: [3000.0e3]
-    uReconstructZonal: [3000.0e3]
-    uReconstructMeridional: [3000.0e3]
-    surface_pressure: [3000.0e3]
+  drivers:
+    compute covariance: true
+    compute correlation: true
+    multivariate strategy: specific_univariate
+    compute variance: true
+    compute moments: true
+    compute nicas: true
+    write local nicas: true
+    write global nicas: true
+    write nicas grids: true
+  sampling:
+    computation grid size: 512
+    diagnostic grid size: 150
+    distance classes: 5
+    distance class width: 1000000
+    reduced levels: 1
+    local diagnostic: true
+    averaging length-scale: 1000000
+  diagnostics:
+    target ensemble size: 5
+  variance:
+    objective filtering: true
+    filtering iterations: 1
+    initial length-scale:
+    - variables:
+      - temperature
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
+      - surface_pressure
+      value: 3000.0e3
+  fit:
+    horizontal filtering length-scale: 3000000
+  nicas:
+    resolution: 4
   grids:
-  - prefix: Data/bump/mpas_parametersbump_cov_3D
-    variables: [temperature,spechum,uReconstructZonal,uReconstructMeridional]
-  - prefix: Data/bump/mpas_parametersbump_cov_2D
-    variables: [surface_pressure]
+  - model:
+      variables:
+      - temperature
+      - spechum
+      - uReconstructZonal
+      - uReconstructMeridional
+    io:
+      files prefix: Data/bump/mpas_parametersbump_cov_3D
+  - model:
+      variables:
+      - surface_pressure
+    io:
+      files prefix: Data/bump/mpas_parametersbump_cov_2D
 output:
 - parameter: stddev
   file:
