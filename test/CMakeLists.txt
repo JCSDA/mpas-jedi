@@ -272,7 +272,7 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
     if( DEFINED ENV{ECBUILD_DOWNLOAD_BASE_URL} )
       set( ECBUILD_DOWNLOAD_BASE_URL "$ENV{ECBUILD_DOWNLOAD_BASE_URL}/${repo}/${GIT_TAG_FUNC}" )
     else()
-      set( ECBUILD_DOWNLOAD_BASE_URL https://dashrepo.ucar.edu/api/v1/dataset/147b_jcsda/version/1.0.0/file )
+      set( ECBUILD_DOWNLOAD_BASE_URL https://gdex.ucar.edu/api/v1/dataset/147b_jcsda/version/1.0.0/file )
     endif()
 
     set( DIRNAME ${GIT_TAG_FUNC} )
