@@ -71,6 +71,7 @@ list( APPEND mpas_testinput
   testinput/3denvar_bumploc_unsinterp.yaml
   testinput/3denvar_dual_resolution.yaml
   testinput/3denvar_2stream_bumploc_unsinterp.yaml
+  testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
@@ -123,6 +124,7 @@ list( APPEND mpas_testoutput
   testoutput/3denvar_bumploc_unsinterp.ref
   testoutput/3denvar_dual_resolution.ref
   testoutput/3denvar_2stream_bumploc_unsinterp.ref
+  testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
@@ -853,6 +855,12 @@ add_mpasjedi_application_test(
 
 add_mpasjedi_application_test(
     NAME 3denvar_2stream_bumploc_unsinterp
+    APPLICATION variational
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3denvar_amsua_allsky
     APPLICATION variational
     DEPENDS parameters_bumploc
     ${RECALIBRATE})

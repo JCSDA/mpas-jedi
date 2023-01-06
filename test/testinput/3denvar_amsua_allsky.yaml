@@ -1,0 +1,178 @@
+test:
+  float relative tolerance: 4.0e-5
+  integer tolerance: 0
+  reference filename: testoutput/3denvar_amsua_allsky.ref
+  log output filename: testoutput/3denvar_amsua_allsky.run
+  test output filename: testoutput/3denvar_amsua_allsky.run.ref
+_member config: &memberConfig
+  date: &analysisdate '2018-04-15T00:00:00Z'
+  state variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  - qc
+  - qi
+  - qg
+  - qr
+  - qs
+  stream name: ensemble
+cost function:
+  cost type: 3D-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  geometry:
+    nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km_2stream/streams.atmosphere"
+    deallocate non-da fields: true
+  analysis variables: *incvars
+  background:
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p,qc,qi,qg,qr,qs,cldfrac]
+    filename: "./Data/480km_2stream/mpasout.2018-04-15_00.00.00.nc"
+    date: *analysisdate
+  background error:
+    covariance model: ensemble
+    localization:
+      localization method: SABER
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *incvars
+        bump:
+          io:
+            files prefix: Data/bump/mpas_parametersbump_loc
+          drivers:
+            multivariate strategy: common
+            read local nicas: true
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+  observations:
+    observers:
+    - obs space:
+        name: AMSUA-NOAA19
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_allsky_amsua_n19.nc4
+        simulated variables: [brightness_temperature]
+        channels: 1-4,15
+      obs error:
+        covariance model: diagonal
+      obs operator: &cloudyCRTMObsOperator
+        name: CRTM
+        Absorbers: [H2O,O3]
+        SurfaceWindGeoVars: uv
+        Clouds: [Water, Ice, Rain, Snow, Graupel]
+        linear obs operator:
+          Absorbers: [H2O]
+          Clouds: [Water, Ice, Rain, Snow, Graupel]
+        obs options: &CRTMObsOptions
+          Sensor_ID: amsua_n19
+          EndianType: little_endian
+          CoefficientPath: Data/UFOCoeff/
+      obs bias:
+        input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+        output file: Data/os/satbias_amsua_n19_out.nc4
+        variational bc:
+          predictors:
+          - name: constant
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsua19tlap Data/ufo/testinput_tier_1/amsua_n19_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsua19tlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.0]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+      obs filters:
+      - filter: Bounds Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-4,15
+        minvalue: 100.0
+        maxvalue: 500.0
+      - filter: Background Check
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-4,15
+        threshold: 10.0
+      - filter: BlackList
+        filter variables:
+        - name: brightness_temperature
+          channels: 1-4,15
+        action:
+          name: assign error
+          error function:
+            name: ObsErrorModelRamp@ObsFunction
+            channels: 1-4,15
+            options:
+              channels: 1-4,15
+              xvar:
+                name: CLWRetSymmetricMW@ObsFunction
+                options:
+                  clwret_ch238: 1
+                  clwret_ch314: 2
+                  clwret_types: [ObsValue, HofX]
+                  bias_application: ObsValue
+              x0:    [ 0.030, 0.030, 0.030, 0.030, 0.030 ]
+              x1:    [ 0.59,  0.60,  0.44,  0.51,  0.26 ]
+              err0:  [ 3.47,  2.78,  2.08,  0.87,  4.90 ]
+              err1:  [ 31.11, 42.10, 14.21,  3.21, 15.14]
+      get values:
+        interpolation type: unstructured
+output:
+  filename: "Data/states/mpas.3denvar_amsua_allsky.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
+variational:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      deallocate non-da fields: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+    diagnostics:
+      departures: ombg
+  - geometry:
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      deallocate non-da fields: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+final:
+  diagnostics:
+    departures: oman
