@@ -7,6 +7,7 @@ import netCDF4 as nc
 import numpy as np
 import os
 import sys
+import var_utils as vu
 
 ncWriteFormat = 'NETCDF3_64BIT_OFFSET'
 
@@ -32,7 +33,7 @@ aggregatableFileStats = ['RMS','Mean'] #,'STD','MS', 'Min','Max']
 allFileStats = aggregatableFileStats
 expStats = 'expmgfs'
 varNames2d = ['t2m','surface_pressure','q2','u10','v10']
-varNames3d = ['theta','temperature','rho','pressure','uReconstructZonal','uReconstructMeridional','qv','w']
+varNames3d = ['theta','temperature','rho',vu.modVarPrs,'uReconstructZonal','uReconstructMeridional','qv','w']
 varNames = varNames2d + varNames3d
 latBands = ['NXTro','Tro','SXTro']
 latBandsBounds = [90.0, 30.0, -30.0, -90.0]
@@ -215,7 +216,7 @@ def varRead(varName, ncData):
   if (varName == 'temperature'):
     varVals = getTemperature(ncData)
   else:
-    if (varName == 'pressure'):
+    if (varName == vu.modVarPrs):
       varVals = getPressure(ncData)
     elif varName in varNames3d:
       varVals = np.array( ncData.variables[varName][0,:,:] )

@@ -101,10 +101,11 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/ensemble/mem004/obsout_eda_3dhybrid_sondes.nc4
-        simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+        simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
         obs perturbations seed: 1
       obs operator:
         name: VertInterp
+        observation alias file: testinput/obsop_name_map.yaml
       obs error: *ObsErrorDiagonal
       obs filters:
       - filter: PreQC
@@ -122,7 +123,7 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/ensemble/mem004/obsout_eda_3dhybrid_gnssroref.nc4
-        simulated variables: [refractivity]
+        simulated variables: [atmosphericRefractivity]
         obs perturbations seed: 1
       obs operator:
         name: GnssroRefNCEP
@@ -133,15 +134,15 @@ cost function:
       - filter: Domain Check
         where:
         - variable:
-            name: altitude@MetaData
+            name: MetaData/height
           minvalue: 0
           maxvalue: 30000
         - variable:
-            name: earth_radius_of_curvature@MetaData
+            name: MetaData/earthRadiusCurvature
           minvalue: 6250000
           maxvalue: 6450000
         - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
+            name: MetaData/geoidUndulation
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
@@ -161,21 +162,22 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/ensemble/mem004/obsout_eda_3dhybrid_sfc.nc4
-        simulated variables: [surface_pressure]
+        simulated variables: [stationPressure]
         obs perturbations seed: 1
       obs operator:
         name: SfcPCorrected
         da_psfc_scheme: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yaml
       obs error: *ObsErrorDiagonal
       obs filters:
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
         apply at iterations: 0,1
-        reference: station_elevation@MetaData
-        value: surface_altitude@GeoVaLs
+        reference: MetaData/stationElevation
+        value: GeoVaLs/surface_altitude
         threshold: 500
       - filter: Background Check
         apply at iterations: 0,1

@@ -64,9 +64,10 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sondes.nc4
-        simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+        simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
+        observation alias file: testinput/obsop_name_map.yaml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -87,9 +88,10 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_satwind.nc4
-        simulated variables: [eastward_wind, northward_wind]
+        simulated variables: [windEastward, windNorthward]
       obs operator:
         name: VertInterp
+        observation alias file: testinput/obsop_name_map.yaml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -110,7 +112,7 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_gnssroref.nc4
-        simulated variables: [refractivity]
+        simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
         obs options:
@@ -121,15 +123,15 @@ cost function:
       - filter: Domain Check
         where:
         - variable:
-            name: altitude@MetaData
+            name: MetaData/height
           minvalue: 0
           maxvalue: 30000
         - variable:
-            name: earth_radius_of_curvature@MetaData
+            name: MetaData/earthRadiusCurvature
           minvalue: 6250000
           maxvalue: 6450000
         - variable:
-            name: geoid_height_above_reference_ellipsoid@MetaData
+            name: MetaData/geoidUndulation
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
@@ -151,12 +153,13 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sfc.nc4
-        simulated variables: [surface_pressure]
+        simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
         da_psfc_scheme: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
+        observation alias file: testinput/obsop_name_map.yaml
       obs error:
         covariance model: diagonal
       obs filters:
@@ -164,8 +167,8 @@ cost function:
         maxvalue: 3
       - filter: Difference Check
         apply at iterations: 0,1
-        reference: station_elevation@MetaData
-        value: surface_altitude@GeoVaLs
+        reference: MetaData/stationElevation
+        value: GeoVaLs/surface_altitude
         threshold: 500
       - filter: Background Check
         apply at iterations: 0,1

@@ -27,9 +27,10 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_sondes.nc4
-      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+      simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
     obs operator:
       name: VertInterp
+      observation alias file: testinput/obsop_name_map.yaml
   - obs space:
       name: Aircraft
       obsdatain:
@@ -40,9 +41,10 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_aircraft.nc4
-      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+      simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
     obs operator:
       name: VertInterp
+      observation alias file: testinput/obsop_name_map.yaml
   - obs space:
       name: GnssroRefNCEP
       obsdatain:
@@ -53,7 +55,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_gnssroref.nc4
-      simulated variables: [refractivity]
+      simulated variables: [atmosphericRefractivity]
     obs operator:
       name: GnssroRefNCEP
       obs options:
@@ -65,14 +67,14 @@ observations:
           type: H5File
           obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
         obsgrouping:
-          group variables: [ record_number ]
-          sort variable: impact_height
+          group variables: [ sequenceNumber ]
+          sort variable: impactHeightRO
           sort order: ascending
       obsdataout:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_gnssrobndnbam.nc4
-      simulated variables: [bending_angle]
+      simulated variables: [bendingAngle]
     obs operator:
       name: GnssroBndNBAM
       obs options:
@@ -87,26 +89,26 @@ observations:
           type: H5File
           obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
         obsgrouping:
-          group variables: [ record_number ]
+          group variables: [ sequenceNumber ]
       obsdataout:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_gnssrobndmetoffice.nc4
-      simulated variables: [bending_angle]
+      simulated variables: [bendingAngle]
     obs operator:
       name: GnssroBendMetOffice
       vert_interp_ops: true
       pseudo_ops: true
       min_temp_grad: 1.0e-6
 # need to use different obs file for GnssroRefMetOffice
-# that has obs_height instead of altitude MetaData
+# that has height instead of height MetaData
 #  - obs space:
 #      name: GnssroRefMetOffice
 #      obsdatain:
 #        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
 #      obsdataout:
 #        obsfile: Data/os/obsout_hofx3d_gnssroref.nc4
-#      simulated variables: [refractivity]
+#      simulated variables: [atmosphericRefractivity]
 #    obs operator:
 #      name: GnssroRefMetOffice
   - obs space:
@@ -119,7 +121,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_amsua_n19--nohydro.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: 9-14
     obs operator: &crtmobsoper
       name: CRTM
@@ -139,7 +141,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_amsua_n19--hydro.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: 1-3,15
     obs operator:
       <<: *crtmobsoper
@@ -157,7 +159,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_airs_aqua.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: 1,6-7
     obs operator:
       <<: *crtmobsoper
@@ -175,7 +177,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_cris-fsr_npp.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: 28,32,143,145,224,275,995,1008
     obs operator:
       <<: *crtmobsoper
@@ -193,7 +195,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_iasi_metop-a.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: &iasi_metop-a_channels 16,29,32,35,38,41,44
     obs operator:
       <<: *crtmobsoper
@@ -207,10 +209,10 @@ observations:
 #  Cloud Detection Check
     - filter: Bounds Check
       filter variables:
-      - name: brightness_temperature
+      - name: brightnessTemperature
         channels: *iasi_metop-a_channels
       test variables:
-      - name: CloudDetectMinResidualIR@ObsFunction
+      - name: ObsFunction/CloudDetectMinResidualIR
         channels: *iasi_metop-a_channels
         options:
           channels: *iasi_metop-a_channels
@@ -223,10 +225,10 @@ observations:
 #  Useflag Check
     - filter: Bounds Check
       filter variables:
-      - name: brightness_temperature
+      - name: brightnessTemperature
         channels: *iasi_metop-a_channels
       test variables:
-      - name: ChannelUseflagCheckRad@ObsFunction
+      - name: ObsFunction/ChannelUseflagCheckRad
         channels: *iasi_metop-a_channels
         options:
           channels: *iasi_metop-a_channels
@@ -244,7 +246,7 @@ observations:
 #          engine:
 #            type: H5File
 #            obsfile: Data/os/obsout_hofx3d_atms_npp--ch5-15.nc4
-#        simulated variables: [brightness_temperature]
+#        simulated variables: [brightnessTemperature]
 #        channels: 5-15
 #      obs operator:
 #        <<: *crtmobsoper
@@ -261,7 +263,7 @@ observations:
 #          engine:
 #            type: H5File
 #            obsfile: Data/os/obsout_hofx3d_atms_npp--ch1-4,16-22.nc4
-#        simulated variables: [brightness_temperature]
+#        simulated variables: [brightnessTemperature]
 #        channels: 1-4,16-22
 #      obs operator:
 #        <<: *crtmobsoper
@@ -280,7 +282,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/obsout_hofx3d_sfc.nc4
-      simulated variables: [surface_pressure]
+      simulated variables: [stationPressure]
     obs operator:
       name: SfcPCorrected
       da_psfc_scheme: UKMO   # or WRFDA

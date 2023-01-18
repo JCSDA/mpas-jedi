@@ -30,9 +30,10 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_sondes.nc4
-      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+      simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
     obs operator:
       name: VertInterp
+      observation alias file: testinput/obsop_name_map.yaml
     obs bias: {}
   - obs space:
       name: Aircraft
@@ -44,9 +45,10 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_aircraft.nc4
-      simulated variables: [air_temperature, eastward_wind, northward_wind, specific_humidity]
+      simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
     obs operator:
       name: VertInterp
+      observation alias file: testinput/obsop_name_map.yaml
     obs bias: {}
   - obs space:
       name: Satwind
@@ -58,9 +60,10 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_satwind.nc4
-      simulated variables: [eastward_wind, northward_wind]
+      simulated variables: [windEastward, windNorthward]
     obs operator:
       name: VertInterp
+      observation alias file: testinput/obsop_name_map.yaml
     obs bias: {}
   - obs space:
       name: GnssroRefNCEP
@@ -72,7 +75,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssroref.nc4
-      simulated variables: [refractivity]
+      simulated variables: [atmosphericRefractivity]
     obs operator:
       name: GnssroRefNCEP
       obs options:
@@ -89,7 +92,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_gnssrobndropp1d.nc4
-      simulated variables: [bending_angle]
+      simulated variables: [bendingAngle]
     obs operator:
       name: GnssroBndROPP1D
       obs options:
@@ -115,7 +118,7 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_amsua.nc4
-      simulated variables: [brightness_temperature]
+      simulated variables: [brightnessTemperature]
       channels: 1-15
     obs bias: {}
   - obs space:
@@ -128,12 +131,13 @@ observations:
         engine:
           type: H5File
           obsfile: Data/os/ensemble/mem004/obsout_enshofx_sfc.nc4
-      simulated variables: [surface_pressure]
+      simulated variables: [stationPressure]
     obs operator:
       name: SfcPCorrected
       da_psfc_scheme: UKMO   # or WRFDA
     linear obs operator:
       name: Identity
+      observation alias file: testinput/obsop_name_map.yaml
     obs error:
       covariance model: diagonal
     obs filters:
@@ -141,12 +145,12 @@ observations:
       maxvalue: 3
       apply at iterations: 0
     - filter: Difference Check
-      reference: station_elevation@MetaData
-      value: surface_altitude@GeoVaLs
+      reference: MetaData/stationElevation
+      value: GeoVaLs/surface_altitude
       threshold: 500
     - filter: Background Check
       filter variables:
-      - name: surface_pressure
+      - name: stationPressure
       threshold: 10
 prints:
   frequency: PT3H

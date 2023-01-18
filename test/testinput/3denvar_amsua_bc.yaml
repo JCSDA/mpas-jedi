@@ -64,7 +64,7 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_bc_amsua_n19.nc4
-        simulated variables: [brightness_temperature]
+        simulated variables: [brightnessTemperature]
         channels: 1-15
       obs error:
         covariance model: diagonal
@@ -110,13 +110,13 @@ cost function:
       obs filters:
       - filter: Bounds Check
         filter variables:
-        - name: brightness_temperature
+        - name: brightnessTemperature
           channels: 1-15
         minvalue: 100.0
         maxvalue: 500.0
       - filter: Background Check
         filter variables:
-        - name: brightness_temperature
+        - name: brightnessTemperature
           channels: 1-15
         threshold: 10.0
       get values:

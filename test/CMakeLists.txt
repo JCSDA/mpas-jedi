@@ -113,6 +113,7 @@ list( APPEND mpas_testinput
   testinput/rtpp.yaml
   testinput/state.yaml
   testinput/unsinterp.yaml
+  testinput/obsop_name_map.yaml
 )
 # Create Data directory for test input and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)

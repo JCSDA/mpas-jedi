@@ -108,7 +108,7 @@ class DiagnoseModelStatistics():
 
     # read "metadata" fields that are used for binning and
     #  create reshaped copies to fit 1D and 2D arrays
-    pressure = mu.varRead('pressure', ReferenceState)
+    pressure = mu.varRead(vu.modVarPrs, ReferenceState)
     nCells = pressure.shape[0]
     nVertLevelsP1 = pressure.shape[1]+1
     nVertLevels = nVertLevelsP1-1

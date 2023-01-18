@@ -69,7 +69,7 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3denvar_allsky_amsua_n19.nc4
-        simulated variables: [brightness_temperature]
+        simulated variables: [brightnessTemperature]
         channels: 1-4,15
       obs error:
         covariance model: diagonal
@@ -117,28 +117,28 @@ cost function:
       obs filters:
       - filter: Bounds Check
         filter variables:
-        - name: brightness_temperature
+        - name: brightnessTemperature
           channels: 1-4,15
         minvalue: 100.0
         maxvalue: 500.0
       - filter: Background Check
         filter variables:
-        - name: brightness_temperature
+        - name: brightnessTemperature
           channels: 1-4,15
         threshold: 10.0
       - filter: BlackList
         filter variables:
-        - name: brightness_temperature
+        - name: brightnessTemperature
           channels: 1-4,15
         action:
           name: assign error
           error function:
-            name: ObsErrorModelRamp@ObsFunction
+            name: ObsFunction/ObsErrorModelRamp
             channels: 1-4,15
             options:
               channels: 1-4,15
               xvar:
-                name: CLWRetSymmetricMW@ObsFunction
+                name: ObsFunction/CLWRetSymmetricMW
                 options:
                   clwret_ch238: 1
                   clwret_ch314: 2

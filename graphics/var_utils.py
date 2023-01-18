@@ -28,72 +28,76 @@ DiagnosticVars[HBHT] = 'EnsembleSpread'
 DiagnosticVars[R] = 'ObsError'
 DiagnosticVars[HBHTplusR] = 'TotalSpread'
 
-## NC variable names for MPAS-JEDI
-obsVarAlt     = 'altitude'
+## Variable names for MPAS-JEDI
+# IODA/UFO variables (ObsSpace, GeoVaLs, ObsDiagnostics)
+obsVarAlt     = 'height'
+obsVarBT      = 'brightnessTemperature'
+obsVarBTClear = 'brightness_temperature_assuming_clear_sky' # GeoVar
+obsVarCldFracY = 'cloudAmount'
+obsVarCldFracX = 'cloud_area_fraction_in_atmosphere_layer' # GeoVar
+obsVarLandFrac= 'landAreaFraction'
+obsVarLat     = 'latitude'
+obsVarLon     = 'longitude'
+obsVarPrs     = 'pressure'
+obsVarSenZen  = 'sensorZenithAngle'
+obsVarSenAzi  = 'sensorAzimuthAngle'
+obsVarSolZen  = 'solarZenithAngle'
+obsVarSolAzi  = 'solarAzimuthAngle'
+
+# Post-processing derived variables
 obsVarACI     = 'asymmetric_cloud_impact'
-obsVarBT      = 'brightness_temperature'
 obsVarY       = 'y'
 obsVarH       = 'h'
-obsVarBTClear = obsVarBT+'_assuming_clear_sky'
-obsVarCldFracY = 'cloud_area_fraction'
-obsVarCldFracX = 'cloud_area_fraction_in_atmosphere_layer'
 obsVarDT      = 'datetime'
 obsVarGlint   = 'glint'
 obsVarLT      = 'LocalTime'
-obsVarLandFrac= 'land_area_fraction'
-obsVarLat     = 'latitude'
-obsVarLon     = 'longitude'
 obsVarDep     = 'y-h'
 obsVarClearSkyDep = 'y-hclr'
 obsVarLogDepRatio = 'logDeparture'
 obsVarNormDep = 'dσ\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
 obsVarNormDep = 'ENI' #error-normalized innovation
-obsVarPrs     = 'air_pressure'
 obsVarQC      = 'QCflag'
 obsVarCI      = 'cloud_impact'
 obsVarLogCI   = 'logarithm_cloud_impact'
 obsVarMCI     = 'modeled_cloud_impact'
 obsVarOCI     = 'observed_cloud_impact'
-obsVarSenZen  = 'sensor_zenith_angle'
-obsVarSenAzi  = 'sensor_azimuth_angle'
-obsVarSolZen  = 'solar_zenith_angle'
-obsVarSolAzi  = 'solar_azimuth_angle'
 
 degree= u'\N{DEGREE SIGN}'
 
-# columns: var_name            unit_used   abbr.
+# key = variable name
+# value = [unit used, abbreviation]
 varDictObs = {
-    'air_temperature':        [ 'K',     'T'       ],
-    'bending_angle':          [ '%',     'Bnd'     ],
-    obsVarBT:                 [ 'K',     'BT'      ],
-    obsVarY:                  [ 'K',     obsVarY   ],
-    obsVarH:                  [ 'K',     obsVarH   ],
-    'eastward_wind':          [ 'm/s',   'U'       ],
-    'northward_wind':         [ 'm/s',   'V'       ],
-    'refractivity':           [ '%',     'Ref'     ],
-    'specific_humidity':      [ 'kg/kg', 'qv'      ],
-    'surface_pressure':       [ 'Pa',    'Ps'      ],
-    'virtual_temperature':    [ 'K',     'Tv'      ],
-    obsVarAlt:                [ 'm',     'alt'     ],
-    obsVarACI:                [ 'K',     'ACI'     ],
-    obsVarCldFracY:           [ miss_s,  'CFy'     ],
-    obsVarCldFracX:           [ miss_s,  'CFx'     ],
-    obsVarLandFrac:           [ miss_s,  'landfrac'],
-    obsVarLat:                [ degree,  'lat'     ],
-    obsVarLon:                [ degree,  'lon'     ],
-    obsVarLT:                 [ 'hr',    obsVarLT  ],
-    'Normalized departure':   [ miss_s,  obsVarNormDep ],
-    obsVarPrs:                [ 'hPa',   'P'       ],
-    obsVarQC:                 [ miss_s,  obsVarQC  ],
-    obsVarCI:                 [ 'K',     'CI'     ],
-    obsVarLogCI:              [ 'K',     'Log-CI'  ],
-    obsVarMCI:                [ 'K',     'MCI'     ],
-    obsVarOCI:                [ 'K',     'OCI'     ],
-    obsVarSenZen:             [ degree,  'zenith'  ],
-    obsVarGlint:              [ degree,  obsVarGlint  ],
+    'airTemperature': ['K', 'T'],
+    'bendingAngle': ['%', 'Bnd'],
+    obsVarBT: ['K', 'BT'],
+    obsVarY: ['K', obsVarY],
+    obsVarH: ['K', obsVarH],
+    'windEastward': ['m/s', 'U'],
+    'windNorthward': ['m/s', 'V'],
+    'atmosphericRefractivity': ['%', 'Ref'],
+    'specificHumidity': ['kg/kg', 'qv'],
+    'stationPressure': ['Pa', 'Ps'],
+    'virtualTemperature': ['K', 'Tv'],
+    obsVarAlt: ['m', 'alt'],
+    obsVarACI: ['K', 'ACI'],
+    obsVarCldFracY: [miss_s, 'CFy'],
+    obsVarCldFracX: [miss_s, 'CFx'],
+    obsVarLandFrac: [miss_s, 'landfrac'],
+    obsVarLat: [degree, 'lat'],
+    obsVarLon: [degree, 'lon'],
+    obsVarLT: ['hr', obsVarLT],
+    'Normalized departure': [miss_s, obsVarNormDep],
+    obsVarPrs: ['hPa', 'P'],
+    obsVarQC: [miss_s, obsVarQC],
+    obsVarCI: ['K', 'CI'],
+    obsVarLogCI: ['K', 'Log-CI'],
+    obsVarMCI: ['K', 'MCI'],
+    obsVarOCI: ['K', 'OCI'],
+    obsVarSenZen: [degree, 'zenith'],
+    obsVarGlint: [degree, obsVarGlint],
 }
-#Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
-#Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bendibinVar == obsVarAlt:
+#Note, atmosphericRefractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
+#Note, bendingAngle: we plot RMSE of OMB/O and OMA/O; bending angle binVar == obsVarAlt:
 
 obsRegionBinVar = 'ObsRegion'
 varDictObs[obsRegionBinVar] = [miss_s, obsRegionBinVar]
@@ -215,7 +219,7 @@ def splitObsVarGrp(WholeVarGrp):
 
 
 def splitIntSuffix(var):
-  # separate integer suffixes (e.g., brightness_temperature_*)
+  # separate integer suffixes (e.g., brightnessTemperature_*)
   obsVarName, grpName = splitObsVarGrp(var)
   suf = obsVarName.split(intSufSeparator)[-1]
   if not pu.isint(suf):
@@ -240,9 +244,9 @@ def obsVarAttributes(var):
 
 
 
-## NC variable names for MPAS-Model
+## Variable names for MPAS-Model
 #modVarAlt = 'zgrid' # --> needs to be interpolated to nVertLevels instead of nVertLevelsP1
-modVarPrs = 'pressure'
+modVarPrs = 'P3D'
 modVarLat = 'latCell'
 modVarLon = 'lonCell'
 modVarLev = 'modelLevel'
@@ -264,32 +268,32 @@ AllGroups[lonModel] = None
 
 kgm3 = 'kg/m\N{SUPERSCRIPT THREE}'
 
-# columns: var_name            unit_used   abbr.
+# key = variable name
+# value = [unit used, abbreviation]
 varDictModel = {
-  modVarLev:                [ miss_s, 'ModLev'],
-  modVarLat:                [ degree, 'lat'  ],
-  modVarLon:                [ degree, 'lon'  ],
-  modVarPrs:                [ 'Pa',   'PP'   ],
-  'pressure':               [ 'Pa',   'P'    ],
-  'q2':                     [ 'g/kg', 'Q2m'  ],
-  'qv':                     [ 'g/kg', 'Qv'   ],
-  'qv01to30':               [ 'g/kg', 'Qv01to30' ],
-  'qv01to10':               [ 'g/kg', 'Qv01to10' ],
-  'qv11to20':               [ 'g/kg', 'Qv11to20' ],
-  'qv21to30':               [ 'g/kg', 'Qv21to30' ],
-  'qv31to40':               [ 'g/kg', 'Qv31to40' ],
-  'qv41to55':               [ 'g/kg', 'Qv41to55' ],
-  'rho':                    [ kgm3,   'rho'  ],
-  'surface_pressure':       [ 'Pa',   'Ps'   ],
-  't2m':                    [ 'C',    'T2m'  ],
-  'temperature':            [ 'C',    'T'    ],
-  'theta':                  [ 'K',    'Theta'],
-  'u':                      [ 'm/s',  'uedge'],
-  'u10':                    [ 'm/s',  'U10m' ],
-  'uReconstructZonal':      [ 'm/s',  'U'    ],
-  'uReconstructMeridional': [ 'm/s',  'V'    ],
-  'v10':                    [ 'm/s',  'V10m' ],
-  'w':                      [ 'm/s',  'W'    ],
+  modVarLev: [miss_s, 'ModLev'],
+  modVarLat: [degree, 'lat'],
+  modVarLon: [degree, 'lon'],
+  modVarPrs: ['Pa', 'P'],
+  'q2': ['g/kg', 'Q2m'],
+  'qv': ['g/kg', 'Qv'],
+  'qv01to30': ['g/kg', 'Qv01to30'],
+  'qv01to10': ['g/kg', 'Qv01to10'],
+  'qv11to20': ['g/kg', 'Qv11to20'],
+  'qv21to30': ['g/kg', 'Qv21to30'],
+  'qv31to40': ['g/kg', 'Qv31to40'],
+  'qv41to55': ['g/kg', 'Qv41to55'],
+  'rho': [kgm3, 'rho'],
+  'surface_pressure': ['Pa', 'Ps'],
+  't2m': ['C', 'T2m'],
+  'temperature': ['C', 'T'],
+  'theta': ['K', 'Theta'],
+  'u': ['m/s', 'uedge'],
+  'u10': ['m/s', 'U10m'],
+  'uReconstructZonal': ['m/s', 'U'],
+  'uReconstructMeridional': ['m/s', 'V'],
+  'v10': ['m/s', 'V10m'],
+  'w': ['m/s', 'W'],
 }
 #Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv.
 
@@ -309,7 +313,7 @@ modVarNames2d = [
 ]
 
 modVarNamesBase3d = [
-  'pressure',
+  modVarPrs,
   'qv',
   'rho',
   'theta',

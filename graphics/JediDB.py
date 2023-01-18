@@ -262,7 +262,7 @@ class HDFFileHandle(FileHandle):
 
     self.fileFormat = vu.hdfFileFormat
     self.h = h5.File(File, mode)
-    self.nlocs = self.h['nlocs'].size
+    self.nlocs = self.h['Location'].size
 
     varlist = []
     for node in self.h:
@@ -279,7 +279,7 @@ class HDFFileHandle(FileHandle):
       for ii, dim in enumerate(self.h[var].attrs['DIMENSION_LIST']):
         dims[ii] = self.h[dim[0]]
         assert len(dims[ii]) == shape[ii], ('HDFFileHandle.init: len(dims[ii]) and shape[ii] do not match, ii = ', ii)
-      if dims[0] != self.h['nlocs']: continue
+      if dims[0] != self.h['Location']: continue
 
       if len(shape) == 1:
         self.variables[var] = self.h[var]

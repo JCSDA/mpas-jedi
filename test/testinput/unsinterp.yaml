@@ -7,6 +7,6 @@ number of target points: 30
 latitude bounds of target points: [-90.0, 90.0]
 longitude bounds of target points: [0.0, 360.0]
 number of levels: 3
-variable name: air_temperature
+variable name: airTemperature
 
 tolerance interpolation: 1.e-2
