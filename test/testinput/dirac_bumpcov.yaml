@@ -22,7 +22,7 @@ background error:
     saber block name: BUMP_NICAS
     bump:
       drivers:
-        multivariate strategy: specific_univariate
+        multivariate strategy: univariate
         read local nicas: true
       grids:
       - model:

@@ -16,7 +16,7 @@ bump:
   io:
     files prefix: mpas_parametersbump_cov
   drivers:
-    multivariate strategy: specific_univariate
+    multivariate strategy: univariate
     compute nicas: true
     write local nicas: true
     write global nicas: true

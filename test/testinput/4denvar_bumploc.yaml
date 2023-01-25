@@ -53,7 +53,7 @@ cost function:
           io:
             files prefix: Data/bump/mpas_parametersbump_loc
           drivers:
-            multivariate strategy: common
+            multivariate strategy: duplicated
             read local nicas: true
     members:
     - states:

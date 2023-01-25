@@ -48,7 +48,7 @@ bump:
     compute covariance: true
     compute correlation: true
     compute localization: true
-    multivariate strategy: common
+    multivariate strategy: duplicated
     compute moments: true
     compute nicas: true
     write local nicas: true
