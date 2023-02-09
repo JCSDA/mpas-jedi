@@ -1,0 +1,56 @@
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+  deallocate non-da fields: true
+  iterator dimension: 3
+
+window begin: 2018-04-14T21:00:00Z
+window end: 2018-04-15T03:00:00Z
+
+observations:
+- obs space:
+    name: 'Vertical BoxCar'
+    distribution:
+      name: InefficientDistribution
+    simulated variables: [airTemperature]
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+  obs localizations:
+  - localization method: Vertical localization
+    vertical lengthscale: 5.e3
+    ioda vertical coordinate: height
+    ioda vertical coordinate group: MetaData
+    localization function: Box Car
+    reference gridpoints:
+      lons: [-119.79888934141884, -119.79888934141884, -119.79888934141884]
+      lats: [61.44294696963654, 61.44294696963654, 61.44294696963654]
+      depths: [1098.55408, 3744.89676, 8793.91508]
+    reference local nobs: [524, 571, 103]
+    reference rms: [1.0, 1.0, 1.0]
+    print iterator: false
+
+
+- obs space:
+    name: 'Vertical Gaspari Cohn'
+    distribution:
+      name: InefficientDistribution
+    simulated variables: [airTemperature]
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+  obs localizations:
+  - localization method: Vertical localization
+    vertical lengthscale: 3.e3
+    ioda vertical coordinate: height
+    ioda vertical coordinate group: MetaData
+    localization function: Gaspari Cohn
+    reference gridpoints:
+      lons: [-119.79888934141884, -119.79888934141884, -119.79888934141884]
+      lats: [61.44294696963654, 61.44294696963654, 61.44294696963654]
+      depths: [1098.55408, 3744.89676, 8793.91508]
+    reference local nobs: [514, 217, 80]
+    reference rms: [0.505112, 0.421054, 0.294308]
+

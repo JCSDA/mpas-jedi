@@ -1,0 +1,67 @@
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+  deallocate non-da fields: true
+  iterator dimension: 2
+
+window begin: 2018-04-14T21:00:00Z
+window end: 2018-04-15T03:00:00Z
+
+observations:
+- obs space:
+    name: 'BoxCar'
+    distribution:
+      name: InefficientDistribution
+    simulated variables: [stationPressure]
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+  obs localizations:
+  - localization method: Horizontal Box car
+    lengthscale: 3.e6
+    reference gridpoints:
+      lons: [-111.12680753884949, -119.79888934141884, 14.630166646902024, 12.75966501515151]
+      lats: [28.659673272262104, 61.44294696963654, 31.358523198750248, 54.937001027645884]
+      depths: [-99999., -99999., -99999., -99999.]
+    reference local nobs: [90, 24, 60, 65]
+    reference rms: [1.0, 1.0, 1.0, 1.0]
+
+- obs space:
+    name: 'GC99'
+    distribution:
+      name: InefficientDistribution
+    simulated variables: [stationPressure]
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+  obs localizations:
+  - localization method: Horizontal Gaspari-Cohn
+    lengthscale: 3.e6
+    reference gridpoints:
+      lons: [-111.12680753884949, -119.79888934141884, 14.630166646902024, 12.75966501515151]
+      lats: [28.659673272262104, 61.44294696963654, 31.358523198750248, 54.937001027645884]
+      depths: [-99999., -99999., -99999., -99999.]
+    reference local nobs: [90, 24, 60, 65]
+    reference rms: [0.119607, 0.00308268, 0.123026, 0.41289]
+
+- obs space:
+    name: 'SOAR'
+    distribution:
+      name: InefficientDistribution
+    simulated variables: [stationPressure]
+    obsdatain:
+      engine:
+        type: H5File
+        obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+  obs localizations:
+  - localization method: Horizontal SOAR
+    lengthscale: 3.e6
+    soar horizontal decay: 0.000005
+    reference gridpoints:
+      lons: [-111.12680753884949, -119.79888934141884, 14.630166646902024, 12.75966501515151]
+      lats: [28.659673272262104, 61.44294696963654, 31.358523198750248, 54.937001027645884]
+      depths: [-99999., -99999., -99999., -99999.]
+    reference local nobs: [90, 24, 60, 65]
+    reference rms: [0.00289177, 4.69833e-05, 0.0191692, 0.063072]

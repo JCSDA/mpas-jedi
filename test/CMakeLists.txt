@@ -110,6 +110,9 @@ list( APPEND mpas_testinput
   testinput/increment.yaml
   testinput/linvarcha.yaml
   testinput/model.yaml
+  testinput/obslocalization.yaml
+  testinput/obslocalization_vertical.yaml
+  testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
   testinput/rtpp.yaml
@@ -724,6 +727,9 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
+    add_mpasjedi_unit_test( CLASS ObsLocalization YAMLFILE obslocalization )
+    add_mpasjedi_unit_test( CLASS ObsLocalization YAMLFILE obslocalization_vertical )
+    add_mpasjedi_unit_test( CLASS ObsLocalizations YAMLFILE obslocalizations )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output
