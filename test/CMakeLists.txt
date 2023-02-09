@@ -101,6 +101,8 @@ list( APPEND mpas_testinput
   testinput/forecast.yaml
   testinput/gen_ens_pert_B.yaml
   testinput/geometry.yaml
+  testinput/geometry_iterator_2d.yaml
+  testinput/geometry_iterator_3d.yaml
   testinput/hofx.yaml
   testinput/hofx3d.yaml
   testinput/hofx3d_ropp.yaml
@@ -388,11 +390,12 @@ list( APPEND mpas_test_480km
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
            ${mpas_test_480km} )
-# multi_pe_480: list of processor counts for which to run multi-PE 480km tests
+# multi_pe_standard_480: list of processor counts for which to run non-letkf multi-PE 480km tests
 # options: 2, 4, 6, 8, 12, 16
-list(APPEND multi_pe_480 2)
+list(APPEND multi_pe_standard_480 2)
+list(APPEND multi_pe_other_480 4)
 list(APPEND mpas_test_partition_480km x1.2562.graph.info)
-foreach(THIS_NPE ${multi_pe_480})
+foreach(THIS_NPE ${multi_pe_standard_480} ${multi_pe_other_480})
     if( THIS_NPE GREATER 1 )
         list( APPEND mpas_test_partition_480km x1.2562.graph.info.part.${THIS_NPE})
     endif()
@@ -401,11 +404,6 @@ endforeach()
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}
            ${mpas_test_partition_480km} )
-# Singularity for unsinterp: NPE=8 : adhoc
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
-           ${CMAKE_CURRENT_BINARY_DIR}
-           x1.2562.graph.info.part.4 )
-
 
 #480km_2stream tests
 list( APPEND mpas_test_480km_2stream
@@ -451,7 +449,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states)
-# EDA member directory names standardized by
+# ensemble member directory names standardized by
 # oops/utils/string_utils::swap_name_member
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble)
@@ -724,6 +722,8 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
     add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
+    add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
+    add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
 endif()
 
 # APPLICATION tests with creation of or comparison to reference output
@@ -919,7 +919,7 @@ add_mpasjedi_application_test(
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
 if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
-    foreach(THIS_NPE ${multi_pe_480})
+    foreach(THIS_NPE ${multi_pe_standard_480})
         if( THIS_NPE GREATER 1 )
 	    add_mpasjedi_application_test(
                 APPLICATION forecast

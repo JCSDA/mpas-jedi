@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -23,6 +23,8 @@
 
 #include "mpasjedi/Geometry/Geometry.interface.h"
 #include "mpasjedi/Geometry/GeometryParameters.h"
+#include "mpasjedi/GeometryIterator/GeometryIterator.h"
+#include "mpasjedi/GeometryIterator/GeometryIterator.interface.h"
 
 namespace mpas {
 
@@ -55,7 +57,11 @@ class Geometry : public util::Printable,
   // - In mpas-jedi, flip happens in toFieldSet/fromFieldSet(atlas)/geo_fill_extra_fields(saber)
   const bool levelsAreTopDown() const {return true;}
 
-  std::vector<size_t> variableSizes(const oops::Variables &) const;
+  GeometryIterator begin() const;
+  GeometryIterator end() const;
+  int IteratorDimension() const;
+  std::vector<size_t> variableSizes(const oops::Variables & vars) const;
+  std::vector<double> verticalCoord(std::string &) const {return {};}
 
  private:
   Geometry & operator=(const Geometry &);

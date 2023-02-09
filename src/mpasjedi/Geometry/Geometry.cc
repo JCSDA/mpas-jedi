@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2021 UCAR
+ * (C) Copyright 2017-2023 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -62,6 +62,26 @@ Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
 Geometry::~Geometry() {
   mpas_geo_delete_f90(keyGeom_);
 }
+// -------------------------------------------------------------------------------------------------
+GeometryIterator Geometry::begin() const {
+  return GeometryIterator(*this, 1, 1);
+}
+
+// -------------------------------------------------------------------------------------------------
+GeometryIterator Geometry::end() const {
+  // return end of the geometry on this mpi tile
+  // (returns index out of bounds for the iterator loops to work)
+  return GeometryIterator(*this, -1, -1);
+}
+// -----------------------------------------------------------------------------
+int Geometry::IteratorDimension() const {
+  // return dimesnion of the iterator
+  // if 2, iterator is over vertical columns
+  // if 3, iterator is over 3D points
+  int rv;
+  mpas_geo_iterator_dimension_f90(keyGeom_, rv);
+  return rv;
+}
 // -----------------------------------------------------------------------------
 bool Geometry::isEqual(const Geometry & other) const {
   bool isEqual;
@@ -108,8 +128,8 @@ void Geometry::print(std::ostream & os) const {
   int nEdgesSolve;
   int nVertLevels;
   int nVertLevelsP1;
-  mpas_geo_info_f90(keyGeom_, nCellsGlobal, nCells, nCellsSolve, \
-                              nEdgesGlobal, nEdges, nEdgesSolve, \
+  mpas_geo_info_f90(keyGeom_, nCellsGlobal, nCells, nCellsSolve,
+                              nEdgesGlobal, nEdges, nEdgesSolve,
                               nVertLevels, nVertLevelsP1);
 
   os << ", nCellsGlobal = " << nCellsGlobal \

@@ -60,6 +60,22 @@ call mpas_geom_registry%remove(c_key_self)
 
 end subroutine c_mpas_geo_delete
 
+! ------------------------------------------------------------------------------
+
+!> C++ interface to get dimension of the GeometryIterator
+subroutine mpas_geo_iterator_dimension(c_key_self, itd) bind(c, name='mpas_geo_iterator_dimension_f90')
+  use iso_c_binding
+  use mpas_geom_mod
+
+  integer(c_int), intent(in) :: c_key_self
+  integer(c_int), intent(out) :: itd ! iterator dimension
+
+  type(mpas_geom), pointer :: self
+  call mpas_geom_registry%get(c_key_self, self)
+
+  itd = self%iterator_dimension
+end subroutine mpas_geo_iterator_dimension
+
 ! --------------------------------------------------------------------------------------------------
 
 subroutine c_mpas_geo_set_lonlat(c_key_self, c_afieldset, c_include_halo) bind(c,name='mpas_geo_set_lonlat_f90')

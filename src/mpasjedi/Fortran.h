@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -11,6 +11,8 @@ namespace mpas {
 
 // Geometry key type
 typedef int F90geom;
+// GeometryIterator key type
+typedef int F90iter;
 // Model key type
 typedef int F90model;
 // Variables key type

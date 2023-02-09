@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2022 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -161,6 +161,27 @@ void Increment::random() {
 std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
   throw eckit::NotImplemented("mpasjedi::Increment::rmsByLevel not implemented yet",
                               Here());
+}
+// -----------------------------------------------------------------------------
+/// Getpoint/Setpoint
+// -----------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
+  std::vector<size_t> nLevels = geom_.variableSizes(vars_);
+  size_t lenvalues = std::accumulate(nLevels.begin(), nLevels.end(), 0);
+  std::vector<double> values(lenvalues);
+
+  // Get variable values
+  mpas_increment_getpoint_f90(keyInc_, iter.toFortran(), values[0], values.size());
+
+  // convert to vector<int> expected by LocalIncrement ctor
+  std::vector<int> varlens(nLevels.begin(), nLevels.end());
+  return oops::LocalIncrement(vars_, values, varlens);
+}
+// -------------------------------------------------------------------------------------------------
+void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
+  const std::vector<double> vals = values.getVals();
+  mpas_increment_setpoint_f90(keyInc_, iter.toFortran(), vals[0], vals.size());
 }
 // -----------------------------------------------------------------------------
 /// ATLAS

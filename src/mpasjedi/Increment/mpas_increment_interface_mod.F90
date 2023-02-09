@@ -1,4 +1,4 @@
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2023 UCAR
 ! 
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -19,6 +19,7 @@ use mpas_kind_types, only: RKIND
 
 !mpas-jedi
 use mpas_geom_mod
+use mpas_geom_iter_mod
 use mpas_increment_mod
 use mpas_fields_mod
 use mpas_kinds, only : c_real_type
@@ -570,6 +571,53 @@ call mpas_fields_registry%get(c_key_self, self)
 call self%deserialize(c_vsize, c_vect_inc, c_index)
 
 end subroutine mpas_increment_deserialize_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_increment_getpoint_c(c_key_self, c_key_iter, values, nval) &
+           bind(c,name='mpas_increment_getpoint_f90')
+
+implicit none
+
+! Passed variables
+integer(c_int),intent(in) :: c_key_self           !< Increment
+integer(c_int), intent(in) :: c_key_iter
+integer(c_int), intent(in) :: nval
+real(c_double), intent(inout) :: values(nval)
+
+type(mpas_fields), pointer :: self
+type(mpas_geom_iter), pointer :: iter
+
+call mpas_fields_registry%get(c_key_self, self)
+call mpas_geom_iter_registry%get(c_key_iter, iter)
+
+call iter%iterator%getpoint(self, values, nval)
+
+end subroutine mpas_increment_getpoint_c
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine mpas_increment_setpoint_c(c_key_self, c_key_iter, values, nval) &
+           bind(c,name='mpas_increment_setpoint_f90')
+
+implicit none
+
+! Passed variables
+integer(c_int),intent(inout) :: c_key_self           !< Increment
+integer(c_int), intent(in)   :: c_key_iter
+integer(c_int), intent(in)   :: nval
+real(c_double), intent(in)   :: values(nval)
+
+type(mpas_fields), pointer :: self
+type(mpas_geom_iter), pointer :: iter
+
+call mpas_fields_registry%get(c_key_self, self)
+call mpas_geom_iter_registry%get(c_key_iter, iter)
+
+call iter%iterator%setpoint(self, values, nval)
+
+end subroutine mpas_increment_setpoint_c
+
 ! ------------------------------------------------------------------------------
 
 end module mpas_increment_interface_mod

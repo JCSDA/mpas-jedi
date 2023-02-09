@@ -44,6 +44,9 @@ class GeometryParameters : public oops::Parameters {
   /// not needed for hofx and variational applications
   /// available options are modellevel, height, avgheight, and scaleheight
   oops::Parameter<std::string> bump_vunit{ "bump vunit", "modellevel", this};
+
+  /// LocalEnsembleDA iterator dimensionality (2 or 3)
+  oops::Parameter<int> iterator_dimension{ "iterator dimension", 2, this};
 };
 // -------------------------------------------------------------------------------------------------
 

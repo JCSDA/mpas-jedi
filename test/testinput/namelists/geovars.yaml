@@ -241,6 +241,10 @@ fields:
   - field name: tropopause_pressure
     mpas template field: u10
 
+  - field name: qv
+    mpas template field: theta
+    mpas identity field: qv
+
   - field name: qc
     mpas template field: theta
     mpas identity field: qc

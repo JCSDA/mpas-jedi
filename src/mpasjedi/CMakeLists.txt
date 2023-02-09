@@ -12,6 +12,14 @@ list( APPEND mpasjedi_src_files
     Geometry/Geometry.interface.h
     Geometry/mpas_geom_interface.F90
     Geometry/mpas_geom_mod.F90
+    GeometryIterator/GeometryIterator.cc
+    GeometryIterator/GeometryIterator.h
+    GeometryIterator/GeometryIterator.interface.h
+    GeometryIterator/iter.F90
+    GeometryIterator/iter2d.F90
+    GeometryIterator/iter3d.F90
+    GeometryIterator/mpas_geom_iter_mod.F90
+    GeometryIterator/mpas_geom_iter_interface.F90
     Increment/Increment.cc
     Increment/Increment.h
     Increment/IncrementParameters.h

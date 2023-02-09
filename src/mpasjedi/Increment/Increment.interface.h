@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -88,7 +88,8 @@ extern "C" {
                                     real_type[]);
   void mpas_increment_deserialize_f90(const F90inc &, const std::size_t &,
                                       const real_type[], const std::size_t &);
-
+  void mpas_increment_getpoint_f90(const F90inc &, const F90iter &, double &, const int &);
+  void mpas_increment_setpoint_f90(F90inc &, const F90iter &, const double &, const int &);
 };  // extern "C"
 // -----------------------------------------------------------------------------
 

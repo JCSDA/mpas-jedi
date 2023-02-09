@@ -1,4 +1,4 @@
-! (C) Copyright 2020 UCAR
+! (C) Copyright 2020-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -322,8 +322,7 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_w ) !-upward_air_velocity
           call xm%get('w', ptrr2_a)
-          call full_to_half_levels(ptrr2_a(:,1:nCells), nCells, &
-                                       nVertLevels, gdata%r2%array(:,1:nCells))
+          call geom%full_to_half(ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells), nCells)
 
         case ( var_oz ) !-mole_fraction_of_ozone_in_air :TODO: not directly available from MPAS
           !call xm%get('o3', mdata)
@@ -446,17 +445,13 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_z ) !-geopotential_height, geopotential heights at midpoint
           ! calculate midpoint geometricZ (unit: m):
-          allocate(r2_a(1:nVertLevels,1:nCells))
-          call full_to_half_levels(geom%zgrid(:,1:nCells), nCells, &
-                                       nVertLevels, r2_a(:,1:nCells))
           do iCell = 1, nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
             do iLevel = 1, nVertLevels
-               call geometric2geop(real(lat,kind=kind_real), real(r2_a(iLevel,iCell),kind=kind_real), rz)
+               call geometric2geop(real(lat,kind=kind_real), real(geom%height(iLevel,iCell),kind=kind_real), rz)
                gdata%r2%array(iLevel,iCell)=rz
             enddo
           enddo
-          deallocate(r2_a)
 
         case ( var_zi ) !-geopotential_height_levels, geopotential heights at w levels
           do iCell = 1, nCells
@@ -469,8 +464,7 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_geomz, var_zm ) !-height
           ! calculate midpoint geometricZ (unit: m):
-          call full_to_half_levels(geom%zgrid(:,1:nCells), nCells, &
-                                       nVertLevels, gdata%r2%array(:,1:nCells))
+          gdata%r2%array(:,1:nCells) = geom%height(:,1:nCells)
 
         case ( var_tropprs ) !-tropopause pressure
           call xm%get('pressure',    ptrr2_a)

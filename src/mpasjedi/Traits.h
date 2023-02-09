@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -11,6 +11,7 @@
 
 #include "mpasjedi/Covariance/ErrorCovariance.h"
 #include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/GeometryIterator/GeometryIterator.h"
 #include "mpasjedi/Increment/Increment.h"
 #include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
 #include "mpasjedi/ModelBias/ModelBias.h"
@@ -28,11 +29,14 @@ struct Traits {
 
   typedef mpas::ErrorCovariance      Covariance;
   typedef mpas::Geometry             Geometry;
+  typedef mpas::GeometryIterator     GeometryIterator;
   typedef mpas::Increment            Increment;
   typedef mpas::State                State;
+
   typedef mpas::ModelBias            ModelAuxControl;
   typedef mpas::ModelBiasIncrement   ModelAuxIncrement;
   typedef mpas::ModelBiasCovariance  ModelAuxCovariance;
+
   typedef mpas::LinearVariableChange LinearVariableChange;
   typedef mpas::VariableChange       VariableChange;
 };

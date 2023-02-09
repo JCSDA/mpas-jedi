@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -49,6 +49,7 @@ extern "C" {
   void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
                          int &, int &, int &);
   void mpas_geo_delete_f90(F90geom &);
+  void mpas_geo_iterator_dimension_f90(const F90geom &, int &);
 }
 // -----------------------------------------------------------------------------
 

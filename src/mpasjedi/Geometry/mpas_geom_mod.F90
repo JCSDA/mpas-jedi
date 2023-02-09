@@ -1,4 +1,4 @@
-! (C) Copyright 2017 UCAR
+! (C) Copyright 2017-2023 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -73,6 +73,7 @@ type :: mpas_geom
    real(kind=RKIND), dimension(:),   allocatable :: latEdge, lonEdge
    real(kind=RKIND), dimension(:,:), allocatable :: edgeNormalVectors
    real(kind=RKIND), dimension(:,:), allocatable :: zgrid
+   real(kind=RKIND), dimension(:,:), allocatable :: height
    real(kind=RKIND), dimension(:,:), allocatable :: scaleheight
    integer, allocatable :: nEdgesOnCell(:)
    integer, allocatable :: cellsOnCell(:,:)
@@ -94,12 +95,15 @@ type :: mpas_geom
    
    type(templated_field), allocatable :: templated_fields(:)
 
+   integer :: iterator_dimension
+
    contains
 
    procedure, public :: is_templated => field_is_templated
    procedure, public :: template => template_fieldname
    procedure, public :: has_identity => field_has_identity
    procedure, public :: identity => identity_fieldname
+   procedure, public :: full_to_half => full_to_half_levels
    generic, public :: nlevels => variables_nlevels, var_nlevels
    procedure :: variables_nlevels
    procedure :: var_nlevels
@@ -231,6 +235,10 @@ subroutine geo_setup(self, f_conf, f_comm)
    end do
    deallocate(fields_conf)
 
+  ! retrieve iterator dimension from config
+  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
+      self%iterator_dimension = 2
+
 !   if (associated(self % domain)) then
 !       write(message,*) 'inside geom: geom % domain associated for domainID = ', self % domain % domainID
 !       call fckit_log%debug(message)
@@ -285,6 +293,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    allocate ( self % areaCell ( self % nCells ) )
    allocate ( self % edgeNormalVectors (3,  self % nEdges ) )
    allocate ( self % zgrid ( self % nVertLevelsP1, self % nCells ) )
+   allocate ( self % height ( self % nVertLevels, self % nCells ) )
    allocate ( self % scaleheight ( self % nVertLevels, self % nCells ) )
    allocate ( self % nEdgesOnCell ( self % nCells ) )
    allocate ( self % edgesOnCell ( self % maxEdges, self % nCells ) )
@@ -346,11 +355,32 @@ subroutine geo_setup(self, f_conf, f_comm)
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
 
+   call self%full_to_half(self % zgrid, self % height, self % nCells)
+
+
    call fckit_log%debug('End of geo_setup')
    if (allocated(prev_count)) deallocate(prev_count)
    if (allocated(str)) deallocate(str)
 
 end subroutine geo_setup
+
+! --------------------------------------------------------------------------------------------------
+
+subroutine full_to_half_levels(self, full, half, nx)
+
+   implicit none
+
+   class(mpas_geom), intent(in) :: self
+   integer, intent(in) :: nx
+   real (kind=RKIND), dimension(self%nVertLevels+1,nx), intent(in) :: full
+   real (kind=RKIND), dimension(self%nVertLevels,nx), intent(out) :: half
+   integer :: i, k
+
+   !  calculate half level values of a variable at full levels:
+   do k = 1, self%nVertLevels
+      half(k,:) = ( full(k,:) + full(k+1,:) ) * MPAS_JEDI_HALF_kr
+   enddo
+end subroutine full_to_half_levels
 
 ! --------------------------------------------------------------------------------------------------
 
@@ -442,8 +472,7 @@ subroutine geo_fill_extra_fields(self, afieldset)
       if (trim(self % bump_vunit) .eq. 'modellevel') then
          real_ptr(jz,1:nx) = real(iz, kind_real)
       else if (trim(self % bump_vunit) .eq. 'height') then
-         real_ptr(jz,1:nx) = MPAS_JEDI_HALF_kr * &
-         ( self%zgrid(iz,1:nx) + self%zgrid(iz+1,1:nx) )
+         real_ptr(jz,1:nx) = self%height(iz,1:nx)
       else if (trim(self % bump_vunit) .eq. 'avgheight') then
          ! find avgheight by averaging across MPI processes, of course without halo
          var_local = MPAS_JEDI_HALF_kr * ( sum(self%zgrid(iz,  1:nx2)) &
@@ -620,6 +649,8 @@ subroutine geo_clone(self, other)
    self % vertexDegree  = other % vertexDegree
    self % maxEdges      = other % maxEdges
 
+   self % iterator_dimension = other % iterator_dimension
+
    if (.not.allocated(self % latCell)) allocate(self % latCell(other % nCells))
    if (.not.allocated(self % lonCell)) allocate(self % lonCell(other % nCells))
    if (.not.allocated(self % latEdge)) allocate(self % latEdge(other % nEdges))
@@ -627,6 +658,7 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % areaCell)) allocate(self % areaCell(other % nCells))
    if (.not.allocated(self % edgeNormalVectors)) allocate(self % edgeNormalVectors(3, other % nEdges))
    if (.not.allocated(self % zgrid)) allocate(self % zgrid(other % nVertLevelsP1, other % nCells))
+   if (.not.allocated(self % height)) allocate(self % height(other % nVertLevels, other % nCells))
    if (.not.allocated(self % scaleheight)) allocate(self % scaleheight(other % nVertLevels, other % nCells))
    if (.not.allocated(self % nEdgesOnCell)) allocate(self % nEdgesOnCell(other % nCells))
    if (.not.allocated(self % edgesOnCell)) allocate(self % edgesOnCell(other % maxEdges, other % nCells))
@@ -650,6 +682,7 @@ subroutine geo_clone(self, other)
    self % lonEdge           = other % lonEdge
    self % edgeNormalVectors = other % edgeNormalVectors
    self % zgrid             = other % zgrid
+   self % height            = other % height
    self % scaleheight       = other % scaleheight
    self % nEdgesOnCell      = other % nEdgesOnCell
    self % edgesOnCell       = other % edgesOnCell
@@ -701,6 +734,7 @@ subroutine geo_delete(self)
    if (allocated(self%areaCell)) deallocate(self%areaCell)
    if (allocated(self%edgeNormalVectors)) deallocate(self%edgeNormalVectors)
    if (allocated(self%zgrid)) deallocate(self%zgrid)
+   if (allocated(self%height)) deallocate(self%height)
    if (allocated(self%scaleheight)) deallocate(self%scaleheight)
    if (allocated(self%nEdgesOnCell)) deallocate(self%nEdgesOnCell)
    if (allocated(self%edgesOnCell)) deallocate(self%edgesOnCell)

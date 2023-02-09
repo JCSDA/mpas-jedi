@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2022 UCAR
+ * (C) Copyright 2017-2023 UCAR
  * 
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
@@ -59,7 +59,7 @@ class Increment : public util::Printable,
   typedef IncrementWriteParameters WriteParameters_;
   typedef DiracParameters DiracParameters_;
 
-/// Constructor, destructor
+  /// Constructor, destructor
   Increment(const Geometry &, const oops::Variables &,
                 const util::DateTime &);
   Increment(const Geometry &, const Increment &);
@@ -67,7 +67,7 @@ class Increment : public util::Printable,
   Increment(const Increment &);
   virtual ~Increment();
 
-/// Basic operators
+  /// Basic operators
   void diff(const State &, const State &);
   void zero();
   void zero(const util::DateTime &);
@@ -84,25 +84,31 @@ class Increment : public util::Printable,
   void dirac(const DiracParameters_ &);
   std::vector<double> rmsByLevel(const std::string &) const;
 
+  /// Getpoint/Setpoint
+  oops::LocalIncrement getLocal(const GeometryIterator &) const;
+  void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
+
+  /// ATLAS
   void toFieldSet(atlas::FieldSet &) const;
   void toFieldSetAD(const atlas::FieldSet &);
   void fromFieldSet(const atlas::FieldSet &);
 
-/// I/O and diagnostics
+  /// I/O and diagnostics
   void read(const ReadParameters_ &);
   void write(const WriteParameters_ &) const;
   real_type norm() const;
 
   void updateTime(const util::Duration & dt) {time_ += dt;}
 
-/// Other
+  /// Other
   void accumul(const real_type &, const State &);
 
-/// Serialize and deserialize
+  /// Serialize and deserialize
   size_t serialSize() const override;
   void serialize(std::vector<real_type> &) const override;
   void deserialize(const std::vector<real_type> &, size_t &) override;
 
+  /// Member address accessors
   const Geometry & geometry() const {return geom_;}
   const oops::Variables & variables() const {return vars_;}
 
