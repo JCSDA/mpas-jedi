@@ -1,0 +1,204 @@
+test:
+  float relative tolerance: 1.e-2 # lenient to allow different core counts
+  float absolute tolerance: 1.e-40
+  integer tolerance: 0
+  reference filename: testoutput/letkf_2dloc.ref
+  log output filename: testoutput/letkf_2dloc.run
+  test output filename: testoutput/letkf_2dloc.run.ref
+
+_obs error diagonal: &ObsErrorDiagonal
+  covariance model: diagonal
+
+_hor obs localization: &HorizObsLoc
+  localization method: Horizontal Gaspari-Cohn
+  lengthscale: 5.0e6
+
+_obs distribution: &ObsSpaceDistribution
+  name: Halo
+  halo size: 5.0e6
+
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+  deallocate non-da fields: true
+  iterator dimension: 3
+
+window begin: 2018-04-14T21:00:00Z
+window length: PT6H
+
+background:
+  members from template:
+    template:
+      date: '2018-04-15T00:00:00Z'
+      state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                        theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                        snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+      stream name: background
+      #state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure]
+      filename: Data/480km/bg/ensemble/mem%mem%/x1.2562.init.2018-04-15_00.00.00.nc
+    pattern: '%mem%'
+    zero padding: 2
+    nmembers: 5
+
+increment variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure]
+
+observations:
+  observers:
+  - obs space:
+      name: Radiosonde
+      distribution: *ObsSpaceDistribution
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/letkf/os/obsout_letkf_2dloc_sondes.nc4
+      simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
+      obs perturbations seed: 1
+    obs operator:
+      name: VertInterp
+      #observation alias file: testinput/obsop_name_map.yaml
+    obs error: *ObsErrorDiagonal
+    obs localizations:
+    - <<: *HorizObsLoc
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+    - filter: Background Check
+      threshold: 3
+
+  - obs space:
+      name: GnssroRefNCEP
+      distribution: *ObsSpaceDistribution
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/letkf/os/obsout_letkf_2dloc_gnssroref.nc4
+      simulated variables: [atmosphericRefractivity]
+      obs perturbations seed: 1
+    obs operator:
+      name: GnssroRefNCEP
+      obs options:
+        use_compress: 0
+    obs error: *ObsErrorDiagonal
+    obs localizations:
+    - <<: *HorizObsLoc
+    obs filters:
+    - filter: Domain Check
+      where:
+      - variable:
+          name: MetaData/height
+        minvalue: 0
+        maxvalue: 30000
+      - variable:
+          name: MetaData/earthRadiusCurvature
+        minvalue: 6250000
+        maxvalue: 6450000
+      - variable:
+          name: MetaData/geoidUndulation
+        minvalue: -200
+        maxvalue: 200
+    - filter: Background Check
+      threshold: 3
+    - filter: ROobserror
+      variable: refractivity
+      errmodel: NCEP
+
+  - obs space:
+      name: SfcPCorrected
+      distribution: *ObsSpaceDistribution
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/letkf/os/obsout_letkf_2dloc_sfc.nc4
+      simulated variables: [stationPressure]
+      obs perturbations seed: 1
+    obs operator:
+      name: SfcPCorrected
+      da_psfc_scheme: UKMO   # or WRFDA
+    linear obs operator:
+      name: Identity
+      #observation alias file: testinput/obsop_name_map.yaml
+    obs error: *ObsErrorDiagonal
+    obs localizations:
+    - <<: *HorizObsLoc
+    obs filters:
+    - filter: PreQC
+      maxvalue: 3
+    - filter: Difference Check
+      reference: MetaData/stationElevation
+      value: GeoVaLs/surface_altitude
+      threshold: 500
+    - filter: Background Check
+      threshold: 10
+
+  - obs space:
+      name: AMSUA-NOAA19
+      distribution: *ObsSpaceDistribution
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/letkf/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+      simulated variables: [brightnessTemperature]
+      channels: 5-7,9
+    obs error:
+      covariance model: diagonal
+    obs error: *ObsErrorDiagonal
+    obs localizations:
+    - <<: *HorizObsLoc
+    obs filters:
+    - filter: Background Check
+      threshold: 10
+    obs operator:
+      name: CRTM
+      Absorbers: [H2O,O3]
+      SurfaceWindGeoVars: uv
+      linear obs operator:
+        Absorbers: [H2O]
+      obs options:
+        Sensor_ID: amsua_n19
+        EndianType: little_endian
+        CoefficientPath: Data/UFOCoeff/
+
+driver:
+  do test prints: true
+  do posterior observer: true
+  save posterior ensemble: true
+  save posterior ensemble increments: false
+  save posterior mean: true
+  save posterior variance: true
+
+local ensemble DA:
+  solver: LETKF
+# TODO: how do inflation settings impact result?
+#  inflation:
+#    rtps: 0.5
+#    rtpp: 0.6
+#    mult: 1.1
+
+output:
+  filename: Data/letkf/model/mem%{member}%/an.2dloc.$Y-$M-$D_$h.$m.$s.nc
+  stream name: analysis
+
+output variance posterior:
+  filename: Data/letkf/model/mem%{member}%/an.var.2dloc.$Y-$M-$D_$h.$m.$s.nc
+  stream name: analysis
+
+#output ensemble increments:
+#  # requires external AddIncrement step with mem%{member}%/bg.$Y-$M-$D_$h.$m.$s.nc as background
+#  filename: Data/letkf/model/mem%{member}%/increment.2dloc.$Y-$M-$D_$h.$m.$s.nc
+#  stream name: control

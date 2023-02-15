@@ -38,6 +38,7 @@ namespace oops {
 
 namespace mpas {
   class Geometry;
+  class GeometryIterator;
   class State;
 
 /// Increment Class: Difference between two states

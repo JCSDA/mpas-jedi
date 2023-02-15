@@ -108,6 +108,8 @@ list( APPEND mpas_testinput
   testinput/hofx3d_ropp.yaml
   testinput/hofx3d_rttovcpp.yaml
   testinput/increment.yaml
+  testinput/letkf_2dloc.yaml
+  testinput/letkf_3dloc.yaml
   testinput/linvarcha.yaml
   testinput/model.yaml
   testinput/obslocalization.yaml
@@ -153,6 +155,8 @@ list( APPEND mpas_testoutput
   testoutput/hofx3d.ref
   testoutput/hofx3d_ropp.ref
   testoutput/hofx3d_rttovcpp.ref
+  testoutput/letkf_2dloc.ref
+  testoutput/letkf_3dloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
   testoutput/rtpp.ref
@@ -396,7 +400,7 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
 # multi_pe_standard_480: list of processor counts for which to run non-letkf multi-PE 480km tests
 # options: 2, 4, 6, 8, 12, 16
 list(APPEND multi_pe_standard_480 2)
-list(APPEND multi_pe_other_480 4)
+list(APPEND multi_pe_other_480 4 8 16)
 list(APPEND mpas_test_partition_480km x1.2562.graph.info)
 foreach(THIS_NPE ${multi_pe_standard_480} ${multi_pe_other_480})
     if( THIS_NPE GREATER 1 )
@@ -452,6 +456,11 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states)
+#letkf ObsSpaces/mean/perturbations
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/letkf)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/letkf/os)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/letkf/model)
+
 # ensemble member directory names standardized by
 # oops/utils/string_utils::swap_name_member
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble)
@@ -460,6 +469,8 @@ set(ensemblemembers mem000;mem001;mem002;mem003;mem004;mem005)
 foreach(MEM IN LISTS ensemblemembers)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os/ensemble/${MEM})
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/states/ensemble/${MEM})
+#  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/letkf/os/${MEM})
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/letkf/model/${MEM})
 endforeach(MEM)
 
 
@@ -921,6 +932,26 @@ add_mpasjedi_application_test(
     APPLICATION rtpp
     DEPENDS eda_3dhybrid
     ${RECALIBRATE})
+
+# letkf (4 and 8 pe)
+add_mpasjedi_application_test(
+    NAME letkf_2dloc
+    NPE 4
+    APPLICATION letkf
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME letkf_3dloc
+    NPE 4
+    APPLICATION letkf
+    ${RECALIBRATE})
+
+# disable for now, too slow
+#add_mpasjedi_application_test(
+#    NAME letkf_3dloc
+#    NPE 8
+#    APPLICATION letkf
+#    ${RECALIBRATE})
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------

@@ -21,10 +21,10 @@
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
 
+#include "mpasjedi/GeometryIterator/GeometryIterator.h"
+
 #include "mpasjedi/Geometry/Geometry.interface.h"
 #include "mpasjedi/Geometry/GeometryParameters.h"
-#include "mpasjedi/GeometryIterator/GeometryIterator.h"
-#include "mpasjedi/GeometryIterator/GeometryIterator.interface.h"
 
 namespace mpas {
 

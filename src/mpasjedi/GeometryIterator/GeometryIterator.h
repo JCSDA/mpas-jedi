@@ -21,12 +21,10 @@ namespace eckit {
     class Point3;
   }
 }
+
 namespace mpas {
   class Geometry;
-}
 
-
-namespace mpas {
 // -----------------------------------------------------------------------------
 class GeometryIterator: public std::iterator<std::forward_iterator_tag,
                                                eckit::geometry::Point3>,
