@@ -7,16 +7,19 @@
 module iter2d_mod
 
 use iso_c_binding
+
+!oops
 use kinds, only : kind_real
 
+!MPAS-Model
 use mpas_derived_types
-use mpas_pool_routines
 use mpas_kind_types, only: RKIND
 
+!mpas-jedi
 use iter_mod
 use mpas_constants_mod
 use mpas_fields_mod, only: mpas_fields
-use mpas_geom_mod, only: getSolveDimSizes
+use mpas_geom_mod, only: getVertLevels
 
 implicit none
 private
@@ -96,50 +99,38 @@ end subroutine next_2d
 
 subroutine getpoint_2d(self, fields, values, nval)
 
-   implicit none
+  implicit none
 
-   ! Passed variables
-   class(iter2d), intent(in) :: self
-   class(mpas_fields), intent(in) :: fields
-   integer(c_int) :: nval
-   real(kind_real), intent(inout) :: values(nval)
+  ! Passed variables
+  class(iter2d), intent(in) :: self
+  class(mpas_fields), intent(in) :: fields
+  integer(c_int) :: nval
+  real(kind_real), intent(inout) :: values(nval)
 
-   ! Local variables
-   integer :: ii, nvert
-   type (mpas_pool_iterator_type) :: poolItr
-   type(mpas_pool_data_type), pointer :: fdata
-   integer, allocatable :: dimSizes(:)
+  ! Local variables
+  integer :: ii, iVar, nvert
+  type(mpas_pool_data_type), pointer :: fdata
 
-   ! Initialize
-   ii = 0
+  ii = 0
 
-   call mpas_pool_begin_iteration(fields%subFields)
-   do while ( mpas_pool_get_next_member(fields%subFields, poolItr) )
-      if (poolItr % memberType == MPAS_POOL_FIELD) then
-         call fields%get(poolItr % memberName, fdata)
-         dimSizes = getSolveDimSizes(fields%subFields, poolItr%memberName)
-         if (poolItr % nDims == 1) then
-            nvert = 1
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-               values(ii+1) = real(fdata%i1%array(self%cellIndex), kind_real)
-            else if (poolItr % dataType == MPAS_POOL_REAL) then
-               values(ii+1) = real(fdata%r1%array(self%cellIndex), kind_real)
-            endif
-         else if (poolItr % nDims == 2) then
-            nvert = dimSizes(1)
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-               values(ii+1:ii+nvert) = real(fdata%i2%array(1:nvert, self%cellIndex), kind_real)
-            else if (poolItr % dataType == MPAS_POOL_REAL) then
-               values(ii+1:ii+nvert) = real(fdata%r2%array(1:nvert, self%cellIndex), kind_real)
-            endif
-         else
-            write(message,*) '--> getpoint_2d: poolItr % nDims == ',poolItr % nDims,' not handled'
-            call abor1_ftn(message)
-         endif
-         ii = ii + nvert
-         deallocate(dimSizes)
-      endif
-   enddo
+  do iVar = 1, fields%nf
+
+    call fields%get(fields%fldnames(iVar), fdata)
+    nvert = fields%nvert(iVar)
+
+    if (associated(fdata%r2)) then
+      values(ii+1:ii+nvert) = real(fdata%r2%array(1:nvert, self%cellIndex), kind_real)
+
+    else if (associated(fdata%r1)) then
+      values(ii+1) = real(fdata%r1%array(self%cellIndex), kind_real)
+
+    else
+      call abor1_ftn('getpoint_2d: only r1 and r2 data types are supported')
+    end if
+
+    ii = ii + nvert
+
+  enddo
 
 end subroutine getpoint_2d
 
@@ -147,54 +138,41 @@ end subroutine getpoint_2d
 
 subroutine setpoint_2d(self, fields, values, nval)
 
-   implicit none
+  implicit none
 
-   ! Passed variables
-   class(iter2d), intent(in) :: self
-   class(mpas_fields), intent(inout) :: fields
-   integer(c_int) :: nval
-   real(kind_real), intent(in) :: values(nval)
+  ! Passed variables
+  class(iter2d), intent(in) :: self
+  class(mpas_fields), intent(inout) :: fields
+  integer(c_int) :: nval
+  real(kind_real), intent(in) :: values(nval)
 
-   ! Local variables
-   integer :: ii, nvert
-   type (mpas_pool_iterator_type) :: poolItr
-   type(mpas_pool_data_type), pointer :: fdata
-   integer, allocatable :: dimSizes(:)
+  ! Local variables
+  integer :: ii, iVar, nvert
+  type(mpas_pool_data_type), pointer :: fdata
 
-   ! Initialize
-   ii = 0
+  ii = 0
 
-   call mpas_pool_begin_iteration(fields%subFields)
-   do while ( mpas_pool_get_next_member(fields%subFields, poolItr) )
-      if (poolItr % memberType == MPAS_POOL_FIELD) then
-         call fields%get(poolItr % memberName, fdata)
-         dimSizes = getSolveDimSizes(fields%subFields, poolItr%memberName)
-         if (poolItr % nDims == 1) then
-            nvert = 1
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-               fdata%i1%array(self%cellIndex) = nint(values(ii+1))
-            else if (poolItr % dataType == MPAS_POOL_REAL) then
-               fdata%r1%array(self%cellIndex) = real(values(ii+1), RKIND)
-            endif
-         else if (poolItr % nDims == 2) then
-            nvert = dimSizes(1)
-            if (poolItr % dataType == MPAS_POOL_INTEGER) then
-               fdata%i2%array(1:nvert, self%cellIndex) = nint(values(ii+1:ii+nvert))
-            else if (poolItr % dataType == MPAS_POOL_REAL) then
-               fdata%r2%array(1:nvert, self%cellIndex) = real(values(ii+1:ii+nvert), RKIND)
-            endif
-         else
-            write(message,*) '--> setpoint_2d: poolItr % nDims == ',poolItr % nDims,' not handled'
-            call abor1_ftn(message)
-         endif
-         ii = ii + nvert
-         deallocate(dimSizes)
-      endif
-   enddo
+  do iVar = 1, fields%nf
+
+    call fields%get(fields%fldnames(iVar), fdata)
+    nvert = fields%nvert(iVar)
+
+    if (associated(fdata%r2)) then
+      fdata%r2%array(1:nvert, self%cellIndex) = real(values(ii+1:ii+nvert), RKIND)
+
+    else if (associated(fdata%r1)) then
+      fdata%r1%array(self%cellIndex) = real(values(ii+1), RKIND)
+
+    else
+      call abor1_ftn('setpoint_2d: only r1 and r2 data types are supported')
+    end if
+
+    ii = ii + nvert
+
+  enddo
 
 end subroutine setpoint_2d
 
 ! ------------------------------------------------------------------------------
-
 
 end module iter2d_mod

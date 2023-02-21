@@ -32,7 +32,6 @@ GeometryIterator::GeometryIterator(const Geometry& geom,
   mpas_geom_iter_setup_f90(keyIter_, geom.toFortran(), cellIndex, levIndex);
 }
 
-
 // -----------------------------------------------------------------------------
 
 GeometryIterator::~GeometryIterator() {

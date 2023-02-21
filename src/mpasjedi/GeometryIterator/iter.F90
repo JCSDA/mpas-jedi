@@ -35,43 +35,43 @@ type, abstract :: iter
 
   ! methods below are deferred to extensions of iter
 
-  !> \copybrief equals_iter
-  procedure(equals_iter), deferred :: equals
+  !> \copybrief iter_equals
+  procedure(iter_equals), deferred :: equals
 
-  !> \copybrief current_iter
-  procedure(current_iter), deferred :: current
+  !> \copybrief iter_current
+  procedure(iter_current), deferred :: current
 
-  !> \copybrief next_iter
-  procedure(next_iter), deferred :: next
+  !> \copybrief iter_next
+  procedure(iter_next), deferred :: next
 
-  !> \copybrief getpoint_iter
-  procedure(getpoint_iter), deferred :: getpoint
+  !> \copybrief iter_getpoint
+  procedure(iter_getpoint), deferred :: getpoint
 
-  !> \copybrief setpoint_iter
-  procedure(setpoint_iter), deferred :: setpoint
+  !> \copybrief iter_setpoint
+  procedure(iter_setpoint), deferred :: setpoint
 
 end type iter
 
 interface
-  logical(kind=c_bool) function equals_iter(self, other)
+  logical(kind=c_bool) function iter_equals(self, other)
     use iso_c_binding
     import :: iter
     class(iter), intent(in) :: self  !< Geometry iterator
     class(iter), pointer, intent(in) :: other !< Geometry iterator
   end function
-  subroutine current_iter(self, lon, lat, height)
+  subroutine iter_current(self, lon, lat, height)
     use kinds, only : kind_real
     import :: iter
     class(iter), intent(in) :: self !< Geometry iterator
     real(kind_real), intent(out) :: lon    !< Longitude
     real(kind_real), intent(out) :: lat    !< Latitude
     real(kind_real), intent(out) :: height !< Height
-  end subroutine current_iter
-  subroutine next_iter(self)
+  end subroutine iter_current
+  subroutine iter_next(self)
     import :: iter
     class(iter), intent(inout) :: self !< Geometry iterator
-  end subroutine next_iter
-  subroutine getpoint_iter(self, fields, values, nval)
+  end subroutine iter_next
+  subroutine iter_getpoint(self, fields, values, nval)
     use iso_c_binding
     use kinds, only : kind_real
     use mpas_fields_mod, only: mpas_fields
@@ -80,8 +80,8 @@ interface
     class(mpas_fields), intent(in) :: fields
     integer(c_int) :: nval
     real(kind_real), intent(inout) :: values(nval)
-  end subroutine getpoint_iter
-  subroutine setpoint_iter(self, fields, values, nval)
+  end subroutine iter_getpoint
+  subroutine iter_setpoint(self, fields, values, nval)
     use iso_c_binding
     use kinds, only : kind_real
     use mpas_fields_mod, only: mpas_fields
@@ -90,7 +90,7 @@ interface
     class(mpas_fields), intent(inout) :: fields
     integer(c_int) :: nval
     real(kind_real), intent(in) :: values(nval)
-  end subroutine setpoint_iter
+  end subroutine iter_setpoint
 end interface
 
 ! ------------------------------------------------------------------------------

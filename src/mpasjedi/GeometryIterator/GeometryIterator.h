@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iterator>
 #include <string>
+#include <vector>
 
 #include "mpasjedi/Fortran.h"
 

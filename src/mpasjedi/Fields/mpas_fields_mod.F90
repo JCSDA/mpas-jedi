@@ -74,6 +74,7 @@ public :: mpas_fields, mpas_fields_registry, &
      type (mpas_pool_type), pointer, public        :: subFields => null() !---> state variables (to be analyzed)
      integer, public :: nf_ci                                             ! Number of variables in CI
      character(len=MAXVARLEN), allocatable, public :: fldnames_ci(:)      ! Control increment identifiers
+     integer, allocatable, public :: nvert(:)                             ! number of vertical levels of each field
 
      contains
 
@@ -271,6 +272,12 @@ subroutine create_fields(self, geom, vars, vars_ci)
 
     call self%populate()
 
+    ! pre-determine number of vertical levels for each variables
+    allocate(self % nvert(self % nf))
+    do ivar = 1, self % nf
+       self % nvert(ivar) = getVertLevels(self % subFields, self % fldnames(ivar))
+    end do
+
     return
 
 end subroutine create_fields
@@ -296,6 +303,7 @@ subroutine delete_fields(self)
 
    if (allocated(self % fldnames)) deallocate(self % fldnames)
    if (allocated(self % fldnames_ci)) deallocate(self % fldnames_ci)
+   if (allocated(self % nvert)) deallocate(self % nvert)
 
    call fckit_log%debug('--> delete_fields: deallocate subFields Pool')
    call delete_pool(self % subFields)

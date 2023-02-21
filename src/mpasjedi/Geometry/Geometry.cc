@@ -83,6 +83,19 @@ int Geometry::IteratorDimension() const {
   return rv;
 }
 // -----------------------------------------------------------------------------
+std::vector<int> Geometry::nIterLevs(const oops::Variables & vars) const {
+  std::vector<size_t> n_t(vars.size());
+  if (IteratorDimension() == 3) {
+    // 1 level per variable
+    std::fill(n_t.begin(), n_t.end(), 1);
+  } else {
+    // # levels equivalent to those in Fortran arrays
+    n_t = variableSizes(vars);
+  }
+  std::vector<int> n(n_t.begin(), n_t.end());
+  return n;
+}
+// -----------------------------------------------------------------------------
 bool Geometry::isEqual(const Geometry & other) const {
   bool isEqual;
 

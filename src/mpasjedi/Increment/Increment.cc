@@ -28,16 +28,19 @@ namespace mpas {
 Increment::Increment(const Geometry & geom,
                              const oops::Variables & vars,
                              const util::DateTime & time):
-  geom_(geom), vars_(vars), time_(time)
+  geom_(geom), vars_(vars), time_(time), iterLevs_(geom_.nIterLevs(vars_)),
+  iterVals_(std::accumulate(iterLevs_.begin(), iterLevs_.end(), 0))
 {
   mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_zero_f90(keyInc_);
   oops::Log::trace() << "Increment::Increment (from geom, vars and time) done" << std::endl;
 }
+
 // -----------------------------------------------------------------------------
 Increment::Increment(const Geometry & resol,
                              const Increment & other)
-  : geom_(resol), vars_(other.vars_), time_(other.time_)
+  : geom_(resol), vars_(other.vars_), time_(other.time_),
+  iterLevs_(other.iterLevs_), iterVals_(other.iterVals_)
 {
   mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
@@ -45,7 +48,8 @@ Increment::Increment(const Geometry & resol,
 }
 // -----------------------------------------------------------------------------
 Increment::Increment(const Increment & other, const bool copy)
-  : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
+  : geom_(other.geom_), vars_(other.vars_), time_(other.time_),
+  iterLevs_(other.iterLevs_), iterVals_(other.iterVals_)
 {
   mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   if (copy) {
@@ -57,7 +61,8 @@ Increment::Increment(const Increment & other, const bool copy)
 }
 // -----------------------------------------------------------------------------
 Increment::Increment(const Increment & other)
-  : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
+  : geom_(other.geom_), vars_(other.vars_), time_(other.time_),
+  iterLevs_(other.iterLevs_), iterVals_(other.iterVals_)
 {
   mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
   mpas_increment_copy_f90(keyInc_, other.keyInc_);
@@ -166,17 +171,9 @@ std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
 /// Getpoint/Setpoint
 // -----------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
-oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
-  std::vector<size_t> nLevels = geom_.variableSizes(vars_);
-  size_t lenvalues = std::accumulate(nLevels.begin(), nLevels.end(), 0);
-  std::vector<double> values(lenvalues);
-
-  // Get variable values
-  mpas_increment_getpoint_f90(keyInc_, iter.toFortran(), values[0], values.size());
-
-  // convert to vector<int> expected by LocalIncrement ctor
-  std::vector<int> varlens(nLevels.begin(), nLevels.end());
-  return oops::LocalIncrement(vars_, values, varlens);
+oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) {
+  mpas_increment_getpoint_f90(keyInc_, iter.toFortran(), iterVals_[0], iterVals_.size());
+  return oops::LocalIncrement(vars_, iterVals_, iterLevs_);
 }
 // -------------------------------------------------------------------------------------------------
 void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {

@@ -86,7 +86,7 @@ class Increment : public util::Printable,
   std::vector<double> rmsByLevel(const std::string &) const;
 
   /// Getpoint/Setpoint
-  oops::LocalIncrement getLocal(const GeometryIterator &) const;
+  oops::LocalIncrement getLocal(const GeometryIterator &);
   void setLocal(const oops::LocalIncrement &, const GeometryIterator &);
 
   /// ATLAS
@@ -128,6 +128,8 @@ class Increment : public util::Printable,
   const Geometry & geom_;
   oops::Variables vars_;
   util::DateTime time_;
+  std::vector<int> iterLevs_;
+  std::vector<double> iterVals_;
 };
 // -----------------------------------------------------------------------------
 
