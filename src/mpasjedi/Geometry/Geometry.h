@@ -62,7 +62,8 @@ class Geometry : public util::Printable,
   int IteratorDimension() const;
   std::vector<int> nIterLevs(const oops::Variables &) const;
   std::vector<size_t> variableSizes(const oops::Variables & vars) const;
-  std::vector<double> verticalCoord(std::string &) const {return {};}
+  std::vector<double> verticalCoord(std::string &) const;
+  const int getDim(const std::string &) const;
 
  private:
   Geometry & operator=(const Geometry &);

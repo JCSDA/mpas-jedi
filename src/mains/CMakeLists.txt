@@ -27,8 +27,8 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_hofx3d.x
                         SOURCES mpasHofX3D.cc
                         LIBS    ${PROJECT_NAME} )
 
-ecbuild_add_executable( TARGET  ${PROJECT_NAME}_letkf.x
-                        SOURCES mpasLETKF.cc
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_enkf.x
+                        SOURCES mpasEnKF.cc
                         LIBS    ${PROJECT_NAME})
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_error_covariance_training.x

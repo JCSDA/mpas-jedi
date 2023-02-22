@@ -10,6 +10,7 @@ use iso_c_binding
 
 !oops
 use kinds, only : kind_real
+use missing_values_mod
 
 !MPAS-Model
 use mpas_derived_types
@@ -111,6 +112,8 @@ subroutine getpoint_2d(self, fields, values, nval)
   integer :: ii, iVar, nvert
   type(mpas_pool_data_type), pointer :: fdata
 
+  values(:) = missing_value(values(1))
+
   ii = 0
 
   do iVar = 1, fields%nf
@@ -128,7 +131,7 @@ subroutine getpoint_2d(self, fields, values, nval)
       call abor1_ftn('getpoint_2d: only r1 and r2 data types are supported')
     end if
 
-    ii = ii + nvert
+    ii = ii + self%geom%nVertLevels
 
   enddo
 
@@ -167,7 +170,7 @@ subroutine setpoint_2d(self, fields, values, nval)
       call abor1_ftn('setpoint_2d: only r1 and r2 data types are supported')
     end if
 
-    ii = ii + nvert
+    ii = ii + self%geom%nVertLevels
 
   enddo
 

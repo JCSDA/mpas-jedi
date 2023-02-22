@@ -7,8 +7,11 @@
 
 #include "atlas/grid.h"
 #include "atlas/util/Config.h"
-#include "mpasjedi/Geometry/Geometry.h"
+
+#include "oops/util/abor1_cpp.h"
 #include "oops/util/Logger.h"
+
+#include "mpasjedi/Geometry/Geometry.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
@@ -84,16 +87,29 @@ int Geometry::IteratorDimension() const {
 }
 // -----------------------------------------------------------------------------
 std::vector<int> Geometry::nIterLevs(const oops::Variables & vars) const {
-  std::vector<size_t> n_t(vars.size());
+  std::vector<int> n(vars.size());
   if (IteratorDimension() == 3) {
     // 1 level per variable
-    std::fill(n_t.begin(), n_t.end(), 1);
+    std::fill(n.begin(), n.end(), 1);
   } else {
-    // # levels equivalent to those in Fortran arrays
-    n_t = variableSizes(vars);
+    // nVertLevels for all variables (including 2d)
+    std::fill(n.begin(), n.end(), getDim("nVertLevels"));
   }
-  std::vector<int> n(n_t.begin(), n_t.end());
   return n;
+}
+// -------------------------------------------------------------------------------------------------
+std::vector<double> Geometry::verticalCoord(std::string & vcUnits) const {
+  // returns vertical coordinate in untis of vcUnits
+  // TODO(JJG): get this to work for height and scale height
+  std::vector<double> vc(getDim("nVertLevels"));
+  if (vcUnits == "modellevel") {
+    for (size_t i=0; i < vc.size(); ++i) {vc[i] = static_cast<double> (i+1);}
+  } else {
+    std::stringstream errorMsg;
+    errorMsg << "Uknown vertical coordinate unit " << vcUnits << std::endl;
+    ABORT(errorMsg.str());
+  }
+  return vc;
 }
 // -----------------------------------------------------------------------------
 bool Geometry::isEqual(const Geometry & other) const {
@@ -154,6 +170,42 @@ void Geometry::print(std::ostream & os) const {
      << ", nVertLevels = " <<nVertLevels \
      << ", nVertLevelsP1 = " <<nVertLevelsP1
      << ", communicator = " << this->getComm().name();
+}
+// -----------------------------------------------------------------------------
+const int Geometry::getDim(const std::string & dim) const {
+  int ncGlobal;
+  int nc;
+  int ncSolve;
+  int neGlobal;
+  int ne;
+  int neSolve;
+  int nv;
+  int nvP1;
+  mpas_geo_info_f90(keyGeom_, ncGlobal, nc, ncSolve,
+                              neGlobal, ne, neSolve,
+                              nv, nvP1);
+  if (dim == "nCellsGlobal") {
+      return ncGlobal;
+  } else if (dim == "nCells") {
+      return nc;
+  } else if (dim == "nCellsSolve") {
+      return ncSolve;
+  } else if (dim == "nEdgesGlobal") {
+      return neGlobal;
+  } else if (dim == "nEdges") {
+      return ne;
+  } else if (dim == "nEdgesSolve") {
+      return neSolve;
+  } else if (dim == "nVertLevels") {
+      return nv;
+  } else if (dim == "nVertLevelsP1") {
+      return nvP1;
+  } else {
+      std::stringstream errorMsg;
+      errorMsg << "Uknown dimension " << dim << std::endl;
+      ABORT(errorMsg.str());
+  }
+  return -1;
 }
 // -----------------------------------------------------------------------------
 }  // namespace mpas
