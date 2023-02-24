@@ -424,6 +424,7 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km_2stream
 # test config files
 list( APPEND mpas_test_config_base
   geovars.yaml
+  keptvars.yaml
   stream_list.atmosphere.background
   stream_list.atmosphere.analysis
   stream_list.atmosphere.ensemble

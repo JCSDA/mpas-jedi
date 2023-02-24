@@ -188,7 +188,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    !Deallocate not-used fields for memory reduction
    call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
    self % deallocate_nonda_fields = deallocate_fields
-   if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (self % domain)
+   if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (f_conf, self % domain)
 
    ! Set up the vertical coordinate for bump
    call f_conf%get_or_die("bump vunit",str)
@@ -491,9 +491,10 @@ subroutine geo_fill_extra_fields(self, afieldset)
 end subroutine geo_fill_extra_fields
 
 ! ------------------------------------------------------------------------------
-subroutine geo_deallocate_nonda_fields(domain)
+subroutine geo_deallocate_nonda_fields(f_conf, domain)
 
    implicit none
+   type(fckit_configuration),      intent(in)    :: f_conf
    type (domain_type), pointer,    intent(inout) :: domain
    type (mpas_pool_type), pointer                :: pool_a, pool_b
    type (mpas_pool_data_type), pointer           :: mem
@@ -508,6 +509,10 @@ subroutine geo_deallocate_nonda_fields(domain)
    character (len=22), allocatable :: poolname_a(:), poolname_b(:)
    character (len=22), allocatable :: da_fieldnames(:)
 
+   type(fckit_configuration) :: template_conf
+   character(len=:), allocatable :: str, str_arr(:)
+   character(len=512) :: fields_file
+
    allocate(poolname_a(3))
    poolname_a(1)='tend'
    poolname_a(2)='tend_physics'
@@ -518,44 +523,18 @@ subroutine geo_deallocate_nonda_fields(domain)
    poolname_b(2)='diag'
    poolname_b(3)='sfc_input'
 
-   !TODO: remove the following list of fieldnames and read from a stream_list.atmosphere file
-   allocate(da_fieldnames(num_da_fields))
-   da_fieldnames(1)='re_cloud'
-   da_fieldnames(2)='re_ice'
-   da_fieldnames(3)='re_snow'
-   da_fieldnames(4)='cldfrac'
-   da_fieldnames(5)='lai'
-   da_fieldnames(6)='u10'
-   da_fieldnames(7)='v10'
-   da_fieldnames(8)='q2'
-   da_fieldnames(9)='t2m'
-   da_fieldnames(10)='pressure_p'
-   da_fieldnames(11)='pressure'
-   da_fieldnames(12)='pressure_base'
-   da_fieldnames(13)='surface_pressure'
-   da_fieldnames(14)='rho'
-   da_fieldnames(15)='theta'
-   da_fieldnames(16)='temperature'
-   da_fieldnames(17)='relhum'
-   da_fieldnames(18)='spechum'
-   da_fieldnames(19)='u'
-   da_fieldnames(20)='uReconstructZonal'
-   da_fieldnames(21)='uReconstructMeridional'
-   da_fieldnames(22)='stream_function'
-   da_fieldnames(23)='velocity_potential'
-   da_fieldnames(24)='landmask'
-   da_fieldnames(25)='xice'
-   da_fieldnames(26)='snowc'
-   da_fieldnames(27)='skintemp'
-   da_fieldnames(28)='ivgtyp'
-   da_fieldnames(29)='isltyp'
-   da_fieldnames(30)='snowh'
-   da_fieldnames(31)='vegfra'
-   da_fieldnames(32)='lai'
-   da_fieldnames(33)='smois'
-   da_fieldnames(34)='tslb'
-   da_fieldnames(35)='vorticity'
-   da_fieldnames(36)='w'
+   ! first read array of templated field configurations
+   call f_conf%get_or_die('kept fields file',str)
+   fields_file = str
+   template_conf = fckit_YAMLConfiguration(fckit_pathname(fields_file))
+   call template_conf%get_or_die('fields',str_arr)
+
+   ! create da_fieldnames array to be kept
+   allocate(da_fieldnames(size(str_arr)))
+   do i = 1, size(str_arr)
+      da_fieldnames(i)=trim(str_arr(i))
+   end do
+   deallocate(str_arr)
 
    do i=1,size(poolname_a)
       mem => pool_get_member(domain % blocklist % structs, poolname_a(i), MPAS_POOL_SUBPOOL)

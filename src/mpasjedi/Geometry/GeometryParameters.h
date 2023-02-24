@@ -37,6 +37,10 @@ class GeometryParameters : public oops::Parameters {
   /// can not be true for forecast and hofx (4D) applications
   oops::Parameter<bool> deallocate_non_da_fields{ "deallocate non-da fields", false, this};
 
+  /// yaml filename that contains the list of variables to be kept
+  /// when "deallocate non-da fields" is true
+  oops::Parameter<std::string> kept_fields_file{ "kept fields file", "keptvars.yaml", this};
+
   /// yaml filename that contains configurations of templated field names
   oops::Parameter<std::string> template_fields_file{ "template fields file", "geovars.yaml", this};
 
