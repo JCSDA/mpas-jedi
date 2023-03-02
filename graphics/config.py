@@ -264,6 +264,7 @@ ahiGrp = 'ahi'
 amsuaGrp = 'amsua'
 amsuacldGrp = 'amsuacld'
 mhsGrp = 'mhs'
+iasiGrp = 'iasi'
 modelGrp = 'model'
 
 anGroupConfig = {
@@ -274,6 +275,7 @@ anGroupConfig = {
     amsuaGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:60:00'}, #bg
     amsuacldGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:25:00'},
     mhsGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:20:00'},
+    iasiGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:50:00'},
     modelGrp: {'npwork': 10, 'npread': 36, 'analyze walltime': '03:30:00'},
 }
 
@@ -517,10 +519,30 @@ DiagSpaceConfig = {
     },
     'iasi_metop-a': {
         'DiagSpaceGrp': radiance_s,
-        'process': False,
+        'process': True,
+        'anGrp': iasiGrp,
         'binVarConfigs': polarBinVars,
-        'diagNames': pconf.defaultDiagnostics,
-        'channels': [16,29,32,35,38,41,44],
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
+        'channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
+    },
+    'iasi_metop-b': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': iasiGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
+        'channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
+    },
+    'iasi_metop-c': {
+        'DiagSpaceGrp': radiance_s,
+        'process': False,
+        'anGrp': iasiGrp,
+        'binVarConfigs': polarBinVars,
+        'diagNames': pconf.defaultDiagnostics+pconf.sigmaDiagnostics+pconf.nobcDiagnostics,
+        'channels': [16,104,154,254,410,1585,2019,2993,3110],
+        'analyzed channels': [16,104,154,254,410,1585,2019,2993,3110],
     },
     'mhs_metop-a': {
         'DiagSpaceGrp': radiance_s,
