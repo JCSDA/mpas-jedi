@@ -77,6 +77,13 @@ list( APPEND mpasjedi_src_files
     Utilities/slow_oops_unstructured_interpolation_mod.F90
     )
 
+if(saca_FOUND)
+    #include saca-specific src
+    list( APPEND mpasjedi_src_files
+        Utilities/mpas_saca_interface_mod.F90
+        )
+endif(saca_FOUND)
+
 #Create target
 include(GNUInstallDirs)
 ecbuild_add_library( TARGET ${PROJECT_NAME}
@@ -96,6 +103,10 @@ target_link_libraries( ${PROJECT_NAME} PUBLIC oops )
 target_link_libraries( ${PROJECT_NAME} PUBLIC saber )
 target_link_libraries( ${PROJECT_NAME} PUBLIC ioda )
 target_link_libraries( ${PROJECT_NAME} PUBLIC ufo )
+if(saca_FOUND)
+    target_link_libraries( ${PROJECT_NAME} PUBLIC saca )
+    target_compile_definitions( ${PROJECT_NAME} PUBLIC SACA_FOUND) #cpp preprocessor
+endif()
 
 #Configure include directory layout for build-tree to match install-tree
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)

@@ -58,7 +58,8 @@ public :: mpas_fields, mpas_fields_registry, &
           cellCenteredWindFields, &
           moistureFields, &
           analysisThermoFields, &
-          modelThermoFields
+          modelThermoFields, &
+          sacaStateFields, sacaObsFields
 
 ! ------------------------------------------------------------------------------
 
@@ -207,6 +208,12 @@ public :: mpas_fields, mpas_fields_registry, &
    character(len=MAXVARLEN), parameter :: modelThermoFields(4) = &
       [character(len=MAXVARLEN) :: &
        'qv', 'pressure', 'rho', 'theta']
+   character(len=MAXVARLEN), parameter :: sacaStateFields(9) = &
+      [character(len=MAXVARLEN) :: &
+       'qv', 'qc', 'qi', 'qs', 'cldfrac', 'rho', 'temperature', 'pressure', 'xland']
+   character(len=MAXVARLEN), parameter :: sacaObsFields(2) = &
+      [character(len=MAXVARLEN) :: &
+       'cldmask', 'brtemp']
 
 
    integer, parameter    :: max_string=8000
@@ -444,11 +451,12 @@ subroutine read_fields(self, f_conf, vdate)
    ! Model2AnalysisVariableChange (default: true):
    ! indicates whether to transform from model fields (pressure_p, pressure_base, theta, qv)
    ! to analysis fields (temperature, specific_humidity).
-   ! When streamID=='control', the default value is changed to false.  For example, the transform
-   ! is not carried out when reading analysis fields directly (e.g., background error standard
-   ! deviation is read/written using streamID=='control').
+   ! When streamID=='control' or 'saca_obs', the default value is changed to false.
+   ! For example, the transform is not carried out when reading analysis fields directly (e.g.,
+   ! background error standard deviation is read/written using streamID=='control') or
+   ! when reading the obs-related fields for Non-Variational SAtellite-based Cloud Analysis (SACA).
    Model2AnalysisVariableChange = .True.
-   if(streamID == 'control') Model2AnalysisVariableChange = .False.
+   if(streamID == 'control'.or. streamID == 'saca_obs') Model2AnalysisVariableChange = .False.
    if (f_conf%has("transform model to analysis")) then
       call f_conf%get_or_die("transform model to analysis", Model2AnalysisVariableChange)
    end if

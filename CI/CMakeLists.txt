@@ -45,6 +45,9 @@ set(MPAS_CORES atmosphere init_atmosphere CACHE STRING "MPAS-Model: cores to bui
 set(MPAS_DOUBLE_PRECISION "ON" CACHE STRING "MPAS-Model: Use double precision 64-bit Floating point.")
 
 ecbuild_bundle( PROJECT MPAS     GIT "https://github.com/jcsda-internal/MPAS-Model.git" )
+
+option(BUNDLE_SKIP_SACA "Don't build saca"  "ON") # Skip saca build unless user passes -DBUNDLE_SKIP_SACA=OFF
+
 ecbuild_bundle( PROJECT mpas-jedi GIT "https://github.com/jcsda-internal/mpas-jedi")
 
 ecbuild_bundle_finalize()

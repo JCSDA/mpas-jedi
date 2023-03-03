@@ -504,7 +504,6 @@ subroutine geo_deallocate_nonda_fields(f_conf, domain)
    type (field1DReal), pointer :: field1d
    type (field2DReal), pointer :: field2d
 
-   integer, parameter :: num_da_fields = 36
    integer            :: i
    character (len=22), allocatable :: poolname_a(:), poolname_b(:)
    character (len=22), allocatable :: da_fieldnames(:)
