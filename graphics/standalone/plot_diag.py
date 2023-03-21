@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.insert(1, '../')
 import numpy as np
 from copy import deepcopy
 import matplotlib
@@ -22,13 +24,15 @@ test/
  │        ├── obsout_3denvar_bump_sondes_0001.nc4
  │        ├── ...
  ├── graphics/
- │   ├── plot_diag.py
  │   ├── basic_plot_functions.py
  │   ├── ...
+ │   ├── standalone
+ │   │   ├── plot_diag.py
+ │   │   ├── ...
 
 Directory Structure for cycling:
 test/
- ├── Data/
+ ├── dbOut/
  │   ├── obsout_3denvar_bump_sondes_0000.h5
  │   ├── obsout_3denvar_bump_sondes_0001.h5
  │   ├── ...
@@ -60,7 +64,7 @@ def readdata():
   #imageFmt = 'pdf' #higher fidelity, slower
 
   # Diagnostic omb,oma and hofx files located in diagdir
-  diagdir    = '../Data/os/'
+  diagdir    = '../../Data/os/'
   diagprefix = 'obsout_'
   diagsuffix = '_*.nc4'  #for ctests
   #diagsuffix = '_*.h5'   #for cycling
@@ -143,11 +147,12 @@ def readdata():
   metaGroup = 'MetaData'
   latitude = metaGroup+'/latitude'
   longitude = metaGroup+'/longitude'
-  pressure = metaGroup+'/air_pressure'
-  altitude = metaGroup+'/altitude'
-  occultID = metaGroup+'/occulting_sat_id'
-  stationID = metaGroup+'/station_id'
-  recordNumber = metaGroup+'/record_number'
+  pressure = metaGroup+'/pressure'
+  altitude = metaGroup+'/height'
+  occultID = metaGroup+'/occulting_sat_is'
+  satelliteId = metaGroup+'/satelliteIdentifier'
+  stationID = metaGroup+'/stationIdentification'
+  recordNumber = metaGroup+'/sequenceNumber'
 
   # settings for binning coordinates
   binningCoordinates = {
@@ -225,7 +230,7 @@ def readdata():
     for file in obsFiles:
       ncDB = nc4.Dataset(file, 'r')
       ncDB.set_auto_mask(False)
-      nlocs += ncDB.dimensions['nlocs'].size
+      nlocs += ncDB.dimensions['Location'].size
       ncDB.close()
 
     # get some basic info from obsFiles[0]
@@ -233,8 +238,8 @@ def readdata():
     ncDB.set_auto_mask(False)
 
     # define a channel list, if available
-    if 'nchans' in ncDB.dimensions:
-      nchans = ncDB.variables['nchans'][:]
+    if 'Channel' in ncDB.dimensions:
+      nchans = ncDB.variables['Channel'][:]
       nch = len(nchans)
 
     # applicationType: type of jedi application (hofx, variational)
@@ -283,7 +288,10 @@ def readdata():
     isGNSSRO = 'gnssro' in obstype
     if isGNSSRO:
       binCoord = altitude
-      station = occultID
+      if metaGroup+'/occulting_sat_is' not in ncVarList:
+        station = satelliteId
+      else:
+        station = occultID
       record = recordNumber
       coordVars += [binCoord, station, record]
     elif obstype in profileObsTypes:
@@ -336,7 +344,7 @@ def readdata():
       for file in obsFiles:
         ncDB = nc4.Dataset(file, 'r')
         ncDB.set_auto_mask(False)
-        nn = ncDB.dimensions['nlocs'].size
+        nn = ncDB.dimensions['Location'].size
         ee = ss + nn
 
         for varGrp in readVars:
@@ -354,7 +362,7 @@ def readdata():
           assert var in ncDB.groups[grp].variables, (
             varGrp,' not in ncDB.groups[grp].variables: ',ncDB.groups[grp].variables)
 
-          varHasNChansDim = 'nchans' in ncDB.groups[grp].variables[var].dimensions
+          varHasNChansDim = 'Channel' in ncDB.groups[grp].variables[var].dimensions
 
           # initialize each varGrp
           if varGrp not in db:

@@ -1393,7 +1393,7 @@ class MultiDimBinMethodBase(AnalysisBase):
             vu.obsVarGlint: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
             vu.obsVarLandFrac: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
             vu.obsVarLT: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
-            vu.obsVarSenZen: {'profilefunc': bpf.plotSeries, 'binbinVarTier': 3},
+            vu.obsVarSenZen: {'profilefunc': bpf.plotSeries, 'binVarTier': 3},
         }
         self.maxDiagnosticsPerAnalysis = 10 // self.nExp
 

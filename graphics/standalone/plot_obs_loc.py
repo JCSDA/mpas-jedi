@@ -1,23 +1,44 @@
-import config as conf
 import os
 import sys
+sys.path.insert(1, '../')
 import numpy as np
 from copy import deepcopy
 import fnmatch
+import config as conf
 import basic_plot_functions
 import var_utils as vu
 import h5py as h5
 
 '''
-Directory structure and file names for ctest (or cycling experiments):
+Directory structure and file names for ctest:
 test/
  ├── Data/
- │   ├── sondes_obs_2018041500_m.nc4 (or sondes_obs_2018041500.h5)
- │   ├── satwind_obs_2018041500_m.nc4 (or satwind_obs_2018041500.h5)
- │   ├── ...
+ │   ├──ufo/
+ │       ├─testinput_tier_1/
+ │           ├── sondes_obs_2018041500_m.nc4 (or sondes_obs_2018041500.h5)
+ │           ├── satwind_obs_2018041500_m.nc4 (or satwind_obs_2018041500.h5)
+ │           ├── ...
  ├── graphics/
- │   ├── plot_obs_loc.py
- │   ├── ...
+ │   ├── basic_plot_functions.py
+ │   │──...
+ │   ├── standalone
+ │   │   ├── plot_obs_loc.py
+ │   │   ├── ...
+
+Directory structure and file names for cycling:
+test/
+ ├── dbIn/
+ │   ├── sondes_obs_2018041500.nc4 (or sondes_obs_2018041500.h5)
+ │   ├── satwind_obs_2018041500.nc4 (or satwind_obs_2018041500.h5)
+ │   ├── ...
+ ├── graphics/
+ │   ├── basic_plot_functions.py
+ │   │──...
+ │   ├── standalone
+ │   │   ├── plot_obs_loc.py
+ │   │   ├── ...
+
+
 How to run it:
 python plot_obs_loc.py cycling 2018041500
 python plot_obs_loc.py ctest   2018041500
@@ -40,19 +61,20 @@ def readdata():
         string = '_obs_'+Date+suffix+'.nc4'
         nChar1 = -21  # remove "_obs_2018041500_m.nc4" to get obstype string
         nChar2 = -4   # remove '.nc4' to get output string
+        dataPath = '../../Data/ufo/testinput_tier_1/'
     elif (test == 'cycling'):
         suffix = ''
         string = '_obs_'+Date+suffix+'.h5'
         nChar1 = -18  # remove "_obs_2018041500.h5" to get obstype string
         nChar2 = -3   # remove '.h5' to get output string
-
+        dataPath = '../../dbIn/'
     PreQCMaxvalueConv = 3
     PreQCMinvalueConv = -90
     PreQCMaxvalueAmsua = 0
 
     #search all obs files and get obs types from  Data dir:
     allobstypes = []
-    for files in os.listdir('../Data/'):
+    for files in os.listdir(dataPath):
         if fnmatch.fnmatch(files, '*'+string):
             allobstypes.append(files[:nChar1])
 
@@ -74,21 +96,23 @@ def readdata():
     print(obsfiles)
 
     for file_name in obsfiles:
-        nc = h5.File("../Data/"+file_name, 'r')
+        nc = h5.File(dataPath+file_name, 'r')
         print('Plotting:', file_name)
         varlist = []
         for node in nc:
           if type(nc[node]) is h5._hl.group.Group:
             for var in nc[node]:
               varlist += [node+'/'+var]
-
-        if 'MetaData/station_id' in varlist:
-            stationidnc = nc['MetaData/station_id']
+        stationidnc = []
+        if 'MetaData/stationIdentification' in varlist:
+            stationidnc = nc['MetaData/stationIdentification']
         #for gnss:
-        elif 'MetaData/occulting_sat_id' in varlist:
-            stationidnc = nc['MetaData/occulting_sat_id']
+        elif 'MetaData/occulting_sat_is' in varlist:
+            stationidnc = nc['MetaData/occulting_sat_is']
             if (test == 'cycling'):
-                recordNum = nc['MetaData/record_number']
+                recordNum = nc['MetaData/sequenceNumber']
+        elif 'MetaData/satelliteIdentifier' in varlist:
+            stationidnc = nc['MetaData/satelliteIdentifier']
         #for radiances:
         else:
             nstation = 0
@@ -124,7 +148,7 @@ def readdata():
                 obsnc = np.asarray(obsnc)
                 stationidnc_array = []
                 recordnc_array = []
-                if (obstype == 'gnssro'):
+                if (obstype == 'gnssro' or obstype == 'gnssroref'):
                     obsnc[np.less(obsnc, -999)] = np.NaN
                     stationidnc_array=np.asarray(stationidnc).astype(str)
                     if (test == 'cycling'):
@@ -140,7 +164,7 @@ def readdata():
                 nstation = len(set(stationidnc_array)) -1 # -1: 'nan' is also included, so remove it
                 if (obstype == 'satwind' or obstype == 'satwnd'):
                     nstation = 0
-                if (obstype == 'gnssro' and test == 'cycling'):
+                if ((obstype == 'gnssro' or obstype == 'gnssroref') and test == 'cycling'):
                     basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nrecord,levbin)
                 else:
                     basic_plot_functions.plotDistri(latnc,lonnc,obsnc,obs_type,var_name,var_unit,out_name,nstation,levbin)
