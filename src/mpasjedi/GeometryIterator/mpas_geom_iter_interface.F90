@@ -64,10 +64,15 @@ end subroutine mpas_geom_iter_clone_c
 ! ------------------------------------------------------------------------------
 !> !> C++ interface for deleting mpas_geom_iter_mod::mpas_geom_iter
 subroutine mpas_geom_iter_delete_c(c_key_self) bind(c, name='mpas_geom_iter_delete_f90')
-    integer(c_int), intent(inout) :: c_key_self !< Geometry iterator
+  integer(c_int), intent(inout) :: c_key_self !< Geometry iterator
 
-    ! Clear interface
-    call mpas_geom_iter_registry%remove(c_key_self)
+  ! Local variables
+  type(mpas_geom_iter), pointer :: self
+
+  ! Clear interface
+  call mpas_geom_iter_registry%get(c_key_self, self)
+  call self%delete()
+  call mpas_geom_iter_registry%remove(c_key_self)
 
 end subroutine mpas_geom_iter_delete_c
 

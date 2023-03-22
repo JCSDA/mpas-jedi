@@ -20,16 +20,18 @@ namespace mpas {
 
 // -----------------------------------------------------------------------------
 
-GeometryIterator::GeometryIterator(const GeometryIterator& iter) {
-  mpas_geom_iter_clone_f90(keyIter_, iter.toFortran());
+GeometryIterator::GeometryIterator(const Geometry & geom,
+                                   const int & cellIndex,
+                                   const int & levIndex)
+  : geom_(geom) {
+  mpas_geom_iter_setup_f90(keyIter_, geom_.toFortran(), cellIndex, levIndex);
 }
 
 // -----------------------------------------------------------------------------
 
-GeometryIterator::GeometryIterator(const Geometry& geom,
-                                   const int & cellIndex,
-                                   const int & levIndex) {
-  mpas_geom_iter_setup_f90(keyIter_, geom.toFortran(), cellIndex, levIndex);
+GeometryIterator::GeometryIterator(const GeometryIterator & other)
+  : geom_(other.geom_) {
+  mpas_geom_iter_clone_f90(keyIter_, other.toFortran());
 }
 
 // -----------------------------------------------------------------------------
@@ -43,7 +45,7 @@ GeometryIterator::~GeometryIterator() {
 bool GeometryIterator::operator==(const GeometryIterator & other) const {
   bool equals;
   mpas_geom_iter_equals_f90(keyIter_, other.toFortran(), equals);
-  return equals;
+  return (equals && geom_.isEqual(other.geom_));
 }
 
 // -----------------------------------------------------------------------------

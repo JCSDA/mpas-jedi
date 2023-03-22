@@ -6,6 +6,8 @@
 !> Geometry iterator
 module iter_mod
 
+use iso_c_binding
+
 use mpas_geom_mod, only: mpas_geom
 
 implicit none
@@ -102,7 +104,7 @@ contains
 subroutine iter_setup(self, geom, cellIndex, levIndex)
   class(iter),              intent(inout) :: self
   type(mpas_geom), pointer, intent(in)    :: geom !< Pointer to geometry
-  integer,                  intent(in)    :: cellIndex, levIndex  !< starting index
+  integer(c_int),           intent(in)    :: cellIndex, levIndex  !< starting index
 
   ! Associate geometry
   self%geom => geom

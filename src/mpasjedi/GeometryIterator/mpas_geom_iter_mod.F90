@@ -28,8 +28,8 @@ public :: mpas_geom_iter
 !! Generic container for 2d and 3d iterators
 type :: mpas_geom_iter
   class(iter), pointer :: iterator => null()
-  class(iter2d), pointer :: i2d
-  class(iter3d), pointer :: i3d
+  class(iter2d), pointer :: i2d => null()
+  class(iter3d), pointer :: i3d => null()
 
   contains
 
@@ -48,7 +48,8 @@ type :: mpas_geom_iter
   !> \copybrief mpas_geom_iter_next \see mpas_geom_iter_next
   procedure :: next => mpas_geom_iter_next
 
-  final :: mpas_geom_iter_delete
+  !> \copybrief mpas_geom_iter_delete \see mpas_geom_iter_delete
+  procedure :: delete => mpas_geom_iter_delete
 
 end type mpas_geom_iter
 
@@ -75,9 +76,9 @@ contains
 !!
 !! \relates mpas_geom_iter_mod::mpas_geom_iter
 subroutine mpas_geom_iter_setup(self, geom, cellIndex, levIndex)
-  class(mpas_geom_iter),     intent(inout) :: self
+  class(mpas_geom_iter),    intent(inout) :: self
   type(mpas_geom), pointer, intent(in)    :: geom !< Pointer to geometry
-  integer,                  intent(in)    :: cellIndex, levIndex  !< starting index
+  integer(c_int),           intent(in)    :: cellIndex, levIndex  !< starting index
 
   select case (geom%iterator_dimension)
     case (2)
@@ -99,7 +100,7 @@ end subroutine mpas_geom_iter_setup
 !!
 !! \relates mpas_geom_iter_mod::mpas_geom_iter
 subroutine mpas_geom_iter_delete(self)
-  type(mpas_geom_iter), intent(inout) :: self
+  class(mpas_geom_iter), intent(inout) :: self
   if (associated(self%i2d)) deallocate(self%i2d)
   if (associated(self%i3d)) deallocate(self%i3d)
 end subroutine mpas_geom_iter_delete

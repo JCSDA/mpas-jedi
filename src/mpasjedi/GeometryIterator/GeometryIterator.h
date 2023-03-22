@@ -53,6 +53,7 @@ class GeometryIterator: public std::iterator<std::forward_iterator_tag,
 
  private:
   void print(std::ostream &) const;
+  const Geometry & geom_;
   F90iter keyIter_;
 };
 
