@@ -139,17 +139,16 @@ workflowType = 'MPAS-Workflow'
 
 # MPAS-Workflow settings
 if workflowType == 'MPAS-Workflow':
-  OMBOMAVerification = '/CyclingDA'
-  ShortRangeFCVerification = '/Verification/bg'
-  ExtendedFCVerification = '/Verification/fc'
-  deterministicFCMemberDir = '/mean'
+  deterministicMemberDir = '/mean'
+  OMBOMAVerification = '/Verification/da'+deterministicMemberDir
+  ShortRangeFCVerification = '/Verification/bg'+deterministicMemberDir
+  ExtendedFCVerification = '/Verification/fc'+deterministicMemberDir
 
 # liuz, jban settings
 if workflowType == 'liuz,jban':
   OMBOMAVerification = '/DADIAG'
   ShortRangeFCVerification = '/FC1DIAG'
   ExtendedFCVerification = '/FC2DIAG'
-  deterministicFCMemberDir = ''
 
 ## deterministicVerifyDir, ensembleVerifyDir, and commonAppIdentifier are assumed to be
 # uniform across all experiments
@@ -164,14 +163,14 @@ ensembleVerifyDir = 'NotSupported'
 
 if zeroDurationForecast:
   if VerificationType == 'omb/oma' and VerificationSpace == 'obs':
-    commonAppIdentifier = 'variational'
+    commonAppIdentifier = 'variational' # will need to change to 'da' after feature/letkf merged to MPAS-Workflow
     deterministicVerifyDir = OMBOMAVerification
     # ensemble verification for omb/oma not currently supported by MPAS-Workflow
 
   if VerificationType == 'forecast':
     # single forecast duration omf (fcTDeltaFirst==0 and fcTDeltaLast == 0)
     deterministicVerifyDir = ShortRangeFCVerification
-    ensembleVerifyDir = ShortRangeFCVerification+deterministicFCMemberDir
+    ensembleVerifyDir = ShortRangeFCVerification
 
     if VerificationSpace == 'obs': commonAppIdentifier = 'hofx'
     if VerificationSpace == 'model': commonAppIdentifier = ''
@@ -180,8 +179,8 @@ else:
   # multiple extended forecast omf (0 < fcTDeltaLast <= extended forecast length)
   # override VerificationType; only 'forecast' is available
   VerificationType = 'forecast'
-  deterministicVerifyDir = ExtendedFCVerification+deterministicFCMemberDir
-  ensembleVerifyDir = ExtendedFCVerification+deterministicFCMemberDir
+  deterministicVerifyDir = ExtendedFCVerification
+  ensembleVerifyDir = ExtendedFCVerification
 
   if VerificationSpace == 'obs': commonAppIdentifier = 'hofx'
   if VerificationSpace == 'model': commonAppIdentifier = ''
@@ -227,9 +226,13 @@ dbConf['cntrlExpName'] = 'clrama'
 
 experiments = OrderedDict()
 
+experiments['clrama'] = \
+  'guerrett_3dhybrid-60-60-iter_gnssrorefncep_O30kmI60km_ensB-SE80+RTPP70_VarBC_RefNCEP_2ndDoaDob' + \
+  deterministicVerifyDir
 
-## Examples for adding experiments
-## -------------------------------
+
+## Additional examples for adding experiments
+## ------------------------------------------
 
 ## -------------------------------------------------------------------------
 ## (1) Single-state (deterministic background) experiment
@@ -261,7 +264,7 @@ experiments = OrderedDict()
 #  + add the 5th ensemble member
 
 #experiments['gefs-cold-5'] = \
-#  'guerrett_eda_3denvar_NMEM20_OIE120km_GEFSVerify'+ShortRangeFCVerification+'/mem005'
+#  'guerrett_eda_3denvar_NMEM20_OIE120km_GEFSVerify/Verification/bg/mem005'
 
 ## -------------------------------------------------------------------------
 ## (4) Make spaghetti plots for a 20-member ensemble of cold-start
@@ -279,71 +282,10 @@ experiments = OrderedDict()
 #thisExpDir = 'guerrett_eda_3denvar_NMEM20_OIE120km_GEFSVerify'
 #for mem in list(range(1,nEnsDAMembers+1)):
 #  member = '{:03d}'.format(mem)
-#  experiments['gefs-cold-'+str(mem)] = thisExpDir+ShortRangeFCVerification+'/mem'+member
+#  experiments['gefs-cold-'+str(mem)] = thisExpDir+'/Verification/bg/mem'+member
 
 #  + the same procedure can be used for MPAS-Workflow EDA experiment output
 #  + this kind of figure is very expensive to generate for large nEnsDAMembers
-
-
-###########
-#120 km
-###########
-## 3denvar clrama (conventional + clear-sky AMSUA)
-# JUNE 2021
-#experiments['120km-clrama'] = 'guerrett_3denvar_OIE120km_ioda-v2'+deterministicVerifyDir
-
-# 6-hr forecasts from GEFS
-#experiments['gefs-cold'] = 'guerrett_eda_3denvar_NMEM20_OIE120km_GEFSVerify'+ensembleVerifyDir
-
-#experiments['120km-20rtpp80'] = \
-#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.8_LeaveOneOut_OIE120km_WarmStart' + \
-#  ensembleVerifyDir
-
-#experiments['Bloo20'] = 'guerrett_3denvar_OIE120km_B-LOO20+RTPP80'+deterministicVerifyDir
-
-#experiments['Bloo40'] = 'guerrett_3denvar_OIE120km_B-LOO40+RTPP80'+deterministicVerifyDir
-
-#experiments['Bloo80'] = 'guerrett_3denvar_OIE120km_B-LOO80+RTPP80'+deterministicVerifyDir
-
-###########
-# 30-60km
-###########
-experiments['clrama'] = \
-  'guerrett_3denvar-60-60-iter_O30kmIE60km_01FEB2022' + \
-  deterministicVerifyDir
-
-#experiments['SCI-jjg'] = \
-#  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Okamoto' + \
-#  deterministicVerifyDir
-
-#experiments['SCI-liuz'] = \
-#  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Okamoto_thin145km_liuzObsErrorSettings' + \
-#  deterministicVerifyDir
-
-#experiments['SCI-liuz-bc'] = \
-#  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Okamoto_thin145km_liuzObsErrorSettings_constBiasCorr' + \
-#  deterministicVerifyDir
-
-# note: requires (workflowType == 'liuz,jban')
-#liuzDeterministicVerifyDir = '/hofx_fc2'
-#liuzStatsFileSubDir = 'diagnostic_stats'
-#experiments['SCI-liuz'] = '30km60km_2018_conv_ama_abiahi_1200km6km'+liuzDeterministicVerifyDir
-
-#experiments['Poly2DLat_1stFit'] = \
-#  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Polynomial2DByLatBand_ITCZ' + \
-#  deterministicVerifyDir
-
-#experiments['Poly2DLat'] = \
-#  'guerrett_3denvar-60-60-iter_abi_g16_ahi_himawari8_O30kmIE60km_Polynomial2DByLatBand_ITCZ_regeneratedObsError' + \
-#  deterministicVerifyDir
-
-#experiments['60km-rtpp40'] = \
-#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.4_LeaveOneOut_OIE60km_WarmStart' + \
-#  ensembleVerifyDir
-
-#experiments['60km-rtpp70'] = \
-#  'guerrett_eda_3denvar-60-iter_NMEM20_RTPP0.7_LeaveOneOut_OIE60km_WarmStart' + \
-#  ensembleVerifyDir
 
 ## ================================================================================================
 ## The settings below are automatically populated from the above configurations
