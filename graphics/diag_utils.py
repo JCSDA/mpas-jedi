@@ -59,6 +59,70 @@ class BiasCorrectedObsMinusModel:
         return omm_bc
 
 
+class ExpectedDoaDob:
+    '''Sqrt of diagonal of Doesroziers et al. (2005)'s E[d^o_a d^o_b^T] ~ R'''
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfOMBValue)
+        self.baseVars.append(vu.selfOMAValue)
+
+    def evaluate(self, dbVals, insituParameters):
+        omb_bc = dbVals[insituParameters[vu.selfOMBValue]]
+        oma_bc = dbVals[insituParameters[vu.selfOMAValue]]
+        return negativeSafeSqrt(np.multiply(oma_bc, omb_bc))
+
+
+class ExpectedDabDob:
+    '''Sqrt of diagonal of Doesroziers et al. (2005)'s E[d^a_b d^o_b^T] ~ HBH^T'''
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfOMBValue)
+        self.baseVars.append(vu.anHofXValue)
+        self.baseVars.append(vu.bgHofXValue)
+
+    def evaluate(self, dbVals, insituParameters):
+        ana = dbVals[insituParameters[vu.anHofXValue]]
+        bak = dbVals[insituParameters[vu.bgHofXValue]]
+        dab = np.subtract(ana, bak)
+
+        omb_bc = dbVals[insituParameters[vu.selfOMBValue]]
+        return negativeSafeSqrt(np.multiply(dab, omb_bc))
+
+
+class ExpectedRelativeDoaDob:
+    '''Sqrt of diagonal of Doesroziers et al. (2005)'s E[d^o_a d^o_b^T] ~ R, normalized by observed value'''
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfOMBValue)
+        self.baseVars.append(vu.selfOMAValue)
+        self.baseVars.append(vu.selfObsValue)
+
+    def evaluate(self, dbVals, insituParameters):
+        omb_bc = dbVals[insituParameters[vu.selfOMBValue]]
+        oma_bc = dbVals[insituParameters[vu.selfOMAValue]]
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+        return np.multiply(np.divide(negativeSafeSqrt(np.multiply(oma_bc, omb_bc)), obs), 100.)
+
+
+class ExpectedRelativeDabDob:
+    '''Sqrt of diagonal of Doesroziers et al. (2005)'s E[d^a_b d^o_b^T] ~ HBH^T, normalized by observed value'''
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfOMBValue)
+        self.baseVars.append(vu.anHofXValue)
+        self.baseVars.append(vu.bgHofXValue)
+        self.baseVars.append(vu.selfObsValue)
+
+    def evaluate(self, dbVals, insituParameters):
+        ana = dbVals[insituParameters[vu.anHofXValue]]
+        bak = dbVals[insituParameters[vu.bgHofXValue]]
+        dab = np.subtract(ana, bak)
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+
+        omb_bc = dbVals[insituParameters[vu.selfOMBValue]]
+        return np.multiply(np.divide(negativeSafeSqrt(np.multiply(dab, omb_bc)), obs), 100.)
+
+
 class NonBiasCorrectedObsMinusModel(bu.InsituLocFunction):
     def _initBaseVars(self):
         self.baseVars = []
@@ -122,11 +186,11 @@ class RelativeObsMinusModel:
 class AnalysisMinusBackground:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.anHofXValue)
         self.baseVars.append(vu.bgHofXValue)
 
     def evaluate(self, dbVals, insituParameters):
-        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        ana = dbVals[insituParameters[vu.anHofXValue]]
         bak = dbVals[insituParameters[vu.bgHofXValue]]
         return np.subtract(ana, bak)
 
@@ -134,12 +198,12 @@ class AnalysisMinusBackground:
 class RelativeAnalysisMinusBackground:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.anHofXValue)
         self.baseVars.append(vu.selfObsValue)
         self.baseVars.append(vu.bgHofXValue)
 
     def evaluate(self, dbVals, insituParameters):
-        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        ana = dbVals[insituParameters[vu.anHofXValue]]
         bak = dbVals[insituParameters[vu.bgHofXValue]]
         obs = dbVals[insituParameters[vu.selfObsValue]]
 
@@ -154,12 +218,12 @@ class RelativeAnalysisMinusBackground:
 class AnalysisMinusBackgroundOverObsMinusBackground:
     def __init__(self):
         self.baseVars = []
-        self.baseVars.append(vu.selfHofXValue)
+        self.baseVars.append(vu.anHofXValue)
         self.baseVars.append(vu.selfObsValue)
         self.baseVars.append(vu.bgHofXValue)
 
     def evaluate(self, dbVals, insituParameters):
-        ana = dbVals[insituParameters[vu.selfHofXValue]]
+        ana = dbVals[insituParameters[vu.anHofXValue]]
         bak = dbVals[insituParameters[vu.bgHofXValue]]
         obs = dbVals[insituParameters[vu.selfObsValue]]
 
@@ -171,6 +235,23 @@ class AnalysisMinusBackgroundOverObsMinusBackground:
         AMBoOMB[~valid] = np.NaN
 
         return AMBoOMB
+
+
+class RelativeError:
+    def __init__(self):
+        self.baseVars = []
+        self.baseVars.append(vu.selfErrorValue)
+        self.baseVars.append(vu.selfObsValue)
+
+    def evaluate(self, dbVals, insituParameters):
+        err = deepcopy(dbVals[insituParameters[vu.selfErrorValue]])
+        obs = dbVals[insituParameters[vu.selfObsValue]]
+
+        valid = bu.greatBound(np.abs(obs), 0.0, False)
+        err[valid] = np.divide(err[valid], obs[valid])
+        err[~valid] = np.NaN
+
+        return np.multiply(err, 100.0)
 
 
 class DerivedDiagnostic:
@@ -248,13 +329,17 @@ class idealSigmao(DerivedDiagnostic):
     Calculates ideal sigmao for the
     background, analysis, or forecast states
     '''
-    availableStatistics = ['MS', 'RMS']
+    availableStatistics = ['RMS']
     def __init__(self, stateType):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
         assert stateType in ['b', 'a', 'f'], 'idealSigmao: wrong stateType => '+stateType
         self.diagname = 'ideal-sigmao'+stateType
 
-        self.label = '$ideal-sigmao_{'+stateType+'}$',
+        self.label = r'$\sigma_{o'
+        if stateType != 'f':
+          self.label += r','+stateType
+        self.label += r'}^*$'
+
         self.omm = 'om'+stateType
         self.sigmam = 'sigma'+stateType
 
@@ -275,12 +360,57 @@ class idealSigmao(DerivedDiagnostic):
 
         p = np.logical_and(np.isfinite(omm), np.isfinite(sigmam))
         if p.sum() > 0:
-            # idealSigmao(MS) = MS(OBS-MODEL) - MS(SIGMAMOD)
-            Stats['MS'][p] = omm[p] - sigmam[p]
-
             # idealSigmao(RMS) = SQRT( [MS(OBS-MODEL) - MS(SIGMAMOD)] )
             Stats['RMS'][p] = omm[p] - sigmam[p]
             Stats['RMS'] = negativeSafeSqrt(Stats['RMS'])
+
+        return self.templateDFfromStats(dfw, self.omm, Stats)
+
+
+class idealRelativeSigmao(DerivedDiagnostic):
+    '''
+    Calculates ideal sigmao for the
+    background, analysis, or forecast states
+    '''
+    availableStatistics = ['E']
+    def __init__(self, stateType):
+    # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
+        assert stateType in ['b', 'a', 'f'], 'idealRelativeSigmao: wrong stateType => '+stateType
+        self.diagname = 'ideal-rltv_sigmao'+stateType
+
+        self.label = r'$\frac{\sigma_{o'
+        if stateType != 'f':
+          self.label += r','+stateType
+        self.label += r'}^*}{\bar{y}} \times 100$'
+
+        self.omm = 'om'+stateType
+        self.rltvomm = 'rltv_om'+stateType
+        self.sigmam = 'sigma'+stateType
+
+        self.requiredDiagnostics = [self.omm, self.rltvomm, self.sigmam]
+
+    def evaluate(self, dfw):
+        diagNamesAvailableInSlice = dfw.levels('diagName')
+        for diag in self.requiredDiagnostics:
+            if diag not in diagNamesAvailableInSlice: return None
+
+        # get the statistics needed as numpy arrays
+        omm = self.retrieveDiagnosticStat(dfw, self.omm, 'MS')
+        rltvomm = self.retrieveDiagnosticStat(dfw, self.rltvomm, 'RMS')
+        sigmam = self.retrieveDiagnosticStat(dfw, self.sigmam, 'MS')
+
+        Stats = {}
+        for statName in self.availableStatistics:
+            Stats[statName] = np.full_like(omm, np.NaN)
+
+        p = np.logical_and(np.isfinite(omm), np.isfinite(sigmam))
+        if p.sum() > 0:
+            # yy is approximately equal to (obs)^2
+            yy = np.divide(omm, np.square(np.divide(rltvomm, 100.)))
+
+            # idealRelativeSigmao(E) = SQRT( [MS(OBS-MODEL) - MS(SIGMAMOD)] / OBS^2 )
+            Stats['E'][p] = np.divide(omm[p] - sigmam[p], yy[p])
+            Stats['E'] = np.multiply(negativeSafeSqrt(Stats['E']), 100.)
 
         return self.templateDFfromStats(dfw, self.omm, Stats)
 
@@ -302,7 +432,12 @@ class ObsSpaceConsistencyRatio(DerivedDiagnostic):
         assert stateType in ['b', 'a', 'f'], 'ObsSpaceConsistencyRatio: wrong stateType => '+stateType
         self.diagname = 'CRy'+stateType
 
-        self.label = '$CR_{y,'+stateType+'}$',
+        self.label = r'$CR_{y'
+        if stateType != 'f':
+          self.label += r','+stateType
+        self.label += r'}$'
+
+        self.label = r'$CR_{y,'+stateType+'}$'
         self.omm = 'om'+stateType
         self.sigmao = 'sigmao'+stateType
         self.sigmam = 'sigma'+stateType
@@ -377,10 +512,14 @@ class ModelSpaceConsistencyRatio(DerivedDiagnostic):
 
     def __init__(self, stateType):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
-        assert stateType in ['b', 'a', 'inf', 'f'], 'ObsSpaceConsistencyRatio: wrong stateType => '+stateType
+        assert stateType in ['b', 'a', 'inf', 'f'], 'ModelSpaceConsistencyRatio: wrong stateType => '+stateType
         self.diagname = 'CRx'+stateType
 
-        self.label = '$CR_{x,'+stateType+'}$',
+        self.label = r'$CR_{x'
+        if stateType != 'f':
+          self.label += r','+stateType
+        self.label += r'}$'
+
         self.mmref = 'mmgfsan'
         self.sigmam = 'sigmax'+stateType
 
@@ -437,8 +576,10 @@ class SumDiagnosticsStatisticsPairs(DerivedDiagnostic):
     # stateType - model state diagnostic type (either 'b' for background, 'a' for analysis, or 'f' for forecast)
         assert stateType in ['b', 'a', 'f'], 'SumDiagnosticsStatisticsPairs: wrong stateType => '+stateType
         self.availableStatistics = [self.statName]
-        self.diagname = self.diagName+'_'+stateType
-        self.label = '$'+self.diagName+'$',
+        self.diagname = self.diagName
+        if stateType != 'f':
+          self.diagname += '_'+stateType
+        self.label = r'$'+self.diagName+'$'
         self.requiredDiagnostics = [d+stateType for d in self.sourceDiagnosticPrefixes]
 
     def evaluate(self, dfw):
@@ -481,7 +622,7 @@ class DepartureSTD(SumDiagnosticsStatisticsPairs):
     Calculates the sqrt of the mean of the LHS term (with mean removed) of the spread expectation equation:
       E[dd^T] = HBH^T + R,
     '''
-    statName = 'RMSq'
+    statName = 'rms'
     diagName = vu.DiagnosticVars[vu.EddT]
     sourceStatistics = ['STD']
     sourceDiagnosticPrefixes = ['om']
@@ -492,7 +633,7 @@ class DepartureRMS(SumDiagnosticsStatisticsPairs):
     Calculates the sqrt of the mean of the LHS term of the spread expectation equation:
       E[dd^T] = HBH^T + R,
     '''
-    statName = 'RMSq'
+    statName = 'rms'
     diagName = vu.DiagnosticVars[vu.EddT]
     sourceStatistics = ['RMS']
     sourceDiagnosticPrefixes = ['om']
@@ -502,7 +643,7 @@ class EnsembleSpread(SumDiagnosticsStatisticsPairs):
     Calculates the sqrt of the mean of the 1st RHS term of the spread expectation equation:
       E[dd^T] = HBH^T + R,
     '''
-    statName = 'RMSq'
+    statName = 'rms'
     diagName = vu.DiagnosticVars[vu.HBHT]
     sourceStatistics = ['RMS']
     sourceDiagnosticPrefixes = ['sigma']
@@ -513,7 +654,7 @@ class ObsError(SumDiagnosticsStatisticsPairs):
     Calculates the sqrt of the mean of the 2nd RHS term of the spread expectation equation:
       E[dd^T] = HBH^T + R,
     '''
-    statName = 'RMSq'
+    statName = 'rms'
     diagName = vu.DiagnosticVars[vu.R]
     sourceStatistics = ['RMS']
     sourceDiagnosticPrefixes = ['sigmao']
@@ -524,7 +665,7 @@ class TotalSpread(SumDiagnosticsStatisticsPairs):
     Calculates the sqrt of the mean of the full RHS of the spread expectation equation:
       E[dd^T] = HBH^T + R,
     '''
-    statName = 'RMSq'
+    statName = 'rms'
     diagName = vu.DiagnosticVars[vu.HBHTplusR]
     sourceStatistics = ['MS', 'MS']
     sourceDiagnosticPrefixes = ['sigma', 'sigmao']
@@ -545,7 +686,11 @@ class ObsErrorNormalizedInnovation(DerivedDiagnostic):
         assert stateType in ['b', 'a', 'f'], 'ObsErrorNormalizedInnovation: wrong stateType => '+stateType
         self.diagname = 'OENI'+stateType
 
-        self.label = '$OENI_{'+stateType+'}$',
+        self.label = r'$OENI'
+        if stateType != 'f':
+          self.label += r'_{'+stateType+'}'
+        self.label += r'$'
+
         self.omm = 'om'+stateType
         self.sigmao = 'sigmao'+stateType
         self.requiredDiagnostics = [self.omm, self.sigmao]
@@ -593,7 +738,7 @@ class InnovationRatio(DerivedDiagnostic):
     diagname = 'InnovationRatio'
     availableStatistics = ['AbsMean', 'MS', 'RMS']
     def __init__(self):
-        self.label = '$\frac{OMA}{OMB}$',
+        self.label = r'$\frac{O-A}{O-B}$'
         self.omb = 'omb'
         self.oma = 'oma'
         self.requiredDiagnostics = [self.omb, self.oma]
@@ -644,7 +789,7 @@ class SpreadRatio(DerivedDiagnostic):
     availableStatistics = ['STD']
     def __init__(self, diagname, sigmab, sigmaa):
         self.diagname = diagname
-        self.label = '$'+diagname+'$'
+        self.label = r'$'+diagname+'$'
         self.sigmab = sigmab
         self.sigmaa = sigmaa
         self.requiredDiagnostics = [self.sigmab, self.sigmaa]
@@ -677,6 +822,78 @@ class SpreadRatio(DerivedDiagnostic):
 
         return self.templateDFfromStats(dfw, self.sigmab, Stats)
 
+
+class ApproxDoaDob(DerivedDiagnostic):
+    '''
+    Calculates sqrt(RMS(OMA) * RMS(OMB)), rough approximation of Doesroziers et al. (2005)'s E[d^o_a d^o_b^T] ~ R
+    '''
+    diagname = 'ApproxDoaDob'
+    availableStatistics = ['RMS']
+    def __init__(self):
+        self.label = r'$\sqrt{ rms\left(O-A\right)\times rms\left(O-B\right)}$'
+        self.omb = 'omb'
+        self.oma = 'oma'
+        self.requiredDiagnostics = [self.omb, self.oma]
+
+    def evaluate(self, dfw):
+        diagNamesAvailableInSlice = dfw.levels('diagName')
+        for diag in self.requiredDiagnostics:
+            if diag not in diagNamesAvailableInSlice: return None
+
+        # get the statistics needed as numpy arrays
+        ombRMS = self.retrieveDiagnosticStat(dfw, self.omb, 'RMS')
+        omaRMS = self.retrieveDiagnosticStat(dfw, self.oma, 'RMS')
+
+        Stats = {}
+        for statName in self.availableStatistics:
+            Stats[statName] = np.full_like(ombRMS, np.NaN)
+
+        p = np.logical_and(np.isfinite(ombRMS), np.isfinite(omaRMS))
+
+        if p.sum() > 0:
+            # ApproxDoaDob['RMS'] = sqrt(RMS(OMA) * RMS(OMB))
+            Stats['RMS'][p] = np.sqrt(omaRMS[p] * ombRMS[p])
+
+        return self.templateDFfromStats(dfw, self.omb, Stats)
+
+
+class ApproxRelativeDoaDob(DerivedDiagnostic):
+    '''
+    Calculates sqrt(RMS(OMA) * RMS(OMB)), rough approximation of Doesroziers et al. (2005)'s E[d^o_a d^o_b^T] ~ R, normalized by approx observed value
+    '''
+    diagname = 'ApproxRelativeDoaDob'
+    availableStatistics = ['RMS']
+    def __init__(self):
+        self.label = r'$\frac{\sqrt{ rms\left(O-A\right)\times rms\left(O-B\right)}}{\bar{O}} \times 100$'
+        self.omb = 'omb'
+        self.rltvomb = 'rltv_omb'
+        self.oma = 'oma'
+        self.requiredDiagnostics = [self.omb, self.oma, self.rltvomb]
+
+    def evaluate(self, dfw):
+        diagNamesAvailableInSlice = dfw.levels('diagName')
+        for diag in self.requiredDiagnostics:
+            if diag not in diagNamesAvailableInSlice: return None
+
+        # get the statistics needed as numpy arrays
+        ombRMS = self.retrieveDiagnosticStat(dfw, self.omb, 'RMS')
+        rltvombRMS = self.retrieveDiagnosticStat(dfw, self.rltvomb, 'RMS')
+        omaRMS = self.retrieveDiagnosticStat(dfw, self.oma, 'RMS')
+
+        Stats = {}
+        for statName in self.availableStatistics:
+            Stats[statName] = np.full_like(ombRMS, np.NaN)
+
+        p = np.logical_and(np.isfinite(ombRMS), np.isfinite(omaRMS))
+
+        if p.sum() > 0:
+            # yy is approximately equal to (obs)^2
+            yy = np.divide(np.square(ombRMS), np.square(np.divide(rltvombRMS, 100.)))
+
+            # ApproxRelativeDoaDob['RMS'] = sqrt(RMS(OMA) * RMS(OMB))
+            Stats['RMS'][p] = np.multiply(np.sqrt(np.divide(omaRMS[p] * ombRMS[p], yy[p])), 100.)
+
+        return self.templateDFfromStats(dfw, self.omb, Stats)
 
 ## Table of available diagnostics
 # format of each entry:
@@ -713,6 +930,10 @@ biso_ = idealSigmao('b')
 aiso_ = idealSigmao('a')
 fiso_ = idealSigmao('f')
 
+birso_ = idealRelativeSigmao('b')
+airso_ = idealRelativeSigmao('a')
+firso_ = idealRelativeSigmao('f')
+
 # consistency ratio
 bcry_ = ObsSpaceConsistencyRatio('b')
 acry_ = ObsSpaceConsistencyRatio('a')
@@ -740,6 +961,10 @@ srxeda_ = SpreadRatio('SRx-eda', 'sigmaxb', 'sigmaxa')
 # ratio of σ_{x_inf} / σ_{x_a}
 srxrtpp_ = SpreadRatio('SRx-rtpp', 'sigmaxa', 'sigmaxinf')
 
+# approximate desroziers diagnostic: sqrt(diag((O-A)(O-B)^T))
+approxdoadob_ = ApproxDoaDob()
+approxrltvdoadob_ = ApproxRelativeDoaDob()
+
 # components of departure spread equation:
 #   E[dd^T] = HBH^T + R,
 #departurespread_ = DepartureSTD('f')
@@ -748,65 +973,57 @@ ensspread_ = EnsembleSpread('f')
 obserror_ = ObsError('f')
 totalspread_ = TotalSpread('f')
 
-diagnosticIndependentStatistics = ['Count'] \
-  + ObsSpaceConsistencyRatio.availableStatistics \
-  + ModelSpaceConsistencyRatio.availableStatistics
-
-statisticDependentDiagnostics = [
-  biso_.diagname,
-  aiso_.diagname,
-  fiso_.diagname,
-  boeni_.diagname,
-  aoeni_.diagname,
-  foeni_.diagname,
-  innovratio_.diagname,
-  sry_.diagname,
-  srxeda_.diagname,
-  srxrtpp_.diagname,
-]
-
 availableDiagnostics = {
     'bc': {
         'variable': BiasCorrection,
         'iter': 'an',
-        'label': '$y_{bias}$',
+        'label': r'$y_{bc}$',
     },
     'omb': {
         'variable': BiasCorrectedObsMinusModel,
         'iter': 'bg',
-        'label': '$y - x_b$',
-
+        'label': r'$O-B$',
     },
     'oma': {
         'variable': BiasCorrectedObsMinusModel,
         'iter': 'an',
-        'label': '$y - x_a$',
+        'label': r'$O-A$',
+    },
+    'doadob': {
+        'variable': ExpectedDoaDob,
+        'label': r'$\sqrt{(O-A)^T(O-B)}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'dabdob': {
+        'variable': ExpectedDabDob,
+        'label': r'$\sqrt{(A-B)^T(O-B)}$',
+        'selectedStatistics': su.sigmaStatistics,
     },
     'omf': {
         'analyze': True,
         'variable': ObsMinusModel,
-        'label': '$y - x_f$',
+        'label': r'$O-F$',
+        'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     'amb': {
         'variable': AnalysisMinusBackground,
-        'iter': 'an',
-        'label': '$x_a - x_b$',
+        'label': r'$A-B$',
     },
     'mmgfsan': {
         'offline': True,
-        'label': '$x - x_{a,GFS}$',
+        'label': r'$\delta{x_{GFSa}}$',
         'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     'rltv_mmgfsan': {
         'offline': True,
         'analyze': False,
-        'label': '$\frac{x - x_{a,GFS}}{x_{a,GFS}}$',
+        'label': r'$\frac{\delta{x_{GFSa}}}{x_{GFSa}}$',
         'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     'log_mogfsan': {
         'offline': True,
         'analyze': False,
-        'label': '$\log{\frac{x}{x_{a,GFS}}}$',
+        'label': r'$\log{\frac{x}{x_{GFSa}}}$',
         'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     #NOTE: a failure results when 'analyze' is True under sigmax*, any one of the experiments
@@ -817,7 +1034,7 @@ availableDiagnostics = {
         'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{x_f}$',
+        'label': r'$\sigma_{x}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaxb': {
@@ -825,7 +1042,7 @@ availableDiagnostics = {
         'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{x_b}$',
+        'label': r'$\sigma_{x_b}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaxa': {
@@ -833,7 +1050,7 @@ availableDiagnostics = {
         'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{x_a}$',
+        'label': r'$\sigma_{x_a}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaxinf': {
@@ -842,80 +1059,97 @@ availableDiagnostics = {
         'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{x_inf}$',
+        'label': r'$\sigma_{x_{inf}}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'omb_nobc': {
         'variable': NonBiasCorrectedObsMinusModel,
         'iter': 'bg',
-        'label': '$y - x_b$',
+        'label': r'$O_{orig}-B$',
     },
     'oma_nobc': {
         'variable': NonBiasCorrectedObsMinusModel,
         'iter': 'an',
-        'label': '$y - x_a$',
+        'label': r'$O_{orig}-A$',
     },
     'rltv_omb': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'bg',
-        'label': '$(y - x_b) / y$',
+        'label': r'$\frac{O-B}{O} \times 100$',
     },
     'rltv_oma': {
         'variable': RelativeBiasCorrectedObsMinusModel,
         'iter': 'an',
-        'label': '$(y - x_a) / y$',
+        'label': r'$\frac{O-A}{O} \times 100$',
+    },
+    'rltv_doadob': {
+        'variable': ExpectedRelativeDoaDob,
+        'label': r'$\frac{\sqrt{(O-A)^T(O-B)}}{O} \times 100$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'rltv_dabdob': {
+        'variable': ExpectedRelativeDabDob,
+        'label': r'$\frac{\sqrt{(A-B)^T(O-B)}}{O} \times 100$',
+        'selectedStatistics': su.sigmaStatistics,
     },
     'rltv_omf': {
         'analyze': True,
         'variable': RelativeObsMinusModel,
-        'label': '$(y - x_f) / y$',
+        'label': r'$\frac{O-F}{O} \times 100$',
+        'selectedStatistics': ['Mean', 'RMS', 'STD'],
     },
     'rltv_amb': {
         'variable': RelativeAnalysisMinusBackground,
-        'iter': 'an',
-        'label': '$(x_a - x_b) / y$',
+        'label': r'$\frac{A-B}{y} \times 100$',
     },
     'rltv_omb_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'bg',
-        'label': '$(y - x_b) / y$',
+        'label': r'$\frac{O-B}{O} \times 100$',
     },
     'rltv_oma_nobc': {
         'variable': RelativeObsMinusModel,
         'iter': 'an',
-        'label': '$(y - x_a) / y$',
+        'label': r'$\frac{O-A}{O} \times 100$',
     },
     'amb_o_omb': {
         'variable': AnalysisMinusBackgroundOverObsMinusBackground,
-        'iter': 'an',
-        'label': '$(x_a - x_b) / (y - x_b)$',
+        'label': r'$\frac{A-B}{O-B}$',
     },
     'obs': {
         'variable': vu.selfObsValue,
+        'label': r'$y$',
     },
     'obs_bc': {
         'variable': BiasCorrectedObs,
-        'label': '$y$',
+        'label': r'$y$',
     },
     'h(x)': {
         'variable': vu.selfHofXValue,
-        'label': '$h(x_f)$',
+        'label': r'$h(x)$',
     },
     'bak': {
         'variable': vu.selfHofXValue,
         'iter': 'bg',
-        'label': '$h(x_b)$',
+        'label': r'$h(x_b)$',
     },
     'ana': {
         'variable': vu.selfHofXValue,
         'iter': 'an',
-        'label': '$h(x_a)$',
+        'label': r'$h(x_a)$',
     },
     'sigmaob': {
         'variable': vu.selfErrorValue,
         'iter': 'bg',
-        'analyze': False,
-        'label': '$\sigma_o$',
+        'analyze': True,
+        'label': r'$\sigma_{o,b}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'rltv_sigmaob': {
+        'variable': RelativeError,
+        'iter': 'bg',
+        'analyze': True,
+        'label': r'$\frac{\sigma_{o,b}}{y} \times 100$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmab': {
@@ -924,14 +1158,21 @@ availableDiagnostics = {
         'analyze': False,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{h_b}$',
+        'label': r'$\sigma_{h(x_b)}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaoa': {
         'variable': vu.selfErrorValue,
         'iter': 'an',
         'analyze': False,
-        'label': '$\sigma_o$',
+        'label': r'$\sigma_{o,a}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'rltv_sigmaoa': {
+        'variable': RelativeError,
+        'iter': 'an',
+        'analyze': False,
+        'label': r'$\frac{\sigma_{o,a}}{y} \times 100$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaa': {
@@ -940,14 +1181,20 @@ availableDiagnostics = {
         'analyze': False,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{h_a}$',
+        'label': r'$\sigma_{h(x_a)}$',
         'selectedStatistics': su.sigmaStatistics,
     },
     'sigmaof': {
         'variable': vu.selfErrorValue,
-        'analyze': False,
-        'label': '$\sigma_o$',
-        'selectedStatistics': ['RMS', 'STD'],
+        'analyze': True,
+        'label': r'$\sigma_{o}$',
+        'selectedStatistics': su.sigmaStatistics,
+    },
+    'rltv_sigmaof': {
+        'variable': RelativeError,
+        'analyze': True,
+        'label': r'$\frac{\sigma_{o}}{y} \times 100$',
+        'selectedStatistics': su.sigmaStatistics,
     },
     #NOTE: a failure results when 'analyze' is True under sigmaf, any one of the experiments
     # does not have sigmaf (i.e., a non-ensemble-DA experiment), and any one of the experiments
@@ -957,7 +1204,7 @@ availableDiagnostics = {
         'analyze': True,
         vu.mean: False,
         vu.ensemble: True,
-        'label': '$\sigma_{h_f}$',
+        'label': r'$\sigma_{h(x_f)}$',
         'selectedStatistics': su.sigmaStatistics,
     },
 # cloud-related diagnostics
@@ -988,7 +1235,7 @@ availableDiagnostics = {
     'ABEILambda': {
         'variable': bu.ABEILambda,
         'onlyDiagSpaces': ['abi_g16', 'ahi_himawari8'],
-        'label': '$\lambda_{ABEI}$',
+        'label': r'$\lambda_{ABEI}$',
     },
 # DerivedDiagnostics
     biso_.diagname: {
@@ -999,6 +1246,14 @@ availableDiagnostics = {
         'availableStatistics': biso_.availableStatistics,
         'label': biso_.label,
     },
+    birso_.diagname: {
+        'iter': 'bg',
+        'analyze': False,
+        'DerivedDiagnostic': birso_,
+        'requiredDiagnostics': birso_.requiredDiagnostics,
+        'availableStatistics': birso_.availableStatistics,
+        'label': birso_.label,
+    },
     aiso_.diagname: {
         'iter': 'an',
         'analyze': False,
@@ -1006,6 +1261,14 @@ availableDiagnostics = {
         'requiredDiagnostics': aiso_.requiredDiagnostics,
         'availableStatistics': aiso_.availableStatistics,
         'label': aiso_.label,
+    },
+    airso_.diagname: {
+        'iter': 'an',
+        'analyze': False,
+        'DerivedDiagnostic': airso_,
+        'requiredDiagnostics': airso_.requiredDiagnostics,
+        'availableStatistics': airso_.availableStatistics,
+        'label': airso_.label,
     },
     #NOTE: a failure results when 'analyze' is True under ideal-sigmaof, any one of the experiments
     # does not have sigmaf (i.e., a non-ensemble-DA experiment), and any one of the experiments
@@ -1016,6 +1279,13 @@ availableDiagnostics = {
         'requiredDiagnostics': fiso_.requiredDiagnostics,
         'availableStatistics': fiso_.availableStatistics,
         'label': fiso_.label,
+    },
+    firso_.diagname: {
+        'DerivedDiagnostic': firso_,
+        'analyze': False,
+        'requiredDiagnostics': firso_.requiredDiagnostics,
+        'availableStatistics': firso_.availableStatistics,
+        'label': firso_.label,
     },
     #NOTE: a failure results when 'analyze' is True under CR*, any one of the experiments
     # does not have CR* (i.e., a non-ensemble-DA experiment), and any one of the experiments
@@ -1126,12 +1396,26 @@ availableDiagnostics = {
         'availableStatistics': srxrtpp_.availableStatistics,
         'label': srxrtpp_.label,
     },
+    approxdoadob_.diagname: {
+        'DerivedDiagnostic': approxdoadob_,
+        'analyze': False,
+        'requiredDiagnostics': approxdoadob_.requiredDiagnostics,
+        'availableStatistics': approxdoadob_.availableStatistics,
+        'label': approxdoadob_.label,
+    },
+    approxrltvdoadob_.diagname: {
+        'DerivedDiagnostic': approxrltvdoadob_,
+        'analyze': False,
+        'requiredDiagnostics': approxrltvdoadob_.requiredDiagnostics,
+        'availableStatistics': approxrltvdoadob_.availableStatistics,
+        'label': approxrltvdoadob_.label,
+    },
     departurespread_.diagname: {
         'DerivedDiagnostic': departurespread_,
         'analyze': False,
         'requiredDiagnostics': departurespread_.requiredDiagnostics,
         'availableStatistics': departurespread_.availableStatistics,
-        'label': departurespread_.label,
+        'label': r'$d$',
     },
     ensspread_.diagname: {
         'DerivedDiagnostic': ensspread_,
@@ -1152,9 +1436,40 @@ availableDiagnostics = {
         'analyze': False,
         'requiredDiagnostics': totalspread_.requiredDiagnostics,
         'availableStatistics': totalspread_.availableStatistics,
-        'label': totalspread_.label,
+        'label': r'total spread',
     },
 }
+
+# classifications of diagnostics useful for plotting conventions
+# TODO: incorporate these into availableDiagnostics dict
+
+diagnosticIndependentStatistics = ['Count'] \
+  + ObsSpaceConsistencyRatio.availableStatistics \
+  + ModelSpaceConsistencyRatio.availableStatistics
+
+statisticDependentDiagnostics = [
+  biso_.diagname,
+  aiso_.diagname,
+  fiso_.diagname,
+  boeni_.diagname,
+  aoeni_.diagname,
+  foeni_.diagname,
+  innovratio_.diagname,
+  sry_.diagname,
+  srxeda_.diagname,
+  srxrtpp_.diagname,
+]
+
+absoluteOnlyDiagnostics = set(statisticDependentDiagnostics + [
+  'bc', 'obs', 'bak', 'ana', 'h(x)', 'amb',
+  'CRyb', 'CRya', 'CRyf',
+  'CRxb', 'CRxa', 'CRxinf',
+  'doadob', 'dabdob', 'rltv_doadob',
+  approxdoadob_.diagname,
+  approxrltvdoadob_.diagname,
+  birso_.diagname, airso_.diagname, firso_.diagname,
+  #'sigmaoa', 'sigmaob', 'sigmaof',
+])
 
 #TODO: have this function return a list of diagnosticConfiguration or Diagnostic (new class) objects
 #      instead of a list of dicts
@@ -1180,7 +1495,7 @@ def diagnosticConfigs(diagnosticNames_, DiagSpaceName, includeEnsembleDiagnostic
         config['onlyDiagSpaces'] = config.get('onlyDiagSpaces',[])
         config['availableStatistics'] = config.get('availableStatistics', selectedStatistics)
         config['selectedStatistics'] = config.get('selectedStatistics', config['availableStatistics'])
-        config['label'] = config.get('label',diagnosticName)
+        config['label'] = config.get('label', diagnosticName)
         config['requiredDiagnostics'] = set(config.get('requiredDiagnostics',[]))
 
         # diagnosticConfig is undefined for the following cases

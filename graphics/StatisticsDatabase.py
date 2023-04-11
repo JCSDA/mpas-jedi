@@ -308,14 +308,14 @@ class StatsDB:
         indices = list(range(nVars))
 
         # sort by channel number (int) for radiances
-        chlist = ['']*nVars
+        chlist = [-1]*nVars
         for ivar, varName in enumerate(varNames):
             for c in list(range(len(varName))):
                 sub = varName[c:]
                 if pu.isint(sub):
                     chlist[ivar] = int(sub)
                     break
-        if '' in chlist:
+        if any(np.array(chlist) < 0):
             indices.sort(key=varNames.__getitem__)
         else:
             indices.sort(key=chlist.__getitem__)
@@ -325,40 +325,38 @@ class StatsDB:
         ## extract units for each varName from varUnits DF column
         self.varUnitss = []
         varLoc = {}
-        varLoc['fcTDelta'] = self.fcTDeltas[0]
-        varLoc['cyDTime'] = self.cyDTimes[0]
-        allDiags = self.dfw.levels('diagName', varLoc)
-        varLoc['diagName'] = allDiags[0]
+        #varLoc['fcTDelta'] = self.fcTDeltas[0]
+        #varLoc['cyDTime'] = self.cyDTimes[0]
 
         for varName in self.varNames:
             varLoc['varName'] = varName
             units = self.dfw.uniquevals('varUnits', varLoc)
-            assert len(units) == 1, ("\n\nERROR: too many units values for varName = "+varName,
-                                    units, varLoc)
+            #assert len(units) == 1, ("\n\nERROR: too many units values for varName = "+varName,
+                                    #units, varLoc)
             self.varUnitss.append(units[0])
 
         ##  bin values --> combination of numerical and string, all stored as strings
-        self.allBinVals = self.dfw.levels('binVal')
+        self.allBinStrVals = self.dfw.levels('binVal')
 
-        # convert allBinVals to numeric type that can be used as axes values
-        self.binNumVals = []
-        self.binNumVals2DasStr = []
-        for binVal in self.allBinVals:
+        # convert allBinStrVals to numeric type that can be used as axes values
+        self.allBinNumVals = []
+        self.allBinNumVals2DasStr = []
+        for binVal in self.allBinStrVals:
             # int
             if pu.isint(binVal):
-                self.binNumVals.append(int(binVal))
-                self.binNumVals2DasStr.append(binVal)
+                self.allBinNumVals.append(int(binVal))
+                self.allBinNumVals2DasStr.append(binVal)
             # float
             elif pu.isfloat(binVal):
-                self.binNumVals.append(float(binVal))
-                self.binNumVals2DasStr.append(binVal)
+                self.allBinNumVals.append(float(binVal))
+                self.allBinNumVals2DasStr.append(binVal)
             else:
-                self.binNumVals.append(vu.miss_i)
+                self.allBinNumVals.append(vu.miss_i)
                 # comma-separated lists of float/int
                 if ',' in binVal:
                     binVals = binVal.split(',')
                     if all([(pu.isint(b) or pu.isfloat(b)) for b in binVals]):
-                        self.binNumVals2DasStr.append(binVal)
+                        self.allBinNumVals2DasStr.append(binVal)
 
     def statsDirectory(self, expLongName, cyDTime, fcTDelta, statsFileSubDir):
         dateDir = cyDTime

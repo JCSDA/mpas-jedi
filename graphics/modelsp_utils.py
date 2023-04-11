@@ -2,6 +2,7 @@ import binning_utils as bu
 from copy import deepcopy
 import datetime as dt
 from datetime import datetime, timedelta
+import multiprocessing as mp
 from netCDF4 import Dataset
 import netCDF4 as nc
 import numpy as np
@@ -212,19 +213,37 @@ def getTemperature(ncData):
 def getNCData(ncFile, mode='r'):
   return Dataset(ncFile, mode)
 
-def varRead(varName, ncData):
-  if (varName == 'temperature'):
-    varVals = getTemperature(ncData)
-  else:
-    if (varName == vu.modVarPrs):
-      varVals = getPressure(ncData)
-    elif varName in varNames3d:
-      varVals = np.array( ncData.variables[varName][0,:,:] )
-    else:
-      varVals = np.array( ncData.variables[varName][0,:] )
+# diagnostic pressures (hPa) for diagnostics
+diagnosticPressures = np.array([50., 100., 200., 250., 500., 700., 850., 925.])
 
-    if (varName == 'qv' or varName == 'rho' or varName == 'q2'):
-      varVals = varVals * 1000.
+def varRead(varName, ncData, nprocs=1):
+
+  if varName in vu.modDiagnosticVarNames:
+    nLocs = getTemperature(ncData['state']).shape[0]
+    nLevs = len(diagnosticPressures)
+    varVals = np.full((nLocs, nLevs), np.NaN)
+
+    # allow for missing values for ensembles (None)
+    if ncData['diagnostics'] is not None:
+      # read all 1D nc arrays into single 2D numpy array
+      for iLev, p in enumerate(diagnosticPressures):
+        layerVarName = (varName+'_{:d}hPa'.format(int(p))).replace('diagnostic_','')
+        if layerVarName in ncData['diagnostics'].variables:
+          varVals[:, iLev] = np.array( ncData['diagnostics'].variables[layerVarName][0,:] )
+
+  else:
+    if (varName == 'temperature'):
+      varVals = getTemperature(ncData['state'])
+    elif (varName == vu.modVarPrs):
+      varVals = getPressure(ncData['state'])
+    else:
+      if varName in varNames3d:
+        varVals = np.array( ncData['state'].variables[varName][0,:,:] )
+      else:
+        varVals = np.array( ncData['state'].variables[varName][0,:] )
+
+      if (varName in ['qv', 'rho', 'q2']):
+        varVals = varVals * 1000.
 
   return varVals
 
@@ -299,7 +318,7 @@ def headerOnlyFileFromTemplate(template, outfile, date):
 
 ## field functions for a single varName
 #class fieldFunction():
-#  def evaluate(self, varName, fieldsDB):
+#  def evaluate(self, varName, fieldsDB, nprocs=1):
 #    '''
 #    virtual method
 #    '''
@@ -310,16 +329,16 @@ class fieldSpread():
   def __init__(self, stateType: str):
     self.stateType = stateType
 
-  def evaluate(self, varName: str, fieldsDB):
-    exp = varRead(varName, fieldsDB['MeanState'])
+  def evaluate(self, varName: str, fieldsDB, nprocs=1):
+    exp = varRead(varName, fieldsDB['mean'], nprocs)
     nLocs = exp.size
-    ensemble = fieldsDB[self.stateType+'Ensemble']
+    ensemble = fieldsDB[self.stateType+'Ens']
 
     nEns = len(ensemble)
     if nEns > 1:
       exps = np.full((nEns, nLocs), np.NaN)
       for ii, member in enumerate(ensemble):
-        exps[ii,:] = varRead(varName, member).flatten()
+        exps[ii,:] = varRead(varName, member, nprocs).flatten()
 
       std = np.nanstd(exps, axis=0, ddof=1).reshape(exp.shape)
 
@@ -335,9 +354,9 @@ class fieldDiff():
   def __init__(self):
     pass
 
-  def evaluate(self, varName: str, fieldsDB):
-    ref = varRead(varName, fieldsDB['ReferenceState'])
-    exp = varRead(varName, fieldsDB['MeanState'])
+  def evaluate(self, varName: str, fieldsDB, nprocs=1):
+    ref = varRead(varName, fieldsDB['reference'], nprocs)
+    exp = varRead(varName, fieldsDB['mean'], nprocs)
     return np.asarray(exp - ref)
 
 
@@ -345,10 +364,10 @@ class fieldRelativeDiff():
   def __init__(self):
     pass
 
-  def evaluate(self, varName: str, fieldsDB):
-    # only valid for positive-definite ReferenceState
-    ref = varRead(varName, fieldsDB['ReferenceState'])
-    exp = varRead(varName, fieldsDB['MeanState'])
+  def evaluate(self, varName: str, fieldsDB, nprocs=1):
+    # only valid for positive-definite reference state
+    ref = varRead(varName, fieldsDB['reference'], nprocs)
+    exp = varRead(varName, fieldsDB['mean'], nprocs)
 
     d = np.empty_like(ref)
     valid = bu.greatBound(np.abs(ref), 0.)
@@ -361,10 +380,10 @@ class fieldLogRatio():
   def __init__(self):
     pass
 
-  def evaluate(self, varName: str, fieldsDB):
-    # only valid for positive-definite ReferenceState and MeanState
-    ref = varRead(varName, fieldsDB['ReferenceState'])
-    exp = varRead(varName, fieldsDB['MeanState'])
+  def evaluate(self, varName: str, fieldsDB, nprocs=1):
+    # only valid for positive-definite reference and mean
+    ref = varRead(varName, fieldsDB['reference'], nprocs)
+    exp = varRead(varName, fieldsDB['mean'], nprocs)
 
     d = np.empty_like(ref)
     valid = bu.greatBound(ref, 0.)
@@ -387,6 +406,7 @@ diagnosticFunctions = {
 
 variableSpecificDiagnosticConfigs = {
   # default is 'mmgfsan' below
+  vu.modVarPrs: ['mmgfsan', 'log_mogfsan'],
   'q2': ['mmgfsan', 'log_mogfsan'],
   'qv': ['mmgfsan', 'log_mogfsan'],
   'qv01to30': ['mmgfsan', 'log_mogfsan'],
@@ -453,7 +473,6 @@ def aggMinLevel(varName: str):
 
 def aggMaxLevel(varName: str, nLevels: int):
   return np.min([aggVariableConfig(varName).get('max level', nLevels), nLevels])
-
 
 def main():
   print ('This is not a runnable program.')

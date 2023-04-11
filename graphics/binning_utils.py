@@ -42,6 +42,7 @@ alt_jet_min = 9500.0
 alt_jet_max = 10500.0
 alt_jet_val = '{:.0f}'.format(0.5 * (alt_jet_min + alt_jet_max))
 altjetMethod = 'alt='+alt_jet_val+'m'
+impactjetMethod = 'alt='+alt_jet_val+'m'
 
 #LocalHour
 LH0  = 0.0
@@ -51,6 +52,7 @@ LHDT = 1.0
 #named latitude-bands
 latbandsMethod = 'LatBands'
 troplatbandsMethod = 'TropicalLatBands'
+polarlatbandsMethod = 'PolarLatBands'
 
 #named surface-type-bands
 seasurfMethod = 'sea'
@@ -1010,14 +1012,20 @@ class BinningAxis:
     def __init__(self, config):
 
         # parse config for first guesses of all parameters
-        validConfig = ((('start' in config and 'stop' in config) and 'values' not in config)
-                    or ('values' in config and 'start' not in config and 'stop' not in config))
-
+        validConfig = (
+          (('start' in config and 'stop' in config) and 'values' not in config)
+          or (('values' in config or 'value' in config)
+            and 'start' not in config and 'stop' not in config)
+        )
         assert validConfig, 'BinningAxis.__init__: missing config component'
 
         start = config.get('start', None)
         stop = config.get('stop', None)
         values = config.get('values', None)
+        if values is None:
+          value = config.get('value', None)
+          if value is not None:
+            values = [value]
 
         step = config.get('step', None)
         nsteps = config.get('nsteps', self.nsteps)
@@ -1069,13 +1077,21 @@ class BinningAxis:
                 stop = transforms[0](stop)
                 step = (stop - start) / nsteps
 
-                values = np.arange(start, stop+step, step)
-                starts = np.subtract(values, 0.5*step)
-                stops = np.add(values, 0.5*step)
+                if nsteps == 1:
+                    values = np.array([(stop+start)*0.5])
+                    starts = np.array([start])
+                    stops = np.array([stop])
+                else:
+                    values = np.arange(start, stop+step, step)
+                    starts = np.subtract(values, 0.5*step)
+                    stops = np.add(values, 0.5*step)
 
                 values = transforms[1](values)
                 starts = transforms[1](starts)
                 stops = transforms[1](stops)
+        elif len(values) == 1:
+            starts = deepcopy(values)
+            stops = deepcopy(values)
         else:
             assert self.isMonotonic(values), 'BinningAxis.__init__: can only handle monotonically increasing or decreasing values'
             ## initial transform
@@ -1435,6 +1451,11 @@ class BinMethod:
         assert self._includeVars is None or isinstance(self._includeVars, Iterable), (
           self.__class__.__name__+'.__init__: invalid self._includeVars: '+str(self._includeVars))
 
+        # list of variables to exclude
+        self._excludeVars = config.get('exclude variables', None)
+        assert self._excludeVars is None or isinstance(self._excludeVars, Iterable), (
+          self.__class__.__name__+'.__init__: invalid self._excludeVars: '+str(self._excludeVars))
+
         fconf = {}
         fconf['dsName'] = config['dsName']
         fconf['fileFormat'] = config['fileFormat']
@@ -1493,5 +1514,12 @@ class BinMethod:
         return diagName in self._excludeDiags
 
     def excludeVariable(self, varName):
-        if self._includeVars is None: return False
-        return varName not in self._includeVars
+        exclude = False
+
+        if self._includeVars is not None:
+          exclude = varName not in self._includeVars
+
+        if self._excludeVars is not None:
+          exclude = exclude or (varName in self._excludeVars)
+
+        return exclude

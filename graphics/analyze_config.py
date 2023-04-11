@@ -38,31 +38,35 @@ Job-submission examples:
 + Spawn one job for each DiagSpace that is enabled in config
   using the anGroupConfig specified therein
 
-    python SpawnAnalyzeStats.py
+    ./SpawnAnalyzeStats.py
 
 + Specify that statistics files come from a JEDI hofx application
 
-    python SpawnAnalyzeStats.py -app hofx
+    ./SpawnAnalyzeStats.py -app hofx
 
 + Spawn one job for each DiagSpace that contains "amsua"
 
-    python SpawnAnalyzeStats.py -d amsua
+    ./SpawnAnalyzeStats.py -d amsua
 
 + Spawn one job for the MPAS model DiagSpace
 
-    python SpawnAnalyzeStats.py -d mpas
+    ./SpawnAnalyzeStats.py -d mpas
+
++ Spawn one job for each DiagSpace in the typical MPAS-Workflow variational application
+
+    ./SpawnAnalyzeStats.py -nout 2 -d amsua_,sonde,airc,sfc,gnssrobndropp1d,satwind
 
 + Spawn one job for each DiagSpace in the typical MPAS-Workflow hofx application
 
-    python SpawnAnalyzeStats.py -app hofx -d mhs,amsua,abi_,ahi_,sonde,airc,sfc,gnssroref,satwind
+    ./SpawnAnalyzeStats.py -app hofx -d mhs,amsua,abi_,ahi_,sonde,airc,sfc,gnssrobndropp1d,gnssrorefncep,satwind
 
 + Choose a unique job account number
 
-    python SpawnAnalyzeStats.py -a NMMM0043
+    ./SpawnAnalyzeStats.py -a NMMM0043
 
 + Get info about more options
 
-    python SpawnAnalyzeStats.py --help
+    ./SpawnAnalyzeStats.py --help
 
 '''
 
@@ -110,7 +114,7 @@ dbConf['fcTimeInc'] = dt.timedelta(hours=12)
 # + OMBOMAVerification, ShortRangeFCVerification, ExtendedFCVerification, and
 #   deterministicFCMemberDir
 # OR
-# + deterministicVerifyDir, ensembleVerifyDir, commonAppIdentifier, and commonStatsFileSubDir
+# + deterministicVerifyDir, ensembleVerifyDir, obsAppIdentifier, and commonStatsFileSubDir
 
 ## VerificationType
 # OPTIONS: 'omb/oma', 'forecast'
@@ -150,7 +154,7 @@ if workflowType == 'liuz,jban':
   ShortRangeFCVerification = '/FC1DIAG'
   ExtendedFCVerification = '/FC2DIAG'
 
-## deterministicVerifyDir, ensembleVerifyDir, and commonAppIdentifier are assumed to be
+## deterministicVerifyDir, ensembleVerifyDir, and obsAppIdentifier are assumed to be
 # uniform across all experiments
 
 ## deterministicVerifyDir, set automatically from above settings
@@ -163,7 +167,7 @@ ensembleVerifyDir = 'NotSupported'
 
 if zeroDurationForecast:
   if VerificationType == 'omb/oma' and VerificationSpace == 'obs':
-    commonAppIdentifier = 'da'
+    obsAppIdentifier = 'da'
     deterministicVerifyDir = OMBOMAVerification
     # ensemble verification for omb/oma not currently supported by MPAS-Workflow
 
@@ -171,9 +175,7 @@ if zeroDurationForecast:
     # single forecast duration omf (fcTDeltaFirst==0 and fcTDeltaLast == 0)
     deterministicVerifyDir = ShortRangeFCVerification
     ensembleVerifyDir = ShortRangeFCVerification
-
-    if VerificationSpace == 'obs': commonAppIdentifier = 'hofx'
-    if VerificationSpace == 'model': commonAppIdentifier = ''
+    obsAppIdentifier = 'hofx'
 
 else:
   # multiple extended forecast omf (0 < fcTDeltaLast <= extended forecast length)
@@ -181,9 +183,7 @@ else:
   VerificationType = 'forecast'
   deterministicVerifyDir = ExtendedFCVerification
   ensembleVerifyDir = ExtendedFCVerification
-
-  if VerificationSpace == 'obs': commonAppIdentifier = 'hofx'
-  if VerificationSpace == 'model': commonAppIdentifier = ''
+  obsAppIdentifier = 'hofx'
 
 
 ## ================================================================================================
@@ -332,7 +332,10 @@ dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 #  as part of the file name to distinguish the information contained within from
 #  other files, e.g., an experiment characteristic.  appIdentifiers is only important
 #  for file naming and is not used in the analyses
-dbConf['appIdentifiers'] = [commonAppIdentifier]*len(dbConf['expNames'])
+if VerificationSpace == 'model':
+  dbConf['appIdentifiers'] = ['']*len(dbConf['expNames'])
+else:
+  dbConf['appIdentifiers'] = [obsAppIdentifier]*len(dbConf['expNames'])
 
 ## fcDirFormats is used to declare the directory string format
 #  for forecast lengths. Can include any combination of substrings
@@ -369,23 +372,33 @@ selectedStatistics = ['Count', 'Mean', 'RMS', 'STD']
 #   diagnosticGroupings or has maxDiagnosticsPerAnalysis < len(diagnosticNames),
 #   e.g., CYandBinValAxes2D, FCandBinValAxes2D, and BinValAxes2D
 diagnosticGroupings = {}
+# OMM
 diagnosticGroupings['omm'] = ['omb', 'oma']
 diagnosticGroupings['rltv_omm'] = ['rltv_omb', 'rltv_oma']
-#diagnosticGroupings['ObsError'] = ['omb', 'oma', 'sigmaob']
-#diagnosticGroupings['dy'] = ['omf', 'sigmaof', 'sigmaf']
-#diagnosticGroupings['dy'] = ['omf', 'sigmaof']
+diagnosticGroupings['omm_nobc'] = ['omb_nobc', 'oma_nobc']
+
+# ObsError
+diagnosticGroupings['ObsError'] = ['sigmaob', 'doadob', 'ApproxDoaDob']
+diagnosticGroupings['RelativeObsError'] = ['rltv_sigmaob', 'rltv_doadob', 'ApproxRelativeDoaDob']
 diagnosticGroupings['sigmao'] = ['sigmaof', 'ideal-sigmaof']
+#diagnosticGroupings['rltv_sigmao'] = ['rltv_omf', 'ideal-rltv_sigmaof']
+diagnosticGroupings['ErrorRatios'] = ['OENIb', 'OENIa', 'InnovationRatio']
+
+# R, HBH^T, obs consistency
+diagnosticGroupings['ddT'] = ['doadob', 'dabdob']
+diagnosticGroupings['Relative-ddT'] = ['rltv_doadob', 'rltv_dabdob']
+#SpreadDiagnostics = [vu.EddT, vu.HBHT, vu.R]
+SpreadDiagnostics = [vu.EddT, vu.HBHTplusR]
+diagnosticGroupings['dy'] = [vu.DiagnosticVars[dy] for dy in SpreadDiagnostics]
+#diagnosticGroupings['dy'] = ['omf', 'sigmaof', 'sigmaf']
+diagnosticGroupings['CRy'] = ['CRyb', 'CRya']
+
+# model spread and consistency
 #diagnosticGroupings['sigmax'] = ['sigmaxb', 'sigmaxa', 'sigmainf']
 #diagnosticGroupings['dx'] = ['mmgfsan', 'sigmaxb']
-diagnosticGroupings['RelativeObsError'] = ['rltv_omb', 'rltv_oma', 'OENIb']
-diagnosticGroupings['ErrorRatios'] = ['OENIb', 'OENIa', 'InnovationRatio']
-diagnosticGroupings['CRy'] = ['CRyb', 'CRya']
 #diagnosticGroupings['CRx'] = ['CRxb', 'CRxa']
 #diagnosticGroupings['SRx'] = ['SRx-eda', 'SRx-rtpp']
 
-#SpreadDiagnostics = [vu.EddT, vu.HBHT, vu.R]
-SpreadDiagnostics = [vu.EddT, vu.HBHTplusR]
-diagnosticGroupings['error'] = [vu.DiagnosticVars[d]+'_f' for d in SpreadDiagnostics]
 
 ########################################################################
 ## Configure the analysisTypes to apply to the statistics
@@ -394,39 +407,43 @@ diagnosticGroupings['error'] = [vu.DiagnosticVars[d]+'_f' for d in SpreadDiagnos
 #    however some of them require nCY, nFC, or nExp > 1
 #  - see the individual classes for more details (Analyses.py)
 analysisTypes = []
-if dbConf['fcTDeltaFirst'] == dbConf['fcTDeltaLast']:
+if zeroDurationForecast:
   print('Generating CY-type figures')
   ## gross error analysisTypes for single forecast length
   ## -------------------------------------------------------
   ## recommended
   analysisTypes.append('CYAxisExpLines')
-
-  ## potentially useful
-  analysisTypes.append('CYAxisBinValLines')
   analysisTypes.append('CYandBinValAxes2D')
   analysisTypes.append('BinValAxes2D')
+  if len(dbConf['expNames']) > 1: analysisTypes.append('BinValAxisProfileDiffCI')
+
+  ## useful for prescribing/evaluating R statistics
+  #analysisTypes.append('BinValAxisPDF')
+  #analysisTypes.append('BinValAxisPDFMultiExp')
+  analysisTypes.append('BinValAxisStatsComposite')
+  #analysisTypes.append('GrossValues')
+  analysisTypes.append('BinValAxisProfile')
+
+  ## potentially useful
+  #analysisTypes.append('CYAxisBinValLines')
 
 else:
   print('Generating FC-type figures')
   ## gross error analysisTypes for multiple forecast lengths
   ## -------------------------------------------------------
   ## recommended
-  analysisTypes.append('FCAxisExpLines')
-  if len(dbConf['expNames']) > 1: analysisTypes.append('FCAxisExpLinesDiffCI')
+  if len(dbConf['expNames']) > 1: analysisTypes.append('FCScoreCard')
+  if len(dbConf['expNames']) > 1: analysisTypes.append('BinValAxisProfileDiffCI')
 
   ## potentially useful
-  analysisTypes.append('FCandBinValAxes2D')
+  #analysisTypes.append('FCandBinValAxes2D')
+  #analysisTypes.append('FCAxisExpLines')
+  #if len(dbConf['expNames']) > 1: analysisTypes.append('FCAxisExpLinesDiffCI')
   #analysisTypes.append('CYandBinValAxes2D')
   #analysisTypes.append('CYAxisExpLines')
   #analysisTypes.append('CYAxisFCLines')
-  analysisTypes.append('BinValAxes2D')
+  #analysisTypes.append('BinValAxisProfile') 
+  #analysisTypes.append('BinValAxes2D')
+  #analysisTypes.append('BinValAxisStatsComposite')
 
-## used to dissect gross errors in more detail
-analysisTypes.append('BinValAxisProfile')
-if len(dbConf['expNames']) > 1: analysisTypes.append('BinValAxisProfileDiffCI')
-##Note: BinValAxisProfile* analyses work for any forecast duration
 
-## useful for prescribing/evaluating R statistics
-#analysisTypes.append('BinValAxisPDF')
-#analysisTypes.append('BinValAxisStatsComposite')
-#analysisTypes.append('GrossValues')

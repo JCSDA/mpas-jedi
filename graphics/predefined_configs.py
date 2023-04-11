@@ -4,6 +4,7 @@ import binning_utils as bu
 from collections import defaultdict
 from copy import deepcopy
 from jediApplicationArgs import jediAppName, nOuterIter
+import modelsp_utils as mu
 import numpy as np
 import os
 import var_utils as vu
@@ -24,77 +25,95 @@ appName = jediAppName
 ## model-space diagnostics
 modelDiags = [
   'mmgfsan',
-  'rltv_mmgfsan', 'log_mogfsan',
+  #'rltv_mmgfsan', 'log_mogfsan',
   'sigmaxb',
-  'sigmaxa', 'sigmaxf', 'sigmaxinf',
-  'SRx-eda', 'SRx-rtpp',
+  #'sigmaxa', 'sigmaxf', 'sigmaxinf',
+  #'SRx-eda',
+  #'SRx-rtpp',
   'CRxb',
   #'CRxa', 'CRxf', 'CRxinf',
 ]
 
 ## difference diagnostics
-diffDiagnostics_ = defaultdict(list)
-diffDiagnostics_['variational'] += ['omb']
-diffDiagnostics_['hofx'] += ['omf']
+absDiagnostics_ = defaultdict(list)
+absDiagnostics_['variational'] += ['omb']
+absDiagnostics_['hofx'] += ['omf']
 
 ## relative difference diagnostics
-relativeDiagnostics_ = defaultdict(list)
-relativeDiagnostics_['variational'] += ['rltv_omb']
-relativeDiagnostics_['hofx'] += ['rltv_omf']
+rltvDiagnostics_ = defaultdict(list)
+rltvDiagnostics_['variational'] += ['rltv_omb']
+rltvDiagnostics_['hofx'] += ['rltv_omf']
 
 ## absolute diagnostics
-absoluteDiagnostics_ = defaultdict(list)
-absoluteDiagnostics_['variational'] += ['obs', 'bak']
-absoluteDiagnostics_['hofx'] += ['obs', 'h(x)']
+yDiagnostics_ = defaultdict(list)
+yDiagnostics_['variational'] += ['obs', 'bak']
+yDiagnostics_['hofx'] += ['obs', 'h(x)']
 
 ## non-bias-corrected diagnostics
 nobcDiagnostics_ = defaultdict(list)
 nobcDiagnostics_['variational'] += ['omb_nobc']
 
 ## cloudy radiance diagnostics
-cloudyRadDiagnostics = [
+cloudyRadDiagnostics = set([
   'SCI-'+bu.OkamotoMethod,
 #  'ACI-'+bu.MZ19Method,
 #  'MCI',
 #  'CFy',
-]
+])
 
 ## STD diagnostics
-sigmaDiagnostics_ = defaultdict(list)
-sigmaDiagnostics_['variational'] = [
+absSigmaDiagnostics_ = defaultdict(list)
+absSigmaDiagnostics_['variational'] = [
   'omb',
   'sigmaob',
   'sigmab',
-  #'ideal-sigmaob', 'OENIb',
-  #'CRyb', 'CRya',
-  #'SRy',
+  #'ideal-sigmaob',
+  'OENIb',
+  #'CRyb',
 ]
-sigmaDiagnostics_['hofx'] = [
+absSigmaDiagnostics_['hofx'] = [
   'omf',
   'sigmaof',
   'sigmaf',
   #'ideal-sigmaof',
+  #'ideal-rltv_sigmaof',
   #'OENIf',
   'CRyf',
 ]
-spreadDiagnostics = [vu.DiagnosticVars[var]+'_f' for var in [vu.EddT, vu.HBHT, vu.R, vu.HBHTplusR]]
-sigmaDiagnostics_['hofx'] += spreadDiagnostics
+spreadDiagnostics = [vu.DiagnosticVars[var] for var in [vu.EddT, vu.HBHT, vu.R, vu.HBHTplusR]]
+absSigmaDiagnostics_['hofx'] += spreadDiagnostics
 
 # variational analysis diagnostics
 if nOuterIter > 0:
-    diffDiagnostics_['variational'] += ['oma', 'InnovationRatio']
+    absDiagnostics_['variational'] += ['oma', 'InnovationRatio']
     nobcDiagnostics_['variational'] += ['oma_nobc']
-    relativeDiagnostics_['variational'] += ['rltv_oma']
-    absoluteDiagnostics_['variational'] += ['ana']
-    sigmaDiagnostics_['variational'] += ['oma','sigmaoa','sigmaa', 'ideal-sigmaoa', 'CRya', 'OENIa', 'SRy', 'InnovationRatio']
+    rltvDiagnostics_['variational'] += [
+      'rltv_oma',
+      'rltv_sigmaob',
+      'rltv_doadob',
+      'rltv_dabdob',
+      'ApproxRelativeDoaDob',
+    ]
+    yDiagnostics_['variational'] += ['ana']
+    absSigmaDiagnostics_['variational'] += [
+      'oma',
+      'sigmaoa',
+      'sigmaa',
+      #'ideal-sigmaoa',
+      'CRya',
+      'OENIa',
+      'SRy',
+      'InnovationRatio',
+      'doadob',
+      'dabdob',
+      'ApproxDoaDob',
+    ]
 
-diffDiagnostics = diffDiagnostics_[jediAppName]
-relativeDiagnostics = relativeDiagnostics_[jediAppName]
-absoluteDiagnostics = absoluteDiagnostics_[jediAppName]
-sigmaDiagnostics = sigmaDiagnostics_[jediAppName]
-nobcDiagnostics = nobcDiagnostics_[jediAppName]
-
-defaultDiagnostics = diffDiagnostics
+absDiagnostics = set(absDiagnostics_[jediAppName])
+rltvDiagnostics = set(rltvDiagnostics_[jediAppName])
+yDiagnostics = set(yDiagnostics_[jediAppName])
+absSigmaDiagnostics = set(absSigmaDiagnostics_[jediAppName])
+nobcDiagnostics = set(nobcDiagnostics_[jediAppName])
 
 ## diagnostics for which QC is irrelevant
 nonQCedDiagnostics = ['obs']
@@ -108,16 +127,20 @@ nonQCedDiagnostics = ['obs']
 
 # latbandsMethod bins, north to south
 allNamedLatBands = {}
-allNamedLatBands['SPol']  = (-90.0, -60.0)
 allNamedLatBands['SXTro'] = (-90.0, -30.0)
-allNamedLatBands['Tro']   = (-30.0,  30.0)
-allNamedLatBands['NXTro'] = ( 30.0,  90.0)
-allNamedLatBands['NPol']  = ( 60.0,  90.0)
-
 allNamedLatBands['STro']  = (-30.0, -5.0)
 allNamedLatBands['ITCZ']  = ( -5.0,  5.0)
 allNamedLatBands['NTro']  = (  5.0, 30.0)
+allNamedLatBands['NXTro'] = ( 30.0,  90.0)
 
+allNamedLatBands['SPol']  = (-90.0, -60.0)
+allNamedLatBands['SMid']  = (-60.0, -30.0)
+allNamedLatBands['Tro']   = (-30.0,  30.0)
+allNamedLatBands['NMid']  = ( 30.0,  60.0)
+allNamedLatBands['NPol']  = ( 60.0,  90.0)
+
+allNamedLatBands['SHem']  = (-90.0,  0.0)
+allNamedLatBands['NHem']  = (  0.0, 90.0)
 
 namedLatBands = {}
 namedLatBands['values'] = ['NXTro','Tro','SXTro']
@@ -137,6 +160,16 @@ namedTropLatBands['stops'] = []
 for latBand in namedTropLatBands['values']:
     namedTropLatBands['starts'].append(allNamedLatBands[latBand][0])
     namedTropLatBands['stops'].append(allNamedLatBands[latBand][1])
+
+namedPolarLatBands = {}
+namedPolarLatBands['values'] = ['NPol','NMid','Tro','SMid','SPol']
+namedPolarLatBands['starts'] = []
+namedPolarLatBands['stops'] = []
+
+for latBand in namedPolarLatBands['values']:
+    namedPolarLatBands['starts'].append(allNamedLatBands[latBand][0])
+    namedPolarLatBands['stops'].append(allNamedLatBands[latBand][1])
+
 
 # cloudbandsMethod bins
 namedCldFracBands = {}
@@ -178,6 +211,31 @@ for bound in ['starts', 'stops']:
     while geoirLonBands[bound][ii] < 0.:
       geoirLonBands[bound][ii] += 360.
 
+# namedSatwindObsType bins (see GSI src/read_satwnd.f90)
+GSISatwindObsTypes = {
+  'GOES-SW': 240,
+  'India': 241,
+  'JMA-Vis': 242,
+  'EUMETSAT-Vis': 243,
+  'AVHRR': 244,
+  'GOES-IR': 245,
+  'GOES-WV-cloud-top': 246,
+  'GOES-WV-deep-layer': 247,
+  'JMA-WV-deep-layer': 250,
+  'GOES-Vis': 251,
+  'JMA-IR': 252,
+  'EUMETSAT-IR': 253,
+  'EUMETSAT-WV-deep-layer': 254,
+  'LEOGEO': 255,
+  'MODIS-IR': 257,
+  'MODIS-WV-cloud-top': 258,
+  'MODIS-WV-deep-layer': 259,
+  'VIIRS-IR': 260,
+}
+namedSatWindObsTypes = {}
+namedSatWindObsTypes['names'] = list(GSISatwindObsTypes.keys())
+namedSatWindObsTypes['values'] = list(GSISatwindObsTypes.values())
+
 ## cloud impact coordinates
 #notes:
 # initial specification: ±np.floor(np.power(np.arange(0.4,3.6,0.33), np.e) * 10.) / 10.
@@ -199,17 +257,24 @@ diagnosticCloudImpactValuesFine = np.array([ -4.9, -3.5, -2.4, -1.6, -1., -0.5, 
 ############
 binLims1D = {}
 
-diagnosticPressureValues = [5.0, 10.0, 25.0, 50.0, 100.0, 200.0, 300.0, 400.0, 500.0, 650.0, 800.0, 1000.0]
+# base middle values on model-space diagnosticPressures, stop at 25.0 hPa for 30km model top
+obsDiagnosticPressures = [25.]+list(mu.diagnosticPressures)+[1000.]
+
+# add more bins as model top goes up
+#obsDiagnosticPressures = [5.0, 10.0]+obsDiagnosticPressures
+
 binLims1D[vu.obsVarPrs] = {}
 binLims1D[vu.obsVarPrs]['format'] = '{:.1f}'
 binLims1D[vu.obsVarPrs]['transforms'] = [np.log, np.exp]
-binLims1D[vu.obsVarPrs]['values'] = diagnosticPressureValues
+binLims1D[vu.obsVarPrs]['values'] = obsDiagnosticPressures
 
 binLims1D[vu.obsVarAlt] = {}
 binLims1D[vu.obsVarAlt]['start']  = 1000.0
-binLims1D[vu.obsVarAlt]['stop']   = 50000.0
-binLims1D[vu.obsVarAlt]['step']   = 2000.0
+binLims1D[vu.obsVarAlt]['stop']   = 30000.0
+binLims1D[vu.obsVarAlt]['step']   = 1000.0
 binLims1D[vu.obsVarAlt]['format'] = '{:.0f}'
+
+binLims1D[vu.obsVarImpact] = deepcopy(binLims1D[vu.obsVarAlt])
 
 binLims1D[vu.obsVarLat] = {}
 binLims1D[vu.obsVarLat]['start']  = -90.0
@@ -352,11 +417,9 @@ binLims1D[vu.modVarLev]['stop']   = 55+1
 binLims1D[vu.modVarLev]['step']   = 1
 binLims1D[vu.modVarLev]['format'] = '{:.0f}'
 
-#binLims1D[vu.modVarAlt] = {}
-#binLims1D[vu.modVarAlt]['start']  = 0.0
-#binLims1D[vu.modVarAlt]['stop']   = 50000.0
-#binLims1D[vu.modVarAlt]['step']   = 5000.0
-#binLims1D[vu.modVarAlt]['format'] = '{:.0f}'
+binLims1D[vu.modVarDiagPrs] = {}
+binLims1D[vu.modVarDiagPrs]['format'] = '{:.0f}'
+binLims1D[vu.modVarDiagPrs]['values'] = mu.diagnosticPressures
 
 binAxes1D = {}
 for binVar, config in binLims1D.items():
@@ -541,11 +604,6 @@ binVarConfigs = {
                  'variable': vu.selfQCValue,
                  'bounds': badFlags,
                  'except_diags': nonQCedDiagnostics},
-                {'where': bu.equalBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': badFlags,
-                 'except_diags': nonQCedDiagnostics,
-                 },
             ],
             'values': badFlagNames,
         },
@@ -555,11 +613,6 @@ binVarConfigs = {
                  'variable': vu.selfQCValue,
                  'bounds': goodFlags+badFlags,
                  'except_diags': nonQCedDiagnostics},
-                {'where': bu.equalBound,
-                 'variable': vu.selfQCValue,
-                 'bounds': goodFlags+badFlags,
-                 'except_diags': nonQCedDiagnostics,
-                 },
             ],
             'values': goodFlagNames+badFlagNames,
         },
@@ -594,6 +647,21 @@ binVarConfigs = {
             'values': bu.alt_jet_val,
         },
     },
+    vu.obsVarImpact: {
+        bu.altjetMethod: {
+            'filters': [
+# eliminate locations outside bu.alt_jet_min to bu.alt_jet_max
+                {'where': bu.lessBound,
+                 'variable': vu.impactMeta,
+                 'bounds': bu.alt_jet_min},
+                {'where': bu.greatEqualBound,
+                 'variable': vu.impactMeta,
+                 'bounds': bu.alt_jet_max},
+                AnyBadQC,
+            ],
+            'values': bu.alt_jet_val,
+        },
+    },
     vu.obsVarLat: {
         bu.latbandsMethod: {
             'filters': [
@@ -618,6 +686,18 @@ binVarConfigs = {
                 AnyBadQC,
             ],
             'values': namedTropLatBands['values'],
+        },
+        bu.polarlatbandsMethod: {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.latMeta,
+                 'bounds': namedPolarLatBands['starts']},
+                {'where': bu.greatEqualBound,
+                 'variable': vu.latMeta,
+                 'bounds': namedPolarLatBands['stops']},
+                AnyBadQC,
+            ],
+            'values': namedPolarLatBands['values'],
         },
         bu.PjetMethod: {
             'filters': [
@@ -650,6 +730,24 @@ binVarConfigs = {
                  'bounds': bu.alt_jet_min},
                 {'where': bu.greatEqualBound,
                  'variable': vu.altMeta,
+                 'bounds': bu.alt_jet_max},
+                AnyBadQC,
+            ],
+            'values': binAxes1D[vu.obsVarLat].values(),
+        },
+        bu.impactjetMethod: {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.latMeta,
+                 'bounds': binAxes1D[vu.obsVarLat].starts()},
+                {'where': bu.greatEqualBound,
+                 'variable': vu.latMeta,
+                 'bounds': binAxes1D[vu.obsVarLat].stops()},
+                {'where': bu.lessBound,
+                 'variable': vu.impactMeta,
+                 'bounds': bu.alt_jet_min},
+                {'where': bu.greatEqualBound,
+                 'variable': vu.impactMeta,
                  'bounds': bu.alt_jet_max},
                 AnyBadQC,
             ],
@@ -853,6 +951,17 @@ binVarConfigs = {
             'values': binAxes1D[vu.modVarLev].values(),
         },
     },
+    vu.modVarDiagPrs: {
+        bu.identityBinMethod: {
+            'filters': [
+                {'where': bu.notEqualBound,
+                 'variable': vu.prsModelDiag,
+                 'bounds': binAxes1D[vu.modVarDiagPrs].centrals},
+            ],
+            'include variables': vu.modDiagnosticVarNames,
+            'values': binAxes1D[vu.modVarDiagPrs].values(),
+        },
+    },
     vu.modVarLat: {
         bu.identityBinMethod: {
             'filters': [
@@ -863,6 +972,7 @@ binVarConfigs = {
                  'variable': vu.latModel,
                  'bounds': binAxes1D[vu.modVarLat].stops()},
             ],
+            'exclude variables': vu.modDiagnosticVarNames,
             'values': binAxes1D[vu.modVarLat].values(),
         },
         bu.latbandsMethod: {
@@ -874,7 +984,8 @@ binVarConfigs = {
                  'variable': vu.latModel,
                  'bounds': namedLatBands['stops']},
             ],
-            'values': namedTropLatBands['values'],
+            'exclude variables': vu.modDiagnosticVarNames,
+            'values': namedLatBands['values'],
         },
         bu.troplatbandsMethod: {
             'filters': [
@@ -885,6 +996,7 @@ binVarConfigs = {
                  'variable': vu.latModel,
                  'bounds': namedTropLatBands['stops']},
             ],
+            'exclude variables': vu.modDiagnosticVarNames,
             'values': namedTropLatBands['values'],
         },
     },
@@ -931,6 +1043,7 @@ binVarConfigs = {
                  'variable': vu.latModel,
                  'bounds': geoirLatBands['stops']},
             ],
+            'exclude variables': vu.modDiagnosticVarNames,
             'values': geoirLonBands['values'],
         },
     },
@@ -941,6 +1054,7 @@ binVarConfigs = {
                  'variable': vu.levModel,
                  'bounds': [1]},
             ],
+            'exclude variables': vu.modDiagnosticVarNames,
             'values': [vu.noBinVar],
         },
     },
@@ -975,35 +1089,13 @@ for ii, instrument in enumerate(geoirLonBands['values']):
       'values': binAxes1D[vu.modVarLev].values(),
   }
 
-# model level bins by latitude band
-for latBand, latStart, latStop in zip(
-  namedTropLatBands['values'],
-  namedTropLatBands['starts'],
-  namedTropLatBands['stops']):
-
-  # add basic QC filter and composite binVal's (values)
-  binVarConfigs[vu.modVarLev][latBand] = {
-    'filters': [
-      {'where': bu.lessBound,
-       'variable': vu.latModel,
-       'bounds': latStart},
-      {'where': bu.greatEqualBound,
-       'variable': vu.latModel,
-       'bounds': latStop},
-      {'where': bu.notEqualBound,
-       'variable': vu.levModel,
-       'bounds': binAxes1D[vu.modVarLev].centrals(astype=int)},
-    ],
-    'include variables': vu.modVarNamesBase3d,
-    'values': binAxes1D[vu.modVarLev].values(),
-  }
-
 # Add bu.identityBinMethod for identity ranged binning variables
 identityRangeBinVars = {
     vu.obsVarAlt: [vu.altMeta, bu.BinMethod.commonDiags],
     vu.obsVarCldFracX: [bu.MaximumCFx, []],
     vu.obsVarCldFracY: [vu.cldfracMeta, []],
     vu.obsVarGlint: [bu.GlintAngle, []],
+    vu.obsVarImpact: [vu.impactMeta, bu.BinMethod.commonDiags],
     vu.obsVarLandFrac: [vu.landfracGeo, []],
     vu.obsVarLat: [vu.latMeta, bu.BinMethod.commonDiags],
     vu.obsVarLT: [bu.LocalHour, []],
@@ -1133,17 +1225,19 @@ for departureFunction, obserrorMethod in [
     }
 
 
-# Add named latitude-band-specific bins for applicable ranged variables
-latBinVars = {
-    vu.obsVarAlt: [vu.altMeta, []],
-    vu.obsVarPrs: [vu.prsMeta, []],
+# Add named latitude-band-specific bins for observation-space ranged variables
+obsLatBinVars = {
+    vu.obsVarAlt: [vu.altMeta, [], namedPolarLatBands],
+    vu.obsVarImpact: [vu.impactMeta, [], namedPolarLatBands],
+    vu.obsVarPrs: [vu.prsMeta, [], namedLatBands],
 }
-for binVar, rangeVar in latBinVars.items():
+for binVar, rangeVar in obsLatBinVars.items():
     if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
+    latBands = deepcopy(rangeVar[2])
     for latBand, latStart, latStop in zip(
-        namedLatBands['values'],
-        namedLatBands['starts'],
-        namedLatBands['stops'],
+        latBands['values'],
+        latBands['starts'],
+        latBands['stops'],
         ):
         binVarConfigs[binVar][latBand] = {
             'filters': [
@@ -1164,6 +1258,71 @@ for binVar, rangeVar in latBinVars.items():
             'values': binAxes1D[binVar].values(),
             'override_exclusiveDiags': rangeVar[1],
         }
+
+# Add named latitude-band-specific bins for model-space ranged variables
+modelLatBinVars = {
+    vu.modVarLev: [vu.levModel, int, namedTropLatBands, vu.modVarNamesBase3d],
+    vu.modVarDiagPrs: [vu.prsModelDiag, float, namedLatBands, vu.modDiagnosticVarNames],
+}
+for binVar, rangeVar in modelLatBinVars.items():
+    if binVar not in binVarConfigs: binVarConfigs[binVar] = {}
+    latBands = deepcopy(rangeVar[2])
+    for latBand, latStart, latStop in zip(
+        latBands['values'],
+        latBands['starts'],
+        latBands['stops'],
+        ):
+        binVarConfigs[binVar][latBand] = {
+            'filters': [
+                {'where': bu.notEqualBound,
+                 'variable': rangeVar[0],
+                 'bounds': binAxes1D[binVar].centrals(astype=rangeVar[1])},
+                {'where': bu.lessBound,
+                 'variable': vu.latModel,
+                 'bounds': latStart},
+                {'where': bu.greatEqualBound,
+                 'variable': vu.latModel,
+                 'bounds': latStop},
+            ],
+            'values': binAxes1D[binVar].values(),
+            'include variables': rangeVar[3]
+        }
+
+# pressure level bins by satellite ObsType and namedLatBand
+for latBand, latStart, latStop in zip(
+  namedLatBands['values'],
+  namedLatBands['starts'],
+  namedLatBands['stops'],
+  ):
+
+  for name, ID in zip(
+    namedSatWindObsTypes['names'],
+    namedSatWindObsTypes['values']):
+
+    # add basic QC filter and composite binVal's (values)
+    #binVarConfigs[vu.obsVarPrs][name] = {
+    binVarConfigs[vu.obsVarPrs][latBand+'-ObsType'+str(ID)] = {
+      'filters': [
+        {'where': bu.notEqualBound, # eliminates locations where vu.selfObsType != ID
+         'variable': vu.selfObsType,
+         'bounds': ID},
+        {'where': bu.lessBound,
+         'variable': vu.prsMeta,
+         'bounds': binAxes1D[vu.obsVarPrs].starts()},
+        {'where': bu.greatEqualBound,
+         'variable': vu.prsMeta,
+         'bounds': binAxes1D[vu.obsVarPrs].stops()},
+        {'where': bu.lessBound,
+         'variable': vu.latMeta,
+         'bounds': latStart},
+        {'where': bu.greatEqualBound,
+         'variable': vu.latMeta,
+         'bounds': latStop},
+        AnyBadQC,
+      ],
+      'values': binAxes1D[vu.obsVarPrs].values(),
+    }
+
 
 # Add named cloud fraction-band-specific bins for applicable ranged variables
 cldfracBinVars = {
@@ -1232,6 +1391,7 @@ for binVar, rangeVar in landfracBinVars.items():
             #'override_exclusiveDiags': bu.BinMethod.commonDiags,
     }
 
+
 ############
 # -- 2D -- #
 ############
@@ -1247,19 +1407,25 @@ binMethods2D = defaultdict(list)
 binLims2D[(vu.obsVarPrs, bu.noBinMethod)] = {}
 binLims2D[(vu.obsVarPrs, bu.noBinMethod)]['format'] = '{:.1f}'
 binLims2D[(vu.obsVarPrs, bu.noBinMethod)]['transforms'] = [np.log, np.exp]
-binLims2D[(vu.obsVarPrs, bu.noBinMethod)]['values'] = diagnosticPressureValues
+binLims2D[(vu.obsVarPrs, bu.noBinMethod)]['values'] = obsDiagnosticPressures
 
 binLims2D[(vu.obsVarAlt, bu.noBinMethod)] = {}
 binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['start']  = 1000.0
-binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['stop']   = 50000.0
-binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['step']   = 6125.0
+binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['stop']   = 30000.0
+binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['step']   = 2000.0
 binLims2D[(vu.obsVarAlt, bu.noBinMethod)]['format'] = '{:.0f}'
+
+binLims2D[(vu.obsVarImpact, bu.noBinMethod)] = deepcopy(binLims2D[(vu.obsVarAlt, bu.noBinMethod)])
 
 binLims2D[(vu.modVarLev, bu.noBinMethod)] = {}
 binLims2D[(vu.modVarLev, bu.noBinMethod)]['start']  = 1
 binLims2D[(vu.modVarLev, bu.noBinMethod)]['stop']   = 56
 binLims2D[(vu.modVarLev, bu.noBinMethod)]['nsteps'] = 10
 binLims2D[(vu.modVarLev, bu.noBinMethod)]['format'] = '{:.0f}'
+
+binLims2D[(vu.modVarDiagPrs, bu.noBinMethod)] = {}
+binLims2D[(vu.modVarDiagPrs, bu.noBinMethod)]['format'] = '{:.0f}'
+binLims2D[(vu.modVarDiagPrs, bu.noBinMethod)]['values'] = mu.diagnosticPressures
 
 ## horizontal coordinates
 # globally distributed instruments/model
@@ -1341,12 +1507,24 @@ binVars2D[LatAlt2D] = [vu.obsVarLat, vu.obsVarAlt]
 whereVars2D[LatAlt2D] = [vu.latMeta, vu.altMeta]
 binMethods2D[LatAlt2D] += [bu.noBinMethod]
 
+LatImpact2D = 'LatImpact2D'
+binVars2D[LatImpact2D] = [vu.obsVarLat, vu.obsVarImpact]
+whereVars2D[LatImpact2D] = [vu.latMeta, vu.impactMeta]
+binMethods2D[LatImpact2D] += [bu.noBinMethod]
+
 ModelLatLev2D = 'ModelLatLev2D'
 binVars2D[ModelLatLev2D] = [vu.modVarLat, vu.modVarLev]
 whereVars2D[ModelLatLev2D] = [vu.latModel, vu.levModel]
 includeQC2D[ModelLatLev2D] = False
 includeVars2D[ModelLatLev2D] = vu.modVarNamesBase3d
 binMethods2D[ModelLatLev2D] += [bu.noBinMethod]
+
+ModelLatPrs2D = 'ModelLatPrs2D'
+binVars2D[ModelLatPrs2D] = [vu.modVarLat, vu.modVarDiagPrs]
+whereVars2D[ModelLatPrs2D] = [vu.latModel, vu.prsModelDiag]
+includeQC2D[ModelLatPrs2D] = False
+includeVars2D[ModelLatPrs2D] = vu.modDiagnosticVarNames
+binMethods2D[ModelLatPrs2D] += [bu.noBinMethod]
 
 ObsModel2D = 'ObsModel2D'
 binVars2D[ObsModel2D] = [vu.obsVarY, vu.obsVarH]

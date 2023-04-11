@@ -49,7 +49,7 @@ aggregatableFileStats = [
 nonCountAggregatableFileStats = deepcopy(aggregatableFileStats)
 nonCountAggregatableFileStats.remove('Count')
 
-sigmaStatistics = ['MS', 'RMS']
+sigmaStatistics = ['RMS']
 posSemiDefiniteStats = ['Count', 'MS', 'RMS', 'STD']
 
 allFileStats = aggregatableFileStats
@@ -87,6 +87,11 @@ statDtypesCompute = {
 # (2) that can be sampled with bootstrap
 sampleableAggStats = ['Count','Mean','MS','RMS']
 
+bootStrapStats = []
+for s in sampleableAggStats:
+    if s not in ['Count', 'Mean']: bootStrapStats.append(s)
+
+# pandas indices
 fileStatAttributes = ['DiagSpaceGrp','varName','varUnits','diagName',
                       'binMethod','binVar','binVal','binUnits']
 
@@ -377,11 +382,15 @@ def bootStrapVector(X, alpha=0.05, n_samples=8000, weights=None):
 
   if type(n_samples) is list:
     nsSamples = n_samples
+    ciVals = defaultdict(list)
   elif (type(n_samples) is np.array
     or type(n_samples) is np.ndarray):
     nsSamples = list(n_samples)
+    ciVals = defaultdict(list)
   else:
     nsSamples = [n_samples]
+    ciVals = {}
+
   max_samples = np.max(nsSamples)
 
   ## number of "data points" must by > 0
@@ -396,8 +405,6 @@ def bootStrapVector(X, alpha=0.05, n_samples=8000, weights=None):
   XResample = X[iResample]
   Expect = np.nanmean(XResample, axis=0)
 
-  ciVals = defaultdict(list)
-
   for nSamples in nsSamples:
     sampleVals = np.sort(Expect[0:nSamples])
     nonNaNSamples = np.isfinite(sampleVals).sum()
@@ -406,9 +413,14 @@ def bootStrapVector(X, alpha=0.05, n_samples=8000, weights=None):
     iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
     iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
-    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
-    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
+    if len(nsSamples) == 1:
+      ciVals[cimean] = rKindStore(sampleVals[iMid])
+      ciVals[cimin] = rKindStore(sampleVals[iLeft])
+      ciVals[cimax] = rKindStore(sampleVals[iRight])
+    else:
+      ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+      ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+      ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
   return ciVals
 
@@ -429,11 +441,15 @@ def bootStrapVectorRMSFunc(X, Y, statFunc=np.subtract,
 
   if type(n_samples) is list:
     nsSamples = n_samples
+    ciVals = defaultdict(list)
   elif (type(n_samples) is np.array
     or type(n_samples) is np.ndarray):
     nsSamples = list(n_samples)
+    ciVals = defaultdict(list)
   else:
     nsSamples = [n_samples]
+    ciVals = {}
+
   max_samples = np.max(nsSamples)
 
   ## number of "data points" must by > 0
@@ -447,8 +463,6 @@ def bootStrapVectorRMSFunc(X, Y, statFunc=np.subtract,
 
   Expect = statFunc(XResample,YResample)
 
-  ciVals = defaultdict(list)
-
   for nSamples in nsSamples:
     sampleVals = np.sort(Expect[0:nSamples])
     nonNaNSamples = np.isfinite(sampleVals).sum()
@@ -457,9 +471,14 @@ def bootStrapVectorRMSFunc(X, Y, statFunc=np.subtract,
     iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
     iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
-    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
-    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
+    if len(nsSamples) == 1:
+      ciVals[cimean] = rKindStore(sampleVals[iMid])
+      ciVals[cimin] = rKindStore(sampleVals[iLeft])
+      ciVals[cimax] = rKindStore(sampleVals[iRight])
+    else:
+      ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+      ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+      ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
   return ciVals
 
@@ -483,11 +502,15 @@ def bootStrapAggRMSFunc(X, Y, Ns, statFunc=np.subtract,
 
   if type(n_samples) is list:
     nsSamples = n_samples
+    ciVals = defaultdict(list)
   elif (type(n_samples) is np.array
     or type(n_samples) is np.ndarray):
     nsSamples = list(n_samples)
+    ciVals = defaultdict(list)
   else:
     nsSamples = [n_samples]
+    ciVals = {}
+
   max_samples = np.max(nsSamples)
 
   # remove invalid clusters
@@ -515,8 +538,6 @@ def bootStrapAggRMSFunc(X, Y, Ns, statFunc=np.subtract,
 
   Expect = statFunc(XaggResample, YaggResample)
 
-  ciVals = defaultdict(list)
-
   for nSamples in nsSamples:
     sampleVals = np.sort(Expect[0:nSamples])
     nonNaNSamples = np.isfinite(sampleVals).sum()
@@ -525,9 +546,14 @@ def bootStrapAggRMSFunc(X, Y, Ns, statFunc=np.subtract,
     iLeft = int(np.around(0.5 * alpha * rKindCompute(nonNaNSamples)))
     iRight = int(np.around((1 - 0.5 * alpha) * rKindCompute(nonNaNSamples)))
 
-    ciVals[cimean].append(rKindStore(sampleVals[iMid]))
-    ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
-    ciVals[cimax].append(rKindStore(sampleVals[iRight]))
+    if len(nsSamples) == 1:
+      ciVals[cimean] = rKindStore(sampleVals[iMid])
+      ciVals[cimin] = rKindStore(sampleVals[iLeft])
+      ciVals[cimax] = rKindStore(sampleVals[iRight])
+    else:
+      ciVals[cimean].append(rKindStore(sampleVals[iMid]))
+      ciVals[cimin].append(rKindStore(sampleVals[iLeft]))
+      ciVals[cimax].append(rKindStore(sampleVals[iRight]))
 
   return ciVals
 
@@ -610,7 +636,7 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
   for stat in statNames:
     statCIVals[stat] = {}
     for trait in ciTraits:
-      statCIVals[stat][trait] = [np.NaN]
+      statCIVals[stat][trait] = np.NaN
 
   ## number of "data points" must by > 0
   #  could be aggregated over a time series, space, or any other binning characteristic

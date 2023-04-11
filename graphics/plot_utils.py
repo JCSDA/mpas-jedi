@@ -2,120 +2,15 @@
 
 from collections.abc import Iterable
 import datetime as dt
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.dates import ConciseDateFormatter, DateFormatter, AutoDateLocator
 import numpy as np
-import os
 import pandas as pd
 
-
-#============================
-# figure/plotting definitions
-#============================
-
-colorIterator = [
-#  [0.6350, 0.0780, 0.1840],
-  [0., 0., 0.],
-  [0.0000, 0.4470, 0.7410],
-  [0.8500, 0.3250, 0.0980],
-  [0.9290, 0.6940, 0.1250],
-  [0.4940, 0.1840, 0.5560],
-  [0.4660, 0.6740, 0.1880],
-  [0.3010, 0.7450, 0.9330],
-  [0.6350, 0.0780, 0.1840],
-]
-greyIterator = [
-  [0.2, 0.2, 0.2],
-  [0.4, 0.4, 0.4],
-  [0.6, 0.6, 0.6],
-  [0.8, 0.8, 0.8],
-]
-
-subplotIterator = [
-'a', 'b', 'c', 'd', 'e',
-'f', 'g', 'h', 'i', 'j',
-'k', 'l', 'm', 'n', 'o',
-'p', 'q', 'r', 's', 't',
-'y', 'v', 'w', 'x', 'y',
-'z',
-'A', 'B', 'C', 'D', 'E',
-'F', 'G', 'H', 'I', 'J',
-'K', 'L', 'M', 'N', 'O',
-'P', 'Q', 'R', 'S', 'T',
-'Y', 'V', 'W', 'X', 'Y',
-'Z',
-'aa', 'ab', 'ac', 'ad', 'ae',
-'af', 'ag', 'ah', 'ai', 'aj',
-'ak', 'al', 'am', 'an', 'ao',
-'ap', 'aq', 'ar', 'as', 'at',
-'ay', 'av', 'aw', 'ax', 'ay',
-'az',
-'ba', 'bb', 'bc', 'bd', 'be',
-'bf', 'bg', 'bh', 'bi', 'bj',
-'bk', 'bl', 'bm', 'bn', 'bo',
-'bp', 'bq', 'br', 'bs', 'bt',
-'by', 'bv', 'bw', 'bx', 'by',
-'bz',
-'ca', 'cb', 'cc', 'cd', 'ce',
-'cf', 'cg', 'ch', 'ci', 'cj',
-'ck', 'cl', 'cm', 'cn', 'co',
-'cp', 'cq', 'cr', 'cs', 'ct',
-'cy', 'cv', 'cw', 'cx', 'cy',
-'cz',
-'da', 'db', 'dc', 'dd', 'de',
-'df', 'dg', 'dh', 'di', 'dj',
-'dk', 'dl', 'dm', 'dn', 'do',
-'dp', 'dq', 'dr', 'ds', 'dt',
-'dy', 'dv', 'dw', 'dx', 'dy',
-'dz',
-]
-
-styleIterator = ['-', '--', '-.', ':']
-
-# fast varying line colors
-# produces: 'k-', 'b-', 'g-', ..., 'k--', 'b--', 'g--', ..., 'm:'
-defaultPColors = colorIterator*len(styleIterator)
-defaultPLineStyles = []
-for style in styleIterator:
-  defaultPLineStyles += [style]*len(colorIterator)
-
-# fast varying line styles
-# produces: 'k-', 'k--', 'k-.', 'k:', ..., 'm-', 'm--', 'm-.', 'm:'
-#defaultPLineStyles = styleIterator*len(colorIterator)
-#defaultPColors = []
-#for color in colorIterator:
-#  defaultPColors += [color]*len(styleIterator)
-
-def plotColor(nLines = 1, index = 0, nSpaghetti = None):
-  if nSpaghetti is not None and nLines >= nSpaghetti:
-    pColors = ['0.45']*nSpaghetti
-    for i in list(range(0, nLines - nSpaghetti + 1)):
-      pColors += [plotColor(1, i)]
-    return pColors[index]
-  else:
-    return defaultPColors[np.mod(index,len(defaultPColors))]
-
-def plotLineStyle(nLines = 1, index = 0, nSpaghetti = None):
-  if nSpaghetti is not None and nLines >= nSpaghetti:
-    pLineStyles = ['--']*nSpaghetti
-    for i in list(range(0, nLines - nSpaghetti + 1)):
-      pLineStyles += [plotLineStyle(1, i)]
-    return pLineStyles[index]
-  else:
-    return defaultPLineStyles[np.mod(index,len(defaultPLineStyles))]
-
-def subplotLabel(index = 0):
-  if index < 0:
-    return ''
-  else:
-    return '('+subplotIterator[np.mod(index,len(subplotIterator))]+')'
-
-plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*',
-             'k--+','b--+','g--+','r--+','c--+','m--+']
-plotMarkers = ['*','*','*','*','*','*',
-               '+','+','+','+','+','+']
-
+#===============
+# plot utilities
+#===============
 
 ###############################################################################
 def setup_fig(nx=1, ny=1, inch_width=1.5, aspect=1.0, ybuffer=True):
@@ -140,7 +35,7 @@ def setup_fig(nx=1, ny=1, inch_width=1.5, aspect=1.0, ybuffer=True):
 
 ###############################################################################
 def finalize_fig(fig, filename='temporary_figure', filetype='png',
-                 ybuffer=True, xbuffer=0.35):
+                 ybuffer=True, xbuffer=0.35, hspace_=0.70):
 #INPUTS
 # fig - plt.figure() type
 # filename - name of figure file without extension
@@ -151,7 +46,7 @@ def finalize_fig(fig, filename='temporary_figure', filetype='png',
     wspace = xbuffer
 
     hspace = 0.40
-    if ybuffer: hspace = 0.70
+    if ybuffer: hspace = hspace_
 
     fig.subplots_adjust(wspace=wspace,hspace=hspace)
 
@@ -174,7 +69,7 @@ def TDeltas2Seconds(x_):
 
 
 ###############################################################################
-def timeDeltaTicks(x, pos):
+def timeDeltaTickLabels(x, pos):
     d = dt.timedelta(seconds=x)
     i = '{:d}'
     i02 = '{:02d}'
@@ -194,13 +89,14 @@ def timeDeltaTicks(x, pos):
     fmts['HH'] = i02
     prefs['HH'] = ''
     suffs['HH'] = ''
-    #depends['HH'] = ['HH','MM','SS']
+    depends['HH'] = ['HH','MM','SS']
 
     vals['MM'], vals['SS'] = divmod(hrem, 60)
     fmts['MM'] = i02
     prefs['MM'] = ':'
     suffs['MM'] = ''
     depends['MM'] = ['MM','SS']
+
     fmts['SS'] = i02
     prefs['SS'] = ':'
     suffs['SS'] = ''
@@ -221,35 +117,41 @@ def timeDeltaTicks(x, pos):
         if include:
             out += prefs[key]+fmts[key].format(vals[key])+suffs[key]
 
+    # default to 0 days when empty
+    if out == '': out = '0d'
+
     return out
 
 #DTimeLocator = AutoDateLocator(interval_multiples=True)
 DTimeLocator = AutoDateLocator()
 DTimeFormatter = ConciseDateFormatter(DTimeLocator) #DateFormatter('%m-%d_%HZ')
-TDeltaFormatter = matplotlib.ticker.FuncFormatter(timeDeltaTicks)
+TDeltaFormatter = mpl.ticker.FuncFormatter(timeDeltaTickLabels)
 
 
 ###############################################################################
-def format_x_for_dates(ax,x):
+def timeDeltaTicks(x):
+    x = TDeltas2Seconds(x)
+    tstep = 3600*3 #3 hours
+    ntick = 500
+    while ntick > 8:
+        ticks = np.arange(x[0],x[-1]+tstep,tstep)
+        ntick = len(ticks)
+        tstep = tstep * 2
+    return ticks
+
+
+###############################################################################
+def format_x_for_dates(ax, x):
     if isinstance(x[0],dt.datetime):
         ax.xaxis.set_major_locator(DTimeLocator)
         ax.xaxis.set_major_formatter(DTimeFormatter)
-#        ax.xaxis.set_tick_params(rotation=30)
-#        ax.set_xlabel('Date',fontsize=4)
         ax.xaxis.get_offset_text().set_fontsize(3)
     if isinstance(x[0],dt.timedelta):
-        x = TDeltas2Seconds(x)
-        ax.set_xlim(min(x),max(x))
-        tstep = 3600*3 #3 hours
-        ntick = 500
-        while ntick > 8:
-            ticks = np.arange(x[0],x[-1]+tstep,tstep)
-            ntick = len(ticks)
-            tstep = tstep * 2
+        ticks = timeDeltaTicks(x)
+        ax.set_xlim(min(ticks), max(ticks))
         ax.set_xticks(ticks)
         ax.xaxis.set_major_formatter(TDeltaFormatter)
         ax.xaxis.set_tick_params(rotation=30)
-        ax.set_xlabel('Lead Time',fontsize=4)
 
 
 ###############################################################################

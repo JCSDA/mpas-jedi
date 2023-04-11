@@ -35,104 +35,127 @@ class DiagnoseModelStatistics():
     initDate = datetime.strptime(date,'%Y%m%d%H')
     fileDate= initDate.strftime('%Y-%m-%d_%H.%M.%S')
 
-    # mean/deterministic states
-    #TODO: allow for entire ReferenceStateFile and MeanStateFile as args instead of date
-    self.ReferenceStateFile = str(self.args.referenceState)+'.'+fileDate+'.nc'
-    self.MeanStateFile = str(self.args.meanState)+'.'+fileDate+'.nc'
+    self.files = {'state': {}, 'diagnostics':{}}
 
-    self.logger.info('ReferenceState: '+self.ReferenceStateFile)
-    self.logger.info('MeanState: '+self.MeanStateFile)
+    # mean/deterministic files['state']
+    #TODO: allow for entire referenceState and meanState as args instead of date
+    self.files['state']['reference'] = str(self.args.referenceState)+'.'+fileDate+'.nc'
+    self.files['state']['mean'] = str(self.args.meanState)+'.'+fileDate+'.nc'
 
-    # ensemble member states
+    self.logger.info('ReferenceState: '+self.files['state']['reference'])
+    self.logger.info('MeanState: '+self.files['state']['mean'])
+
+    # mean/deterministic files['diagnostics'] (optional)
+    file = str(self.args.referenceDiagnostics)+'.'+fileDate+'.nc'
+    if os.path.exists(file):
+      self.files['diagnostics']['reference'] = file
+    else:
+      self.files['diagnostics']['reference'] = None
+
+    file = str(self.args.meanDiagnostics)+'.'+fileDate+'.nc'
+    if os.path.exists(file):
+      self.files['diagnostics']['mean'] = file
+    else:
+      self.files['diagnostics']['mean'] = None
+
+    self.logger.info('ReferenceDiagnostics: '+str(self.files['diagnostics']['reference']))
+    self.logger.info('MeanDiagnostics: '+str(self.files['diagnostics']['mean']))
+
+
+    # ensemble member files['state']
     # background
-    self.bgEnsembleFiles = []
+    self.files['state']['bgEns'] = []
     ensemblePath = (str(self.args.bgEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
     for member in list(range(1, self.args.nMembers+1)):
       file = ensemblePath.format(member)
       if os.path.exists(file):
         self.logger.info('adding background member file: '+file)
-        self.bgEnsembleFiles.append(file)
+        self.files['state']['bgEns'].append(file)
 
     # analysis
-    self.anEnsembleFiles = []
+    self.files['state']['anEns'] = []
     ensemblePath = (str(self.args.anEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
     for member in list(range(1, self.args.nMembers+1)):
       file = ensemblePath.format(member)
       if os.path.exists(file):
         self.logger.info('adding analysis member file: '+file)
-        self.anEnsembleFiles.append(file)
+        self.files['state']['anEns'].append(file)
 
     # inflated
-    self.inflatedEnsembleFiles = []
+    self.files['state']['infEns'] = []
     ensemblePath = (str(self.args.inflatedEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
     for member in list(range(1, self.args.nMembers+1)):
       file = ensemblePath.format(member)
       if os.path.exists(file):
         self.logger.info('adding inflated member file: '+file)
-        self.inflatedEnsembleFiles.append(file)
+        self.files['state']['infEns'].append(file)
 
     # account for when there is no inflation
-    if len(self.anEnsembleFiles) == 0 and self.args.nMembers > 1:
+    if len(self.files['state']['anEns']) == 0 and self.args.nMembers > 1:
       self.logger.info('no valid analysis member files; assuming inflated members are identical to analysis members')
-      self.anEnsembleFiles = deepcopy(self.inflatedEnsembleFiles)
-      self.inflatedEnsembleFiles = []
+      self.files['state']['anEns'] = deepcopy(self.files['state']['infEns'])
+      self.files['state']['infEns'] = []
 
     # forecast
-#    self.fcEnsembleFiles = []
+#    self.files['state']['fcEns'] = []
 #    ensemblePath = (str(self.args.fcEnsemblePath)+'.'+fileDate+'.nc').replace('YYYYMMDDHH', date)
 #    for member in list(range(1, self.args.nMembers+1)):
 #      file = ensemblePath.format(member)
 #      self.logger.info('adding member file: '+file)
-#      self.fcEnsembleFiles.append(file)
+#      self.files['state']['fcEns'].append(file)
 
   def diagnose(self):
 
     self.logger.info('Populating binning metadata')
 
     # initialize netcdf4 Dataset's
-    ReferenceState = mu.getNCData(self.ReferenceStateFile)
-    MeanState = mu.getNCData(self.MeanStateFile)
-    bgEnsemble = []
-    for file in self.bgEnsembleFiles:
-      bgEnsemble.append(mu.getNCData(file))
-    anEnsemble = []
-    for file in self.anEnsembleFiles:
-      anEnsemble.append(mu.getNCData(file))
-    inflatedEnsemble = []
-    for file in self.inflatedEnsembleFiles:
-      inflatedEnsemble.append(mu.getNCData(file))
+    dataSets = {}
+    for ds in ['reference', 'mean']:
+      dataSets[ds] = {}
+      dataSets[ds]['state'] = mu.getNCData(self.files['state'][ds])
+      if self.files['diagnostics'][ds] is None:
+        dataSets[ds]['diagnostics'] = None
+      else:
+        dataSets[ds]['diagnostics'] = mu.getNCData(self.files['diagnostics'][ds])
 
-#    fcEnsemble = []
-#    for file in self.fcEnsembleFiles:
-#      fcEnsemble.append(mu.getNCData(file))
+    for ds in ['bgEns', 'anEns', 'infEns']: # , 'fcEns']
+      dataSets[ds] = []
+      #for stateFile, diagnosticFile in zip(self.files['state'][ds], self.files['diagnostics'][ds]):
+      for stateFile in self.files['state'][ds]:
+        dataSets[ds].append({
+          'state': mu.getNCData(stateFile),
+          'diagnostics': None,
+          #'diagnostics': mu.getNCData(diagnosticFile),
+        })
 
     # read "metadata" fields that are used for binning and
     #  create reshaped copies to fit 1D and 2D arrays
-    pressure = mu.varRead(vu.modVarPrs, ReferenceState)
+    pressure = mu.varRead(vu.modVarPrs, dataSets['reference'])
     nCells = pressure.shape[0]
-    nVertLevelsP1 = pressure.shape[1]+1
-    nVertLevels = nVertLevelsP1-1
+    nVertLevels = pressure.shape[1]
+    nVertLevelsP1 = nVertLevels+1
+    nDiagLevs = len(mu.diagnosticPressures)
 
     dbVals = {}
-    for nn in [1, nVertLevels, nVertLevelsP1]:
+    allLevelSizes = [1, nVertLevels, nVertLevelsP1, nDiagLevs]
+    for nn in allLevelSizes:
       dbVals[(nn,)] = {}
 
-    # modVarLev (unique for variables with different numbers of levels)
-    for nn in [1, nVertLevels, nVertLevelsP1]:
+    # modVarLev
+    # unique for variables with different numbers of levels, not defined for nDiagLevs
+    for nn in allLevelSizes:
+    #for nn in [1, nVertLevels, nVertLevelsP1]:
       dbVals[(nn,)][vu.modVarLev] = np.arange(1, nn+1)
 
     # modVarLat, modVarLon (same for all level-distributions)
-    grid = mu.readGrid(gridFile=self.ReferenceStateFile)
-    for nn in [1, nVertLevels, nVertLevelsP1]:
+    grid = mu.readGrid(gridFile=self.files['state']['reference'])
+    for nn in allLevelSizes:
       dbVals[(nn,)][vu.modVarLat] = grid['latitude']
       dbVals[(nn,)][vu.modVarLon] = grid['longitude']
 
     # add pressure as a binning variable
     # TODO: enable binning by altitude
-    # TODO: enable binning by pressure
-    # TODO: enable pressure on W levels, if desired
-    #dbVals[(nVertLevels,)][vu.modVarPrs] = np.array(pressure)
-    #dbVals[(1,)][vu.modVarPrs] = np.array(pressure[:,0]).flatten()
+    dbVals[(nDiagLevs,)][vu.modVarDiagPrs] = mu.diagnosticPressures
 
 
     ###############################################
@@ -186,33 +209,39 @@ class DiagnoseModelStatistics():
     ## Collect statistics for all modelVars
     ######################################
 
+    self.logger.info('Calculating diagnostic statistics')
+    self.logger.info("with "+str(self.nprocs)+" out of "+str(mp.cpu_count())+" processors")
+
+    # Fill in the global statsDict for all variables and diagnostics
+    statsDict = {}
+    for aa in su.fileStatAttributes:
+      statsDict[aa] = []
+    for ss in su.allFileStats:
+      statsDict[ss] = []
+
     if self.nprocs > 1:
       workers = mp.Pool(processes = self.nprocs)
     else:
       workers = None
 
-    self.logger.info('Calculating diagnostic statistics')
-    self.logger.info("with "+str(self.nprocs)+" out of "+str(mp.cpu_count())+" processors")
-
-    fieldsDB = {
-      'ReferenceState': ReferenceState,
-      'MeanState': MeanState,
-      'bgEnsemble': bgEnsemble,
-      'anEnsemble': anEnsemble,
-      'infEnsemble': inflatedEnsemble,
-#      'fcEnsemble': fcEnsemble,
-    }
-
     subStats = []
+
     for varName in modelVars: 
 
-      for diagName in mu.variableSpecificDiagnostics(varName, len(bgEnsemble)):
+      self.logger.info('varName: '+varName)
+
+      # TODO: first, get varName arrays from all dataSets that are needed by all diagnostics
+      # then expensive quanities can be reused as needed
+
+      for diagName in mu.variableSpecificDiagnostics(varName, len(dataSets['bgEns'])):
         # TODO(JJG): extend to ACC diagnostic, e.g., for 500mb geopotential height
 
         modelVarName = mu.aggModelVariable(varName)
 
         diagFunction = mu.diagnosticFunctions[diagName]
-        diagnostic = diagFunction.evaluate(modelVarName, fieldsDB)
+        diagnostic = diagFunction.evaluate(modelVarName, dataSets, self.nprocs)
+
+        self.logger.info('diagnostic calculated: '+diagName)
 
         dShape = diagnostic.shape
         nDims = len(dShape)
@@ -223,13 +252,13 @@ class DiagnoseModelStatistics():
           nn = dShape[1]
         dbValsNN = dbVals[(nn,)]
 
-        minLevel = mu.aggMinLevel(varName)
-        maxLevel = mu.aggMaxLevel(varName, nn)
-
         # TODO: move this binning to a generic binMethod instead of creating
         #       unique level-binned variables for, e.g., qv
 
-        if len(dShape)==2:
+        if len(dShape)==2 and varName not in vu.modDiagnosticVarNames:
+          minLevel = mu.aggMinLevel(varName)
+          maxLevel = mu.aggMaxLevel(varName, nn)
+
           # mask levels < minLevel
           mask = bu.lessBound(dbValsNN[vu.modVarLev], minLevel)
           diagnostic[:,mask] = np.NaN
@@ -238,8 +267,8 @@ class DiagnoseModelStatistics():
           mask = bu.greatBound(dbValsNN[vu.modVarLev], maxLevel)
           diagnostic[:,mask] = np.NaN
 
-        if diagnostic.size-np.isnan(diagnostic).sum() == 0:
-          self.logger.warning('All missing values for diagnostic: '+diagName)
+        if np.isfinite(diagnostic).sum() == 0:
+          self.logger.warning('All missing values for (varName, diagnostic): '+varName+', '+diagName)
           continue
 
         # parallelize across binMethods
@@ -268,13 +297,6 @@ class DiagnoseModelStatistics():
               )
             ))
 
-    # Fill in the global statsDict for all variables and diagnostics
-    statsDict = {}
-    for aa in su.fileStatAttributes:
-      statsDict[aa] = []
-    for ss in su.allFileStats:
-      statsDict[ss] = []
-
     if workers is None:
       for stats in subStats:
         goodValues = True
@@ -294,10 +316,16 @@ class DiagnoseModelStatistics():
           for name, values in stats.get().items():
             statsDict[name] += values
 
-    ReferenceState.close()
-    MeanState.close()
-    for f in bgEnsemble+anEnsemble+inflatedEnsemble:
-      f.close()
+
+    for ds in (
+      [dataSets['reference'], dataSets['mean']] +
+      dataSets['bgEns'] +
+      dataSets['anEns'] +
+      dataSets['infEns']
+    ):
+      for typ in ['state', 'diagnostics']:
+        if ds[typ] is not None:
+          ds[typ].close()
 
     self.logger.info('Writing statistics file')
 
@@ -315,9 +343,10 @@ class DiagnoseModelStatistics():
     diagValues,
   ):
 
+    varShort, varUnits = vu.varAttributes(varName)
+
     #self.logger.info('  starting '+varShort+', '+diagName+', '+binVarKey+', '+binMethodName)
 
-    varShort, varUnits = vu.varAttributes(varName)
     outerIter = None
 
     statsDict = {}

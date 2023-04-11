@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
-from jediApplicationArgs import ombgGroup, omanGroup
+from jediApplicationArgs import ombgGroup, omanGroup, nOuterIter
 import numpy as np
 import os
 import re
@@ -23,7 +23,7 @@ R = 'R'
 HBHTplusR = '[HBH^T+R]'
 
 DiagnosticVars = {}
-DiagnosticVars[EddT] = 'InnovSpread'
+DiagnosticVars[EddT] = 'Innov'
 DiagnosticVars[HBHT] = 'EnsembleSpread'
 DiagnosticVars[R] = 'ObsError'
 DiagnosticVars[HBHTplusR] = 'TotalSpread'
@@ -50,6 +50,7 @@ obsVarY       = 'y'
 obsVarH       = 'h'
 obsVarDT      = 'datetime'
 obsVarGlint   = 'glint'
+obsVarImpact  = 'impactHeightRO'
 obsVarLT      = 'LocalTime'
 obsVarDep     = 'y-h'
 obsVarClearSkyDep = 'y-hclr'
@@ -82,6 +83,7 @@ varDictObs = {
     obsVarACI: ['K', 'ACI'],
     obsVarCldFracY: [miss_s, 'CFy'],
     obsVarCldFracX: [miss_s, 'CFx'],
+    obsVarImpact: ['m', 'impact_height'],
     obsVarLandFrac: [miss_s, 'landfrac'],
     obsVarLat: [degree, 'lat'],
     obsVarLon: [degree, 'lon'],
@@ -112,10 +114,12 @@ errorGroup  = 'EffectiveError'
 qcGroup     = 'EffectiveQC'
 bcGroup     = 'ObsBias'
 bgIter = '0'
+anIter = str(nOuterIter)
 
 # Fixed IODA ObsGroups for observation-type variables
 obsGroup    = 'ObsValue'
 metaGroup   = 'MetaData'
+typeGroup   = 'ObsType'
 
 # Dynamic MPAS-Workflow ObsGroups for observation-type variables
 ommGroup    = 'ommIter'
@@ -126,15 +130,20 @@ geoGroup    = 'GeoVaLs'
 
 # Generic variable names used as baseVar
 selfObsValue = 'selfObsValue'
+selfObsType = 'selfObsType'
 selfOMMValue = 'selfOMMValue'
+selfOMBValue = 'selfOMBValue'
+selfOMAValue = 'selfOMAValue'
 selfHofXValue = 'selfHofXValue'
 selfErrorValue = 'selfErrorValue'
 selfQCValue = 'selfQCValue'
 selfBCValue = 'selfBCValue'
 bgHofXValue = 'bgHofXValue'
+anHofXValue = 'anHofXValue'
 altMeta = 'altMeta'
 cldfracMeta = 'cldfracMeta'
 datetimeMeta = 'datetimeMeta'
+impactMeta = 'impactMeta'
 latMeta = 'latMeta'
 lonMeta = 'lonMeta'
 prsMeta = 'prsMeta'
@@ -150,8 +159,16 @@ cldfracGeo = 'cldfracGeo'
 ObsGroups = {}
 ObsVars = {}
 ObsGroups[selfObsValue] = obsGroup
+ObsGroups[selfObsType] = typeGroup
+
 ObsGroups[selfOMMValue] = ommGroup
+ObsGroups[selfOMBValue] = ombgGroup
+ObsGroups[selfOMAValue] = omanGroup
+
 ObsGroups[selfHofXValue] = hofxGroup
+ObsGroups[bgHofXValue] = hofxGroup+bgIter
+ObsGroups[anHofXValue] = hofxGroup+anIter
+
 ObsGroups[selfErrorValue] = errorGroup
 ObsGroups[selfQCValue] = qcGroup
 ObsGroups[selfBCValue] = bcGroup
@@ -159,13 +176,11 @@ ObsGroups[selfBCValue] = bcGroup
 for key in ObsGroups.keys():
   ObsVars[key] = vNameStr
 
-ObsGroups[bgHofXValue] = hofxGroup+bgIter
-ObsVars[bgHofXValue] = vNameStr
-
 # Fixed IODA variable names (MetaData)
 ObsVars[altMeta]      = obsVarAlt
 ObsVars[cldfracMeta]  = obsVarCldFracY
 ObsVars[datetimeMeta] = obsVarDT
+ObsVars[impactMeta]   = obsVarImpact
 ObsVars[latMeta]      = obsVarLat
 ObsVars[lonMeta]      = obsVarLon
 ObsVars[prsMeta]      = obsVarPrs
@@ -246,14 +261,16 @@ def obsVarAttributes(var):
 
 ## Variable names for MPAS-Model
 #modVarAlt = 'zgrid' # --> needs to be interpolated to nVertLevels instead of nVertLevelsP1
-modVarPrs = 'P3D'
+modVarLev = 'modelLevel'
 modVarLat = 'latCell'
 modVarLon = 'lonCell'
-modVarLev = 'modelLevel'
+modVarPrs = 'P3D'
+modVarDiagPrs = 'diagnostic_pressure'
 
 levModel = 'levModel'
 latModel = 'latModel'
 lonModel = 'lonModel'
+prsModelDiag = 'prsModelDiag'
 
 AllVars = deepcopy(ObsVars)
 AllGroups = deepcopy(ObsGroups)
@@ -261,10 +278,14 @@ AllGroups = deepcopy(ObsGroups)
 AllVars[levModel] = modVarLev
 AllVars[latModel] = modVarLat
 AllVars[lonModel] = modVarLon
+AllVars[prsModelDiag] = modVarDiagPrs
 
 AllGroups[levModel] = None
 AllGroups[latModel] = None
 AllGroups[lonModel] = None
+AllGroups[prsModelDiag] = None
+
+modDiagnosticIndependentVars = [prsModelDiag]
 
 kgm3 = 'kg/m\N{SUPERSCRIPT THREE}'
 
@@ -294,6 +315,15 @@ varDictModel = {
   'uReconstructMeridional': ['m/s', 'V'],
   'v10': ['m/s', 'V10m'],
   'w': ['m/s', 'W'],
+  # diagnostic variables at fixed pressure levels
+  modVarDiagPrs: ['Pa', 'DiagnosticP'],
+  'diagnostic_relhum': ['%', 'RH'],
+  'diagnostic_dewpoint': ['K', 'Tdp'],
+  'diagnostic_temperature': ['K', 'T'],
+  'diagnostic_height': ['m', 'height'],
+  'diagnostic_uzonal': ['m/s', 'U'],
+  'diagnostic_umeridional': ['m/s', 'V'],
+  'diagnostic_w': ['m/s', 'W'],
 }
 #Note, qv unit is kg/kg in original mpas restart file. The unit is converted to g/kg when read qv.
 
@@ -316,11 +346,21 @@ modVarNamesBase3d = [
   modVarPrs,
   'qv',
   'rho',
-  'theta',
   'temperature',
+  'theta',
   'uReconstructMeridional',
   'uReconstructZonal',
   'w',
+]
+
+modDiagnosticVarNames = [
+  'diagnostic_relhum',
+  'diagnostic_dewpoint',
+  'diagnostic_temperature',
+  'diagnostic_height',
+  'diagnostic_uzonal',
+  'diagnostic_umeridional',
+  'diagnostic_w',
 ]
 
 modVarNames3d = modVarNamesBase3d+[
@@ -332,6 +372,8 @@ modVarNames3d = modVarNamesBase3d+[
   'qv31to40',
   'qv41to55',
 ]
+
+modVarNames3d += modDiagnosticVarNames
 
 def modelVarAttributes(var):
     # return short name and units

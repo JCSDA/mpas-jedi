@@ -5,26 +5,37 @@ from cartopy.mpl.ticker import (LongitudeFormatter, LatitudeFormatter,
                                 LatitudeLocator, LongitudeLocator)
 from collections.abc import Iterable
 from copy import deepcopy, copy
+import datetime as dt
 import logging
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-import matplotlib
-matplotlib.use('AGG')
+import matplotlib as mpl
+mpl.use('AGG')
 import matplotlib.axes as maxes
 import matplotlib.cm as cm
-import matplotlib.colors as colors
-from matplotlib.colors import BoundaryNorm
+import matplotlib.colors as mcolors
+import matplotlib.collections as mcollections
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+import plot_styles as pstyle
 import plot_utils as pu
 import var_utils as vu
 import os
 
+
+mpl.rcParams['mathtext.fontset'] = 'cm'
+mpl.rcParams['mathtext.rm'] = 'serif'
+mpl.rcParams['hatch.linewidth'] = 0.02
+
 _logger = logging.getLogger(__name__)
 
+## color maps
+
+# IR brightness temperature color map
 cmGray     = plt.cm.get_cmap("gist_gray")
 cmRainbow  = plt.cm.get_cmap("gist_rainbow")
 cmSpectral = plt.cm.get_cmap("nipy_spectral")
@@ -46,7 +57,7 @@ WhiteBlack2 = cmGray(np.linspace(0.9,0.0,31)) # white to black (0 to 30 C)
 #btcolors = np.concatenate((WhiteBlack1, BlackRed, ROYG, GreenBlueCyan, WhiteBlack2))
 btcolors = np.concatenate((WhiteBlack1, BlackRed, ROYG, GreenBlueCyan, MVW, WhiteBlack2))
 
-btCMap = colors.ListedColormap(btcolors)
+btCMap = mcolors.ListedColormap(btcolors)
 
 #This script includes basic plotting functions.
 
@@ -291,9 +302,9 @@ def scatterMapFields(
     elif cbarType == 'Log':
       if vmin <= logVLim: vmin = logVLim
       f[f < vmin] = vmin
-      norm=colors.LogNorm(vmin=vmin, vmax=vmax)
+      norm=mcolors.LogNorm(vmin=vmin, vmax=vmax)
     elif cbarType == 'SymLog':
-      norm=colors.SymLogNorm(vmin=vmin, vmax=vmax,
+      norm=mcolors.SymLogNorm(vmin=vmin, vmax=vmax,
                              linthresh=1.e-4*vmax, linscale=1.0, base=10)
 
     sc = ax.scatter(lons, lats, c=f,
@@ -354,7 +365,7 @@ def plotTimeserial2D(Stats,xlabeltime,ylevels,VarName):
         else:
             xi=4
         #print('xi= '+str(xi)+' valuemin= ',str(valuemin)+' valuemax= ',str(valuemax))
-        norm = matplotlib.colors.DivergingNorm(vmin=valuemin, vcenter=0, vmax=valuemax)
+        norm = mcolors.DivergingNorm(vmin=valuemin, vcenter=0, vmax=valuemax)
         plt.contourf(xarray,ylevels,Stats,40,vmin=valuemin, vmax=valuemax,norm=norm,cmap=cmap)
     xarray = range(len(xlabeltime))
     major_ticks = np.arange(0, 56, 5)
@@ -519,15 +530,18 @@ class OneCenteredAxisTicks():
 maxLegendEntries = 12
 
 # common line width for "ax.plot"
-commonLineWidth = 0.92
+commonLineWidth = 0.80
 significanceLineWidth = 0.3
 errorbarLineWidth = 0.38
+gridLineWidth = 0.05
+coastLineWidth = 0.15
 
-titleFontSize = 5.0
-cbarLabelFontSize = 3.8
-axisLabelFontSize = 4.0
-legendLabelFontSize1 = 2.8
-legendLabelFontSize2 = 2
+titleFontSize = 5.5
+cbarLabelFontSize = 4.6
+axisLabelFontSize = 4.8
+legendLabelFontSize1 = 3.8
+legendLabelFontSize2 = 3.2
+categoryLabelFontSize = 3.8
 
 ###############################################################################
 lenWarnSer = 0
@@ -535,7 +549,7 @@ nanWarnSer = 0
 def plotSeries(fig,
                linesVals, xVals,
                linesLabel,
-               title="", indepLabel="x", dataLabel="y",
+               title="", indepLabel=None, dataLabel=None,
                indepConfig=defaultIndepConfig,
                sciTicks=False, logScale= False, centralValue=None,
                ny=1, nx=1, nplots=1, iplot=0,
@@ -552,19 +566,20 @@ def plotSeries(fig,
 # linesLabel       - legend label for linesVals (list)
 
 # title            - subplot title, optional
+# indepLabel       - label for xVals, optional
 # dataLabel        - label for linesVals, optional
+
 # sciTicks         - whether linesVals needs scientific formatting for ticks, optional
 # logScale         - y-axis is scaled logarithmically, optional, overrides sciTicks
 # centralValue     - central value of linesVals, optional
-# indepLabel       - label for xVals, optional
 # indepConfig      - x axis formatting config, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
 # nplots           - total number of subplots, optional
 # iplot            - this subplot index (starting at 0), optional
 
-# linesValsMinCI   - minimum error bound for linesVals (list of arrays), optional
-# linesValsMaxCI   - maximum error bound for linesVals (list of arrays), optional
+# linesValsMinCI   - minimum confidence interval bound for linesVals (list of arrays), optional
+# linesValsMaxCI   - maximum confidence interval bound for linesVals (list of arrays), optional
 # Note: linesValsMinCI and linesValsMaxCI must be specified together
 
 # lineAttribOffset - offset for selecting line attributes, optional
@@ -574,9 +589,11 @@ def plotSeries(fig,
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -586,24 +603,24 @@ def plotSeries(fig,
             global nanWarnSer
             if nanWarnSer==0:
                 _logger.warning("skipping all-NaN data")
-                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             nanWarnSer=nanWarnSer+1
             continue
         if len(lineVals)!=len(xVals):
             global lenWarnSer
             if lenWarnSer==0:
                 _logger.warning("skipping data where len(x)!=len(y)")
-                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+                _logger.warning(title+"; "+dataLabel+"; "+linesLabel[iline])
             lenWarnSer=lenWarnSer+1
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
+        pColor = pstyle.color(iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals,
                 color=pColor,
                 label=linesLabel[iline],
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                ls=pstyle.line(iline+lineAttribOffset),
                 linewidth=commonLineWidth)
         nLines += 1
         plotVals = np.append(plotVals, lineVals)
@@ -631,16 +648,16 @@ def plotSeries(fig,
             else:
               # test statistical significance versus centralValue
               if centralValue is None:
-                  significant = np.empty(len(lineVals))
-                  significant[:] = np.NaN
+                  isSignificant = np.empty(len(lineVals))
+                  isSignificant[:] = np.NaN
                   centralValue_ = 0.0
               else:
-                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                  isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
                                             np.subtract(linesValsMaxCI[iline], centralValue))
                   centralValue_ = centralValue
-              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+              isSignificant = np.array([x if np.isfinite(x) else -1.0 for x in isSignificant])
 
-              negsiginds = np.array([i for i,x in enumerate(significant)
+              negsiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
               if len(negsiginds) > 0:
                   ax.plot(xArr[negsiginds], lineArr[negsiginds],
@@ -649,7 +666,7 @@ def plotSeries(fig,
                           marker='v',
                           markersize=0.2)
 
-              possiginds = np.array([i for i,x in enumerate(significant)
+              possiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
               if len(possiginds) > 0:
                   ax.plot(xArr[possiginds], lineArr[possiginds],
@@ -674,7 +691,7 @@ def plotSeries(fig,
                               edgecolor=pColor,
                               linewidth=0.0, alpha = 0.1)
               ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
-                              where=significant > 0.0,
+                              where=isSignificant > 0.0,
                               color=pColor,
                               edgecolor=pColor,
                               linewidth=0.2, alpha = 0.3)
@@ -756,6 +773,9 @@ def plotSeries(fig,
     if indepConfig['transform'] is None:
         ax.set_xscale('linear')
         ax.xaxis.set_major_locator(mticker.AutoLocator())
+    elif indepConfig['transform'] == 'logit':
+        ax.set_xscale('logit', nonpositive='clip')
+        ax.xaxis.set_major_locator(mticker.AutoLocator())
     else:
         transform = axisTransform(indepConfig['transform'])
         locator = transform.locator()
@@ -772,10 +792,10 @@ def plotSeries(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
+        if indepLabel is not None: ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if dataLabel is not None: ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
@@ -792,10 +812,10 @@ def plotSeries(fig,
     if indepConfig['invert']:
         ax.invert_xaxis()
 
-    ax.grid()
+    ax.grid(linewidth=gridLineWidth)
 
     # label physical distance to the left and up:
-    #label = pu.subplotLabel(iplot)
+    #label = pstyle.subplotLabel(iplot)
     #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
     #        fontsize='medium', va='bottom', fontfamily='serif')
@@ -808,7 +828,7 @@ nanWarnProf = 0
 def plotProfile(fig,
                 linesVals, yVals,
                 linesLabel,
-                title="", indepLabel="y", dataLabel="x",
+                title="", indepLabel=None, dataLabel=None,
                 indepConfig=defaultIndepConfig,
                 sciTicks=False, logScale=False, centralValue=None,
                 ny=1, nx=1, nplots=1, iplot=0,
@@ -826,20 +846,20 @@ def plotProfile(fig,
 # linesLabel       - legend label for linesVals (list)
 
 # title            - subplot title, optional
+# indepLabel       - label for yVals, optional
 # dataLabel        - label for linesVals, optional
 # indepConfig      - y axis formatting config, optional
 
 # sciTicks         - whether linesVals needs scientific formatting for ticks, optional
 # logScale         - x-axis is scaled logarithmically, optional, overrides sciTicks
 # centralValue     - central value of linesVals, optional
-# indepLabel       - label for yVals, optional
 
 # ny, nx           - number of subplots in x/y direction, optional
 # nplots           - total number of subplots, optional
 # iplot            - this subplot index (starting at 0), optional
 
-# linesValsMinCI   - minimum error bound for linesVals (list of arrays), optional
-# linesValsMaxCI   - maximum error bound for linesVals (list of arrays), optional
+# linesValsMinCI   - minimum confidence interval bound for linesVals (list of arrays), optional
+# linesValsMaxCI   - maximum confidence interval bound for linesVals (list of arrays), optional
 # Note: linesValsMinCI and linesValsMaxCI must be specified together
 
 # lineAttribOffset - offset for selecting line attributes, optional
@@ -849,9 +869,11 @@ def plotProfile(fig,
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -873,12 +895,12 @@ def plotProfile(fig,
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
+        pColor = pstyle.color(iline+lineAttribOffset)
 
         ax.plot(lineVals, yVals,
                 color=pColor,
                 label=linesLabel[iline],
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                ls=pstyle.line(iline+lineAttribOffset),
                 linewidth=commonLineWidth,
                 marker=marker)
         nLines += 1
@@ -907,16 +929,16 @@ def plotProfile(fig,
             else:
               # test statistical significance versus centralValue
               if centralValue is None:
-                  significant = np.empty(len(lineVals))
-                  significant[:] = np.NaN
+                  isSignificant = np.empty(len(lineVals))
+                  isSignificant[:] = np.NaN
                   centralValue_ = 0.0
               else:
-                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                  isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
                                             np.subtract(linesValsMaxCI[iline], centralValue))
                   centralValue_ = centralValue
-              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+              isSignificant = np.array([x if np.isfinite(x) else -1.0 for x in isSignificant])
 
-              negsiginds = np.array([i for i,x in enumerate(significant)
+              negsiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
               if len(negsiginds) > 0:
                   ax.plot(lineArr[negsiginds], yArr[negsiginds],
@@ -925,7 +947,7 @@ def plotProfile(fig,
                           marker='<',
                           markersize=0.2)
 
-              possiginds = np.array([i for i,x in enumerate(significant)
+              possiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
               if len(possiginds) > 0:
                   ax.plot(lineArr[possiginds], yArr[possiginds],
@@ -950,7 +972,7 @@ def plotProfile(fig,
                                edgecolor=pColor,
                                linewidth=0.0, alpha = 0.1)
               ax.fill_betweenx(yVals, linesValsMinCI[iline], linesValsMaxCI[iline],
-                               where=significant > 0.0,
+                               where=isSignificant > 0.0,
                                color=pColor,
                                edgecolor=pColor,
                                linewidth=0.2, alpha = 0.3)
@@ -1035,6 +1057,9 @@ def plotProfile(fig,
     if indepConfig['transform'] is None:
         ax.set_yscale('linear')
         ax.yaxis.set_major_locator(mticker.AutoLocator())
+    elif indepConfig['transform'] == 'logit':
+        ax.set_yscale('logit', nonpositive='clip')
+        ax.yaxis.set_major_locator(mticker.AutoLocator())
     else:
         transform = axisTransform(indepConfig['transform'])
         locator = transform.locator()
@@ -1050,10 +1075,10 @@ def plotProfile(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if interiorLabels or ix == 0:
-        ax.set_xlabel(dataLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(indepLabel,fontsize=axisLabelFontSize)
+        if dataLabel is not None: ax.set_xlabel(dataLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if indepLabel is not None: ax.set_ylabel(indepLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
@@ -1070,10 +1095,10 @@ def plotProfile(fig,
     if indepConfig['invert']:
         ax.invert_yaxis()
 
-    ax.grid()
+    ax.grid(linewidth=gridLineWidth)
 
     # label physical distance to the left and up:
-    #label = pu.subplotLabel(iplot)
+    #label = pstyle.subplotLabel(iplot)
     #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
     #        fontsize='medium', va='bottom', fontfamily='serif')
@@ -1087,7 +1112,7 @@ nanWarnTS=0
 def plotTimeSeries(fig,
                    xsDates, linesVals,
                    linesLabel,
-                   title="", dataLabel="",
+                   title="", indepLabel=None, dataLabel=None,
                    sciTicks=False, logScale = False, centralValue=None,
                    ny=1, nx=1, nplots=1, iplot=0,
                    linesValsMinCI=None, linesValsMaxCI=None,
@@ -1113,8 +1138,8 @@ def plotTimeSeries(fig,
 # nplots           - total number of subplots, optional
 # iplot            - this subplot index (starting at 0), optional
 
-# linesValsMinCI   - minimum error bound for linesVals (list of arrays), optional
-# linesValsMaxCI   - maximum error bound for linesVals (list of arrays), optional
+# linesValsMinCI   - minimum confidence interval bound for linesVals (list of arrays), optional
+# linesValsMaxCI   - maximum confidence interval bound for linesVals (list of arrays), optional
 # Note: linesValsMinCI and linesValsMaxCI must be specified together
 
 # lineAttribOffset - offset for selecting line attributes, optional
@@ -1124,9 +1149,11 @@ def plotTimeSeries(fig,
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #add lines
     plotVals = np.asarray([])
@@ -1164,12 +1191,12 @@ def plotTimeSeries(fig,
         jline += 1
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColor(len(linesVals),iline+lineAttribOffset)
+        pColor = pstyle.color(iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals,
                 label=linesLabel[iline],
                 color=pColor,
-                ls=pu.plotLineStyle(len(linesVals),iline+lineAttribOffset),
+                ls=pstyle.line(iline+lineAttribOffset),
                 linewidth=commonLineWidth)
         nLines += 1
         plotVals = np.append(plotVals, lineVals)
@@ -1197,17 +1224,17 @@ def plotTimeSeries(fig,
             else:
               # test statistical significance versus centralValue
               if centralValue is None:
-                  significant = np.empty(len(lineVals))
-                  significant[:] = np.NaN
+                  isSignificant = np.empty(len(lineVals))
+                  isSignificant[:] = np.NaN
                   centralValue_ = 0.0
               else:
-                  significant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
+                  isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
                                             np.subtract(linesValsMaxCI[iline], centralValue))
                   centralValue_ = centralValue
 
-              significant = np.array([x if np.isfinite(x) else -1.0 for x in significant])
+              isSignificant = np.array([x if np.isfinite(x) else -1.0 for x in isSignificant])
 
-              negsiginds = np.array([i for i,x in enumerate(significant)
+              negsiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] < centralValue_)],dtype=int)
               if len(negsiginds) > 0:
                   ax.plot(xArr[negsiginds], lineArr[negsiginds],
@@ -1216,7 +1243,7 @@ def plotTimeSeries(fig,
                           marker='v',
                           markersize=0.8)
 
-              possiginds = np.array([i for i,x in enumerate(significant)
+              possiginds = np.array([i for i,x in enumerate(isSignificant)
                                      if (x > 0.0 and lineArr[i] > centralValue_)],dtype=int)
               if len(possiginds) > 0:
                   ax.plot(xArr[possiginds], lineArr[possiginds],
@@ -1241,7 +1268,7 @@ def plotTimeSeries(fig,
                               edgecolor=pColor,
                               linewidth=0.0, alpha = 0.1)
               ax.fill_between(xVals, linesValsMinCI[iline], linesValsMaxCI[iline],
-                              where=significant > 0.0,
+                              where=isSignificant > 0.0,
                               color=pColor,
                               edgecolor=pColor,
                               linewidth=0.2, alpha = 0.3)
@@ -1326,7 +1353,7 @@ def plotTimeSeries(fig,
     ax.tick_params(axis='both', which='major', labelsize=3)
     ax.tick_params(axis='both', which='minor', labelsize=2)
 
-    ax.grid()
+    ax.grid(linewidth=gridLineWidth)
 
     #handle interior subplot ticks/labels
     ix = int(iplot)%int(nx)
@@ -1334,8 +1361,10 @@ def plotTimeSeries(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
+    if interiorLabels or iy == ny-1:
+        if indepLabel is not None: ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or ix == 0:
-        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
+        if dataLabel is not None: ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if nLines <= maxLegendEntries:
@@ -1351,46 +1380,36 @@ def plotTimeSeries(fig,
                       bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
     # label physical distance to the left and up:
-    #label = pu.subplotLabel(iplot)
+    #label = pstyle.subplotLabel(iplot)
     #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
     #        fontsize='medium', va='bottom', fontfamily='serif')
 
     return
 
-# color map and # of levels for various cAxisType's
-cmaps = {
-  'magnitude': 'YlOrBr',
-  'symmetric': 'seismic',
-}
-nlevs = {
-  'magnitude': 18,
-  'symmetric': 29,
-}
 
 ###############################################################################
-def plot2D(fig,
-           xVals, yVals, contourVals,
-           title='', xLabel='x', yLabel='y', cLabel='',
+def scoreCard(fig,
+           xVals, binNames, contourVals,
+           title='', xLabel=None, yLabel=None, cLabel=None,
            xConfig=defaultIndepConfig,
-           yConfig=defaultIndepConfig,
            sciTicks=False, logScale=False, centralValue=None,
            ny=1, nx=1, nplots=1, iplot=0,
+           contourValsMinCI=None, contourValsMaxCI=None,
            dmin=np.NaN, dmax=np.NaN,
            interiorLabels=True):
 
 # ARGUMENTS
 # fig           - matplotlib figure object
 # xVals         - x-values (list/array of float, datetime.datetime, or datetime.timedelta)
-# yVals         - y-values
-# contourVals   - dependent variable (2d numpy array), same size as yVals x xVals
+# binNames      - bin names to display on y axis
+# contourVals   - dependent variable (2d numpy array), len(binNames) x len(xVals)
 
 # title         - subplot title, optional
 # xLabel        - label for xVals, optional
 # yLabel        - label for yVals, optional
 # cLabel        - label for dependent variable, optional
 # xConfig       - x axis formatting config, optional
-# yConfig       - y axis formatting config, optional
 
 # log_y_axis    - whether y-axis is scaled logarithmically, optional
 # sciTicks      - whether contourVals needs scientific formatting for ticks, optional
@@ -1401,10 +1420,12 @@ def plot2D(fig,
 # nplots        - total number of subplots, optional
 # iplot         - this subplot index (starting at 0), optional
 
+# contourValsMinCI   - minimum confidence interval bound for contourVals (2d numpy array), optional
+# contourValsMaxCI   - maximum confidence interval bound for contourVals (2d numpy array), optional
+# Note: contourValsMinCI and contourValsMaxCI must be specified together
+
 # dmin, dmax    - min/max values of contourVals, optional
 # interiorLabels- whether to add titles, axis, and colorbar labels for interior subplots, optional
-
-    global cmaps, nlevs
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
@@ -1412,8 +1433,6 @@ def plot2D(fig,
         ax.tick_params(axis='x',labelbottom=False)
         ax.tick_params(axis='y',labelleft=False)
         return
-
-    xVals_ = pu.TDeltas2Seconds(xVals)
 
     # standardize color limits
     mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, contourVals, centralValue, buffr=0.05)
@@ -1423,10 +1442,10 @@ def plot2D(fig,
     if np.isfinite(maxdval): maxp = maxdval
 
     # default cAxisType
-    cAxisType = 'magnitude'
+    cAxisType = 'sequential'
 
     if centralValue is not None and pu.isfloat(centralValue):
-        cAxisType = 'symmetric'
+        cAxisType = 'diverging'
 
     # log contours
     isLogScale = logScale
@@ -1452,9 +1471,9 @@ def plot2D(fig,
                 isInt = np.all((contourVals - cint) == 0)
                 if isInt:
                     minp = np.nanmax(np.array([1., minp]))
-                lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+                lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
         elif float(centralValue) == 0.:
-            lognorm = colors.SymLogNorm(vmin=minp, vmax=maxp,
+            lognorm = mcolors.SymLogNorm(vmin=minp, vmax=maxp,
                         linthresh=1.e-3*maxp, linscale=1.3, base=10)
         else:
             vmin = np.nanmin(np.abs(contourVals[nonzero]))
@@ -1466,49 +1485,398 @@ def plot2D(fig,
             maxratio = maxp / centralValue
             minp = centralValue / maxratio
 
-            lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+            lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
+
+    cmap = copy(pstyle.cmaps[cAxisType]['map'])
+    #cmap.set_bad(color='gray', alpha=0.5)
+    if isLogScale:
+        norm = lognorm
+    #elif cAxisType == 'diverging':
+    #    norm = mcolors.CenteredNorm(centralValue)
+    else:
+        levels = mticker.MaxNLocator(nbins=pstyle.cmaps[cAxisType]['n']).tick_values(minp, maxp)
+        norm = mcolors.BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+
+    # remove rows filled with missing values
+    keep = []
+    for iy in range(len(binNames)):
+      if any(np.isfinite(contourVals[iy,:])):
+        keep.append(iy)
+    binNames_ = np.array(binNames)[keep]
+    contourVals_ = contourVals[keep,:]
+
+    # (x, y) specify corners instead of centers
+    yBins = np.arange(len(binNames_))
+    xBins = np.arange(len(xVals))
+    xBins_edges, yBins_edges = transformXY_to_edges(xBins, yBins)
+
+    pcm = ax.pcolormesh(xBins_edges, yBins_edges, contourVals_, cmap=cmap, norm=norm)
+
+    ax.set_yticks(yBins)
+    ax.set_yticklabels(binNames_)
+
+    if isinstance(xVals[0], dt.timedelta):
+      xVals_ = pu.TDeltas2Seconds(xVals)
+      xTicks = pu.timeDeltaTicks(xVals)
+      xBinsTicks = [xVals_.index(t) for t in xTicks]
+      ax.set_xticks(xBinsTicks)
+      ax.set_xticklabels([pu.timeDeltaTickLabels(t, None) for t in xTicks])
+      ax.xaxis.set_tick_params(rotation=90)
+      ax.set_aspect('equal')
+    else:
+      # TODO: clean this up if non-timedelta x values are needed
+      ax.set_xticks(xBins)
+      ax.set_xticklabels(xVals)
+
+    # Add significance regions if specified
+    if (contourValsMinCI is not None and
+       np.isfinite(contourValsMinCI).sum() > 0 and
+       contourValsMaxCI is not None and
+       np.isfinite(contourValsMaxCI).sum() > 0 ):
+
+        contourValsMinCI_ = contourValsMinCI[keep,:]
+        contourValsMaxCI_ = contourValsMaxCI[keep,:]
+
+        # test statistical significance versus centralValue
+        if centralValue is not None:
+            isSignificant = np.multiply(np.subtract(contourValsMinCI_, centralValue),
+                                     np.subtract(contourValsMaxCI_, centralValue))
+            centralValue_ = centralValue
+            isSignificant[~np.isfinite(isSignificant)] = -1.0
+
+            # Create patches indicating significance
+            w100 = xBins_edges[1:] - xBins_edges[0:-1]
+            h100 = yBins_edges[1:] - yBins_edges[0:-1]
+            patches = []
+
+            q = 97.73 # 2 sigma, or get quartile from argument in place of CI
+            quartile = np.full_like(isSignificant, q)
+            distortion = 6. # best for triangles
+            cellFraction = np.power(np.abs(quartile - 50.) / 50., distortion) # distort patch with large power
+            cellFraction[isSignificant<=0.] = 0.
+
+            for ix in range(len(xBins)):
+              for iy in range(len(yBins)):
+                if cellFraction[iy, ix] > 0.:
+                  # patch center
+                  xc = xBins[ix]
+                  yc = yBins[iy]
+
+                  # patch width and height
+                  w = w100[ix] * cellFraction[iy, ix]
+                  h = h100[iy] * cellFraction[iy, ix]
+
+                  # add triangle patch
+                  if contourValsMinCI_[iy, ix] > centralValue:
+                    patches.append(
+                      mpatches.RegularPolygon((xc, yc+h/8.), 3, radius=w/2.,
+                        orientation = np.pi, fill = False)
+                    )
+                  if contourValsMaxCI_[iy, ix] < centralValue:
+                    patches.append(
+                      mpatches.RegularPolygon((xc, yc-h/8.), 3, radius=w/2.,
+                        orientation = 0., fill = False)
+                    )
+
+            # Create patch collection with specified color/alpha
+            pc = mcollections.PatchCollection(patches,
+                edgecolor = 'black',
+                facecolor = 'none',
+                snap = False,
+                alpha = 0.5,
+                linewidth = 0.05,
+                linestyles = (0, (5, 1)), # (offset, onoffseq), where onoffseq is an even length tuple of on and off ink lengths in points
+            )
+
+            # Add collection to axes
+            ax.add_collection(pc)
+
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
+
+    #axes settings
+    if xConfig['transform'] is not None:
+        if xConfig['transform'] == 'logit':
+            ax.set_xscale('logit', nonpositive='clip')
+            ax.xaxis.set_major_locator(mticker.AutoLocator())
+        else:
+            transform = axisTransform(xConfig['transform'])
+            locator = transform.locator()
+            ax.set_xscale('function', functions=(transform.forward(), transform.inverse()))
+            ax.xaxis.set_major_locator(locator(xVals))
+            ax.tick_params(axis='x', rotation=90)
+
+    ax.tick_params(axis='x', which='major', labelsize=3)
+    ax.tick_params(axis='x', which='minor', labelsize=2)
+    ax.tick_params(axis='y', which='major', labelsize=categoryLabelFontSize)
+
+    #handle interior subplot ticks/labels
+    ix = int(iplot)%int(nx)
+    iy = int(iplot)/int(nx)
+    if interiorLabels or iy == ny-1:
+        if xLabel is not None: ax.set_xlabel(xLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if yLabel is not None: ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
+
+    #colorbar
+    m = plt.cm.ScalarMappable(cmap=cmap)
+    m.set_array(contourVals)
+    m.set_norm(norm)
+    if not isLogScale:
+        m.set_clim(minp, maxp)
+
+    divider = make_axes_locatable(ax)
+    ax_cb = divider.append_axes("right", size="5%", pad=0.05)
+    f = ax.get_figure()
+    f.add_axes(ax_cb, label='cb')
+    cb = plt.colorbar(m, cax=ax_cb)
+
+    #scientific formatting
+    if sciTicks and not logScale:
+        cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    cb.ax.yaxis.get_offset_text().set_fontsize(3)
+
+    if centralValue is not None and float(centralValue) == 1. and isLogScale:
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(cb.ax.yaxis)
+
+    cb.ax.tick_params(axis='y', which='major', labelsize=3)
+    cb.ax.tick_params(axis='y', which='minor', labelsize=2)
+
+    if cLabel is not None: cb.set_label(cLabel,fontsize=cbarLabelFontSize)
+
+    if xConfig['invert']:
+        ax.invert_xaxis()
+
+    # optionally add a grid
+    #ax.grid(linewidth=gridLineWidth)
+
+    # label physical distance to the left and up:
+    #label = pstyle.subplotLabel(iplot)
+    #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
+    #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
+    #        fontsize='medium', va='bottom', fontfamily='serif')
+
+    return
+
+
+###############################################################################
+def plot2D(fig,
+           xVals, yVals, contourVals,
+           title='', xLabel=None, yLabel=None, cLabel=None,
+           xConfig=defaultIndepConfig,
+           yConfig=defaultIndepConfig,
+           sciTicks=False, logScale=False, centralValue=None,
+           ny=1, nx=1, nplots=1, iplot=0,
+           contourValsMinCI=None, contourValsMaxCI=None,
+           dmin=np.NaN, dmax=np.NaN,
+           interiorLabels=True):
+
+# ARGUMENTS
+# fig           - matplotlib figure object
+# xVals         - x-values (list/array of float, datetime.datetime, or datetime.timedelta)
+# yVals         - y-values
+# contourVals   - dependent variable (2d numpy array), len(yVals) x len(xVals)
+
+# title         - subplot title, optional
+# xLabel        - label for xVals, optional
+# yLabel        - label for yVals, optional
+# cLabel        - label for dependent variable, optional
+# xConfig       - x axis formatting config, optional
+# yConfig       - y axis formatting config, optional
+
+# log_y_axis    - whether y-axis is scaled logarithmically, optional
+# sciTicks      - whether contourVals needs scientific formatting for ticks, optional
+# logScale      - whether contours are spaced logarithmically, optional, overrides sciTicks
+# centralValue  - central value of contourVals, optional
+
+# ny, nx        - number of subplots in x/y direction, optional
+# nplots        - total number of subplots, optional
+# iplot         - this subplot index (starting at 0), optional
+
+# contourValsMinCI   - minimum confidence interval bound for contourVals (2d numpy array), optional
+# contourValsMaxCI   - maximum confidence interval bound for contourVals (2d numpy array), optional
+# Note: contourValsMinCI and contourValsMaxCI must be specified together
+
+# dmin, dmax    - min/max values of contourVals, optional
+# interiorLabels- whether to add titles, axis, and colorbar labels for interior subplots, optional
+
+    ax = fig.add_subplot(ny, nx, iplot+1)
+
+    if (np.isnan(contourVals)).all():
+        ax.tick_params(axis='x',labelbottom=False)
+        ax.tick_params(axis='y',labelleft=False)
+        return
+
+    xVals_ = pu.TDeltas2Seconds(xVals)
+
+    # standardize color limits
+    mindval, maxdval = pu.get_clean_ax_limits(dmin, dmax, contourVals, centralValue, buffr=0.05)
+    minp = None
+    maxp = None
+    if np.isfinite(mindval): minp = mindval
+    if np.isfinite(maxdval): maxp = maxdval
+
+    # default cAxisType
+    cAxisType = 'sequential'
+
+    if centralValue is not None and pu.isfloat(centralValue):
+        cAxisType = 'diverging'
+
+    # log contours
+    isLogScale = logScale
+    finite = np.isfinite(contourVals)
+    nonzero = finite
+    nonzero[finite] = np.greater(np.abs(contourVals[finite]), 0.)
+    if nonzero.sum()==0:
+        isLogScale = False
+
+    elif isLogScale:
+        if centralValue is None:
+            minp_, maxp_ = pu.get_clean_ax_limits(
+                np.log10(np.nanmax(np.array([dmin, dmax*1.e-3]))),
+                np.log10(dmax), np.log10(contourVals[nonzero]), buffr=0.05)
+            minp_ = np.power(10., minp_)
+            maxp_ = np.power(10., maxp_)
+            if maxp_ / minp_ < 20.:
+                isLogScale = False
+            else:
+                minp = minp_
+                maxp = maxp_
+                cint = contourVals.astype(int)
+                isInt = np.all((contourVals - cint) == 0)
+                if isInt:
+                    minp = np.nanmax(np.array([1., minp]))
+                lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
+        elif float(centralValue) == 0.:
+            lognorm = mcolors.SymLogNorm(vmin=minp, vmax=maxp,
+                        linthresh=1.e-3*maxp, linscale=1.3, base=10)
+        else:
+            vmin = np.nanmin(np.abs(contourVals[nonzero]))
+            vmax = np.nanmax(np.abs(contourVals[nonzero]))
+
+            maxratio = np.max([vmax/centralValue, centralValue/vmin])
+            maxp = maxratio / centralValue
+            p, maxp = pu.get_clean_ax_limits(centralValue, maxp, centralValue=centralValue)
+            maxratio = maxp / centralValue
+            minp = centralValue / maxratio
+
+            lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
 
     # plot contour
     # option 1: smoothed contours
-    #cp = ax.contourf(xVals_, yVals, contourVals, nlevs[cAxisType], cmap=cmaps[cAxisType], extend='both',
+    #cp = ax.contourf(xVals_, yVals, contourVals, pstyle.cmaps[cAxisType]['n'], cmap=pstyle.cmaps[cAxisType]['map'], extend='both',
     #     vmin=minp, vmax=maxp)
 
     # option 2: pixel contours
-    cmap = copy(plt.get_cmap(cmaps[cAxisType]))
-    cmap.set_bad(color='gray', alpha=1.0)
+    cmap = copy(pstyle.cmaps[cAxisType]['map'])
+    #cmap.set_bad(color='gray', alpha=0.5)
     if isLogScale:
         norm = lognorm
+    #elif cAxisType == 'diverging':
+    #    norm = mcolors.CenteredNorm(centralValue)
     else:
-        levels = mticker.MaxNLocator(nbins=nlevs[cAxisType]).tick_values(minp, maxp)
-        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
-    xVals_pcolor, yVals_pcolor = transformXY_for_pcolor(xVals_,yVals)
-    cp = ax.pcolormesh(xVals_pcolor, yVals_pcolor, contourVals, cmap=cmap, norm=norm)
+        levels = mticker.MaxNLocator(nbins=pstyle.cmaps[cAxisType]['n']).tick_values(minp, maxp)
+        norm = mcolors.BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # (x, y) specify corners instead of centers
+    xVals_edges, yVals_edges = transformXY_to_edges(xVals_,yVals)
+
+    pcm = ax.pcolormesh(xVals_edges, yVals_edges, contourVals, cmap=cmap, norm=norm)
+
+    # Add significance regions if specified
+    if (contourValsMinCI is not None and
+       np.isfinite(contourValsMinCI).sum() > 0 and
+       contourValsMaxCI is not None and
+       np.isfinite(contourValsMaxCI).sum() > 0 ):
+
+        # test statistical significance versus centralValue
+        if centralValue is not None:
+            isSignificant = np.multiply(np.subtract(contourValsMinCI, centralValue),
+                                     np.subtract(contourValsMaxCI, centralValue))
+            centralValue_ = centralValue
+            isSignificant[~np.isfinite(isSignificant)] = -1.0
+
+            # Create patches indicating significance
+            w100 = xVals_edges[1:] - xVals_edges[0:-1]
+            h100 = yVals_edges[1:] - yVals_edges[0:-1]
+            patches = []
+
+            q = 97.73 # 2 sigma, or get quartile from argument in place of CI
+            quartile = np.full_like(isSignificant, q)
+            cellFraction = np.power(np.abs(quartile - 50.) / 50., 16.) # distort patch with large power
+            cellFraction[isSignificant<=0.] = 0.
+
+            for ix in range(len(xVals)):
+              for iy in range(len(yVals)):
+                if cellFraction[iy, ix] > 0.:
+
+                  # patch center
+                  xc = xVals_[ix]
+                  yc = yVals[iy]
+
+                  # patch width and height
+                  w = w100[ix] * cellFraction[iy, ix]
+                  h = h100[iy] * cellFraction[iy, ix]
+
+                  # add Ellipse patch
+                  patches.append(
+                    mpatches.Ellipse((xc, yc), w, h, fill = False)
+                  )
+
+                  ## origin of Rectangle (bottom left)
+                  #x0 = xc - w / 2.
+                  #y0 = yc - h / 2.
+
+                  ## add Rectangle patch
+                  #patches.append(
+                  #  mpatches.Rectangle((x0, y0), w, h, fill = False)
+                  #)
+
+            # Create patch collection with specified color/alpha
+            pc = mcollections.PatchCollection(patches,
+                edgecolor = 'black',
+                facecolor = 'none',
+                snap = False,
+                alpha = 0.5,
+                linewidth = 0.05,
+                linestyles = (0, (5, 1)), # (offset, onoffseq), where onoffseq is an even length tuple of on and off ink lengths in points
+            )
+
+            # Add collection to axes
+            ax.add_collection(pc)
+
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #axes settings
     pu.format_x_for_dates(ax, xVals)
-    #if xConfig['transform'] is None:
-        #ax.set_xscale('linear')
-        #ax.xaxis.set_major_locator(mticker.AutoLocator())
-    #else:
     if xConfig['transform'] is not None:
-        transform = axisTransform(xConfig['transform'])
-        locator = transform.locator()
-        ax.set_xscale('function', functions=(transform.forward(), transform.inverse()))
-        ax.xaxis.set_major_locator(locator(xVals))
-        ax.tick_params(axis='x', rotation=90)
+        if xConfig['transform'] == 'logit':
+            ax.set_xscale('logit', nonpositive='clip')
+            ax.xaxis.set_major_locator(mticker.AutoLocator())
+        else:
+            transform = axisTransform(xConfig['transform'])
+            locator = transform.locator()
+            ax.set_xscale('function', functions=(transform.forward(), transform.inverse()))
+            ax.xaxis.set_major_locator(locator(xVals))
+            ax.tick_params(axis='x', rotation=90)
 
-    if yConfig['transform'] is None:
-        ax.set_yscale('linear')
-        ax.yaxis.set_major_locator(mticker.AutoLocator())
-    else:
-        transform = axisTransform(yConfig['transform'])
-        locator = transform.locator()
-        ax.set_yscale('function', functions=(transform.forward(), transform.inverse()))
-        ax.yaxis.set_major_locator(locator(yVals))
+    if yConfig['transform'] is not None:
+      if yConfig['transform'] == 'logit':
+          ax.set_yscale('logit', nonpositive='clip')
+          ax.yaxis.set_major_locator(mticker.AutoLocator())
+      else:
+          transform = axisTransform(yConfig['transform'])
+          locator = transform.locator()
+          ax.set_yscale('function', functions=(transform.forward(), transform.inverse()))
+          ax.yaxis.set_major_locator(locator(yVals))
 
     ax.tick_params(axis='both', which='major', labelsize=3)
     ax.tick_params(axis='both', which='minor', labelsize=2)
@@ -1519,33 +1887,32 @@ def plot2D(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if interiorLabels or ix == 0:
-        ax.set_xlabel(xLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
+        if xLabel is not None: ax.set_xlabel(xLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if yLabel is not None: ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
 
-    if interiorLabels or ix == nx-1:
-        #colorbar
-        m = plt.cm.ScalarMappable(cmap=cmap)
-        m.set_array(contourVals)
-        m.set_norm(norm)
-        if not isLogScale:
-            m.set_clim(minp, maxp)
-        cb = plt.colorbar(m, ax=ax)
-        #scientific formatting
-        if sciTicks and not logScale:
-            cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        cb.ax.yaxis.get_offset_text().set_fontsize(3)
+    #colorbar
+    m = plt.cm.ScalarMappable(cmap=cmap)
+    m.set_array(contourVals)
+    m.set_norm(norm)
+    if not isLogScale:
+        m.set_clim(minp, maxp)
+    cb = plt.colorbar(m, ax=ax)
+    #scientific formatting
+    if sciTicks and not logScale:
+        cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
-        if centralValue is not None and float(centralValue) == 1. and isLogScale:
-            axTicks = OneCenteredAxisTicks(maxp)
-            axTicks.setTicks(cb.ax.yaxis)
+    if centralValue is not None and float(centralValue) == 1. and isLogScale:
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(cb.ax.yaxis)
 
-        #cb.ax.tick_params(labelsize=3)
-        cb.ax.tick_params(axis='y', which='major', labelsize=3)
-        cb.ax.tick_params(axis='y', which='minor', labelsize=2)
+    #cb.ax.tick_params(labelsize=3)
+    cb.ax.tick_params(axis='y', which='major', labelsize=3)
+    cb.ax.tick_params(axis='y', which='minor', labelsize=2)
 
-        cb.set_label(cLabel,fontsize=cbarLabelFontSize)
+    if cLabel is not None: cb.set_label(cLabel,fontsize=cbarLabelFontSize)
 
     if xConfig['invert']:
         ax.invert_xaxis()
@@ -1554,10 +1921,10 @@ def plot2D(fig,
         ax.invert_yaxis()
 
     # optionally add a grid
-    #ax.grid()
+    #ax.grid(linewidth=gridLineWidth)
 
     # label physical distance to the left and up:
-    #label = pu.subplotLabel(iplot)
+    #label = pstyle.subplotLabel(iplot)
     #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
     #        fontsize='medium', va='bottom', fontfamily='serif')
@@ -1572,6 +1939,7 @@ def map2D(fig,
           title='', cLabel='',
           sciTicks=False, logScale=False, centralValue=None,
           ny=1, nx=1, nplots=1, iplot=0,
+          contourValsMinCI=None, contourValsMaxCI=None,
           dmin=np.NaN, dmax=np.NaN,
           interiorLabels=True):
 
@@ -1579,7 +1947,7 @@ def map2D(fig,
 # fig           - matplotlib figure object
 # lonVals       - longitude
 # latVals       - latitude
-# contourVals   - dependent variable (2d numpy array), same size as latVals x lonVals
+# contourVals   - dependent variable (2d numpy array), len(latVals) x len(lonVals)
 
 # title         - subplot title, optional
 # cLabel        - label for dependent variable, optional
@@ -1590,10 +1958,11 @@ def map2D(fig,
 # nplots        - total number of subplots, optional
 # iplot         - this subplot index (starting at 0), optional
 
+# contourValsMinCI   - minimum confidence interval bound for contourVals (2d numpy array), optional
+# contourValsMaxCI   - maximum confidence interval bound for contourVals (2d numpy array), optional
+
 # dmin, dmax    - min/max values of contourVals, optional
 # interiorLabels- whether to add titles, axis, and colorbar labels for interior subplots, optional
-
-    global cmaps, nlevs
 
     # setup map
     cLon = None
@@ -1649,9 +2018,9 @@ def map2D(fig,
     if np.isfinite(maxdval): maxp = maxdval
 
     # default cAxisType
-    cAxisType = 'magnitude'
+    cAxisType = 'sequential'
     if centralValue is not None and pu.isfloat(centralValue):
-      cAxisType = 'symmetric'
+      cAxisType = 'diverging'
 
     # log contours
     isLogScale = logScale
@@ -1676,9 +2045,9 @@ def map2D(fig,
                 isInt = np.all((contourVals - cint) == 0)
                 if isInt:
                     minp = np.nanmax(np.array([1., minp]))
-                lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+                lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
         elif float(centralValue) == 0.:
-            lognorm = colors.SymLogNorm(vmin=minp, vmax=maxp,
+            lognorm = mcolors.SymLogNorm(vmin=minp, vmax=maxp,
                         linthresh=1.e-3*maxp, linscale=1.3, base=10)
         else:
             vmin = np.nanmin(np.abs(contourVals[nonzero]))
@@ -1690,16 +2059,18 @@ def map2D(fig,
             maxratio = maxp / centralValue
             minp = centralValue / maxratio
 
-            lognorm = colors.LogNorm(vmin=minp, vmax=maxp)
+            lognorm = mcolors.LogNorm(vmin=minp, vmax=maxp)
 
 
-    cmap = copy(plt.get_cmap(cmaps[cAxisType]))
+    cmap = copy(pstyle.cmaps[cAxisType]['map'])
     cmap.set_bad(color='gray', alpha=0.)
     if isLogScale:
         norm = lognorm
+    #elif cAxisType == 'diverging':
+    #    norm = mcolors.CenteredNorm(centralValue)
     else:
-        levels = mticker.MaxNLocator(nbins=nlevs[cAxisType]).tick_values(minp, maxp)
-        norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+        levels = mticker.MaxNLocator(nbins=pstyle.cmaps[cAxisType]['n']).tick_values(minp, maxp)
+        norm = mcolors.BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
     ## transform to pcolormesh and cartopy conventions
     # longitude monotonically increasing
@@ -1710,46 +2081,46 @@ def map2D(fig,
       contourVals_[:,ii] = contourVals[:,jj]
 
     # lat/lon vectors specify corners instead of centers
-    lonVals_pcolor, latVals_pcolor = transformXY_for_pcolor(lonVals_180, latVals)
+    lonVals_edges, latVals_edges = transformXY_to_edges(lonVals_180, latVals)
 
-    cp = ax.pcolormesh(lonVals_pcolor, latVals_pcolor, contourVals_, cmap=cmap, norm=norm,
+    pcm = ax.pcolormesh(lonVals_edges, latVals_edges, contourVals_, cmap=cmap, norm=norm,
         transform=ccrs.PlateCarree())
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     # show full projection extent
     ax.set_global()
 
     # add coastlines
-    ax.coastlines()
+    ax.coastlines(linewidth=coastLineWidth)
 
-    ix = int(iplot)%int(nx)
-    if interiorLabels or ix == nx-1:
-        #colorbar
-        m = plt.cm.ScalarMappable(cmap=cmap)
-        m.set_array(contourVals)
-        m.set_norm(norm)
-        if not isLogScale:
-            m.set_clim(minp, maxp)
-        cb = plt.colorbar(m, ax=ax)
-        #scientific formatting
-        if sciTicks and not logScale:
-            cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-        cb.ax.yaxis.get_offset_text().set_fontsize(3)
+    #colorbar
+    m = plt.cm.ScalarMappable(cmap=cmap)
+    m.set_array(contourVals)
+    m.set_norm(norm)
+    if not isLogScale:
+        m.set_clim(minp, maxp)
+    cb = plt.colorbar(m, ax=ax)
+    #scientific formatting
+    if sciTicks and not logScale:
+        cb.ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    cb.ax.yaxis.get_offset_text().set_fontsize(3)
 
-        if centralValue is not None and float(centralValue) == 1. and isLogScale:
-            axTicks = OneCenteredAxisTicks(maxp)
-            axTicks.setTicks(cb.ax.yaxis)
+    if centralValue is not None and float(centralValue) == 1. and isLogScale:
+        axTicks = OneCenteredAxisTicks(maxp)
+        axTicks.setTicks(cb.ax.yaxis)
 
-        #cb.ax.tick_params(labelsize=3)
-        cb.ax.tick_params(axis='y', which='major', labelsize=3)
-        cb.ax.tick_params(axis='y', which='minor', labelsize=2)
-        cb.set_label(cLabel,fontsize=cbarLabelFontSize)
+    #cb.ax.tick_params(labelsize=3)
+    cb.ax.tick_params(axis='y', which='major', labelsize=3)
+    cb.ax.tick_params(axis='y', which='minor', labelsize=2)
+    cb.set_label(cLabel,fontsize=cbarLabelFontSize)
 
     # label physical distance to the left and up:
-    #label = pu.subplotLabel(iplot)
+    #label = pstyle.subplotLabel(iplot)
     #trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     #ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
     #        fontsize='medium', va='bottom', fontfamily='serif')
@@ -1758,7 +2129,7 @@ def map2D(fig,
 
 
 ###############################################################################
-def transformXY_for_pcolor(xs,ys):
+def transformXY_to_edges(xs,ys):
     # adjust centered x and y values to edges to work with pcolormesh
     # note: works best for regularly spaced data
     xs_diff = xs[1] - xs[0]
@@ -1787,7 +2158,7 @@ def transformXY_for_pcolor(xs,ys):
     for ii, y in enumerate(ys_extend[:-1]):
         ys_pcolormesh_midpoints.append(y+0.5*(ys_extend[ii+1] - ys_extend[ii]))
 
-    return xs_pcolormesh_midpoints, ys_pcolormesh_midpoints
+    return np.array(xs_pcolormesh_midpoints), np.array(ys_pcolormesh_midpoints)
 
 
 ###############################################################################
@@ -1797,7 +2168,7 @@ def plotPDF(fig,
             countsVals, xVals,
             countLabels,
             title="",
-            indepLabel="x",
+            indepLabel=None,
             ny=1, nx=1, nplots=1, iplot=0,
             lineAttribOffset=1,
             legend_inside=True,
@@ -1827,9 +2198,11 @@ def plotPDF(fig,
 
     ax = fig.add_subplot(ny, nx, iplot+1)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #add counts
     plotVals = []
@@ -1866,9 +2239,9 @@ def plotPDF(fig,
           yVals = np.divide(yVals,np.sum(countVals[positive])*dx)
 
         ax.plot(xVals_, yVals,
-                color=pu.plotColor(len(countsVals),jhist+lineAttribOffset),
+                color=pstyle.color(jhist+lineAttribOffset),
                 label=countLabels[ihist],
-                ls=pu.plotLineStyle(len(countsVals),jhist+lineAttribOffset),
+                ls=pstyle.line(jhist+lineAttribOffset),
                 linewidth=commonLineWidth)
         nPDFs = nPDFs + 1
         plotVals.append(yVals)
@@ -1887,7 +2260,7 @@ def plotPDF(fig,
                     linewidth=0.35,
                     label='N(0,1)'
         )
-        ax.set_ylim(bottom=1.e-6)
+        ax.set_ylim(bottom=5.e-4)
 
     #axes settings
     ax.set_yscale('log')
@@ -1904,8 +2277,9 @@ def plotPDF(fig,
 
     yLabel = 'Count'
     if normalized: yLabel = 'PDF'
+    if interiorLabels or iy == ny-1:
+        if indepLabel is not None: ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
         ax.set_ylabel(yLabel,fontsize=axisLabelFontSize)
 
     #legend
@@ -1919,7 +2293,7 @@ def plotPDF(fig,
         ax.legend(loc='upper left',fontsize=legendLabelFontSize2,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
-    ax.grid()
+    ax.grid(linewidth=gridLineWidth)
 
     return
 
@@ -1927,14 +2301,14 @@ def plotPDF(fig,
 ###############################################################################
 lenWarnRamp = 0
 nanWarnRamp = 0
-def plotfitRampComposite(fig,
+def plotCompositeSeries(fig,
                xVals,
                countVals,
                meanVals,
                rmsVals,
                stdVals,
-               title="", dataLabel="y",
-               indepLabel="x",
+               title="", dataLabel=None,
+               indepLabel=None,
                ny=1, nx=1, nplots=1, iplot=0,
                lineAttribOffset=1,
                legend_inside=True,
@@ -1964,9 +2338,11 @@ def plotfitRampComposite(fig,
     ix = int(iplot)%int(nx)
     iy = int(iplot)/int(nx)
 
-    #title
-    label = pu.subplotLabel(iplot)
-    ax.set_title(label+' '+title,fontsize=titleFontSize)
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
 
     #add lines
     plotVals = []
@@ -1989,12 +2365,278 @@ def plotfitRampComposite(fig,
             continue
 
         # Plot line for each lineVals that has non-missing data
-        pColor = pu.plotColor(4,iline+lineAttribOffset)
+        pColor = pstyle.color(iline+lineAttribOffset)
 
         ax.plot(xVals, lineVals,
                 color=pColor,
                 label=linesLabel[iline],
-                ls=pu.plotLineStyle(4,iline+lineAttribOffset),
+                ls=pstyle.line(iline+lineAttribOffset),
+                linewidth=commonLineWidth)
+        nLines += 1
+        plotVals.append(lineVals)
+
+    if nLines == 0:
+        ax.tick_params(axis='x',labelbottom=False)
+        ax.tick_params(axis='y',labelleft=False)
+        return None
+
+    #axes settings
+    # standardize x-limits
+    mindval, maxdval = pu.get_clean_ax_limits(plotVals=plotVals)
+    if (np.isfinite(mindval) and
+        np.isfinite(maxdval)):
+        ax.set_ylim(mindval, maxdval)
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
+
+    #handle interior subplot ticks/labels
+    if not interiorLabels \
+       and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
+        ax.tick_params(axis='x',labelbottom=False)
+    if interiorLabels or iy == ny-1:
+        if indepLabel is not None: ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if dataLabel is not None: ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
+
+    #legend
+    if legend_inside:
+        #INSIDE AXES
+        lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
+                       framealpha=0.4,ncol=1)
+        lh.get_frame().set_linewidth(0.0)
+    elif ix==nx-1 or iplot==nplots-1:
+        #OUTSIDE AXES
+        ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
+                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+    ax.grid(linewidth=gridLineWidth)
+
+    # Add count on RHS y-axis
+    ax2 = ax.twinx()
+    color = 'black'
+    if interiorLabels or ix == nx-1:
+        ax2.set_ylabel('Count',fontsize=axisLabelFontSize,color=color)
+    ax2.plot(xVals, countVals,
+             color=color,
+             label='Count',
+             ls=':',
+             linewidth=commonLineWidth)
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_yscale('log')
+    ax2.set_ylim(bottom=100.)
+    ax2.tick_params(axis='y', which='major', labelsize=3)
+    ax2.tick_params(axis='y', which='minor', labelsize=2)
+
+    return None
+
+
+
+###############################################################################
+lenWarnRamp = 0
+nanWarnRamp = 0
+def plotCompositeProfile(fig,
+               yVals,
+               countVals,
+               meanVals,
+               rmsVals,
+               stdVals,
+               title="", dataLabel=None,
+               indepLabel=None,
+               ny=1, nx=1, nplots=1, iplot=0,
+               lineAttribOffset=1,
+               legend_inside=True,
+               interiorLabels=True):
+
+# ARGUMENTS
+# fig              - matplotlib figure object
+# countVals        - Count of quantity (array)
+# meanVals         - Mean of quantity (array)
+# rmsVals          - RMS of quantity (array)
+# stdVals          - STD of quantity (array)
+
+# yVals           - independent variable on y-axis (array)
+
+# title            - subplot title, optional
+# dataLabel        - label for x-axis, optional
+# indepLabel       - label for yVals, optional
+
+# ny, nx           - number of subplots in x/y direction, optional
+# nplots           - total number of subplots, optional
+# iplot            - this subplot index (starting at 0), optional
+
+# lineAttribOffset - offset for selecting line attributes, optional
+# legend_inside    - whether legend should be placed inside the subplot, optional
+
+    ax = fig.add_subplot(ny, nx, iplot+1)
+    ix = int(iplot)%int(nx)
+    iy = int(iplot)/int(nx)
+
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
+
+    #add lines
+    plotVals = []
+    nLines = 0
+    linesLabel = ['RMS','STD','Mean']
+    for iline, lineVals in enumerate([rmsVals,stdVals,meanVals]):
+        if np.all(np.isnan(lineVals)):
+            global nanWarnRamp
+            if nanWarnRamp==0:
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+            nanWarnRamp=nanWarnRamp+1
+            continue
+        if len(lineVals)!=len(yVals):
+            global lenWarnRamp
+            if lenWarnRamp==0:
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+            lenWarnRamp=lenWarnRamp+1
+            continue
+
+        # Plot line for each lineVals that has non-missing data
+        pColor = pstyle.color(iline+lineAttribOffset)
+
+        ax.plot(lineVals, yVals,
+                color=pColor,
+                label=linesLabel[iline],
+                ls=pstyle.line(iline+lineAttribOffset),
+                linewidth=commonLineWidth)
+        nLines += 1
+        plotVals.append(lineVals)
+
+    if nLines == 0:
+        ax.tick_params(axis='x',labelbottom=False)
+        ax.tick_params(axis='y',labelleft=False)
+        return None
+
+    #axes settings
+    # standardize x-limits
+    mindval, maxdval = pu.get_clean_ax_limits(plotVals=plotVals)
+    if (np.isfinite(mindval) and
+        np.isfinite(maxdval)):
+        ax.set_xlim(mindval, maxdval)
+
+    ax.tick_params(axis='both', which='major', labelsize=3)
+    ax.tick_params(axis='both', which='minor', labelsize=2)
+
+    #handle interior subplot ticks/labels
+    if not interiorLabels \
+       and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
+        ax.tick_params(axis='x',labelbottom=False)
+    if interiorLabels or iy == ny-1:
+        if dataLabel is not None: ax.set_xlabel(dataLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if indepLabel is not None: ax.set_ylabel(indepLabel,fontsize=axisLabelFontSize)
+
+    #legend
+    if legend_inside:
+        #INSIDE AXES
+        lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
+                       framealpha=0.4,ncol=1)
+        lh.get_frame().set_linewidth(0.0)
+    elif ix==nx-1 or iplot==nplots-1:
+        #OUTSIDE AXES
+        ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
+                  bbox_to_anchor=(1.02, 1), borderaxespad=0)
+
+    ax.grid(linewidth=gridLineWidth)
+
+    # Add count on RHS y-axis
+    ax2 = ax.twiny()
+    color = 'black'
+    if interiorLabels or iy == 0:
+        ax2.set_xlabel('Count',fontsize=axisLabelFontSize,color=color)
+    ax2.plot(countVals, yVals,
+             color=color,
+             label='Count',
+             ls=':',
+             linewidth=commonLineWidth)
+    ax2.tick_params(axis='x', labelcolor=color)
+    ax2.set_xscale('log')
+    ax2.set_xlim(left=100.)
+    ax2.tick_params(axis='x', which='major', labelsize=3)
+    ax2.tick_params(axis='x', which='minor', labelsize=2)
+
+    return None
+
+###############################################################################
+lenWarnRamp = 0
+nanWarnRamp = 0
+def plotfitRampComposite(fig,
+               xVals,
+               countVals,
+               meanVals,
+               rmsVals,
+               stdVals,
+               title="", dataLabel=None,
+               indepLabel=None,
+               ny=1, nx=1, nplots=1, iplot=0,
+               lineAttribOffset=1,
+               legend_inside=True,
+               interiorLabels=True):
+
+# ARGUMENTS
+# fig              - matplotlib figure object
+# countVals        - Count of quantity (array)
+# meanVals         - Mean of quantity (array)
+# rmsVals          - RMS of quantity (array)
+# stdVals          - STD of quantity (array)
+
+# xVals           - independent variable on x-axis (array)
+
+# title            - subplot title, optional
+# dataLabel        - label for y-axis, optional
+# indepLabel       - label for xVals, optional
+
+# ny, nx           - number of subplots in x/y direction, optional
+# nplots           - total number of subplots, optional
+# iplot            - this subplot index (starting at 0), optional
+
+# lineAttribOffset - offset for selecting line attributes, optional
+# legend_inside    - whether legend should be placed inside the subplot, optional
+
+    ax = fig.add_subplot(ny, nx, iplot+1)
+    ix = int(iplot)%int(nx)
+    iy = int(iplot)/int(nx)
+
+    # title
+    t = title
+    if nplots > 1:
+      t = pstyle.subplotLabel(iplot)+' '+title
+    ax.set_title(t,fontsize=titleFontSize)
+
+    #add lines
+    plotVals = []
+    nLines = 0
+    linesLabel = ['RMS','STD','Mean']
+    for iline, lineVals in enumerate([rmsVals,stdVals,meanVals]):
+        if np.all(np.isnan(lineVals)):
+            global nanWarnRamp
+            if nanWarnRamp==0:
+                _logger.warning("skipping all-NaN data")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+            nanWarnRamp=nanWarnRamp+1
+            continue
+        if len(lineVals)!=len(xVals):
+            global lenWarnRamp
+            if lenWarnRamp==0:
+                _logger.warning("skipping data where len(x)!=len(y)")
+                _logger.warning(title+"; "+indepLabel+"; "+linesLabel[iline])
+            lenWarnRamp=lenWarnRamp+1
+            continue
+
+        # Plot line for each lineVals that has non-missing data
+        pColor = pstyle.color(iline+lineAttribOffset)
+
+        ax.plot(xVals, lineVals,
+                color=pColor,
+                label=linesLabel[iline],
+                ls=pstyle.line(iline+lineAttribOffset),
                 linewidth=commonLineWidth)
         nLines += 1
         plotVals.append(lineVals)
@@ -2124,7 +2766,7 @@ def plotfitRampComposite(fig,
 
       plotVals.append(fitERR)
 
-      pColor = pu.plotColor(4,linesLabel.index(fitStat)+lineAttribOffset)
+      pColor = pstyle.color(linesLabel.index(fitStat)+lineAttribOffset)
 
       ax.plot(fitX, fitERR,
               color=pColor,
@@ -2149,10 +2791,10 @@ def plotfitRampComposite(fig,
     if not interiorLabels \
        and (iy < ny-2 or ( iy == ny-2 and (int(nplots)%int(nx)==0 or ix <= (int(nplots)%int(nx) - 1)) )):
         ax.tick_params(axis='x',labelbottom=False)
-    if interiorLabels or ix == 0:
-        ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
     if interiorLabels or iy == ny-1:
-        ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
+        if indepLabel is not None: ax.set_xlabel(indepLabel,fontsize=axisLabelFontSize)
+    if interiorLabels or ix == 0:
+        if dataLabel is not None: ax.set_ylabel(dataLabel,fontsize=axisLabelFontSize)
 
     #legend
     if legend_inside:
@@ -2165,12 +2807,12 @@ def plotfitRampComposite(fig,
         ax.legend(loc='upper left',fontsize=legendLabelFontSize1,frameon=False,
                   bbox_to_anchor=(1.02, 1), borderaxespad=0)
 
-    ax.grid()
+    ax.grid(linewidth=gridLineWidth)
 
     # Add count on RHS y-axis
     ax2 = ax.twinx()
     color = 'black'
-    if interiorLabels or ix == nx:
+    if interiorLabels or ix == nx-1:
         ax2.set_ylabel('Count',fontsize=axisLabelFontSize,color=color)
     #ax2.plot(xVals[:indMaxX4Quant], countVals[:indMaxX4Quant],
     ax2.plot(xVals, countVals,

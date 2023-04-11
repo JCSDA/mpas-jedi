@@ -85,11 +85,15 @@ class FileHandles():
     filevars = self.handles[0].varsINGroup(group)
 
     # only include variables with finite data
+    # ensures only assimilated channels are selected
     varlist = []
     for var in filevars:
         grpVar = vu.AllVarCtors[self.fileFormat](var, group)
         var1D = self.singleVarAtLocations(grpVar)
         if np.isfinite(var1D).sum() > 0: varlist.append(var)
+
+        # TODO(JJG-05OCT2022): turn off above check for gnssrobndnbam to get through due to all missing values
+        #varlist.append(var)
 
     return varlist
 
