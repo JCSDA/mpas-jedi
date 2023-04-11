@@ -114,7 +114,7 @@ dbConf['fcTimeInc'] = dt.timedelta(hours=12)
 
 ## VerificationType
 # OPTIONS: 'omb/oma', 'forecast'
-# 'omb/oma' - calculated from a variational application, only available when
+# 'omb/oma' - calculated from a da application, only available when
 #             VerificationSpace=='obs'
 # 'forecast' - single- or multi-duration forecasts either in observation or model space
 VerificationType = 'forecast'
@@ -163,7 +163,7 @@ ensembleVerifyDir = 'NotSupported'
 
 if zeroDurationForecast:
   if VerificationType == 'omb/oma' and VerificationSpace == 'obs':
-    commonAppIdentifier = 'variational' # will need to change to 'da' after feature/letkf merged to MPAS-Workflow
+    commonAppIdentifier = 'da'
     deterministicVerifyDir = OMBOMAVerification
     # ensemble verification for omb/oma not currently supported by MPAS-Workflow
 
@@ -327,7 +327,7 @@ dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
 
 ## appIdentifiers is a list of secondary labels that are within the database
 #  intermediate file names.  Typical values in MPAS-Workflow applications are
-#  'hofx' for OMF, 'variational' for OMB/OMA, and '' (empty) for model-space
+#  'hofx' for OMF, 'da' for OMB/OMA, and '' (empty) for model-space
 #  verification.  It is optional for the user to use whatever string they choose
 #  as part of the file name to distinguish the information contained within from
 #  other files, e.g., an experiment characteristic.  appIdentifiers is only important
