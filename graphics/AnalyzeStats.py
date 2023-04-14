@@ -2,7 +2,6 @@
 
 from AnalyzeStatsArgs import args
 
-from Analyses import Analyses
 import analyze_config as anconf
 import config as conf
 from copy import deepcopy
@@ -11,26 +10,11 @@ import logging
 import logsetup
 import multiprocessing as mp
 import os
-import StatisticsDatabase as sdb
+
+from analysis.Analyses import Analyses
+import analysis.StatisticsDatabase as sdb
 
 _logger = logging.getLogger(__name__)
-
-depends_on = [
-  'AnalyzeStatsArgs',
-  'analyze_config',
-  'Analyses',
-  'basic_plot_functions',
-  'predefined_configs',
-  'binning_params',
-  'binning_utils',
-  'config',
-  'diag_utils',
-  'fit2D',
-  'plot_utils',
-  'stat_utils',
-  'StatisticsDatabase',
-  'var_utils',
-]
 
 def main():
     '''

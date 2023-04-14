@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 from SpawnAnalyzeStatsArgs import args
-import AnalyzeStats as mainScript
-from Analyses import anWorkingDir
-from analyze_config import analysisTypes
 
 import argparse
 import config as conf
@@ -14,6 +11,11 @@ import os
 from pathlib import Path
 import re
 import textwrap
+
+import AnalyzeStats as mainScript
+from analyze_config import analysisTypes
+
+from analysis.AnalysisBase import anWorkingDir
 
 jobenv = 'csh'
 jobbody = ['''
@@ -29,20 +31,7 @@ setenv NUMEXPR_MAX_THREADS 1
 setenv pySourceDir PYSOURCE
 
 set mainScript = '''+mainScript.__name__+'''
-
-#
-# link dependencies:
-# ==================
-set pyDepends = ( \\
-  ${mainScript} \\''']
-for dep in mainScript.depends_on:
-    jobbody += ['  '+dep+' \\']
-jobbody += [''')
-
-#TODO: copy these scripts before job submission to allow multiple concurrent job spawns
-foreach pySource ($pyDepends)
-  ln -sf ${pySourceDir}/${pySource}.py ./
-end
+ln -sf ${pySourceDir}/${mainScript}.py ./
 
 #
 # make plots:
