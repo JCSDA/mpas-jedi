@@ -8,101 +8,104 @@ geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
   deallocate non-da fields: true
-input variables: &vars
-- temperature
-- spechum
-- uReconstructZonal
-- uReconstructMeridional
-- surface_pressure
 background:
-  state variables: *vars
+  state variables: &vars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: &date 2018-04-15T00:00:00Z
-ensemble:
-  members:
-  - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-bump:
-  drivers:
-    compute covariance: true
-    compute correlation: true
-    multivariate strategy: univariate
-    compute variance: true
-    compute moments: true
-    compute nicas: true
-    write local nicas: true
-    write global nicas: true
-    write nicas grids: true
-  sampling:
-    computation grid size: 512
-    diagnostic grid size: 150
-    distance classes: 5
-    distance class width: 1000000
-    reduced levels: 1
-    local diagnostic: true
-    averaging length-scale: 1000000
-  diagnostics:
-    target ensemble size: 5
-  variance:
-    objective filtering: true
-    filtering iterations: 1
-    initial length-scale:
-    - variables:
-      - temperature
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-      - surface_pressure
-      value: 3000.0e3
-  fit:
-    horizontal filtering length-scale: 3000000
-  nicas:
-    resolution: 4
-  grids:
-  - model:
-      variables:
-      - temperature
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-    io:
-      files prefix: Data/bump/mpas_parametersbump_cov_3D
-  - model:
-      variables:
-      - surface_pressure
-    io:
-      files prefix: Data/bump/mpas_parametersbump_cov_2D
-output:
-- parameter: stddev
-  file:
-    filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-- parameter: cor_rh
-  file:
-    filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-- parameter: cor_rv
-  file:
-    filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
+background error:
+  covariance model: SABER
+  ensemble:
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+  saber central block:
+    saber block name: BUMP_NICAS
+    calibration:
+      drivers:
+        compute covariance: true
+        compute correlation: true
+        multivariate strategy: univariate
+        compute variance: true
+        compute moments: true
+        compute nicas: true
+        write local nicas: true
+        write global nicas: true
+        write nicas grids: true
+      sampling:
+        computation grid size: 512
+        diagnostic grid size: 150
+        distance classes: 5
+        distance class width: 1000000
+        reduced levels: 1
+        local diagnostic: true
+        averaging length-scale: 1000000
+      diagnostics:
+        target ensemble size: 5
+      variance:
+        objective filtering: true
+        filtering iterations: 1
+        initial length-scale:
+        - variables:
+          - temperature
+          - spechum
+          - uReconstructZonal
+          - uReconstructMeridional
+          - surface_pressure
+          value: 3000.0e3
+      fit:
+        horizontal filtering length-scale: 3000000
+      nicas:
+        resolution: 4
+      grids:
+      - model:
+          variables:
+          - temperature
+          - spechum
+          - uReconstructZonal
+          - uReconstructMeridional
+        io:
+          files prefix: Data/bump/mpas_parametersbump_cov_3D
+      - model:
+          variables:
+          - surface_pressure
+        io:
+          files prefix: Data/bump/mpas_parametersbump_cov_2D
+      output model files:
+      - parameter: stddev
+        file:
+          filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: cor_rh
+        file:
+          filename: Data/bump/mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: cor_rv
+        file:
+          filename: Data/bump/mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control

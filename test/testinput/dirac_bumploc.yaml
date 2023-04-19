@@ -23,7 +23,7 @@ background error:
     saber central block:
       saber block name: BUMP_NICAS
       active variables: *vars
-      bump:
+      read:
         io:
           files prefix: Data/bump/mpas_parametersbump_loc
         drivers:

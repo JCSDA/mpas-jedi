@@ -49,7 +49,7 @@ cost function:
       saber central block:
         saber block name: BUMP_NICAS
         active variables: *incvars
-        bump:
+        read:
           io:
             files prefix: Data/bump/mpas_parametersbump_loc
           drivers:

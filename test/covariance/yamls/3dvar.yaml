@@ -21,9 +21,9 @@ cost function:
     covariance model: SABER
     saber central block:
       saber block name: BUMP_NICAS
-      bump:
+      read:
         io:
-          data directory: /glade/scratch/bjung/pandac/20230120_feature_groups/60km.NICAS_00
+          data directory: /glade/scratch/bjung/pandac/20230313_feature_training/refac.60km.NICAS_00
           files prefix: mpas_parametersbump_cov
         drivers:
           multivariate strategy: univariate
@@ -36,16 +36,15 @@ cost function:
       - surface_pressure
     saber outer blocks:
     - saber block name: StdDev
-      input fields:
-      - parameter: StdDev
-        file:
-          filename: /glade/scratch/bjung/pandac/20230120_feature_groups/60km.CMAT_00/mpas.stddev_0p33.$Y-$M-$D_$h.$m.$s.nc
+      read:
+        model file:
+          filename: /glade/scratch/bjung/pandac/20230313_feature_training/refac.60km.CMAT_00.iterative_ensemble_loading/mpas.stddev_0p33.$Y-$M-$D_$h.$m.$s.nc
           date: *date
           stream name: control
     - saber block name: BUMP_VerticalBalance
-      bump:
+      read:
         io:
-          data directory: /glade/scratch/bjung/pandac/20230120_feature_groups/60km.VBAL_00
+          data directory: /glade/scratch/bjung/pandac/20230313_feature_training/refac.60km.VBAL_00
           files prefix: mpas_vbal
         drivers:
           read local sampling: true

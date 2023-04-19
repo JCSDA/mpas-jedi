@@ -2,43 +2,51 @@ geometry:
   nml_file: "./namelist.atmosphere"
   streams_file: "./streams.atmosphere"
   bump vunit: "avgheight"
-input variables: &vars
-- stream_function
-- velocity_potential
-- temperature
-- spechum
-- surface_pressure
 background:
-  state variables: *vars
+  state variables: &vars
+  - stream_function
+  - velocity_potential
+  - temperature
+  - spechum
+  - surface_pressure
   filename: "./restart.2018-04-15_00.00.00.nc"
   date: &date '2018-04-15T00:00:00Z'
-bump:
-  io:
-    files prefix: mpas_parametersbump_cov
-  drivers:
-    multivariate strategy: univariate
-    compute nicas: true
-    write local nicas: true
-    write global nicas: true
-    write nicas grids: true
-  sampling:
-    computation grid size: 4096
-  nicas:
-    resolution: 8
-input fields:
-- parameter: rh
-  file:
-    filename: ./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-- parameter: rv
-  file:
-    filename: ./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-output:
-- parameter: nicas_norm
-  file:
-    filename: ./mpas.nicas_norm.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
+
+background error:
+  covariance model: SABER
+
+  saber central block:
+    saber block name: BUMP_NICAS
+
+    calibration:
+      io:
+        files prefix: mpas_parametersbump_cov
+      drivers:
+        multivariate strategy: univariate
+        compute nicas: true
+        write local nicas: true
+        write global nicas: true
+        write nicas grids: true
+      sampling:
+        computation grid size: 4096
+      nicas:
+        resolution: 8
+
+    input model files:
+    - parameter: rh
+      file:
+        filename: ./mpas.cor_rh.$Y-$M-$D_$h.$m.$s.nc
+        date: *date
+        stream name: control
+    - parameter: rv
+      file:
+        filename: ./mpas.cor_rv.$Y-$M-$D_$h.$m.$s.nc
+        date: *date
+        stream name: control
+
+    output model files:
+    - parameter: nicas_norm
+      file:
+        filename: ./mpas.nicas_norm.$Y-$M-$D_$h.$m.$s.nc
+        date: *date
+        stream name: control

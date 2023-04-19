@@ -34,7 +34,7 @@ cost function:
         covariance model: SABER
         saber central block:
           saber block name: BUMP_NICAS
-          bump:
+          read:
             drivers:
               multivariate strategy: univariate
               read local nicas: true
@@ -54,9 +54,8 @@ cost function:
                 files prefix: Data/bump/mpas_parametersbump_cov_2D
         saber outer blocks:
         - saber block name: StdDev
-          input fields:
-          - parameter: StdDev
-            file:
+          read:
+            model file:
               filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
               date: *analysisdate
               stream name: control
@@ -69,7 +68,7 @@ cost function:
           saber central block:
             saber block name: BUMP_NICAS
             active variables: *incvars
-            bump:
+            read:
               io:
                 files prefix: Data/bump/mpas_parametersbump_loc
               drivers:

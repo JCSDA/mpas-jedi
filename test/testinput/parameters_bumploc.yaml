@@ -9,80 +9,83 @@ geometry:
   streams_file: "./Data/480km/streams.atmosphere"
   deallocate non-da fields: true
   bump vunit: "modellevel" # modellevel, height
-input variables: &vars
-- temperature
-- spechum
-- uReconstructZonal
-- uReconstructMeridional
-- surface_pressure
 background:
-  state variables: *vars
+  state variables: &vars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
   filename: ./Data/480km/bg/restart.2018-04-15_00.00.00.nc
   date: &date 2018-04-15T00:00:00Z
-ensemble:
-  members:
-  - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-  - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
-    date: *date
-    state variables: *vars
-    stream name: ensemble
-bump:
-  io:
-    files prefix: Data/bump/mpas_parametersbump_loc
-  drivers:
-    compute covariance: true
-    compute correlation: true
-    compute localization: true
-    multivariate strategy: duplicated
-    compute moments: true
-    compute nicas: true
-    write local nicas: true
-    write global nicas: true
-    write nicas grids: true
-  model:
-    level for 2d variables: last
-  sampling:
-    computation grid size: 1024
-    diagnostic grid size: 200
-    distance classes: 10
-    distance class width: 1000000
-    reduced levels: 1
-    local diagnostic: true
-    averaging length-scale: 1000000
-  diagnostics:
-    target ensemble size: 5
-  fit:
-    horizontal filtering length-scale: 3000000
-  nicas:
-    resolution: 4
-output:
-- parameter: loc_rh
-  file:
-    filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-- parameter: loc_rv
-  file:
-    filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
-- parameter: nicas_norm
-  file:
-    filename: Data/bump/mpas.hyb_nicas_norm.$Y-$M-$D_$h.$m.$s.nc
-    date: *date
-    stream name: control
+background error:
+  covariance model: SABER
+  ensemble:
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+      stream name: ensemble
+  saber central block:
+    saber block name: BUMP_NICAS
+    calibration:
+      io:
+        files prefix: Data/bump/mpas_parametersbump_loc
+      drivers:
+        compute covariance: true
+        compute correlation: true
+        compute localization: true
+        multivariate strategy: duplicated
+        compute moments: true
+        compute nicas: true
+        write local nicas: true
+        write global nicas: true
+        write nicas grids: true
+      model:
+        level for 2d variables: last
+      sampling:
+        computation grid size: 1024
+        diagnostic grid size: 200
+        distance classes: 10
+        distance class width: 1000000
+        reduced levels: 1
+        local diagnostic: true
+        averaging length-scale: 1000000
+      diagnostics:
+        target ensemble size: 5
+      fit:
+        horizontal filtering length-scale: 3000000
+      nicas:
+        resolution: 4
+      output model files:
+      - parameter: loc_rh
+        file:
+          filename: Data/bump/mpas.hyb_loc_rh.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: loc_rv
+        file:
+          filename: Data/bump/mpas.hyb_loc_rv.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: nicas_norm
+        file:
+          filename: Data/bump/mpas.hyb_nicas_norm.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
