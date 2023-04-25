@@ -25,7 +25,6 @@ use interpolatorbump_mod, only: bump_interpolator
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex, var_prsi
-use ufo_locations_mod
 use ufo_geovals_mod, only: ufo_geovals
 
 !MPAS-Model
