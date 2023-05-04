@@ -44,6 +44,8 @@ background error:
   saber central block:
     saber block name: BUMP_NICAS
     calibration:
+      io:
+        files prefix: Data/bump/mpas_parametersbump_cov
       drivers:
         compute covariance: true
         compute correlation: true
@@ -86,13 +88,9 @@ background error:
           - spechum
           - uReconstructZonal
           - uReconstructMeridional
-        io:
-          files prefix: Data/bump/mpas_parametersbump_cov_3D
       - model:
           variables:
           - surface_pressure
-        io:
-          files prefix: Data/bump/mpas_parametersbump_cov_2D
       output model files:
       - parameter: stddev
         file:
