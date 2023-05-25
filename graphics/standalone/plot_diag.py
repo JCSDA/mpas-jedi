@@ -42,18 +42,6 @@ test/
  │   ├── ...
 '''
 
-# columns: var_name            unit_used   abbr.
-vardict = {
-  'air_temperature':        [ '(K)',     'T'   ],
-  'virtual_temperature':    [ '(K)',     'Tv'  ],
-  'eastward_wind':          [ '(m/s)',   'U'   ],
-  'northward_wind':         [ '(m/s)',   'V'   ],
-  'specific_humidity':      [ '(kg/kg)', 'Q'   ],
-  'refractivity':           [ '(%)',     'Ref' ],
-  'bending_angle':          [ '(%)',     'Bnd' ],
-  'brightness_temperature': [ '(K)',     'BT'  ],
-  'surface_pressure':       [ '(Pa)',    'Ps'  ],
-}
 # need add Ps
     #Note, refractivity: we plot RMSE of OMB/O and OMA/O; refractivity unit: N-unit
     #Note, bending_angle: we plot RMSE of OMB/O and OMA/O; bending_angle unit: rad
@@ -64,15 +52,15 @@ def readdata():
   #imageFmt = 'pdf' #higher fidelity, slower
 
   # Diagnostic omb,oma and hofx files located in diagdir
-  diagdir    = '../../Data/os/'
+  diagdir    = '../../Data/'
   diagprefix = 'obsout_'
-  diagsuffix = '_*.nc4'  #for ctests
-  #diagsuffix = '_*.h5'   #for cycling
+  #diagsuffix = '_*.nc4'  #for ctests
+  diagsuffix = '_*.h5'   #for cycling
   # * in diagsuffix is 4-digit processor rank [0000 to XXXX]
   #npedigits = 4
 
   # controls for generating 2D maps of locations
-  makeDistributionPlots = False
+  makeDistributionPlots = True
   plot_allinOneDistri = True   # plot profileObsTypes (includes all levels) and sfcObsTypes.
   plot_eachLevelDistri = False # plot every level separately for profileObsTypes.
 

@@ -698,16 +698,16 @@ DiagSpaceConfig = {
         #'analyzed variables': [
         #  'T2m', 'Q2m', 'U10m', 'V10m', 'Ps',
         #  'T', 'Theta', 'Qv', 'U', 'V', 'P', 'rho', 'W',
+        # 'Qv01to10', 'Qv11to20','Qv21to30','Qv31to40','Qv41to55',
         #],
         ## all standard variables + Qv by levels
         'analyzed variables': [
-          'T2m', 'Q2m', 'U10m', 'V10m', 'Ps',
-          'T', 'Theta', 'Qv', 'U', 'V', 'P', 'rho', 'W',
+          'T2m', 'Q2m', 'U10m', 'Ps',
+          'T',  'Qv', 'U', 'V',
           'Qv01to10',
           'Qv11to20',
           'Qv21to30',
           'Qv31to40',
-          'Qv41to55',
         ],
         ## specific standard variables
         #'analyzed variables': [
