@@ -237,8 +237,8 @@ list( APPEND crtm_test_input
 )
 
 ## Create tests to download UFO and CRTM test files
-# Currently only use 2.3.0 CRTM coefficients
-set( CRTM_COEFFS_BRANCH "2.3.0" )
+set( CRTM_COEFFS_BRANCH "2.4.1" )
+#set( CRTM_COEFFS_BRANCH "2.4.1_skylab_4.0" ) # for complete coeff. files
 
 function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
   # If REPO branch is being built set GIT_BRANCH_FUNC to REPO's current branch.
@@ -284,7 +284,8 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
     if( DEFINED ENV{ECBUILD_DOWNLOAD_BASE_URL} )
       set( ECBUILD_DOWNLOAD_BASE_URL "$ENV{ECBUILD_DOWNLOAD_BASE_URL}/${repo}/${GIT_TAG_FUNC}" )
     else()
-      set( ECBUILD_DOWNLOAD_BASE_URL https://gdex.ucar.edu/api/v1/dataset/147b_jcsda/version/1.0.0/file )
+      set( ECBUILD_DOWNLOAD_BASE_URL https://gdex.ucar.edu/dataset/jedi-skylab/file )
+      #set( ECBUILD_DOWNLOAD_BASE_URL https://ftp.ssec.wisc.edu/pub/s4/CRTM/file ) # for complete coeff. files
     endif()
 
     set( DIRNAME ${GIT_TAG_FUNC} )
@@ -344,7 +345,7 @@ endfunction()
 # Link test data files from other repositories
 #ufo
 set(ufo_test_data  ufo_testinput_tier_1.tar.gz)
-set(crtm_test_data crtm_coefficients.tar.gz)
+set(crtm_test_data crtm_coefficients_${CRTM_COEFFS_BRANCH}.tar.gz)
 set(mpas_test_data  mpas-jedi_testinput_tier_1.tar.gz)
 
 ADD_DOWNLOAD_TEST( "ufo" ${ufo_test_data} MPAS_UFO_TESTFILES_PATH )

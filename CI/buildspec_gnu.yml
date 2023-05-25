@@ -50,9 +50,6 @@ phases:
       - git lfs install # creates .gitconfig
       - mkdir -p /jcsda/mpas-bundle
 
-      #  Set crtm branch name
-      - export CRTM_JEDI_BRANCH="release/crtm_jedi"
-
       # when testing develop branch
       - if [ "$CODEBUILD_GIT_BRANCH" = "develop" ];
         then export CODEBUILD_GIT_BRANCH_CRTM=${CRTM_JEDI_BRANCH};
@@ -96,9 +93,6 @@ phases:
 
       # ufo
       - ./clone.sh jcsda-internal/ufo $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle ufo ${GIT_BASE_BRANCH} develop
-
-      # crtm
-      - ./clone.sh jcsda-internal/crtm $CODEBUILD_GIT_BRANCH_CRTM /jcsda/mpas-bundle crtm ${GIT_BASE_BRANCH_CRTM} ${CRTM_JEDI_BRANCH}
 
       ##  internal repos
       #  mpas-model
