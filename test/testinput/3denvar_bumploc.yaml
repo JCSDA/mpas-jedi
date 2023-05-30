@@ -1,9 +1,9 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/3denvar_bumploc_bumpinterp.ref
-  log output filename: testoutput/3denvar_bumploc_bumpinterp.run
-  test output filename: testoutput/3denvar_bumploc_bumpinterp.run.ref
+  reference filename: testoutput/3denvar_bumploc.ref
+  log output filename: testoutput/3denvar_bumploc.run
+  test output filename: testoutput/3denvar_bumploc.run.ref
 _member config: &memberConfig
   date: &analysisdate '2018-04-15T00:00:00Z'
   state variables: &incvars
@@ -63,7 +63,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_bump_sondes.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_unst_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -76,8 +76,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: bump
     - obs space:
         name: Satwind
         obsdatain:
@@ -87,7 +85,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_bump_satwind.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_unst_satwind.nc4
         simulated variables: [windEastward, windNorthward]
       obs operator:
         name: VertInterp
@@ -100,8 +98,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: bump
     - obs space:
         name: GnssroRefNCEP
         obsdatain:
@@ -111,7 +107,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_bump_gnssroref.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_unst_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -141,8 +137,6 @@ cost function:
         apply at iterations: 0,1
         variable: refractivity
         errmodel: NCEP
-      get values:
-        interpolation type: bump
     - obs space:
         name: SfcPCorrected
         obsdatain:
@@ -152,7 +146,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_bump_sfc.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_unst_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -173,10 +167,8 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 10
-      get values:
-        interpolation type: bump
 output:
-  filename: "Data/states/mpas.3denvar_bumploc_bump.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_bumploc_unst.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:

@@ -76,8 +76,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: Satwind
         obsdatain:
@@ -100,8 +98,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: GnssroRefNCEP
         obsdatain:
@@ -141,8 +137,6 @@ cost function:
         apply at iterations: 0,1
         variable: refractivity
         errmodel: NCEP
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: SfcPCorrected
         obsdatain:
@@ -173,8 +167,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 10
-      get values:
-        interpolation type: unstructured
 output:
   filename: "Data/states/mpas.3denvar_unsinterp_dualres.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis

@@ -1,19 +1,16 @@
-getvalues test:
-  state generate:
-    analytic init:
-      method: dcmip-test-4-0
-    state variables: &ufoVars
-    # use UFO variables directly in the background State object
-    # note: has to be virtual_temperature and air_pressure
-    - virtual_temperature
-    - air_pressure
-    date: '2018-04-15T00:00:00Z'
-  interpolation tolerance: 5.0e-3
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
-state variables: *ufoVars
-interpolation type: unstructured
+state:
+  analytic init:
+    method: dcmip-test-4-0
+  state variables: &ufoVars
+  # use UFO variables directly in the background State object
+  # note: has to be virtual_temperature and air_pressure
+  - virtual_temperature
+  - air_pressure
+  date: '2018-04-15T00:00:00Z'
+variables: *ufoVars
 locations:
   window begin: 2018-04-14T21:00:00Z
   window end: 2018-04-15T03:00:00Z
@@ -32,3 +29,4 @@ locations:
         obs errors:
         - 1.5
         - 2.1
+tolerance interpolation: 5.0e-3

@@ -67,10 +67,9 @@ endif()
 
 ## test yamls
 list( APPEND mpas_testinput
-  testinput/3denvar_bumploc_bumpinterp.yaml
-  testinput/3denvar_bumploc_unsinterp.yaml
+  testinput/3denvar_bumploc.yaml
   testinput/3denvar_dual_resolution.yaml
-  testinput/3denvar_2stream_bumploc_unsinterp.yaml
+  testinput/3denvar_2stream_bumploc.yaml
   testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
@@ -103,6 +102,7 @@ list( APPEND mpas_testinput
   testinput/geometry.yaml
   testinput/geometry_iterator_2d.yaml
   testinput/geometry_iterator_3d.yaml
+  testinput/getvalues.yaml
   testinput/hofx.yaml
   testinput/hofx3d.yaml
   testinput/hofx3d_ropp.yaml
@@ -128,10 +128,9 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 
 ## reference outputs
 list( APPEND mpas_testoutput
-  testoutput/3denvar_bumploc_bumpinterp.ref
-  testoutput/3denvar_bumploc_unsinterp.ref
+  testoutput/3denvar_bumploc.ref
   testoutput/3denvar_dual_resolution.ref
-  testoutput/3denvar_2stream_bumploc_unsinterp.ref
+  testoutput/3denvar_2stream_bumploc.ref
   testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
@@ -740,6 +739,7 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
+    add_mpasjedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
     add_mpasjedi_unit_test( CLASS ObsLocalization YAMLFILE obslocalization )
     add_mpasjedi_unit_test( CLASS ObsLocalization YAMLFILE obslocalization_vertical )
     add_mpasjedi_unit_test( CLASS ObsLocalizations YAMLFILE obslocalizations )
@@ -856,13 +856,7 @@ endif( ${rttov_FOUND} )
 
 #variational - 3denvar
 add_mpasjedi_application_test(
-    NAME 3denvar_bumploc_bumpinterp
-    APPLICATION variational
-    DEPENDS parameters_bumploc
-    ${RECALIBRATE})
-
-add_mpasjedi_application_test(
-    NAME 3denvar_bumploc_unsinterp
+    NAME 3denvar_bumploc
     APPLICATION variational
     DEPENDS parameters_bumploc
     ${RECALIBRATE})
@@ -874,7 +868,7 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
-    NAME 3denvar_2stream_bumploc_unsinterp
+    NAME 3denvar_2stream_bumploc
     APPLICATION variational
     DEPENDS parameters_bumploc
     ${RECALIBRATE})

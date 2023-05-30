@@ -119,8 +119,6 @@ cost function:
         - name: brightnessTemperature
           channels: 1-15
         threshold: 10.0
-      get values:
-        interpolation type: unstructured
 output:
   filename: "Data/states/mpas.3denvar_amsua_bc.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis

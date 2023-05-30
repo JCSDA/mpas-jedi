@@ -1,9 +1,9 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/3denvar_bumploc_unsinterp.ref
-  log output filename: testoutput/3denvar_bumploc_unsinterp.run
-  test output filename: testoutput/3denvar_bumploc_unsinterp.run.ref
+  reference filename: testoutput/3denvar_2stream_bumploc.ref
+  log output filename: testoutput/3denvar_2stream_bumploc.run
+  test output filename: testoutput/3denvar_2stream_bumploc.run.ref
 _member config: &memberConfig
   date: &analysisdate '2018-04-15T00:00:00Z'
   state variables: &incvars
@@ -18,15 +18,15 @@ cost function:
   window begin: '2018-04-14T21:00:00Z'
   window length: PT6H
   geometry:
-    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-    streams_file: "./Data/480km/streams.atmosphere"
+    nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km_2stream/streams.atmosphere"
     deallocate non-da fields: true
   analysis variables: *incvars
   background:
     state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
                       theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
                       snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
-    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km_2stream/mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:
     covariance model: ensemble
@@ -63,7 +63,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_sondes.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -76,8 +76,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: Satwind
         obsdatain:
@@ -87,7 +85,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_satwind.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_satwind.nc4
         simulated variables: [windEastward, windNorthward]
       obs operator:
         name: VertInterp
@@ -100,8 +98,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: GnssroRefNCEP
         obsdatain:
@@ -111,7 +107,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_gnssroref.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -141,8 +137,6 @@ cost function:
         apply at iterations: 0,1
         variable: refractivity
         errmodel: NCEP
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: SfcPCorrected
         obsdatain:
@@ -152,7 +146,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_sfc.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -173,18 +167,16 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 10
-      get values:
-        interpolation type: unstructured
 output:
-  filename: "Data/states/mpas.3denvar_bumploc_unst.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_2stream.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:
     algorithm: DRIPCG
   iterations:
   - geometry:
-      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km/streams.atmosphere"
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
@@ -192,8 +184,8 @@ variational:
     diagnostics:
       departures: ombg
   - geometry:
-      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km/streams.atmosphere"
+      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km_2stream/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
