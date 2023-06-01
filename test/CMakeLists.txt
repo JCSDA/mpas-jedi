@@ -236,8 +236,8 @@ list( APPEND crtm_test_input
 )
 
 ## Create tests to download UFO and CRTM test files
-set( CRTM_COEFFS_BRANCH "2.4.1" )
-#set( CRTM_COEFFS_BRANCH "2.4.1_skylab_4.0" ) # for complete coeff. files
+#set( CRTM_COEFFS_BRANCH "2.4.1" ) # file from GDEX
+set( CRTM_COEFFS_BRANCH "2.4.1_skylab_4.0" ) # for complete coeff. files
 
 function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
   # If REPO branch is being built set GIT_BRANCH_FUNC to REPO's current branch.
@@ -283,8 +283,8 @@ function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
     if( DEFINED ENV{ECBUILD_DOWNLOAD_BASE_URL} )
       set( ECBUILD_DOWNLOAD_BASE_URL "$ENV{ECBUILD_DOWNLOAD_BASE_URL}/${repo}/${GIT_TAG_FUNC}" )
     else()
-      set( ECBUILD_DOWNLOAD_BASE_URL https://gdex.ucar.edu/dataset/jedi-skylab/file )
-      #set( ECBUILD_DOWNLOAD_BASE_URL https://ftp.ssec.wisc.edu/pub/s4/CRTM/file ) # for complete coeff. files
+      #set( ECBUILD_DOWNLOAD_BASE_URL https://gdex.ucar.edu/dataset/jedi-skylab/file )
+      set( ECBUILD_DOWNLOAD_BASE_URL https://ftp.ssec.wisc.edu/pub/s4/CRTM/file ) # for complete coeff. files
     endif()
 
     set( DIRNAME ${GIT_TAG_FUNC} )
