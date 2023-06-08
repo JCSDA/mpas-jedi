@@ -73,7 +73,7 @@ subroutine add_incr(self, increment)
    class(mpas_fields), intent(in)    :: increment
    character(len=StrKIND) :: kind_op
 
-   integer :: ngrid
+   integer :: i, k, ngrid
    type (mpas_pool_type), pointer :: state, diag, mesh
    type (field2DReal), pointer :: fld2d_pb, fld2d_u, fld2d_u_inc, fld2d_uRm, fld2d_uRz
    type (field2DReal), pointer :: fld2d_p, fld2d_dp, fld2d_drho, fld2d_dth, fld2d_dqv
@@ -119,6 +119,14 @@ subroutine add_incr(self, increment)
          call increment%get('surface_pressure', ptrr1_dps)
 
          call increment%get(         'spechum', ptrr2_dsh) ! converted to dqv below
+         do i = 1, ngrid
+            do k = 20, self%geom%nVertLevels
+               if (ptrr2_p(k,i) .le. 15000.) then
+                  ptrr2_dsh(k,i) = 0.
+               end if
+            end do
+         end do
+
          call self%get(              'spechum', ptrr2_sh)  !    for trajectory
 
          !duplicate dp, drho, dtheta
