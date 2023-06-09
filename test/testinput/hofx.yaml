@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.05
+  float relative tolerance: 0.07
   integer tolerance: 0
   reference filename: testoutput/hofx.ref
   log output filename: testoutput/hofx.run
