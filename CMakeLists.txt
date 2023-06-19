@@ -8,7 +8,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( mpasjedi VERSION 1.0.0 LANGUAGES C CXX Fortran )
+project( mpasjedi VERSION 2.0.0 LANGUAGES C CXX Fortran )
 
 ## Ecbuild integration
 find_package( ecbuild 3.3.2 REQUIRED )
