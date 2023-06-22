@@ -12,3 +12,9 @@ inc variables:
 increment test:
   date: '2018-04-15T00:00:00Z'
   skip rms by level test: true
+  dirac:
+    ndir: 1
+    dirLats: [30.31011691]
+    dirLons: [130.11182691]
+    ildir: 3
+    dirvar: uReconstructZonal

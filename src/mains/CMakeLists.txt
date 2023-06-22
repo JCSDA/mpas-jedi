@@ -4,10 +4,6 @@ if(saca_FOUND)
                             LIBS    ${PROJECT_NAME})
 endif(saca_FOUND)
 
-ecbuild_add_executable( TARGET  ${PROJECT_NAME}_dirac.x
-                        SOURCES mpasDirac.cc
-                        LIBS    ${PROJECT_NAME} saber )
-
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_enshofx.x
                         SOURCES mpasEnsHofX.cc
                         LIBS    ${PROJECT_NAME} )
@@ -36,17 +32,13 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_enkf.x
                         SOURCES mpasEnKF.cc
                         LIBS    ${PROJECT_NAME})
 
-ecbuild_add_executable( TARGET  ${PROJECT_NAME}_error_covariance_training.x
-                        SOURCES mpasErrorCovarianceTraining.cc
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_error_covariance_toolbox.x
+                        SOURCES mpasErrorCovarianceToolbox.cc
                         LIBS    ${PROJECT_NAME} saber )
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_rtpp.x
                         SOURCES mpasRTPP.cc
                         LIBS	${PROJECT_NAME} )
-
-ecbuild_add_executable( TARGET  ${PROJECT_NAME}_staticbinit.x
-                        SOURCES mpasStaticBInit.cc
-                        LIBS    ${PROJECT_NAME} )
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_variational.x
                         SOURCES mpasVariational.cc

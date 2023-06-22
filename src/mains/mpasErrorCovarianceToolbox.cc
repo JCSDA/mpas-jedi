@@ -7,7 +7,7 @@
 
 #include <oops/runs/Run.h>
 
-#include <saber/oops/ErrorCovarianceTraining.h>
+#include <saber/oops/ErrorCovarianceToolbox.h>
 #include <saber/oops/instantiateCovarFactory.h>
 
 #include "mpasjedi/Traits.h"
@@ -15,7 +15,6 @@
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   saber::instantiateCovarFactory<mpas::Traits>();
-  saber::ErrorCovarianceTraining<mpas::Traits> dir;
-  return run.execute(dir);
+  saber::ErrorCovarianceToolbox<mpas::Traits> ect;
+  return run.execute(ect);
 }
-

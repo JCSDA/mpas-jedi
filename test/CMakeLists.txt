@@ -794,12 +794,12 @@ add_mpasjedi_application_test(
 #parameters
 add_mpasjedi_application_test(
     NAME parameters_bumpcov
-    APPLICATION error_covariance_training
+    APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME parameters_bumploc
-    APPLICATION error_covariance_training
+    APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
 #gen_ens_pert_B
@@ -811,19 +811,19 @@ add_mpasjedi_application_test(
 #dirac
 add_mpasjedi_application_test(
     NAME dirac_bumpcov
-    APPLICATION dirac
+    APPLICATION error_covariance_toolbox
     DEPENDS parameters_bumpcov
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME dirac_bumploc
-    APPLICATION dirac
+    APPLICATION error_covariance_toolbox
     DEPENDS parameters_bumploc
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME dirac_noloc
-    APPLICATION dirac
+    APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
 #variational - 3dvar
@@ -957,12 +957,12 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
 #                NPE ${THIS_NPE})
 
             add_mpasjedi_application_test(
-                APPLICATION error_covariance_training
+                APPLICATION error_covariance_toolbox
 		NAME parameters_bumpcov
                 NPE ${THIS_NPE})
 
             add_mpasjedi_application_test(
-                APPLICATION error_covariance_training
+                APPLICATION error_covariance_toolbox
 		NAME parameters_bumploc
                 NPE ${THIS_NPE})
 
