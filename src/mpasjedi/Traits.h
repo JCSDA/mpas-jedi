@@ -17,6 +17,7 @@
 #include "mpasjedi/ModelBias/ModelBias.h"
 #include "mpasjedi/ModelBias/ModelBiasCovariance.h"
 #include "mpasjedi/ModelBias/ModelBiasIncrement.h"
+#include "mpasjedi/ModelData/ModelData.h"
 #include "mpasjedi/State/State.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
 
@@ -39,6 +40,7 @@ struct Traits {
 
   typedef mpas::LinearVariableChange LinearVariableChange;
   typedef mpas::VariableChange       VariableChange;
+  typedef mpas::ModelData            ModelData;
 };
 
 }  // namespace mpas

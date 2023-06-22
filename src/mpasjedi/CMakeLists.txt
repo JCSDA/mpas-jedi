@@ -50,6 +50,7 @@ list( APPEND mpasjedi_src_files
     ModelBias/ModelBiasCovariance.h
     ModelBias/ModelBiasIncrement.h
     ModelBias/ModelBias.h
+    ModelData/ModelData.h
     State/State.cc
     State/State.h
     State/State.interface.h
