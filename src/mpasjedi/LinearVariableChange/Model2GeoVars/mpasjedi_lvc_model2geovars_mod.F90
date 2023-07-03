@@ -142,10 +142,11 @@ subroutine multiply(self, geom, dxm, dxg)
         call dxm%copy_to(geom%identity(geovar), dxg, geovar)
       else
         !note: this warning is specifically for pressure => air_pressure in GNSSRO
-        write(message,'(2A)') &
-           'WARNING: mpasjedi_lvc_model2geovars::multiply: '&
-          &'increment missing identity field for geovar => ', trim(geovar)
-        call fckit_log%warning(message)
+        !write(message,'(2A)') &
+        !   'WARNING: mpasjedi_lvc_model2geovars::multiply: '&
+        !  &'increment missing identity field for geovar => ', trim(geovar)
+        !call fckit_log%warning(message)
+        continue
       end if
     else
 
@@ -275,10 +276,11 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
         call dxm%copy_to_ad(geom%identity(geovar), dxg, geovar)
       else
         !note: this warning is specifically for pressure => air_pressure in GNSSRO
-        write(message,'(2A)') &
-           'WARNING: mpasjedi_lvc_model2geovars::multiplyadjoint: '&
-          &'increment missing identity field for geovar => ', trim(geovar)
-        call fckit_log%warning(message)
+        !write(message,'(2A)') &
+        !   'WARNING: mpasjedi_lvc_model2geovars::multiplyadjoint: '&
+        !  &'increment missing identity field for geovar => ', trim(geovar)
+        !call fckit_log%warning(message)
+        continue
       end if
     else
 
