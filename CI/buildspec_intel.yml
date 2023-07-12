@@ -53,10 +53,8 @@ phases:
 
       # when testing develop branch
       - if [ "$CODEBUILD_GIT_BRANCH" = "develop" ];
-        then export CODEBUILD_GIT_BRANCH_CRTM=${CRTM_JEDI_BRANCH};
-        export CODEBUILD_GIT_BRANCH_MPAS="release-stable";
-        else export CODEBUILD_GIT_BRANCH_CRTM=${CODEBUILD_GIT_BRANCH};
-        export CODEBUILD_GIT_BRANCH_MPAS=${CODEBUILD_GIT_BRANCH};
+        then export CODEBUILD_GIT_BRANCH_MPAS="release-stable";
+        else export CODEBUILD_GIT_BRANCH_MPAS=${CODEBUILD_GIT_BRANCH};
         fi
 
       # if merging to develop
@@ -92,6 +90,9 @@ phases:
 
       # ufo
       - ./clone.sh jcsda-internal/ufo $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle ufo ${GIT_BASE_BRANCH} develop
+
+      # crtm
+      - ./clone.sh jcsda/CRTMv3 $CODEBUILD_GIT_BRANCH /jcsda/mpas-bundle crtm ${GIT_BASE_BRANCH} develop
 
       ##  internal repos
       #  mpas-model

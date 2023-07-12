@@ -1,10 +1,10 @@
-Norm of input parameter StdDev: 1.1149982611482137e+01
+Norm of input parameter StdDev: 1.1149982611482136e+01
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(Radiosonde) = 1.5258380885584734e+03, nobs = 1064, Jo/n = 1.4340583539083396e+00, err = 1.9647816818926029e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 3.1676369754556273e+00, nobs = 1, Jo/n = 3.1676369754556273e+00, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 9.1824249744009066e+01, nobs = 53, Jo/n = 1.7325330140379069e+00, err = 1.4351385443605903e+02
-CostFunction: Nonlinear J = 1.6208299752779380e+03
-DRIPCGMinimizer: reduction in residual norm = 2.3356509294574888e-05
+CostJo   : Nonlinear Jo(SfcPCorrected) = 9.1824249744009848e+01, nobs = 53, Jo/n = 1.7325330140379216e+00, err = 1.4351385443605903e+02
+CostFunction: Nonlinear J = 1.6208299752779390e+03
+DRIPCGMinimizer: reduction in residual norm = 2.3356509294574895e-05
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 24
@@ -32,13 +32,13 @@ Fld=21  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394
 Fld=22  Min=2.9000001028180122e-02, Max=1.0000000000000000e+00, RMS=8.9139849396001836e-01 : smois
 Fld=23  Min=2.1811969627674353e+02, Max=3.1135931962579207e+02, RMS=2.8901603837799001e+02 : tslb
 Fld=24  Min=-4.7312256548611767e+03, Max=7.0171652305389798e+03, RMS=3.0934484122600861e+03 : pressure_p
-Norm of input parameter StdDev: 1.1149982611482137e+01
-CostJb   : Nonlinear Jb = 8.5838446716653589e+00
-CostJo   : Nonlinear Jo(Radiosonde) = 1.3690261835952547e+03, nobs = 1063, Jo/n = 1.2878891661291201e+00, err = 1.9653610300465214e+00
+Norm of input parameter StdDev: 1.1149982611482136e+01
+CostJb   : Nonlinear Jb = 8.5838446716660233e+00
+CostJo   : Nonlinear Jo(Radiosonde) = 1.3690261835952551e+03, nobs = 1063, Jo/n = 1.2878891661291205e+00, err = 1.9653610300465214e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 2.8220048578954291e+00, nobs = 1, Jo/n = 2.8220048578954291e+00, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 5.5799853155149123e+01, nobs = 53, Jo/n = 1.0528274180216814e+00, err = 1.4351385443605903e+02
-CostFunction: Nonlinear J = 1.4362318862799646e+03
-DRIPCGMinimizer: reduction in residual norm = 2.3193301842072746e-05
+CostJo   : Nonlinear Jo(SfcPCorrected) = 5.5799853155147247e+01, nobs = 53, Jo/n = 1.0528274180216461e+00, err = 1.4351385443605903e+02
+CostFunction: Nonlinear J = 1.4362318862799639e+03
+DRIPCGMinimizer: reduction in residual norm = 2.3193301842164723e-05
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 24
@@ -66,8 +66,8 @@ Fld=21  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394
 Fld=22  Min=2.9000001028180122e-02, Max=1.0000000000000000e+00, RMS=8.9139849396001836e-01 : smois
 Fld=23  Min=2.1811969627674353e+02, Max=3.1135931962579207e+02, RMS=2.8901603837799001e+02 : tslb
 Fld=24  Min=-4.7312256548611767e+03, Max=7.0171655006135188e+03, RMS=3.0934500638787677e+03 : pressure_p
-CostJb   : Nonlinear Jb = 8.5845315823722839e+00
-CostJo   : Nonlinear Jo(Radiosonde) = 1.3687433601797325e+03, nobs = 1063, Jo/n = 1.2876231045905291e+00, err = 1.9653610300465214e+00
+CostJb   : Nonlinear Jb = 8.5845315823715591e+00
+CostJo   : Nonlinear Jo(Radiosonde) = 1.3687433601797318e+03, nobs = 1063, Jo/n = 1.2876231045905284e+00, err = 1.9653610300465214e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 2.8219737035981471e+00, nobs = 1, Jo/n = 2.8219737035981471e+00, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 5.5797734143972626e+01, nobs = 53, Jo/n = 1.0527874366787289e+00, err = 1.4351385443605903e+02
-CostFunction: Nonlinear J = 1.4359475996096755e+03
+CostJo   : Nonlinear Jo(SfcPCorrected) = 5.5797734143973940e+01, nobs = 53, Jo/n = 1.0527874366787535e+00, err = 1.4351385443605903e+02
+CostFunction: Nonlinear J = 1.4359475996096753e+03

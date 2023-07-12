@@ -25,6 +25,7 @@ ecbuild_bundle_initialize()
 
 option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=ON
 ecbuild_bundle( PROJECT ropp-ufo  GIT "https://github.com/jcsda-internal/ropp-test.git" )
+ecbuild_bundle( PROJECT crtm      GIT "https://github.com/jcsda/CRTMv3.git" )
 ecbuild_bundle( PROJECT rttov     GIT "https://github.com/jcsda-internal/rttov.git" )
 ecbuild_bundle( PROJECT oops      GIT "https://github.com/jcsda-internal/oops.git" )
 ecbuild_bundle( PROJECT saber     GIT "https://github.com/jcsda-internal/saber.git" )

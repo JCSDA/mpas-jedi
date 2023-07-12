@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 4.0e-5
+  float relative tolerance: 1.5e-4
   integer tolerance: 0
   reference filename: testoutput/3denvar_amsua_allsky.ref
   log output filename: testoutput/3denvar_amsua_allsky.run

@@ -237,7 +237,8 @@ list( APPEND crtm_test_input
 
 ## Create tests to download UFO and CRTM test files
 #set( CRTM_COEFFS_BRANCH "2.4.1" ) # file from GDEX
-set( CRTM_COEFFS_BRANCH "2.4.1_skylab_4.0" ) # for complete coeff. files
+#set( CRTM_COEFFS_BRANCH "2.4.1_skylab_4.0" ) # for complete coeff. files from ftp.ssec.wisc.edu
+set( CRTM_COEFFS_BRANCH "3.0.0_skylab_4.0" ) # for CRTMv3
 
 function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
   # If REPO branch is being built set GIT_BRANCH_FUNC to REPO's current branch.
