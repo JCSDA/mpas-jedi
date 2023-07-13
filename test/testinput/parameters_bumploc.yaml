@@ -67,12 +67,17 @@ background error:
         reduced levels: 1
         local diagnostic: true
         averaging length-scale: 1000000
+        interpolation type: c0
       diagnostics:
         target ensemble size: 5
       fit:
         horizontal filtering length-scale: 3000000
       nicas:
         resolution: 4
+        interpolation type:
+        - groups:
+          - common
+          type: c0
       output model files:
       - parameter: loc_rh
         file:

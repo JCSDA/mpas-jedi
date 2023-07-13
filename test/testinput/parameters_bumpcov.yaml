@@ -64,6 +64,7 @@ background error:
         reduced levels: 1
         local diagnostic: true
         averaging length-scale: 1000000
+        interpolation type: c0
       diagnostics:
         target ensemble size: 5
       variance:
@@ -81,6 +82,14 @@ background error:
         horizontal filtering length-scale: 3000000
       nicas:
         resolution: 4
+        interpolation type:
+        - groups:
+          - temperature
+          - spechum
+          - uReconstructZonal
+          - uReconstructMeridional
+          - surface_pressure
+          type: c0
       grids:
       - model:
           variables:
