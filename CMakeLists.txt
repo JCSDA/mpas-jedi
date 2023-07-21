@@ -44,6 +44,15 @@ else()
     find_package( atlas 0.23.0 REQUIRED )
 endif()
 
+# Use external ESMF if found
+if(ESMF_FOUND)
+  message(STATUS "Configure mpas-jedi for external ESMF")
+  add_definitions(-DMPAS_EXTERNAL_ESMF_LIB)
+  add_library(${PROJECT_NAME}::external::esmf ALIAS esmf)
+else()
+  message(STATUS "Configure mpas-jedi for internal ESMF")
+endif()
+
 find_package( rttov 12.1.0 QUIET )
 find_package( ropp-ufo QUIET )
 find_package( oops 1.0.0 REQUIRED )

@@ -31,6 +31,11 @@ use mpas_pool_routines
 !mpas_jedi
 use mpas_constants_mod
 
+#ifdef MPAS_EXTERNAL_ESMF_LIB
+!external ESMF
+use ESMF
+#endif
+
 implicit none
 private
 public :: mpas_geom, &
@@ -174,6 +179,11 @@ subroutine geo_setup(self, f_conf, f_comm)
    nml_file = str
    call f_conf%get_or_die("streams_file",str)
    streams_file = str
+
+#ifdef MPAS_EXTERNAL_ESMF_LIB
+   !external ESMF - initialize on behalf of MPAS; ok to hardcode calendar?
+   call ESMF_Initialize(defaultCalKind=ESMF_CALKIND_GREGORIAN)
+#endif
 
    ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator(), &
@@ -752,6 +762,11 @@ subroutine geo_delete(self)
    
    call self%afunctionspace%final()
    call self%afunctionspace_incl_halo%final()
+
+#ifdef MPAS_EXTERNAL_ESMF_LIB
+   ! Finalize ESMF on behalf of MPAS, keep MPI alive for JEDI to clean up
+   call ESMF_Finalize(endflag=ESMF_END_KEEPMPI)
+#endif
 
 end subroutine geo_delete
 
