@@ -73,6 +73,7 @@ list( APPEND mpas_testinput
   testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
+  testinput/3dfgat_pseudo.yaml
   testinput/3dhybrid_bumpcov_bumploc.yaml
   testinput/3dvar.yaml
   testinput/3dvar_bumpcov.yaml
@@ -80,6 +81,7 @@ list( APPEND mpas_testinput
   testinput/3dvar_bumpcov_rttovcpp.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
+  testinput/4dfgat.yaml
   testinput/convertstate_bumpinterp.yaml
   testinput/convertstate_unsinterp.yaml
   testinput/dirac_bumpcov.yaml
@@ -103,10 +105,11 @@ list( APPEND mpas_testinput
   testinput/geometry_iterator_2d.yaml
   testinput/geometry_iterator_3d.yaml
   testinput/getvalues.yaml
-  testinput/hofx.yaml
   testinput/hofx3d.yaml
   testinput/hofx3d_ropp.yaml
   testinput/hofx3d_rttovcpp.yaml
+  testinput/hofx4d.yaml
+  testinput/hofx4d_pseudo.yaml
   testinput/increment.yaml
   testinput/letkf_3dloc.yaml
   testinput/lgetkf.yaml
@@ -134,6 +137,7 @@ list( APPEND mpas_testoutput
   testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
+  testoutput/3dfgat_pseudo.ref
   testoutput/3dhybrid_bumpcov_bumploc.ref
   testoutput/3dvar.ref
   testoutput/3dvar_bumpcov.ref
@@ -141,6 +145,7 @@ list( APPEND mpas_testoutput
   testoutput/3dvar_bumpcov_rttovcpp.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
+  testoutput/4dfgat.ref
   testoutput/convertstate_bumpinterp.ref
   testoutput/convertstate_unsinterp.ref
   testoutput/dirac_bumpcov.ref
@@ -150,10 +155,11 @@ list( APPEND mpas_testoutput
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
   testoutput/gen_ens_pert_B.ref
-  testoutput/hofx.ref
   testoutput/hofx3d.ref
   testoutput/hofx3d_ropp.ref
   testoutput/hofx3d_rttovcpp.ref
+  testoutput/hofx4d.ref
+  testoutput/hofx4d_pseudo.ref
   testoutput/letkf_3dloc.ref
   testoutput/lgetkf.ref
   testoutput/parameters_bumpcov.ref
@@ -753,7 +759,7 @@ add_mpasjedi_application_test(
     APPLICATION forecast
     ${RECALIBRATE})
 
-#hofx/hofx3d/enshofx
+#hofx3d/hofx4d/enshofx
 add_mpasjedi_application_test(
     APPLICATION hofx3d
     ${RECALIBRATE})
@@ -773,6 +779,12 @@ if( ${rttov_FOUND} )
 endif( ${rttov_FOUND} )
 
 add_mpasjedi_application_test(
+    NAME hofx4d
+    APPLICATION hofx
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME hofx4d_pseudo
     APPLICATION hofx
     ${RECALIBRATE})
 
@@ -899,6 +911,11 @@ add_mpasjedi_application_test(
     APPLICATION variational
     ${RECALIBRATE})
 
+add_mpasjedi_application_test(
+    NAME 3dfgat_pseudo
+    APPLICATION variational
+    ${RECALIBRATE})
+
 #variational - 4denvar
 add_mpasjedi_application_test(
     NAME 4denvar_ID
@@ -913,6 +930,12 @@ add_mpasjedi_application_test(
     NPE 3
     N_PARALLEL_STATES 3
     DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+#variational - 4dfgat
+add_mpasjedi_application_test(
+    NAME 4dfgat
+    APPLICATION variational
     ${RECALIBRATE})
 
 # eda

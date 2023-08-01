@@ -1,11 +1,12 @@
 test:
-  float relative tolerance: 0.015
+  float relative tolerance: 0.005
   integer tolerance: 0
-  reference filename: testoutput/3dfgat.ref
-  log output filename: testoutput/3dfgat.run
-  test output filename: testoutput/3dfgat.run.ref
+  reference filename: testoutput/4dfgat.ref
+  log output filename: testoutput/4dfgat.run
+  test output filename: testoutput/4dfgat.run.ref
 cost function:
-  cost type: 3D-FGAT
+  # 4dfgat utilizes the 4D-Var cost function with an identity linear model
+  cost type: 4D-Var
   window begin: '2018-04-14T21:00:00Z'
   window length: PT6H
   geometry:
@@ -42,7 +43,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_sondes.nc4
+            obsfile: Data/os/obsout_4dfgat_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -64,7 +65,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_gnssroref.nc4
+            obsfile: Data/os/obsout_4dfgat_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -103,7 +104,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_sfc.nc4
+            obsfile: Data/os/obsout_4dfgat_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -125,7 +126,7 @@ cost function:
         apply at iterations: 0,1
         threshold: 3
 output:
-  filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.4dfgat.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:
@@ -134,18 +135,27 @@ variational:
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041421"
       streams_file: "./Data/480km/streams.atmosphere"
+    linear model:
+      # 4dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
+      name: Identity
+      increment variables: *incvars
+      tstep: PT30M
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
     diagnostics:
       departures: ombg
-# 3D-FGAT can not run multiple outer loops. If activated, 3D-Var will be applied for the 2nd OL.
-#  - geometry:
-#      nml_file: "./Data/480km/namelist.atmosphere_2018041421"
-#      streams_file: "./Data/480km/streams.atmosphere"
-#    ninner: '10'
-#    gradient norm reduction: 1e-10
-#    test: 'on'
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041421"
+      streams_file: "./Data/480km/streams.atmosphere"
+    linear model:
+      # 4dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
+      name: Identity
+      increment variables: *incvars
+      tstep: PT30M
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
 final:
   diagnostics:
     departures: oman

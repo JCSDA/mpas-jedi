@@ -1,9 +1,9 @@
 test:
   float relative tolerance: 0.07
   integer tolerance: 0
-  reference filename: testoutput/hofx.ref
-  log output filename: testoutput/hofx.run
-  test output filename: testoutput/hofx.run.ref
+  reference filename: testoutput/hofx4d.ref
+  log output filename: testoutput/hofx4d.run
+  test output filename: testoutput/hofx4d.run.ref
 window begin: '2018-04-14T21:00:00Z'
 window length: PT6H
 forecast length: PT6H
@@ -33,7 +33,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_sondes.nc4
+          obsfile: Data/os/obsout_hofx4d_sondes.nc4
       simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
     obs operator:
       name: VertInterp
@@ -47,7 +47,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_satwind.nc4
+          obsfile: Data/os/obsout_hofx4d_satwind.nc4
       simulated variables: [windEastward, windNorthward]
     obs operator:
       name: VertInterp
@@ -61,7 +61,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_gnssroref.nc4
+          obsfile: Data/os/obsout_hofx4d_gnssroref.nc4
       simulated variables: [atmosphericRefractivity]
     obs operator:
       name: GnssroRefNCEP
@@ -76,7 +76,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_amsua_n19--nohydro.nc4
+          obsfile: Data/os/obsout_hofx4d_amsua_n19--nohydro.nc4
       simulated variables: [brightnessTemperature]
       channels: 4-8
     obs operator: &crtmobsoper
@@ -96,7 +96,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_amsua_n19--hydro.nc4
+          obsfile: Data/os/obsout_hofx4d_amsua_n19--hydro.nc4
       simulated variables: [brightnessTemperature]
       channels: 1-3,15
     obs operator:
@@ -114,7 +114,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_airs_aqua.nc4
+          obsfile: Data/os/obsout_hofx4d_airs_aqua.nc4
       simulated variables: [brightnessTemperature]
       channels: 1,6-7
     obs operator:
@@ -132,7 +132,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_cris-fsr_npp.nc4
+          obsfile: Data/os/obsout_hofx4d_cris-fsr_npp.nc4
       simulated variables: [brightnessTemperature]
       channels: 24,26,135,137,332,342,1022,1058
     obs operator:
@@ -150,7 +150,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_iasi_metop-a.nc4
+          obsfile: Data/os/obsout_hofx4d_iasi_metop-a.nc4
       simulated variables: [brightnessTemperature]
       channels: 16,29,32,35,38,41,44
     obs operator:
@@ -168,7 +168,7 @@ observations:
 #        obsdataout:
 #          engine:
 #            type: H5File
-#            obsfile: Data/os/obsout_hofx_atms_npp--ch5-15.nc4
+#            obsfile: Data/os/obsout_hofx4d_atms_npp--ch5-15.nc4
 #        simulated variables: [brightnessTemperature]
 #        channels: 5-15
 #      obs operator:
@@ -185,7 +185,7 @@ observations:
 #        obsdataout:
 #          engine:
 #            type: H5File
-#            obsfile: Data/os/obsout_hofx_atms_npp--ch1-4,16-22.nc4
+#            obsfile: Data/os/obsout_hofx4d_atms_npp--ch1-4,16-22.nc4
 #        simulated variables: [brightnessTemperature]
 #        channels: 1-4,16-22
 #      obs operator:
@@ -204,7 +204,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx_sfc.nc4
+          obsfile: Data/os/obsout_hofx4d_sfc.nc4
       simulated variables: [stationPressure]
     obs operator:
       name: SfcPCorrected

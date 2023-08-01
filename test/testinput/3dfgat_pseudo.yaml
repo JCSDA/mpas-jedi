@@ -1,9 +1,9 @@
 test:
-  float relative tolerance: 0.015
+  float relative tolerance: 0.005
   integer tolerance: 0
-  reference filename: testoutput/3dfgat.ref
-  log output filename: testoutput/3dfgat.run
-  test output filename: testoutput/3dfgat.run.ref
+  reference filename: testoutput/3dfgat_pseudo.ref
+  log output filename: testoutput/3dfgat_pseudo.run
+  test output filename: testoutput/3dfgat_pseudo.run.ref
 cost function:
   cost type: 3D-FGAT
   window begin: '2018-04-14T21:00:00Z'
@@ -12,12 +12,18 @@ cost function:
     nml_file: "./Data/480km/namelist.atmosphere_2018041421"
     streams_file: "./Data/480km/streams.atmosphere"
   model:
-    name: MPAS
-    tstep: PT30M
-    model variables: &modvars
-                     [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                     theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
-                     qc, qi, qr, qs, qg, pressure_p, snowh, vegfra, u10, v10, lai, smois, tslb, w]
+    name: PseudoModel  #Generic PseudoModel from OOPS
+    tstep: PT3H
+    states:
+    - date: '2018-04-15T00:00:00Z'
+      filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+      state variables: &stvars
+                       [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                       theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                       qc, qi, qr, qs, qg, pressure_p, snowh, vegfra, u10, v10, lai, smois, tslb, w]
+    - date: '2018-04-15T03:00:00Z'
+      filename: "./Data/480km/bg/restart.2018-04-15_03.00.00.nc"
+      state variables: *stvars
   analysis variables: &incvars
   - temperature
   - spechum
@@ -25,7 +31,7 @@ cost function:
   - uReconstructMeridional
   - surface_pressure
   background:
-    state variables: *modvars
+    state variables: *stvars
     filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
     date: '2018-04-14T21:00:00Z'
   background error:
@@ -42,7 +48,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_sondes.nc4
+            obsfile: Data/os/obsout_3dfgat_pseudo_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -64,7 +70,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_gnssroref.nc4
+            obsfile: Data/os/obsout_3dfgat_pseudo_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -103,7 +109,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dfgat_sfc.nc4
+            obsfile: Data/os/obsout_3dfgat_pseudo_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -125,7 +131,7 @@ cost function:
         apply at iterations: 0,1
         threshold: 3
 output:
-  filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3dfgat_pseudo.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:
