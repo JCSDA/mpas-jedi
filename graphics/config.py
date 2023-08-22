@@ -17,11 +17,11 @@ basicAllSkyBins = True
 
 # specialAllSkyBins controls whether to bin by additional all-sky radiance relevant quantities
 # NOTE: requires ydiags and geovals to be written for applicable DiagSpaces
-specialAllSkyBins = False
+specialAllSkyBins = True
 
 # specialLandFracBins controls whether to bin by land-ocean fractions and categories
 # NOTE: requires geovals to be written for applicable DiagSpaces
-specialLandFracBins = False
+specialLandFracBins = True
 
 
 #################################################################
@@ -123,9 +123,9 @@ radianceBinVars[vu.obsVarSenZen] += [bu.identityBinMethod]
 
 
 # priority 4
-if specialLandFracBins:
-    radianceBinVars[vu.obsVarLandFrac] += [bu.identityBinMethod,
-                                           bu.surfbandsMethod]
+#if specialLandFracBins:
+#    radianceBinVars[vu.obsVarLandFrac] += [bu.identityBinMethod,
+#                                           bu.surfbandsMethod]
 
 
 ############################################
@@ -231,8 +231,8 @@ if specialAllSkyBins:
   geoirBinVars[pconf.CldFrac2D] += [bu.noBinMethod]
   # uncomment to enable Poly2DLat fitting
   # priority 2b
-  #for latBand in pconf.namedTropLatBands['values']:
-  #  geoirBinVars[pconf.CldFrac2D] += [latBand]
+  for latBand in pconf.namedTropLatBands['values']:
+    geoirBinVars[pconf.CldFrac2D] += [latBand]
 
   # used for diagnosing 2D statistical patterns vs. model-CI and obs-CI
   # priority 4
@@ -421,7 +421,7 @@ DiagSpaceConfig = {
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
-        'analyzed channels': [8, 9, 10, 13, 14, 15],
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'ahi_himawari8': {
         'DiagSpaceGrp': radiance_s,
@@ -431,7 +431,7 @@ DiagSpaceConfig = {
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
-        'analyzed channels': [8, 9, 10, 13, 14, 15],
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'abi-clr_g16': {
         'DiagSpaceGrp': radiance_s,
