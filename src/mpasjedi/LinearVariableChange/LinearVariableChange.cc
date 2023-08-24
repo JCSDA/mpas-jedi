@@ -8,6 +8,8 @@
 #include <ostream>
 #include <string>
 
+#include "eckit/config/Configuration.h"
+
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -20,8 +22,11 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-LinearVariableChange::LinearVariableChange(const Geometry & geom, const Parameters_ & params)
-  : geom_(geom), params_(params), linearVariableChange_() {}
+LinearVariableChange::LinearVariableChange(const Geometry & geom,
+                                           const eckit::Configuration & config)
+  : geom_(geom), linearVariableChange_() {
+  params_.deserialize(config);
+}
 
 // -------------------------------------------------------------------------------------------------
 

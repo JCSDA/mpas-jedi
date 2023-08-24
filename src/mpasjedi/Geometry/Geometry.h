@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "eckit/config/Configuration.h"
 #include "eckit/mpi/Comm.h"
 
 #include "atlas/field.h"
@@ -24,7 +25,6 @@
 #include "mpasjedi/GeometryIterator/GeometryIterator.h"
 
 #include "mpasjedi/Geometry/Geometry.interface.h"
-#include "mpasjedi/Geometry/GeometryParameters.h"
 
 namespace mpas {
 
@@ -34,10 +34,9 @@ namespace mpas {
 class Geometry : public util::Printable,
                       private util::ObjectCounter<Geometry> {
  public:
-  typedef GeometryParameters Parameters_;
   static const std::string classname() {return "mpas::Geometry";}
 
-  Geometry(const Parameters_ &, const eckit::mpi::Comm &);
+  Geometry(const eckit::Configuration &, const eckit::mpi::Comm &);
   Geometry(const Geometry &);
   ~Geometry();
 

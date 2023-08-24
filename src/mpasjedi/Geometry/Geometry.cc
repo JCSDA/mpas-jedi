@@ -12,14 +12,17 @@
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
+#include "mpasjedi/Geometry/GeometryParameters.h"
 
 // -----------------------------------------------------------------------------
 namespace mpas {
 // -----------------------------------------------------------------------------
-Geometry::Geometry(const GeometryParameters & params,
+Geometry::Geometry(const eckit::Configuration & config,
                            const eckit::mpi::Comm & comm) : comm_(comm) {
   oops::Log::trace() << "========= Geometry::Geometry step 1 =========="
                      << std::endl;
+  GeometryParameters params;
+  params.deserialize(config);
   mpas_geo_setup_f90(keyGeom_, params.toConfiguration(), &comm);
 
   // Set ATLAS lon/lat field with halo

@@ -40,9 +40,7 @@ class Model: public oops::interface::ModelBase<Traits>,
  public:
   static const std::string classname() {return "mpas::Model";}
 
-  typedef ModelParameters Parameters_;
-
-  Model(const Geometry &, const ModelParameters &);
+  Model(const Geometry &, const eckit::Configuration &);
   ~Model();
 
 /// Prepare model integration

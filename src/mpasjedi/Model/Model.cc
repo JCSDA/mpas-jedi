@@ -19,12 +19,13 @@ namespace mpas {
 static oops::interface::ModelMaker<Traits, Model> makermodel_("MPAS");
 // -----------------------------------------------------------------------------
 Model::Model(const Geometry & resol,
-                     const ModelParameters & params)
-  : keyModel_(0), tstep_(params.tstep), geom_(resol),
-    vars_(params.vars)
+                     const eckit::Configuration & config)
+  : keyModel_(0), tstep_(0), geom_(resol), vars_(config, "model variables")
 {
   oops::Log::trace() << "Model::Model" << std::endl;
-  tstep_ = util::Duration(params.tstep);
+  ModelParameters params;
+  params.deserialize(config);
+  tstep_ = util::Duration(config.getString("tstep"));
   oops::Log::trace() << "Model::tstep_" << tstep_ << std::endl;
   mpas_model_setup_f90(params.toConfiguration(), geom_.toFortran(), keyModel_);
   oops::Log::trace() << "Model created" << std::endl;

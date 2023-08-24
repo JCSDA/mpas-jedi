@@ -33,22 +33,23 @@ State::State(const Geometry & geom,
 }
 // -----------------------------------------------------------------------------
 State::State(const Geometry & geom,
-                     const StateParameters & params)
-  : geom_(geom), time_(util::DateTime())
+                     const eckit::Configuration & config)
+  : geom_(geom), time_(util::DateTime()), vars_()
 {
   oops::Log::trace() << "State::State create and read." << std::endl;
+  StateParameters params;
+  params.deserialize(config);
 
   // Set up vars
   vars_ = oops::Variables(params.state_variables.value());
-
   mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
 
   if (params.analytic_init.value() != boost::none) {
-    analytic_init(params);
+    analytic_init(params.toConfiguration());
   } else {
     // filename must be set if not analytic initial condition
     ASSERT(params.filename.value() != boost::none);
-    read(params);
+    read(params.toConfiguration());
   }
 
   oops::Log::trace() << "State::State created and read in."
@@ -177,17 +178,21 @@ void State::deserialize(const std::vector<real_type> & vect, size_t & index) {
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void State::read(const StateParameters & params) {
-  mpas_state_read_file_f90(keyState_, params.toConfiguration(), time_);
-}
-// -----------------------------------------------------------------------------
-void State::analytic_init(const StateParameters & params) {
+void State::analytic_init(const eckit::Configuration & config) {
   oops::Log::trace() << "State analytic init starting" << std::endl;
-  mpas_state_analytic_init_f90(keyState_, params.toConfiguration(), time_);
+  mpas_state_analytic_init_f90(keyState_, config, time_);
   oops::Log::trace() << "State analytic init done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void State::write(const StateWriteParameters & params) const {
+void State::read(const eckit::Configuration & config) {
+  StateParameters params;
+  params.deserialize(config);
+  mpas_state_read_file_f90(keyState_, params.toConfiguration(), time_);
+}
+// -----------------------------------------------------------------------------
+void State::write(const eckit::Configuration & config) const {
+  StateWriteParameters params;
+  params.deserialize(config);
   mpas_state_write_file_f90(keyState_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------

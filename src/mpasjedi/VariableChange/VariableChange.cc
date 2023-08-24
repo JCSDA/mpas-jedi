@@ -8,7 +8,12 @@
 #include <ostream>
 #include <string>
 
+#include "oops/base/VariableChangeParametersBase.h"
 #include "oops/util/Logger.h"
+#include "oops/util/parameters/OptionalParameter.h"
+#include "oops/util/parameters/Parameter.h"
+#include "oops/util/parameters/Parameters.h"
+#include "oops/util/parameters/RequiredParameter.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
 #include "mpasjedi/State/State.h"
@@ -18,9 +23,12 @@
 namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
+  typedef VariableChangeParameters Parameters_;
 
-VariableChange::VariableChange(const Parameters_ & params, const Geometry & geometry) {
+VariableChange::VariableChange(const eckit::Configuration & config, const Geometry & geometry) {
   // Create the variable change
+  VariableChangeParameters params;
+  params.deserialize(config);
   variableChange_.reset(VariableChangeFactory::create(geometry,
                         params.variableChangeParametersWrapper.variableChangeParameters.value()));
 }

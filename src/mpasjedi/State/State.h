@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "eckit/config/Configuration.h"
+
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/ObjectCounter.h"
@@ -46,13 +48,10 @@ class State : public util::Printable,
  public:
   static const std::string classname() {return "mpas::State";}
 
-  typedef StateParameters Parameters_;
-  typedef StateWriteParameters WriteParameters_;
-
 /// Constructor, destructor
   State(const Geometry &, const oops::Variables &,
             const util::DateTime &);
-  State(const Geometry &, const Parameters_ &);
+  State(const Geometry &, const eckit::Configuration &);
   State(const Geometry &, const State &);
   State(const State &);
   ~State();
@@ -74,8 +73,8 @@ class State : public util::Printable,
   void deserialize(const std::vector<real_type> &, size_t &) override;
 
 /// I/O and diagnostics
-  void read(const Parameters_ &);
-  void write(const WriteParameters_ &) const;
+  void read(const eckit::Configuration &);
+  void write(const eckit::Configuration &) const;
   real_type norm() const;
 
   const Geometry & geometry() const {return geom_;}
@@ -96,7 +95,7 @@ class State : public util::Printable,
 
  private:
 /// Analytic intialization
-  void analytic_init(const Parameters_ &);
+  void analytic_init(const eckit::Configuration &);
 
   void print(std::ostream &) const override;
   F90state keyState_;

@@ -21,15 +21,15 @@ namespace mpas {
 static oops::interface::LinearModelMaker<Traits, Tlm> makerMPASTLM_("MPASTLM");
 // -----------------------------------------------------------------------------
 Tlm::Tlm(const Geometry & resol,
-                 const Parameters_ & params)
-  : keyConfig_(0), tstep_(params.tlmtstep), resol_(resol), traj_(),
-    lrmodel_(resol_, params.tlmparams),
-    linvars_(params.tlmvars)
-
+         const eckit::Configuration & config)
+  : keyConfig_(0), tstep_(), resol_(resol), traj_(),
+    lrmodel_(resol_, config), linvars_()
 {
-  tstep_ = util::Duration(params.tlmtstep);
+  tstep_ = util::Duration(config.getString("tstep"));
+  oops::Variables tlvars(config, "tlm variables");
+  linvars_ = tlvars;
 
-  mpas_model_setup_f90(params.toConfiguration(), resol_.toFortran(), keyConfig_);
+  mpas_model_setup_f90(config, resol_.toFortran(), keyConfig_);
 
   oops::Log::trace() << "Tlm created" << std::endl;
 }

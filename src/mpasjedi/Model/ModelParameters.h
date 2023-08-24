@@ -19,8 +19,8 @@ namespace mpas {
 // -----------------------------------------------------------------------------
 /// Model Parameters Class.
 
-class ModelParameters : public oops::ModelParametersBase {
-  OOPS_CONCRETE_PARAMETERS(ModelParameters, ModelParametersBase)
+class ModelParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(ModelParameters, Parameters)
 
  public:
 /// The property 'name' is already part of the default schema

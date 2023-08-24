@@ -15,6 +15,8 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 
+#include "eckit/config/Configuration.h"
+
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/WriteParametersBase.h"
 #include "oops/util/DateTime.h"
@@ -55,10 +57,6 @@ class Increment : public util::Printable,
  public:
   static const std::string classname() {return "mpas::Increment";}
 
-  typedef IncrementReadParameters ReadParameters_;
-  typedef IncrementWriteParameters WriteParameters_;
-  typedef DiracParameters DiracParameters_;
-
   /// Constructor, destructor
   Increment(const Geometry &, const oops::Variables &,
                 const util::DateTime &);
@@ -81,7 +79,7 @@ class Increment : public util::Printable,
   real_type dot_product_with(const Increment &) const;
   void schur_product_with(const Increment &);
   void random();
-  void dirac(const DiracParameters_ &);
+  void dirac(const eckit::Configuration &);
   std::vector<double> rmsByLevel(const std::string &) const;
 
   /// Getpoint/Setpoint
@@ -94,8 +92,8 @@ class Increment : public util::Printable,
   void fromFieldSet(const atlas::FieldSet &);
 
   /// I/O and diagnostics
-  void read(const ReadParameters_ &);
-  void write(const WriteParameters_ &) const;
+  void read(const eckit::Configuration &);
+  void write(const eckit::Configuration &) const;
   real_type norm() const;
 
   void updateTime(const util::Duration & dt) {time_ += dt;}
@@ -122,6 +120,10 @@ class Increment : public util::Printable,
 
 /// Data
  private:
+  typedef DiracParameters          DiracParameters_;
+  typedef IncrementReadParameters  ReadParameters_;
+  typedef IncrementWriteParameters WriteParameters_;
+
   void print(std::ostream &) const override;
   F90inc keyInc_;
   const Geometry & geom_;

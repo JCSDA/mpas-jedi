@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "eckit/config/Configuration.h"
+
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -213,11 +215,15 @@ void Increment::toFieldSetAD(const atlas::FieldSet & fset) {
 // -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
-void Increment::read(const IncrementReadParameters & params) {
+void Increment::read(const eckit::Configuration & config) {
+  ReadParameters_ params;
+  params.deserialize(config);
   mpas_increment_read_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
-void Increment::write(const IncrementWriteParameters & params) const {
+void Increment::write(const eckit::Configuration & config) const {
+  WriteParameters_ params;
+  params.deserialize(config);
   mpas_increment_write_file_f90(keyInc_, params.toConfiguration(), time_);
 }
 // -----------------------------------------------------------------------------
@@ -286,7 +292,9 @@ void Increment::print(std::ostream & os) const {
   }
 }
 // -----------------------------------------------------------------------------
-void Increment::dirac(const DiracParameters & params) {
+void Increment::dirac(const eckit::Configuration & config) {
+  DiracParameters_ params;
+  params.deserialize(config);
   mpas_increment_dirac_f90(keyInc_, params.toConfiguration());
 }
 // -----------------------------------------------------------------------------

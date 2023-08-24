@@ -39,9 +39,7 @@ class Tlm: public oops::interface::LinearModelBase<Traits>,
  public:
   static const std::string classname() {return "mpas::Tlm";}
 
-  typedef TlmParameters Parameters_;
-
-  Tlm(const Geometry &, const  TlmParameters &);
+  Tlm(const Geometry &, const eckit::Configuration &);
   ~Tlm();
 
 /// Model trajectory computation
@@ -73,7 +71,7 @@ class Tlm: public oops::interface::LinearModelBase<Traits>,
   const Geometry resol_;
   std::map< util::DateTime, F90traj> traj_;
   const Model lrmodel_;
-  const oops::Variables linvars_;
+  oops::Variables linvars_;
 };
 // -----------------------------------------------------------------------------
 
