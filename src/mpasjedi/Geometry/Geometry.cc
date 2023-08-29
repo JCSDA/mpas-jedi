@@ -42,9 +42,9 @@ Geometry::Geometry(const eckit::Configuration & config,
   mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
                                              functionSpaceIncludingHalo_.get());
 
-  // Fill extra fieldset : for saber vunit
-  extraFields_ =  atlas::FieldSet();
-  mpas_geo_fill_extra_fields_f90(keyGeom_, extraFields_.get());
+  // Fill geometry fieldset : for saber vunit
+  fields_ =  atlas::FieldSet();
+  mpas_geo_fill_geometry_fields_f90(keyGeom_, fields_.get());
 
   oops::Log::trace() << "========= Geometry::Geometry step 2 =========="
                      << std::endl;
@@ -59,9 +59,9 @@ Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
     other.functionSpaceIncludingHalo_.lonlat());
   mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
                                          functionSpaceIncludingHalo_.get());
-  extraFields_ = atlas::FieldSet();
-  for (auto & field : other.extraFields_) {
-    extraFields_->add(field);
+  fields_ = atlas::FieldSet();
+  for (auto & field : other.fields_) {
+    fields_->add(field);
   }
 }
 // -----------------------------------------------------------------------------

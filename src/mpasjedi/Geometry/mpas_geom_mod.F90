@@ -40,7 +40,7 @@ implicit none
 private
 public :: mpas_geom, &
           geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
-          geo_set_lonlat, geo_fill_extra_fields, pool_has_field, &
+          geo_set_lonlat, geo_fill_geometry_fields, pool_has_field, &
           getSolveDimSizes, getSolveDimNames, getVertLevels
 
 public :: mpas_geom_registry
@@ -431,7 +431,7 @@ end subroutine geo_set_lonlat
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine geo_fill_extra_fields(self, afieldset)
+subroutine geo_fill_geometry_fields(self, afieldset)
 
    implicit none
 
@@ -445,24 +445,20 @@ subroutine geo_fill_extra_fields(self, afieldset)
    type(atlas_field) :: afield
 
    integer :: nx, nx2
-   integer, allocatable :: hmask_1(:)
    integer, pointer :: int_ptr(:,:)
    ! subroutine for saber, always include halo
    
    nx = self%nCells        ! rank with halo
    nx2= self%nCellsSolve   !      without
 
-   ! Add halo mask
+   ! Add owned vs halo/BC field
    afield = self%afunctionspace_incl_halo%create_field &
-        (name='hmask', kind=atlas_integer(kind_int), levels=1)
+        (name='owned', kind=atlas_integer(kind_int), levels=1)
    call afield%data(int_ptr)
-   allocate( hmask_1(nx) )
-   hmask_1(1:nx2)=1
-   if (nx2<nx) hmask_1(nx2+1:nx)=0
-   int_ptr(1,1:nx) = hmask_1(1:nx)
+   int_ptr(1,:)=0
+   int_ptr(1,1:nx2) = 1
    call afieldset%add(afield)
    call afield%final()
-   deallocate (hmask_1)
    
    ! Add area
    afield = self%afunctionspace_incl_halo%create_field &
@@ -475,7 +471,7 @@ subroutine geo_fill_extra_fields(self, afieldset)
    
    ! Add vertical unit
    afield = self%afunctionspace_incl_halo%create_field &
-        (name='vunit', kind=atlas_real(kind_real), levels=self%nVertLevels)
+        (name='vert_coord', kind=atlas_real(kind_real), levels=self%nVertLevels)
    call afield%data(real_ptr)
    do jz=1,self%nVertLevels
       iz = self%nVertLevels - jz + 1
@@ -498,7 +494,7 @@ subroutine geo_fill_extra_fields(self, afieldset)
    call afieldset%add(afield)
    call afield%final()
 
-end subroutine geo_fill_extra_fields
+end subroutine geo_fill_geometry_fields
 
 ! ------------------------------------------------------------------------------
 subroutine geo_deallocate_nonda_fields(f_conf, domain)
