@@ -59,7 +59,6 @@ list( APPEND mpasjedi_src_files
     State/mpas_state_mod.F90
     Tlm/Tlm.cc
     Tlm/Tlm.h
-    Tlm/TlmParameters.h
     Traits.h
     VariableChange/VariableChange.cc
     VariableChange/VariableChange.h
