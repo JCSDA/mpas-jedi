@@ -231,8 +231,8 @@ if specialAllSkyBins:
   geoirBinVars[pconf.CldFrac2D] += [bu.noBinMethod]
   # uncomment to enable Poly2DLat fitting
   # priority 2b
-  for latBand in pconf.namedTropLatBands['values']:
-    geoirBinVars[pconf.CldFrac2D] += [latBand]
+  #for latBand in pconf.namedTropLatBands['values']:
+  #  geoirBinVars[pconf.CldFrac2D] += [latBand]
 
   # used for diagnosing 2D statistical patterns vs. model-CI and obs-CI
   # priority 4
