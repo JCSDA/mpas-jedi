@@ -11,8 +11,8 @@
 
 #include "oops/base/ParameterTraitsVariables.h"
 #include "oops/base/Variables.h"
-#include "oops/base/WriteParametersBase.h"
 #include "oops/util/parameters/OptionalParameter.h"
+#include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
 
@@ -54,18 +54,6 @@ class StateParameters : public oops::Parameters {
   oops::RequiredParameter<util::DateTime> date{"date", this};
   oops::Parameter<std::string> stream_name{"stream name", "background", this};
   oops::Parameter<bool> transform_model_to_analysis{"transform model to analysis", true, this};
-};
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration options recognized by mpas_fields_mod for write_fields
-class StateWriteParameters : public oops::WriteParametersBase {
-  OOPS_CONCRETE_PARAMETERS(StateWriteParameters, WriteParametersBase)
-
- public:
-  // Write parameters
-  oops::RequiredParameter<std::string> filename{"filename", this};
-  oops::Parameter<std::string> stream_name{"stream name", "da_state", this};
 };
 
 // -------------------------------------------------------------------------------------------------

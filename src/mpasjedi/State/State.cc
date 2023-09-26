@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2017-2022 UCAR
- * 
+ *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
@@ -191,9 +191,11 @@ void State::read(const eckit::Configuration & config) {
 }
 // -----------------------------------------------------------------------------
 void State::write(const eckit::Configuration & config) const {
-  StateWriteParameters params;
-  params.deserialize(config);
-  mpas_state_write_file_f90(keyState_, params.toConfiguration(), time_);
+  eckit::LocalConfiguration wconf(config);
+  if (wconf.getBool("use_oops_filename", false)) {
+    wconf.set("filename", wconf.getString("datadir") + "/" + wconf.getString("prefix") + ".nc");
+  }
+  mpas_state_write_file_f90(keyState_, wconf, time_);
 }
 // -----------------------------------------------------------------------------
 void State::print(std::ostream & os) const {

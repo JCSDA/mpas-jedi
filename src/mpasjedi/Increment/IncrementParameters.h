@@ -53,7 +53,7 @@ class IncrementWriteParameters : public oops::WriteParametersBase {
 
  public:
   // Write parameters
-  oops::RequiredParameter<std::string> filename{"filename", this};
+  oops::OptionalParameter<std::string> filename{"filename", this};
   oops::Parameter<std::string> stream_name{"stream name", "da_state", this};
 };
 
