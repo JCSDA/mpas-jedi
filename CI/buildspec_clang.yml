@@ -1,6 +1,7 @@
 version: 0.2
 
 env:
+  shell: bash
   parameter-store:
     GIT_USER: "/CodeBuild/Git_USER"
     GIT_PASS: "/CodeBuild/Git_PASS"
@@ -119,6 +120,12 @@ phases:
       - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle
       - sed -i "s@CDASH_URL@$CDASH_URL@g" /jcsda/mpas-bundle/CTestConfig.cmake
 
+      # https://github.com/JCSDA-internal/mpas-jedi/issues/919
+      - rm -vf `find /opt/view/bin -iname '*esmf*'`
+      - rm -vf `find /opt/view/lib -iname '*esmf*'`
+      - rm -vf `find /opt/view/include -iname '*esmf*'`
+      - rm -vf `find /opt/view/cmake -iname '*esmf*'`
+
   build:
     on-failure: CONTINUE
     commands:
@@ -130,7 +137,7 @@ phases:
       # configure and build
       - cd /build_container
 
-      - . /etc/profile.d/z10_spack_environment.sh
+      - source /opt/spack-environment/activate.sh
       - export jedi_cmake_ROOT=/opt/view
       - ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_SYSTEM_NAME=ClangContainer -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE /jcsda/mpas-bundle/
       - ls /build_container

@@ -42,8 +42,7 @@ phases:
 
       - cd CI
 
-      - source /etc/profile.d/z10_spack_environment.sh
-      - cat /etc/profile.d/z10_spack_environment.sh
+      - source /opt/spack-environment/activate.sh
       - source /opt/intel/oneapi/compiler/latest/env/vars.sh
       - source /opt/intel/oneapi/mpi/latest/env/vars.sh
 
@@ -122,6 +121,12 @@ phases:
 
 
       - chmod -R 777 /jcsda/mpas-bundle
+
+      # https://github.com/JCSDA-internal/mpas-jedi/issues/919
+      - rm -vf `find /opt/view/bin -iname '*esmf*'`
+      - rm -vf `find /opt/view/lib -iname '*esmf*'`
+      - rm -vf `find /opt/view/include -iname '*esmf*'`
+      - rm -vf `find /opt/view/cmake -iname '*esmf*'`
 
   build:
     on-failure: CONTINUE

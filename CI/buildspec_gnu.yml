@@ -22,6 +22,10 @@ phases:
       - echo $CODEBUILD_WEBHOOK_TRIGGER
       - echo $CODEBUILD_WEBHOOK_BASE_REF
 
+      # read cdash url from s3
+      - wget https://ci-test-cdash-url.s3.amazonaws.com/cdash_url.txt
+      - CDASH_URL=$(cat cdash_url.txt)
+
       # Codebuild only runs on PUSH events if HEAD_REF
       # is refs/heads/develop (merge to develop). In this
       # case CODEBUILD_GIT_BRANCH="develop"
@@ -40,15 +44,12 @@ phases:
       - echo "CODEBUILD_GIT_BRANCH=${CODEBUILD_GIT_BRANCH}"
       - echo "CODEBUILD_SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}"
 
-      # read cdash url from s3
-      - wget https://ci-test-cdash-url.s3.amazonaws.com/cdash_url.txt
-      - CDASH_URL=$(cat cdash_url.txt)
-
   pre_build:
     commands:
       - echo Executing pre_build phase
+      - mkdir /build_container
+      - mkdir /jcsda
       - git lfs install # creates .gitconfig
-      - mkdir -p /jcsda/mpas-bundle
 
       # when testing develop branch
       - if [ "$CODEBUILD_GIT_BRANCH" = "develop" ];
@@ -116,12 +117,15 @@ phases:
       - cp CMakeLists.txt /jcsda/mpas-bundle
       - cp -r cmake /jcsda/mpas-bundle/
       # cdash upload setup
-      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle/
+      - cp /jcsda/mpas-bundle/cmake/CTestConfig.cmake /jcsda/mpas-bundle
       - sed -i "s@CDASH_URL@$CDASH_URL@g" /jcsda/mpas-bundle/CTestConfig.cmake
 
-      - cd /jcsda/mpas-bundle
-      - chmod -R 777 /jcsda/mpas-bundle
-      - ls -lt /jcsda/mpas-bundle
+      # https://github.com/JCSDA-internal/mpas-jedi/issues/919
+      - rm -vf `find /opt/view/bin -iname '*esmf*'`
+      - rm -vf `find /opt/view/lib -iname '*esmf*'`
+      - rm -vf `find /opt/view/include -iname '*esmf*'`
+      - rm -vf `find /opt/view/cmake -iname '*esmf*'`
+
   build:
     on-failure: CONTINUE
     commands:
@@ -130,16 +134,22 @@ phases:
       - export BUILD_STATUS="0"
       - echo $BUILD_STATUS
 
-      - su - nonroot -c "cd /home/nonroot
-        && export jedi_cmake_ROOT=/opt/view
-        && ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_SYSTEM_NAME=GNUContainer -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE  -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_Fortran_COMPILER=$(which gfortran) /jcsda/mpas-bundle/"
+      # configure and build
+      - cd /build_container
 
-      - su - nonroot -c "cd /home/nonroot/mpas-jedi
-        && cp ../DartConfiguration.tcl .
-        && sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
-        && sed -i 's/home\/nonroot/home\/nonroot\/mpas-jedi/' DartConfiguration.tcl
-        && cat DartConfiguration.tcl
-        && make -j2"
+      - source /opt/spack-environment/activate.sh
+      - export jedi_cmake_ROOT=/opt/view
+      - export OMPI_ALLOW_RUN_AS_ROOT=1
+      - export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+      - ecbuild -Wno-dev -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCDASH_OVERRIDE_SITE=CodeBuild -DCDASH_OVERRIDE_SYSTEM_NAME=GNUContainer -DCDASH_OVERRIDE_GIT_BRANCH=$CODEBUILD_GIT_BRANCH -DCTEST_UPDATE_VERSION_ONLY=FALSE -DENABLE_GPROF=ON /jcsda/mpas-bundle/
+      - ls /build_container
+      - cd /build_container/mpas-jedi
+      - cp ../DartConfiguration.tcl .
+      - sed -i 's/mpas-bundle/mpas-bundle\/mpas-jedi/' DartConfiguration.tcl
+      - sed -i 's/build_container/build_container\/mpas-jedi/' DartConfiguration.tcl
+      - cat DartConfiguration.tcl
+
+      - make -j2
 
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ];
         then export BUILD_STATUS="1";
@@ -147,14 +157,14 @@ phases:
         fi
       - echo $BUILD_STATUS
 
-      # run ctest
-      - su - nonroot -c "cd /home/nonroot/mpas-jedi
-        && ctest  -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx"
+      - cd /build_container/mpas-jedi
+      - ctest -C RelWithDebInfo -D ExperimentalTest -E compare_mpasjedi_hofx
 
     finally:
-      # upload ctest report to CDASH
-      - su - nonroot -c "cd /home/nonroot/mpas-jedi
-        && ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous"
+      - export OMPI_ALLOW_RUN_AS_ROOT=1
+      - export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+      - cd /build_container/mpas-jedi
+      - ctest -C RelWithDebInfo -D ExperimentalSubmit -M Continuous -- --track Continuous --group Continuous
 
   post_build:
     commands:
@@ -165,7 +175,7 @@ phases:
       # upload find cdash url and upload it as CodeBuild artifact to S3
       - if [ "$BUILD_STATUS" = "1" ];
         then echo "Build & tests passed, find cdash url";
-        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /home/nonroot/mpas-jedi/Testing $CDASH_URL);
+        url=$(bash /jcsda/mpas-bundle/mpas-jedi/CI/cdash-url.sh /build_container/mpas-jedi/Testing $CDASH_URL);
         echo $url;
         echo ${url} > /jcsda/artifacts/cdash-url.txt;
         cat /jcsda/artifacts/cdash-url.txt;

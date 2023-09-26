@@ -21,6 +21,13 @@ find_package(ecbuild)
 include( ecbuild_bundle )
 ecbuild_bundle_initialize()
 
+# Use external jedi-cmake for findESMF.cmake
+include( $ENV{jedi_cmake_ROOT}/share/jedicmake/Functions/git_functions.cmake )
+list( APPEND CMAKE_MODULE_PATH $ENV{jedi_cmake_ROOT}/share/jedicmake/Modules )
+
+# Find external ESMF for mpas-model (optional in theory, but if CI containers have ESMF it becomes mandatory)
+find_package(ESMF 8.3.0 MODULE)
+
 #TODO: When mpas-bundle becomes a public repo, consider changing the default value of BUNDLE_SKIP_ROPP-UFO to "ON"
 
 option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=ON
