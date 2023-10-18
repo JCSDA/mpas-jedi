@@ -190,6 +190,10 @@ fields:
   - field name: surface_snow_thickness
     mpas template field: u10
 
+  - field name: surface_roughness_length
+    mpas template field: u10
+    mpas identity field: znt
+
   - field name: vegetation_area_fraction
     mpas template field: u10
 
