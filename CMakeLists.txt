@@ -77,6 +77,25 @@ else( ${saca_FOUND} )
     message(STATUS "SACA NOT FOUND; Excluding SACA")
 endif( ${saca_FOUND} )
 
+## Test data
+
+### The mpas-jedi_data package is problematic in bundles because it has some special CMake logic
+### at the root bundle location. So, we cannot find the mpas-jedi-data while in mpas-jedi!
+### Basically, with the current logic we hack mpas-jedi-data_FOUND to match ENABLE_MPAS_JEDI_DATA
+#find_package( mpas-jedi-data QUIET )
+if (ENABLE_MPAS_JEDI_DATA)
+  set (mpas-jedi-data_FOUND TRUE)
+else()
+  # This functionality hasn't been added for mpas-jedi-data yet,
+  # leaving the values from fv3-jedi as placeholders for now.
+  ## Set values for downloading fv3-jedi test data from tarball
+  #set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
+  #set (mpas-jedi_data_tag "1.7.0")
+  #set (mpas-jedi_data_tarball_name "fv3-jedi_testinput_tier_1_${fv3-jedi_data_tag}.tar.gz")
+  #set (mpas-jedi_data_tarball_hash "c94cc6f939eb1a345ea9fe2b2c2dc8bf")
+  message(FATAL_ERROR "Downloadig mpas-jedi test data from release tarballs not implemented")
+endif()
+
 ## Sources
 add_subdirectory( src )
 add_subdirectory( test )

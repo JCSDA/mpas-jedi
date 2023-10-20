@@ -241,131 +241,61 @@ list( APPEND crtm_test_input
   TauCoeff/ODPS/Little_Endian/iasi_metop-a.TauCoeff.bin
 )
 
-## Create tests to download UFO and CRTM test files
-set( CRTM_COEFFS_BRANCH "3.0.0_skylab_6.0" )
-set( checksum "1" )
-
-function(ADD_DOWNLOAD_TEST repo test_files_dirname output_data_path)
-  # If REPO branch is being built set GIT_BRANCH_FUNC to REPO's current branch.
-  # If a tagged version of REPO is being built set GIT_TAG_FUNC to REPO's current tag.
-  find_branch_name(REPO_DIR_NAME ${repo})
-
-  if ( ${repo} STREQUAL "crtm" )
-    set( GIT_TAG_FUNC ${CRTM_COEFFS_BRANCH} )
+# If CRTM is found then we know that UFO must be configured with CRTM as well
+# and will have taken care of the data (whether it is provided locally or downloaded);
+# in particular it will have set UFO_CRTM_TESTFILES_PATH at parent scope.
+if (crtm_FOUND)
+  if (NOT UFO_CRTM_TESTFILES_PATH)
+    message(FATAL_ERROR "Found crtm but UFO_CRTM_TESTFILES_PATH was not set by ufo")
+  elseif (NOT EXISTS ${UFO_CRTM_TESTFILES_PATH})
+    message(FATAL_ERROR "Found crtm but ${UFO_CRTM_TESTFILES_PATH}, set by ufo, does not exist")
   endif()
+  message(STATUS "Use crtm test data provided by ufo in ${UFO_CRTM_TESTFILES_PATH}")
+endif()
 
-  if( DEFINED GIT_BRANCH_FUNC )
-    set( REPO_GIT_BRANCH ${GIT_BRANCH_FUNC} )
-  elseif( DEFINED GIT_TAG_FUNC )
-    set( REPO_GIT_BRANCH ${GIT_TAG_FUNC} )
-  endif()
+# UFO takes care of downloading ufo-data in whatever way specified
+# and sets UFO_UFO_TESTFILES_PATH accordingly (includes "/testinput_tier_1")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/ufo)
+link_dir(${UFO_UFO_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/ufo/testinput_tier_1)
 
-  # When env veriable LOCAL_PATH_JEDI_TESTFILES is set, simply link test files
-  # to build directory. get_${repo}_test_data checks the existence of test file directory.
-  # ${repo} test data must be stored in
-  # ${LOCAL_PATH_JEDI_TESTFILES}/${repo}/${BRANCH}/testinput_tier_1
-  if( DEFINED ENV{LOCAL_PATH_JEDI_TESTFILES} )
-    set( LOCAL_PATH_JEDI_TESTFILES "$ENV{LOCAL_PATH_JEDI_TESTFILES}" )
-    message( STATUS "use LOCAL_PATH_JEDI_TESTFILES: ${LOCAL_PATH_JEDI_TESTFILES}" )
-    # If test data specific to testing branch exists locally use it.
-    # If not use test data specific to develop branch.
-    if( EXISTS ${LOCAL_PATH_JEDI_TESTFILES}/${repo}/${REPO_GIT_BRANCH} )
-      set( TESTFILE_DIR_REPO "${LOCAL_PATH_JEDI_TESTFILES}/${repo}/${REPO_GIT_BRANCH}" )
-    else()
-      set( TESTFILE_DIR_REPO "${LOCAL_PATH_JEDI_TESTFILES}/${repo}/develop" )
-    endif()
-
-    message( STATUS "Test data in ${TESTFILE_DIR_REPO} is linked to build directory" )
-    list( APPEND REPO_DATA_DOWNLOADER_ARGS
-    ${TESTFILE_DIR_REPO} )
-    set ( REPO_DATA_DOWNLOADER mpas_data_checker.py )
-
-  # Any tagged version of REPO is being built.
-  # Build mpas_get_{repo}_test_data test to download test data from DASH.
-  elseif( DEFINED GIT_TAG_FUNC)
-    message( STATUS "Tagged version of ${repo} is used" )
-    # set ARGS for get_${repo}_test_data
-
-    if( DEFINED ENV{ECBUILD_DOWNLOAD_BASE_URL} )
-      set( ECBUILD_DOWNLOAD_BASE_URL "$ENV{ECBUILD_DOWNLOAD_BASE_URL}/${repo}/${GIT_TAG_FUNC}" )
-    else()
-      set( ECBUILD_DOWNLOAD_BASE_URL https://ftp.ssec.wisc.edu/pub/s4/CRTM/file ) # for complete coeff. files
-    endif()
-
-    set( DIRNAME ${GIT_TAG_FUNC} )
-    set( TESTFILE_DIR_REPO "${CMAKE_SOURCE_DIR}/test-data-release/${repo}/${GIT_TAG_FUNC}" )
-    # Create test-data-release in source directory
-    file( MAKE_DIRECTORY ${TESTFILE_DIR_REPO})
-    list( APPEND REPO_DATA_DOWNLOADER_ARGS
-          ${ECBUILD_DOWNLOAD_BASE_URL}
-          ${CMAKE_SOURCE_DIR}/test-data-release
-          ${test_files_dirname}
-          ${checksum} )
-    set ( REPO_DATA_DOWNLOADER mpas_data_downloader.py )
-
-    message( STATUS "Test files will be downloaded from DASH and
-    saved to ${TESTFILE_DIR_REPO} for ${repo}")
-
-  # Any branch of REPO is being built.
-  # repo-data repository is already cloned by bundle/CMakeLists.txt.
-  # Link test files in repo-data repo to build directory.
-  # get_repo_test_data checks the existence of test file directory
+# MPAS-JEDI test data - from mpas-jedi-data repo if found, from local directory, or from tarball
+if (mpas-jedi-data_FOUND)
+  message(STATUS "Use test data from mpas-jedi-data repository")
+  set (mpas-jedi_data_testinput_tier_1_local "${CMAKE_SOURCE_DIR}/mpas-jedi-data/testinput_tier_1")
+# It's unclear if anyone is using the local data functionality, therefore comment it out
+# for now and add in if someone complains / remove if completely if not.
+#elseif (DEFINED ENV{MPAS_JEDI_TESTFILES})
+#  message(STATUS "Use test data from local directory $ENV{MPAS_JEDI_TESTFILES}")
+#  # A bit of guesswork here, I don't know if folks using this option stored it in the same directory structure
+#  set (mpas-jedi_data_testinput_tier_1_local "$ENV{MPAS_JEDI_TESTFILES}/mpas-jedi-data/testinput_tier_1")
+else()
+  set (mpas-jedi_data_testinput_tier_1_local "${CMAKE_SOURCE_DIR}/test-data-release/mpas-jedi/${mpas-jedi_data_tag}/testinput_tier_1")
+  if (EXISTS ${mpas-jedi_data_testinput_tier_1_local})
+    message(STATUS "Skipping download of test data from ${mpas-jedi_data_download_url}/${mpas-jedi_data_tarball_name} since it already exists")
   else()
-    set( TESTFILE_DIR_REPO ${CMAKE_SOURCE_DIR}/${repo}-data )
-    list( APPEND REPO_DATA_DOWNLOADER_ARGS
-          ${TESTFILE_DIR_REPO} )
-    set (REPO_DATA_DOWNLOADER mpas_data_checker.py )
+    message(STATUS "Download test data from ${mpas-jedi_data_download_url}/${mpas-jedi_data_tarball_name}")
+    include(FetchContent)
+    FetchContent_Declare(
+      mpas-jedi-testdata
+      DOWNLOAD_DIR ${CMAKE_SOURCE_DIR}/test-data-release
+      DOWNLOAD_NO_EXTRACT ON
+      URL      ${mpas-jedi_data_download_url}/${mpas-jedi_data_tarball_name}
+      URL_HASH MD5=${mpas-jedi_data_tarball_hash}
+    )
+    FetchContent_MakeAvailable(mpas-jedi-testdata)
+    file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/test-data-release/${mpas-jedi_data_tarball_name} DESTINATION ${CMAKE_SOURCE_DIR}/test-data-release)
   endif()
-
-  # add test for downloading data
-  ecbuild_add_test( TARGET    mpas_get_${repo}_test_data
-                    TYPE      SCRIPT
-                    COMMAND   ${CMAKE_BINARY_DIR}/bin/${REPO_DATA_DOWNLOADER}
-                    ARGS  ${REPO_DATA_DOWNLOADER_ARGS} )
-
-  # pass output data path back to calling code
-  set(${output_data_path} ${TESTFILE_DIR_REPO} PARENT_SCOPE)
-
-  # Create download script for mpas_get_*_test_data test
-  set ( FILENAME ${REPO_DATA_DOWNLOADER})
-  set ( SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME} )
-  set ( DEST_FILE ${CMAKE_BINARY_DIR}/bin/${FILENAME} )
-
-  if( EXISTS "${SOURCE_FILE}.in" )
-    configure_file( ${SOURCE_FILE}.in ${DEST_FILE} @ONLY )
-  else()
-    configure_file( ${SOURCE_FILE}    ${DEST_FILE} @ONLY )
-  endif()
-
-
-  add_custom_target( bin_mpas_${repo}_test_download_scripts ALL
-    COMMAND chmod +x ${DEST_FILE}
-    DEPENDS ${DEST_FILE} )
-
-endfunction()
-
-#############################################
-# Link test data files from other repositories
-#ufo
-set(ufo_test_data  ufo_testinput_tier_1.tar.gz)
-set(crtm_test_data crtm_coefficients_${CRTM_COEFFS_BRANCH}.tar.gz)
-set(mpas_test_data  mpas-jedi_testinput_tier_1.tar.gz)
-
-ADD_DOWNLOAD_TEST( "ufo" ${ufo_test_data} MPAS_UFO_TESTFILES_PATH )
-ADD_DOWNLOAD_TEST( "crtm" ${crtm_test_data} MPAS_CRTM_COEFFS_PATH )
-ADD_DOWNLOAD_TEST( "mpas-jedi" ${mpas_test_data} MPAS_MPAS_TESTFILES_PATH )
-
-link_dir(${MPAS_UFO_TESTFILES_PATH} ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/ufo)
+endif()
 
 # link .nc files from mpas-jedi-data to build/mpas-jedi/test/Data
 #384km tests
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km)
-link_dir(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/384km/init
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/init
         ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/init)
 
 #480km
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km)
-link_dir(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km/bg
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/480km/bg
          ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km/bg)
 
 #480km_2stream
@@ -378,7 +308,7 @@ list( APPEND mpas_test_480km_2stream_nc
       x1.2562.grid.nc
       x1.2562.init.2018-04-14_18.00.00.nc
 )
-link_files(${MPAS_MPAS_TESTFILES_PATH}/testinput_tier_1/480km_2stream
+link_files(${mpas-jedi_data_testinput_tier_1_local}/480km_2stream
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
            ${mpas_test_480km_2stream_nc} )
 
@@ -441,7 +371,7 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
 # link crtm coefficient files
 if( crtm_FOUND )
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff)
-  create_symlink_filename( ${MPAS_CRTM_COEFFS_PATH}
+  create_symlink_filename( ${UFO_CRTM_TESTFILES_PATH}
                            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/UFOCoeff
                            ${crtm_test_input} )
 endif ( crtm_FOUND )

@@ -7,7 +7,7 @@
 # MPAS/JEDI bundle
 #
 
-cmake_minimum_required( VERSION 3.12 )
+cmake_minimum_required( VERSION 3.14 )
 project( mpas-bundle VERSION 1.0.0 LANGUAGES C CXX Fortran )
 
 ## ECBuild integration
@@ -31,20 +31,25 @@ find_package(ESMF 8.3.0 MODULE)
 #TODO: When mpas-bundle becomes a public repo, consider changing the default value of BUNDLE_SKIP_ROPP-UFO to "ON"
 
 option(BUNDLE_SKIP_ROPP-UFO "Don't build ROPP-UFO"  "OFF") # Skip ropp-ufo build unless user passes -DBUNDLE_SKIP_ROPP-UFO=ON
+# Enabling the ioda-data and ufo-data repos but then not cloning them
+# when they are not needed saves us from unnecessary downloads of the data tarballs
+option(ENABLE_IODA_DATA "Obtain ufo test data from ioda-data repository (vs tarball)" ON)
+option(ENABLE_UFO_DATA "Obtain ufo test data from ufo-data repository (vs tarball)" ON)
+
 ecbuild_bundle( PROJECT ropp-ufo  GIT "https://github.com/jcsda-internal/ropp-test.git" )
 ecbuild_bundle( PROJECT crtm      GIT "https://github.com/jcsda/CRTMv3.git" )
 ecbuild_bundle( PROJECT rttov     GIT "https://github.com/jcsda-internal/rttov.git" )
 ecbuild_bundle( PROJECT oops      GIT "https://github.com/jcsda-internal/oops.git" )
 ecbuild_bundle( PROJECT saber     GIT "https://github.com/jcsda-internal/saber.git" )
+#ecbuild_bundle( PROJECT ioda-data GIT "https://github.com/jcsda-internal/ioda-data.git" )
 ecbuild_bundle( PROJECT ioda      GIT "https://github.com/jcsda-internal/ioda.git" )
+#ecbuild_bundle( PROJECT ufo-data GIT "https://github.com/jcsda-internal/ufo-data.git" )
 ecbuild_bundle( PROJECT ufo       GIT "https://github.com/jcsda-internal/ufo.git" )
 
-# ioda and ufo test data
+# mpas-jedi test data
 #---------------------------------
-
-ecbuild_bundle( PROJECT ufo-data GIT "https://github.com/JCSDA-internal/ufo-data.git" )
+option(ENABLE_MPAS_JEDI_DATA "Obtain mpas-jedi test data from mpas-data repository (vs tarball)" ON)
 ecbuild_bundle( PROJECT mpas-jedi-data GIT "https://github.com/JCSDA-internal/mpas-jedi-data.git" )
-
 
 set(MPAS_CORES atmosphere init_atmosphere CACHE STRING "MPAS-Model: cores to build.")
 set(MPAS_DOUBLE_PRECISION "ON" CACHE STRING "MPAS-Model: Use double precision 64-bit Floating point.")
