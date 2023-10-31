@@ -81,6 +81,8 @@ list( APPEND mpas_testinput
   testinput/3dvar_bumpcov_rttovcpp.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
+  testinput/4denvar_VarBC.yaml
+  testinput/4denvar_VarBC_nonpar.yaml
   testinput/4dfgat.yaml
   testinput/convertstate_bumpinterp.yaml
   testinput/convertstate_unsinterp.yaml
@@ -145,6 +147,7 @@ list( APPEND mpas_testoutput
   testoutput/3dvar_bumpcov_rttovcpp.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
+  testoutput/4denvar_VarBC.ref
   testoutput/4dfgat.ref
   testoutput/convertstate_bumpinterp.ref
   testoutput/convertstate_unsinterp.ref
@@ -849,6 +852,20 @@ add_mpasjedi_application_test(
     APPLICATION variational
     NPE 3
     N_PARALLEL_STATES 3
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 4denvar_VarBC
+    APPLICATION variational
+    NPE 3
+    N_PARALLEL_STATES 3
+    DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 4denvar_VarBC_nonpar
+    APPLICATION variational
+    DEPENDS parameters_bumploc
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(

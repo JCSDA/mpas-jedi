@@ -1,0 +1,174 @@
+test:
+  float relative tolerance: 0.000001
+  integer tolerance: 0
+  reference filename: testoutput/4denvar_VarBC.ref
+  log output filename: testoutput/4denvar_VarBC_nonpar.run
+  test output filename: testoutput/4denvar_VarBC_nonpar.run.ref
+_member config 1: &memberConfig1
+  date: &date1 '2018-04-14T21:00:00Z'
+  state variables: &incvars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  stream name: ensemble
+_member config 2: &memberConfig2
+  <<: *memberConfig1
+  date: &date2 '2018-04-15T00:00:00Z'
+_member config 3: &memberConfig3
+  <<: *memberConfig1
+  date: &date3 '2018-04-15T03:00:00Z'
+cost function:
+  cost type: 4D-Ens-Var
+  window begin: '2018-04-14T21:00:00Z'
+  window length: PT6H
+  parallel subwindows: false
+  subwindow: PT3H
+  geometry:
+    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km/streams.atmosphere"
+  analysis variables: *incvars
+  background:
+    states:
+    - state variables: &stvars
+                      [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
+                      snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+      filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
+      date: *date1
+    - state variables: *stvars
+      filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+      date: *date2
+    - state variables: *stvars
+      filename: "./Data/480km/bg/restart.2018-04-15_03.00.00.nc"
+      date: *date3
+  background error:
+    covariance model: ensemble
+    localization:
+      localization method: SABER
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *incvars
+        read:
+          io:
+            files prefix: Data/bump/mpas_parametersbump_loc
+          drivers:
+            multivariate strategy: duplicated
+            read local nicas: true
+    members:
+    - states:
+      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
+        <<: *memberConfig1
+      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+        <<: *memberConfig2
+      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_03.00.00.nc
+        <<: *memberConfig3
+    - states:
+      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
+        <<: *memberConfig1
+      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+        <<: *memberConfig2
+      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_03.00.00.nc
+        <<: *memberConfig3
+    - states:
+      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
+        <<: *memberConfig1
+      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+        <<: *memberConfig2
+      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_03.00.00.nc
+        <<: *memberConfig3
+    - states:
+      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
+        <<: *memberConfig1
+      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+        <<: *memberConfig2
+      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_03.00.00.nc
+        <<: *memberConfig3
+    - states:
+      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
+        <<: *memberConfig1
+      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+        <<: *memberConfig2
+      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
+        <<: *memberConfig3
+  observations:
+    observers:
+    - obs space:
+        name: AMSUA-NOAA19
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_4denvar_bc_nonpar_amsua_n19.nc4
+        simulated variables: [brightnessTemperature]
+        channels: 1-15
+      obs error:
+        covariance model: diagonal
+      obs operator: &crtmobsoper
+        name: CRTM
+        Absorbers: [H2O,O3]
+        SurfaceWindGeoVars: uv
+        linear obs operator:
+          Absorbers: [H2O]
+        obs options: &crtmobsopts
+          Sensor_ID: amsua_n19
+          EndianType: little_endian
+          CoefficientPath: Data/UFOCoeff/
+      obs bias:
+        input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+        output file: Data/os/satbias_amsua_n19_nonpar_out.nc4
+        variational bc:
+          predictors:
+          - name: constant
+          - name: lapse_rate
+            order: 2
+            tlapse: &amsua19tlap Data/ufo/testinput_tier_1/amsua_n19_tlapmean.txt
+          - name: lapse_rate
+            tlapse: *amsua19tlap
+          - name: emissivity
+          - name: scan_angle
+            order: 4
+          - name: scan_angle
+            order: 3
+          - name: scan_angle
+            order: 2
+          - name: scan_angle
+        covariance:
+          minimal required obs number: 20
+          variance range: [1.0e-6, 10.0]
+          step size: 1.0e-4
+          largest analysis variance: 10000.0
+          prior:
+            input file: Data/ufo/testinput_tier_1/satbias_amsua_n19.nc4
+            inflation:
+              ratio: 1.1
+              ratio for small dataset: 2.0
+          output file: Data/os/satbias_cov_amsua_n19_nonpar_out.nc4
+output:
+  filename: "Data/states/mpas.4denvar_bc_nonpar_bump.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
+variational:
+  minimizer:
+    algorithm: DRIPCG
+  iterations:
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+    diagnostics:
+      departures: ombg
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+final:
+  diagnostics:
+    departures: oman
