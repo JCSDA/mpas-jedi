@@ -1,0 +1,40 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/hofx3d_nbam.ref
+  log output filename: testoutput/hofx3d_nbam.run
+  test output filename: testoutput/hofx3d_nbam.run.ref
+window begin: '2018-04-14T21:00:00Z'
+window length: PT6H
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+state:
+  state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                    qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
+                    ivgtyp, isltyp, snowh, vegfra, u10, v10, lai, smois, tslb]
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: '2018-04-15T00:00:00Z'
+observations:
+  observers:
+  - obs space:
+      name: GnssroBndNBAM
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_gnssrobndnbam.nc4
+      simulated variables: [bendingAngle]
+    obs operator:
+      name: GnssroBndNBAM
+      obs options:
+        use_compress: 1 # compressibility constants, 1: from Rueger 2002, 0: from Bevis et al 1994
+        #sr_steps: 2 # same as default, super-refraction steps
+        vertlayer: mass # or full, type of vertical layers for pressure and geopotential height
+        #super_ref_qc: NBAM # same as default, or ECMWF
+        modeltop: 30 # model top height in km
+        #nlevadd: 13 # extended model layers on top of the existing model levels
+        #ngrd: 80 # number of integration grids for bending angle

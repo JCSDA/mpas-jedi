@@ -1,9 +1,9 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/3dvar_bumpcov_ropp.ref
-  log output filename: testoutput/3dvar_bumpcov_ropp.run
-  test output filename: testoutput/3dvar_bumpcov_ropp.run.ref
+  reference filename: testoutput/3dvar_bumpcov_nbam.ref
+  log output filename: testoutput/3dvar_bumpcov_nbam.run
+  test output filename: testoutput/3dvar_bumpcov_nbam.run.ref
 cost function:
   cost type: 3D-Var
   window begin: '2018-04-14T21:00:00Z'
@@ -61,7 +61,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dvar_bumpcov_ropp_sondes.nc4
+            obsfile: Data/os/obsout_3dvar_bumpcov_nbam_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -75,7 +75,7 @@ cost function:
         apply at iterations: 0,1
         threshold: 3
     - obs space:
-        name: GnssroBndROPP1D
+        name: GnssroBndNBAM
         obsdatain:
           engine:
             type: H5File
@@ -83,34 +83,43 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dvar_bumpcov_ropp_gnssrobndropp1d.nc4
+            obsfile: Data/os/obsout_hofx3d_gnssrobndnbam.nc4
         simulated variables: [bendingAngle]
       obs operator:
-        name: GnssroBndROPP1D
-      obs error:
-        covariance model: diagonal
+        name: GnssroBndNBAM
+        obs options:
+          use_compress: 1 # compressibility constants, 1: from Rueger 2002, 0: from Bevis et al 1994
+          #sr_steps: 2 # same as default, super-refraction steps
+          vertlayer: mass # or full, type of vertical layers for pressure and geopotential height
+          #super_ref_qc: NBAM # same as default, or ECMWF
+          modeltop: 30 # model top height in km
+          #nlevadd: 13 # extended model layers on top of the existing model levels
+          #ngrd: 80 # number of integration grids for bending angle
       obs filters:
       - filter: Domain Check
         where:
         - variable:
             name: MetaData/height
-          minvalue: 0
-          maxvalue: 50000
+          minvalue: 0.0
+          maxvalue: 30000.0
         - variable:
             name: MetaData/earthRadiusCurvature
-          minvalue: 6250000
-          maxvalue: 6450000
+          minvalue: 6250000.0
+          maxvalue: 6450000.0
         - variable:
             name: MetaData/geoidUndulation
-          minvalue: -200
-          maxvalue: 200
-      - filter: Background Check
-        apply at iterations: 0,1
-        threshold: 3
+          minvalue: -200.0
+          maxvalue: 200.0
       - filter: ROobserror
+        filter variables:
+        - name: bendingAngle
+        errmodel: NBAM
         apply at iterations: 0,1
-        variable: bending_angle
-        errmodel: ECMWF
+      - filter: Background Check RONBAM
+        filter variables:
+        - name: bendingAngle
+        threshold: 3
+        apply at iterations: 0,1
     - obs space:
         name: SfcPCorrected
         obsdatain:
@@ -120,7 +129,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dvar_bumpcov_ropp_sfc.nc4
+            obsfile: Data/os/obsout_3dvar_bumpcov_nbam_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -155,7 +164,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3dvar_amsua_bumpcov_ropp_amsua_n19--nohydro.nc4
+            obsfile: Data/os/obsout_3dvar_amsua_bumpcov_nbam_amsua_n19--nohydro.nc4
         simulated variables: [brightnessTemperature]
         channels: 4-7,9-14
       obs error:
@@ -175,7 +184,7 @@ cost function:
           EndianType: little_endian
           CoefficientPath: Data/UFOCoeff/
 output:
-  filename: "Data/states/mpas.3dvar_bumpcov_ropp.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3dvar_bumpcov_nbam.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:

@@ -82,6 +82,9 @@ observations:
         sr_steps: 2
         vertlayer: full
         super_ref_qc: NBAM
+        modeltop: 30 # model top height in km
+        #nlevadd: 13 # extended model layers on top of the existing model levels
+        #ngrd: 80 # number of integration grids for bending angle
   - obs space:
       name: GnssroBendMetOffice
       obsdatain:
