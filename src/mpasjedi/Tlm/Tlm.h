@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-#include "oops/base/Variables.h"
 #include "oops/interface/LinearModelBase.h"
 
 #include "mpasjedi/Fortran.h"
@@ -57,7 +56,6 @@ class Tlm: public oops::interface::LinearModelBase<Traits>,
 /// Other utilities
   const util::Duration & timeResolution() const override {return tstep_;}
   const Geometry & resolution() const {return resol_;}
-  const oops::Variables & variables() const override {return linvars_;}
 
  private:
   void print(std::ostream &) const override;
@@ -70,7 +68,6 @@ class Tlm: public oops::interface::LinearModelBase<Traits>,
   const Geometry resol_;
   std::map< util::DateTime, F90traj> traj_;
   const Model lrmodel_;
-  oops::Variables linvars_;
 };
 // -----------------------------------------------------------------------------
 
