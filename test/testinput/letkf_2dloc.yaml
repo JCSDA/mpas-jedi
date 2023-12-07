@@ -23,8 +23,9 @@ geometry:
   deallocate non-da fields: true
   iterator dimension: 3
 
-window begin: 2018-04-14T21:00:00Z
-window length: PT6H
+time window:
+  begin: 2018-04-14T21:00:00Z
+  length: PT6H
 
 background:
   members from template:

@@ -1,5 +1,6 @@
-window begin: &date '2018-04-14T21:00:00Z'
-window length: PT6H
+time window:
+  begin: &date '2018-04-14T21:00:00Z'
+  length: PT6H
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"

@@ -21,8 +21,9 @@ _member config 3: &memberConfig3
   date: &date3 '2018-04-15T03:00:00Z'
 cost function:
   cost type: 4D-Ens-Var
-  window begin: '2018-04-14T21:00:00Z'
-  window length: PT6H
+  time window:
+    begin: '2018-04-14T21:00:00Z'
+    length: PT6H
   subwindow: PT3H
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041500"

@@ -4,8 +4,9 @@ test:
   reference filename: testoutput/hofx4d_pseudo.ref
   log output filename: testoutput/hofx4d_pseudo.run
   test output filename: testoutput/hofx4d_pseudo.run.ref
-window begin: '2018-04-14T21:00:00Z'
-window length: PT6H
+time window:
+  begin: '2018-04-14T21:00:00Z'
+  length: PT6H
 forecast length: PT6H
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041421"

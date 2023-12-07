@@ -7,8 +7,9 @@ test:
 cost function:
   # 4dfgat utilizes the 4D-Var cost function with an identity linear model
   cost type: 4D-Var
-  window begin: '2018-04-14T21:00:00Z'
-  window length: PT6H
+  time window:
+    begin: '2018-04-14T21:00:00Z'
+    length: PT6H
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041421"
     streams_file: "./Data/480km/streams.atmosphere"
