@@ -1481,7 +1481,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             else
                ! Create Atlas field
                if (include_halo) then
-                  afield = geom%afunctionspace_incl_halo%create_field &
+                  afield = geom%afunctionspace%create_field &
                        (name=vars%variable(jvar),kind=atlas_real(kind_real),levels=nlevels)
                else
                   afield = geom%afunctionspace%create_field &
@@ -1537,6 +1537,8 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                STOP 'poolItr % dataType neither real nor integer'
             endif
 
+            ! Set dirty: halo points are uninitialized and must be filled by calling the atlas haloExchange
+            call afield%set_dirty(.true.)
 
             meta = afield%metadata()
             if (poolItr % dataType == MPAS_POOL_REAL) then

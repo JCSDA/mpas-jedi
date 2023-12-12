@@ -74,12 +74,6 @@ extern "C" {
                                      const atlas::field::FieldSetImpl *,
                                      const bool &,
                                      const bool &);
-  void mpas_increment_to_fieldset_ad_f90(const F90inc &,
-                                     const F90geom &,
-                                     const oops::Variables &,
-                                     const atlas::field::FieldSetImpl *,
-                                     const bool &,
-                                     const bool &);
   void mpas_increment_dirac_f90(const F90inc &,
                                 const eckit::Configuration &);
   void mpas_increment_sizes_f90(const F90inc &, int &, int &);

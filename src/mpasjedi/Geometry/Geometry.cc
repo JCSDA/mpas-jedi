@@ -5,8 +5,15 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <algorithm>
+
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
 #include "atlas/grid.h"
-#include "atlas/util/Config.h"
+#include "atlas/mesh/actions/BuildHalo.h"
+#include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/MeshBuilder.h"
+#include "atlas/output/Gmsh.h"
 
 #include "oops/util/abor1_cpp.h"
 #include "oops/util/Logger.h"
@@ -25,22 +32,93 @@ Geometry::Geometry(const eckit::Configuration & config,
   params.deserialize(config);
   mpas_geo_setup_f90(keyGeom_, params.toConfiguration(), &comm);
 
+  // setup the atlas functionspace
+  {
+    // get the number of nodes and cells owned by this PE
+    int num_nodes;
+    int num_tri_elements;
+    mpas_geo_get_num_nodes_and_elements_f90(keyGeom_, num_nodes, num_tri_elements);
+
+    std::vector<double> lons(num_nodes);
+    std::vector<double> lats(num_nodes);
+    std::vector<int> ghosts(num_nodes);
+    std::vector<int> global_indices(num_nodes);
+    std::vector<int> remote_indices(num_nodes);
+    std::vector<int> partitions(num_nodes);
+
+    const int num_tri_nodes = 3*num_tri_elements;
+    std::vector<int> raw_tri_boundary_nodes(num_tri_nodes);
+    mpas_geo_get_coords_and_connectivities_f90(keyGeom_,
+      num_nodes, lons.data(), lats.data(), ghosts.data(),
+      global_indices.data(), remote_indices.data(), partitions.data(),
+      num_tri_nodes, raw_tri_boundary_nodes.data());
+
+    // calculate per-PE global tri numbering offset
+    std::vector<int> num_elements_per_rank(comm_.size());
+    comm_.allGather(num_tri_elements, num_elements_per_rank.begin(), num_elements_per_rank.end());
+    int global_element_index = 0;
+    for (size_t i = 0; i < comm_.rank(); ++i) {
+      global_element_index += num_elements_per_rank[i];
+    }
+
+    // convert some of the temporary arrays into a form atlas expects
+    using atlas::gidx_t;
+    using atlas::idx_t;
+
+    std::vector<gidx_t> atlas_global_indices(num_nodes);
+    std::transform(global_indices.begin(), global_indices.end(), atlas_global_indices.begin(),
+      [](const int index) {return atlas::gidx_t{index};});
+
+    const atlas::idx_t remote_index_base = 1;  // 1-based indexing from Fortran
+    std::vector<idx_t> atlas_remote_indices(num_nodes);
+    std::transform(remote_indices.begin(), remote_indices.end(), atlas_remote_indices.begin(),
+      [](const int index) {return atlas::idx_t{index};});
+
+    std::vector<std::array<gidx_t, 3>> tri_boundary_nodes(num_tri_elements);
+    std::vector<gidx_t> tri_global_indices(num_tri_elements);
+    for (size_t tri = 0; tri < num_tri_elements; ++tri) {
+      for (size_t i = 0; i < 3; ++i) {
+        tri_boundary_nodes[tri][i] = raw_tri_boundary_nodes[3*tri + i];
+      }
+      tri_global_indices[tri] = global_element_index++;  // work for both global/regional MPAS mesh
+    }
+    std::vector<std::array<gidx_t, 4>> quad_boundary_nodes{};  // MPAS does not have quad.
+    std::vector<gidx_t> quad_global_indices{};  // MPAS does not have quad.
+
+    // build the mesh!
+    eckit::LocalConfiguration config{};
+    config.set("mpi_comm", comm_.name());
+    const atlas::mesh::MeshBuilder mesh_builder{};
+    atlas::Mesh mesh = mesh_builder(
+      lons, lats, ghosts,
+      atlas_global_indices, atlas_remote_indices, remote_index_base, partitions,
+      tri_boundary_nodes, tri_global_indices,
+      quad_boundary_nodes, quad_global_indices, config);
+    atlas::mesh::actions::build_halo(mesh, 1);
+    functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
+
+    // optionally save output for viewing with gmsh
+    if (config.getBool("gmsh save", false)) {
+      std::string filename = config.getString("gmsh filename", "out.msh");
+      atlas::output::Gmsh gmsh(filename,
+          atlas::util::Config("coordinates", "xyz")
+          | atlas::util::Config("ghost", true));  // enables viewing halos per task
+      gmsh.write(mesh);
+    }
+  }
+
   // Set ATLAS lon/lat field with halo
   atlas::FieldSet fs;
   const bool include_halo = true;
   mpas_geo_set_lonlat_f90(keyGeom_, fs.get(), include_halo);
 
-  // Create function space
-  const atlas::Field lonlatField = fs.field("lonlat");
-  functionSpace_ = atlas::functionspace::PointCloud(lonlatField);
-
-  // Create function space with halo
-  const atlas::Field lonlatFieldInclHalo = fs.field("lonlat_including_halo");
-  functionSpaceIncludingHalo_ = atlas::functionspace::PointCloud(lonlatFieldInclHalo);
+  // Create function space without halo, for constructing the bump interpolator from mpasjedi
+  const atlas::Field lonlatFieldForBump = fs.field("lonlat");
+  functionSpaceForBump_ = atlas::functionspace::PointCloud(lonlatFieldForBump);
 
   // Set ATLAS function space pointer in Fortran
   mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                             functionSpaceIncludingHalo_.get());
+                                             functionSpaceForBump_.get());
 
   // Fill geometry fieldset : for saber vunit
   fields_ =  atlas::FieldSet();
@@ -54,11 +132,10 @@ Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
   oops::Log::trace() << "========= Geometry mpas_geo_clone_f90   =========="
                      << std::endl;
   mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
-  functionSpace_ = atlas::functionspace::PointCloud(other.functionSpace_.lonlat());
-  functionSpaceIncludingHalo_ = atlas::functionspace::PointCloud(
-    other.functionSpaceIncludingHalo_.lonlat());
+  functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
+  functionSpaceForBump_ = atlas::functionspace::PointCloud(other.functionSpaceForBump_.lonlat());
   mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                         functionSpaceIncludingHalo_.get());
+                                         functionSpaceForBump_.get());
   fields_ = atlas::FieldSet();
   for (auto & field : other.fields_) {
     fields_->add(field);
@@ -136,9 +213,9 @@ void Geometry::latlon(std::vector<real_type> & lats, std::vector<real_type> & lo
                       const bool halo) const {
   const atlas::FunctionSpace * fspace;
   if (halo) {
-    fspace = &functionSpaceIncludingHalo_;
-  } else {
     fspace = &functionSpace_;
+  } else {
+    fspace = &functionSpaceForBump_;
   }
   const auto lonlat = atlas::array::make_view<real_type, 2>(fspace->lonlat());
   const size_t npts = fspace->size();

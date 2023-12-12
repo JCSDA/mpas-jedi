@@ -96,7 +96,11 @@ type :: mpas_geom
    type(fckit_mpi_comm) :: f_comm
 
    type(atlas_functionspace) :: afunctionspace
-   type(atlas_functionspace) :: afunctionspace_incl_halo
+
+   ! As a temporary hack to enable using the BUMP interpolator from mpasjedi, make an additional
+   ! FunctionSpace without halos. This should be removed as soon as the interpolations can be made
+   ! more generic
+   type(atlas_functionspace) :: afunctionspace_for_bump
    
    type(templated_field), allocatable :: templated_fields(:)
 
@@ -109,9 +113,12 @@ type :: mpas_geom
    procedure, public :: has_identity => field_has_identity
    procedure, public :: identity => identity_fieldname
    procedure, public :: full_to_half => full_to_half_levels
+   procedure, public :: get_num_nodes_and_elements
+   procedure, public :: get_coords_and_connectivities
    generic, public :: nlevels => variables_nlevels, var_nlevels
    procedure :: variables_nlevels
    procedure :: var_nlevels
+
 
 end type mpas_geom
 
@@ -452,7 +459,7 @@ subroutine geo_fill_geometry_fields(self, afieldset)
    nx2= self%nCellsSolve   !      without
 
    ! Add owned vs halo/BC field
-   afield = self%afunctionspace_incl_halo%create_field &
+   afield = self%afunctionspace%create_field &
         (name='owned', kind=atlas_integer(kind_int), levels=1)
    call afield%data(int_ptr)
    int_ptr(1,:)=0
@@ -461,7 +468,7 @@ subroutine geo_fill_geometry_fields(self, afieldset)
    call afield%final()
    
    ! Add area
-   afield = self%afunctionspace_incl_halo%create_field &
+   afield = self%afunctionspace%create_field &
         (name='area', kind=atlas_real(kind_real), levels=1)
    call afield%data(real_ptr)
    real_ptr(1,1:nx) = real(self%areaCell(1:nx), kind_real)
@@ -470,7 +477,7 @@ subroutine geo_fill_geometry_fields(self, afieldset)
 
    
    ! Add vertical unit
-   afield = self%afunctionspace_incl_halo%create_field &
+   afield = self%afunctionspace%create_field &
         (name='vert_coord', kind=atlas_real(kind_real), levels=self%nVertLevels)
    call afield%data(real_ptr)
    do jz=1,self%nVertLevels
@@ -682,7 +689,7 @@ subroutine geo_clone(self, other)
    self % angleEdge         = other % angleEdge
 
    self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
-   self%afunctionspace_incl_halo = atlas_functionspace(other%afunctionspace_incl_halo%c_ptr())
+   self%afunctionspace_for_bump = atlas_functionspace(other%afunctionspace_for_bump%c_ptr())
 
    call fckit_log%debug('====> copy of geom corelist and domain')
 
@@ -757,7 +764,7 @@ subroutine geo_delete(self)
    end do
    
    call self%afunctionspace%final()
-   call self%afunctionspace_incl_halo%final()
+   call self%afunctionspace_for_bump%final()
 
 #ifdef MPAS_EXTERNAL_ESMF_LIB
    ! Finalize ESMF on behalf of MPAS, keep MPI alive for JEDI to clean up
@@ -1172,6 +1179,108 @@ subroutine variables_nlevels(self, vars, nv, nlevels)
    end do
 
 end subroutine variables_nlevels
+
+! ------------------------------------------------------------------------------
+
+subroutine get_num_nodes_and_elements(self, num_nodes, num_tris)
+
+   implicit none
+
+   class(mpas_geom), intent(in) :: self
+   integer, intent(out) :: num_nodes
+   integer, intent(out) :: num_tris
+
+   logical, pointer :: config_apply_lbcs
+   integer, dimension(:), pointer :: bdyMaskVertex
+   integer :: nVerticesBdy7
+
+   num_nodes = self % nCells         ! Local + Halo
+   num_tris = self % nVerticesSolve  ! Local
+
+   call mpas_pool_get_config(self%domain%blocklist%configs, 'config_apply_lbcs', config_apply_lbcs)
+
+   ! for regional MPAS mesh
+   if ( config_apply_lbcs) then
+      call mpas_pool_get_array(self%domain%blocklist%allFields, 'bdyMaskVertex', bdyMaskVertex)
+      ! count the number of outer-most Vertices ( bdyMaskVertex == 7 )
+      nVerticesBdy7 = count ( bdyMaskVertex(1:self%nVerticesSolve) ==7 )
+      ! number of "interior" own vertices for a given process
+      num_tris = self % nVerticesSolve - nVerticesBdy7
+      write(message,*) self%f_comm%rank(), 'this is regional, nVerticesSolve, nVerticesBdy7=', &
+              self % nVerticesSolve, nVerticesBdy7
+      call fckit_log%debug(message)
+   end if
+
+end subroutine get_num_nodes_and_elements
+
+! ------------------------------------------------------------------------------
+
+subroutine get_coords_and_connectivities(self, &
+   num_nodes, num_tri_boundary_nodes, &
+   lons, lats, ghosts, global_indices, remote_indices, partition, &
+   raw_tri_boundary_nodes)
+
+   implicit none
+
+   class(mpas_geom), intent(in) :: self
+   integer, intent(in) :: num_nodes
+   integer, intent(in) :: num_tri_boundary_nodes
+   real(kind_real), intent(out) :: lons(num_nodes)
+   real(kind_real), intent(out) :: lats(num_nodes)
+   integer, intent(out) :: ghosts(num_nodes)
+   integer, intent(out) :: global_indices(num_nodes)
+   integer, intent(out) :: remote_indices(num_nodes)
+   integer, intent(out) :: partition(num_nodes)
+   integer, intent(out) :: raw_tri_boundary_nodes(num_tri_boundary_nodes)
+
+   integer :: i, iVertValid
+   type (field1DInteger), pointer :: indexToCellID, indexToVertexID, iTmp
+
+   lons = self % lonCell * MPAS_JEDI_RAD2DEG_kr
+   lats = self % latCell * MPAS_JEDI_RAD2DEG_kr
+
+   ghosts = 1
+   ghosts(1:self%nCellsSolve) = 0 ! Own nodes (or Cells in MPAS)
+
+   !indexToCellID & indexToVertexID from MPAS domain
+   call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToCellID', indexToCellID)
+   call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToVertexID', indexToVertexID)
+   call mpas_duplicate_field(indexToCellID, iTmp)   ! intermediate for halo exchange
+
+   global_indices(1:num_nodes) = indexToCellID % array(1:num_nodes)
+   !No need halo exchange. b/c using self%nCells here.
+
+   iTmp % array(:) = -1
+   do i=1,self%nCellsSolve ! Own definition first
+      iTmp % array(i) = i
+   end do
+   call mpas_dmpar_exch_halo_field(iTmp) ! halo exchange
+   do i=1,num_nodes !=self%nCells
+      remote_indices(i) = iTmp % array(i)
+   end do
+
+   iTmp % array(:) = -1
+   do i=1,self%nCellsSolve ! Own definition first
+      iTmp % array(i) = self%f_comm%rank()
+   end do
+   call mpas_dmpar_exch_halo_field(iTmp) ! halo exchange
+   do i=1,num_nodes !=self%nCells
+      partition(i) = iTmp % array(i)
+   end do
+
+   !clean up 
+   call mpas_deallocate_field(iTmp)
+
+   iVertValid=1 ! used for global indices of vertices.
+   do i=1,self%nVerticesSolve ! Note self%nVerticesSolve = num_tris (for global mesh), but != num_tris (for regional mesh)
+      if( any( indexToCellID % array ( self%cellsOnVertex(:,i) ) .eq. 0 ) ) cycle ! regional MPAS mesh, Skip the outer-most Vertices
+      raw_tri_boundary_nodes(3*(iVertValid-1)+1) = indexToCellID % array( self%cellsOnVertex(1,i) )
+      raw_tri_boundary_nodes(3*(iVertValid-1)+2) = indexToCellID % array( self%cellsOnVertex(2,i) )
+      raw_tri_boundary_nodes(3*(iVertValid-1)+3) = indexToCellID % array( self%cellsOnVertex(3,i) )
+      iVertValid=iVertValid+1
+   end do
+
+end subroutine get_coords_and_connectivities
 
 ! ------------------------------------------------------------------------------
 

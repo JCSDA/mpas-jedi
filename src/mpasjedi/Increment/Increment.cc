@@ -195,24 +195,15 @@ void Increment::fromFieldSet(const atlas::FieldSet & fset) {
 }
 // -------------------------------------------------------------------------------------------------
 void Increment::toFieldSet(atlas::FieldSet & fset) const {
-  const bool include_halo = true;
+  const bool include_halo = false;
   const bool flip_vert_lev = true;
   oops::Log::trace() << "mpasjedi::Increment:::toFieldSet starting" << std::endl;
   mpas_increment_to_fieldset_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
                               flip_vert_lev);
+  fset.haloExchange();
   oops::Log::trace() << "mpasjedi::Increment::toFieldSet done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void Increment::toFieldSetAD(const atlas::FieldSet & fset) {
-  // Quenstionable : true for halo and flip_vert_lev
-  const bool include_halo = true;
-  const bool flip_vert_lev = true;
-  oops::Log::trace() << "mpasjedi::Increment:::toFieldSetAD starting" << std::endl;
-  mpas_increment_to_fieldset_ad_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
-                                 flip_vert_lev);
-  oops::Log::trace() << "mpasjedi::Increment::toFieldSetAD done" << std::endl;
-}
-// -----------------------------------------------------------------------------
 /// I/O and diagnostics
 // -----------------------------------------------------------------------------
 void Increment::read(const eckit::Configuration & config) {

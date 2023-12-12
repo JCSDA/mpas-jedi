@@ -369,36 +369,6 @@ end subroutine mpas_increment_from_fieldset_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_to_fieldset_ad_c(c_key_self,c_key_geom,c_vars,c_afieldset, &
-     c_include_halo, c_flip_vert_lev) bind (c,name='mpas_increment_to_fieldset_ad_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_self
-integer(c_int), intent(in) :: c_key_geom
-type(c_ptr), value, intent(in) :: c_vars
-type(c_ptr), intent(in), value :: c_afieldset
-logical(c_bool), intent(in)    :: c_include_halo
-logical(c_bool), intent(in)    :: c_flip_vert_lev
-
-type(mpas_fields), pointer :: self
-type(mpas_geom),  pointer :: geom
-type(oops_variables) :: vars
-type(atlas_fieldset) :: afieldset
-logical :: include_halo
-logical :: flip_vert_lev
-
-call mpas_fields_registry%get(c_key_self, self)
-call mpas_geom_registry%get(c_key_geom, geom)
-vars = oops_variables(c_vars)
-afieldset = atlas_fieldset(c_afieldset)
-include_halo = c_include_halo
-flip_vert_lev = c_flip_vert_lev
-
-call self%to_fieldset_ad(geom, vars, afieldset, include_halo, flip_vert_lev)
-
-end subroutine mpas_increment_to_fieldset_ad_c
-
-! ------------------------------------------------------------------------------
-
 subroutine mpas_increment_read_file_c(c_key_inc, c_conf, c_dt) &
       bind(c,name='mpas_increment_read_file_f90')
 implicit none

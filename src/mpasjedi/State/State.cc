@@ -34,7 +34,7 @@ State::State(const Geometry & geom,
 // -----------------------------------------------------------------------------
 State::State(const Geometry & geom,
                      const eckit::Configuration & config)
-  : geom_(geom), time_(util::DateTime()), vars_()
+  : geom_(geom), vars_(), time_(util::DateTime())
 {
   oops::Log::trace() << "State::State create and read." << std::endl;
   StateParameters params;
@@ -98,10 +98,11 @@ State & State::operator=(const State & rhs) {
 }
 // -----------------------------------------------------------------------------
 void State::toFieldSet(atlas::FieldSet & fset) const {
-  const bool include_halo = true;
+  const bool include_halo = false;
   const bool flip_vert_lev = true;
   mpas_state_to_fieldset_f90(keyState_, geom_.toFortran(), vars_, fset.get(), include_halo,
                           flip_vert_lev);
+  fset.haloExchange();
   oops::Log::trace() << "State toFieldSet done" << std::endl;
 }
 // -----------------------------------------------------------------------------
