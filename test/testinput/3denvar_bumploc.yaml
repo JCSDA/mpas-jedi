@@ -64,7 +64,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_sondes.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -86,7 +86,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_satwind.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_satwind.nc4
         simulated variables: [windEastward, windNorthward]
       obs operator:
         name: VertInterp
@@ -108,7 +108,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_gnssroref.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -147,7 +147,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_bumploc_unst_sfc.nc4
+            obsfile: Data/os/obsout_3denvar_bumploc_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -169,7 +169,7 @@ cost function:
         apply at iterations: 0,1
         threshold: 10
 output:
-  filename: "Data/states/mpas.3denvar_bumploc_unst.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_bumploc.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:
@@ -184,6 +184,12 @@ variational:
     test: 'on'
     diagnostics:
       departures: ombg
+    online diagnostics:
+      write increment: true  # increment from 1st outer loop
+      increment:
+        state component:
+          filename: "./Data/states/mpas.3denvar_bumploc.inc-iter1.$Y-$M-$D_$h.$m.$s.nc"
+          stream name: control
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041500"
       streams_file: "./Data/480km/streams.atmosphere"
@@ -191,6 +197,21 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+    online diagnostics:
+      write increment: true  # increment from 2nd outer loop
+      increment:
+        state component:
+          filename: "./Data/states/mpas.3denvar_bumploc.inc-iter2.$Y-$M-$D_$h.$m.$s.nc"
+          stream name: control
 final:
   diagnostics:
     departures: oman
+  increment: # total increment
+    geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+      deallocate non-da fields: true
+    output:
+      state component:
+        filename: "./Data/states/mpas.3denvar_bumploc.inc.$Y-$M-$D_$h.$m.$s.nc"
+        stream name: control
