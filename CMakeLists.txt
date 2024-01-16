@@ -8,7 +8,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( mpasjedi VERSION 1.0.0 LANGUAGES C CXX Fortran )
+project( mpasjedi VERSION 3.0.0 LANGUAGES C CXX Fortran )
 
 ## Ecbuild integration
 find_package( ecbuild 3.3.2 REQUIRED )
@@ -86,14 +86,11 @@ endif( ${saca_FOUND} )
 if (ENABLE_MPAS_JEDI_DATA)
   set (mpas-jedi-data_FOUND TRUE)
 else()
-  # This functionality hasn't been added for mpas-jedi-data yet,
-  # leaving the values from fv3-jedi as placeholders for now.
-  ## Set values for downloading fv3-jedi test data from tarball
-  #set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
-  #set (mpas-jedi_data_tag "1.7.0")
-  #set (mpas-jedi_data_tarball_name "fv3-jedi_testinput_tier_1_${fv3-jedi_data_tag}.tar.gz")
-  #set (mpas-jedi_data_tarball_hash "c94cc6f939eb1a345ea9fe2b2c2dc8bf")
-  message(FATAL_ERROR "Downloadig mpas-jedi test data from release tarballs not implemented")
+  # Set values for downloading mpas-jedi test data from tarball
+  set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
+  set (mpas-jedi_data_tag "3.0.0")
+  set (mpas-jedi_data_tarball_name "mpas-jedi_testinput_tier_1_${mpas-jedi_data_tag}.tar.gz")
+  set (mpas-jedi_data_tarball_hash "5bbd7148a641b7b9593adeb50bb3c120")
 endif()
 
 ## Sources
