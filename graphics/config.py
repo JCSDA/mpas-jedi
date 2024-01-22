@@ -317,15 +317,15 @@ iasiGrp = 'iasi'
 modelGrp = 'model'
 
 anGroupConfig = {
-    convGrp: {'npwork': 18, 'npread': 36, 'analyze walltime': '00:20:00'},
-    satwindGrp: {'npwork': 16, 'npread': 36, 'analyze walltime': '00:40:00'},
-    abiGrp: {'npwork': 1, 'npread': 36, 'analyze walltime': '03:00:00'},
-    ahiGrp: {'npwork': 1, 'npread': 36, 'analyze walltime': '03:00:00'},
-    amsuaGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:60:00'}, #bg
-    amsuacldGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:25:00'},
-    mhsGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:20:00'},
-    iasiGrp: {'npwork': 14, 'npread': 36, 'analyze walltime': '00:50:00'},
-    modelGrp: {'npwork': 10, 'npread': 36, 'analyze walltime': '03:30:00'},
+    convGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:20:00'},
+    satwindGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:40:00'},
+    abiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:00:00'},
+    ahiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:00:00'},
+    amsuaGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:60:00'}, #bg
+    amsuacldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:25:00'},
+    mhsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:20:00'},
+    iasiGrp: {'npwork': 14, 'npread': 128, 'analyze walltime': '00:50:00'},
+    modelGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:30:00'},
 }
 
 # Each entry of DiagSpaceConfig is a key-value pair, with the following possible values:

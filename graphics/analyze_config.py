@@ -208,8 +208,8 @@ else:
 ## expDirectory is the top-level directory that contains data
 #  from all experiments.  The environment variable, EXP_DIR, can be used
 #  to specify its value externally if desired.
-user = 'guerrett'
-dbConf['expDirectory'] = os.getenv('EXP_DIR','/glade/scratch/'+user+'/pandac')
+user = os.environ['USER']
+dbConf['expDirectory'] = os.getenv('EXP_DIR','/glade/derecho/scratch/'+user+'/pandac')
 
 ## hasFCLenDir whether directory structure includes forecast length
 #  overridden to True within StatisticsDatabase.StatsDB when fcTDeltaLast > fcTDeltaFirst

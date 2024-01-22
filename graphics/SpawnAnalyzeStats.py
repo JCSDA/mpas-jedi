@@ -24,7 +24,7 @@ date
 #
 # set environment:
 # ================
-source /etc/profile.d/modules.csh
+source /etc/profile.d/z00_modules.csh
 setenv HDF5_DISABLE_VERSION_CHECK 1
 setenv NUMEXPR_MAX_THREADS 1
 
@@ -37,14 +37,14 @@ ln -sf ${pySourceDir}/${mainScript}.py ./
 # make plots:
 # ===========
 module purge
-module load python
-source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
+#module load python
+#source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
 #module load ncarenv/1.3
 #module load gnu/10.1.0
 #module load ncarcompilers/0.5.0
 #module load netcdf/4.8.1
-#module load conda/latest
-#conda activate npl
+module load conda/latest
+conda activate npl-2023a
 setenv PYTHONDONTWRITEBYTECODE 1 # avoid __pycache__ creation
 module list
 
@@ -60,9 +60,11 @@ while ($success != 0 && $try < 5)
     sleep 2
     deactivate
     module purge
-    module load python
+    #module load python
+    module load conda/latest
+    conda activate npl-2023a
     module list
-    source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
+    #source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
   else
     set success = 0
   endif
@@ -130,6 +132,7 @@ def main():
         anGroup = dsConf['anGrp']
         grpAtt = conf.anGroupConfig[anGroup]
         npwork = grpAtt['npwork']
+        myJobConf['nnode'] = npwork
         npread = grpAtt['npread']
         myJobConf['nppernode'] = max(npwork, npread)
         myJobConf['walltime'] = grpAtt['analyze walltime']

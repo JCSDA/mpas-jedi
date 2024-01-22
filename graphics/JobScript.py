@@ -11,7 +11,7 @@ class JobScriptBase():
     + generating the script
     + submitting the script
 
-    Each HPC job submission system (e.g., PBSPro on Cheyenne)
+    Each HPC job submission system (e.g., PBSPro on Cheyenne/Casper/Derecho)
     will have its own derived class that defines
     the job header and submission command
     generic config elements:
@@ -88,6 +88,45 @@ class JobScriptBase():
         print(command+" in "+os.getcwd())
         os.system(command)
         os.chdir(CWD)
+
+class PBSProDerecho(JobScriptBase):
+    '''
+    PBSPro job script on Derecho
+    unique config elements compared to base class:
+        account - derecho account for charging
+        queue   - name of job submission queue (see qavail)
+        memory  - amount of memory requested per node (see mavail)
+
+    NOTE: Derecho has a maximum of 128 processors available per node
+    '''
+    qavail = ['main']
+    mavail = [235]
+    maxnppernode = 128
+    def __init__(self, conf):
+        # Initialize derived config settings
+        super().__init__(conf)
+
+        # Initialize config settings that are specific to PBSProDerecho
+        self.account = conf.get('account','NMMM0043')
+        self.queue = conf.get('queue','main')
+        assert self.queue in self.qavail, ("ERROR: PBSProDerecho requires queue to be any of ",self.qavail)
+        self.memory = conf.get('memory',235)
+        assert self.memory in self.mavail, ("ERROR: PBSProDerecho requires memory (in GB) to be any  of", self.mavail)
+        assert self.nppernode <= self.maxnppernode, ("ERROR: PBSProDerecho requires nppernode <= ", self.maxnppernode)
+
+        self.header = [
+            '#PBS -N '+self.jobname,
+            '#PBS -A '+self.account,
+            '#PBS -q '+self.queue,
+            '#PBS -l select='+str(self.nnode)+':ncpus='+str(self.nppernode)+':mpiprocs='+str(self.nppernode)+':mem='+str(self.memory)+'GB',
+            '#PBS -l walltime='+self.walltime,
+            '#PBS -m ae',
+            '#PBS -k eod',
+            '#PBS -o '+self.olog,
+            '#PBS -e '+self.elog,
+        ]
+
+        self.command = 'qsub '
 
 
 class PBSProCheyenne(JobScriptBase):
@@ -211,6 +250,9 @@ class PBSProCasper(JobScriptBase):
 
 
 JobScriptDict = {
+    ## derecho
+    # computing nodes
+    'derecho': PBSProDerecho,
     ## cheyenne
     # login nodes
     'cheyenne': PBSProCheyenne,
