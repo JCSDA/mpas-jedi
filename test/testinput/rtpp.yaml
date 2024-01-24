@@ -68,35 +68,10 @@ analysis:
     filename: Data/states/ensemble/mem001/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
   - <<: *memberConfig
     filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
-analysis variables:
-- temperature
-- spechum
-- uReconstructZonal
-- uReconstructMeridional
-- surface_pressure
-- qv
-- pressure
-- rho
-- theta
-- u
-#Note: exclude hydrometeors in ctest, because not present in 480km init file
-# MUST be included in cycling for correct member-by-member values
-#- qc
-#- qi
-#- qr
-#- qs
-#- qg
-- pressure_p
-- skintemp
-- smois
-- snowc
-- snowh
-- tslb
-- u10
-- v10
-- w
-- xice
+analysis type: "state"
 output:
   filename: Data/states/ensemble/mem%{member}%/mpas.rtpp.$Y-$M-$D_$h.$m.$s.nc
   stream name: background
-factor: 0.5
+inflation:
+- method: RTPP
+  factor: 0.5

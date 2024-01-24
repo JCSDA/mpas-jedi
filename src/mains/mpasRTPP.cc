@@ -5,13 +5,15 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <oops/runs/RTPP.h>
-#include <oops/runs/Run.h>
-
 #include "mpasjedi/Traits.h"
 
+#include "oops/base/instantiateInflationFactory.h"
+#include "oops/runs/EnsembleInflation.h"
+#include "oops/runs/Run.h"
+
 int main(int argc,  char ** argv) {
+  oops::instantiateInflationFactory<mpas::Traits>();
   oops::Run run(argc, argv);
-  oops::RTPP<mpas::Traits> rtpp;
-  return run.execute(rtpp);
+  oops::EnsembleInflation<mpas::Traits> ensinfl;
+  return run.execute(ensinfl);
 }
