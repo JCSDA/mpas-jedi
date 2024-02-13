@@ -73,6 +73,16 @@ State::State(const Geometry & geom,
                      << std::endl;
 }
 // -----------------------------------------------------------------------------
+State::State(const oops::Variables & vars, const State & other)
+  : geom_(other.geom_), vars_(vars), time_(other.time_)
+{
+  oops::Log::trace() << "State::State create with variable change." << std::endl;
+
+  mpas_state_create_f90(keyState_, geom_.toFortran(), stateVars(), vars_);
+  mpas_state_copy_f90(keyState_, other.keyState_);
+  oops::Log::trace() << "State::State created with variablechange" << std::endl;
+}
+// -----------------------------------------------------------------------------
 State::State(const State & other)
   : geom_(other.geom_), vars_(other.vars_), time_(other.time_)
 {

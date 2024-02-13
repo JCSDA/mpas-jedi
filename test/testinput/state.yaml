@@ -38,3 +38,9 @@ state test:
       filename: *filename
       date: *date
       transform model to analysis: false # Prevents variable change logic in read routine
+  construct to variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+

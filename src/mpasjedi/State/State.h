@@ -53,6 +53,7 @@ class State : public util::Printable,
             const util::DateTime &);
   State(const Geometry &, const eckit::Configuration &);
   State(const Geometry &, const State &);
+  State(const oops::Variables &, const State &);
   State(const State &);
   ~State();
 //  virtual ~State();
