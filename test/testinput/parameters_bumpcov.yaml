@@ -78,10 +78,13 @@ background error:
           - uReconstructMeridional
           - surface_pressure
           value: 3000.0e3
+        smoother max horizontal grid size: 15000 #default: 50000
+        smoother min effective resolution: 2.5 #default: 2.0
       fit:
         horizontal filtering length-scale: 3000000
       nicas:
         resolution: 4
+        min effective resolution: 2.5
         interpolation type:
         - groups:
           - temperature
