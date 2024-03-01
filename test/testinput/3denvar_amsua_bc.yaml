@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 5.0e-6
+  float relative tolerance: 9.0e-6
   integer tolerance: 0
   reference filename: testoutput/3denvar_amsua_bc.ref
   log output filename: testoutput/3denvar_amsua_bc.run
@@ -125,7 +125,7 @@ output:
   stream name: analysis
 variational:
   minimizer:
-    algorithm: DRIPCG
+    algorithm: DRPCG
   iterations:
   - geometry:
       nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"

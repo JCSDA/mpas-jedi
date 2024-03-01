@@ -154,7 +154,7 @@ output:
   stream name: analysis
 variational:
   minimizer:
-    algorithm: DRIPCG
+    algorithm: DRPCG
   iterations:
   - geometry:
       nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"

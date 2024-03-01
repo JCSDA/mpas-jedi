@@ -185,7 +185,7 @@ output:
   stream name: background #required for use by rtpp test
 variational:
   minimizer:
-    algorithm: DRIPCG
+    algorithm: DRPCG
   iterations:
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041500"

@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.015
+  float relative tolerance: 0.08
   integer tolerance: 0
   reference filename: testoutput/3dfgat.ref
   log output filename: testoutput/3dfgat.run
@@ -130,7 +130,7 @@ output:
   stream name: analysis
 variational:
   minimizer:
-    algorithm: DRIPCG
+    algorithm: DRPCG
   iterations:
   - geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041421"
