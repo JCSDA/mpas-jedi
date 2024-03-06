@@ -98,8 +98,8 @@ Geometry::Geometry(const eckit::Configuration & config,
     functionSpace_ = atlas::functionspace::NodeColumns(mesh, config);
 
     // optionally save output for viewing with gmsh
-    if (config.getBool("gmsh save", false)) {
-      std::string filename = config.getString("gmsh filename", "out.msh");
+    if (params.gmsh_save.value()) {
+      std::string filename = params.gmsh_filename.value();
       atlas::output::Gmsh gmsh(filename,
           atlas::util::Config("coordinates", "xyz")
           | atlas::util::Config("ghost", true));  // enables viewing halos per task

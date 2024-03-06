@@ -51,6 +51,10 @@ class GeometryParameters : public oops::Parameters {
 
   /// LocalEnsembleDA iterator dimensionality (2 or 3)
   oops::Parameter<int> iterator_dimension{ "iterator dimension", 2, this};
+
+  /// gmsh
+  oops::Parameter<bool> gmsh_save{ "gmsh_save", false, this};
+  oops::Parameter<std::string> gmsh_filename{ "gmsh_filename", "out.msh", this};
 };
 // -------------------------------------------------------------------------------------------------
 
