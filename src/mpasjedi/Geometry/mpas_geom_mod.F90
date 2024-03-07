@@ -1234,7 +1234,7 @@ subroutine get_coords_and_connectivities(self, &
    integer, intent(out) :: raw_tri_boundary_nodes(num_tri_boundary_nodes)
 
    integer :: i, iVertValid
-   type (field1DInteger), pointer :: indexToCellID, indexToVertexID, iTmp
+   type (field1DInteger), pointer :: indexToCellID, indexToVertexID, iTmp, bdyMaskVertex
 
    lons = self % lonCell * MPAS_JEDI_RAD2DEG_kr
    lats = self % latCell * MPAS_JEDI_RAD2DEG_kr
@@ -1245,6 +1245,7 @@ subroutine get_coords_and_connectivities(self, &
    !indexToCellID & indexToVertexID from MPAS domain
    call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToCellID', indexToCellID)
    call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToVertexID', indexToVertexID)
+   call mpas_pool_get_field(self%domain%blocklist%allFields, 'bdyMaskVertex', bdyMaskVertex)
    call mpas_duplicate_field(indexToCellID, iTmp)   ! intermediate for halo exchange
 
    global_indices(1:num_nodes) = indexToCellID % array(1:num_nodes)
@@ -1273,7 +1274,7 @@ subroutine get_coords_and_connectivities(self, &
 
    iVertValid=1 ! used for global indices of vertices.
    do i=1,self%nVerticesSolve ! Note self%nVerticesSolve = num_tris (for global mesh), but != num_tris (for regional mesh)
-      if( any( indexToCellID % array ( self%cellsOnVertex(:,i) ) .eq. 0 ) ) cycle ! regional MPAS mesh, Skip the outer-most Vertices
+      if( bdyMaskVertex % array (i) .eq. 7 ) cycle ! regional MPAS mesh, Skip the outer-most Vertices
       raw_tri_boundary_nodes(3*(iVertValid-1)+1) = indexToCellID % array( self%cellsOnVertex(1,i) )
       raw_tri_boundary_nodes(3*(iVertValid-1)+2) = indexToCellID % array( self%cellsOnVertex(2,i) )
       raw_tri_boundary_nodes(3*(iVertValid-1)+3) = indexToCellID % array( self%cellsOnVertex(3,i) )
