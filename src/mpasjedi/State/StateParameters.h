@@ -51,7 +51,7 @@ class StateParameters : public oops::Parameters {
   // Read parameters for read_fields
   // when analytic init is not set, filename must be set
   oops::OptionalParameter<std::string> filename{"filename", this};
-  oops::RequiredParameter<util::DateTime> date{"date", this};
+  oops::OptionalParameter<util::DateTime> date{"date", this};
   oops::Parameter<std::string> stream_name{"stream name", "background", this};
   oops::Parameter<bool> transform_model_to_analysis{"transform model to analysis", true, this};
 };

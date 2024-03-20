@@ -41,7 +41,7 @@ class IncrementReadParameters : public oops::Parameters {
  public:
   // Read parameters
   oops::RequiredParameter<std::string> filename{"filename", this};
-  oops::RequiredParameter<util::DateTime> date{"date", this};
+  oops::OptionalParameter<util::DateTime> date{"date", this};
   oops::Parameter<std::string> stream_name{"stream name", "control", this};
 };
 

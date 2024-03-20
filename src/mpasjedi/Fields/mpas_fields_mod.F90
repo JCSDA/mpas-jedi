@@ -402,9 +402,14 @@ subroutine read_fields(self, f_conf, vdate)
    type (field2DReal), pointer    :: pressure, pressure_base, pressure_p
 
    call fckit_log%debug('--> read_fields')
-   call f_conf%get_or_die("date",str)
-   sdate = str
-   call datetime_set(sdate, vdate)
+   if (f_conf%get("date", str)) then
+      sdate = str
+      call datetime_set(sdate, vdate)
+      dateTimeString = '$Y-$M-$D_$h:$m:$s'
+      call cvt_oopsmpas_date(sdate,dateTimeString,1)
+   else
+      dateTimeString = '2023-09-21_00:00:00' ! 1st MPAS-JEDI tutorial
+   end if
 
    call f_conf%get_or_die("filename",str)
    call swap_name_member(f_conf, str)
@@ -429,8 +434,6 @@ subroutine read_fields(self, f_conf, vdate)
    ! and then can be like this ....
    ierr = 0
    self % manager => self % geom % domain % streamManager
-   dateTimeString = '$Y-$M-$D_$h:$m:$s'
-   call cvt_oopsmpas_date(sdate,dateTimeString,1)
    write(message,*) '--> read_fields: dateTimeString: ',trim(dateTimeString)
    call fckit_log%debug(message)
    call mpas_set_time(local_time, dateTimeString=dateTimeString, ierr=ierr)
