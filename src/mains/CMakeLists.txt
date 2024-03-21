@@ -40,6 +40,10 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_rtpp.x
                         SOURCES mpasRTPP.cc
                         LIBS	${PROJECT_NAME} )
 
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_ens_mean_variance.x
+                        SOURCES mpasEnsMeanVariance.cc
+                        LIBS    ${PROJECT_NAME} )
+
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_variational.x
                         SOURCES mpasVariational.cc
                         LIBS    ${PROJECT_NAME} saber )

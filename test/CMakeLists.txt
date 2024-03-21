@@ -126,6 +126,7 @@ list( APPEND mpas_testinput
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
   testinput/rtpp.yaml
+  testinput/ens_mean_variance.yaml
   testinput/state.yaml
   testinput/unsinterp.yaml
   testinput/obsop_name_map.yaml
@@ -174,6 +175,7 @@ list( APPEND mpas_testoutput
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
   testoutput/rtpp.ref
+  testoutput/ens_mean_variance.ref
 )
 # Create Data directory for reference output and symlink all files
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
@@ -920,6 +922,12 @@ add_mpasjedi_application_test(
 # rtpp
 add_mpasjedi_application_test(
     APPLICATION rtpp
+    DEPENDS eda_3dhybrid
+    ${RECALIBRATE})
+
+# ens_mean_variance
+add_mpasjedi_application_test(
+    APPLICATION ens_mean_variance
     DEPENDS eda_3dhybrid
     ${RECALIBRATE})
 

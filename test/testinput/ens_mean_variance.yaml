@@ -1,0 +1,54 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/ens_mean_variance.ref
+  log output filename: testoutput/ens_mean_variance.run
+  test output filename: testoutput/ens_mean_variance.run.ref
+
+_member config: &memberConfig
+  date: 2018-04-15T00:00:00Z
+  stream name: background
+  state variables:
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  - qv
+  - pressure
+  - rho
+  - theta
+  - u
+  - pressure_p
+  - skintemp
+  - smois
+  - snowc
+  - snowh
+  - tslb
+  - u10
+  - v10
+  - w
+  - xice
+
+geometry:
+  nml_file: ./Data/480km/namelist.atmosphere_2018041500
+  streams_file: ./Data/480km/streams.atmosphere
+  deallocate non-da fields: true
+
+ensemble:
+  members from template:
+    template:
+      <<: *memberConfig
+      filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
+    pattern: %iMember%
+    start: 1
+    zero padding: 2
+    nmembers: 4
+
+mean output:
+  filename: Data/states/ensemble/mpas.mean.$Y-$M-$D_$h.$m.$s.nc
+  stream name: background
+
+variance output:
+  filename: Data/states/ensemble/mpas.variance.$Y-$M-$D_$h.$m.$s.nc
+  stream name: background
