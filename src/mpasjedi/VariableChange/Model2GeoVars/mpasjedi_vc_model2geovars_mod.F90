@@ -332,22 +332,22 @@ subroutine changevar(self, geom, xm, xg)
           !call xm%get('co2', mdata)
           gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr !mdata%r2%array(:,1:nCells)
 
-        case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
+        case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
           call q_fields_forward('qc', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
+        case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
           call q_fields_forward('qi', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
+        case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
           call q_fields_forward('qr', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
+        case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
           call q_fields_forward('qs', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
+        case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
           call q_fields_forward('qg', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
+        case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
           call q_fields_forward('qh', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clwefr ) !-effective_radius_of_cloud water particle

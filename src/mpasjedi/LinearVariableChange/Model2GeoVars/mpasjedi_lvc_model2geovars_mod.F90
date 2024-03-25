@@ -196,22 +196,22 @@ subroutine multiply(self, geom, dxm, dxg)
             gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr
           end where
 
-        case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
+        case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
           call q_fields_TL('qc', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
+        case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
           call q_fields_TL('qi', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
+        case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
           call q_fields_TL('qr', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
+        case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
           call q_fields_TL('qs', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
+        case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
           call q_fields_TL('qg', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
+        case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
           call q_fields_TL('qh', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
       end select
@@ -338,22 +338,22 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
           ! cleanup
           deallocate(r2)
 
-        case ( var_clw ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
+        case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
           call q_fields_AD('qc', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cli ) !-mass_content_of_cloud_ice_in_atmosphere_layer
+        case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
           call q_fields_AD('qi', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clr ) !-mass_content_of_rain_in_atmosphere_layer
+        case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
           call q_fields_AD('qr', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_cls ) !-mass_content_of_snow_in_atmosphere_layer
+        case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
           call q_fields_AD('qs', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clg ) !-mass_content_of_graupel_in_atmosphere_layer
+        case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
           call q_fields_AD('qg', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
-        case ( var_clh ) !-mass_content_of_hail_in_atmosphere_layer
+        case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
           call q_fields_AD('qh', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
       end select
