@@ -48,6 +48,7 @@ extern "C" {
                                  const std::size_t &, std::size_t &);
   void mpas_geo_info_f90(const F90geom &, int &, int &, int &, int &, int &,
                          int &, int &, int &);
+  void mpas_geo_vert_coord_f90(const F90geom &, int &, int &, const char *, real_type &);
   void mpas_geo_delete_f90(F90geom &);
   void mpas_geo_iterator_dimension_f90(const F90geom &, int &);
   void mpas_geo_get_num_nodes_and_elements_f90(const F90geom &, int &, int &);

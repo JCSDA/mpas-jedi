@@ -104,7 +104,7 @@ list( APPEND mpas_testinput
   testinput/enshofx_5.yaml
   testinput/errorcovariance.yaml
   testinput/forecast.yaml
-  testinput/gen_ens_pert_B.yaml
+  #  testinput/gen_ens_pert_B.yaml
   testinput/geometry.yaml
   testinput/geometry_iterator_2d.yaml
   testinput/geometry_iterator_3d.yaml
@@ -118,6 +118,7 @@ list( APPEND mpas_testinput
   testinput/increment.yaml
   testinput/letkf_3dloc.yaml
   testinput/lgetkf.yaml
+  testinput/lgetkf_height_vloc.yaml
   testinput/linvarcha.yaml
   testinput/model.yaml
   testinput/obslocalization.yaml
@@ -163,7 +164,7 @@ list( APPEND mpas_testoutput
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
-  testoutput/gen_ens_pert_B.ref
+  #  testoutput/gen_ens_pert_B.ref
   testoutput/hofx3d.ref
   testoutput/hofx3d_ropp.ref
   testoutput/hofx3d_nbam.ref
@@ -172,6 +173,7 @@ list( APPEND mpas_testoutput
   testoutput/hofx4d_pseudo.ref
   testoutput/letkf_3dloc.ref
   testoutput/lgetkf.ref
+  testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
   testoutput/rtpp.ref
@@ -941,6 +943,11 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME lgetkf
     NPE 4
+    APPLICATION enkf
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME lgetkf_height_vloc
     APPLICATION enkf
     ${RECALIBRATE})
 

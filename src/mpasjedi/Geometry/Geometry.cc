@@ -178,17 +178,19 @@ std::vector<int> Geometry::nIterLevs(const oops::Variables & vars) const {
   return n;
 }
 // -------------------------------------------------------------------------------------------------
-std::vector<double> Geometry::verticalCoord(std::string & vcUnits) const {
+std::vector<real_type> Geometry::verticalCoord(std::string & vcUnits) const {
   // returns vertical coordinate in untis of vcUnits
-  // TODO(JJG): get this to work for height and scale height
-  std::vector<double> vc(getDim("nVertLevels"));
-  if (vcUnits == "modellevel") {
-    for (size_t i=0; i < vc.size(); ++i) {vc[i] = static_cast<double> (i+1);}
-  } else {
-    std::stringstream errorMsg;
-    errorMsg << "Uknown vertical coordinate unit " << vcUnits << std::endl;
-    ABORT(errorMsg.str());
-  }
+  std::vector<real_type> vc(getDim("nVertLevels"));
+  // vertical levels
+  int vert_levels = vc.size();
+  // length of vcUnits
+  int len_vcunits = vcUnits.size();
+  // vector of vcUnits
+  std::vector<char> vec_vcUnits(vcUnits.begin(), vcUnits.end());
+  vec_vcUnits.push_back('\0');  // Ensure null-termination for C compatibility.
+  // vertical coordinates
+  mpas_geo_vert_coord_f90(keyGeom_, vert_levels, len_vcunits, &vec_vcUnits[0], vc[0]);
+
   return vc;
 }
 // -----------------------------------------------------------------------------

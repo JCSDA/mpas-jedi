@@ -41,7 +41,7 @@ private
 public :: mpas_geom, &
           geo_setup, geo_clone, geo_delete, geo_info, geo_is_equal, &
           geo_set_lonlat, geo_fill_geometry_fields, pool_has_field, &
-          getSolveDimSizes, getSolveDimNames, getVertLevels
+          getSolveDimSizes, getSolveDimNames, getVertLevels, geo_vert_coord
 
 public :: mpas_geom_registry
 
@@ -492,12 +492,13 @@ subroutine geo_fill_geometry_fields(self, afieldset)
                                          + sum(self%zgrid(iz+1,1:nx2)) )
          call mpas_dmpar_sum_real(self%domain%dminfo,var_local,var_global)
          real_ptr(jz,1:nx) = real(var_global / self%nCellsGlobal , kind_real)
-      else if (trim(self % bump_vunit) .eq. 'scaleheight') then
+      else if (trim(self % bump_vunit) .eq. 'scaleheight' .or. trim(self % bump_vunit) .eq. 'logp') then
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
          real_ptr(jz,1:nx) = log(real(pressure_base(iz,1:nx), kind_real))
       end if
    end do
+
    call afieldset%add(afield)
    call afield%final()
 
@@ -816,6 +817,50 @@ subroutine geo_info(self, nCellsGlobal, nCells, nCellsSolve, &
    nVertLevelsP1 = self%nVertLevelsP1
 
 end subroutine geo_info
+
+! ------------------------------------------------------------------------------
+
+subroutine geo_vert_coord(self, nlevel, CoordName, VertCoord)
+
+   implicit none
+
+   type(mpas_geom), intent(in) :: self
+   integer, intent(in) :: nlevel
+   character(len=*), intent(in) :: CoordName
+   real(kind=kind_real), intent(inout) :: VertCoord(nlevel)
+
+   ! local variables
+   integer :: iz, nx
+   real(kind=RKIND) :: var_local, var_global
+   real(kind=RKIND), pointer :: pressure_base(:,:)
+
+   nx = self%nCellsSolve 
+
+   if (trim(CoordName) .eq. "modellevel") then
+      do iz = 1, nlevel
+         VertCoord(iz) = real(iz, kind_real)
+      end do
+   else if (trim(CoordName) .eq. "height") then
+      do iz = 1, nlevel
+         var_local = MPAS_JEDI_HALF_kr * ( sum(self%zgrid(iz,  1:nx)) &
+                                         + sum(self%zgrid(iz+1,1:nx)) )
+         call mpas_dmpar_sum_real(self%domain%dminfo,var_local,var_global)
+         VertCoord(iz) = real(var_global / self%nCellsGlobal , kind_real)
+      end do
+   else if (trim(CoordName) .eq. "scaleheight" .or. trim(CoordName) .eq. "logp") then
+      call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
+      do iz = 1, nlevel
+         var_local = sum(log(pressure_base(iz,1:nx)))
+         call mpas_dmpar_sum_real(self%domain%dminfo,var_local,var_global)
+         VertCoord(iz) = real(var_global / self%nCellsGlobal , kind_real)
+      end do
+   else
+      write(message,*)'--> geo_vert_coord: ',trim(CoordName), &
+                      ' not supported'
+      call abor1_ftn(message)
+   end if
+
+end subroutine geo_vert_coord
 
 ! ------------------------------------------------------------------------------
 

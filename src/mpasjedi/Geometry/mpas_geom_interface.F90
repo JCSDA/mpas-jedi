@@ -204,6 +204,34 @@ end subroutine c_mpas_geo_info
 
 ! ------------------------------------------------------------------------------
 
+subroutine c_mpas_geo_vert_coord(c_key_self, c_nVertLevels, c_CoordNameLen, &
+                                 c_CoordName, c_VertCoord) &
+                                 bind(c,name='mpas_geo_vert_coord_f90')
+use iso_c_binding
+use mpas_geom_mod
+use mpas_kind_types
+use mpas_kinds, only : c_real_type
+implicit none
+integer(c_int), intent(in)       :: c_key_self
+integer(c_int), intent(in)       :: c_nVertLevels
+integer(c_int), intent(in)       :: c_CoordNameLen
+character(c_char), intent(in)    :: c_CoordName(c_CoordNameLen)
+real(c_real_type), intent(out)   :: c_VertCoord(c_nVertLevels)
+
+type(mpas_geom), pointer :: self
+character(len=c_CoordNameLen) :: coordname
+
+! convert c string to fortran string
+coordname = transfer(c_CoordName,coordname)
+
+call mpas_geom_registry%get(c_key_self, self)
+
+call geo_vert_coord(self, c_nVertLevels, coordname, c_VertCoord)
+
+end subroutine c_mpas_geo_vert_coord
+
+! ------------------------------------------------------------------------------
+
 subroutine c_mpas_geo_get_num_nodes_and_elements(c_key_self, c_num_nodes, c_num_tris) &
     bind(c, name='mpas_geo_get_num_nodes_and_elements_f90')
 use iso_c_binding
