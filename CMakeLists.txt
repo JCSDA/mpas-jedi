@@ -8,7 +8,7 @@
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
-project( mpasjedi VERSION 3.0.0 LANGUAGES C CXX Fortran )
+project( mpasjedi VERSION 3.1.0 LANGUAGES C CXX Fortran )
 
 ## Ecbuild integration
 find_package( ecbuild 3.3.2 REQUIRED )
@@ -44,14 +44,14 @@ if(OpenMP_FOUND)
     else()
         find_package( MPAS 7.0 REQUIRED COMPONENTS core_atmosphere OpenMP)
     endif()
-    find_package( atlas 0.23.0 REQUIRED COMPONENTS OMP OMP_Fortran)
+    find_package( atlas 0.35.0 REQUIRED COMPONENTS OMP OMP_Fortran)
 else()
     if (MPAS_DOUBLE_PRECISION)
         find_package( MPAS 7.0 REQUIRED COMPONENTS DOUBLE_PRECISION core_atmosphere)
     else()
         find_package( MPAS 7.0 REQUIRED COMPONENTS core_atmosphere)
     endif()
-    find_package( atlas 0.23.0 REQUIRED )
+    find_package( atlas 0.35.0 REQUIRED )
 endif()
 
 # Use external ESMF if found
@@ -65,10 +65,10 @@ endif()
 
 find_package( rttov 12.1.0 QUIET )
 find_package( ropp-ufo QUIET )
-find_package( oops 1.0.0 REQUIRED )
-find_package( saber 1.0.0 REQUIRED )
-find_package( ioda 1.0.0 REQUIRED )
-find_package( ufo 1.0.0 REQUIRED )
+find_package( oops 1.10.0 REQUIRED )
+find_package( saber 1.10.0 REQUIRED )
+find_package( ioda 2.9.0 REQUIRED )
+find_package( ufo 1.10.0 REQUIRED )
 # SACA
 find_package( saca 1.0.0 QUIET )
 if( ${saca_FOUND} )
@@ -88,9 +88,9 @@ if (ENABLE_MPAS_JEDI_DATA)
 else()
   # Set values for downloading mpas-jedi test data from tarball
   set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
-  set (mpas-jedi_data_tag "3.0.0")
+  set (mpas-jedi_data_tag "3.1.0.jcsda")
   set (mpas-jedi_data_tarball_name "mpas-jedi_testinput_tier_1_${mpas-jedi_data_tag}.tar.gz")
-  set (mpas-jedi_data_tarball_hash "5bbd7148a641b7b9593adeb50bb3c120")
+  set (mpas-jedi_data_tarball_hash "1c9999dc04609f0c129ed39bc644bddc")
 endif()
 
 ## Sources
