@@ -112,7 +112,6 @@ void State::toFieldSet(atlas::FieldSet & fset) const {
   const bool flip_vert_lev = true;
   mpas_state_to_fieldset_f90(keyState_, geom_.toFortran(), vars_, fset.get(), include_halo,
                           flip_vert_lev);
-  fset.haloExchange();
   oops::Log::trace() << "State toFieldSet done" << std::endl;
 }
 // -----------------------------------------------------------------------------

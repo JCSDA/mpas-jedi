@@ -200,7 +200,6 @@ void Increment::toFieldSet(atlas::FieldSet & fset) const {
   oops::Log::trace() << "mpasjedi::Increment:::toFieldSet starting" << std::endl;
   mpas_increment_to_fieldset_f90(keyInc_, geom_.toFortran(), vars_, fset.get(), include_halo,
                               flip_vert_lev);
-  fset.haloExchange();
   oops::Log::trace() << "mpasjedi::Increment::toFieldSet done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
