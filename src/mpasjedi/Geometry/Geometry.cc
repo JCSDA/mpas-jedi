@@ -211,25 +211,6 @@ std::vector<size_t> Geometry::variableSizes(const oops::Variables & vars) const 
   return varSizes;
 }
 // -----------------------------------------------------------------------------
-void Geometry::latlon(std::vector<real_type> & lats, std::vector<real_type> & lons,
-                      const bool halo) const {
-  const atlas::FunctionSpace * fspace;
-  if (halo) {
-    fspace = &functionSpace_;
-  } else {
-    fspace = &functionSpaceForBump_;
-  }
-  const auto lonlat = atlas::array::make_view<real_type, 2>(fspace->lonlat());
-  const size_t npts = fspace->size();
-  lats.resize(npts);
-  lons.resize(npts);
-  for (size_t jj = 0; jj < npts; ++jj) {
-    lats[jj] = lonlat(jj, 1);
-    lons[jj] = lonlat(jj, 0);
-    if (lons[jj] < 0.0) lons[jj] += 360.0;
-  }
-}
-// -----------------------------------------------------------------------------
 void Geometry::print(std::ostream & os) const {
   int nCellsGlobal;
   int nCells;

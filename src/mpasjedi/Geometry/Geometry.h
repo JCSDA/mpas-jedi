@@ -45,7 +45,6 @@ class Geometry : public util::Printable,
   const eckit::mpi::Comm & getComm() const {return comm_;}
   const atlas::FunctionSpace & functionSpace() const {return functionSpace_;}
   const atlas::FieldSet & fields() const {return fields_;}
-  void latlon(std::vector<real_type> &, std::vector<real_type> &, const bool) const;
 
   bool isEqual(const Geometry &) const;
   // The bool levelsAreTopDown=true is a fixed parameter here (cannot be false);
