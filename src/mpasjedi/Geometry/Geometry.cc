@@ -254,7 +254,7 @@ void Geometry::print(std::ostream & os) const {
      << ", communicator = " << this->getComm().name();
 }
 // -----------------------------------------------------------------------------
-const int Geometry::getDim(const std::string & dim) const {
+int Geometry::getDim(const std::string & dim) const {
   int ncGlobal;
   int nc;
   int ncSolve;

@@ -52,7 +52,7 @@ class Geometry : public util::Printable,
   // it is a required parameter to be passed to oops::Geometry -> getvalue -> ufo
   // - MPAS-Model levels are bottom-to-up, differs from CRTM: Top-to-Bottom
   // - In mpas-jedi, flip happens in toFieldSet/fromFieldSet(atlas)/geo_fill_extra_fields(saber)
-  const bool levelsAreTopDown() const {return true;}
+  bool levelsAreTopDown() const {return true;}
 
   GeometryIterator begin() const;
   GeometryIterator end() const;
@@ -60,7 +60,7 @@ class Geometry : public util::Printable,
   std::vector<int> nIterLevs(const oops::Variables &) const;
   std::vector<size_t> variableSizes(const oops::Variables & vars) const;
   std::vector<real_type> verticalCoord(std::string &) const;
-  const int getDim(const std::string &) const;
+  int getDim(const std::string &) const;
 
  private:
   Geometry & operator=(const Geometry &);
