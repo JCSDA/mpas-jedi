@@ -502,7 +502,7 @@ class AnalysisBase():
                       'hr. Only using common CYDTimes for CI calculation.')
         return expsCYDTimes
 
-    def dataYAMLFmtFloat(f):
+    def dataYAMLFmtFloat(self, f):
       if np.isfinite(f):
         return float(('{:.'+str(self.__dataYAMLPrecision-1)+'e}').format(f))
       else:

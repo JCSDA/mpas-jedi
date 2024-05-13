@@ -90,7 +90,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
                         if self.fcTDeltas.index(fcTDelta) > (self.MAX_FC_LINES-1): continue
 
                         self.fcTDeltas_labels.append(
-                            pu.timeDeltaTicks(fcTDelta.total_seconds(),0))
+                            pu.timeDeltaTicks([fcTDelta.total_seconds()]))
 
                         lineCYDTimes = dfwDict['dfw'].levels('cyDTime', lineLoc)
 
