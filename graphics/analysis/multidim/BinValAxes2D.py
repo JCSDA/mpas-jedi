@@ -384,13 +384,9 @@ class BinValAxes2D(MultiDimBinMethodBase):
                               dmin_relative,
                               dmax_relative,
                             )
-                            if statName in su.bootStrapStats:
-                              if ~any(np.isfinite(np.array([dmin_relative, dmax_relative]))):
-                                dmin = np.nanmin(planeVals[su.cimean])
-                                dmax = np.nanmax(planeVals[su.cimean])
-                            else:
-                              dmin = dmin_relative
-                              dmax = dmax_relative
+                            
+                            dmin = dmin_relative
+                            dmax = dmax_relative
 
                             bgstatDiagLabel = statName.replace('RMS','rms').replace('Mean','mean')+': '+label
 
@@ -449,7 +445,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             xConfig, yConfig,
                             sciTicks_abs, logScale_abs, centralValue_abs,
                             nyFit, nxFit, nyFit*nxFit, fplot,
-                            dmin = dmin_abs, dmax = dmax_abs,
+                            dmin = dmin, dmax = dmax_abs,
                             interiorLabels = self.interiorLabels)
 
                         # plot count
