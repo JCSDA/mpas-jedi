@@ -55,6 +55,23 @@ class GeometryParameters : public oops::Parameters {
   /// gmsh
   oops::Parameter<bool> gmsh_save{ "gmsh_save", false, this};
   oops::Parameter<std::string> gmsh_filename{ "gmsh_filename", "out.msh", this};
+
+  /// SACA-related parameters
+  /// NOTE:: "l_build_madwrf" and "l_build_gsdcloud" are mutually exclusive
+  ///        "l_saturate_qv" and "l_conserve_thetaV" are mutually exclusive
+  /// whether to use MADWRF's cloud building algorithm
+  oops::Parameter<bool> l_build_madwrf{ "l_build_madwrf", true, this};
+  /// whether to use GSD's cloud building algorithm
+  oops::Parameter<bool> l_build_gsdcloud{ "l_build_gsdcloud", false, this};
+  /// whether to saturate water vapor mixing ratio (Qv)
+  oops::Parameter<bool> l_saturate_qv{ "l_saturate_qv", false, this};
+  /// whether to conserve Theta V
+  oops::Parameter<bool> l_conserve_thetaV{ "l_conserve_thetaV", true, this};
+  /// cloud fraction value for cloud insertion
+  oops::Parameter<float> cldfra_def{ "cldfra_def", 0.98f, this};
+  /// above ground height [meters] to limit the cloud building
+  /// only works with l_build_gsdcloud=true
+  oops::Parameter<float> cld_bld_hgt{ "cld_bld_hgt", 1200.0f, this};
 };
 // -------------------------------------------------------------------------------------------------
 

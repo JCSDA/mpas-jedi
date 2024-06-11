@@ -90,8 +90,11 @@ subroutine add_incr(self, increment)
 #if defined(SACA_FOUND)
       !SACA
       if ( all(self%has(sacaStateFields)) .and. all(increment%has(sacaObsFields)) ) then
+         !call interface to the main SACA algorithm
          call update_cloud_fields ( self, increment )
-         return ! Early return for this specific usecase
+
+         !early return for this specific usecase
+         return
       endif
 #endif
 

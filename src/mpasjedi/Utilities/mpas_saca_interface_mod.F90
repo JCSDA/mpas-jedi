@@ -10,6 +10,8 @@ use module_mp_thompson_cldfra3_saca, only: cal_cldfra3
 
 !mpas-jedi
 use mpas_fields_mod
+use mpas2ufo_vars_mod, only : linearized_hydrostatic_balance
+use mpas4da_mod, only : da_posdef
 
 implicit none
 private
@@ -22,14 +24,22 @@ subroutine update_cloud_fields ( state, obs )
    implicit none
 
    class(mpas_fields), intent(inout) :: state !< state
-   class(mpas_fields), intent(in   ) :: obs   !< state
+   class(mpas_fields), intent(in   ) :: obs   !< increment
 
    !-- of MPAS pool
    real(kind=RKIND),dimension(:),pointer:: meshDensity, xland, ter
    real(kind=RKIND),dimension(:),pointer:: cldmask, brtemp
-   real(kind=RKIND),dimension(:,:),pointer:: qv, qc, qi, qs, cldfrac
+   real(kind=RKIND),dimension(:),pointer:: ps
+   real(kind=RKIND),dimension(:,:),pointer:: qv, qc, qi, qs, ni, cldfrac
    real(kind=RKIND),dimension(:,:),pointer:: rho, t, p
+   real(kind=RKIND),dimension(:,:),pointer:: diag, diag_cldfra
+   real(kind=RKIND),dimension(:,:),pointer:: pp, th
    real(kind=RKIND),pointer:: len_disp
+
+   type (field1DReal), pointer :: fld1d_ps, fld1d_dps
+   type (field2DReal), pointer :: fld2d_p, fld2d_dp, fld2d_drho, fld2d_dth, fld2d_pb
+   type (field2DReal), pointer :: fld2d_dqv, fld2d_dt, fld2d_qv_bg
+   integer :: ngrid
 
    type (mpas_pool_type), pointer :: meshPool
    type (block_type), pointer :: block_ptr
@@ -41,11 +51,12 @@ subroutine update_cloud_fields ( state, obs )
 
    real(kind=RKIND),dimension(:,:),allocatable :: dx_p, xland_p, ter_p
    real(kind=RKIND),dimension(:,:),allocatable :: cldmask_p, brtemp_p
-   real(kind=RKIND),dimension(:,:,:),allocatable :: qv_p, qc_p, qi_p, qs_p, cldfrac_p
+   real(kind=RKIND),dimension(:,:,:),allocatable :: qv_p, qc_p, qi_p, qs_p, ni_p, cldfrac_p
    real(kind=RKIND),dimension(:,:,:),allocatable :: rho_p, t_p, p_p
    real(kind=RKIND),dimension(:,:,:),allocatable :: dz_p
    integer,dimension(:,:),allocatable :: k_tropo_p
    real(kind=RKIND),dimension(:,:),allocatable :: tropoz_p, cldtopz_p, cldtopz_p0
+   real(kind=RKIND),dimension(:,:,:),allocatable :: diag_p, diag_cldfra_p
 
    integer :: i, j, k
    integer :: k_tropo
@@ -79,6 +90,7 @@ subroutine update_cloud_fields ( state, obs )
    allocate(qc_p(ims:ime,kms:kme,jms:jme))
    allocate(qi_p(ims:ime,kms:kme,jms:jme))
    allocate(qs_p(ims:ime,kms:kme,jms:jme))
+   allocate(ni_p(ims:ime,kms:kme,jms:jme))
    allocate(cldfrac_p(ims:ime,kms:kme,jms:jme))
    allocate(rho_p(ims:ime,kms:kme,jms:jme))
    allocate(t_p(ims:ime,kms:kme,jms:jme))
@@ -102,6 +114,8 @@ subroutine update_cloud_fields ( state, obs )
    do j = jts,jte
       do i = its,ite
          dx_p(i,j)      = len_disp / meshDensity(i)**0.25
+         !conversion of dx_p from meters to kilometers.
+         dx_p(i,j)    = dx_p(i,j)*0.001
          xland_p(i,j)   = xland(i)
          ter_p(i,j)     = state % geom % zgrid(1,i)  !ter(i) BJJ
          cldmask_p(i,j) = cldmask(i)
@@ -113,6 +127,7 @@ subroutine update_cloud_fields ( state, obs )
    call state%get('qc', qc)
    call state%get('qi', qi)
    call state%get('qs', qs)
+   call state%get('ni', ni)
    call state%get('cldfrac'    , cldfrac)
    call state%get('rho'        , rho)
    call state%get('temperature', t)
@@ -125,6 +140,7 @@ subroutine update_cloud_fields ( state, obs )
       qc_p(i,k,j) = max(0.,qc(k,i))
       qi_p(i,k,j) = max(0.,qi(k,i))
       qs_p(i,k,j) = max(0.,qs(k,i))
+      ni_p(i,k,j) = max(0.,ni(k,i))
 
       cldfrac_p(i,k,j) = 0._RKIND
 
@@ -189,29 +205,70 @@ subroutine update_cloud_fields ( state, obs )
    end do
    end do
 
-!call cal_cldfra3
-   call cal_cldfra3( &
-         cldfra = cldfrac_p , qv     = qv_p    , qc = qc_p , qi  = qi_p    ,       &
+!call main algorithm
+   if (state%has('uReconstructZonal') .and. state%has('uReconstructMeridional')) then
+      ! allocate and initialize diag and diag_cldfra
+      allocate(       diag_p(ims:ime,kms:kme,jms:jme))
+      allocate(diag_cldfra_p(ims:ime,kms:kme,jms:jme))
+      diag_p        = 0.0
+      diag_cldfra_p = 0.0
+
+      !call cal_cldfra3 w/ diag and diag_cldfra
+      call cal_cldfra3( &
+         cldfra = cldfrac_p , qv     = qv_p    , qc = qc_p , qi  = qi_p    , ni = ni_p     ,    &
          qs     = qs_p   ,    dz     = dz_p    , p = p_p   , t   = t_p     , rho = rho_p   ,    &
          xland  = xland_p   , gridkm = dx_p    , modify_qvapor = modify_qvapor ,   &
          ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde ,   &
          ims = ims , ime = ime , jms = jms , jme = jme , kms = kds , kme = kme ,   &
          its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte ,   &
-         k_tropo = k_tropo_p, cldmask = cldmask_p, cldtopz = cldtopz_p             &
-         )
+         k_tropo = k_tropo_p, cldmask = cldmask_p, cldtopz = cldtopz_p,            &
+         saca_params = state%geom%saca_params,                                     &
+         diag = diag_p, diag_cldfra = diag_cldfra_p)
+
+      !update diag & diag_cldfra back to pool
+      call state%get('uReconstructZonal',      diag )
+      call state%get('uReconstructMeridional', diag_cldfra )
+      do j = jts, jte
+      do k = kts, kte
+      do i = its, ite
+         diag(k,i)        = diag_p(i,k,j)
+         diag_cldfra(k,i) = diag_cldfra_p(i,k,j)
+      end do
+      end do
+      end do
+
+   else
+      !call cal_cldfra3 w/o diag and diag_cldfra
+      call cal_cldfra3( &
+         cldfra = cldfrac_p , qv     = qv_p    , qc = qc_p , qi  = qi_p    , ni = ni_p     ,    &
+         qs     = qs_p   ,    dz     = dz_p    , p = p_p   , t   = t_p     , rho = rho_p   ,    &
+         xland  = xland_p   , gridkm = dx_p    , modify_qvapor = modify_qvapor ,   &
+         ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde ,   &
+         ims = ims , ime = ime , jms = jms , jme = jme , kms = kds , kme = kme ,   &
+         its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte ,   &
+         k_tropo = k_tropo_p, cldmask = cldmask_p, cldtopz = cldtopz_p,            &
+         saca_params = state%geom%saca_params)
+   end if
 
 !update the pool variables
-   call state%get('cldfrac',cldfrac)
+   call state%get('cldfrac',cldfrac)          ! update state cldfrac directly
+   !duplicate dqv, dt
+   call mpas_pool_get_field(state%subFields, 'pressure', fld2d_p) ! for template
+   call mpas_duplicate_field(fld2d_p, fld2d_dqv)  ! intermediate increment
+   call mpas_duplicate_field(fld2d_p, fld2d_dt)   ! intermediate increment
    do j = jts,jte
    do k = kts,kte
    do i = its,ite
-      cldfrac(k,i) = cldfrac_p(i,k,j)
-      qc(k,i) = qc_p(i,k,j)
-      qi(k,i) = qi_p(i,k,j)
-      qs(k,i) = qs_p(i,k,j)
+      cldfrac(k,i) = cldfrac_p(i,k,j)  ! update state directly
+      qc(k,i) = qc_p(i,k,j)            ! update state directly
+      qi(k,i) = qi_p(i,k,j)            ! update state directly
+      qs(k,i) = qs_p(i,k,j)            ! update state directly
+      ni(k,i) = ni_p(i,k,j)            ! update state directly
       if (modify_qvapor) then
-         qv(k,i) = qv_p(i,k,j)
+         fld2d_dqv%array(k,i) = qv_p(i,k,j) - qv(k,i)  ! inc = DI_analysis - background for later procedure
+         qv(k,i) = qv_p(i,k,j)         ! update state directly
       end if
+      fld2d_dt%array(k,i) = t_p(i,k,j) - t(k,i)        ! inc = DI_analysis - background for later procedure
    end do
    end do
    end do
@@ -227,6 +284,7 @@ subroutine update_cloud_fields ( state, obs )
    deallocate(qc_p)
    deallocate(qi_p)
    deallocate(qs_p)
+   deallocate(ni_p)
    deallocate(cldfrac_p)
    deallocate(rho_p)
    deallocate(t_p)
@@ -236,6 +294,58 @@ subroutine update_cloud_fields ( state, obs )
    deallocate(tropoz_p)
    deallocate(cldtopz_p)
    deallocate(cldtopz_p0)
+
+!additional update for "model-related" state variables
+!this is applied either l_saturate_qv (update qv) and l_conserve_thetaV (update qv & T) options
+   ngrid = state%geom%nCellsSolve
+
+   !get more variables to work with "linearized_hydrostatic_balance"
+   call state%get('surface_pressure', ps)
+   call state%get(           'theta', th)
+
+   !duplicate dp, drho, dtheta
+   call mpas_pool_get_field(state%subFields, 'pressure', fld2d_p) ! for template
+   call mpas_duplicate_field(fld2d_p, fld2d_dp)    ! intermediate output
+   call mpas_duplicate_field(fld2d_p, fld2d_drho)  ! intermediate output
+   call mpas_duplicate_field(fld2d_p, fld2d_dth)   ! intermediate output
+   !duplicate temporary fields to contain qv_bg fields
+   call mpas_duplicate_field(fld2d_p, fld2d_qv_bg) ! temporary bg field
+   !duplicate dps
+   call mpas_pool_get_field(state%subFields, 'surface_pressure', fld1d_ps) ! for template
+   call mpas_duplicate_field(fld1d_ps, fld1d_dps) ! intermediate input
+   fld1d_dps%array(:) = 0.0 ! fill w/ zeros
+
+   !define the qv_bg
+   fld2d_qv_bg%array(:,1:ngrid) = qv(:,1:ngrid) - fld2d_dqv%array(:,1:ngrid)  ! bg = an - inc
+
+   !call major routine
+   call linearized_hydrostatic_balance( ngrid, state%geom%nVertLevels, state%geom%zgrid(:,1:ngrid), & ! dims
+          t(:,1:ngrid), fld2d_qv_bg%array(:,1:ngrid), ps(1:ngrid), p(:,1:ngrid),                    & ! trajectories
+          fld2d_dt%array(:,1:ngrid), fld2d_dqv%array(:,1:ngrid), fld1d_dps%array(1:ngrid),          & ! input increments
+          fld2d_dp%array(:,1:ngrid), fld2d_drho%array(:,1:ngrid), fld2d_dth%array(:,1:ngrid) )        ! output increments
+
+   !update p, rho, and theta
+   p(:,1:ngrid)   = p(:,1:ngrid)   + fld2d_dp%array(:,1:ngrid)
+   rho(:,1:ngrid) = rho(:,1:ngrid) + fld2d_drho%array(:,1:ngrid)
+   th(:,1:ngrid)  = th(:,1:ngrid)  + fld2d_dth%array(:,1:ngrid)
+
+   !deallocate intermediate fields
+   call mpas_deallocate_field( fld2d_dqv   )
+   call mpas_deallocate_field( fld2d_dt    )
+   call mpas_deallocate_field( fld2d_dp    )
+   call mpas_deallocate_field( fld2d_drho  )
+   call mpas_deallocate_field( fld2d_dth   )
+   call mpas_deallocate_field( fld2d_qv_bg )
+   call mpas_deallocate_field( fld1d_dps   )
+
+   ! Impose positive-definite limits on hydrometeors and moistureFields
+   call da_posdef( state%subFields, mpas_hydrometeor_fields)
+   call da_posdef( state%subFields, moistureFields)
+
+   !update pressure_p
+   call mpas_pool_get_field(state%geom%domain%blocklist%allFields, 'pressure_base', fld2d_pb)
+   call state%get('pressure_p', pp)
+   pp(:,1:ngrid) = p(:,1:ngrid) - fld2d_pb%array(:,1:ngrid)
 
 end subroutine update_cloud_fields
 
