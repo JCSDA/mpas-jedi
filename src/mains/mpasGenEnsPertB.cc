@@ -7,11 +7,13 @@
 
 #include <oops/runs/GenEnsPertB.h>
 #include <oops/runs/Run.h>
+#include "saber/oops/instantiateCovarFactory.h"
 
 #include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
+  saber::instantiateCovarFactory<mpas::Traits>();
   oops::GenEnsPertB<mpas::Traits> ensgen;
   return run.execute(ensgen);
 }

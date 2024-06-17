@@ -4,9 +4,17 @@ test:
   reference filename: testoutput/gen_ens_pert_B.ref
   log output filename: testoutput/gen_ens_pert_B.run
   test output filename: testoutput/gen_ens_pert_B.run.ref
-forecast_length: PT6H
-initial:
-  variables: &vars
+  
+forecast length: PT1H
+
+include control: true
+
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+
+initial condition:
+  state variables: &vars
   - temperature
   - spechum
   - uReconstructZonal
@@ -14,13 +22,16 @@ initial:
   - surface_pressure
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
-members: 5
-Covariance:
-  covariance: SABER
-  date: &date '2018-04-15T00:00:00Z'
+  
+members: 4
+
+background error:
+  covariance model: SABER
   saber central block:
     saber block name: BUMP_NICAS
     read:
+      io:
+        files prefix: Data/bump/mpas_parametersbump_cov
       drivers:
         multivariate strategy: univariate
         read local nicas: true
@@ -31,38 +42,27 @@ Covariance:
           - spechum
           - uReconstructZonal
           - uReconstructMeridional
-        io:
-          files prefix: Data/bump/mpas_parametersbump_cov_3D
       - model:
           variables:
           - surface_pressure
-        io:
-          files prefix: Data/bump/mpas_parametersbump_cov_2D
   saber outer blocks:
   - saber block name: StdDev
     read:
       model file:
         filename: Data/bump/mpas.stddev.$Y-$M-$D_$h.$m.$s.nc
-        date: *date
+        date: '2018-04-15T00:00:00Z'
         stream name: control
+        
 model:
   name: MPAS
   tstep: PT30M
-  variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  model variables: [spechum,surface_pressure,temperature,uReconstructZonal,uReconstructMeridional]
+  
 output:
+  type: ens
+  first: PT0H
   frequency: PT1H
-  filename: "./mpas_ens_forecast.$Y-$M-$D_$h.$m.$s.nc"
-resolution:
-  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-  streams_file: "./Data/480km/streams.atmosphere"
-variables:
-- temperature
-- spechum
-- uReconstructZonal
-- uReconstructMeridional
-- surface_pressure
+  filename: Data/enkf/model/EnsPertB.$Y-$M-$D_$h.$m.$s.nc.%member%
+  member pattern: '%member%'
+
+perturbed variables: [spechum,surface_pressure,temperature,uReconstructZonal,uReconstructMeridional]
