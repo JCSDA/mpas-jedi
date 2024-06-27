@@ -523,6 +523,10 @@ subroutine geo_fill_geometry_fields(self, afieldset)
          ! defined as a natural logarithm of pressure_base (base state pressure)
          call mpas_pool_get_array(self % domain % blocklist % allFields,'pressure_base', pressure_base)
          real_ptr(jz,1:nx) = log(real(pressure_base(iz,1:nx), kind_real))
+      else
+         write(message,*) '--> geo_fill_geometry_fields: bump_vunit "'&
+                          //trim(self % bump_vunit)//'" is not implemented'
+         call abor1_ftn(message)
       end if
    end do
 
