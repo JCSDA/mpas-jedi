@@ -525,7 +525,7 @@ subroutine changevar(self, geom, xm, xg)
           call xm%get('v10', ptrr1_b)
           gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
 
-        case ( var_domain_mask )      ! for domain check
+        case ( var_observable_domain_mask )      ! for domain check
           call mpas_pool_get_array(geom%domain%blocklist%allFields, 'bdyMaskCell', domainMask)
 ! pass only the domain interior points.
           gdata%r1%array(1:nCells)= real(domainMask(1:nCells))
