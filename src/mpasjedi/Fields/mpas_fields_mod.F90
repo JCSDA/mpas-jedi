@@ -188,9 +188,9 @@ public :: mpas_fields, mpas_fields_registry, &
 !
 !   end interface
 
-   character(len=MAXVARLEN) :: mpas_hydrometeor_fields(6) = &
+   character(len=MAXVARLEN) :: mpas_hydrometeor_fields(12) = &
       [ character(len=MAXVARLEN) :: &
-      "qc", "qi", "qr", "qs", "qg", "qh" ]
+      "qc", "qi", "qr", "qs", "qg", "qh", "nc", "ni", "nr", "ns", "ng", "nh" ]
    character(len=MAXVARLEN) :: mpas_re_fields(3) = &
       [ character(len=MAXVARLEN) :: &
       "re_cloud", "re_ice  ", "re_snow " ]
