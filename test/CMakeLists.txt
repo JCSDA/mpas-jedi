@@ -91,6 +91,7 @@ list( APPEND mpas_testinput
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
+  testinput/dirac_spectral_1.yaml
   testinput/eda_3dhybrid.yaml
   testinput/eda_3dhybrid_1.yaml
   testinput/eda_3dhybrid_2.yaml
@@ -161,6 +162,7 @@ list( APPEND mpas_testoutput
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
+  testoutput/dirac_spectral_1.ref
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
@@ -400,6 +402,8 @@ endif( ${rttov_FOUND} )
 # Make directories for output test data
 #bump outputs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
+#spectral outputs
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/spectral)
 #ObsSpaces
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
@@ -780,6 +784,11 @@ add_mpasjedi_application_test(
 
 add_mpasjedi_application_test(
     NAME dirac_noloc
+    APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_spectral_1
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 

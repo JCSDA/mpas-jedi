@@ -1,0 +1,70 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/dirac_spectral_1.ref
+  log output filename: testoutput/dirac_spectral_1.run
+  test output filename: testoutput/dirac_spectral_1.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+background:
+  state variables: &vars
+  - temperature
+  - spechum
+  - uReconstructZonal
+  - uReconstructMeridional
+  - surface_pressure
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: &date '2018-04-15T00:00:00Z'
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: Ensemble
+    localization:
+      saber central block:
+        saber block name: ID
+      saber outer blocks:
+      - saber block name: spectral analytical filter
+        function:
+          horizontal daley length: 2000e3 # adjust this??
+        normalize filter variance: true
+      - saber block name: spectral to gauss
+  saber outer blocks:
+  - saber block name: interpolation
+    inner geometry:
+      function space: StructuredColumns
+      grid:
+        name: F15
+      halo: 1
+      partitioner: ectrans
+    forward interpolator:
+      local interpolator type: oops unstructured grid interpolator
+    inverse interpolator:
+      local interpolator type: oops unstructured grid interpolator
+    active variables: *vars
+  ensemble:
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+dirac:
+  ndir: 2
+  dirLats: [  30.31011691,  26.56505123 ]
+  dirLons: [ 130.11182691,-102.95294521 ]
+  ildir: 3
+  dirvar: uReconstructZonal
+output dirac:
+  filename: Data/spectral/mpas.spectral_1_%id%.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
