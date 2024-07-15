@@ -7,7 +7,9 @@ import textwrap
 class analyzeStatsArgs(ProcessArgs):
   def __init__(self):
     super().__init__()
+
     self.argProcessors += [jediApplicationArgs]
+    self.processArgs()
 
   @staticmethod
   def add_arguments(parser):
@@ -27,8 +29,3 @@ class analyzeStatsArgs(ProcessArgs):
     parser.add_argument("-a", "--analysisType",
       help="Select a single analysisType")
 
-processor = analyzeStatsArgs()
-
-processor.processArgs()
-
-args = processor.args

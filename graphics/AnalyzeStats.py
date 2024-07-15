@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from AnalyzeStatsArgs import args
+from AnalyzeStatsArgs import analyzeStatsArgs
 
 import analyze_config as anconf
 import config as conf
@@ -26,6 +26,8 @@ def main():
        - analyzes the statistics for all selected anconf.analysisTypes (internal multiprocessing)
     See analysis_config for more information
     '''
+    print('main()')
+    processor = analyzeStatsArgs()
     _logger.info('Starting main()')
 
     DiagSpaceConfig = deepcopy(conf.DiagSpaceConfig)
@@ -34,6 +36,8 @@ def main():
 
     ## process processor selection
     #  note: these scripts only work on a single node
+    args = processor.args
+    print('main::args', args)
     if args.npan:
         npan = min(int(args.npan), mp.cpu_count())
     else:

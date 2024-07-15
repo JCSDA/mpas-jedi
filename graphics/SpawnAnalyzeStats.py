@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from SpawnAnalyzeStatsArgs import args
+from SpawnAnalyzeStatsArgs import SpawnAnalyzeStatsArgs
 
 import argparse
 import config as conf
@@ -90,6 +90,8 @@ def main():
     () loops over selected DiagSpaces, and for each
        - spawns a job that executes AnalyzeStats on multiple processors
     '''
+    processor = SpawnAnalyzeStatsArgs()
+    args = processor.args
     DiagSpaceConfig = deepcopy(conf.DiagSpaceConfig)
     for key in sorted(DiagSpaceConfig):
         if not DiagSpaceConfig[key]['process']: del DiagSpaceConfig[key]
