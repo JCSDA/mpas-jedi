@@ -28,13 +28,9 @@ use mpas_subdriver
 use atm_core
 use mpas_pool_routines
 
-#if defined(SACA_FOUND)
-!saca
-use module_mp_thompson_cldfra3_saca, only: saca_param_type
-#endif
-
 !mpas_jedi
 use mpas_constants_mod
+use module_mp_thompson_cldfra3_saca, only: saca_param_type
 
 #ifdef MPAS_EXTERNAL_ESMF_LIB
 !external ESMF
@@ -111,9 +107,7 @@ type :: mpas_geom
 
    integer :: iterator_dimension
 
-#if defined(SACA_FOUND)
    type (saca_param_type), public :: saca_params
-#endif
 
    contains
 
@@ -265,12 +259,13 @@ subroutine geo_setup(self, f_conf, f_comm)
   if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
       self%iterator_dimension = 2
 
-#if defined(SACA_FOUND)
    call f_conf%get_or_die('l_build_madwrf',self%saca_params%l_build_madwrf)
    call f_conf%get_or_die('l_build_gsdcloud',self%saca_params%l_build_gsdcloud)
    call f_conf%get_or_die('l_saturate_qv',self%saca_params%l_saturate_qv)
    call f_conf%get_or_die('l_conserve_thetaV',self%saca_params%l_conserve_thetaV)
    call f_conf%get_or_die('cldfra_def',self%saca_params%cldfra_def)
+   call f_conf%get_or_die('cldfra_thresh',self%saca_params%cldfra_thresh)
+   call f_conf%get_or_die('cldmask_thresh',self%saca_params%cldmask_thresh)
    call f_conf%get_or_die('cld_bld_hgt',self%saca_params%cld_bld_hgt)
    if ( (self%saca_params%l_build_madwrf .and. self%saca_params%l_build_gsdcloud) .or. &
         (.not.self%saca_params%l_build_madwrf .and. .not.self%saca_params%l_build_gsdcloud) ) then
@@ -282,7 +277,6 @@ subroutine geo_setup(self, f_conf, f_comm)
       write(message,*) '--> only one of l_saturate_qv OR l_conserve_thetaV should be set as .true. in mpas_geom%params%'
       call abor1_ftn(message)
    end if
-#endif
 !   if (associated(self % domain)) then
 !       write(message,*) 'inside geom: geom % domain associated for domainID = ', self % domain % domainID
 !       call fckit_log%debug(message)
@@ -674,9 +668,7 @@ subroutine geo_clone(self, other)
 
    self % iterator_dimension = other % iterator_dimension
 
-#if defined(SACA_FOUND)
    self % saca_params = other % saca_params
-#endif
 
    if (.not.allocated(self % latCell)) allocate(self % latCell(other % nCells))
    if (.not.allocated(self % lonCell)) allocate(self % lonCell(other % nCells))

@@ -5,13 +5,11 @@ use mpas_kind_types
 use mpas_pool_routines
 use mpas_derived_types
 
-!saca
-use module_mp_thompson_cldfra3_saca, only: cal_cldfra3
-
 !mpas-jedi
 use mpas_fields_mod
 use mpas2ufo_vars_mod, only : linearized_hydrostatic_balance
 use mpas4da_mod, only : da_posdef
+use module_mp_thompson_cldfra3_saca, only: cal_cldfra3
 
 implicit none
 private
@@ -175,7 +173,7 @@ subroutine update_cloud_fields ( state, obs )
       tropoz_p(i,j) = tropo_z + ter_p(i,j) 
 
       cldtopz_p0(i,j) = -999.
-      if (cldmask_p(i,j) .gt. 0.) then
+      if (cldmask_p(i,j) .gt. state % geom % saca_params % cldmask_thresh ) then
          this_height = SUM(dz_p(i,kts:kte-1,j)) + ter_p(i,j)
          do k = kte-2, kts, -1
             this_height = this_height - dz_p(i,k+1,j)

@@ -69,13 +69,6 @@ find_package( oops 1.10.0 REQUIRED )
 find_package( saber 1.10.0 REQUIRED )
 find_package( ioda 2.9.0 REQUIRED )
 find_package( ufo 1.10.0 REQUIRED )
-# SACA
-find_package( saca 1.0.0 QUIET )
-if( ${saca_FOUND} )
-    message(STATUS "SACA FOUND; Including SACA")
-else( ${saca_FOUND} )
-    message(STATUS "SACA NOT FOUND; Excluding SACA")
-endif( ${saca_FOUND} )
 
 ## Test data
 

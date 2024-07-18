@@ -69,6 +69,11 @@ class GeometryParameters : public oops::Parameters {
   oops::Parameter<bool> l_conserve_thetaV{ "l_conserve_thetaV", true, this};
   /// cloud fraction value for cloud insertion
   oops::Parameter<float> cldfra_def{ "cldfra_def", 0.98f, this};
+  /// cloud fraction threshold to determine presence of model cloud
+  /// only applicable to l_build_madwrf=true
+  oops::Parameter<float> cldfra_thresh{ "cldfra_thresh", 0.0f, this};
+  /// threshold to distinguish clear/cloudy for "observed" cldmask (or cloud fraction)
+  oops::Parameter<float> cldmask_thresh{ "cldmask_thresh", 0.0f, this};
   /// above ground height [meters] to limit the cloud building
   /// only works with l_build_gsdcloud=true
   oops::Parameter<float> cld_bld_hgt{ "cld_bld_hgt", 1200.0f, this};

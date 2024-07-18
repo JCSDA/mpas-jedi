@@ -31,15 +31,11 @@ use mpas_kind_types, only: StrKIND
 use mpas_pool_routines
 use mpas_dmpar, only: mpas_dmpar_exch_halo_field
 
-#if defined(SACA_FOUND)
-  !saca
-  use mpas_saca_interface_mod, only: update_cloud_fields
-#endif
-
 !mpas-jedi
 use mpas_constants_mod
 use mpas_geom_mod
 use mpas_fields_mod
+use mpas_saca_interface_mod, only: update_cloud_fields
 use mpas2ufo_vars_mod
 use mpas4da_mod
 
@@ -87,7 +83,6 @@ subroutine add_incr(self, increment)
 
    if (self%geom%nCells==increment%geom%nCells .and. self%geom%nVertLevels==increment%geom%nVertLevels) then
 
-#if defined(SACA_FOUND)
       !SACA
       if ( all(self%has(sacaStateFields)) .and. all(increment%has(sacaObsFields)) ) then
          !call interface to the main SACA algorithm
@@ -96,7 +91,6 @@ subroutine add_incr(self, increment)
          !early return for this specific usecase
          return
       endif
-#endif
 
       ngrid = self%geom%nCellsSolve
 

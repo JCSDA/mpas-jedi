@@ -1,8 +1,6 @@
-if(saca_FOUND)
-    ecbuild_add_executable( TARGET  ${PROJECT_NAME}_addincrement.x
-                            SOURCES mpasAddIncrement.cc
-                            LIBS    ${PROJECT_NAME})
-endif(saca_FOUND)
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_saca.x
+	                SOURCES mpasSACA.cc
+                        LIBS    ${PROJECT_NAME})
 
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_enshofx.x
                         SOURCES mpasEnsHofX.cc
