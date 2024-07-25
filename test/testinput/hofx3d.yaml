@@ -290,3 +290,26 @@ observations:
     obs operator:
       name: SfcPCorrected
       da_psfc_scheme: UKMO   # or WRFDA
+
+  - obs space:
+      name: Surface U,V
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_sfc_uv.nc4
+      simulated variables: [windEastward, windNorthward]
+    obs operator:
+      name: VertInterp
+      vertical coordinate: height
+      observation vertical coordinate: height
+      interpolation method: linear
+
+      hofx scaling field: wind_reduction_factor_at_10m
+      hofx scaling field group: GeoVaLs
+      variables:
+      - name: windEastward
+      - name: windNorthward

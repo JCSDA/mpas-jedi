@@ -92,6 +92,8 @@ subroutine changevar(self, geom, xm, xg)
   ! reusable fields
   type(field2DReal), pointer :: fieldr2_a, fieldr2_b
 
+  real(kind=RKIND), dimension(:), allocatable :: uu, vv, f10m
+
   ! reusable arrays
   real(kind=RKIND), dimension(:), pointer :: ptrr1_a, ptrr1_b
   real(kind=RKIND), dimension(:,:), pointer :: ptrr2_a, ptrr2_b
@@ -100,7 +102,7 @@ subroutine changevar(self, geom, xm, xg)
   ! iteration-specific variables
   character(len=MAXVARLEN) :: geovar
   integer :: nCells, nVertLevels, nVertLevelsP1
-  integer :: iVar, iCell, iLevel
+  integer :: iVar, iCell, iLevel, i
   real (kind=RKIND) :: lat
   real (kind=kind_real) :: rz
 
@@ -525,10 +527,40 @@ subroutine changevar(self, geom, xm, xg)
           call xm%get('v10', ptrr1_b)
           gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
 
-        case ( var_observable_domain_mask )      ! for domain check
+        case ( var_observable_domain_mask ) !-domain check
           call mpas_pool_get_array(geom%domain%blocklist%allFields, 'bdyMaskCell', domainMask)
 ! pass only the domain interior points.
           gdata%r1%array(1:nCells)= real(domainMask(1:nCells))
+
+        case ( var_sfc_fact10 ) !-wind_reduction_factor_at_10m
+          call xm%get('u10', ptrr1_a)
+          call xm%get('v10', ptrr1_b)
+
+! get model wind at surface layer
+          call xm%get('uReconstructZonal', mdata)
+          allocate(uu(1:nCells))
+          uu(1:nCells) = mdata%r2%array(1, 1:nCells)
+
+          call xm%get('uReconstructMeridional', mdata)
+          allocate(vv(1:nCells))
+          vv(1:nCells) = mdata%r2%array(1, 1:nCells)
+! get model wind at surface layer
+
+          allocate(f10m(1:nCells))
+          f10m(1:nCells) = sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
+
+          do i=1, nCells
+           if (f10m(i) > 0.0_kind_real) then
+               f10m(i) = f10m(i)/ sqrt( uu(i)**2 + vv(i)**2 )
+           else
+               f10m(i) = 1.0_kind_real
+           end if
+          end do
+
+          gdata%r1%array(1:nCells) = f10m(1:nCells)
+
+          deallocate(uu)
+          deallocate(vv)
 
 !! end surface variables
         case default

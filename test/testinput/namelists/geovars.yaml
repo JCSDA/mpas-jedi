@@ -281,6 +281,9 @@ fields:
   - field name: observable_domain_mask
     mpas template field: u10
 
+  - field name: wind_reduction_factor_at_10m
+    mpas template field: u10
+    
   - field name: land_type_index_USGS
     mpas template field: ivgtyp
 
