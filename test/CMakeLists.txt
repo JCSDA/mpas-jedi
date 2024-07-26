@@ -787,10 +787,12 @@ add_mpasjedi_application_test(
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
-add_mpasjedi_application_test(
-    NAME dirac_spectral_1
-    APPLICATION error_covariance_toolbox
-    ${RECALIBRATE})
+if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
+    add_mpasjedi_application_test(
+        NAME dirac_spectral_1
+        APPLICATION error_covariance_toolbox
+        ${RECALIBRATE})
+endif()
 
 #variational - 3dvar
 add_mpasjedi_application_test(
