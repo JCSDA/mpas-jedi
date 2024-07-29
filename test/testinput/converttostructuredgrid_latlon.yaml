@@ -1,0 +1,32 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 1
+  reference filename: testoutput/converttostructuredgrid_latlon.ref
+  log output filename: testoutput/converttostructuredgrid_latlon.run
+  test output filename: testoutput/converttostructuredgrid_latlon.run.ref
+states to structured grid:
+- state geometry:
+    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km/streams.atmosphere"
+  state:
+    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
+                      qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
+                      ivgtyp, isltyp, snowh, vegfra, u10, v10, lai, smois, tslb]
+    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    date: '2018-04-15T00:00:00Z'
+  structured grid interpolation:
+    grid type: latlon
+    local interpolator type: oops unstructured grid interpolator
+    resolution in degrees: 10
+    variables to output:
+    - air_temperature
+    - eastward_wind
+    - northward_wind
+    - specific_humidity
+    pressure levels in hPa:
+    - 925
+    - 850
+    - 500
+    - 250
+    prefix: "converttostructuredgrid_latlon"
+    datapath: "Data/states"

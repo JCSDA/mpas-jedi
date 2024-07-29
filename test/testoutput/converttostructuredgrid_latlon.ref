@@ -1,0 +1,5 @@
+StructuredGridWriter::<MPAS>
+Grid Resolution: 9
+Variables: 4 variables: air_temperature, eastward_wind, northward_wind, specific_humidity
+Output on Levels: Pressure Levels (hPa) = (9.2500000000000000e+02,8.5000000000000000e+02,5.0000000000000000e+02,2.5000000000000000e+02,)
+

@@ -88,6 +88,7 @@ list( APPEND mpas_testinput
   testinput/4dfgat.yaml
   testinput/convertstate_bumpinterp.yaml
   testinput/convertstate_unsinterp.yaml
+  testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
@@ -159,6 +160,7 @@ list( APPEND mpas_testoutput
   testoutput/4dfgat.ref
   testoutput/convertstate_bumpinterp.ref
   testoutput/convertstate_unsinterp.ref
+  testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
@@ -751,6 +753,11 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME convertstate_unsinterp
     APPLICATION convertstate
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME converttostructuredgrid_latlon
+    APPLICATION converttostructuredgrid
     ${RECALIBRATE})
 
 #parameters
