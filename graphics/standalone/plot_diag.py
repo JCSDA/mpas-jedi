@@ -52,7 +52,8 @@ def readdata():
   #imageFmt = 'pdf' #higher fidelity, slower
 
   # Diagnostic omb,oma and hofx files located in diagdir
-  diagdir    = '../../Data/'
+  # assume obsout_hofx_*.h5 or obsout_da_*.h5 are located '../../' of current standalone folder
+  diagdir    = '../../'
   diagprefix = 'obsout_'
   #diagsuffix = '_*.nc4'  #for ctests
   diagsuffix = '_*.h5'   #for cycling
@@ -621,7 +622,7 @@ def plotprofile(xVals1, xLabel1,
   plt.grid(True)
   ax1.plot(xVals1, yVals,'b-o', markersize=5)
   ax1.plot(xVals2, yVals,'r--*', markersize=5)
-  if varName in 'specific_humidity':
+  if varName in 'specificHumidity':
     ax1.set_xlim([0, np.nanmax(xVals1)])
   else:
     ax1.set_xlim([0, math.ceil(np.nanmax(xVals1))])
@@ -669,7 +670,7 @@ def ploterrpro(xVals1, xLabel1,
   plt.grid(True)
   ax1.plot(xVals1, yVals,'b-o', markersize=5)
   ax1.plot(xVals2, yVals,'r--*', markersize=5)
-  if varName in 'specific_humidity':
+  if varName in 'specificHumidity':
     ax1.set_xlim([0, np.nanmax(xVals1)])
   else:
     ax1.set_xlim([0, math.ceil(np.nanmax(xVals2))])

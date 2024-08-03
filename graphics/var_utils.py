@@ -384,8 +384,8 @@ def modelVarAttributes(var):
     return varShort, varUnits
 
 #misc. constants; TODO: collect into single script
-deg2rad = np.pi / np.float(180.0)
-rad2deg = np.float(180.0) / np.pi
+deg2rad = np.pi / float(180.0)
+rad2deg = float(180.0) / np.pi
 
 
 # dictionary containing all analyzed variables
