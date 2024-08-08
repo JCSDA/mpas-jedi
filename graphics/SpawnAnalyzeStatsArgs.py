@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import traceback
 import jediApplicationArgs
 from ProcessArgs import ProcessArgs
 import textwrap
@@ -9,7 +8,6 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
   def __init__(self):
     super().__init__()
     self.argProcessors += [jediApplicationArgs]
-    self.processArgs()
 
   @staticmethod
   def add_arguments(parser):
@@ -29,3 +27,8 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
     parser.add_argument('-s', '--scriptdir', type = str,
       help='Location of scripts')
 
+processor = SpawnAnalyzeStatsArgs()
+
+processor.processArgs()
+
+args = processor.args
