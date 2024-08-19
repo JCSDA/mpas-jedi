@@ -98,21 +98,18 @@ end subroutine c_mpas_geo_set_lonlat
 
 ! --------------------------------------------------------------------------------------------------
 
-subroutine c_mpas_geo_set_functionspace_pointer(c_key_self,c_afunctionspace,c_afunctionspace_for_bump) &
+subroutine c_mpas_geo_set_functionspace_pointer(c_key_self,c_afunctionspace) &
  & bind(c,name='mpas_geo_set_functionspace_pointer_f90')
-!!use atlas_module, only: atlas_functionspace_pointcloud
 use atlas_module, only: atlas_fieldset, atlas_functionspace
 use iso_c_binding
 use mpas_geom_mod
 implicit none
 integer(c_int), intent(in)     :: c_key_self
 type(c_ptr), intent(in), value :: c_afunctionspace
-type(c_ptr), intent(in), value :: c_afunctionspace_for_bump
 type(mpas_geom),pointer :: self
 
 call mpas_geom_registry%get(c_key_self, self)
 self%afunctionspace = atlas_functionspace(c_afunctionspace)
-self%afunctionspace_for_bump = atlas_functionspace(c_afunctionspace_for_bump)
 
 end subroutine c_mpas_geo_set_functionspace_pointer
 

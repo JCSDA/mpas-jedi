@@ -87,8 +87,6 @@ cost function:
         apply at iterations: 0
       - filter: Background Check
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: Satwind
         obsdatain:
@@ -116,8 +114,6 @@ cost function:
     #    random_seed: 0
     #  - filter: Gaussian_Thinning
     #    horizontal_mesh: 200.0 #km
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: Satwind
         obsdatain:
@@ -167,8 +163,6 @@ cost function:
         action:
           name: reject
 
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: Aircraft
         obsdatain:
@@ -190,8 +184,6 @@ cost function:
         apply at iterations: 0
       - filter: Background Check
         threshold: 3
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: SfcPCorrected
         obsdatain:
@@ -222,8 +214,6 @@ cost function:
       - filter: Background Check
         threshold: 3.0
         apply at iterations: 0, 1
-      get values:
-        interpolation type: unstructured
 
     - obs space:
         name: GnssroRefNCEP
@@ -264,8 +254,6 @@ cost function:
         apply at iterations: 0, 1
         variable: refractivity
         errmodel: NCEP
-      get values:
-        interpolation type: unstructured
 
     - obs space:
         name: amsua_n19
@@ -600,8 +588,6 @@ cost function:
           name: reject
       - filter: Gaussian_Thinning
         horizontal_mesh:   145 #km      
-      get values:
-        interpolation type: unstructured
   
     - obs space:
         name: amsua_n15
@@ -935,8 +921,6 @@ cost function:
           name: reject
       - filter: Gaussian_Thinning
         horizontal_mesh:   145 #km
-      get values:
-        interpolation type: unstructured
   
     - obs space:
         name: amsua_n18
@@ -1272,9 +1256,6 @@ cost function:
       - filter: Gaussian_Thinning
         horizontal_mesh:   145 #km
   
-      get values:
-        interpolation type: unstructured
-  
     - obs space:
         name: amsua_metop-a
         obsdatain:
@@ -1608,8 +1589,6 @@ cost function:
       - filter: Gaussian_Thinning
         horizontal_mesh:   145 #km
   
-      get values:
-        interpolation type: unstructured
     - obs space:
         name: amsua_aqua
         obsdatain:
@@ -1942,9 +1921,6 @@ cost function:
           name: reject
       - filter: Gaussian_Thinning
         horizontal_mesh:   145 #km
-  
-      get values:
-        interpolation type: unstructured
 
 output:
   filename: "./analysis.$Y-$M-$D_$h.$m.$s.nc"

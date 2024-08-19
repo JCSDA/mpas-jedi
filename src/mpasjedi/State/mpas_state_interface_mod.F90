@@ -183,22 +183,6 @@ end subroutine mpas_state_add_incr_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_state_change_resol_c(c_key_state,c_key_rhs) &
-      bind(c,name='mpas_state_change_resol_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_state
-integer(c_int), intent(in) :: c_key_rhs
-type(mpas_fields), pointer :: state, rhs
-
-call mpas_fields_registry%get(c_key_state,state)
-call mpas_fields_registry%get(c_key_rhs,rhs)
-
-call state%change_resol(rhs)
-
-end subroutine mpas_state_change_resol_c
-
-! ------------------------------------------------------------------------------
-
 subroutine mpas_state_read_file_c(c_key_state, c_conf, c_dt) &
       bind(c,name='mpas_state_read_file_f90')
 implicit none

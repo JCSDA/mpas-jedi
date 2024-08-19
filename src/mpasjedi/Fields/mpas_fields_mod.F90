@@ -18,10 +18,6 @@ use datetime_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use string_utils, only: swap_name_member
-use slow_oops_unstructured_interpolation_mod, only : unstrc_interp
-
-! saber
-use interpolatorbump_mod, only: bump_interpolator
 
 !ufo
 use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex, var_prsi
@@ -90,7 +86,6 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: zeros        => zeros_
      procedure :: ones         => ones_
 
-     procedure :: change_resol => change_resol_fields
      procedure :: copy         => copy_fields
      procedure :: create       => create_fields
      procedure :: populate     => populate_subfields
@@ -581,26 +576,6 @@ end subroutine write_fields
 
 ! ------------------------------------------------------------------------------
 
-subroutine change_resol_fields(self,rhs)
-
-   implicit none
-   class(mpas_fields), intent(inout) :: self
-   class(mpas_fields), intent(in)    :: rhs
-
-   if (self%geom%nCells == rhs%geom%nCells .and.  self%geom%nVertLevels == rhs%geom%nVertLevels) then
-     call self%copy(rhs)
-   else if (self%geom%nVertLevels == rhs%geom%nVertLevels) then
-      call interpolate_fields(self,rhs)
-   else
-     write(message,*) '--> change_resol_fields: ',self%geom%nCells, rhs%geom%nCells, self%geom%nVertLevels, rhs%geom%nVertLevels
-     call fckit_log%info(message)
-     call abor1_ftn("mpas_fields_mod:change_resol_fields: VertLevels dimension mismatch")
-   endif
-
-end subroutine change_resol_fields
-
-! ------------------------------------------------------------------------------
-
 subroutine zeros_(self)
 
    implicit none
@@ -737,168 +712,6 @@ subroutine dot_prod_(self,fld,zprod)
 end subroutine dot_prod_
 
 !------------------------------------------------------------------------------
-
-!> \brief Populates subfields of self using rhs
-!!
-!! \details **interpolate_fields** This subroutine is called when creating
-!! a new mpas_fields type (self) using an existing mpas_fields (rhs) as a source that
-!! has a different geometry/mesh (but the same number of VertLevels). It populates
-!! the subfields of self, interpolating the data from rhs. It can use either
-!! bump or unstructured interpolation for the interpolation routine.
-subroutine interpolate_fields(self,rhs)
-
-  implicit none
-  class(mpas_fields), intent(inout) :: self !< mpas_fields being populated
-  class(mpas_fields), intent(in)    :: rhs  !< mpas_fields used as source
-
-  type(bump_interpolator) :: bumpinterp
-  type(unstrc_interp)     :: unsinterp
-  type (mpas_pool_iterator_type) :: poolItr
-  real(kind=kind_real), allocatable :: interp_in(:,:), interp_out(:,:)
-  real (kind=RKIND), dimension(:), pointer :: r1d_ptr
-  real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr
-  integer :: rhs_nCells, self_nCells, maxlevels, nlevels, jlev
-  character(len=StrKIND) :: interp_type
-  integer, allocatable :: rhsDims(:)
-
-  interp_type = trim(rhs%geom%fields_to_fields_interp_type)
-
-  if (interp_type == 'bump') then
-    call initialize_bumpinterp(self%geom, rhs%geom, bumpinterp)
-  else
-    call initialize_uns_interp(self%geom, rhs%geom, unsinterp)
-  endif
-
-  ! Interpolate field from rhs mesh to self mesh using pre-calculated weights
-  ! ----------------------------------------------------------------------------------
-  maxlevels = rhs%geom%nVertLevelsP1
-  rhs_nCells = rhs%geom%nCellsSolve
-  self_nCells = self%geom%nCellsSolve
-
-  allocate(interp_in(rhs_nCells, maxlevels))
-  allocate(interp_out(self_nCells, maxlevels))
-
-  call mpas_pool_begin_iteration(rhs%subFields)
-  do while ( mpas_pool_get_next_member(rhs%subFields, poolItr) )
-  ! TODO: For now, we skip the interpolation for integer type.
-  if (poolItr % memberType == MPAS_POOL_FIELD .and. poolItr % dataType == MPAS_POOL_REAL ) then
-    write(message,*) 'poolItr % nDims , poolItr % memberName =', poolItr % nDims , trim(poolItr % memberName)
-    call fckit_log%debug(message)
-    ! Get the rhs fields out of the rhs%subFields pool and into an array that
-    ! can be passed to the interpolator apply functions.
-    ! (Two cases to cover: 1D/2D real variables)
-    if (poolItr % nDims == 1) then
-      nlevels = 1
-      call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r1d_ptr)
-      interp_in(:,1) = r1d_ptr(1:rhs_nCells)
-    else if (poolItr % nDims == 2) then
-      rhsDims = getSolveDimSizes(rhs%subFields, poolItr%memberName)
-      nlevels = rhsDims(1)
-      if (nlevels > maxlevels) then
-        write(message,*) '--> interpolate_fields: nlevels > maxlevels, ', nlevels, maxlevels
-        call abor1_ftn(message)
-      endif
-      call mpas_pool_get_array(rhs%subFields, trim(poolItr % memberName), r2d_ptr)
-      interp_in(1:rhs_nCells,1:nlevels) = transpose(r2d_ptr(1:nlevels,1:rhs_nCells))
-    else
-      write(message,*) '--> interpolate_fields: poolItr % nDims == ',poolItr % nDims,' not handled'
-      call abor1_ftn(message)
-    endif
-
-    if (interp_type == 'bump') then
-      call bumpinterp%apply(interp_in(:,1:nlevels), &
-                            interp_out(:,1:nlevels), &
-                            trans_in=.false.)
-    else
-      do jlev = 1, nlevels
-        call unsinterp%apply(interp_in(:,jlev),interp_out(:,jlev))
-      end do
-    endif
-
-    ! Put the interpolated results into the self%subFields pool
-    if (poolItr % nDims == 1) then
-      call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r1d_ptr)
-      r1d_ptr(1:self_nCells) = interp_out(:,1)
-    else if (poolItr % nDims == 2) then
-      call mpas_pool_get_array(self%subFields, trim(poolItr % memberName), r2d_ptr)
-      r2d_ptr(1:nlevels,1:self_nCells) = transpose (interp_out(1:self_nCells,1:nlevels))
-    endif
-  endif
-  end do !- end of pool iteration
-  deallocate(interp_in)
-  deallocate(interp_out)
-  if (allocated(rhsDims)) deallocate(rhsDims)
-
-end subroutine interpolate_fields
-! ------------------------------------------------------------------------------
-
-! ------------------------------------------------------------------------------
-
-!> \brief Initializes a bump interpolation type
-!!
-!! \details **initialize_bumpinterp** This subroutine calls bumpinterp%init,
-!! which calculates the barycentric weights used to interpolate data between the
-!! geom_from locations and the geom_to locations.
-subroutine initialize_bumpinterp(geom_to, geom_from, bumpinterp)
-
-   implicit none
-   class(mpas_geom), intent(in)           :: geom_to     !< geometry interpolating to
-   class(mpas_geom), intent(in)           :: geom_from   !< geometry interpolating from
-   type(bump_interpolator), intent(inout) :: bumpinterp  !< bump interpolator
-
-   call bumpinterp%init(geom_from%f_comm,geom_from%afunctionspace,geom_to%afunctionspace,geom_from%nVertLevels)
-
-end subroutine initialize_bumpinterp
-
-! --------------------------------------------------------------------------------------------------
-
-!> \brief Initializes an unstructured interpolation type
-!!
-!! \details **initialize_uns_interp** This subroutine calls unsinterp%create,
-!! which calculates the barycentric weights used to interpolate data between the
-!! geom_from locations and the geom_to locations.
-subroutine initialize_uns_interp(geom_to, geom_from, unsinterp)
-
-   implicit none
-   class(mpas_geom), intent(in)           :: geom_to     !< geometry interpolating to
-   class(mpas_geom), intent(in)           :: geom_from   !< geometry interpolating from
-   type(unstrc_interp),     intent(inout) :: unsinterp   !< unstructured interpolator
-
-   integer :: nn, ngrid_from, ngrid_to
-   character(len=8) :: wtype = 'barycent'
-   real(kind=kind_real), allocatable :: lats_from(:), lons_from(:), lats_to(:), lons_to(:)
-
-   ! Get the Solution dimensions
-   ! ---------------------------
-   ngrid_from = geom_from%nCellsSolve
-   ngrid_to   = geom_to%nCellsSolve
-
-   !Calculate interpolation weight
-   !------------------------------------------
-   allocate( lats_from(ngrid_from) )
-   allocate( lons_from(ngrid_from) )
-   lats_from(:) = geom_from%latCell( 1:ngrid_from ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-   lons_from(:) = geom_from%lonCell( 1:ngrid_from ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-   allocate( lats_to(ngrid_to) )
-   allocate( lons_to(ngrid_to) )
-   lats_to(:) = geom_to%latCell( 1:ngrid_to ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-   lons_to(:) = geom_to%lonCell( 1:ngrid_to ) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
-
-   ! Initialize unsinterp
-   ! ---------------
-   nn = 3 ! number of nearest neigbors
-   call unsinterp%create(geom_from%f_comm, nn, wtype, &
-        ngrid_from, lats_from, lons_from, &
-        ngrid_to, lats_to, lons_to)
-
-   ! Release memory
-   ! --------------
-   deallocate(lats_from)
-   deallocate(lons_from)
-   deallocate(lats_to)
-   deallocate(lons_to)
-
-end subroutine initialize_uns_interp
 
 subroutine serial_size(self, vsize)
 
@@ -1435,7 +1248,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
    integer :: jvar, nlevels
    real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
-   integer, pointer :: i1d_ptr_a(:), i2d_ptr_a(:,:)
+   integer, pointer :: i1d_ptr_a(:)
    logical :: var_found
    type(atlas_field) :: afield
    type(atlas_metadata) :: meta
@@ -1511,7 +1324,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
                   call afield%data(real_ptr)
                   real_ptr(1,1:nx) = real(i1d_ptr_a(1:nx), kind_real)
                else if (poolItr%nDims==2) then
-                  write(message,*) '--> fill_geovals: nDims == 2:  not handled for integers'
+                  write(message,*) '--> to_fieldset: nDims == 2:  not handled for integers'
                   call abor1_ftn(message)
                end if
             else
@@ -1558,6 +1371,7 @@ subroutine from_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_le
    integer :: jvar
    real(kind=kind_real), pointer :: real_ptr(:,:)
    real(kind=RKIND), pointer :: r1d_ptr_a(:), r2d_ptr_a(:,:)
+   integer, pointer :: i1d_ptr_a(:)
    logical :: var_found
    type(atlas_field) :: afield
    type(mpas_pool_iterator_type) :: poolItr
@@ -1607,8 +1421,14 @@ subroutine from_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_le
                   r2d_ptr_a(:,nx+1:) = real(0.0, RKIND)  ! set mpas halos (if any) to zero
                end if
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
-                  write(message,*) 'from_fieldset error: integers are not handled here'
+               if (poolItr%nDims==1) then
+                  call mpas_pool_get_array(self%subFields, trim(poolItr%memberName), i1d_ptr_a)
+                  call afield%data(real_ptr)
+                  i1d_ptr_a(1:nx) = nint(real_ptr(1,1:nx))
+               else if (poolItr%nDims==2) then
+                  write(message,*) '--> from_fieldset: nDims == 2:  not handled for integers'
                   call abor1_ftn(message)
+               end if
             else
                call abor1_ftn('poolItr % dataType neither real nor integer')
             endif

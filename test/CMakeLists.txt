@@ -86,8 +86,7 @@ list( APPEND mpas_testinput
   testinput/4denvar_VarBC_nonpar.yaml
   testinput/4dhybrid_bumpcov_bumploc.yaml
   testinput/4dfgat.yaml
-  testinput/convertstate_bumpinterp.yaml
-  testinput/convertstate_unsinterp.yaml
+  testinput/convertstate.yaml
   testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
@@ -158,8 +157,7 @@ list( APPEND mpas_testoutput
   testoutput/4denvar_VarBC.ref
   testoutput/4dhybrid_bumpcov_bumploc.ref
   testoutput/4dfgat.ref
-  testoutput/convertstate_bumpinterp.ref
-  testoutput/convertstate_unsinterp.ref
+  testoutput/convertstate.ref
   testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
@@ -746,12 +744,7 @@ add_mpasjedi_application_test(
 
 #convertstate
 add_mpasjedi_application_test(
-    NAME convertstate_bumpinterp
-    APPLICATION convertstate
-    ${RECALIBRATE})
-
-add_mpasjedi_application_test(
-    NAME convertstate_unsinterp
+    NAME convertstate
     APPLICATION convertstate
     ${RECALIBRATE})
 

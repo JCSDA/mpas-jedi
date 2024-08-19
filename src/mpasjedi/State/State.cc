@@ -10,6 +10,11 @@
 #include <iostream>
 #include <vector>
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+
+#include "oops/base/GeometryData.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -127,7 +132,36 @@ void State::fromFieldSet(const atlas::FieldSet & fset) {
 // -----------------------------------------------------------------------------
 void State::changeResolution(const State & other) {
   oops::Log::trace() << "State changed resolution starting" << std::endl;
-  mpas_state_change_resol_f90(keyState_, other.toFortran());
+
+  // If both states have same resolution, then copy instead of interpolating
+  if (geom_.isEqual(other.geom_)) {
+    mpas_state_copy_f90(keyState_, other.keyState_);
+    time_ = other.time_;
+    return;
+  }
+
+  // Build oops interpolator -- this takes a few extra steps at this level
+  const oops::GeometryData source_geom(other.geom_.functionSpace(),
+                                       other.geom_.fields(),
+                                       other.geom_.levelsAreTopDown(),
+                                       other.geom_.getComm());
+  const atlas::FunctionSpace target_fs = geom_.functionSpace();
+  eckit::LocalConfiguration conf;
+  // Use oops interpolator to handle integer/categorical fields correctly
+  // Once the atlas interpolator gains support for this feature, we could make this configurable
+  // from the user-facing yaml file; for now though, the atlas interpolator would be wrong for the
+  // many integer fields of mpas-jedi.
+  conf.set("local interpolator type", "oops unstructured grid interpolator");
+  oops::GlobalInterpolator interp(conf, source_geom, target_fs, geom_.getComm());
+
+  atlas::FieldSet source{};
+  atlas::FieldSet target{};
+
+  // Interpolate atlas::FieldSet representation of mpas data
+  other.toFieldSet(source);
+  interp.apply(source, target);
+  this->fromFieldSet(target);
+
   oops::Log::trace() << "State changed resolution" << std::endl;
 }
 // -----------------------------------------------------------------------------

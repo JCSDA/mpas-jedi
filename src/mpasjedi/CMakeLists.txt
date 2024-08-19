@@ -75,8 +75,6 @@ list( APPEND mpasjedi_src_files
     Utilities/mpas4da_mod.F90
     Utilities/mpas_constants_mod.F90
     Utilities/mpas_kinds_mod.F90
-    Utilities/mpasjedi_unstructured_interp_mod.F90
-    Utilities/slow_oops_unstructured_interpolation_mod.F90
     )
 
 #Create target

@@ -38,7 +38,6 @@ extern "C" {
   void mpas_geo_set_lonlat_f90(const F90geom &, atlas::field::FieldSetImpl *,
                                      const bool &);
   void mpas_geo_set_functionspace_pointer_f90(const F90geom &,
-                                                    atlas::functionspace::FunctionSpaceImpl *,
                                                     atlas::functionspace::FunctionSpaceImpl *);
   void mpas_geo_fill_geometry_fields_f90(const F90geom &,
                                          atlas::field::FieldSetImpl *);

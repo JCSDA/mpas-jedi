@@ -293,22 +293,6 @@ end subroutine mpas_increment_diff_incr_c
 
 ! ------------------------------------------------------------------------------
 
-subroutine mpas_increment_change_resol_c(c_key_inc,c_key_rhs) &
-      bind(c,name='mpas_increment_change_resol_f90')
-implicit none
-integer(c_int), intent(in) :: c_key_inc
-integer(c_int), intent(in) :: c_key_rhs
-type(mpas_fields), pointer :: inc, rhs
-
-call mpas_fields_registry%get(c_key_inc,inc)
-call mpas_fields_registry%get(c_key_rhs,rhs)
-
-call inc%change_resol(rhs)
-
-end subroutine mpas_increment_change_resol_c
-
-! ------------------------------------------------------------------------------
-
 subroutine mpas_increment_to_fieldset_c(c_key_self,c_key_geom,c_vars,c_afieldset, c_include_halo, &
      c_flip_vert_lev) bind (c,name='mpas_increment_to_fieldset_f90')
 implicit none

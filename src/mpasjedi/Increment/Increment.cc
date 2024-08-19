@@ -14,8 +14,13 @@
 #include <string>
 #include <vector>
 
+#include "atlas/field.h"
+#include "atlas/functionspace.h"
+
 #include "eckit/config/Configuration.h"
 
+#include "oops/base/GeometryData.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -45,7 +50,33 @@ Increment::Increment(const Geometry & resol,
   iterLevs_(other.iterLevs_), iterVals_(other.iterVals_)
 {
   mpas_increment_create_f90(keyInc_, geom_.toFortran(), vars_);
-  mpas_increment_change_resol_f90(keyInc_, other.keyInc_);
+
+  // If both increments have same resolution, then copy instead of interpolating
+  if (geom_.isEqual(other.geom_)) {
+    mpas_increment_copy_f90(keyInc_, other.keyInc_);
+    time_ = other.time_;
+    return;
+  }
+
+  // Build oops interpolator -- this takes a few extra steps at this level
+  const oops::GeometryData source_geom(other.geom_.functionSpace(),
+                                       other.geom_.fields(),
+                                       other.geom_.levelsAreTopDown(),
+                                       other.geom_.getComm());
+  const atlas::FunctionSpace target_fs = geom_.functionSpace();
+  eckit::LocalConfiguration conf;
+  // Use oops interpolator for consistency with State resolution change.
+  conf.set("local interpolator type", "oops unstructured grid interpolator");
+  oops::GlobalInterpolator interp(conf, source_geom, target_fs, geom_.getComm());
+
+  atlas::FieldSet source{};
+  atlas::FieldSet target{};
+
+  // Interpolate atlas::FieldSet representation of mpas data
+  other.toFieldSet(source);
+  interp.apply(source, target);
+  this->fromFieldSet(target);
+
   oops::Log::trace() << "Increment::Increment (from geom/resol and other) done" << std::endl;
 }
 // -----------------------------------------------------------------------------

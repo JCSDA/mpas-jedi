@@ -72,7 +72,6 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    logical :: deallocate_nonda_fields
-   character(len=StrKIND) :: fields_to_fields_interp_type
    character(len=StrKIND) :: bump_vunit
    real(kind=RKIND), dimension(:),   allocatable :: latCell, lonCell
    real(kind=RKIND), dimension(:),   allocatable :: areaCell
@@ -97,11 +96,6 @@ type :: mpas_geom
    type(fckit_mpi_comm) :: f_comm
 
    type(atlas_functionspace) :: afunctionspace
-
-   ! As a temporary hack to enable using the BUMP interpolator from mpasjedi, make an additional
-   ! FunctionSpace without halos. This should be removed as soon as the interpolations can be made
-   ! more generic
-   type(atlas_functionspace) :: afunctionspace_for_bump
    
    type(templated_field), allocatable :: templated_fields(:)
 
@@ -198,12 +192,6 @@ subroutine geo_setup(self, f_conf, f_comm)
    ! Domain decomposition and templates for state/increment variables
    call mpas_init( self % corelist, self % domain, mpi_comm = self%f_comm%communicator(), &
                  & namelistFileParam = trim(nml_file), streamsFileParam = trim(streams_file))
-
-   ! The interpolation method specified here will be used to interpolate data between
-   ! different geometries, but not in GetValues. GetValues has its own configuration
-   ! for specifying its interpolation method.
-   call f_conf%get_or_die("interpolation type",str)
-   self % fields_to_fields_interp_type = str
 
    !Deallocate not-used fields for memory reduction
    call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
@@ -692,7 +680,6 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % areaTriangle)) allocate(self % areaTriangle(self % nVertices))
    if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
 
-   self % fields_to_fields_interp_type = other % fields_to_fields_interp_type
    self % templated_fields  = other % templated_fields
    self % latCell           = other % latCell
    self % lonCell           = other % lonCell
@@ -717,7 +704,6 @@ subroutine geo_clone(self, other)
    self % angleEdge         = other % angleEdge
 
    self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
-   self%afunctionspace_for_bump = atlas_functionspace(other%afunctionspace_for_bump%c_ptr())
 
    call fckit_log%debug('====> copy of geom corelist and domain')
 
@@ -792,7 +778,6 @@ subroutine geo_delete(self)
    end do
    
    call self%afunctionspace%final()
-   call self%afunctionspace_for_bump%final()
 
 #ifdef MPAS_EXTERNAL_ESMF_LIB
    ! Finalize ESMF on behalf of MPAS, keep MPI alive for JEDI to clean up

@@ -67,8 +67,6 @@ class Geometry : public util::Printable,
   F90geom keyGeom_;
   const eckit::mpi::Comm & comm_;
   atlas::FunctionSpace functionSpace_;
-  // temporary hack: FunctionSpace without halos for calling BUMP interpolation from within mpasjedi
-  atlas::FunctionSpace functionSpaceForBump_;
   atlas::FieldSet fields_;
 };
 // -----------------------------------------------------------------------------

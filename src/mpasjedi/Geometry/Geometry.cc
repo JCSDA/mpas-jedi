@@ -112,13 +112,8 @@ Geometry::Geometry(const eckit::Configuration & config,
   const bool include_halo = true;
   mpas_geo_set_lonlat_f90(keyGeom_, fs.get(), include_halo);
 
-  // Create function space without halo, for constructing the bump interpolator from mpasjedi
-  const atlas::Field lonlatFieldForBump = fs.field("lonlat");
-  functionSpaceForBump_ = atlas::functionspace::PointCloud(lonlatFieldForBump);
-
   // Set ATLAS function space pointer in Fortran
-  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                             functionSpaceForBump_.get());
+  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
 
   // Fill geometry fieldset : for saber vunit
   fields_ =  atlas::FieldSet();
@@ -133,9 +128,7 @@ Geometry::Geometry(const Geometry & other) : comm_(other.comm_) {
                      << std::endl;
   mpas_geo_clone_f90(keyGeom_, other.keyGeom_);
   functionSpace_ = atlas::functionspace::NodeColumns(other.functionSpace_);
-  functionSpaceForBump_ = atlas::functionspace::PointCloud(other.functionSpaceForBump_.lonlat());
-  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get(),
-                                         functionSpaceForBump_.get());
+  mpas_geo_set_functionspace_pointer_f90(keyGeom_, functionSpace_.get());
   fields_ = atlas::FieldSet();
   for (auto & field : other.fields_) {
     fields_->add(field);

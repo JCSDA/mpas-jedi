@@ -28,11 +28,6 @@ class GeometryParameters : public oops::Parameters {
   /// streams filename to be used in mpas_init
   oops::RequiredParameter<std::string> streams_file{"streams_file", this};
 
-  /// interpolation method to be used to interpolate data between different geometries
-  /// available options are bump and unstructured
-  /// bump is more memory intensive than unstructured
-  oops::Parameter<std::string> interpolation_type{ "interpolation type", "unstructured", this};
-
   /// option to deallocate not-used fields for reducing memory usage
   /// can not be true for forecast and hofx (4D) applications
   oops::Parameter<bool> deallocate_non_da_fields{ "deallocate non-da fields", false, this};

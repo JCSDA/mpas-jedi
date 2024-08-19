@@ -43,7 +43,6 @@ extern "C" {
   void mpas_state_zero_f90(const F90state &);
   void mpas_state_axpy_f90(const F90state &, const real_type &, const F90state &);
   void mpas_state_add_incr_f90(const F90state &, const F90inc &);
-  void mpas_state_change_resol_f90(const F90state &, const F90state &);
   void mpas_state_serial_size_f90(const F90state &, std::size_t &);
   void mpas_state_serialize_f90(const F90state &, const std::size_t &,
                                 real_type[]);
