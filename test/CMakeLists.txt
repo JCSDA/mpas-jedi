@@ -86,6 +86,7 @@ list( APPEND mpas_testinput
   testinput/4denvar_VarBC_nonpar.yaml
   testinput/4dhybrid_bumpcov_bumploc.yaml
   testinput/4dfgat.yaml
+  testinput/4dfgat_append_obs.yaml
   testinput/convertstate.yaml
   testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
@@ -157,6 +158,7 @@ list( APPEND mpas_testoutput
   testoutput/4denvar_VarBC.ref
   testoutput/4dhybrid_bumpcov_bumploc.ref
   testoutput/4dfgat.ref
+  testoutput/4dfgat_append_obs.ref
   testoutput/convertstate.ref
   testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
@@ -312,6 +314,13 @@ link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/init
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km)
 link_dir(${mpas-jedi_data_testinput_tier_1_local}/480km/bg
          ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km/bg)
+
+#appendable obs
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs)
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend1
+         ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs/mpasobsappend1)
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend2
+         ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs/mpasobsappend2)
 
 #480km_2stream
 # .nc files and config files are in the same directory
@@ -919,6 +928,11 @@ add_mpasjedi_application_test(
 #variational - 4dfgat
 add_mpasjedi_application_test(
     NAME 4dfgat
+    APPLICATION variational
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 4dfgat_append_obs
     APPLICATION variational
     ${RECALIBRATE})
 

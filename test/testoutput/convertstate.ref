@@ -1,4 +1,4 @@
-Input state: 
+Input state:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
 Fld=1  Min=1.9961034302148411e+02, Max=3.0524750469187848e+02, RMS=2.4396516847118451e+02 : temperature
@@ -6,7 +6,7 @@ Fld=2  Min=0.0000000000000000e+00, Max=1.8968370803990039e-02, RMS=4.63051518963
 Fld=3  Min=-4.4161102375550811e+01, Max=8.3002884639199976e+01, RMS=1.7654622452843618e+01 : uReconstructZonal
 Fld=4  Min=-4.5535885706116773e+01, Max=5.8607941256754437e+01, RMS=9.0017723000806011e+00 : uReconstructMeridional
 Fld=5  Min=5.6985528898815101e+04, Max=1.0469254955758584e+05, RMS=9.8674507031394111e+04 : surface_pressure
-Output state: 
+Output state:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 4002, nFields = 5
 Fld=1  Min=2.0189056346122609e+02, Max=3.0467114240953589e+02, RMS=2.4396711480727751e+02 : temperature
