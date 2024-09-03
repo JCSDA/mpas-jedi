@@ -4,7 +4,7 @@
                   filename_template="./Data/384km/init/x1.4002.init.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only" />
 
-<immutable_stream name="static"
+<immutable_stream name="invariant"
                   type="input"
                   filename_template="./Data/384km/init/x1.4002.init.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only" />

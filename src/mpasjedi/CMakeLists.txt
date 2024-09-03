@@ -84,7 +84,6 @@ ecbuild_add_library( TARGET ${PROJECT_NAME}
                      INSTALL_HEADERS LISTED
                      HEADER_DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
                      )
-
 #Link dependencies
 if(OpenMP_FOUND)
     target_link_libraries( ${PROJECT_NAME} PUBLIC OpenMP::OpenMP_Fortran OpenMP::OpenMP_CXX )

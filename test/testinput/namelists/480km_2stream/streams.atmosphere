@@ -1,5 +1,5 @@
 <streams>
-<immutable_stream name="static"
+<immutable_stream name="invariant"
                   type="input"
                   filename_template="./Data/480km_2stream/static.nc"
                   input_interval="initial_only" />
