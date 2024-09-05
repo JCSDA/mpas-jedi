@@ -195,9 +195,14 @@ def varDatatype(varName, ncData):
   return ncData.variables[varName].datatype
 
 def getPressure(ncData):
-  pressure_p = np.array( ncData.variables['pressure_p'][0,:,:] )
-  pressure_base = np.array( ncData.variables['pressure_base'][0,:,:] )
-  pressure = pressure_p + pressure_base
+  if 'pressure' in ncData.variables:
+    pressure = np.array( ncData.variables['pressure'][0,:,:] )
+  elif 'pressure_p' in ncData.variables and 'pressure_base' in ncData.variables:
+    pressure_p = np.array( ncData.variables['pressure_p'][0,:,:] )
+    pressure_base = np.array( ncData.variables['pressure_base'][0,:,:] )
+    pressure = pressure_p + pressure_base
+  else:
+    print("Error: 'pressure', 'pressure_p', or 'pressure_base' variables are missing from the NetCDF data.")
   return pressure
 
 def getTemperature(ncData):
