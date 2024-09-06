@@ -93,6 +93,7 @@ list( APPEND mpas_testinput
   testinput/dirac_bumploc.yaml
   testinput/dirac_noloc.yaml
   testinput/dirac_spectral_1.yaml
+  testinput/dirac_spectral_no_wind.yaml
   testinput/eda_3dhybrid.yaml
   testinput/eda_3dhybrid_1.yaml
   testinput/eda_3dhybrid_2.yaml
@@ -128,6 +129,7 @@ list( APPEND mpas_testinput
   testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
+  testinput/process_perts_spectral_no_wind.yaml
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
   testinput/state.yaml
@@ -165,6 +167,7 @@ list( APPEND mpas_testoutput
   testoutput/dirac_bumploc.ref
   testoutput/dirac_noloc.ref
   testoutput/dirac_spectral_1.ref
+  testoutput/dirac_spectral_no_wind.ref
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
   testoutput/forecast.ref
@@ -180,6 +183,7 @@ list( APPEND mpas_testoutput
   testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
+  testoutput/process_perts_spectral_no_wind.ref
   testoutput/rtpp.ref
   testoutput/ens_mean_variance.ref
 )
@@ -796,10 +800,22 @@ add_mpasjedi_application_test(
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
+#spectral
 if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
     add_mpasjedi_application_test(
         NAME dirac_spectral_1
         APPLICATION error_covariance_toolbox
+        ${RECALIBRATE})
+    
+    add_mpasjedi_application_test(
+        NAME process_perts_spectral_no_wind
+        APPLICATION process_perts
+        ${RECALIBRATE})
+
+    add_mpasjedi_application_test(
+        NAME dirac_spectral_no_wind
+        APPLICATION error_covariance_toolbox
+        DEPENDS process_perts_spectral_no_wind
         ${RECALIBRATE})
 endif()
 

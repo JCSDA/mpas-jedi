@@ -1,0 +1,110 @@
+Norm of perturbation: member 1: 2.4723544837994409e+03
+wb1_variance_1 ; name = temperature ; bin index = 0 ; binned variance = 5.0654072993206144e-03
+wb1_variance_1 ; name = spechum ; bin index = 0 ; binned variance = 3.0509139603271079e-10
+wb1_variance_1 ; name = surface_pressure ; bin index = 0 ; binned variance = 1.8746443800427244e+03
+Wrote file Data/spectral/wb1_variance_1.nc
+Wrote file Data/spectral/wb1_F15_inc_1.nc
+Fields:
+  temperature: 7.0667883500866910e+00
+  spechum: 1.6853554178283799e-03
+  surface_pressure: 1.6340522606697084e+03
+Norm of band perturbation: member 1: band 1: 2.1887109164680078e+03
+wb2_variance_1 ; name = temperature ; bin index = 0 ; binned variance = 2.0530209002426428e-02
+wb2_variance_1 ; name = spechum ; bin index = 0 ; binned variance = 2.8300673687766164e-09
+wb2_variance_1 ; name = surface_pressure ; bin index = 0 ; binned variance = 1.2656932057336708e+03
+Wrote file Data/spectral/wb2_variance_1.nc
+Wrote file Data/spectral/wb2_F15_inc_1.nc
+Fields:
+  temperature: 1.3451773843858751e+01
+  spechum: 4.7023001491019005e-03
+  surface_pressure: 1.5306866816672596e+03
+Norm of band perturbation: member 1: band 2: 1.7731902912471805e+03
+Norm of band perturbation: member 1: band 3: 2.1665538218980441e+03
+Norm of perturbation: member 2: 2.2609073692507786e+03
+wb1_variance_2 ; name = temperature ; bin index = 0 ; binned variance = 7.6983193012590779e-03
+wb1_variance_2 ; name = spechum ; bin index = 0 ; binned variance = 4.9032786553954479e-10
+wb1_variance_2 ; name = surface_pressure ; bin index = 0 ; binned variance = 8.9032076850119802e+02
+Wrote file Data/spectral/wb1_variance_2.nc
+Wrote file Data/spectral/wb1_F15_inc_2.nc
+Fields:
+  temperature: 8.8945436479819424e+00
+  spechum: 2.1088358994983546e-03
+  surface_pressure: 1.2532093355493673e+03
+Norm of band perturbation: member 2: band 1: 1.5098489511530584e+03
+wb2_variance_2 ; name = temperature ; bin index = 0 ; binned variance = 2.3431030730323436e-02
+wb2_variance_2 ; name = spechum ; bin index = 0 ; binned variance = 3.4283219471351491e-09
+wb2_variance_2 ; name = surface_pressure ; bin index = 0 ; binned variance = 7.4498349126452479e+02
+Wrote file Data/spectral/wb2_variance_2.nc
+Wrote file Data/spectral/wb2_F15_inc_2.nc
+Fields:
+  temperature: 1.4235735485037656e+01
+  spechum: 5.1629770125211395e-03
+  surface_pressure: 1.1033896266748457e+03
+Norm of band perturbation: member 2: band 2: 1.3567525772955778e+03
+Norm of band perturbation: member 2: band 3: 1.9565202945502547e+03
+Norm of perturbation: member 3: 3.0757244054592188e+03
+wb1_variance_3 ; name = temperature ; bin index = 0 ; binned variance = 1.0573619171059846e-02
+wb1_variance_3 ; name = spechum ; bin index = 0 ; binned variance = 4.4856149252341415e-10
+wb1_variance_3 ; name = surface_pressure ; bin index = 0 ; binned variance = 5.1777495287870597e+03
+Wrote file Data/spectral/wb1_variance_3.nc
+Wrote file Data/spectral/wb1_F15_inc_3.nc
+Fields:
+  temperature: 9.8421254116546812e+00
+  spechum: 2.0189954171325117e-03
+  surface_pressure: 2.7928702137506430e+03
+Norm of band perturbation: member 3: band 1: 3.6403681077175202e+03
+wb2_variance_3 ; name = temperature ; bin index = 0 ; binned variance = 2.3822262816177425e-02
+wb2_variance_3 ; name = spechum ; bin index = 0 ; binned variance = 2.8627613666516662e-09
+wb2_variance_3 ; name = surface_pressure ; bin index = 0 ; binned variance = 1.3526955897455571e+03
+Wrote file Data/spectral/wb2_variance_3.nc
+Wrote file Data/spectral/wb2_F15_inc_3.nc
+Fields:
+  temperature: 1.4288757637954328e+01
+  spechum: 4.7767397227994795e-03
+  surface_pressure: 1.6141251752284907e+03
+Norm of band perturbation: member 3: band 2: 1.8340247647354865e+03
+Norm of band perturbation: member 3: band 3: 2.7403366322301804e+03
+Norm of perturbation: member 4: 2.4128225355731242e+03
+wb1_variance_4 ; name = temperature ; bin index = 0 ; binned variance = 7.2643005990421948e-03
+wb1_variance_4 ; name = spechum ; bin index = 0 ; binned variance = 1.4142921007129570e-09
+wb1_variance_4 ; name = surface_pressure ; bin index = 0 ; binned variance = 1.8532272377343354e+03
+Wrote file Data/spectral/wb1_variance_4.nc
+Wrote file Data/spectral/wb1_F15_inc_4.nc
+Fields:
+  temperature: 7.9263131083667231e+00
+  spechum: 3.4521010401517890e-03
+  surface_pressure: 1.6094545895129595e+03
+Norm of band perturbation: member 4: band 1: 2.1762921541321080e+03
+wb2_variance_4 ; name = temperature ; bin index = 0 ; binned variance = 2.0056360207362230e-02
+wb2_variance_4 ; name = spechum ; bin index = 0 ; binned variance = 3.3001580994171608e-09
+wb2_variance_4 ; name = surface_pressure ; bin index = 0 ; binned variance = 8.1696652682433273e+02
+Wrote file Data/spectral/wb2_variance_4.nc
+Wrote file Data/spectral/wb2_F15_inc_4.nc
+Fields:
+  temperature: 1.3236175763103496e+01
+  spechum: 5.1688853551661463e-03
+  surface_pressure: 1.1681057395713069e+03
+Norm of band perturbation: member 4: band 2: 1.4214859756782291e+03
+Norm of band perturbation: member 4: band 3: 2.2020352862577238e+03
+Norm of perturbation: member 5: 2.2996759011673453e+03
+wb1_variance_5 ; name = temperature ; bin index = 0 ; binned variance = 7.6578460966881231e-03
+wb1_variance_5 ; name = spechum ; bin index = 0 ; binned variance = 9.0591248830170045e-10
+wb1_variance_5 ; name = surface_pressure ; bin index = 0 ; binned variance = 1.4748097972046362e+03
+Wrote file Data/spectral/wb1_variance_5.nc
+Wrote file Data/spectral/wb1_F15_inc_5.nc
+Fields:
+  temperature: 8.1454670805696487e+00
+  spechum: 2.8045713539467929e-03
+  surface_pressure: 1.4465259191743025e+03
+Norm of band perturbation: member 5: band 1: 1.9402094469559515e+03
+wb2_variance_5 ; name = temperature ; bin index = 0 ; binned variance = 1.9186030431521176e-02
+wb2_variance_5 ; name = spechum ; bin index = 0 ; binned variance = 3.0934607990064039e-09
+wb2_variance_5 ; name = surface_pressure ; bin index = 0 ; binned variance = 9.9295826852416008e+02
+Wrote file Data/spectral/wb2_variance_5.nc
+Wrote file Data/spectral/wb2_F15_inc_5.nc
+Fields:
+  temperature: 1.2863465190944098e+01
+  spechum: 4.9420581170877276e-03
+  surface_pressure: 1.2986205827525187e+03
+Norm of band perturbation: member 5: band 2: 1.5691139568664896e+03
+Norm of band perturbation: member 5: band 3: 2.0428527445117236e+03

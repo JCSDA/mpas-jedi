@@ -1,0 +1,167 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/dirac_spectral_no_wind.ref
+  log output filename: testoutput/dirac_spectral_no_wind.run
+  test output filename: testoutput/dirac_spectral_no_wind.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+background:
+  state variables: &vars
+  - temperature
+  - spechum
+  - surface_pressure
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: &date "2018-04-15T00:00:00Z"
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: Hybrid
+    components:
+    ###########################################################################
+    # Waveband 1 - F14 grid
+    ###########################################################################
+    - weight:
+        value: 1.0
+      covariance:
+        ensemble geometry:
+          function space: StructuredColumns
+          grid:
+            type: regular_gaussian
+            N: 15
+          halo: 1
+          #groups: *var_groups
+        ensemble pert on other geometry:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filepath: Data/spectral/wb1_F15_inc_%MEM%
+              variables: *vars
+        saber central block:
+          saber block name: Ensemble
+          # FunctionSpace-specific localization, not on model Geometry.
+          localization:
+            saber central block:
+              saber block name: ID
+            saber outer blocks:
+            - saber block name: spectral analytical filter
+              # localization for low-waveband component of ensemble
+              # (full inter-level and inter-variables localization)
+              function:
+                horizontal daley length: 8000e3  # (in m)
+              normalize filter variance: true
+            - saber block name: spectral to gauss
+        saber outer blocks:
+        - saber block name: interpolation
+          inner geometry:
+            function space: StructuredColumns
+            grid:
+              name: F15
+            halo: 1
+          forward interpolator:
+            local interpolator type: oops unstructured grid interpolator
+          inverse interpolator:
+            local interpolator type: oops unstructured grid interpolator
+          active variables: *vars
+    ###########################################################################
+    # Waveband 2 - F14 grid
+    ###########################################################################
+    - weight:
+        value: 1.0
+      covariance:
+        ensemble geometry:
+          function space: StructuredColumns
+          grid:
+            type: regular_gaussian
+            N: 15
+          halo: 1
+          #groups: *var_groups
+        ensemble pert on other geometry:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filepath: Data/spectral/wb2_F15_inc_%MEM%
+              variables: *vars
+        saber central block:
+          saber block name: Ensemble
+          # FunctionSpace-specific localization, not on model Geometry.
+          localization:
+            saber central block:
+              saber block name: ID
+            saber outer blocks:
+            - saber block name: spectral analytical filter
+            # Moderate horizontal localization
+            # (although full inter-level and inter-variables localization)
+              function:
+                horizontal daley length: 2500e3  # (in m)
+              normalize filter variance: true
+            - saber block name: spectral to gauss
+        saber outer blocks:
+        - saber block name: interpolation
+          inner geometry:
+            function space: StructuredColumns
+            grid:
+              name: F15
+            halo: 1
+          forward interpolator:
+            local interpolator type: oops unstructured grid interpolator
+          inverse interpolator:
+            local interpolator type: oops unstructured grid interpolator
+          active variables: *vars
+    ###########################################################################
+    # Waveband 3 - From Residual (on mpas gird)
+    ###########################################################################
+    - weight:
+        value: 1.0
+      covariance:
+        ensemble pert:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filename: Data/spectral/wb3_mpas480_inc_mb%MEM%
+              variables: *vars
+        saber central block:
+          saber block name: Ensemble
+          # FunctionSpace-specific localization, on model Geometry.
+          localization:
+            saber central block:
+              saber block name: ID
+            saber outer blocks:
+            - saber block name: spectral analytical filter
+              # localization for high-waveband component of ensemble
+              # (although full inter-level and inter-variables localization)
+              function:
+                horizontal daley length: 800e3  # (in m)
+              normalize filter variance: true
+            - saber block name: spectral to gauss
+            - saber block name: interpolation
+              inner geometry:
+                function space: StructuredColumns
+                grid:
+                  name: F15
+                halo: 1
+              forward interpolator:
+                local interpolator type: oops unstructured grid interpolator
+              inverse interpolator:
+                local interpolator type: oops unstructured grid interpolator
+              active variables: *vars
+dirac:
+  ndir: 2
+  dirLats: [  30.31011691,  26.56505123 ]
+  dirLons: [ 130.11182691,-102.95294521 ]
+  ildir: 3
+  dirvar: temperature
+output dirac:
+  stream name: control
+  filename: Data/spectral/mpas.spectral_scalars_%id%.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

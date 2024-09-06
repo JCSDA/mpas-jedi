@@ -53,3 +53,7 @@ ecbuild_add_executable( TARGET  ${PROJECT_NAME}_convertstate.x
 ecbuild_add_executable( TARGET  ${PROJECT_NAME}_converttostructuredgrid.x
                         SOURCES mpasConvertToStructuredGrid.cc
                         LIBS    ${PROJECT_NAME} saber )
+
+ecbuild_add_executable( TARGET  ${PROJECT_NAME}_process_perts.x
+                        SOURCES mpasProcessPerts.cc
+                        LIBS    ${PROJECT_NAME} saber)

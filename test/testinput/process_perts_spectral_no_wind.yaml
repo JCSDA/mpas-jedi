@@ -1,0 +1,175 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/process_perts_spectral_no_wind.ref
+  log output filename: testoutput/process_perts_spectral_no_wind.run
+  test output filename: testoutput/process_perts_spectral_no_wind.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+background:
+  state variables: &vars
+  - temperature
+  - spechum
+  - surface_pressure
+  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  date: &date "2018-04-15T00:00:00Z"
+input variables: *vars
+ensemble:
+  members:
+  - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+  - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+    date: *date
+    state variables: *vars
+bands:
+- band: # band 1
+    filter:
+      saber central block:
+        saber block name: ID
+      saber outer blocks:
+      - saber block name: spectral analytical filter
+        function:
+          shape: waveband filter
+          waveband min: 0
+          waveband peak: 1
+          waveband max: 3
+        preserving variance: true
+        active variables: *vars
+      - saber block name: spectral to gauss
+        active variables: *vars
+        filter mode: true # instead of running the adjoint code it runs the inverse
+      - saber block name: write variances
+        binning:
+          type: "horizontal global average"
+        field names: *vars
+        instantaneous statistics:
+          multiply fset filename: wb1_variance
+          output path: Data/spectral
+      - saber block name: write fields
+        output path: Data/spectral
+        multiply fset filename: wb1_F15_inc
+      - saber block name: interpolation
+        inner geometry:
+          function space: StructuredColumns
+          grid:
+            name: F15
+          halo: 1
+        forward interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        inverse interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        active variables: *vars
+#  *following block can be used once a way of getting the area (from
+#  *the model) of cells in each bin is implemented for MPAS
+#      - saber block name: write variances
+#        binning:
+#          type: "horizontal global average"
+#        field names: *vars
+#        filter mode: true # instead of running the adjoint code it runs the inverse
+#        instantaneous statistics:
+#          left inverse fset filename: initial_mpas480_variance
+#          output path: Data/spectral
+  output:
+    model write:
+      stream name: control
+      filename: Data/spectral/wb1_mpas480_inc_mb%MEM%
+      member pattern: '%MEM%'
+- band: # band 2
+    filter:
+      saber central block:
+        saber block name: ID
+      saber outer blocks:
+      - saber block name: spectral analytical filter
+        function:
+          shape: waveband filter
+          waveband min: 1
+          waveband peak: 3
+          waveband max: 9
+        preserving variance: true
+        active variables: *vars
+      - saber block name: spectral to gauss
+        active variables: *vars
+        filter mode: true # instead of running the adjoint code it runs the inverse
+      - saber block name: write variances
+        binning:
+          type: "horizontal global average"
+        field names: *vars
+        instantaneous statistics:
+          multiply fset filename: wb2_variance
+          output path: Data/spectral
+      - saber block name: write fields
+        output path: Data/spectral
+        multiply fset filename: wb2_F15_inc
+      - saber block name: interpolation
+        inner geometry:
+          function space: StructuredColumns
+          grid:
+            name: F15
+          halo: 1
+        forward interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        inverse interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        active variables: *vars
+- band: # band 3
+    filter:
+      saber central block:
+        saber block name: ID
+      saber outer blocks:
+      - saber block name: spectral analytical filter
+        function:
+          shape: waveband filter
+          waveband min: 3
+          waveband peak: 9
+          waveband max: 29
+        preserving variance: true
+        complement filter: true
+        active variables: *vars
+      - saber block name: spectral to gauss
+        active variables: *vars
+        filter mode: true # instead of running the adjoint code it runs the inverse
+      - saber block name: interpolation
+        inner geometry:
+          function space: StructuredColumns
+          grid:
+            name: F15
+          halo: 1
+        forward interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        inverse interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        active variables: *vars
+    use residual from filter: true
+  output:
+    model write:
+      stream name: control
+      filename: Data/spectral/wb3_mpas480_inc_mb%MEM%
+      member pattern: '%MEM%'
+#  *following `output` block can be used once a way of getting the
+#  *area (from the model) of cells in each bin is implemented for MPAS
+#  output:
+#    diagnostic only block:
+#      saber central block:
+#        saber block name: ID
+#      saber outer blocks:
+#      - saber block name: write variances
+#        binning:
+#          type: "horizontal global average"
+#        instantaneous statistics:
+#          output path: Data/spectral
+#          multiply fset filename: wb3_mpas480_variance
+#    generic write:
+#      filepath: Data/spectral/wb3_%GRID%_mb%MEM%_inc
+#      member pattern: '%MEM%'
+#      grid pattern: '%GRID%'
