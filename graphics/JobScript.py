@@ -217,10 +217,10 @@ class PBSProCasper(JobScriptBase):
         queue   - name of job submission queue (see qavail)
         memory  - amount of memory requested per node (see mavail)
 
-    NOTE: Casper on htc nodes has a maximum of 144 processors available per node
+    NOTE: 96 of the 104 Casper compute nodes only have 36 processors. 8 GPU nodes have 128 processors.
     '''
     qavail = ['casper', 'gpudev'] # 'casper' queue is the default submission queue
-    maxnppernode = 144
+    maxnppernode = 36
     maxmemory = 360
     def __init__(self, conf):
         # Initialize derived config settings
@@ -230,15 +230,26 @@ class PBSProCasper(JobScriptBase):
         self.account = conf.get('account','NMMM0015')
         self.queue = conf.get('queue','casper')
         assert self.queue in self.qavail, ("ERROR: PBSProCasper requires queue to be any of ",self.qavail)
+        # to use devices with gpus, use the 'casper' queue but specify ngpus in the select statement
+        if self.queue == 'gpudev':
+          self.queue = 'casper'
+          gpus = ':ngpus=1'
+        else:
+          gpus = ""
+
         self.memory = conf.get('memory',109)
         assert self.memory <= self.maxmemory, ("ERROR: PBSProCasper requires memory (in GB) to be <= ", self.maxmemory)
+        if self.nppernode > self.maxnppernode:
+          print("WARNING: PBSProCasper requires nppernode <= ", self.maxnppernode)
+          print(" changing nppernode from ", self.nppernode, " to ", self.maxnppernode)
+          self.nppernode = self.maxnppernode
         assert self.nppernode <= self.maxnppernode, ("ERROR: PBSProCasper requires nppernode <= ", self.maxnppernode)
 
         self.header = [
             '#PBS -N '+self.jobname,
             '#PBS -A '+self.account,
             '#PBS -q '+self.queue,
-            '#PBS -l select='+str(self.nnode)+':ncpus='+str(self.nppernode)+':mpiprocs='+str(self.nppernode)+':mem='+str(self.memory)+'GB',
+            '#PBS -l select='+str(self.nnode)+':ncpus='+str(self.nppernode)+':mpiprocs='+str(self.nppernode)+':mem='+str(self.memory)+'GB'+gpus,
             '#PBS -l walltime='+self.walltime,
             '#PBS -m ae',
             '#PBS -k eod',
