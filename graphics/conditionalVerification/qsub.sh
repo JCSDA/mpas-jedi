@@ -5,6 +5,8 @@
 #  verifications according to the binning method and domain. The
 #  Otional:
 #  - hydro: True/False
+#  - scatter: True/False
+#  - threshold: value from 0% to 100%
 #
 # Usage: ./qsub.sh
 #
@@ -23,7 +25,7 @@ case $machine in
         mpiprocs=36
         mem=109GB
         ompthreads=2
-        walltime=01:00:00
+        walltime=00:20:00
         job_priority=economy
         ;;
     *"derecho"* )
@@ -33,8 +35,8 @@ case $machine in
         ncpus=128
         mpiprocs=128
         mem=235GB
-        ompthreads=1
-        walltime=00:45:00
+        ompthreads=2
+        walltime=00:30:00
         job_priority=economy
         ;;
 
@@ -50,10 +52,14 @@ staticPath=/glade/campaign/mmm/parc/ivette/pandac/codeBuild/MPAS-Model/init_file
 experiments="ColdStart_clean2.1"
 experiments+=",CloudDirectInsertion_clean2.1"
 experiments+=",3dhybrid-allsky_O60-3kmI60km_clean2.1"
+experiments+=",ivette_CloudDirectInsertion_clean2.1_CyclingBeforeDA"
+experiments+=",ivette_CloudDirectInsertion_clean2.1_CyclingAfterDA"
 
 names="ColdStart"
 names+=",DIfrom0hr"
 names+=",CyclingDA"
+names+=",DIbeforeDA"
+names+=",DIafterDA"
 
 binningMethod=("CTPLayering" "CloudFraction")
 domains=("fullDisk" "finer" "coarser")
@@ -61,17 +67,31 @@ dateIni=2018041500
 dateEnd=2018043000
 delta=24
 fcstHr=18
-hydro=true
+fcstFreq=1
+meshRes="60-3km"
+doHydro=false
+scatter=false
+threshold=0
+
+if ${doHydro}; then
+  fcstHr=6
+elif ${scatter}; then
+  # this can take long (~15 per fcst hour)
+  walltime=03:00:00
+fi
 
 for binning in ${binningMethod[@]}; do
   for domain in ${domains[@]}; do
 
-  outputFolder=${binning}_${domain}
-  if ${hydro}; then
-    outputFolder=${binning}_${domain}_hydro
-  fi
-  mkdir -p ${outputFolder}
-  cd ${outputFolder}
+    outputFolder=${binning}_${domain}_${threshold}cldfrac_${fcstHr}hr
+    if ${doHydro}; then
+      outputFolder=${outputFolder}_hydro
+    fi
+    if ${scatter}; then
+      outputFolder=${outputFolder}_scatter
+    fi
+    mkdir -p ${outputFolder}
+    cd ${outputFolder}
 
 cat <<EOF > ${binning}_${domain}.sh
 
@@ -106,7 +126,7 @@ echo "`date` STARTED DATE"
 
 ### Run the python script
 echo "Binning by ${binning} and ${domain}"
-python ${root}/conditionalVerification.py -dir ${rootDir} -ctp ${ctpPath} -static ${staticPath} -exp "${experiments}" -n "${names}" -di ${dateIni} -de ${dateEnd} -dt ${delta} -fhr ${fcstHr} -b ${binning} -hy ${hydro} -r ${domain}
+python ${root}/conditionalVerification.py -dir ${rootDir} -ctp ${ctpPath} -static ${staticPath} -exp "${experiments}" -n "${names}" -di ${dateIni} -de ${dateEnd} -dt ${delta} -fhr ${fcstHr} -freq ${fcstFreq} -b ${binning} -mres ${meshRes} -doHy ${doHydro} -r ${domain} -scatter ${scatter} -thres ${threshold}
 
 echo "`date` ENDED DATE"
 exit 0

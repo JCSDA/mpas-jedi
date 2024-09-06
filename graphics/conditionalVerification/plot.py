@@ -3,9 +3,16 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib.ticker as tck
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 
 import utils as ut
+
+import cartopy.crs as ccrs
+import cartopy
+import cartopy.feature as cfeature
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+from cartopy.feature import NaturalEarthFeature
 
 def line(stat=str,clist=list(),fhours=int,experiments=None,data1=None,data2=None,labelsL=list(),savename=str):
 
@@ -127,3 +134,43 @@ def pdf(data1=None,data2=None,title=None,savename=None):
 
     plt.savefig(outputfolder+'/'+savename+'.png',dpi=300,bbox_inches='tight')
     plt.close()
+
+def scatter(lon,lat,data,title,colormap,savename):
+    proj = ccrs.PlateCarree(central_longitude=180)
+    lon = (lon + 180) % 360 - 180
+    extent = [-140,-10,-65,65]
+    fig = plt.figure(figsize=(8,8))
+    ax = plt.axes(projection=proj)
+    background(ax, extent)
+    vmin = np.nanmin(data)
+    vmax = np.nanmax(data)
+    cmap = colormap
+
+    cntr = ax.scatter(lon,lat, c=data, s=0.5, vmin=vmin, vmax=vmax, cmap=cmap, transform=ccrs.PlateCarree())
+    plt.title( title+', nlocs: '+str(len(data)) )
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("bottom",size="3%", pad=0.2,axes_class=plt.Axes)
+    cbar = plt.colorbar(cntr,cax=cax,orientation='horizontal',extend='both')
+
+    outputfolder = './scatter'
+    if not os.path.exists(outputfolder):
+      os.makedirs(outputfolder)
+
+    plt.savefig(outputfolder+'/'+savename+'.png',dpi=300,bbox_inches='tight')
+    plt.close()
+
+
+def background(ax,extent):
+    ax.set_extent(extent, crs=ccrs.PlateCarree())
+    ax.add_feature(cfeature.COASTLINE.with_scale('50m'), linewidth=0.5)
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.5, color='black', alpha=0.5, linestyle='dotted')
+    gl.top_labels = False
+    gl.right_labels = False
+    gl.bottom_labels = True
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    ax.xaxis.set_major_formatter(LONGITUDE_FORMATTER)
+    ax.yaxis.set_major_formatter(LATITUDE_FORMATTER)
+    gl.xlabel_style = {'size': 8}
+    gl.ylabel_style = {'size': 8}
+    return ax

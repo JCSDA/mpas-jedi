@@ -5,6 +5,7 @@ import logging
 import xarray as xr
 import warnings
 import multiprocessing
+import argparse
 
 float_missingVal = float(-999)
 int_missingVal = int(-999)
@@ -12,19 +13,19 @@ IODAfloat_missing_value = float(-3.3687953e+38)
 IODAint_missing_value   = int(-2147483643)
 hydro_initial = float(5.4999992258578274e-15)
 ioda_float_type = 'float32'
-
-cldfraThresh = 20.0
+ioda_int_type = 'int32'
 
 criteria_list_2by2 = ['Na_Ocloud-Mcloud','Nb_Oclear-Mcloud','Nc_Ocloud-Mclear','Nd_Oclear-Mclear','all','Ocloud','Oclear']
 criteria_3p = ['Na_Ocloud-Mcloud','Nd_Oclear-Mclear', 'all']
 criteria_list_4by4 = ['a_Olow-Mlow', 'b_Omid-Mlow', 'c_Ohigh-Mlow', 'd_Oclear-Mlow', 'e_Olow-Mmid', 'f_Omid-Mmid', 'g_Ohigh-Mmid', 'h_Oclear-Mmid', 'i_Olow-Mhigh', 'j_Omid-Mhigh', 'k_Ohigh-Mhigh', 'l_Oclear-Mhigh', 'm_Olow-Mclear', 'n_Omid-Mclear', 'o_Ohigh-Mclear', 'p_Oclear-Mclear', 'all', 'Ocloud', 'Oclear','lowOnly', 'midOnly', 'highOnly', 'Olow', 'Omid', 'Ohigh', 'Na_Ocloud-Mcloud','Nb_Oclear-Mcloud','Nc_Ocloud-Mclear','Nd_Oclear-Mclear']
 criteria_only = ['lowOnly', 'midOnly', 'highOnly']
+
 Na = ['a_Olow-Mlow', 'b_Omid-Mlow', 'c_Ohigh-Mlow', 'e_Olow-Mmid', 'f_Omid-Mmid', 'g_Ohigh-Mmid', 'i_Olow-Mhigh', 'j_Omid-Mhigh', 'k_Ohigh-Mhigh']
 Nb = ['d_Oclear-Mlow', 'h_Oclear-Mmid', 'l_Oclear-Mhigh']
 Nc = ['m_Olow-Mclear', 'n_Omid-Mclear', 'o_Ohigh-Mclear']
 Nd = ['p_Oclear-Mclear']
 
-cat_stats = ['FBIAS','POD','FAR','CSI','GSS','POFD','PODN','HRATE','ACC']
+cat_stats = ['FBIAS','POD','FAR','GSS','CSI','PODF','PODN','HRATE','ACC']
 cat_stats_reduced = cat_stats[:5]
 cont_stats = ['mean', 'count', 'rmse', 'std']
 
@@ -38,12 +39,31 @@ PTOP_LOW_UPP  = 64200. # low for > 64200 Pa
 PTOP_MID_UPP  = 35000. # mid between 35000-64200 Pa
 PTOP_HIGH_UPP = 15000. # high between 15000-35000 Pa
 
-varsList = ['obs', 'bkg', 'ihumr', 'imclw', 'imcli', 'imclr', 'imcls', 'imclg']
-hydrosList = varsList[2:]
+varsList_  = ['obs', 'bkg', 'lat', 'lon', 'ocldfrac', 'fcldfrac', 'octp']
+
+hydrosList = ['ihumr', 'imclw', 'imcli', 'imclr', 'imcls', 'imclg']
+hydroDict = {'ihumr': 'humidity_mixing_ratio',
+             'imclw': 'mass_content_of_cloud_liquid_water_in_atmosphere_layer',
+             'imcli': 'mass_content_of_cloud_ice_in_atmosphere_layer',
+             'imclr': 'mass_content_of_rain_in_atmosphere_layer',
+             'imcls': 'mass_content_of_snow_in_atmosphere_layer',
+             'imclg': 'mass_content_of_graupel_in_atmosphere_layer'}
 
 colorsL = ['k','r','b','g','c','m','y']
 
 ############################# FUNCTIONS #######################################
+
+def str2bool(v):
+    # https://stackoverflow.com/a/43357954/1264304
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def list_of_strings(arg):
     return arg.split(',')
 
@@ -88,17 +108,17 @@ def get_label(data,stat,criteria=None):
       label = ''
     return label
 
-def varDict_binned(List):
+def varDict_binned(List,varsList):
     fillValue = np.nan
     return {var: {k: fillValue for k in List} for var in varsList}
 
-def varDict3L(List1,List2,List3,fillValue=None):
+def varDict3L(List1,List2,List3,varsList,fillValue=None):
     if fillValue == 'NaN':
       return {var: {l1: {l2: {l3: np.nan for l3 in List3} for l2 in List2} for l1 in List1} for var in varsList}
     elif fillValue == 0:
       return {var: {l1: {l2: {l3: 0 for l3 in List3} for l2 in List2} for l1 in List1} for var in varsList}
     else:
-      return {var: {l1: {l2: {l3: np.array([]) for l3 in List3} for l2 in List2} for l1 in List1} for var in varsList}
+      return {var: {l1: {l2: {l3: np.array([],dtype=ioda_float_type) for l3 in List3} for l2 in List2} for l1 in List1} for var in varsList}
 
 def varContStatDict(List1,List2,fillValue=None):
     if fillValue == 'NaN':
@@ -106,7 +126,7 @@ def varContStatDict(List1,List2,fillValue=None):
     elif fillValue == 0:
       return {stat: {l1: {l2: 0 for l2 in List2} for l1 in List1} for stat in cont_stats}
     else:
-      return {stat: {l1: {l2: np.array([]) for l2 in List2} for l1 in List1} for stat in cont_stats}
+      return {stat: {l1: {l2: np.array([],dtype=ioda_float_type) for l2 in List2} for l1 in List1} for stat in cont_stats}
 
 def varContHydroStatDict(List1,List2,fillValue=None):
     if fillValue == 'NaN':
@@ -114,15 +134,7 @@ def varContHydroStatDict(List1,List2,fillValue=None):
     elif fillValue == 0:
       return {var: {stat: {l1: {l2: 0 for l2 in List2} for l1 in List1} for stat in cont_stats} for var in hydrosList}
     else:
-      return {var: {stat: {l1: {l2: np.array([]) for l2 in List2} for l1 in List1} for stat in cont_stats} for var in hydrosList}
-
-def createDict(List,fillValue=None):
-    if fillValue == 'NaN':
-      return {k: np.nan for k in List}
-    elif fillValue == 0:
-      return {k: 0 for k in List}
-    else:
-      return {k: [] for k in List}
+      return {var: {stat: {l1: {l2: np.array([],dtype=ioda_float_type) for l2 in List2} for l1 in List1} for stat in cont_stats} for var in hydrosList}
 
 def createNestedDictT(List1,List2,List3,fillValue=None):
     if fillValue == 'NaN':
@@ -130,13 +142,30 @@ def createNestedDictT(List1,List2,List3,fillValue=None):
     elif fillValue == 0:
       return {l1: {l2: {l3: 0 for l3 in List3} for l2 in List2} for l1 in List1}
     else:
-      return {l1: {l2: {l3: np.array([]) for l3 in List3} for l2 in List2} for l1 in List1}
+      return {l1: {l2: {l3: np.array([],dtype=ioda_int_type) for l3 in List3} for l2 in List2} for l1 in List1}
 
 def createDictL(List,fillList):
     return {List[k]: fillList[k] for k in range(len(List))}
 
 def m2tokm2(data):
     return data*1e-6
+
+def get_meshSpec(meshRes):
+    if meshRes == '120km':
+      nCellsVMesh = 40962
+    elif meshRes == '60km':
+      nCellsVMesh = 163842
+    elif meshRes == '30km':
+      nCellsVMesh = 655362
+    elif meshRes == '60-3km':
+      nCellsVMesh = 835586
+    mr = [int(i) for i in meshRes.split('km')[0].split('-')]
+    if len(mr) > 1: # variable mesh
+      meshRatio = int(mr[0]/mr[1])
+    else:
+      meshRatio = 1 # uniform mesh
+
+    return nCellsVMesh, meshRatio
 
 def open_dataset(filename, enginetype, group=None):
     if enginetype == 'h5':
@@ -149,10 +178,10 @@ def open_dataset(filename, enginetype, group=None):
       raise NotImplementedError()
 
 def getDomainIndexes(threshold,domain,metadata,staticnc):
-    ocellindex = np.array(metadata.cellIndex.data-int(1),dtype=int) # ocellindex starts in 1 (from fortran), here it has to start from 0 (python)
-    olatitude  = metadata.latitude.data
-    olongitude = metadata.longitude.data # (longitude + 180) % 360 - 180
-    areaCell = np.array( staticnc.variables['areaCell'][:] )
+    ocellindex = np.array(metadata.cellIndex.data-int(1),dtype=ioda_int_type) # ocellindex starts in 1 (from fortran), here it has to start from 0 (python)
+    olatitude  = np.array(metadata.latitude.data,dtype=ioda_float_type)
+    olongitude = np.array(metadata.longitude.data,dtype=ioda_float_type) # (longitude + 180) % 360 - 180
+    areaCell = np.array(staticnc.variables['areaCell'][:],dtype=ioda_float_type) # spherical area of a Voroni cell
     areakm2 = m2tokm2(areaCell)
     matches = ocellindex; obs_ind = None
 
@@ -168,7 +197,7 @@ def getDomainIndexes(threshold,domain,metadata,staticnc):
     return matches, obs_ind
 
 def get_obsvalue(obsvalue,ch,ids):
-    obt        = obsvalue.brightnessTemperature.isel(Channel=ch).data
+    obt        = np.array(obsvalue.brightnessTemperature.isel(Channel=ch).data,dtype=ioda_float_type)
     obt[np.ma.where(obt == 0.0)] = np.nan
     if ids is not None:
       return obt[ids]
@@ -176,7 +205,7 @@ def get_obsvalue(obsvalue,ch,ids):
       return obt
 
 def get_hofx(hofx,ch,ids):
-    fbt        = hofx.brightnessTemperature.isel(Channel=ch).data
+    fbt        = np.array(hofx.brightnessTemperature.isel(Channel=ch).data,dtype=ioda_float_type)
     fbt[np.ma.where(fbt == 0.0)] = np.nan
     if ids is not None:
       return fbt[ids]
@@ -184,58 +213,63 @@ def get_hofx(hofx,ch,ids):
       return fbt
 
 def get_cldfrac(metadata,ids):
-    ocldfrac   = metadata.cloudAmount.data *100 #Unitless to percent
+    ocldfrac   = np.array(metadata.cloudAmount.data,dtype=ioda_float_type) *100 #Unitless to percent
     if ids is not None:
       return ocldfrac[ids]
     else:
       return ocldfrac
 
+def get_latlon(metadata,ids):
+    latitude  = np.array(metadata.latitude.data,dtype=ioda_float_type)
+    longitude = np.array(metadata.longitude.data,dtype=ioda_float_type)
+    #longitude = (longitude + 180) % 360 - 180
+    if ids is not None:
+      return latitude[ids], longitude[ids]
+    else:
+      return latitude, longitude
+
 def get_geoval(geovalnc,ids):
-    fcldfrac   = geovalnc.cloud_area_fraction_in_atmosphere_layer.data *100.0 #Unitless to percent
-    pressure   = geovalnc.air_pressure.data
-    psfc       = geovalnc.air_pressure_levels.data[:,-1]
+    fcldfrac   = np.array(geovalnc.cloud_area_fraction_in_atmosphere_layer.data,dtype=ioda_float_type) *100.0 #Unitless to percent
+    pressure   = np.array(geovalnc.air_pressure.data,dtype=ioda_float_type)
+    psfc       = np.array(geovalnc.air_pressure_levels.data[:,-1],dtype=ioda_float_type)
     if ids is not None:
       return fcldfrac[ids], pressure[ids], psfc[ids]
     else:
       return fcldfrac, pressure, psfc
 
 def get_ctp(obsctpnc,ids):
-    ctp = obsctpnc.PRES_G16.data[0,:] *100.0 # hPa to Pa
+    ctp = np.array(obsctpnc.PRES_G16.data[0,:],dtype=ioda_float_type) *100.0 # hPa to Pa
     ctp[np.ma.where( (ctp > 0.0) & (ctp < PTOP_HIGH_UPP) )] = np.nan
-    bctp_obsloc = np.full_like(ids,np.nan,dtype='float32')
+    bctp_obsloc = np.full_like(ids,np.nan,dtype=ioda_float_type)
     l = [ctp[ids[i]] for i in range(len(ids))]
     bctp_obsloc = np.asarray(l)
     return bctp_obsloc
 
-def get_hydrometeors(geovalnc,ids):
-    humr  = geovalnc.humidity_mixing_ratio.data
-    ihumr = np.sum(humr,axis=1)
-    ihumr[np.ma.where(ihumr == hydro_initial)] = np.nan
-
-    mclw  = geovalnc.mass_content_of_cloud_liquid_water_in_atmosphere_layer.data
-    imclw = np.sum(mclw,axis=1)
-    imclw[np.ma.where(imclw == hydro_initial)] = np.nan
-
-    mcli  = geovalnc.mass_content_of_cloud_ice_in_atmosphere_layer.data
-    imcli = np.sum(mcli,axis=1)
-    imcli[np.ma.where(imcli == hydro_initial)] = np.nan
-
-    mclr  = geovalnc.mass_content_of_rain_in_atmosphere_layer.data
-    imclr = np.sum(mclr,axis=1)
-    imclr[np.ma.where(imclr == hydro_initial)] = np.nan
-
-    mcls  = geovalnc.mass_content_of_snow_in_atmosphere_layer.data
-    imcls = np.sum(mcls,axis=1)
-    imcls[np.ma.where(imcls == hydro_initial)] = np.nan
-
-    mclg  = geovalnc.mass_content_of_graupel_in_atmosphere_layer.data
-    imclg = np.sum(mclg,axis=1)
-    imclg[np.ma.where(imclg == hydro_initial)] = np.nan
-
+def get_hydrometeors(geovalnc,ids,variable):
+    hydroName = hydroDict[variable]
+    hydro_ = np.array(geovalnc[hydroName].data,dtype=ioda_float_type)
+    hydro = np.nansum(hydro_,axis=1)
+    hydro[np.ma.where(hydro == hydro_initial)] = np.nan
     if ids is not None:
-      return ihumr[ids], imclw[ids], imcli[ids], imclr[ids], imcls[ids], imclg[ids]
+      return hydro[ids]
     else:
-      return ihumr, imclw, imcli, imclr, imcls, imclg
+      return hydro
+
+def cleanData(binningMethod, varsDict):
+    if binningMethod == 'CloudFraction':
+      refvar = 'ocldfrac'
+    elif binningMethod == 'CTPLayering':
+      refvar = 'octp'
+    else:
+      raise NotImplementedError()
+    validInd = np.isfinite(varsDict[refvar])
+    for k in varsDict.keys():
+      varsDict[k] = varsDict[k][validInd]
+    return varsDict
+
+def check(list):
+    # check that all elements in a list are identical
+    return all(i == list[0] for i in list)
 
 def get_layerDefinitions_era5(psfc):
     # https://github.com/byoung-joo/cloud_vx/blob/master/bin/python_stuff.py
@@ -267,7 +301,6 @@ def get_FcstCloudFrac_low(cfr,pmid,psfc,PTOP_LOW):
     idx  = [np.where( pmid[i,:] >= PTOP_LOW[i] )[0] for i in range(nlocs)]
     cldfrac_low  = np.array([ np.max(cfr[i,idx[i]]) for i in range(nlocs) if (len(idx[i]) >0) ])
 
-    del idx
     return cldfrac_low
 
 def get_FcstCloudFrac_mid(cfr,pmid,psfc,PTOP_LOW,PTOP_MID):
@@ -286,7 +319,6 @@ def get_FcstCloudFrac_mid(cfr,pmid,psfc,PTOP_LOW,PTOP_MID):
     idx  = [np.where( (pmid[i,:] <  PTOP_LOW[i]) & (pmid[i,:] >= PTOP_MID[i]) )[0] for i in range(nlocs)]
     cldfrac_mid  = np.array([ np.max(cfr[i,idx[i]]) for i in range(nlocs) if (len(idx[i]) >0) ])
 
-    del idx
     return cldfrac_mid
 
 def get_FcstCloudFrac_high(cfr,pmid,psfc,PTOP_MID,PTOP_HIGH):
@@ -304,7 +336,6 @@ def get_FcstCloudFrac_high(cfr,pmid,psfc,PTOP_MID,PTOP_HIGH):
     idx  = [np.where( (pmid[i,:] <  PTOP_MID[i]) & (pmid[i,:] >= PTOP_HIGH[i]) )[0] for i in range(nlocs)]
     cldfrac_high  = np.array([ np.max(cfr[i,idx[i]]) for i in range(nlocs) if (len(idx[i]) >0) ])
 
-    del idx
     return cldfrac_high
 
 def count_non_nan(data):
@@ -327,19 +358,18 @@ def dateList(dateIni,dateEnd,delta):
 
 def calc_stat(stat,var1,refvar=None):
     if refvar is None:
-      p = np.isfinite(var1)
+      valid = np.isfinite(var1)
     else:
-      p = np.isfinite(refvar)
-    nonnan = count_non_nan(var1[p])
-    if ((nonnan > 0) & (len(var1[p]) > 0)):
+      valid = np.isfinite(refvar)
+    if len(var1[valid]) > 0:
       if stat == 'count':
-        return len(var1[p])
+        return len(var1[valid])
       elif (stat == 'mean'):
-        return nanmean(var1[p])
+        return nanmean(var1[valid])
       elif (stat == 'rmse'):
-        return rmse(var1[p])
+        return rmse(var1[valid])
       elif (stat == 'std'):
-        return np.nanstd(var1[p])
+        return np.nanstd(var1[valid])
       else:
         raise NotImplementedError()
     else:
@@ -351,7 +381,7 @@ def nanmean(var):
         return np.nanmean(var)
 
 def rmse(var1):
-    return np.sqrt(np.var(var1))
+    return np.sqrt(np.nanvar(var1))
 
 def omb(obs, bkg, bias=None):
     if bias is None:
@@ -369,132 +399,147 @@ def log10(arr):
 def varbinning(bins,criteria,var1):
     return var1[bins[criteria]]
 
-def get_binsIndexes_cldfrac(cfx,ncfy):
-    # Use only valid locations
-    nonan = np.isfinite(ncfy)
-    cfy = np.array(ncfy[nonan], dtype=ioda_float_type)
-    cfx = np.array(cfx[nonan], dtype=ioda_float_type)
+def get_binsIndexes_cldfrac(cldfraThresh,cfx,cfy):
 
     # Initialize dictionary
-    bins_ids = createDict(criteria_list_2by2)
+    bins_ids = dict.fromkeys(criteria_list_2by2,[])
 
-    if count_non_nan(cfy) == count_non_nan(cfx):  # these should all match
-      bins_ids['Na_Ocloud-Mcloud'] = np.where( (cfy >= cldfraThresh) & (cfx >= cldfraThresh) )[0]
-      bins_ids['Nb_Oclear-Mcloud'] = np.where( (cfy <  cldfraThresh) & (cfx >= cldfraThresh) )[0]
-      bins_ids['Nc_Ocloud-Mclear'] = np.where( (cfy >= cldfraThresh) & (cfx <  cldfraThresh) )[0]
-      bins_ids['Nd_Oclear-Mclear'] = np.where( (cfy <  cldfraThresh) & (cfx <  cldfraThresh) )[0]
-      bins_ids['all'] = np.arange(count_non_nan(cfy))
-      bins_ids['Ocloud'] = np.where( cfy >= cldfraThresh )[0]
-      bins_ids['Oclear'] = np.where( cfy < cldfraThresh )[0]
+    bins_ids['Na_Ocloud-Mcloud'] = np.where( (cfy >  cldfraThresh) & (cfx >  cldfraThresh) )[0]
+    bins_ids['Nb_Oclear-Mcloud'] = np.where( (cfy <= cldfraThresh) & (cfx >  cldfraThresh) )[0]
+    bins_ids['Nc_Ocloud-Mclear'] = np.where( (cfy >  cldfraThresh) & (cfx <= cldfraThresh) )[0]
+    bins_ids['Nd_Oclear-Mclear'] = np.where( (cfy <= cldfraThresh) & (cfx <= cldfraThresh) )[0]
+    bins_ids['all'] = np.arange(len(cfy))
+    bins_ids['Ocloud'] = np.where( (cfy >  cldfraThresh) )[0]
+    bins_ids['Oclear'] = np.where( (cfy <= cldfraThresh) )[0]
 
     return bins_ids
 
-def get_binsIndexes_ctpLayering(fcfrmax, fcstLow, fcstMid, fcstHigh, octp, fPTOP_LOW, fPTOP_MID, fPTOP_HIGH):
-    # Use only valid locations
-    nonan = np.isfinite(octp)
-    ctp = np.array(octp[nonan], dtype=ioda_float_type)
-    cfx = np.array(fcfrmax[nonan], dtype=ioda_float_type)
-    cfxlow = np.array(fcstLow[nonan], dtype=ioda_float_type)
-    cfxmid = np.array(fcstMid[nonan], dtype=ioda_float_type)
-    cfxhigh = np.array(fcstHigh[nonan], dtype=ioda_float_type)
-    PTOP_LOW = np.array(fPTOP_LOW[nonan], dtype=ioda_float_type)
-    PTOP_MID = np.array(fPTOP_MID[nonan], dtype=ioda_float_type)
-    PTOP_HIGH = np.array(fPTOP_HIGH[nonan], dtype=ioda_float_type)
+def get_binsIndexes_ctpLayering(cldfraThresh,cfx, cfxlow, cfxmid, cfxhigh, ctp, PTOP_LOW, PTOP_MID, PTOP_HIGH):
 
     # Initialize dictionary
-    bins_ids = createDict(criteria_list_4by4)
+    bins_ids = dict.fromkeys(criteria_list_4by4,[])
 
-    if count_non_nan(ctp) == count_non_nan(cfx) == count_non_nan(cfxlow) == count_non_nan(cfxmid) == count_non_nan(cfxhigh) == count_non_nan(PTOP_LOW) == count_non_nan(PTOP_LOW) == count_non_nan(PTOP_MID) == count_non_nan(PTOP_HIGH):  # these should all match
+    bins_ids['Na_Ocloud-Mcloud'] = np.where( (ctp > 0.0)       & (cfx > cldfraThresh) )[0]
 
-      bins_ids['Na_Ocloud-Mcloud'] = np.where( (ctp > 0.0)       & (cfx >= cldfraThresh) )[0]
-      bins_ids['Nb_Oclear-Mcloud'] = np.where( (ctp == -77700.0) & (cfx >= cldfraThresh) )[0]
-      bins_ids['Nc_Ocloud-Mclear'] = np.where( (ctp > 0.0)       & (cfx <  cldfraThresh) )[0]
-      bins_ids['Nd_Oclear-Mclear'] = np.where( (ctp == -77700.0) & (cfx <  cldfraThresh) )[0]
+    bins_ids['Nb_Oclear-Mcloud'] = np.where( (ctp == -77700.0) & (cfx >  cldfraThresh) )[0]
+    bins_ids['Nc_Ocloud-Mclear'] = np.where( (ctp > 0.0)       & (cfx <= cldfraThresh) )[0]
+    bins_ids['Nd_Oclear-Mclear'] = np.where( (ctp == -77700.0) & (cfx <= cldfraThresh) )[0]
 
-      bins_ids['all']    = np.arange(count_non_nan(ctp))
-      bins_ids['Ocloud'] = np.where( ctp  > 0.0 )[0]
-      bins_ids['Oclear'] = np.where( ctp == -77700.0 )[0]
-      bins_ids['Olow']   = np.where(                     (ctp >= PTOP_LOW)   )[0]
-      bins_ids['Omid']   = np.where( ((ctp < PTOP_LOW) & (ctp >= PTOP_MID))  )[0]
-      bins_ids['Ohigh']  = np.where( ((ctp < PTOP_MID) & (ctp >= PTOP_HIGH)) )[0]
+    bins_ids['all']    = np.arange(len(ctp))
+    bins_ids['Ocloud'] = np.where( (ctp  > 0.0)                            )[0]
+    bins_ids['Oclear'] = np.where( (ctp == -77700.0)                       )[0]
+    bins_ids['Olow']   = np.where(                     (ctp >= PTOP_LOW)   )[0]
+    bins_ids['Omid']   = np.where( ((ctp < PTOP_LOW) & (ctp >= PTOP_MID))  )[0]
+    bins_ids['Ohigh']  = np.where( ((ctp < PTOP_MID) & (ctp >= PTOP_HIGH)) )[0]
 
-      low  =  np.where( (cfxmid >= cldfraThresh) | (cfxhigh >= cldfraThresh), float_missingVal, cfxlow  )
-      mid  =  np.where( (cfxlow >= cldfraThresh) | (cfxhigh >= cldfraThresh), float_missingVal, cfxmid  )
-      high =  np.where( (cfxlow >= cldfraThresh) | ( cfxmid >= cldfraThresh), float_missingVal, cfxhigh )
-      bins_ids['lowOnly']         = np.where(  (ctp >= PTOP_LOW)                       & (low  >= cldfraThresh) )[0]
-      bins_ids['midOnly']         = np.where( ((ctp <  PTOP_LOW) & (ctp >= PTOP_MID))  & (mid  >= cldfraThresh) )[0]
-      bins_ids['highOnly']        = np.where( ((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH)) & (high >= cldfraThresh) )[0]
+    low  =  np.where( (cfxmid > cldfraThresh) | (cfxhigh > cldfraThresh), float_missingVal, cfxlow  )
+    mid  =  np.where( (cfxlow > cldfraThresh) | (cfxhigh > cldfraThresh), float_missingVal, cfxmid  )
+    high =  np.where( (cfxlow > cldfraThresh) | ( cfxmid > cldfraThresh), float_missingVal, cfxhigh )
+    bins_ids['lowOnly']         = np.where(  (ctp >= PTOP_LOW)                       & (low  > cldfraThresh) )[0]
+    bins_ids['midOnly']         = np.where( ((ctp <  PTOP_LOW) & (ctp >= PTOP_MID))  & (mid  > cldfraThresh) )[0]
+    bins_ids['highOnly']        = np.where( ((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH)) & (high > cldfraThresh) )[0]
 
-      remaining = []
-      for i in range(len(ctp)):
-        if (ctp[i] >= PTOP_LOW[i])                                & (low[i]  >= cldfraThresh):
-          bins_ids['a_Olow-Mlow'].append(i)
-
-        elif ((ctp[i] <  PTOP_LOW[i]) & (ctp[i] >= PTOP_MID[i]))  & (mid[i]  >= cldfraThresh):
-          bins_ids['f_Omid-Mmid'].append(i)
-
-        elif ((ctp[i] <  PTOP_MID[i]) & (ctp[i] >= PTOP_HIGH[i])) & (high[i] >= cldfraThresh):
-          bins_ids['k_Ohigh-Mhigh'].append(i)
-
-        elif ((ctp[i] <  PTOP_LOW[i]) & (ctp[i] >= PTOP_MID[i]))  & (cfxlow[i]  >= cldfraThresh):
-          bins_ids['b_Omid-Mlow'].append(i)
-
-        elif ((ctp[i] <  PTOP_MID[i]) & (ctp[i] >= PTOP_HIGH[i])) & (cfxlow[i]  >= cldfraThresh):
-           bins_ids['c_Ohigh-Mlow'].append(i)
-
-        elif (ctp[i] == -77700.0)                                 & (cfxlow[i]  >= cldfraThresh):
-          bins_ids['d_Oclear-Mlow'].append(i)
-
-        elif (ctp[i] >= PTOP_LOW[i])                              & (cfxmid[i]  >= cldfraThresh):
-          bins_ids['e_Olow-Mmid'].append(i)
-
-        elif ((ctp[i] <  PTOP_MID[i]) & (ctp[i] >= PTOP_HIGH[i])) & (cfxmid[i]  >= cldfraThresh):
-          bins_ids['g_Ohigh-Mmid'].append(i)
-
-        elif (ctp[i] == -77700.0)                                 & (cfxmid[i]  >= cldfraThresh):
-          bins_ids['h_Oclear-Mmid'].append(i)
-
-        elif (ctp[i] >= PTOP_LOW[i])                              & (cfxhigh[i] >= cldfraThresh):
-          bins_ids['i_Olow-Mhigh'].append(i)
-
-        elif ((ctp[i] <  PTOP_LOW[i]) & (ctp[i] >= PTOP_MID[i]))  & (cfxhigh[i] >= cldfraThresh):
-          bins_ids['j_Omid-Mhigh'].append(i)
-
-        elif (ctp[i] == -77700.0)                                 & (cfxhigh[i] >= cldfraThresh):
-          bins_ids['l_Oclear-Mhigh'].append(i)
-
-        elif (ctp[i] >= PTOP_LOW[i])                              & (cfx[i]  <  cldfraThresh):
-          bins_ids['m_Olow-Mclear'].append(i)
-
-        elif ((ctp[i] <  PTOP_LOW[i]) & (ctp[i] >= PTOP_MID[i]))  & (cfx[i]  <  cldfraThresh):
-          bins_ids['n_Omid-Mclear'].append(i)
-
-        elif ((ctp[i] <  PTOP_MID[i]) & (ctp[i] >= PTOP_HIGH[i])) & (cfx[i]  <  cldfraThresh):
-          bins_ids['o_Ohigh-Mclear'].append(i)
-
-        elif (ctp[i] == -77700.0)                                 & (cfx[i]  <  cldfraThresh):
-          bins_ids['p_Oclear-Mclear'].append(i)
-        else:
-          remaining.append(i)
-
-      try:
-        if len(remaining) != 0:  # sanity check
-          raise Exception('nObs: {} outside conditions'.format(str(len(remaining))))
-      except Exception as e:
-          logging.error(str(e))
-          raise   # propagate the exception to the log file
+    bins_ids['a_Olow-Mlow']     = np.where((ctp >= PTOP_LOW) & (low  > cldfraThresh))[0]
+    bins_ids['f_Omid-Mmid']     = np.where((ctp <  PTOP_LOW) & (ctp >= PTOP_MID)  & (mid  > cldfraThresh))[0]
+    bins_ids['k_Ohigh-Mhigh']   = np.where((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH) & (high > cldfraThresh))[0]
+    bins_ids['b_Omid-Mlow']     = np.where((ctp <  PTOP_LOW) & (ctp >= PTOP_MID)  & (cfxlow  > cldfraThresh))[0]
+    bins_ids['c_Ohigh-Mlow']    = np.where((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH) & (cfxlow  > cldfraThresh))[0]
+    bins_ids['d_Oclear-Mlow']   = np.where((ctp == -77700.0) & (cfxlow  > cldfraThresh))[0]
+    bins_ids['e_Olow-Mmid']     = np.where((ctp >= PTOP_LOW) & (cfxmid  > cldfraThresh))[0]
+    bins_ids['g_Ohigh-Mmid']    = np.where((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH) & (cfxmid  > cldfraThresh))[0]
+    bins_ids['h_Oclear-Mmid']   = np.where((ctp == -77700.0) & (cfxmid  > cldfraThresh))[0]
+    bins_ids['i_Olow-Mhigh']    = np.where((ctp >= PTOP_LOW) & (cfxhigh > cldfraThresh))[0]
+    bins_ids['j_Omid-Mhigh']    = np.where((ctp <  PTOP_LOW) & (ctp >= PTOP_MID)  & (cfxhigh > cldfraThresh))[0]
+    bins_ids['l_Oclear-Mhigh']  = np.where((ctp == -77700.0) & (cfxhigh > cldfraThresh))[0]
+    bins_ids['m_Olow-Mclear']   = np.where((ctp >= PTOP_LOW) & (cfx <= cldfraThresh))[0]
+    bins_ids['n_Omid-Mclear']   = np.where((ctp <  PTOP_LOW) & (ctp >= PTOP_MID)  & (cfx  <=  cldfraThresh))[0]
+    bins_ids['o_Ohigh-Mclear']  = np.where((ctp <  PTOP_MID) & (ctp >= PTOP_HIGH) & (cfx  <=  cldfraThresh))[0]
+    bins_ids['p_Oclear-Mclear'] = np.where((ctp == -77700.0) & (cfx <= cldfraThresh))[0]
 
     return bins_ids
 
-def get_binsIndexes(binningMethod, ocldfrac, fcfrmax, fcstLow, fcstMid, fcstHigh, octp, PTOP_LOW, PTOP_MID, PTOP_HIGH):
+def get_binsIndexes(binningMethod, cldfraThresh, ocldfrac, fcfrmax, fcstLow, fcstMid, fcstHigh, octp, PTOP_LOW, PTOP_MID, PTOP_HIGH):
     if binningMethod == 'CloudFraction':
-      return get_binsIndexes_cldfrac(fcfrmax, ocldfrac)
+      return get_binsIndexes_cldfrac(cldfraThresh, fcfrmax, ocldfrac)
     elif binningMethod == 'CTPLayering':
-      return get_binsIndexes_ctpLayering(fcfrmax, fcstLow, fcstMid, fcstHigh, octp, PTOP_LOW, PTOP_MID, PTOP_HIGH)
+      return get_binsIndexes_ctpLayering(cldfraThresh, fcfrmax, fcstLow, fcstMid, fcstHigh, octp, PTOP_LOW, PTOP_MID, PTOP_HIGH)
     else:
       raise NotImplementedError()
 
-def contigency_table_2by2(countDict):
+def fbias(Na,Nb,Nc,Nd,T):
+    try:
+      FBIAS = (Na + Nb)  / (Na + Nc)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      FBIAS = np.nan
+    return FBIAS
+
+def pod(Na,Nb,Nc,Nd,T):
+    try:
+      POD = Na / (Na + Nc)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      POD = np.nan
+    return POD
+
+def podf(Na,Nb,Nc,Nd,T):
+    try:
+      PODF = Nb / (Nb + Nd)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      PODF = np.nan
+    return PODF
+
+def podn(Na,Nb,Nc,Nd,T):
+    try:
+      PODN = Nd / (Nb + Nd)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      PODN = np.nan
+    return PODN
+
+def far(Na,Nb,Nc,Nd,T):
+    try:
+      FAR = Nb / (Na + Nb)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      FAR = np.nan
+    return FAR
+
+def csi(Na,Nb,Nc,Nd,T):
+    try:
+      CSI = Na / (Na + Nb + Nc)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      CSI = np.nan
+    return CSI
+
+def gss(Na,Nb,Nc,Nd,T):
+    try:
+      C   = (Na + Nb)*(Na + Nc) / T
+      GSS = (Na - C) / (Na + Nb + Nc - C)
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      GSS = np.nan
+    return GSS
+
+def hrate(Na,Nb,Nc,Nd,T):
+    try:
+      HRATE = Na / T
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      HRATE = np.nan
+    return HRATE
+
+def acc(Na,Nb,Nc,Nd,T):
+    try:
+      ACC = (Na + Nd) / T
+    except ZeroDivisionError as error:
+      logging.exception('ZeroDivisionError: %s', error)
+      ACC = np.nan
+    return ACC
+
+def contigency_table_2by2(countDict, stat):
 
     Na = countDict[criteria_list_2by2[0]]
     Nb = countDict[criteria_list_2by2[1]]
@@ -502,36 +547,31 @@ def contigency_table_2by2(countDict):
     Nd = countDict[criteria_list_2by2[3]]
 
     T = Na + Nb + Nc + Nd
-    try:
-      FBIAS = (Na + Nb) / (Na + Nc)
-      POD   = Na / (Na + Nc)
-      POFD  = Nb / (Nb + Nd)
-      PODN  = Nd / (Nb + Nd)
-      FAR   = Nb / (Nb + Na)
-      CSI   = Na / (Na + Nb + Nc)
-      C     = (Na + Nb)*(Na + Nc) / T
-      GSS   = (Na - C) / (Na + Nb + Nc - C)
-      RATE  = Na / T
-      ACC   = (Na + Nd) / T
-    except ZeroDivisionError as error:
-      logging.exception('ZeroDivisionError: %s', error)
-      FBIAS = np.nan
-      POD   = np.nan
-      POFD  = np.nan
-      PODN  = np.nan
-      FAR   = np.nan
-      CSI   = np.nan
-      C     = np.nan
-      GSS   = np.nan
-      RATE  = np.nan
-      ACC   = np.nan
-    del Na, Nb, Nc, Nd
-    return FBIAS, POD, POFD, PODN, FAR, CSI, GSS, RATE, ACC
+
+    if stat == 'FBIAS':
+      return fbias(Na,Nb,Nc,Nd,T)
+    elif stat == 'POD':
+      return pod(Na,Nb,Nc,Nd,T)
+    elif stat == 'PODF':
+      return podf(Na,Nb,Nc,Nd,T)
+    elif stat == 'PODN':
+      return podn(Na,Nb,Nc,Nd,T)
+    elif stat == 'FAR':
+      return far(Na,Nb,Nc,Nd,T)
+    elif stat == 'CSI':
+      return csi(Na,Nb,Nc,Nd,T)
+    elif stat == 'GSS':
+      return gss(Na,Nb,Nc,Nd,T)
+    elif stat == 'HRATE':
+      return hrate(Na,Nb,Nc,Nd,T)
+    elif stat == 'ACC':
+      return acc(Na,Nb,Nc,Nd,T)
+    else:
+      raise NotImplementedError()
 
 def pod_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
     # Initialize dictionary
-    POD = createDict(layering_list)
-
+    POD = dict.fromkeys(layering_list,np.nan)
     try:
       POD['all']        = Na / (Na + Nc)
       POD['LowClouds']  = a / (a + e + i + m)
@@ -547,10 +587,9 @@ def pod_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
 
 def far_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
     # Initialize dictionary
-    FAR = createDict(layering_list)
-
+    FAR = dict.fromkeys(layering_list,np.nan)
     try:
-      FAR['all']        = Nb / (Nb + Na)
+      FAR['all']        = Nb / (Na + Nb)
       FAR['LowClouds']  = d / (a + b + c + d)
       FAR['MidClouds']  = h / (e + f + g + h)
       FAR['HighClouds'] = l / (i + j + k + l)
@@ -564,8 +603,7 @@ def far_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
 
 def csi_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
     # Initialize dictionary
-    CSI = createDict(layering_list)
-
+    CSI = dict.fromkeys(layering_list,np.nan)
     try:
       CSI['all']        = Na / (Na + Nb + Nc)
       CSI['LowClouds']  = a  / (a + b + c + d + e + i + m)
@@ -581,17 +619,16 @@ def csi_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
 
 def gss_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
     # Initialize dictionary
-    GSS = createDict(layering_list)
-
+    GSS = dict.fromkeys(layering_list,np.nan)
     try:
       C_all    = (Na + Nb)*(Na + Nc) / T
       C_low    = (a + b + c + d)*(a + e + i + m) / T
       C_mid    = (e + f + g + h)*(b + f + j + n) / T
       C_high   = (c + g + k + o)*(a + b + c + d) / T
       GSS['all']        = (Na - C_all) / (Na + Nb + Nc - C_all)
-      GSS['LowClouds']  = (a - C_low)     / (a + b + c + d + e + i + m - C_low)
-      GSS['MidClouds']  = (b - C_mid)     / (b + f + j + n + e + g + h - C_mid)
-      GSS['HighClouds'] = (c - C_high)    / (a + b + c + d + g + k + o - C_high)
+      GSS['LowClouds']  = (a - C_low)  / (a + b + c + d + e + i + m - C_low)
+      GSS['MidClouds']  = (b - C_mid)  / (b + f + j + n + e + g + h - C_mid)
+      GSS['HighClouds'] = (c - C_high) / (a + b + c + d + g + k + o - C_high)
     except ZeroDivisionError as error:
       logging.exception('ZeroDivisionError: %s', error)
       GSS['all']        = np.nan
@@ -602,13 +639,12 @@ def gss_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
 
 def fbias_cloudlayers(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,T,Na,Nb,Nc,Nd):
     # Initialize dictionary
-    FBIAS = createDict(layering_list)
-
+    FBIAS = dict.fromkeys(layering_list,np.nan)
     try:
       FBIAS['all']        = (Na + Nb)   / (Na + Nc)
-      FBIAS['LowClouds']  = (a + b + c) / (a + e + i)
-      FBIAS['MidClouds']  = (e + f + g) / (b + f + j)
-      FBIAS['HighClouds'] = (i + j + k) / (c + g + k)
+      FBIAS['LowClouds']  = (a + b + c + d) / (a + e + i + m)
+      FBIAS['MidClouds']  = (e + f + g + h) / (b + f + j + n)
+      FBIAS['HighClouds'] = (i + j + k + l) / (c + g + k + o)
     except ZeroDivisionError as error:
       logging.exception('ZeroDivisionError: %s', error)
       FBIAS['all']        = np.nan
