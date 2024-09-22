@@ -480,7 +480,7 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [],
+        'channels': [8,9],
         'analyzed channels': [5, 6, 7, 8, 9],
     },
     'amsua_n15': {
