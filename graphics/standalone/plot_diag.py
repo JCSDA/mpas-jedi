@@ -566,7 +566,7 @@ def readdata():
         # plot all channels that are in both ncDB and config
         ObsSpaceInfo = conf.DiagSpaceConfig.get(obstype, conf.nullDiagSpaceInfo)
         confChans = ObsSpaceInfo.get('channels',[vu.miss_i])
-        plotChannels = set(confChans).union(set(nchans))
+        plotChannels = sorted(set(confChans).intersection(set(nchans)))
         nvars = len(plotChannels)
         for ivar, channel in enumerate(plotChannels):
           ich = list(nchans).index(channel)
@@ -956,10 +956,10 @@ def scatter_one2ones(XVAL, YVALS, LEG, show_stats, XLAB, YLAB, VAR_NAME, UNITS, 
   ax.set_xticks(ticks)
   ax.set_yticks(ticks)
   for tick in ax.xaxis.get_major_ticks():
-    tick.label.set_fontsize(5)
-    tick.label.set_rotation('vertical')
+    tick.label1.set_fontsize(5)
+    tick.label1.set_rotation('vertical')
   for tick in ax.yaxis.get_major_ticks():
-    tick.label.set_fontsize(5)
+    tick.label1.set_fontsize(5)
 
   ax.set_xlim(xymin, xymax)
   ax.set_ylim(xymin, xymax)
