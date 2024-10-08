@@ -208,7 +208,7 @@ cost function:
         maxvalue: 3
       - filter: Difference Check
         reference: station_elevation@MetaData
-        value: surface_altitude@GeoVaLs
+        value: height_above_mean_sea_level_at_surface@GeoVaLs
         threshold: 200.0
         apply at iterations: 0, 1
       - filter: Background Check

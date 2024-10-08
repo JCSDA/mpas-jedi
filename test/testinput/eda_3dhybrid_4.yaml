@@ -175,7 +175,7 @@ cost function:
       - filter: Difference Check
         apply at iterations: 0,1
         reference: MetaData/stationElevation
-        value: GeoVaLs/surface_altitude
+        value: GeoVaLs/height_above_mean_sea_level_at_surface
         threshold: 500
       - filter: Background Check
         apply at iterations: 0,1

@@ -466,7 +466,7 @@ subroutine changevar(self, geom, xm, xg)
             enddo
           enddo
 
-        case ( var_geomz, var_zm ) !-height
+        case ( var_geomz ) !-height_above_mean_sea_level
           ! calculate midpoint geometricZ (unit: m):
           gdata%r2%array(:,1:nCells) = geom%height(:,1:nCells)
 
@@ -485,14 +485,14 @@ subroutine changevar(self, geom, xm, xg)
           endif
 
 !! begin surface variables
-        case ( var_sfc_z ) !-surface_geopotential_height
+        case ( var_sfc_z ) !-geopotential_height_at_surface
           do iCell=1,nCells
             lat = geom%latCell(iCell) * MPAS_JEDI_RAD2DEG_kr !- to Degrees
             call geometric2geop(real(lat,kind=kind_real), real(geom%zgrid(1,iCell),kind=kind_real), rz)
             gdata%r1%array(iCell)=rz
           enddo
 
-        case ( var_sfc_geomz ) !-surface_altitude
+        case ( var_sfc_geomz ) !-height_above_mean_sea_level_at_surface
           gdata%r1%array(1:nCells) = geom%zgrid(1,1:nCells)
 
         case ( var_sfc_sdepth ) !-surface_snow_thickness

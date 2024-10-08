@@ -19,19 +19,16 @@ fields:
   - field name: upward_air_velocity
     mpas template field: theta
 
-  - field name: geometric_height
-    mpas template field: theta
-
   - field name: geopotential_height
     mpas template field: theta
 
   - field name: geopotential_height_levels
     mpas template field: w
 
-  - field name: surface_geopotential_height
+  - field name: geopotential_height_at_surface
     mpas template field: u10
 
-  - field name: height
+  - field name: height_above_mean_sea_level
     mpas template field: theta
 
   - field name: virtual_temperature
@@ -60,10 +57,14 @@ fields:
     mpas template field: theta
     mpas identity field: spechum
 
-  - field name: surface_altitude
+  - field name: height_above_mean_sea_level_at_surface
     mpas template field: u10
 
   - field name: surface_pressure
+    mpas template field: u10
+    mpas identity field: surface_pressure
+
+  - field name: air_pressure_at_surface
     mpas template field: u10
     mpas identity field: surface_pressure
 

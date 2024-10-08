@@ -304,7 +304,7 @@ observations:
       simulated variables: [windEastward, windNorthward]
     obs operator:
       name: VertInterp
-      vertical coordinate: height
+      vertical coordinate: height_above_mean_sea_level
       observation vertical coordinate: height
       interpolation method: linear
 
