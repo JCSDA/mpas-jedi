@@ -522,7 +522,7 @@ subroutine changevar(self, geom, xm, xg)
           !-water_area_fraction, land_area_fraction, ice_area_fraction, surface_snow_area_fraction
           call xg%copy_from(geovar, RequestedCRTMSfcFields)
 
-        case ( var_sfc_wspeed ) !-surface_wind_speed
+        case ( var_sfc_wspeed ) !-wind_speed_at_surface
           call xm%get('u10', ptrr1_a)
           call xm%get('v10', ptrr1_b)
           gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )

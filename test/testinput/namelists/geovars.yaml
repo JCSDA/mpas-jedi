@@ -76,11 +76,11 @@ fields:
     mpas template field: u10
     mpas identity field: q2
 
-  - field name: uwind_at_10m
+  - field name: eastward_wind_at_10m
     mpas template field: u10
     mpas identity field: u10
 
-  - field name: vwind_at_10m
+  - field name: northward_wind_at_10m
     mpas template field: u10
     mpas identity field: v10
 
@@ -268,15 +268,15 @@ fields:
   - field name: surface_snow_area_fraction
     mpas template field: u10
 
-  - field name: surface_eastward_wind
+  - field name: eastward_wind_at_surface
     mpas template field: u10
     mpas identity field: u10
 
-  - field name: surface_northward_wind
+  - field name: northward_wind_at_surface
     mpas template field: u10
     mpas identity field: v10
 
-  - field name: surface_wind_speed
+  - field name: wind_speed_at_surface
     mpas template field: u10
 
   - field name: observable_domain_mask
