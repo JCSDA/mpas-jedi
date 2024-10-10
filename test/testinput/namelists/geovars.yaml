@@ -68,7 +68,7 @@ fields:
     mpas template field: u10
     mpas identity field: surface_pressure
 
-  - field name: surface_temperature
+  - field name: air_temperature_at_2m
     mpas template field: u10
     mpas identity field: t2m
 
@@ -84,7 +84,7 @@ fields:
     mpas template field: u10
     mpas identity field: v10
 
-  - field name: skin_temperature
+  - field name: skin_temperature_at_surface
     mpas template field: u10
     mpas identity field: skintemp
 
@@ -220,19 +220,19 @@ fields:
     mpas template field: u10
     mpas identity field: skintemp
 
-  - field name: surface_temperature_where_sea
+  - field name: skin_temperature_at_surface_where_sea
     mpas template field: u10
     mpas identity field: skintemp
 
-  - field name: surface_temperature_where_land
+  - field name: skin_temperature_at_surface_where_land
     mpas template field: u10
     mpas identity field: skintemp
 
-  - field name: surface_temperature_where_ice
+  - field name: skin_temperature_at_surface_where_ice
     mpas template field: u10
     mpas identity field: skintemp
 
-  - field name: surface_temperature_where_snow
+  - field name: skin_temperature_at_surface_where_snow
     mpas template field: u10
     mpas identity field: skintemp
 
