@@ -42,7 +42,7 @@ PTOP_HIGH_UPP = 15000. # high between 15000-35000 Pa
 varsList_  = ['obs', 'bkg', 'lat', 'lon', 'ocldfrac', 'fcldfrac', 'octp']
 
 hydrosList = ['ihumr', 'imclw', 'imcli', 'imclr', 'imcls', 'imclg']
-hydroDict = {'ihumr': 'humidity_mixing_ratio',
+hydroDict = {'ihumr': 'water_vapor_mixing_ratio_wrt_dry_air',
              'imclw': 'mass_content_of_cloud_liquid_water_in_atmosphere_layer',
              'imcli': 'mass_content_of_cloud_ice_in_atmosphere_layer',
              'imclr': 'mass_content_of_rain_in_atmosphere_layer',

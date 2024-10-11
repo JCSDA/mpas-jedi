@@ -50,7 +50,7 @@ fields:
     mpas template field: theta
     mpas identity field: uReconstructMeridional
 
-  - field name: humidity_mixing_ratio
+  - field name: water_vapor_mixing_ratio_wrt_dry_air
     mpas template field: theta
 
   - field name: specific_humidity

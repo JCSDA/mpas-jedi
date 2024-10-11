@@ -177,7 +177,7 @@ subroutine multiply(self, geom, dxm, dxg)
           ! cleanup
           deallocate(r2, trajr2)
 
-        case ( var_mixr ) !-humidity_mixing_ratio
+        case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           ! get TL variables
           call dxm%get('spechum', ptrr2_a)
 
@@ -186,7 +186,6 @@ subroutine multiply(self, geom, dxm, dxg)
 
           ! calculations
           call q_to_w_tl(ptrr2_a(:,1:nCells), traj_ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells))
-          gdata%r2%array(:,1:nCells) = gdata%r2%array(:,1:nCells) * MPAS_JEDI_THOUSAND_kr
 
           ! Ensure positive-definite mixing ratios
           !  with respect to precision of crtm::CRTM_Parameters::ZERO.
@@ -312,7 +311,7 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
           ! cleanup
           deallocate(r2, trajr2)
 
-        case ( var_mixr ) !-humidity_mixing_ratio
+        case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           ! get AD variables
           call dxm%get('spechum', ptrr2_a)
 
@@ -332,7 +331,6 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
           end where
 
           ! calculations
-          r2(:,1:nCells) = r2(:,1:nCells) * MPAS_JEDI_THOUSAND_kr
           call q_to_w_ad(ptrr2_a(:,1:nCells), traj_ptrr2_a(:,1:nCells), r2(:,1:nCells))
 
           ! cleanup

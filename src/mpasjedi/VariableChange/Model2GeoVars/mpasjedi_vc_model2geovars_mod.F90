@@ -302,10 +302,9 @@ subroutine changevar(self, geom, xm, xg)
           call tw_to_tv( ptrr2_a(:,1:nCells), r2_a(:,1:nCells), gdata%r2%array(:,1:nCells) )
           deallocate(r2_a)
 
-        case ( var_mixr ) !-humidity_mixing_ratio
+        case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           call xm%get('spechum', ptrr2_a)
           call q_to_w(ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells))
-          gdata%r2%array(:,1:nCells) = gdata%r2%array(:,1:nCells) * MPAS_JEDI_THOUSAND_kr ! [kg/kg] -> [g/kg]
 
           ! Ensure positive-definite mixing ratios
           !  with respect to precision of crtm::CRTM_Parameters::ZERO.
