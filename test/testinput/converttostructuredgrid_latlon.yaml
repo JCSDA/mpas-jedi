@@ -22,7 +22,7 @@ states to structured grid:
     - air_temperature
     - eastward_wind
     - northward_wind
-    - specific_humidity
+    - water_vapor_mixing_ratio_wrt_moist_air
     pressure levels in hPa:
     - 925
     - 850

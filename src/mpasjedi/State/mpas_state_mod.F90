@@ -414,7 +414,7 @@ subroutine analytic_IC(self, f_conf, vdate)
       case('northward_wind', 'uReconstructMeridional')
         fieldData%r2%array(:,1:geom%nCellsSolve) = v
 
-      case('specific_humidity', 'spechum')
+      case('water_vapor_mixing_ratio_wrt_moist_air', 'spechum')
         fieldData%r2%array(:,1:geom%nCellsSolve) = qv
 
       case('surface_pressure')
