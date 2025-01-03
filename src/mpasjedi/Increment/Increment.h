@@ -18,7 +18,6 @@
 #include "eckit/config/Configuration.h"
 
 #include "oops/base/LocalIncrement.h"
-#include "oops/base/WriteParametersBase.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/dot_product.h"
 #include "oops/util/Duration.h"

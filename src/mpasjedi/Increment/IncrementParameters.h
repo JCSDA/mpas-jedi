@@ -10,7 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "oops/base/WriteParametersBase.h"
+#include "oops/util/parameters/OptionalParameter.h"
+#include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
 
@@ -48,11 +49,19 @@ class IncrementReadParameters : public oops::Parameters {
 // -------------------------------------------------------------------------------------------------
 
 /// Configuration options recognized by mpas_fields_mod for write_fields
-class IncrementWriteParameters : public oops::WriteParametersBase {
-  OOPS_CONCRETE_PARAMETERS(IncrementWriteParameters, WriteParametersBase)
+class IncrementWriteParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(IncrementWriteParameters, Parameters)
 
  public:
   // Write parameters
+  oops::OptionalParameter<std::string> type{"type", this};
+  oops::OptionalParameter<std::string> exp{"exp", this};
+  oops::OptionalParameter<int> member{"member", this};
+  oops::OptionalParameter<std::string> memberPattern{"member pattern", this};
+  oops::OptionalParameter<util::DateTime> date{"date", this};
+  oops::OptionalParameter<int> iteration{"iteration", this};
+  oops::OptionalParameter<std::string> prefix{"prefix", this};
+  oops::Parameter<bool> dateCols{"date colons", true, this};
   oops::OptionalParameter<std::string> filename{"filename", this};
   oops::Parameter<std::string> stream_name{"stream name", "da_state", this};
 };
