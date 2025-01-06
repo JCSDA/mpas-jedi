@@ -9,7 +9,7 @@ cost function:
   cost type: 4D-Var
   time window:
     begin: '2018-04-14T21:00:00Z'
-    length: PT6H
+    length: PT3H
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041421"
     streams_file: "./Data/480km/streams.atmosphere"
@@ -55,7 +55,6 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Background Check
-        apply at iterations: 0,1,2
         threshold: 3
     - obs space:
         name: GnssroRefNCEP
@@ -155,4 +154,9 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
-    obs append directory: Data/obs/mpasobsappend2
+    continuous DA:
+      obs append directory: Data/obs/mpasobsappend2
+      time window:
+        begin: '2018-04-14T21:00:00Z'
+        length: PT6H
+
