@@ -21,8 +21,8 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-class VariableChangeParameters : public oops::VariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters, oops::VariableChangeParametersBase)
+class VariableChangeParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(VariableChangeParameters, oops::Parameters)
  public:
   // Wrapper to VariableChange parameters
   VariableChangeParametersWrapper variableChangeParametersWrapper{this};

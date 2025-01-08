@@ -15,7 +15,6 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "oops/base/LinearVariableChangeParametersBase.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
@@ -28,8 +27,8 @@ namespace mpas {
 
 // -------------------------------------------------------------------------------------------------
 
-class LinearVariableChangeParameters : public oops::LinearVariableChangeParametersBase {
-  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters, oops::LinearVariableChangeParametersBase)
+class LinearVariableChangeParameters : public oops::Parameters {
+  OOPS_CONCRETE_PARAMETERS(LinearVariableChangeParameters, oops::Parameters)
  public:
   // Wrapper to LinearVariableChange parameters
   LinearVariableChangeParametersWrapper linearVariableChangeParametersWrapper{this};

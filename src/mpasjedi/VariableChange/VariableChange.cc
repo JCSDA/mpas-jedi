@@ -8,7 +8,6 @@
 #include <ostream>
 #include <string>
 
-#include "oops/base/VariableChangeParametersBase.h"
 #include "oops/util/Logger.h"
 #include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/Parameter.h"
