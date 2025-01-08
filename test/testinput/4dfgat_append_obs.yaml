@@ -44,7 +44,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_4dfgat_sondes.nc4
+            obsfile: Data/os/obsout_4dfgat_append_obs_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -65,7 +65,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_4dfgat_gnssroref.nc4
+            obsfile: Data/os/obsout_4dfgat_append_obs_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -104,7 +104,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_4dfgat_sfc.nc4
+            obsfile: Data/os/obsout_4dfgat_append_obs_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected
@@ -126,7 +126,7 @@ cost function:
         apply at iterations: 0,1
         threshold: 3
 output:
-  filename: "Data/states/mpas.4dfgat.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.4dfgat_append_obs.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:

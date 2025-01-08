@@ -780,6 +780,7 @@ add_mpasjedi_application_test(
 #gen_ens_pert_B
 add_mpasjedi_application_test(
     APPLICATION gen_ens_pert_B
+    DEPENDS parameters_bumpcov
     ${RECALIBRATE})
 
 #dirac
