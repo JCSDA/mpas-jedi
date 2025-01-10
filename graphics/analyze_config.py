@@ -70,6 +70,103 @@ Job-submission examples:
 
 '''
 
+'''
+readjust configuration given the provided run time values for:
+  control the control experiment for comparison graphs
+  expArray an array of colon delimited short and long array names,
+    e.g. ["exp1:exp1_long_name", "exp2:exp2_long_name",...]
+  verifySpace the verification space (model or obs)
+  verifyType the verification type (forecast or omb/oma)
+  firstCycle a datetime object of the first cycle to graph
+  lastCycle a datetime object of the last cycle to graph
+'''
+def adjust_experiments(control, expArray, verifySpace, verifyType, firstCycle, lastCycle):
+  print('control:', control)
+  print('experiments:', expArray)
+  print(verifySpace, verifyType, firstCycle, lastCycle)
+
+  verificationChanged = False
+  exps = None
+  if control:
+    dbConf['cntrlExpName'] = control
+
+  if verifySpace:
+    VerificationSpace = verifySpace
+    verificationChanged = True
+  if verifyType:
+    VerificationType = verifyType
+    verificationChanged = True
+  if firstCycle:
+    dbConf['firstCycleDTime'] = firstCycle
+  if lastCycle:
+    dbConf['lastCycleDTime'] = lastCycle
+
+  ## if the verification space/type changed, reconfigure
+  if verificationChanged:
+    if zeroDurationForecast:
+      if VerificationType == 'omb/oma' and VerificationSpace == 'obs':
+        obsAppIdentifier = 'da'
+        deterministicVerifyDir = OMBOMAVerification
+        # ensemble verification for omb/oma not currently supported by MPAS-Workflow
+
+      if VerificationType == 'forecast':
+        # single forecast duration omf (fcTDeltaFirst==0 and fcTDeltaLast == 0)
+        deterministicVerifyDir = ShortRangeFCVerification
+        ensembleVerifyDir = ShortRangeFCVerification
+        obsAppIdentifier = 'hofx'
+    else:
+      # multiple extended forecast omf (0 < fcTDeltaLast <= extended forecast length)
+      # override VerificationType; only 'forecast' is available
+      VerificationType = 'forecast'
+      deterministicVerifyDir = ExtendedFCVerification
+      ensembleVerifyDir = ExtendedFCVerification
+      obsAppIdentifier = 'hofx'
+
+    if workflowType == 'MPAS-Workflow':
+      commonStatsFileSubDir = statsFileSubDirBase+'/'+VerificationSpace
+
+    # set up the experiments array
+    if expArray is not None:
+      experiments = OrderedDict()
+      for exp in expArray:
+        shortLong = exp.split(':')
+        experiments[shortLong[0]] = shortLong[1] + deterministicVerifyDir
+
+    ## expNames is a list of experiment names used for database lookups and figure labels, e.g., legend
+    #  entries.  expNames must have the same length as expLongNames.  Make these brief names concise
+    #  and exclude spaces. It is recommended to only use characters from [A-Z], [a-z], [0-9], and
+    #  ['-', '+', '=', '_', ',', ';', '.'], although others are allowed.
+    dbConf['expNames'] = []
+
+    ## expLongNames is a list of directories within expDirectory. Each list member is associated with a
+    #  unique experiment.  Add to the list to analyze for experiments simultaneously.
+    dbConf['expLongNames'] = []
+
+    for key, value in experiments.items():
+      dbConf['expNames'].append(key)
+      dbConf['expLongNames'].append(value)
+
+    if VerificationSpace == 'model':
+      dbConf['appIdentifiers'] = ['']*len(dbConf['expNames'])
+    else:
+      dbConf['appIdentifiers'] = [obsAppIdentifier]*len(dbConf['expNames'])
+
+    assert dbConf['cntrlExpName'] in dbConf['expNames'], (
+      'cntrlExpName must be one of the available expNames')
+
+    ## statsFileSubDirs is the final subdirectory within the date directory(ies)
+    #  that contains the statstics files for constructing the StatsDB object
+    dbConf['statsFileSubDirs'] = [commonStatsFileSubDir]*len(dbConf['expNames'])
+
+    if VerificationSpace == 'model':
+      dbConf['appIdentifiers'] = ['']*len(dbConf['expNames'])
+    else:
+      dbConf['appIdentifiers'] = [obsAppIdentifier]*len(dbConf['expNames'])
+
+    commonFCDirFormat = "%hhr"
+    dbConf['fcDirFormats'] = [commonFCDirFormat]*len(dbConf['expNames'])
+
+
 ## ================================================================================================
 ## ================================================================================================
 ## dbConf: configureation for all StatisticsDatabase.StatsDB objects
@@ -227,8 +324,8 @@ dbConf['cntrlExpName'] = 'clrama'
 experiments = OrderedDict()
 
 experiments['clrama'] = \
-  'guerrett_3dhybrid-60-60-iter_gnssrorefncep_O30kmI60km_ensB-SE80+RTPP70_VarBC_RefNCEP_2ndDoaDob' + \
-  deterministicVerifyDir
+    'guerrett_3dhybrid-60-60-iter_gnssrorefncep_O30kmI60km_ensB-SE80+RTPP70_VarBC_RefNCEP_2ndDoaDob' + \
+    deterministicVerifyDir
 
 
 ## Additional examples for adding experiments

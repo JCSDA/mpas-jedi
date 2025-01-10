@@ -3,8 +3,10 @@
 from AnalyzeStatsArgs import args
 
 import analyze_config as anconf
+from collections import OrderedDict
 import config as conf
 from copy import deepcopy
+import datetime as dt
 import diag_utils as du
 import logging
 import logsetup
@@ -57,11 +59,28 @@ def main():
             (anGrp is not None and DiagSpaceConfig[key]['anGrp'] != anGrp)):
             del DiagSpaceConfig[key]
 
+    ## process the analyze_conf args
+    exps = None
+    if args.experiments:
+      # assume experiments commandline switch is comma delimited string of short and long name pairs,
+      # where each pair is colon delimited, e.g. exp1:long_name_exp1,exp2:long_name_exp2
+      exps = args.experiments.split(',')
+
+    firstCycle = None
+    lastCycle = None
+    if args.firstCycle:
+      firstCycle= dt.datetime.strptime(args.firstCycle, '%Y%m%dT%H')
+    if args.lastCycle:
+      lastCycle= dt.datetime.strptime(args.lastCycle, '%Y%m%dT%H')
+
+    anconf.adjust_experiments(args.controlExperiment, exps, args.verifySpace, args.verifyType, firstCycle, lastCycle)
+
     ## process analysisType command-line selection or use defaults from analyze_config
     if args.analysisType:
         analysisTypes = [args.analysisType]
     else:
         analysisTypes = anconf.analysisTypes
+
 
     ## loop over selected DiagSpaces
     for DiagSpaceName in sorted(DiagSpaceConfig):

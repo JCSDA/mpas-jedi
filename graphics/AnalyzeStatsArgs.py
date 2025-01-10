@@ -26,6 +26,18 @@ class analyzeStatsArgs(ProcessArgs):
       help="Select a group of DiagSpaces (overridden by --diagSpace option)")
     parser.add_argument("-a", "--analysisType",
       help="Select a single analysisType")
+    parser.add_argument("-c", "--controlExperiment",
+      help="Base experiment for making comparison graphs")
+    parser.add_argument("-e", "--experiments",
+      help="Comma separated list of <short:long_name> experiments to graph")
+    parser.add_argument("-p", "--verifySpace",
+      help="verificationSpace (model or obs)")
+    parser.add_argument("-t", "--verifyType",
+      help="verificationType (forecast or omb/oma)")
+    parser.add_argument("-f", "--firstCycle",
+      help="first Cycle date/time, e.g. 20180414T18")
+    parser.add_argument("-l", "--lastCycle",
+      help="last Cycle date/time, e.g. 20180415T06")
 
 processor = analyzeStatsArgs()
 

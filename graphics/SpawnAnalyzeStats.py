@@ -54,7 +54,7 @@ while ($success != 0 && $try < 5)
   @ try++
   echo "try=$try"
 
-  python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE -app JEDIAPP -nout NOUTER -a ANALYSISTYPE >& an.log
+  python ${mainScript}.py -n NPWORK -r NPREAD -d DIAGSPACE -app JEDIAPP -nout NOUTER -a ANALYSISTYPE EXPARGS >& an.log
   grep 'TypeError: super() takes at least 1 argument (0 given)' an.log
   if ( $status == 0 ) then
     sleep 2
@@ -123,6 +123,20 @@ def main():
     if args.memory: jobConf['memory'] = args.memory
     if args.nppernode: jobConf['nppernode'] = args.nppernode
 
+    ## get experiment command-line arguments
+    expArgs = ""
+    if args.controlExperiment: expArgs += " -c " + args.controlExperiment
+    if args.experiments: expArgs += " -e " + args.experiments
+    if args.verifySpace: expArgs += " -p " + args.verifySpace
+    if args.verifyType: expArgs += " -t " + args.verifyType
+    if args.firstCycle: expArgs += " -f " + args.firstCycle
+    if args.lastCycle: expArgs += " -l " + args.lastCycle
+
+    ## if experiments were provided, adjust the analysis types
+    if args.experiments:
+      exps = args.experiments.split(',')
+      if len(exps) > 1:analysisTypes.append('BinValAxisProfileDiffCI')
+
     jobConf['env'] = jobenv
 
     ## submit a job for each selected DiagSpace
@@ -152,6 +166,7 @@ def main():
             'NPREAD': str(npread),
             'JEDIAPP': args.jediAppName,
             'NOUTER': str(args.nOuterIter),
+            'EXPARGS': expArgs,
         }
         for line in jobbody:
             newline = line
