@@ -72,6 +72,10 @@ class State : public util::Printable,
   size_t serialSize() const override;
   void serialize(std::vector<real_type> &) const override;
   void deserialize(const std::vector<real_type> &, size_t &) override;
+  void transpose(const State & DistState, const eckit::mpi::Comm & global,
+     const int ensNum, const int transNum) {
+     throw eckit::NotImplemented("MPASJEDI State::transpose not implemented", Here());
+  }
 
 /// I/O and diagnostics
   void read(const eckit::Configuration &);
