@@ -15,11 +15,11 @@ geometry:
 
 initial condition:
   state variables: &vars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
   
@@ -38,13 +38,13 @@ background error:
       grids:
       - model:
           variables:
-          - temperature
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
+          - air_temperature
+          - water_vapor_mixing_ratio_wrt_moist_air
+          - eastward_wind
+          - northward_wind
       - model:
           variables:
-          - surface_pressure
+          - air_pressure_at_surface
   saber outer blocks:
   - saber block name: StdDev
     read:
@@ -56,7 +56,12 @@ background error:
 model:
   name: MPAS
   tstep: PT30M
-  model variables: [spechum,surface_pressure,temperature,uReconstructZonal,uReconstructMeridional]
+  model variables:
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - air_pressure_at_surface
+  - air_temperature
+  - eastward_wind
+  - northward_wind
   
 output:
   type: ens
@@ -65,4 +70,9 @@ output:
   filename: Data/enkf/model/EnsPertB.$Y-$M-$D_$h.$m.$s.nc.%member%
   member pattern: '%member%'
 
-perturbed variables: [spechum,surface_pressure,temperature,uReconstructZonal,uReconstructMeridional]
+perturbed variables:
+- water_vapor_mixing_ratio_wrt_moist_air
+- air_pressure_at_surface
+- air_temperature
+- eastward_wind
+- northward_wind

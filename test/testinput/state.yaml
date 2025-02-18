@@ -4,11 +4,13 @@ geometry:
 state test:
   statefile:
     state variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - eastward_wind
+    - northward_wind
+    - air_pressure_at_surface
+    #- water_vapor_mixing_ratio_wrt_dry_air   # qv test. Read seems to work
+    #- cloud_liquid_water                     # qc test. Read seems to work
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &date '2018-04-15T00:00:00Z'
   date: *date
@@ -17,11 +19,11 @@ state test:
     analytic init:
       method: dcmip-test-4-0
     state variables:
-    - temperature
-    - spechum
-    - uReconstructZonal
-    - uReconstructMeridional
-    - surface_pressure
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - eastward_wind
+    - northward_wind
+    - air_pressure_at_surface
     date: *date
   norm generated state: 20000.378266179847
   tolerance: 1.0e-08
@@ -30,17 +32,17 @@ state test:
       filename: &filename "Data/states/mpas.state.2018-04-15_00.00.00.nc"
     state read:
       state variables:
-      - temperature
-      - spechum
-      - uReconstructZonal
-      - uReconstructMeridional
-      - surface_pressure
+      - air_temperature
+      - water_vapor_mixing_ratio_wrt_moist_air
+      - eastward_wind
+      - northward_wind
+      - air_pressure_at_surface
       filename: *filename
       date: *date
       transform model to analysis: false # Prevents variable change logic in read routine
   construct to variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
 

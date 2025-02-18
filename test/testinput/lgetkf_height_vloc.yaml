@@ -31,17 +31,44 @@ background:
   members from template:
     template:
       date: '2018-04-15T00:00:00Z'
-      state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                        theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
-                        snowh, vegfra, u10, v10, lai, smois, tslb, pressure_p]
+      state variables:
+      - air_temperature
+      - water_vapor_mixing_ratio_wrt_moist_air
+      - eastward_wind
+      - northward_wind
+      - air_pressure_at_surface
+      - air_potential_temperature
+      - dry_air_density
+      - u
+      - water_vapor_mixing_ratio_wrt_dry_air
+      - air_pressure
+      - landmask
+      - seaice_fraction
+      - snowc
+      - skin_temperature_at_surface
+      - ivgtyp
+      - isltyp
+      - snowh
+      - vegetation_area_fraction
+      - eastward_wind_at_10m
+      - northward_wind_at_10m
+      - lai
+      - smois
+      - tslb
+      - pressure_p
       stream name: background
-      #state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure]
+      #state variables: [air_temperature, water_vapor_mixing_ratio_wrt_moist_air, eastward_wind, northward_wind, air_pressure_at_surface]
       filename: Data/480km/bg/ensemble/mem%mem%/x1.2562.init.2018-04-15_00.00.00.nc
     pattern: '%mem%'
     zero padding: 2
     nmembers: 5
 
-increment variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure]
+increment variables:
+- air_temperature
+- water_vapor_mixing_ratio_wrt_moist_air
+- eastward_wind
+- northward_wind
+- air_pressure_at_surface
 
 observations:
   observers:

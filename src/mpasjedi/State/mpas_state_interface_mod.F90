@@ -86,8 +86,8 @@ end if
 if (trim(config_microp_scheme) == 'mp_thompson') then
    do ivar = 1, state_vars % nvars()
       ! Only need nr when qr is in state
-      if ( trim(state_vars%variable(ivar)) == 'qr' ) then
-         call state_vars%push_back("nr")
+      if ( trim(state_vars%variable(ivar)) == 'rain_water' ) then
+         call state_vars%push_back("rain_number_concentration")
          exit
       end if
    end do

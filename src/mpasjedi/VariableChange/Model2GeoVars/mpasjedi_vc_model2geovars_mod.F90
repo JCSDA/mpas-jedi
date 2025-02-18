@@ -109,7 +109,7 @@ subroutine changevar(self, geom, xm, xg)
   ! surface variables
   character(len=MAXVARLEN), parameter :: &
     MPASSfcNames(5) = &
-      [ character(len=MAXVARLEN) :: 'ivgtyp', 'isltyp', 'landmask', 'xice', 'snowc']
+      [ character(len=MAXVARLEN) :: 'ivgtyp', 'isltyp', 'landmask', 'seaice_fraction', 'snowc']
   character(len=MAXVARLEN), parameter :: &
     ValidCRTMSfcNames(8) = &
       [var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, &
@@ -239,7 +239,7 @@ subroutine changevar(self, geom, xm, xg)
 
     ! ice
     call mpas_pool_get_array(RequestedCRTMSfcFields, var_sfc_ifrac, ifrac)
-    call xm%get('xice', mdata)     !'fractional area coverage of sea-ice'
+    call xm%get('seaice_fraction', mdata)     !'fractional area coverage of sea-ice'
     ifrac(1:nCells) = mdata%r1%array(1:nCells)
 
     ! snow
@@ -269,8 +269,8 @@ subroutine changevar(self, geom, xm, xg)
 
   ! pre-calculate pressure on w levels
   allocate(plevels(1:nVertLevelsP1,1:nCells))
-  call xm%get('pressure', ptrr2_a)
-  call xm%get('surface_pressure', ptrr1_a)
+  call xm%get('air_pressure', ptrr2_a)
+  call xm%get('air_pressure_at_surface', ptrr1_a)
   call pressure_half_to_full(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr1_a(1:nCells), &
                              nCells, nVertLevels, plevels)
 
@@ -295,15 +295,15 @@ subroutine changevar(self, geom, xm, xg)
       select case (trim(geovar))
 
         case ( var_tv ) !-virtual_temperature
-          call xm%get('temperature', ptrr2_a)
-          call xm%get('spechum', ptrr2_b)
+          call xm%get('air_temperature', ptrr2_a)
+          call xm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_b)
           allocate(r2_a(1:nVertLevels, 1:nCells))
           call q_to_w( ptrr2_b(:,1:nCells), r2_a(:,1:nCells) )
           call tw_to_tv( ptrr2_a(:,1:nCells), r2_a(:,1:nCells), gdata%r2%array(:,1:nCells) )
           deallocate(r2_a)
 
         case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
-          call xm%get('spechum', ptrr2_a)
+          call xm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_a)
           call q_to_w(ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells))
 
           ! Ensure positive-definite mixing ratios
@@ -315,8 +315,8 @@ subroutine changevar(self, geom, xm, xg)
           end where
 
         case ( var_airdens ) ! moist_air_density
-          call xm%get('rho', ptrr2_a) ! dry air density, kg/m^3
-          call xm%get('qv',  ptrr2_b) ! water vapor mixing ratio, kg/kg
+          call xm%get('dry_air_density', ptrr2_a) ! dry air density, kg/m^3
+          call xm%get('water_vapor_mixing_ratio_wrt_dry_air',  ptrr2_b) ! water vapor mixing ratio, kg/kg
           call dryrho_to_moistrho(ptrr2_a, ptrr2_b, nCells, nVertLevels)
           gdata%r2%array(:,1:nCells) = ptrr2_a(:,1:nCells)
 
@@ -328,30 +328,30 @@ subroutine changevar(self, geom, xm, xg)
           call geom%full_to_half(ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells), nCells)
 
         case ( var_oz ) !-mole_fraction_of_ozone_in_air :TODO: not directly available from MPAS
-          !call xm%get('o3', mdata)
+          !call xm%get('mole_fraction_of_ozone_in_air', mdata)
           gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr !mdata%r2%array(:,1:nCells)
 
         case ( var_co2 ) !-mole_fraction_of_carbon_dioxide_in_air :TODO: not directly available from MPAS
-          !call xm%get('co2', mdata)
+          !call xm%get('mole_fraction_of_carbon_dioxide_in_air', mdata)
           gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr !mdata%r2%array(:,1:nCells)
 
         case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-          call q_fields_forward('qc', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('cloud_liquid_water', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-          call q_fields_forward('qi', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('cloud_liquid_ice', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
-          call q_fields_forward('qr', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('rain_water', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
-          call q_fields_forward('qs', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('snow_water', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
-          call q_fields_forward('qg', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('graupel', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
-          call q_fields_forward('qh', mFields, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_forward('hail', mFields, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clwefr ) !-effective_radius_of_cloud water particle
           call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
@@ -373,19 +373,19 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_clrefr ) !-effective_radius_of_rain water_particle
           ! effective_radius_of_rain_water is not calculated in MPAS model physics
-          call xm%get('qr', fieldr2_a)
+          call xm%get('rain_water', fieldr2_a)
           call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
           call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
           if (config_microp_re) then
             allocate(r2_a(1:nVertLevels, 1:nCells))
             allocate(r2_b(1:nVertLevels, 1:nCells))
             if (trim(config_microp_scheme) == 'mp_thompson') then
-               call xm%get('nr', ptrr2_a) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
+               call xm%get('rain_number_concentration', ptrr2_a) !- [nb kg^{-1}]: MPAS output for 2-moment MP scheme
                r2_b(:,1:nCells) = ptrr2_a(:,1:nCells)
             else
                r2_b = MPAS_JEDI_ONE_kr
             end if
-            call xm%get('rho', fieldr2_b) !- [kg m^{-3}]: Dry air density
+            call xm%get('dry_air_density', fieldr2_b) !- [kg m^{-3}]: Dry air density
 
             call effectRad_rainwater(fieldr2_a%array(:,1:nCells), fieldr2_b%array(:,1:nCells),&
                                      r2_b(:,1:nCells), r2_a(:,1:nCells), config_microp_scheme, &
@@ -408,12 +408,12 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_clgefr ) !-effective_radius_of_graupel_particle
           !effective_radius_of_graupel is not calculated in MPAS model physics
-          call xm%get('qg', fieldr2_a)
+          call xm%get('graupel', fieldr2_a)
           call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_scheme', config_microp_scheme)
           call mpas_pool_get_config(geom % domain % blocklist % configs, 'config_microp_re', config_microp_re)
           if (config_microp_re) then
             allocate(r2_a(1:nVertLevels, 1:nCells))
-            call xm%get('rho', fieldr2_b) !- [kg m^{-3}]: Dry air density
+            call xm%get('dry_air_density', fieldr2_b) !- [kg m^{-3}]: Dry air density
             call effectRad_graupel(fieldr2_a%array(:,1:nCells), fieldr2_b%array(:,1:nCells), &
                                    r2_a(:,1:nCells), config_microp_scheme, &
                                    nCells, nVertLevels)
@@ -458,8 +458,8 @@ subroutine changevar(self, geom, xm, xg)
           gdata%r2%array(:,1:nCells) = geom%height(:,1:nCells)
 
         case ( var_tropprs ) !-tropopause pressure
-          call xm%get('pressure',    ptrr2_a)
-          call xm%get('temperature', ptrr2_b)
+          call xm%get('air_pressure',    ptrr2_a)
+          call xm%get('air_temperature', ptrr2_b)
           if (trim(self%tropprs_method) == "thompson") then
             call tropopause_pressure_th(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr2_b(:,1:nCells), &
                                         nCells, nVertLevels, gdata%r1%array(1:nCells))
@@ -482,8 +482,13 @@ subroutine changevar(self, geom, xm, xg)
           call xm%get('snowh', mdata)
           gdata%r1%array(1:nCells) = mdata%r1%array(1:nCells) * MPAS_JEDI_THOUSAND_kr ! [m] -> [mm]
 
+!! NOTE: With introducing "mpas io scaling factor", this is handled with "identity" VC.
+!  If users comment out "mpas identity field" and "mpas io scaling factor" 
+!  of "field name: vegetation_area_fraction" in the geovars.yaml,
+!  following case-statement will be activated.
+!  TODO: This should be removed in future.
         case ( var_sfc_vegfrac ) !-vegetation_area_fraction
-          call xm%get('vegfra', mdata)
+          call xm%get('vegetation_area_fraction', mdata)
           gdata%r1%array(1:nCells) = mdata%r1%array(1:nCells) / 100.0_kind_real ! [unitless, 0~100] = [%, 0~1]
 
         case ( var_sfc_soilm ) !-volume_fraction_of_condensed_water_in_soil
@@ -506,8 +511,8 @@ subroutine changevar(self, geom, xm, xg)
           call xg%copy_from(geovar, RequestedCRTMSfcFields)
 
         case ( var_sfc_wspeed ) !-wind_speed_at_surface
-          call xm%get('u10', ptrr1_a)
-          call xm%get('v10', ptrr1_b)
+          call xm%get('eastward_wind_at_10m', ptrr1_a)
+          call xm%get('northward_wind_at_10m', ptrr1_b)
           gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
 
         case ( var_observable_domain_mask ) !-domain check
@@ -516,15 +521,15 @@ subroutine changevar(self, geom, xm, xg)
           gdata%r1%array(1:nCells)= real(domainMask(1:nCells))
 
         case ( var_sfc_fact10 ) !-wind_reduction_factor_at_10m
-          call xm%get('u10', ptrr1_a)
-          call xm%get('v10', ptrr1_b)
+          call xm%get('eastward_wind_at_10m', ptrr1_a)
+          call xm%get('northward_wind_at_10m', ptrr1_b)
 
 ! get model wind at surface layer
-          call xm%get('uReconstructZonal', mdata)
+          call xm%get('eastward_wind', mdata)
           allocate(uu(1:nCells))
           uu(1:nCells) = mdata%r2%array(1, 1:nCells)
 
-          call xm%get('uReconstructMeridional', mdata)
+          call xm%get('northward_wind', mdata)
           allocate(vv(1:nCells))
           vv(1:nCells) = mdata%r2%array(1, 1:nCells)
 ! get model wind at surface layer

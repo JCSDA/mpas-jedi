@@ -9,9 +9,9 @@ geometry:
   streams_file: "./Data/480km/streams.atmosphere"
 background:
   state variables: &vars
-  - temperature
-  - spechum
-  - surface_pressure
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: &date "2018-04-15T00:00:00Z"
 background error:
@@ -160,7 +160,7 @@ dirac:
   dirLats: [  30.31011691,  26.56505123 ]
   dirLons: [ 130.11182691,-102.95294521 ]
   ildir: 3
-  dirvar: temperature
+  dirvar: air_temperature
 output dirac:
   stream name: control
   filename: Data/spectral/mpas.spectral_scalars_%id%.$Y-$M-$D_$h.$m.$s.nc

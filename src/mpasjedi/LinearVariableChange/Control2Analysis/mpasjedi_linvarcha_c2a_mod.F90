@@ -15,7 +15,7 @@ use oops_variables_mod, only: oops_variables
 
 !mpas-jedi
 use mpas_constants_mod
-use mpas_fields_mod, only: mpas_fields
+use mpas_fields_mod, only: mpas_fields, cellCenteredWindFields
 use mpas_geom_mod, only: mpas_geom
 
 !MPAS-Model
@@ -61,17 +61,17 @@ subroutine create(self, geom, bg, fg, f_conf, vars)
 
    integer :: ngrid
 
-   if ( vars % has ('relhum') ) then
+   if ( vars % has ('relative_humidity') ) then
       !-- set trajectories for linear variable change
       ngrid = geom % nCells ! local + halo
 
       call mpas_pool_create_pool(self % trajectories)
 
-      if ( .not. fg % has ('temperature') .or. .not. fg % has ('pressure') ) &
+      if ( .not. fg % has ('air_temperature') .or. .not. fg % has ('air_pressure') ) &
          call abor1_ftn("LinVarChaC2A::LinVarChaC2A, mpasjedi_linvarcha_c2a_create: Trajectory failed")
 
-      call fg%get('temperature', fld2d_t)
-      call fg%get('pressure'   , fld2d_p)
+      call fg%get('air_temperature', fld2d_t)
+      call fg%get('air_pressure'   , fld2d_p)
 
       call mpas_duplicate_field(fld2d_t, fld2d_qs) ! for saturation specific humidity
 
@@ -144,19 +144,19 @@ subroutine multiply(self,geom,xctl,xana)
       end if
    end do !- end of pool iteration
 
-   if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call xctl%get(     'relhum', ptrr2_rh)
-      call xana%get(    'spechum', ptrr2_sh)
+   if( xctl%has('relative_humidity') .and. xana%has('water_vapor_mixing_ratio_wrt_moist_air') ) then
+      call xctl%get(     'relative_humidity', ptrr2_rh)
+      call xana%get(    'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)
       call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
       call pseudorh_to_spechum( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
-   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
-       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call xctl%get(       'stream_function', fld2d_sf)
-      call xctl%get(    'velocity_potential', fld2d_vp)
-      call xana%get(     'uReconstructZonal', fld2d_uRz)
-      call xana%get('uReconstructMeridional', fld2d_uRm)
+   if( xctl%has('air_horizontal_streamfunction') .and. xctl%has('air_horizontal_velocity_potential') .and. &
+       all(xana%has(cellCenteredWindFields)) ) then
+      call xctl%get(       'air_horizontal_streamfunction', fld2d_sf)
+      call xctl%get(    'air_horizontal_velocity_potential', fld2d_vp)
+      call xana%get(         'eastward_wind', fld2d_uRz)
+      call xana%get(        'northward_wind', fld2d_uRm)
 
       call mpas_dmpar_exch_halo_field(fld2d_sf)
       call mpas_dmpar_exch_halo_field(fld2d_vp)
@@ -168,7 +168,7 @@ subroutine multiply(self,geom,xctl,xana)
       ! duplicate two temporary working spaces
       call mpas_pool_get_field( geom % domain % blocklist % allFields, 'vorticity', fld2d_v_src)
       call mpas_duplicate_field(fld2d_v_src, fld2d_sf_v)
-      fld2d_sf_v % fieldName = 'stream_function at vertices'
+      fld2d_sf_v % fieldName = 'air_horizontal_streamfunction at vertices'
       call mpas_pool_get_field( geom % domain % blocklist % allFields, 'u', fld2d_e_src)
       call mpas_duplicate_field(fld2d_e_src, fld2d_u)
       fld2d_u % fieldName = 'Horizontal normal velocity at edges'
@@ -237,19 +237,19 @@ subroutine multiplyadjoint(self,geom,xana,xctl)
       end if
    end do !- end of pool iteration
 
-   if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call xctl%get(     'relhum', ptrr2_rh)
-      call xana%get(    'spechum', ptrr2_sh)
+   if( xctl%has('relative_humidity') .and. xana%has('water_vapor_mixing_ratio_wrt_moist_air') ) then
+      call xctl%get(     'relative_humidity', ptrr2_rh)
+      call xana%get(    'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)
       call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
       call pseudorh_to_spechumAD( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
-   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
-       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call xctl%get(       'stream_function', fld2d_sf)
-      call xctl%get(    'velocity_potential', fld2d_vp)
-      call xana%get(     'uReconstructZonal', fld2d_uRz)
-      call xana%get('uReconstructMeridional', fld2d_uRm)
+   if( xctl%has('air_horizontal_streamfunction') .and. xctl%has('air_horizontal_velocity_potential') .and. &
+       all(xana%has(cellCenteredWindFields)) ) then
+      call xctl%get(       'air_horizontal_streamfunction', fld2d_sf)
+      call xctl%get(    'air_horizontal_velocity_potential', fld2d_vp)
+      call xana%get(         'eastward_wind', fld2d_uRz)
+      call xana%get(        'northward_wind', fld2d_uRm)
 
       nCells = geom % nCells    ! local + halo
       nVertices = geom % nVertices ! local + halo
@@ -258,7 +258,7 @@ subroutine multiplyadjoint(self,geom,xana,xctl)
       ! duplicate two temporary working spaces
       call mpas_pool_get_field( geom % domain % blocklist % allFields, 'vorticity', fld2d_v_src)
       call mpas_duplicate_field(fld2d_v_src, fld2d_sf_v)
-      fld2d_sf_v % fieldName = 'stream_function at vertices'
+      fld2d_sf_v % fieldName = 'air_horizontal_streamfunction at vertices'
       call mpas_pool_get_field( geom % domain % blocklist % allFields, 'u', fld2d_e_src)
       call mpas_duplicate_field(fld2d_e_src, fld2d_u)
       fld2d_u % fieldName = 'Horizontal normal velocity at edges'
@@ -329,22 +329,22 @@ subroutine multiplyinverse(self,geom,xana,xctl)
       end if
    end do !- end of pool iteration
 
-   if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call xana%get(    'spechum', ptrr2_sh)
-      call xctl%get(     'relhum', ptrr2_rh)
+   if( xctl%has('relative_humidity') .and. xana%has('water_vapor_mixing_ratio_wrt_moist_air') ) then
+      call xana%get(    'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)
+      call xctl%get(     'relative_humidity', ptrr2_rh)
       call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
       call pseudorh_to_spechum_inverse( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    !-- dummy inverse operator
-   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
-       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call xana%get('uReconstructZonal', ptrr2_ana)
-      call xctl%get(  'stream_function', ptrr2_ctl)
+   if( xctl%has('air_horizontal_streamfunction') .and. xctl%has('air_horizontal_velocity_potential') .and. &
+       all(xana%has(cellCenteredWindFields)) ) then
+      call xana%get(    'eastward_wind', ptrr2_ana)
+      call xctl%get(  'air_horizontal_streamfunction', ptrr2_ctl)
       ptrr2_ctl(:,1:ngrid)=ptrr2_ana(:,1:ngrid)
 
-      call xana%get('uReconstructMeridional', ptrr2_ana)
-      call xctl%get(    'velocity_potential', ptrr2_ctl)
+      call xana%get(        'northward_wind', ptrr2_ana)
+      call xctl%get(    'air_horizontal_velocity_potential', ptrr2_ctl)
       ptrr2_ctl(:,1:ngrid)=ptrr2_ana(:,1:ngrid)
    end if
 
@@ -398,23 +398,23 @@ subroutine multiplyinverseadjoint(self,geom,xctl,xana)
       end if
    end do !- end of pool iteration
 
-   if( xctl%has('relhum') .and. xana%has('spechum') ) then
-      call xana%get(    'spechum', ptrr2_sh)
-      call xctl%get(     'relhum', ptrr2_rh)
+   if( xctl%has('relative_humidity') .and. xana%has('water_vapor_mixing_ratio_wrt_moist_air') ) then
+      call xana%get(    'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)
+      call xctl%get(     'relative_humidity', ptrr2_rh)
       call mpas_pool_get_field(self%trajectories, 'spechum_sat', fld2d_traj_qs)
       call pseudorh_to_spechum_inverseAD( ptrr2_rh(:,1:ngrid), ptrr2_sh(:,1:ngrid), fld2d_traj_qs%array(:,1:ngrid) )
    end if
 
    !-- dummy inverseAD operator
-   if( xctl%has('stream_function') .and. xctl%has('velocity_potential') .and. &
-       xana%has('uReconstructZonal') .and. xana%has('uReconstructMeridional') ) then
-      call xana%get('uReconstructZonal', ptrr2_ana)
-      call xctl%get(  'stream_function', ptrr2_ctl)
+   if( xctl%has('air_horizontal_streamfunction') .and. xctl%has('air_horizontal_velocity_potential') .and. &
+       all(xana%has(cellCenteredWindFields)) ) then
+      call xana%get(    'eastward_wind', ptrr2_ana)
+      call xctl%get(  'air_horizontal_streamfunction', ptrr2_ctl)
       ptrr2_ana(:,1:ngrid)=ptrr2_ana(:,1:ngrid)+ptrr2_ctl(:,1:ngrid)
       ptrr2_ctl(:,1:ngrid)=MPAS_JEDI_ZERO_kr
 
-      call xana%get('uReconstructMeridional', ptrr2_ana)
-      call xctl%get(    'velocity_potential', ptrr2_ctl)
+      call xana%get(        'northward_wind', ptrr2_ana)
+      call xctl%get(    'air_horizontal_velocity_potential', ptrr2_ctl)
       ptrr2_ana(:,1:ngrid)=ptrr2_ana(:,1:ngrid)+ptrr2_ctl(:,1:ngrid)
       ptrr2_ctl(:,1:ngrid)=MPAS_JEDI_ZERO_kr
    end if

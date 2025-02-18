@@ -195,7 +195,7 @@ subroutine model_prepare_integration(self, jedi_state)
    !----------------------------------------------------------------
 
    ! here or where increment is computed
-   call da_copy_sub2all_fields(self % domain, jedi_state % subFields)   
+   call da_copy_sub2all_fields(jedi_state % geom, jedi_state % subFields)
 
 !#ifdef odelMPAS_prepare
    !-------------------------------------------------------------------
@@ -204,8 +204,8 @@ subroutine model_prepare_integration(self, jedi_state)
    !-------------------------------------------------------------------
 
    ! here or where increment is computed
-   !call mpas_pool_get_field(jedi_state % subfields, 'uReconstructZonal', uReconstructZonal)
-   !call mpas_pool_get_field(jedi_state % subfields, 'uReconstructMeridional', uReconstructMeridional)
+   !call mpas_pool_get_field(jedi_state % subfields, 'eastward_wind', uReconstructZonal)
+   !call mpas_pool_get_field(jedi_state % subfields, 'northward_wind', uReconstructMeridional)
    !call mpas_pool_get_field(state, 'u', u_field, 1)
    !call uv_cell_to_edges(self%domain, uReconstructZonal, uReconstructMeridional, u_field, & 
    !                  & jedi_state%geom%lonCell, jedi_state%geom%latCell, &
@@ -366,7 +366,7 @@ subroutine model_propagate(self, jedi_state)
       call atm_compute_output_diagnostics(state, 1, diag, mesh)
 
       !(2) copy all to subFields & diagnose temperature
-      call update_diagnostic_fields(self % domain, jedi_state % subFields, jedi_state % geom % nCellsSolve)
+      call update_diagnostic_fields(jedi_state % geom, jedi_state % subFields, jedi_state % geom % nCellsSolve)
    !end if
 
 end subroutine model_propagate

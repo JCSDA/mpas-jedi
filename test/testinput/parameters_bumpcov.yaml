@@ -10,11 +10,11 @@ geometry:
   deallocate non-da fields: true
 background:
   state variables: &vars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: &date 2018-04-15T00:00:00Z
 background error:
@@ -72,11 +72,11 @@ background error:
         filtering iterations: 1
         initial length-scale:
         - variables:
-          - temperature
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-          - surface_pressure
+          - air_temperature
+          - water_vapor_mixing_ratio_wrt_moist_air
+          - eastward_wind
+          - northward_wind
+          - air_pressure_at_surface
           value: 3000.0e3
         smoother max horizontal grid size: 15000 #default: 50000
         smoother min effective resolution: 2.5 #default: 2.0
@@ -87,22 +87,22 @@ background error:
         min effective resolution: 2.5
         interpolation type:
         - groups:
-          - temperature
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
-          - surface_pressure
+          - air_temperature
+          - water_vapor_mixing_ratio_wrt_moist_air
+          - eastward_wind
+          - northward_wind
+          - air_pressure_at_surface
           type: c0
       grids:
       - model:
           variables:
-          - temperature
-          - spechum
-          - uReconstructZonal
-          - uReconstructMeridional
+          - air_temperature
+          - water_vapor_mixing_ratio_wrt_moist_air
+          - eastward_wind
+          - northward_wind
       - model:
           variables:
-          - surface_pressure
+          - air_pressure_at_surface
       output model files:
       - parameter: stddev
         file:

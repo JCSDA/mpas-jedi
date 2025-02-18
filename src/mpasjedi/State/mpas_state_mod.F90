@@ -106,16 +106,16 @@ subroutine add_incr(self, increment)
            all(increment%has(analysisThermoFields)) .and. &
            .not. all(increment%has(modelThermoFields)) ) then
 
-         call self%get(              'qv', ptrr2_qv)
-         call self%get(        'pressure', ptrr2_p)
-         call self%get(             'rho', ptrr2_rho)
-         call self%get('surface_pressure', ptrr1_ps)
-         call self%get(     'temperature', ptrr2_t)
-         call self%get(           'theta', ptrr2_th)
-         call increment%get(     'temperature', ptrr2_dt)
-         call increment%get('surface_pressure', ptrr1_dps)
+         call self%get(              'water_vapor_mixing_ratio_wrt_dry_air', ptrr2_qv)
+         call self%get(        'air_pressure', ptrr2_p)
+         call self%get(             'dry_air_density', ptrr2_rho)
+         call self%get('air_pressure_at_surface', ptrr1_ps)
+         call self%get(     'air_temperature', ptrr2_t)
+         call self%get(           'air_potential_temperature', ptrr2_th)
+         call increment%get(     'air_temperature', ptrr2_dt)
+         call increment%get('air_pressure_at_surface', ptrr1_dps)
 
-         call increment%get(         'spechum', ptrr2_dsh) ! converted to dqv below
+         call increment%get(         'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_dsh) ! converted to dqv below
          do i = 1, ngrid
             do k = 20, self%geom%nVertLevels
                if (ptrr2_p(k,i) .le. 15000.) then
@@ -124,10 +124,10 @@ subroutine add_incr(self, increment)
             end do
          end do
 
-         call self%get(              'spechum', ptrr2_sh)  !    for trajectory
+         call self%get(              'water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)  !    for trajectory
 
          !duplicate dp, drho, dtheta
-         call mpas_pool_get_field(self%subFields, 'pressure', fld2d_p)
+         call mpas_pool_get_field(self%subFields, 'air_pressure', fld2d_p)
          call mpas_duplicate_field(fld2d_p, fld2d_dp)   ! intermediate output
          call mpas_duplicate_field(fld2d_p, fld2d_drho) ! intermediate output
          call mpas_duplicate_field(fld2d_p, fld2d_dth)  ! intermediate output
@@ -164,29 +164,30 @@ subroutine add_incr(self, increment)
       ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       ! note: nonlinear change of variable
       if ( all(self%has(moistureFields)) .and. &
-           increment%has('spechum') .and. .not.increment%has('qv')) then
-         call self%get(     'qv', ptrr2_qv)
-         call self%get('spechum', ptrr2_sh)
+           increment%has('water_vapor_mixing_ratio_wrt_moist_air') .and. &
+           .not. increment%has('water_vapor_mixing_ratio_wrt_dry_air') ) then
+         call self%get(     'water_vapor_mixing_ratio_wrt_dry_air', ptrr2_qv)
+         call self%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_sh)
          call q_to_w( ptrr2_sh(:,1:ngrid), ptrr2_qv(:,1:ngrid) )
       endif
 
       ! Update pressure_p (pressure perturbation) , which is a diagnostic variable
-      if ( self%has('pressure_p') .and. self%has('pressure') .and. &
+      if ( self%has('pressure_p') .and. self%has('air_pressure') .and. &
            .not.increment%has('pressure_p') ) then
-         call self%get(  'pressure', ptrr2_p)
+         call self%get(  'air_pressure', ptrr2_p)
          call self%get('pressure_p', ptrr2_pp)
          call mpas_pool_get_field(self%geom%domain%blocklist%allFields, 'pressure_base', fld2d_pb)
          ptrr2_pp(:,1:ngrid) = ptrr2_p(:,1:ngrid) - fld2d_pb%array(:,1:ngrid)
       endif
 
-      ! Update edge normal wind u from uReconstructZonal and uReconstructMeridional "incrementally"
+      ! Update edge normal wind u from cell centered winds "incrementally"
       ! note: linear change of variable
       if ( self%has('u') .and. &
            all(increment%has(cellCenteredWindFields)) .and. &
            .not.increment%has('u') ) then
          call mpas_pool_get_field(self%subFields, 'u', fld2d_u)
-         call mpas_pool_get_field(increment%subFields, 'uReconstructMeridional', fld2d_uRm)
-         call mpas_pool_get_field(increment%subFields, 'uReconstructZonal', fld2d_uRz)
+         call mpas_pool_get_field(increment%subFields, 'northward_wind', fld2d_uRm)
+         call mpas_pool_get_field(increment%subFields, 'eastward_wind', fld2d_uRz)
 
          call mpas_duplicate_field(fld2d_u, fld2d_u_inc)
 
@@ -402,22 +403,22 @@ subroutine analytic_IC(self, f_conf, vdate)
     call self%get(varName, fieldData)
 
     select case (trim(varName))
-      case('air_pressure', 'pressure')
+      case('air_pressure')
         fieldData%r2%array(:,1:geom%nCellsSolve) = p
 
-      case('virtual_temperature', 'temperature')
+      case('virtual_temperature', 'air_temperature')
         fieldData%r2%array(:,1:geom%nCellsSolve) = temperature
 
-      case('eastward_wind', 'uReconstructZonal')
+      case('eastward_wind')
         fieldData%r2%array(:,1:geom%nCellsSolve) = u
 
-      case('northward_wind', 'uReconstructMeridional')
+      case('northward_wind')
         fieldData%r2%array(:,1:geom%nCellsSolve) = v
 
-      case('water_vapor_mixing_ratio_wrt_moist_air', 'spechum')
+      case('water_vapor_mixing_ratio_wrt_moist_air')
         fieldData%r2%array(:,1:geom%nCellsSolve) = qv
 
-      case('surface_pressure')
+      case('air_pressure_at_surface')
         fieldData%r1%array(1:geom%nCellsSolve) = ps
 
     end select

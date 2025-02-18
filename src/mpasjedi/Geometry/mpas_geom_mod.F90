@@ -53,6 +53,8 @@ type :: templated_field
    character(len=MAXVARLEN) :: name
    character(len=MAXVARLEN) :: template
    character(len=MAXVARLEN) :: identity
+   character(len=MAXVARLEN) :: io_name
+   real(kind=kind_real)     :: io_scaling_factor
 end type templated_field
 
 !> Fortran derived type to hold geometry definition
@@ -109,6 +111,10 @@ type :: mpas_geom
    procedure, public :: template => template_fieldname
    procedure, public :: has_identity => field_has_identity
    procedure, public :: identity => identity_fieldname
+   procedure, public :: has_io_name => field_has_io_name
+   procedure, public :: io_name => io_name_fieldname
+   procedure, public :: has_io_scaling_factor => field_has_io_scaling_factor
+   procedure, public :: io_scaling_factor => io_scaling_factor_value
    procedure, public :: full_to_half => full_to_half_levels
    procedure, public :: get_num_nodes_and_elements
    procedure, public :: get_coords_and_connectivities
@@ -161,6 +167,7 @@ subroutine geo_setup(self, f_conf, f_comm)
    !character(len=120) :: fn
    character(len=512) :: nml_file, streams_file, fields_file
    character(len=:), allocatable :: str
+   real(kind=kind_real) :: scaling_factor
    type(fckit_configuration) :: template_conf
    type(fckit_configuration), allocatable :: fields_conf(:)
 
@@ -239,6 +246,16 @@ subroutine geo_setup(self, f_conf, f_comm)
         self%templated_fields(ii)%identity = trim(str)
       else
         self%templated_fields(ii)%identity = 'none'
+      end if
+      if (fields_conf(ii)%get('mpas io name',str)) then
+        self%templated_fields(ii)%io_name = trim(str)
+      else
+        self%templated_fields(ii)%io_name = 'none'
+      end if
+      if (fields_conf(ii)%get('mpas io scaling factor',scaling_factor)) then
+        self%templated_fields(ii)%io_scaling_factor = scaling_factor
+      else
+        self%templated_fields(ii)%io_scaling_factor = -1.0_kind_real
       end if
    end do
    deallocate(fields_conf)
@@ -877,6 +894,7 @@ end subroutine geo_vert_coord
 ! ------------------------------------------------------------------------------
 
 function field_is_templated(self, fieldname) result(is_templated)
+   implicit none
    class(mpas_geom), intent(in) :: self
    character(len=*), intent(in) :: fieldname
    integer :: ii
@@ -895,6 +913,7 @@ end function field_is_templated
 ! ------------------------------------------------------------------------------
 
 function template_fieldname(self, fieldname) result(template)
+   implicit none
    class(mpas_geom), intent(in) :: self
    character(len=*), intent(in) :: fieldname
    integer :: ii
@@ -912,6 +931,7 @@ end function template_fieldname
 ! ------------------------------------------------------------------------------
 
 function field_has_identity(self, fieldname) result(has_identity)
+   implicit none
    class(mpas_geom), intent(in) :: self
    character(len=*), intent(in) :: fieldname
    integer :: ii
@@ -919,9 +939,10 @@ function field_has_identity(self, fieldname) result(has_identity)
    has_identity = .false.
    if (allocated(self%templated_fields)) then
       do ii = 1, size(self%templated_fields)
-         if (trim(self%templated_fields(ii)%name) == trim(fieldname) .and. &
-             trim(self%templated_fields(ii)%identity) /= 'none') then
-            has_identity = .true.
+         if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+            if (trim(self%templated_fields(ii)%identity) /= 'none') then
+               has_identity = .true.
+            end if
             return
          end if
       end do
@@ -931,6 +952,7 @@ end function field_has_identity
 ! ------------------------------------------------------------------------------
 
 function identity_fieldname(self, fieldname) result(identity)
+   implicit none
    class(mpas_geom), intent(in) :: self
    character(len=*), intent(in) :: fieldname
    integer :: ii
@@ -944,6 +966,83 @@ function identity_fieldname(self, fieldname) result(identity)
    write(message,*) '--> mpas_geom % identity_fieldname: fieldname does not have identity, ',fieldname
    call abor1_ftn(message)
 end function identity_fieldname
+
+! ------------------------------------------------------------------------------
+
+function field_has_io_name(self, fieldname) result(has_io_name)
+   implicit none
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   logical :: has_io_name
+   has_io_name = .false.
+   if (allocated(self%templated_fields)) then
+      do ii = 1, size(self%templated_fields)
+         if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+            if (trim(self%templated_fields(ii)%io_name) /= 'none') then
+               has_io_name = .true.
+            end if
+            return
+         end if
+      end do
+   end if
+end function field_has_io_name
+
+! ------------------------------------------------------------------------------
+
+function io_name_fieldname(self, fieldname) result(io_name)
+   implicit none
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   character(len=MAXVARLEN) :: io_name
+   do ii = 1, size(self%templated_fields)
+      if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+         io_name = self%templated_fields(ii)%io_name
+         return
+      end if
+   end do
+   write(message,*) '--> mpas_geom % io_name_fieldname: fieldname does not have io_name, ',fieldname
+   call abor1_ftn(message)
+end function io_name_fieldname
+
+! ------------------------------------------------------------------------------
+function field_has_io_scaling_factor(self, fieldname) result(has_io_scaling_factor)
+   implicit none
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   logical :: has_io_scaling_factor
+   has_io_scaling_factor = .false.
+   if (allocated(self%templated_fields)) then
+      do ii = 1, size(self%templated_fields)
+         if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+            if (self%templated_fields(ii)%io_scaling_factor .gt. 0.0_kind_real) then
+               has_io_scaling_factor = .true.
+            end if
+            return
+         end if
+      end do
+   end if
+end function field_has_io_scaling_factor
+
+! ------------------------------------------------------------------------------
+
+function io_scaling_factor_value(self, fieldname) result(io_scaling_factor)
+   implicit none
+   class(mpas_geom), intent(in) :: self
+   character(len=*), intent(in) :: fieldname
+   integer :: ii
+   real(kind=kind_real) :: io_scaling_factor
+   do ii = 1, size(self%templated_fields)
+      if (trim(self%templated_fields(ii)%name) == trim(fieldname)) then
+         io_scaling_factor = self%templated_fields(ii)%io_scaling_factor
+         return
+      end if
+   end do
+   write(message,*) '--> mpas_geom % io_scaling_factor_value: fieldname does not have io_scaling_factor, ',fieldname
+   call abor1_ftn(message)
+end function io_scaling_factor_value
 
 ! ------------------------------------------------------------------------------
 

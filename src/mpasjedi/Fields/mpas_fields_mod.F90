@@ -185,25 +185,28 @@ public :: mpas_fields, mpas_fields_registry, &
 
    character(len=MAXVARLEN) :: mpas_hydrometeor_fields(12) = &
       [ character(len=MAXVARLEN) :: &
-      "qc", "qi", "qr", "qs", "qg", "qh", "nc", "ni", "nr", "ns", "ng", "nh" ]
+      "cloud_liquid_water", "cloud_liquid_ice", "rain_water", "snow_water", "graupel", "hail", &
+      "cloud_droplet_number_concentration", "cloud_ice_number_concentration", "rain_number_concentration", &
+      "snow_number_concentration", "graupel_number_concentration", "hail_number_concentration" ]
    character(len=MAXVARLEN) :: mpas_re_fields(3) = &
       [ character(len=MAXVARLEN) :: &
       "re_cloud", "re_ice  ", "re_snow " ]
    character(len=MAXVARLEN), parameter :: cellCenteredWindFields(2) = &
       [character(len=MAXVARLEN) :: &
-       'uReconstructZonal', 'uReconstructMeridional']
+       'eastward_wind', 'northward_wind']
    character(len=MAXVARLEN), parameter :: moistureFields(2) = &
       [character(len=MAXVARLEN) :: &
-       'qv', 'spechum']
+       'water_vapor_mixing_ratio_wrt_dry_air', 'water_vapor_mixing_ratio_wrt_moist_air']
    character(len=MAXVARLEN), parameter :: analysisThermoFields(2) = &
       [character(len=MAXVARLEN) :: &
-       'surface_pressure', 'temperature']
+       'air_pressure_at_surface', 'air_temperature']
    character(len=MAXVARLEN), parameter :: modelThermoFields(4) = &
       [character(len=MAXVARLEN) :: &
-       'qv', 'pressure', 'rho', 'theta']
+       'water_vapor_mixing_ratio_wrt_dry_air', 'air_pressure', 'dry_air_density', 'air_potential_temperature']
    character(len=MAXVARLEN), parameter :: sacaStateFields(9) = &
       [character(len=MAXVARLEN) :: &
-       'qv', 'qc', 'qi', 'qs', 'cldfrac', 'rho', 'temperature', 'pressure', 'xland']
+       'water_vapor_mixing_ratio_wrt_dry_air', 'cloud_liquid_water', 'cloud_liquid_ice', 'snow_water', &
+       'cldfrac', 'dry_air_density', 'air_temperature', 'air_pressure', 'xland']
    character(len=MAXVARLEN), parameter :: sacaObsFields(2) = &
       [character(len=MAXVARLEN) :: &
        'cldmask', 'brtemp']
@@ -467,27 +470,27 @@ subroutine read_fields(self, f_conf, vdate)
       pressure%array(:,1:ngrid) = pressure_base%array(:,1:ngrid) + pressure_p%array(:,1:ngrid)
 
       !(2) copy all to subFields & diagnose temperature
-      call update_diagnostic_fields(self % geom % domain, self % subFields, self % geom % nCellsSolve)
+      call update_diagnostic_fields(self % geom, self % subFields, self % geom % nCellsSolve)
    else
-      call da_copy_all2sub_fields(self % geom % domain, self % subFields)
+      call da_copy_all2sub_fields(self % geom, self % subFields)
    endif
 
 end subroutine read_fields
 
 
-subroutine update_diagnostic_fields(domain, subFields, ngrid)
+subroutine update_diagnostic_fields(geom, subFields, ngrid)
 
    implicit none
-   type (domain_type), pointer,    intent(inout) :: domain
-   type (mpas_pool_type), pointer, intent(inout) :: subFields
-   integer,                        intent(in)    :: ngrid
+   type (mpas_geom),      pointer,  intent(in)    :: geom
+   type (mpas_pool_type), pointer,  intent(inout) :: subFields
+   integer,                         intent(in)    :: ngrid
    type (field2DReal), pointer    :: theta, pressure, temperature, specific_humidity
    type (field3DReal), pointer    :: scalars
    type (mpas_pool_type), pointer :: state
    integer, pointer :: index_qv
 
    !(1) copy all to subFields
-   call da_copy_all2sub_fields(domain, subFields)
+   call da_copy_all2sub_fields(geom, subFields)
 
    !(2) diagnose temperature
    !Special case: Convert theta and pressure to temperature
@@ -496,13 +499,13 @@ subroutine update_diagnostic_fields(domain, subFields, ngrid)
    !    : If T diagnostic is added in, for example, subroutine atm_compute_output_diagnostics,
    !    : we need to include "exner" in stream_list.for.reading
 
-   call mpas_pool_get_field(domain % blocklist % allFields, 'theta', theta)
-   call mpas_pool_get_field(domain % blocklist % allFields, 'pressure', pressure)
-   call mpas_pool_get_field(subFields, 'temperature', temperature)
-   call mpas_pool_get_field(domain % blocklist % allFields, 'scalars', scalars)
-   call mpas_pool_get_field(subFields, 'spechum', specific_humidity)
+   call mpas_pool_get_field(geom % domain % blocklist % allFields, 'theta', theta)
+   call mpas_pool_get_field(geom % domain % blocklist % allFields, 'pressure', pressure)
+   call mpas_pool_get_field(subFields, 'air_temperature', temperature)
+   call mpas_pool_get_field(geom % domain % blocklist % allFields, 'scalars', scalars)
+   call mpas_pool_get_field(subFields, 'water_vapor_mixing_ratio_wrt_moist_air', specific_humidity)
 
-   call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
+   call mpas_pool_get_subpool(geom % domain % blocklist % structs,'state',state)
    call mpas_pool_get_dimension(state, 'index_qv', index_qv)
 
    call theta_to_temp(theta % array(:,1:ngrid), pressure % array(:,1:ngrid), temperature % array(:,1:ngrid))
@@ -524,7 +527,7 @@ subroutine write_fields(self, f_conf, vdate)
    type (MPAS_Time_type)   :: fld_time, write_time
    character (len=StrKIND) :: dateTimeString, dateTimeString2, streamID, time_string, filename, temp_filename
 
-   call da_copy_sub2all_fields(self % geom % domain, self % subFields)
+   call da_copy_sub2all_fields(self % geom, self % subFields)
 
    call datetime_to_string(vdate, validitydate)
    write(message,*) '--> write_fields: ',trim(validitydate)

@@ -2,49 +2,49 @@ linear variable change tests:
 - linear variable change:
     linear variable change name: Control2Analysis
     input variables:
-    - stream_function
-    - velocity_potential
-    - temperature
-    - spechum
-    - surface_pressure
+    - air_horizontal_streamfunction
+    - air_horizontal_velocity_potential
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - air_pressure_at_surface
     output variables:
-    - uReconstructZonal
-    - uReconstructMeridional
-    - temperature
-    - spechum
-    - surface_pressure
+    - eastward_wind
+    - northward_wind
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - air_pressure_at_surface
   tolerance inverse: 1.0e-8
   test inverse: 0
 - linear variable change: 
     linear variable change name: Control2Analysis
     input variables:
-    - stream_function
-    - velocity_potential
-    - temperature
-    - relhum #pseudo-RH
-    - surface_pressure
+    - air_horizontal_streamfunction
+    - air_horizontal_velocity_potential
+    - air_temperature
+    - relative_humidity #pseudo-RH
+    - air_pressure_at_surface
     output variables:
-    - uReconstructZonal
-    - uReconstructMeridional
-    - temperature
-    - spechum
-    - surface_pressure
+    - eastward_wind
+    - northward_wind
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - air_pressure_at_surface
   tolerance inverse: '1.0e-8'
   test inverse: 0
 - linear variable change: 
     linear variable change name: Control2Analysis
     input variables:
-    - uReconstructZonal
-    - uReconstructMeridional
-    - temperature
-    - relhum #pseudo-RH
-    - surface_pressure
+    - eastward_wind
+    - northward_wind
+    - air_temperature
+    - relative_humidity #pseudo-RH
+    - air_pressure_at_surface
     output variables:
-    - uReconstructZonal
-    - uReconstructMeridional
-    - temperature
-    - spechum
-    - surface_pressure
+    - eastward_wind
+    - northward_wind
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - air_pressure_at_surface
   tolerance inverse: 1.0e-8
   test inverse: 1
 geometry:
@@ -54,9 +54,9 @@ background:
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
   state variables:
-  - uReconstructZonal
-  - uReconstructMeridional
-  - temperature
-  - spechum
-  - surface_pressure
-  - pressure # required for relhum->spechum
+  - eastward_wind
+  - northward_wind
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - air_pressure_at_surface
+  - air_pressure # required for relative_humidity->water_vapor_mixing_ratio_wrt_moist_air

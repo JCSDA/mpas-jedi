@@ -9,26 +9,26 @@ _member config: &memberConfig
   date: 2018-04-15T00:00:00Z
   stream name: background
   state variables:
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  - qv
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  - water_vapor_mixing_ratio_wrt_dry_air
   - pressure
-  - rho
-  - theta
+  - dry_air_density
+  - air_potential_temperature
   - u
   - pressure_p
-  - skintemp
+  - skin_temperature_at_surface
   - smois
   - snowc
   - snowh
   - tslb
-  - u10
-  - v10
+  - eastward_wind_at_10m
+  - northward_wind_at_10m
   - w
-  - xice
+  - seaice_fraction
 
 geometry:
   nml_file: ./Data/480km/namelist.atmosphere_2018041500

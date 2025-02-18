@@ -121,15 +121,15 @@ subroutine update_cloud_fields ( state, obs )
       enddo
    enddo
 
-   call state%get('qv', qv)
-   call state%get('qc', qc)
-   call state%get('qi', qi)
-   call state%get('qs', qs)
-   call state%get('ni', ni)
+   call state%get('water_vapor_mixing_ratio_wrt_dry_air', qv)
+   call state%get('cloud_liquid_water', qc)
+   call state%get('cloud_liquid_ice', qi)
+   call state%get('snow_water', qs)
+   call state%get('cloud_ice_number_concentration', ni)
    call state%get('cldfrac'    , cldfrac)
-   call state%get('rho'        , rho)
-   call state%get('temperature', t)
-   call state%get('pressure'   , p)
+   call state%get('dry_air_density'        , rho)
+   call state%get('air_temperature', t)
+   call state%get('air_pressure'   , p)
    do j = jts, jte
    do k = kts, kte
    do i = its, ite
@@ -204,7 +204,7 @@ subroutine update_cloud_fields ( state, obs )
    end do
 
 !call main algorithm
-   if (state%has('uReconstructZonal') .and. state%has('uReconstructMeridional')) then
+   if (all(state%has(cellCenteredWindFields))) then
       ! allocate and initialize diag and diag_cldfra
       allocate(       diag_p(ims:ime,kms:kme,jms:jme))
       allocate(diag_cldfra_p(ims:ime,kms:kme,jms:jme))
@@ -224,8 +224,8 @@ subroutine update_cloud_fields ( state, obs )
          diag = diag_p, diag_cldfra = diag_cldfra_p)
 
       !update diag & diag_cldfra back to pool
-      call state%get('uReconstructZonal',      diag )
-      call state%get('uReconstructMeridional', diag_cldfra )
+      call state%get('eastward_wind',      diag )
+      call state%get('northward_wind', diag_cldfra )
       do j = jts, jte
       do k = kts, kte
       do i = its, ite
@@ -251,7 +251,7 @@ subroutine update_cloud_fields ( state, obs )
 !update the pool variables
    call state%get('cldfrac',cldfrac)          ! update state cldfrac directly
    !duplicate dqv, dt
-   call mpas_pool_get_field(state%subFields, 'pressure', fld2d_p) ! for template
+   call mpas_pool_get_field(state%subFields, 'air_pressure', fld2d_p) ! for template
    call mpas_duplicate_field(fld2d_p, fld2d_dqv)  ! intermediate increment
    call mpas_duplicate_field(fld2d_p, fld2d_dt)   ! intermediate increment
    do j = jts,jte
@@ -298,18 +298,18 @@ subroutine update_cloud_fields ( state, obs )
    ngrid = state%geom%nCellsSolve
 
    !get more variables to work with "linearized_hydrostatic_balance"
-   call state%get('surface_pressure', ps)
-   call state%get(           'theta', th)
+   call state%get('air_pressure_at_surface',   ps)
+   call state%get('air_potential_temperature', th)
 
    !duplicate dp, drho, dtheta
-   call mpas_pool_get_field(state%subFields, 'pressure', fld2d_p) ! for template
+   call mpas_pool_get_field(state%subFields, 'air_pressure', fld2d_p) ! for template
    call mpas_duplicate_field(fld2d_p, fld2d_dp)    ! intermediate output
    call mpas_duplicate_field(fld2d_p, fld2d_drho)  ! intermediate output
    call mpas_duplicate_field(fld2d_p, fld2d_dth)   ! intermediate output
    !duplicate temporary fields to contain qv_bg fields
    call mpas_duplicate_field(fld2d_p, fld2d_qv_bg) ! temporary bg field
    !duplicate dps
-   call mpas_pool_get_field(state%subFields, 'surface_pressure', fld1d_ps) ! for template
+   call mpas_pool_get_field(state%subFields, 'air_pressure_at_surface', fld1d_ps) ! for template
    call mpas_duplicate_field(fld1d_ps, fld1d_dps) ! intermediate input
    fld1d_dps%array(:) = 0.0 ! fill w/ zeros
 

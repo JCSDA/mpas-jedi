@@ -2,13 +2,13 @@ geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
 inc variables:
-- temperature
-- uReconstructZonal
-- uReconstructMeridional
-- surface_pressure
-- pressure
-- rho
-- theta
+- air_temperature
+- eastward_wind
+- northward_wind
+- air_pressure_at_surface
+- air_pressure
+- dry_air_density
+- air_potential_temperature
 increment test:
   date: '2018-04-15T00:00:00Z'
   skip rms by level test: true
@@ -17,4 +17,4 @@ increment test:
     dirLats: [30.31011691]
     dirLons: [130.11182691]
     ildir: 3
-    dirvar: uReconstructZonal
+    dirvar: eastward_wind

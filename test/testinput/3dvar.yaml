@@ -13,20 +13,49 @@ cost function:
     nml_file: "./Data/480km/namelist.atmosphere_2018041500"
     streams_file: "./Data/480km/streams.atmosphere"
   analysis variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
-  - qc
-  - qi
-  - qr
-  - qs
-  - qg
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  - cloud_liquid_water
+  - cloud_liquid_ice
+  - rain_water
+  - snow_water
+  - graupel
   background:
-    state variables: [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                      qc, qi, qr, qs, qg, theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp,
-                      ivgtyp, isltyp, snowh, znt, t2m, vegfra, u10, v10, lai, smois, tslb]
+    state variables:
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - eastward_wind
+    - northward_wind
+    - air_pressure_at_surface
+    - cloud_liquid_water
+    - cloud_liquid_ice
+    - rain_water
+    - snow_water
+    - graupel
+    - air_potential_temperature
+    - dry_air_density
+    - u
+    - water_vapor_mixing_ratio_wrt_dry_air
+    - air_pressure
+    - landmask
+    - seaice_fraction
+    - snowc
+    - skin_temperature_at_surface
+    - ivgtyp
+    - isltyp
+    - snowh
+    - znt
+    - air_temperature_at_2m
+    - vegetation_area_fraction
+    - eastward_wind_at_10m
+    - northward_wind_at_10m
+    - lai
+    - smois
+    - tslb
+    #- pressure_p  #Should we add this to be consistent with other tests? Just for diagnostics, no change in the result.
     filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
     date: &analysisdate '2018-04-15T00:00:00Z'
   background error:

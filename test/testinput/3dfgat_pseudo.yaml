@@ -19,18 +19,45 @@ cost function:
     - date: '2018-04-15T00:00:00Z'
       filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
       state variables: &stvars
-                       [temperature, spechum, uReconstructZonal, uReconstructMeridional, surface_pressure,
-                       theta, rho, u, qv, pressure, landmask, xice, snowc, skintemp, ivgtyp, isltyp,
-                       qc, qi, qr, qs, qg, pressure_p, snowh, vegfra, u10, v10, lai, smois, tslb, w]
+      - air_temperature
+      - water_vapor_mixing_ratio_wrt_moist_air
+      - eastward_wind
+      - northward_wind
+      - air_pressure_at_surface
+      - air_potential_temperature
+      - dry_air_density
+      - u
+      - water_vapor_mixing_ratio_wrt_dry_air
+      - air_pressure
+      - landmask
+      - seaice_fraction
+      - snowc
+      - skin_temperature_at_surface
+      - ivgtyp
+      - isltyp
+      - cloud_liquid_water
+      - cloud_liquid_ice
+      - rain_water
+      - snow_water
+      - graupel
+      - pressure_p
+      - snowh
+      - vegetation_area_fraction
+      - eastward_wind_at_10m
+      - northward_wind_at_10m
+      - lai
+      - smois
+      - tslb
+      - w
     - date: '2018-04-15T03:00:00Z'
       filename: "./Data/480km/bg/restart.2018-04-15_03.00.00.nc"
       state variables: *stvars
   analysis variables: &incvars
-  - temperature
-  - spechum
-  - uReconstructZonal
-  - uReconstructMeridional
-  - surface_pressure
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
   background:
     state variables: *stvars
     filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"

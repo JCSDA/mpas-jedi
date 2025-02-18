@@ -292,26 +292,27 @@ contains
    !>  with the same name.
    !
    !-----------------------------------------------------------------------
-   subroutine da_copy_all2sub_fields(domain, pool_a)
+   subroutine da_copy_all2sub_fields(geom, pool_a)
 
       implicit none
 
+      type (mpas_geom), pointer, intent(in) :: geom
       type (mpas_pool_type), pointer, intent(inout) :: pool_a
       type (mpas_pool_type), pointer :: pool_b, state
-      type (domain_type), pointer, intent(in) :: domain
 
       type (mpas_pool_iterator_type) :: poolItr_a, poolItr_b
       real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
       real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
       real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
       integer, pointer :: index_scalar
+      character(len=MAXVARLEN) :: targetName, ioName
+      real(kind=RKIND) :: scaling_factor
 
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
 
-
-      pool_b => domain % blocklist % allFields
-      call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
+      pool_b => geom % domain % blocklist % allFields
+      call mpas_pool_get_subpool(geom % domain % blocklist % structs,'state',state)
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
@@ -330,8 +331,23 @@ contains
              call mpas_pool_begin_iteration(pool_a)
              do while ( mpas_pool_get_next_member(pool_a, poolItr_a) )
 
-               if (( trim(poolItr_b % memberName)).eq.(trim(poolItr_a % memberName)) ) then
+               !1. start from pool field name
+               targetName = trim(poolItr_a % memberName)
+               !2. If exists io_name, update with that
+               if ( geom%has_io_name(targetName) ) then
+                   ioName = geom%io_name(targetName)
+               else
+                   ioName = 'none'
+               end if
+               !3. If exists io_scaling_factor, 
+               if ( geom%has_io_scaling_factor(targetName) ) then
+                   scaling_factor = real(geom%io_scaling_factor(targetName),RKIND)
+               else
+                   scaling_factor = 0.0_RKIND
+               end if
 
+               if ( ( trim(poolItr_b % memberName).eq.trim(targetName) ) .or. &
+                    ( trim(poolItr_b % memberName).eq.trim(ioName)     ) ) then
                   ! Depending on the dimensionality of the field, we need to set pointers of
                   ! the correct type
                   if (poolItr_b % nDims == 0) then
@@ -341,26 +357,38 @@ contains
                   else if (poolItr_b % nDims == 1) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
-                     r1d_ptr_a = r1d_ptr_b
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        r1d_ptr_a = r1d_ptr_b * scaling_factor
+                     else
+                        r1d_ptr_a = r1d_ptr_b
+                     end if
                   else if (poolItr_b % nDims == 2) then
                      write(message,*) 'poolItr_b % memberName=',trim(poolItr_b % memberName)
                      call fckit_log%debug(message)
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
-                     r2d_ptr_a = r2d_ptr_b
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        r2d_ptr_a = r2d_ptr_b * scaling_factor
+                     else
+                        r2d_ptr_a = r2d_ptr_b
+                     end if
                      write(message,*) 'Copy all2sub field MIN/MAX: ',trim(poolItr_b % memberName), &
                                       minval(r2d_ptr_a),maxval(r2d_ptr_a)
                      call fckit_log%debug(message)
                   end if
 
-               else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar(trim(poolItr_b % memberName), trim(ioName)) ) then ! Here we know qx or nx variables are all defined as ioName
                   write(message,*) 'Copy all2sub field: Looking at SCALARS now',trim(poolItr_a % memberName)
                   call fckit_log%debug(message)
-                  call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
+                  call mpas_pool_get_dimension(state, 'index_'//trim(ioName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
-                     field2d % array(:,:) = field3d % array(index_scalar,:,:)
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        field2d % array(:,:) = field3d % array(index_scalar,:,:) * scaling_factor
+                     else
+                        field2d % array(:,:) = field3d % array(index_scalar,:,:)
+                     end if
                      write(message,*) 'Copy all2sub field MIN/MAX: ',trim(poolItr_a % memberName), &
                                       minval(field2d % array), maxval(field2d % array)
                      call fckit_log%debug(message)
@@ -391,26 +419,27 @@ contains
    !>  with the same name.
    !
    !-----------------------------------------------------------------------
-   subroutine da_copy_sub2all_fields(domain, pool_a)
+   subroutine da_copy_sub2all_fields(geom, pool_a)
 
       implicit none
 
+      type (mpas_geom), pointer, intent(in) :: geom
       type (mpas_pool_type), pointer, intent(in) :: pool_a
       type (mpas_pool_type), pointer :: pool_b, state
-      type (domain_type), pointer, intent(inout) :: domain
 
       type (mpas_pool_iterator_type) :: poolItr_a, poolItr_b
       real (kind=RKIND), pointer :: r0d_ptr_a, r0d_ptr_b
       real (kind=RKIND), dimension(:), pointer :: r1d_ptr_a, r1d_ptr_b
       real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a, r2d_ptr_b
       integer, pointer :: index_scalar
+      character(len=MAXVARLEN) :: targetName, ioName
+      real(kind=RKIND) :: scaling_factor
 
       type (field2DReal), pointer :: field2d
       type (field3DReal), pointer :: field3d
 
-
-      pool_b => domain % blocklist % allFields
-      call mpas_pool_get_subpool(domain % blocklist % structs,'state',state)
+      pool_b => geom % domain % blocklist % allFields
+      call mpas_pool_get_subpool(geom % domain % blocklist % structs,'state',state)
       !
       ! Iterate over all fields in pool_b, adding them to fields of the same
       ! name in pool_a
@@ -429,8 +458,23 @@ contains
              call mpas_pool_begin_iteration(pool_a)
              do while ( mpas_pool_get_next_member(pool_a, poolItr_a) )
 
-               if (( trim(poolItr_b % memberName)).eq.(trim(poolItr_a % memberName)) ) then
+               !1. start from pool field name
+               targetName = trim(poolItr_a % memberName)
+               !2. If exists io_name, update with that
+               if ( geom%has_io_name(targetName) ) then
+                   ioName = geom%io_name(targetName)
+               else
+                   ioName = 'none'
+               end if
+               !3. If exists io_scaling_factor, 
+               if ( geom%has_io_scaling_factor(targetName) ) then
+                   scaling_factor = real(geom%io_scaling_factor(targetName),RKIND)
+               else
+                   scaling_factor = 0.0_RKIND
+               end if
 
+               if ( ( trim(poolItr_b % memberName).eq.trim(targetName) ) .or. &
+                    ( trim(poolItr_b % memberName).eq.trim(ioName)     ) ) then
                   ! Depending on the dimensionality of the field, we need to set pointers of
                   ! the correct type
                   if (poolItr_b % nDims == 0) then
@@ -440,27 +484,39 @@ contains
                   else if (poolItr_b % nDims == 1) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r1d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r1d_ptr_b)
-                     r1d_ptr_b = r1d_ptr_a
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        r1d_ptr_b = r1d_ptr_a / scaling_factor
+                     else
+                        r1d_ptr_b = r1d_ptr_a
+                     end if
                      write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName), &
                                       minval(r1d_ptr_a),maxval(r1d_ptr_a)
                      call fckit_log%debug(message)
                   else if (poolItr_b % nDims == 2) then
                      call mpas_pool_get_array(pool_a, trim(poolItr_a % memberName), r2d_ptr_a)
                      call mpas_pool_get_array(pool_b, trim(poolItr_b % memberName), r2d_ptr_b)
-                     r2d_ptr_b = r2d_ptr_a
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        r2d_ptr_b = r2d_ptr_a / scaling_factor
+                     else
+                        r2d_ptr_b = r2d_ptr_a
+                     end if
                      write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_b % memberName), &
                                       minval(r2d_ptr_a),maxval(r2d_ptr_a)
                      call fckit_log%debug(message)
                   end if
 
-               else if ( match_scalar(trim(poolItr_b % memberName), trim(poolItr_a % memberName)) ) then
+               else if ( match_scalar(trim(poolItr_b % memberName), trim(ioName)) ) then ! Here we know qx or nx variables are all defined as ioName
                   write(message,*) 'Copy sub2all field: Looking at SCALARS now',trim(poolItr_a % memberName)
                   call fckit_log%debug(message)
-                  call mpas_pool_get_dimension(state, 'index_'//trim(poolItr_a % memberName), index_scalar)
+                  call mpas_pool_get_dimension(state, 'index_'//trim(ioName), index_scalar)
                   if (index_scalar .gt. 0) then
                      call mpas_pool_get_field(pool_a, trim(poolItr_a % memberName), field2d)
                      call mpas_pool_get_field(pool_b, trim(poolItr_b % memberName), field3d)
-                     field3d % array(index_scalar,:,:) = field2d % array(:,:)
+                     if ( scaling_factor /= 0.0_RKIND ) then
+                        field3d % array(index_scalar,:,:) = field2d % array(:,:) / scaling_factor
+                     else
+                        field3d % array(index_scalar,:,:) = field2d % array(:,:)
+                     end if
                      write(message,*) 'Copy sub2all field MIN/MAX: ',trim(poolItr_a % memberName), &
                                       minval(field2d % array), maxval(field2d % array)
                      call fckit_log%debug(message)

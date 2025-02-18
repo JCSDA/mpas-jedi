@@ -68,10 +68,10 @@ subroutine create(self, geom, bg, fg, conf)
   character(len=MAXVARLEN), parameter :: &
     trajFieldNames(4) = &
       [ character(len=MAXVARLEN) :: &
-        'temperature', &
-        'spechum', &
-        'pressure', &
-        'surface_pressure' &
+        'air_temperature', &
+        'water_vapor_mixing_ratio_wrt_moist_air', &
+        'air_pressure', &
+        'air_pressure_at_surface' &
       ]
 
   call da_template_pool(geom, self%trajectory, size(trajFieldNames), trajFieldNames)
@@ -125,8 +125,8 @@ subroutine multiply(self, geom, dxm, dxg)
 
   ! pre-calculate pressure on w levels
   allocate(plevels(1:nVertLevelsP1,1:nCells))
-  call mpas_pool_get_array(self%trajectory, 'pressure', ptrr2_a)
-  call mpas_pool_get_array(self%trajectory, 'surface_pressure', ptrr1_a)
+  call mpas_pool_get_array(self%trajectory, 'air_pressure', ptrr2_a)
+  call mpas_pool_get_array(self%trajectory, 'air_pressure_at_surface', ptrr1_a)
   call pressure_half_to_full(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr1_a(1:nCells), &
                              nCells, nVertLevels, plevels)
 
@@ -156,16 +156,16 @@ subroutine multiply(self, geom, dxm, dxg)
 
         case ( var_tv ) !-virtual_temperature
           ! get TL variables
-          call dxm%get('temperature', ptrr2_a)
-          call dxm%get('spechum', ptrr2_b)
+          call dxm%get('air_temperature', ptrr2_a)
+          call dxm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_b)
 
           ! temporary work fields
           allocate(r2(1:nVertLevels,1:nCells))     ! TL mixing_ratio
           allocate(trajr2(1:nVertLevels,1:nCells)) ! NL mixing_ratio
 
           ! get linearization state
-          call mpas_pool_get_array(self%trajectory, 'temperature', traj_ptrr2_a)
-          call mpas_pool_get_array(self%trajectory, 'spechum', traj_ptrr2_b)
+          call mpas_pool_get_array(self%trajectory, 'air_temperature', traj_ptrr2_a)
+          call mpas_pool_get_array(self%trajectory, 'water_vapor_mixing_ratio_wrt_moist_air', traj_ptrr2_b)
           call q_to_w(traj_ptrr2_b(:,1:nCells), trajr2(:,1:nCells)) !NL coeff.
 
           ! calculations
@@ -179,10 +179,10 @@ subroutine multiply(self, geom, dxm, dxg)
 
         case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           ! get TL variables
-          call dxm%get('spechum', ptrr2_a)
+          call dxm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_a)
 
           ! get linearization state
-          call mpas_pool_get_array(self%trajectory, 'spechum', traj_ptrr2_a)
+          call mpas_pool_get_array(self%trajectory, 'water_vapor_mixing_ratio_wrt_moist_air', traj_ptrr2_a)
 
           ! calculations
           call q_to_w_tl(ptrr2_a(:,1:nCells), traj_ptrr2_a(:,1:nCells), gdata%r2%array(:,1:nCells))
@@ -196,22 +196,22 @@ subroutine multiply(self, geom, dxm, dxg)
           end where
 
         case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-          call q_fields_TL('qc', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('cloud_liquid_water', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-          call q_fields_TL('qi', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('cloud_liquid_ice', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
-          call q_fields_TL('qr', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('rain_water', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
-          call q_fields_TL('qs', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('snow_water', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
-          call q_fields_TL('qg', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('graupel', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
-          call q_fields_TL('qh', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_TL('hail', mFields_tl, gdata%r2, plevels, nCells, nVertLevels)
 
       end select
 
@@ -258,8 +258,8 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
 
   ! pre-calculate pressure on w levels
   allocate(plevels(1:nVertLevelsP1,1:nCells))
-  call mpas_pool_get_array(self%trajectory, 'pressure', ptrr2_a)
-  call mpas_pool_get_array(self%trajectory, 'surface_pressure', ptrr1_a)
+  call mpas_pool_get_array(self%trajectory, 'air_pressure', ptrr2_a)
+  call mpas_pool_get_array(self%trajectory, 'air_pressure_at_surface', ptrr1_a)
   call pressure_half_to_full(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr1_a(1:nCells), &
                              nCells, nVertLevels, plevels)
 
@@ -289,16 +289,16 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
 
         case ( var_tv ) !-virtual_temperature
           ! get AD variables
-          call dxm%get('temperature', ptrr2_a)
-          call dxm%get('spechum', ptrr2_b)
+          call dxm%get('air_temperature', ptrr2_a)
+          call dxm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_b)
 
           ! temporary work fields
           allocate(r2(1:nVertLevels,1:nCells))     ! AD of mixing_ratio
           allocate(trajr2(1:nVertLevels,1:nCells)) ! NL mixing_ratio
 
           ! get linearization state
-          call mpas_pool_get_array(self%trajectory, 'temperature', traj_ptrr2_a)
-          call mpas_pool_get_array(self%trajectory, 'spechum', traj_ptrr2_b)
+          call mpas_pool_get_array(self%trajectory, 'air_temperature', traj_ptrr2_a)
+          call mpas_pool_get_array(self%trajectory, 'water_vapor_mixing_ratio_wrt_moist_air', traj_ptrr2_b)
           call q_to_w(traj_ptrr2_b(:,1:nCells), trajr2(:,1:nCells)) !NL coeff.
 
           ! calculations
@@ -313,13 +313,13 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
 
         case ( var_mixr ) !-water_vapor_mixing_ratio_wrt_dry_air
           ! get AD variables
-          call dxm%get('spechum', ptrr2_a)
+          call dxm%get('water_vapor_mixing_ratio_wrt_moist_air', ptrr2_a)
 
           ! temporary work fields
           allocate(r2(1:nVertLevels,1:nCells)) ! AD of var_mixr
 
           ! get linearization state
-          call mpas_pool_get_array(self%trajectory, 'spechum', traj_ptrr2_a)
+          call mpas_pool_get_array(self%trajectory, 'water_vapor_mixing_ratio_wrt_moist_air', traj_ptrr2_a)
 
           ! Ensure positive-definite mixing ratios
           !  with respect to precision of crtm::CRTM_Parameters::ZERO.
@@ -337,22 +337,22 @@ subroutine multiplyadjoint(self, geom, dxg, dxm)
           deallocate(r2)
 
         case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
-          call q_fields_AD('qc', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('cloud_liquid_water', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cli_wp ) !-mass_content_of_cloud_ice_in_atmosphere_layer
-          call q_fields_AD('qi', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('cloud_liquid_ice', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clr_wp ) !-mass_content_of_rain_in_atmosphere_layer
-          call q_fields_AD('qr', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('rain_water', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_cls_wp ) !-mass_content_of_snow_in_atmosphere_layer
-          call q_fields_AD('qs', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('snow_water', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clg_wp ) !-mass_content_of_graupel_in_atmosphere_layer
-          call q_fields_AD('qg', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('graupel', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
         case ( var_clh_wp ) !-mass_content_of_hail_in_atmosphere_layer
-          call q_fields_AD('qh', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
+          call q_fields_AD('hail', mFields_ad, gdata%r2, plevels, nCells, nVertLevels)
 
       end select
 
