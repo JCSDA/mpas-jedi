@@ -1,4 +1,4 @@
-_test:
+test:
   float relative tolerance: 0.00000001
   integer tolerance: 1
   reference filename: testoutput/hofx3d.ref
