@@ -53,7 +53,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/os/obsout_hofx3d_gnssrobndropp1d.nc4
+          obsfile: Data/os/obsout_hofx3d_ropp_gnssrobndropp1d.nc4
       simulated variables: [bendingAngle]
     obs operator:
       name: GnssroBndROPP1D

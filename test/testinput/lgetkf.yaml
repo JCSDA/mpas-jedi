@@ -180,7 +180,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_amsua_n19--nohydro.nc4
       simulated variables: [brightnessTemperature]
       channels: 5-7,9
     obs error:

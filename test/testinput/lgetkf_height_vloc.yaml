@@ -82,7 +82,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_sondes.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_sondes.nc4
       simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs perturbations seed: 1
     obs operator:
@@ -107,7 +107,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_gnssroref.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_gnssroref.nc4
       simulated variables: [atmosphericRefractivity]
       obs perturbations seed: 1
     obs operator:
@@ -148,7 +148,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_sfc.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_sfc.nc4
       simulated variables: [stationPressure]
       obs perturbations seed: 1
     obs operator:
@@ -180,7 +180,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_3dvar_amsua_amsua_n19--nohydro.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_amsua_n19--nohydro.nc4
       simulated variables: [brightnessTemperature]
       channels: 5-7,9
     obs error:

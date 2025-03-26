@@ -86,7 +86,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sondes.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -108,7 +108,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_satwind.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_satwind.nc4
         simulated variables: [windEastward, windNorthward]
       obs operator:
         name: VertInterp
@@ -130,7 +130,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_gnssroref.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_gnssroref.nc4
         simulated variables: [atmosphericRefractivity]
       obs operator:
         name: GnssroRefNCEP
@@ -169,7 +169,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_2stream_bumploc_unst_sfc.nc4
+            obsfile: Data/os/obsout_3denvar_2stream_bumploc_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcPCorrected

@@ -137,7 +137,7 @@ observations:
 #      obsdatain:
 #        obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_3prof.nc4
 #      obsdataout:
-#        obsfile: Data/os/obsout_hofx3d_gnssroref.nc4
+#        obsfile: Data/os/obsout_hofx3d_gnssrorefmetoffice.nc4
 #      simulated variables: [atmosphericRefractivity]
 #    obs operator:
 #      name: GnssroRefMetOffice
