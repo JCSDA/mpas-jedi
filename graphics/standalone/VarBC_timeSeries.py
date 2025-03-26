@@ -16,8 +16,9 @@ from matplotlib.gridspec import GridSpec
 from datetime import datetime, timedelta
 from pathlib import Path
 from VarBC_dict import VarBCDict
+import math
 
-def plot(days, sensor, data, expname, typ, title, channel):
+def plot(days, sensor, data, expname, typ, title, channel, nobs):
 
     time = pd.to_datetime(days, format='%Y-%m-%d %H:%M:%S')
 
@@ -28,12 +29,17 @@ def plot(days, sensor, data, expname, typ, title, channel):
     predictors = list(data.keys())
 
     ax1.set_title(title+'\n', loc='center', fontweight='bold')
-    ax1.set_title('Sensor: '+sensor, loc='left')
+    ax1.set_title('Sensor: '+sensor+'  nObsUsed @last cycle='+str(nobs) , loc='left')
     ax1.xaxis.grid(linestyle=":", alpha=0.2, color='grey')
     ax1.yaxis.grid(linestyle=":", alpha=0.2, color='grey')
 
     ax1.set_xticks(time[::8])  # every 8 analysis (2 days)
     ax1.set_xticklabels([date.strftime('%d') for date in time[::8]])
+
+    if (typ == 'predcov'):
+      ax1.set_ylabel('Standard Deviation',fontsize=12)
+    if (typ == 'predcoeff'):
+      ax1.set_ylabel('Beta',fontsize=12)
 
     for pred in predictors:
       if len(data[pred]) > 0:
@@ -78,6 +84,7 @@ def main(main_path, dateIni, dateEnd, exp, expname, sensorSat, prefix):
             if os.path.exists(datadir+satbias_file) and os.path.exists(datadir+satbias_cov_file):
               coeff = h5.File(datadir+satbias_file, "r")['BiasCoefficients']
               cov   = h5.File(datadir+satbias_cov_file, "r")['BiasCoefficientErrors']
+              nobs  = h5.File(datadir+satbias_cov_file, "r")['numberObservationsUsed']
 
               for fp in range(len(predlist)):
                 # this is because we specify channels differently for ABI/AHI/MHS (a subset)
@@ -87,15 +94,14 @@ def main(main_path, dateIni, dateEnd, exp, expname, sensorSat, prefix):
                   data_cov[predlist[fp]]   = np.append(data_cov[predlist[fp]],   cov[predlist[fp]][0][ind])
                 else:
                   data_coeff[predlist[fp]] = np.append(data_coeff[predlist[fp]], coeff[predlist[fp]][0][c-1])
-                  data_cov[predlist[fp]]   = np.append(data_cov[predlist[fp]],   cov[predlist[fp]][0][c-1])
-
+                  data_cov[predlist[fp]]   = np.append(data_cov[predlist[fp]],   math.sqrt(cov[predlist[fp]][0][c-1]))
 
           date = date + timedelta(hours=int(delta))
         non_empty = all(len(data_coeff.get(fp, [])) > 0 and len(data_cov.get(fp, [])) > 0 for fp in predlist)
 
         if non_empty:
-          plot(date_list, ss, data_coeff, expname, 'predcoeff', 'Bias coefficients @ch'+str(c), c)
-          plot(date_list, ss, data_cov, expname, 'predcov', 'Bias coefficients errors @ch'+str(c), c)
+          plot(date_list, ss, data_coeff, expname, 'predcoeff', 'Bias coefficients @ch'+str(c), c, nobs[0][c-1])
+          plot(date_list, ss, data_cov, expname, 'predcov', 'Bias coefficients errors @ch'+str(c), c, nobs[0][c-1])
 
     hf = time.time()
     print('Time elapsed: ',hf  - h0)
