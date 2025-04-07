@@ -21,6 +21,7 @@
 
 #include "oops/base/GeometryData.h"
 #include "oops/generic/GlobalInterpolator.h"
+#include "oops/util/FieldSetOperations.h"
 #include "oops/util/Logger.h"
 
 #include "mpasjedi/Geometry/Geometry.h"
@@ -164,6 +165,13 @@ void Increment::zero(const util::DateTime & vt) {
 // ------------------------------------------------------------------------------
 void Increment::ones() {
   mpas_increment_ones_f90(keyInc_);
+}
+// ------------------------------------------------------------------------------
+void Increment::sqrt() {
+  atlas::FieldSet fset{};
+  toFieldSet(fset);
+  util::sqrtFieldSet(fset);
+  fromFieldSet(fset);
 }
 // -----------------------------------------------------------------------------
 void Increment::axpy(const real_type & zz, const Increment & dx,

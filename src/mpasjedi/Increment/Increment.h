@@ -73,6 +73,7 @@ class Increment : public util::Printable,
   Increment & operator+=(const Increment &);
   Increment & operator-=(const Increment &);
   Increment & operator*=(const real_type &);
+  void sqrt();
   void axpy(const real_type &, const Increment &, const bool check = true);
   void axpy(const real_type &, const State &, const bool check = true);
   real_type dot_product_with(const Increment &) const;
