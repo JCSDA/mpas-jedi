@@ -612,10 +612,11 @@ end subroutine mpas_reconstruct_1dAD!}}}
 !-------------------------------------------------------------------------------
 ! input  : psi & chi @ cell center
 ! output : u & v @ cell center
+! - Exclude cells on the boundary, where interpolation requires values of psi, chi outside the domain
 subroutine psichi_to_uv_center(geom, psi, chi, u, v)
 
    implicit none
-   type (mpas_geom),                                               intent(in)  :: geom         !< geometry
+   type (mpas_geom),                                           intent(in)  :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(in)  :: psi, chi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(out) :: u, v
 
@@ -629,6 +630,7 @@ subroutine psichi_to_uv_center(geom, psi, chi, u, v)
    chi_line_intg_dy=MPAS_JEDI_ZERO_kr
 
    do iC = 1, geom%nCellsSolve
+     if ( geom % is_regional .and. geom % bdyMaskCell(iC).eq.7 ) cycle
      do j = 1, geom%nEdgesOnCell(iC) ! or geom%maxEdges
        iE = geom%edgesOnCell(j,iC)
        psi_line_intg_dx(:,iC) = psi_line_intg_dx(:,iC) &
@@ -647,8 +649,14 @@ subroutine psichi_to_uv_center(geom, psi, chi, u, v)
    enddo !- iC
 
    do iC=1, geom%nCellsSolve
-     u(:,iC) = ( psi_line_intg_dx(:,iC) - chi_line_intg_dy(:,iC) ) / geom%areaCell(iC)
-     v(:,iC) = ( psi_line_intg_dy(:,iC) + chi_line_intg_dx(:,iC) ) / geom%areaCell(iC)
+     if ( geom % is_regional .and. geom % bdyMaskCell(iC).eq.7 ) then
+       ! Have incomplete information for reconstruction in cells on the boundary, so set velocity to zero
+       u(:,iC) = MPAS_JEDI_ZERO_kr
+       v(:,iC) = MPAS_JEDI_ZERO_kr
+     else
+       u(:,iC) = ( psi_line_intg_dx(:,iC) - chi_line_intg_dy(:,iC) ) / geom%areaCell(iC)
+       v(:,iC) = ( psi_line_intg_dy(:,iC) + chi_line_intg_dx(:,iC) ) / geom%areaCell(iC)
+     end if
    enddo
 
 end subroutine psichi_to_uv_center
@@ -658,7 +666,7 @@ end subroutine psichi_to_uv_center
 subroutine psichi_to_uv_centerAD(geom, psi, chi, u, v)
 
    implicit none
-   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                           intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: psi, chi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
@@ -672,13 +680,19 @@ subroutine psichi_to_uv_centerAD(geom, psi, chi, u, v)
    chi_line_intg_dy=MPAS_JEDI_ZERO_kr
 
    do iC=1, geom%nCellsSolve
-     psi_line_intg_dx(:,iC) = psi_line_intg_dx(:,iC) + u(:,iC) / geom%areaCell(iC)
-     chi_line_intg_dy(:,iC) = chi_line_intg_dy(:,iC) - u(:,iC) / geom%areaCell(iC)
-     psi_line_intg_dy(:,iC) = psi_line_intg_dy(:,iC) + v(:,iC) / geom%areaCell(iC)
-     chi_line_intg_dx(:,iC) = chi_line_intg_dx(:,iC) + v(:,iC) / geom%areaCell(iC)
+     if ( geom % is_regional .and. geom % bdyMaskCell(iC).eq.7 ) then
+       u(:,iC) = MPAS_JEDI_ZERO_kr
+       v(:,iC) = MPAS_JEDI_ZERO_kr
+     else
+       psi_line_intg_dx(:,iC) = psi_line_intg_dx(:,iC) + u(:,iC) / geom%areaCell(iC)
+       chi_line_intg_dy(:,iC) = chi_line_intg_dy(:,iC) - u(:,iC) / geom%areaCell(iC)
+       psi_line_intg_dy(:,iC) = psi_line_intg_dy(:,iC) + v(:,iC) / geom%areaCell(iC)
+       chi_line_intg_dx(:,iC) = chi_line_intg_dx(:,iC) + v(:,iC) / geom%areaCell(iC)
+     end if
    enddo
 
    do iC = 1, geom%nCellsSolve
+     if ( geom % is_regional .and. geom % bdyMaskCell(iC).eq.7 ) cycle
      do j = 1, geom%nEdgesOnCell(iC) ! or geom%maxEdges
        iE = geom%edgesOnCell(j,iC)
 
@@ -709,10 +723,11 @@ end subroutine psichi_to_uv_centerAD
 !-------------------------------------------------------------------------------
 ! input  : psi @ cell center
 ! output : psi @ vertices
+! - Exclude vertices on the boundary, where interpolation requires values of psi outside the domain
 subroutine psichi_to_uv_edge_step1(geom, psi, psi_v)
 
    implicit none
-   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                              intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: psi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
 
@@ -722,6 +737,8 @@ subroutine psichi_to_uv_edge_step1(geom, psi, psi_v)
 
    ! Interpolate psi in cell center to vertice
    do iV = 1, geom%nVerticesSolve ! local
+     if ( geom % is_regional .and. geom % bdyMaskVertex(iV).eq.7 ) cycle
+
      do j = 1, geom%vertexDegree
        iC = geom%cellsOnVertex(j,iV)
        psi_v(:,iV) = psi_v(:,iV) + geom%kiteAreasOnVertex(j,iV) * psi(:,iC)
@@ -734,10 +751,12 @@ end subroutine psichi_to_uv_edge_step1
 !-------------------------------------------------------------------------------
 ! input  : psi @ vertices, chi @ cell center
 ! output : edge_normal_wind @ edges
+! - Exclude edges on the boundary, where derivatives require values of chi outside the domain
+!   and values of psi on corresponding vertices haven't been calculated
 subroutine psichi_to_uv_edge_step2(geom, psi_v, chi, edge_normal_wind)
 
    implicit none
-   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                              intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(in)    :: psi_v
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(in)    :: chi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
@@ -748,6 +767,8 @@ subroutine psichi_to_uv_edge_step2(geom, psi_v, chi, edge_normal_wind)
 
    !get edge_normal_wind
    do iE = 1, geom%nEdgesSolve ! local
+     if ( geom % is_regional .and. geom % bdyMaskEdge(iE).eq.7 ) cycle
+
      edge_normal_wind(:,iE) = edge_normal_wind(:,iE) - &
                 ( chi(:,geom%cellsOnEdge(2,iE)) - chi(:,geom%cellsOnEdge(1,iE)) ) / geom%dcEdge(iE) - &
                 ( psi_v(:,geom%verticesOnEdge(2,iE)) - psi_v(:,geom%verticesOnEdge(1,iE)) ) / geom%dvEdge(iE)
@@ -763,13 +784,15 @@ subroutine psichi_to_uv_edge_step3(geom, edge_normal_wind, u, v)
    use mpas_vector_reconstruction
 
    implicit none
-   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                           intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges), intent(in)    :: edge_normal_wind
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
    real (kind=RKIND), dimension(:,:), allocatable :: &
                                         uReconstructX, uReconstructY, uReconstructZ
    type (mpas_pool_type), pointer :: mesh
+
+   integer :: iC
 
    allocate(uReconstructX(geom%nVertLevels,geom%nCells))
    allocate(uReconstructY(geom%nVertLevels,geom%nCells))
@@ -784,6 +807,17 @@ subroutine psichi_to_uv_edge_step3(geom, edge_normal_wind, u, v)
                          u,                         &
                          v, .False. ) ! local only, no halo calculation
 
+
+   ! Have incomplete information for reconstruction in cells on the boundary, so set velocity to zero
+   if ( geom % is_regional ) then
+     do iC = 1, geom%nCellsSolve ! local
+       if ( geom % bdyMaskCell(iC).eq.7 ) then
+         u(:,iC) = MPAS_JEDI_ZERO_kr
+         v(:,iC) = MPAS_JEDI_ZERO_kr
+       end if
+     enddo
+   end if
+
    deallocate(uReconstructX, uReconstructY, uReconstructZ)
 
 end subroutine psichi_to_uv_edge_step3
@@ -792,7 +826,7 @@ end subroutine psichi_to_uv_edge_step3
 subroutine psichi_to_uv_edge_step1AD(geom, psi, psi_v)
 
    implicit none
-   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                              intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: psi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
 
@@ -802,6 +836,8 @@ subroutine psichi_to_uv_edge_step1AD(geom, psi, psi_v)
 
    ! Interpolate psi in cell center to vertice
    do iV = 1, geom%nVerticesSolve ! local
+     if ( geom % is_regional .and. geom % bdyMaskVertex(iV).eq.7 ) cycle
+
      psi_v(:,iV) = psi_v(:,iV) / geom%areaTriangle(iV)
      do j = 1, geom%vertexDegree
        iC = geom%cellsOnVertex(j,iV)
@@ -815,7 +851,7 @@ end subroutine psichi_to_uv_edge_step1AD
 subroutine psichi_to_uv_edge_step2AD(geom, psi_v, chi, edge_normal_wind)
 
    implicit none
-   type (mpas_geom),                                                  intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                              intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nVertices), intent(inout) :: psi_v
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells),    intent(inout) :: chi
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges),    intent(inout) :: edge_normal_wind
@@ -827,6 +863,8 @@ subroutine psichi_to_uv_edge_step2AD(geom, psi_v, chi, edge_normal_wind)
 
    !get edge_normal_wind
    do iE = 1, geom%nEdgesSolve ! local
+     if ( geom % is_regional .and. geom % bdyMaskEdge(iE).eq.7 ) cycle
+
      chi(:,geom%cellsOnEdge(2,iE))      = chi(:,geom%cellsOnEdge(2,iE))      - edge_normal_wind(:,iE) / geom%dcEdge(iE)
      chi(:,geom%cellsOnEdge(1,iE))      = chi(:,geom%cellsOnEdge(1,iE))      + edge_normal_wind(:,iE) / geom%dcEdge(iE)
      psi_v(:,geom%verticesOnEdge(2,iE)) = psi_v(:,geom%verticesOnEdge(2,iE)) - edge_normal_wind(:,iE) / geom%dvEdge(iE)
@@ -841,13 +879,23 @@ subroutine psichi_to_uv_edge_step3AD(geom, edge_normal_wind, u, v)
    use mpas_vector_reconstruction
 
    implicit none
-   type (mpas_geom),                                               intent(in)    :: geom         !< geometry
+   type (mpas_geom),                                           intent(in)    :: geom         !< geometry
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nEdges), intent(inout) :: edge_normal_wind
    real (kind=RKIND), dimension(geom%nVertLevels,geom%nCells), intent(inout) :: u, v
 
    real (kind=RKIND), dimension(:,:), allocatable :: &
                                         uReconstructX, uReconstructY, uReconstructZ
    type (mpas_pool_type), pointer :: mesh
+   integer :: iC
+
+   if ( geom % is_regional ) then
+     do iC = 1, geom%nCellsSolve ! local
+       if ( geom % bdyMaskCell(iC).eq.7 ) then
+         u(:,iC) = MPAS_JEDI_ZERO_kr
+         v(:,iC) = MPAS_JEDI_ZERO_kr
+       end if
+     enddo
+   end if
 
    edge_normal_wind=MPAS_JEDI_ZERO_kr
 

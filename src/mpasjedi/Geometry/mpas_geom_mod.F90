@@ -91,6 +91,8 @@ type :: mpas_geom
    real(kind=RKIND), DIMENSION(:), ALLOCATABLE :: dcEdge, dvEdge
    real(kind=RKIND), DIMENSION(:), ALLOCATABLE :: areaTriangle, angleEdge
    real(kind=RKIND), DIMENSION(:,:), ALLOCATABLE :: kiteAreasOnVertex, edgesOnCell_sign
+   logical :: is_regional = .false. ! global mesh by default
+   integer, dimension(:), allocatable :: bdyMaskCell, bdyMaskEdge, bdyMaskVertex
 
    type (domain_type), pointer :: domain => null()
    type (core_type), pointer :: corelist => null()
@@ -173,6 +175,7 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    real (kind=RKIND), pointer :: r1d_ptr(:), r2d_ptr(:,:)
    integer, pointer :: i0d_ptr, i1d_ptr(:), i2d_ptr(:,:)
+   logical, pointer :: config_apply_lbcs
 
    type(idcounter), allocatable :: prev_count(:)
    integer :: ii, nprev
@@ -350,6 +353,9 @@ subroutine geo_setup(self, f_conf, f_comm)
    allocate ( self % edgesOnCell_sign ( self % maxEdges, self % nCells ) )
    allocate ( self % areaTriangle ( self % nVertices ) )
    allocate ( self % angleEdge ( self % nEdges ) )
+   allocate ( self % bdyMaskCell ( self % nCells ) )
+   allocate ( self % bdyMaskEdge ( self % nEdges ) )
+   allocate ( self % bdyMaskVertex ( self % nVertices ) )
 
    call mpas_pool_get_array ( meshPool, 'latCell', r1d_ptr )
    self % latCell = r1d_ptr(1:self % nCells)
@@ -394,6 +400,14 @@ subroutine geo_setup(self, f_conf, f_comm)
    self % areaTriangle = r1d_ptr(1:self % nVertices)
    call mpas_pool_get_array ( meshPool, 'angleEdge', r1d_ptr )           
    self % angleEdge = r1d_ptr(1:self % nEdges)
+   call mpas_pool_get_config( self%domain%blocklist%configs, 'config_apply_lbcs', config_apply_lbcs )
+   self % is_regional = config_apply_lbcs
+   call mpas_pool_get_array ( meshPool, 'bdyMaskCell', i1d_ptr )
+   self % bdyMaskCell = i1d_ptr(1:self % nCells)
+   call mpas_pool_get_array ( meshPool, 'bdyMaskEdge', i1d_ptr )
+   self % bdyMaskEdge = i1d_ptr(1:self % nEdges)
+   call mpas_pool_get_array ( meshPool, 'bdyMaskVertex', i1d_ptr )
+   self % bdyMaskVertex = i1d_ptr(1:self % nVertices)
 
    call mpas_pool_get_array ( meshPool, 'zgrid', r2d_ptr )
    self % zgrid = r2d_ptr ( 1:self % nVertLevelsP1, 1:self % nCells )
@@ -696,6 +710,9 @@ subroutine geo_clone(self, other)
    if (.not.allocated(self % edgesOnCell_sign)) allocate(self % edgesOnCell_sign(self % maxEdges, self % nCells))
    if (.not.allocated(self % areaTriangle)) allocate(self % areaTriangle(self % nVertices))
    if (.not.allocated(self % angleEdge)) allocate(self % angleEdge(self % nEdges))
+   if (.not.allocated(self % bdyMaskCell)) allocate ( self % bdyMaskCell ( self % nCells ) )
+   if (.not.allocated(self % bdyMaskEdge)) allocate ( self % bdyMaskEdge ( self % nEdges ) )
+   if (.not.allocated(self % bdyMaskVertex)) allocate ( self % bdyMaskVertex ( self % nVertices ) )
 
    self % templated_fields  = other % templated_fields
    self % latCell           = other % latCell
@@ -719,6 +736,10 @@ subroutine geo_clone(self, other)
    self % edgesOnCell_sign  = other % edgesOnCell_sign
    self % areaTriangle      = other % areaTriangle
    self % angleEdge         = other % angleEdge
+   self % is_regional       = other % is_regional
+   self % bdyMaskCell       = other % bdyMaskCell
+   self % bdyMaskEdge       = other % bdyMaskEdge
+   self % bdyMaskVertex     = other % bdyMaskVertex
 
    self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
 
@@ -770,6 +791,9 @@ subroutine geo_delete(self)
    if (allocated(self%edgesOnCell_sign)) deallocate(self%edgesOnCell_sign)
    if (allocated(self%areaTriangle)) deallocate(self%areaTriangle)
    if (allocated(self%angleEdge)) deallocate(self%angleEdge)
+   if (allocated(self%bdyMaskCell)) deallocate(self%bdyMaskCell)
+   if (allocated(self%bdyMaskEdge)) deallocate(self%bdyMaskEdge)
+   if (allocated(self%bdyMaskVertex)) deallocate(self%bdyMaskVertex)
 
    do ii = 1, size(geom_count)
       if (geom_count(ii)%id == self%domain%domainID) then
@@ -1346,20 +1370,15 @@ subroutine get_num_nodes_and_elements(self, num_nodes, num_tris)
    integer, intent(out) :: num_nodes
    integer, intent(out) :: num_tris
 
-   logical, pointer :: config_apply_lbcs
-   integer, dimension(:), pointer :: bdyMaskVertex
    integer :: nVerticesBdy7
 
    num_nodes = self % nCells         ! Local + Halo
    num_tris = self % nVerticesSolve  ! Local
 
-   call mpas_pool_get_config(self%domain%blocklist%configs, 'config_apply_lbcs', config_apply_lbcs)
-
    ! for regional MPAS mesh
-   if ( config_apply_lbcs) then
-      call mpas_pool_get_array(self%domain%blocklist%allFields, 'bdyMaskVertex', bdyMaskVertex)
+   if ( self % is_regional ) then
       ! count the number of outer-most Vertices ( bdyMaskVertex == 7 )
-      nVerticesBdy7 = count ( bdyMaskVertex(1:self%nVerticesSolve) ==7 )
+      nVerticesBdy7 = count ( self%bdyMaskVertex(1:self%nVerticesSolve) ==7 )
       ! number of "interior" own vertices for a given process
       num_tris = self % nVerticesSolve - nVerticesBdy7
       write(message,*) self%f_comm%rank(), 'this is regional, nVerticesSolve, nVerticesBdy7=', &
@@ -1390,7 +1409,7 @@ subroutine get_coords_and_connectivities(self, &
    integer, intent(out) :: raw_tri_boundary_nodes(num_tri_boundary_nodes)
 
    integer :: i, iVertValid
-   type (field1DInteger), pointer :: indexToCellID, indexToVertexID, iTmp, bdyMaskVertex
+   type (field1DInteger), pointer :: indexToCellID, indexToVertexID, iTmp
 
    lons = self % lonCell * MPAS_JEDI_RAD2DEG_kr
    lats = self % latCell * MPAS_JEDI_RAD2DEG_kr
@@ -1401,7 +1420,6 @@ subroutine get_coords_and_connectivities(self, &
    !indexToCellID & indexToVertexID from MPAS domain
    call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToCellID', indexToCellID)
    call mpas_pool_get_field(self%domain%blocklist%allFields, 'indexToVertexID', indexToVertexID)
-   call mpas_pool_get_field(self%domain%blocklist%allFields, 'bdyMaskVertex', bdyMaskVertex)
    call mpas_duplicate_field(indexToCellID, iTmp)   ! intermediate for halo exchange
 
    global_indices(1:num_nodes) = indexToCellID % array(1:num_nodes)
@@ -1430,7 +1448,7 @@ subroutine get_coords_and_connectivities(self, &
 
    iVertValid=1 ! used for global indices of vertices.
    do i=1,self%nVerticesSolve ! Note self%nVerticesSolve = num_tris (for global mesh), but != num_tris (for regional mesh)
-      if( bdyMaskVertex % array (i) .eq. 7 ) cycle ! regional MPAS mesh, Skip the outer-most Vertices
+      if( self % bdyMaskVertex(i) .eq. 7 ) cycle ! regional MPAS mesh, Skip the outer-most Vertices
       raw_tri_boundary_nodes(3*(iVertValid-1)+1) = indexToCellID % array( self%cellsOnVertex(1,i) )
       raw_tri_boundary_nodes(3*(iVertValid-1)+2) = indexToCellID % array( self%cellsOnVertex(2,i) )
       raw_tri_boundary_nodes(3*(iVertValid-1)+3) = indexToCellID % array( self%cellsOnVertex(3,i) )
