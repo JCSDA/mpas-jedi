@@ -47,6 +47,8 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
       help="first Cycle date/time, e.g. 20180414T18")
     parser.add_argument("-l", "--lastCycle",
       help="last Cycle date/time, e.g. 20180415T06")
+    parser.add_argument("-w", "--waitForSync", action="store_true",
+      help="create a sync job which won't run until all graph jobs complete")
 
 processor = SpawnAnalyzeStatsArgs()
 

@@ -8,6 +8,7 @@ from predefined_configs import outerIter
 from copy import deepcopy
 import JobScript as js
 import os
+import subprocess
 from pathlib import Path
 import re
 import textwrap
@@ -137,9 +138,16 @@ def main():
       exps = args.experiments.split(',')
       if len(exps) > 1:analysisTypes.append('BinValAxisProfileDiffCI')
 
+    ## check for command line option to create a sync job
+    if args.waitForSync:
+      sync = True
+    else:
+      sync = False
+
     jobConf['env'] = jobenv
 
     ## submit a job for each selected DiagSpace
+    job_procs = []
     for DiagSpace, dsConf in DiagSpaceConfig.items():
       for analysisType in analysisTypes:
         myJobConf = deepcopy(jobConf)
@@ -176,7 +184,15 @@ def main():
 
         job = js.JobScriptFactory(myJobConf)
         job.create()
-        job.submit()
+        job_procs.append(job.submit(sync))
+
+    if len(job_procs) > 0:
+
+      # wait for all jobs to complete, order doesn't matter
+      for job_proc in job_procs:
+        if sync == True:
+          print("waiting for subprocess:", job_proc)
+        job_proc.wait()
 
 if __name__ == '__main__': main()
 

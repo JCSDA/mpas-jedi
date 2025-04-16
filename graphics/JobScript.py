@@ -80,14 +80,22 @@ class JobScriptBase():
         js.close()
         os.system('chmod 744 '+script)
 
-    def submit(self):
+    def submit(self, sync):
         ## submit job
-        command = self.command+self.script
+        block = []
+        # if sync is set pass "-W block=true"  to qsub so it blocks
+        # until the job completes.
+        if sync:
+          block.append( "-W")
+          block.append("block=true")
+        command = self.command + " ".join(block) + " " + self.script
         CWD = os.getcwd()
         os.chdir(str(self.jobpath))
         print(command+" in "+os.getcwd())
-        os.system(command)
+        args = [self.command.rstrip()] + block + [self.script]
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
         os.chdir(CWD)
+        return proc
 
 class PBSProDerecho(JobScriptBase):
     '''
@@ -118,7 +126,7 @@ class PBSProDerecho(JobScriptBase):
             '#PBS -N '+self.jobname,
             '#PBS -A '+self.account,
             '#PBS -q '+self.queue,
-            '#PBS -l job_priority=regular'
+            '#PBS -l job_priority=regular',
             '#PBS -l select='+str(self.nnode)+':ncpus='+str(self.nppernode)+':mpiprocs='+str(self.nppernode)+':mem='+str(self.memory)+'GB',
             '#PBS -l walltime='+self.walltime,
             '#PBS -m ae',
