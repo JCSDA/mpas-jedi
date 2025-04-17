@@ -440,8 +440,13 @@ subroutine read_fields(self, f_conf, vdate)
    call MPAS_stream_mgr_set_property(self % manager, streamID, MPAS_STREAM_PROPERTY_FILENAME, filename)
    write(message,*) '--> read_fields: Reading ',trim(filename)
    call fckit_log%debug(message)
-   call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
+   if (trim(streamID) == "ensemble") then
+      call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
+                           & when=dateTimeString, rightNow=.True., whence=MPAS_STREAM_NEAREST, ierr=ierr)
+   else
+      call MPAS_stream_mgr_read(self % manager, streamID=streamID, &
                            & when=dateTimeString, rightNow=.True., ierr=ierr)
+   endif
    if ( ierr .ne. 0  ) then
       write(message,*) '--> read_fields: MPAS_stream_mgr_read failed ierr=',ierr
       call abor1_ftn(message)
