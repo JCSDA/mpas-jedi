@@ -1,15 +1,17 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/dirac_spectral_no_wind.ref
-  log output filename: testoutput/dirac_spectral_no_wind.run
-  test output filename: testoutput/dirac_spectral_no_wind.run.ref
+  reference filename: testoutput/dirac_spectral_loc.ref
+  log output filename: testoutput/dirac_spectral_loc.run
+  test output filename: testoutput/dirac_spectral_loc.run.ref
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
 background:
   state variables: &vars
   - air_temperature
+  - eastward_wind
+  - northward_wind
   - water_vapor_mixing_ratio_wrt_moist_air
   - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
@@ -54,7 +56,20 @@ background error:
               function:
                 horizontal daley length: 8000e3  # (in m)
               normalize filter variance: true
+              active variables:
+              - spec_vars
             - saber block name: spectral to gauss
+              active variables:
+              - spec_vars
+            - saber block name: duplicate variables
+              variable groupings:
+              - group variable name: spec_vars
+                group components: &groupVars
+                - air_temperature
+                - eastward_wind
+                - northward_wind
+                - water_vapor_mixing_ratio_wrt_moist_air
+                - air_pressure_at_surface
         saber outer blocks:
         - saber block name: interpolation
           inner geometry:
@@ -102,7 +117,15 @@ background error:
               function:
                 horizontal daley length: 2500e3  # (in m)
               normalize filter variance: true
+              active variables:
+              - spec_vars
             - saber block name: spectral to gauss
+              active variables:
+              - spec_vars
+            - saber block name: duplicate variables
+              variable groupings:
+              - group variable name: spec_vars
+                group components: *groupVars
         saber outer blocks:
         - saber block name: interpolation
           inner geometry:
@@ -143,7 +166,15 @@ background error:
               function:
                 horizontal daley length: 800e3  # (in m)
               normalize filter variance: true
+              active variables:
+              - spec_vars
             - saber block name: spectral to gauss
+              active variables:
+              - spec_vars
+            - saber block name: duplicate variables
+              variable groupings:
+              - group variable name: spec_vars
+                group components: *groupVars
             - saber block name: interpolation
               inner geometry:
                 function space: StructuredColumns
@@ -159,9 +190,9 @@ dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123 ]
   dirLons: [ 130.11182691,-102.95294521 ]
-  ildir: 3
+  ildir: 1
   dirvar: air_temperature
 output dirac:
   stream name: control
-  filename: Data/spectral/mpas.spectral_scalars_%id%.$Y-$M-$D_$h.$m.$s.nc
+  filename: Data/spectral/mpas.spectral_loc_%id%.$Y-$M-$D_$h.$m.$s.nc
   date: *date

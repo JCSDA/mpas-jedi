@@ -11,8 +11,8 @@ background:
   state variables: &vars
   - air_temperature
   - water_vapor_mixing_ratio_wrt_moist_air
-  #- eastward_wind    # temporarily commented out. This will be added back in Nate's PR.
-  #- northward_wind
+  - eastward_wind
+  - northward_wind
   - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
   date: &date '2018-04-15T00:00:00Z'
@@ -28,7 +28,21 @@ background error:
         function:
           horizontal daley length: 2000e3 # adjust this??
         normalize filter variance: true
+        active variables:
+        - air_temperature
+        - water_vapor_mixing_ratio_wrt_moist_air
+        - air_upward_absolute_vorticity
+        - air_horizontal_divergence
+        - air_pressure_at_surface
       - saber block name: spectral to gauss
+        active variables:
+        - air_temperature
+        - water_vapor_mixing_ratio_wrt_moist_air
+        - air_upward_absolute_vorticity
+        - air_horizontal_divergence
+        - eastward_wind
+        - northward_wind
+        - air_pressure_at_surface
   saber outer blocks:
   - saber block name: interpolation
     inner geometry:
@@ -64,7 +78,7 @@ dirac:
   dirLats: [  30.31011691,  26.56505123 ]
   dirLons: [ 130.11182691,-102.95294521 ]
   ildir: 3
-  dirvar: air_temperature #eastward_wind  # temporarily changed as air_temperature.
+  dirvar: eastward_wind
 output dirac:
   filename: Data/spectral/mpas.spectral_1_%id%.$Y-$M-$D_$h.$m.$s.nc
   date: *date

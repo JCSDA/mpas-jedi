@@ -1,15 +1,17 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/process_perts_spectral_no_wind.ref
-  log output filename: testoutput/process_perts_spectral_no_wind.run
-  test output filename: testoutput/process_perts_spectral_no_wind.run.ref
+  reference filename: testoutput/process_perts_spectral.ref
+  log output filename: testoutput/process_perts_spectral.run
+  test output filename: testoutput/process_perts_spectral.run.ref
 geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
 background:
   state variables: &vars
   - air_temperature
+  - eastward_wind
+  - northward_wind
   - water_vapor_mixing_ratio_wrt_moist_air
   - air_pressure_at_surface
   filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
@@ -45,9 +47,21 @@ bands:
           waveband peak: 1
           waveband max: 3
         preserving variance: true
-        active variables: *vars
+        active variables: &saf_vars
+        - air_temperature
+        - water_vapor_mixing_ratio_wrt_moist_air
+        - air_upward_absolute_vorticity
+        - air_horizontal_divergence
+        - air_pressure_at_surface
       - saber block name: spectral to gauss
-        active variables: *vars
+        active variables: &StG_vars
+        - air_temperature
+        - water_vapor_mixing_ratio_wrt_moist_air
+        - air_upward_absolute_vorticity
+        - air_horizontal_divergence
+        - eastward_wind
+        - northward_wind
+        - air_pressure_at_surface
         filter mode: true # instead of running the adjoint code it runs the inverse
       - saber block name: write variances
         binning:
@@ -98,9 +112,9 @@ bands:
           waveband peak: 3
           waveband max: 9
         preserving variance: true
-        active variables: *vars
+        active variables: *saf_vars
       - saber block name: spectral to gauss
-        active variables: *vars
+        active variables: *StG_vars
         filter mode: true # instead of running the adjoint code it runs the inverse
       - saber block name: write variances
         binning:
@@ -137,9 +151,9 @@ bands:
           waveband max: 29
         preserving variance: true
         complement filter: true
-        active variables: *vars
+        active variables: *saf_vars
       - saber block name: spectral to gauss
-        active variables: *vars
+        active variables: *StG_vars
         filter mode: true # instead of running the adjoint code it runs the inverse
       - saber block name: interpolation
         filter mode: true
