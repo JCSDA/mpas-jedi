@@ -91,6 +91,8 @@ list( APPEND mpas_testinput
   testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
   testinput/dirac_bumploc.yaml
+  testinput/dirac_diffusion_duplicated.yaml
+  testinput/dirac_diffusion_univariate.yaml
   testinput/dirac_noloc.yaml
   testinput/dirac_spectral_1.yaml
   testinput/dirac_spectral_loc.yaml
@@ -129,6 +131,7 @@ list( APPEND mpas_testinput
   testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
+  testinput/parameters_diffusion.yaml
   testinput/process_perts_spectral.yaml
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
@@ -165,6 +168,8 @@ list( APPEND mpas_testoutput
   testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
   testoutput/dirac_bumploc.ref
+  testoutput/dirac_diffusion_univariate.ref
+  testoutput/dirac_diffusion_duplicated.ref
   testoutput/dirac_noloc.ref
   testoutput/dirac_spectral_1.ref
   testoutput/dirac_spectral_loc.ref
@@ -417,6 +422,8 @@ endif( ${rttov_FOUND} )
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/bump)
 #spectral outputs
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/spectral)
+#diffusion outputs
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/diffusion)
 #ObsSpaces
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/os)
 #model states
@@ -777,6 +784,11 @@ add_mpasjedi_application_test(
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
 
+add_mpasjedi_application_test(
+    NAME parameters_diffusion
+    APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
 #gen_ens_pert_B
 add_mpasjedi_application_test(
     APPLICATION gen_ens_pert_B
@@ -794,6 +806,18 @@ add_mpasjedi_application_test(
     NAME dirac_bumploc
     APPLICATION error_covariance_toolbox
     DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_diffusion_duplicated
+    APPLICATION error_covariance_toolbox
+    DEPENDS parameters_diffusion
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_diffusion_univariate
+    APPLICATION error_covariance_toolbox
+    DEPENDS parameters_diffusion
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(

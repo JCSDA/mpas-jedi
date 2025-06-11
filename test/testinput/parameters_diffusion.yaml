@@ -1,0 +1,40 @@
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+  deallocate non-da fields: true
+  bump vunit: "modellevel" # modellevel, height
+background:
+  state variables: &vars
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  filename: ./Data/480km/bg/restart.2018-04-15_00.00.00.nc
+  date: &date 2018-04-15T00:00:00Z
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: diffusion
+    calibration:
+      normalization:
+        iterations: 1000   #< in the real world you'll want to use 1e4 or so
+      groups:   # Each group is independent.
+      - horizontal:
+          fixed value: 2500e3
+          #as gaussian: true   #default as Gaspari-Cohn
+        write:
+          filepath: Data/diffusion/diffusion_hz
+      #- horizontal:
+      #    model file:   # can read the lengths from the file.
+      #      date: *date
+      #      filename: ./Data/bump/mpas.cor_rh.2018-04-15_00.00.00.nc
+      #    model variable: air_temperature
+      #  write:
+      #    filepath: Data/diffusion/diffusion_hz_bumpcor_t
+      - vertical:
+          levels: 6
+          fixed value: 1.0
+          as gaussian: true
+        write:
+          filepath: Data/diffusion/diffusion_vt
