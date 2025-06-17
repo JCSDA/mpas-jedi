@@ -211,7 +211,7 @@ driver:
   save posterior variance: true
 
 local ensemble DA:
-  solver: GETKF
+  solver: Deterministic GETKF
   vertical localization:
     fraction of retained variance: 0.5
     lengthscale: 2.0
