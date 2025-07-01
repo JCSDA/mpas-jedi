@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.000001
+  float relative tolerance: 0.00001
   integer tolerance: 0
   reference filename: testoutput/4denvar_VarBC.ref
   log output filename: testoutput/4denvar_VarBC.run

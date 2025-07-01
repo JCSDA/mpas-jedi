@@ -1,5 +1,5 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 5.0613151414281093e+06, nobs = 1500, Jo/n = 3.3742100942854063e+03, err = 1.5955834934112145e+00
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 5.0613151414281093e+06
 DRPCGMinimizer: reduction in residual norm = 2.3169898339273839e-02
 CostFunction::addIncrement: Analysis: 
@@ -92,8 +92,8 @@ sensorScanAngle_order_3:  Min= -1.3804903903413515,  Max= 2.2650278905788359,  N
 sensorScanAngle_order_2:  Min= -4.8933433359454304,  Max= 3.5273747474716308,  Norm= 7.4671432247670335
      sensorScanAngle:  Min= -0.7583964713427224,  Max= 0.0663228160003133,  Norm= 1.3029030745225803
 ---------------------------------------------------------------
-CostJb   : Nonlinear Jb = 20147.4332829826125817
 CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 52525.6952962484792806, nobs = 1500, Jo/n = 35.0171301974989859, err = 1.5955834934112145
+CostJb   : Nonlinear Jb = 20147.4332829826125817
 CostFunction: Nonlinear J = 72673.1285792310955003
 DRPCGMinimizer: reduction in residual norm = 0.1572679249246236
 CostFunction::addIncrement: Analysis: 
@@ -186,6 +186,6 @@ sensorScanAngle_order_3:  Min= -1.3085653864975959,  Max= 2.2596039620382316,  N
 sensorScanAngle_order_2:  Min= -4.8708067145283573,  Max= 3.5377628415591484,  Norm= 7.4493388368557243
      sensorScanAngle:  Min= -0.7545353994419134,  Max= 0.0662683128104157,  Norm= 1.2963475387777126
 ---------------------------------------------------------------
-CostJb   : Nonlinear Jb = 8476.6532981386371830
 CostJo   : Nonlinear Jo(AMSUA-NOAA19) = 51948.5816047809639713, nobs = 1500, Jo/n = 34.6323877365206414, err = 1.5955834934112145
+CostJb   : Nonlinear Jb = 8476.6532981386371830
 CostFunction: Nonlinear J = 60425.2349029196047923

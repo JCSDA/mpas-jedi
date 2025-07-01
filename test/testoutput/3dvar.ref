@@ -1,4 +1,3 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(Radiosonde) = 9.2820660311155007e+02, nobs = 969, Jo/n = 9.5790155119871012e-01, err = 1.9854217306933506e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.5559166247113137e+03, nobs = 1591, Jo/n = 9.7794885274124055e-01, err = 2.2957495045177652e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 1.7238368999523830e+00, nobs = 1, Jo/n = 1.7238368999523830e+00, err = 3.3513128757476807e+00
@@ -6,6 +5,7 @@ CostJo   : Nonlinear Jo(Surface T,Q,Ps) = 6.5512399994443160e+02, nobs = 49, Jo/
 CostJo   : Nonlinear Jo(Surface U,V) = 0.0000000000000000e+00 --- No Observations
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7.0775267927969226e+03, nobs = 509, Jo/n = 1.3904767765809279e+01, err = 1.4113148604498487e+00
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1.9892085577302769e+03, nobs = 356, Jo/n = 5.5876644880063955e+00, err = 2.6409534036738811e+00
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 1.2207706415194447e+04
 DRPCGMinimizer: reduction in residual norm = 8.7031370501788594e-02
 CostFunction::addIncrement: Analysis: 
@@ -41,7 +41,6 @@ Fld=27  Min=-2.0220716817104563e+01, Max=2.2314186411640573e+01, RMS=5.236995242
 Fld=28  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394557591e+00 : lai
 Fld=29  Min=2.0000000000000000e-02, Max=1.0000000000000000e+00, RMS=8.9039092466516556e-01 : smois
 Fld=30  Min=2.1861984093432565e+02, Max=3.1450799148116488e+02, RMS=2.7519634154960795e+02 : tslb
-CostJb   : Nonlinear Jb = 1.2328791911257889e-06
 CostJo   : Nonlinear Jo(Radiosonde) = 9.1990509968581500e+02, nobs = 969, Jo/n = 9.4933446820001544e-01, err = 1.9854217306933506e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.4294559355685176e+03, nobs = 1591, Jo/n = 8.9846381871057046e-01, err = 2.2957495045177652e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 1.6814307881738961e+00, nobs = 1, Jo/n = 1.6814307881738961e+00, err = 3.3513128757476807e+00
@@ -49,6 +48,7 @@ CostJo   : Nonlinear Jo(Surface T,Q,Ps) = 6.5512450813862597e+02, nobs = 49, Jo/
 CostJo   : Nonlinear Jo(Surface U,V) = 0.0000000000000000e+00 --- No Observations
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7.0758057689815387e+03, nobs = 509, Jo/n = 1.3901386579531509e+01, err = 1.4113148604498487e+00
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1.3666468431346154e+03, nobs = 356, Jo/n = 3.8388956267826275e+00, err = 2.6409534036738811e+00
+CostJb   : Nonlinear Jb = 1.2328791911257889e-06
 CostFunction: Nonlinear J = 1.1448619587530166e+04
 DRPCGMinimizer: reduction in residual norm = 3.2816220012934699e-01
 CostFunction::addIncrement: Analysis: 
@@ -84,7 +84,6 @@ Fld=27  Min=-2.0220716817104563e+01, Max=2.2314186411640573e+01, RMS=5.236995242
 Fld=28  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394557591e+00 : lai
 Fld=29  Min=2.0000000000000000e-02, Max=1.0000000000000000e+00, RMS=8.9039092466516556e-01 : smois
 Fld=30  Min=2.1861984093432565e+02, Max=3.1450799148116488e+02, RMS=2.7519634154960795e+02 : tslb
-CostJb   : Nonlinear Jb = 4.3770369216741783e-06
 CostJo   : Nonlinear Jo(Radiosonde) = 9.1194797806543374e+02, nobs = 969, Jo/n = 9.4112278438125252e-01, err = 1.9854217306933506e+00
 CostJo   : Nonlinear Jo(Aircraft) = 1.3471540267464979e+03, nobs = 1591, Jo/n = 8.4673414628943933e-01, err = 2.2957495045177652e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 1.6019951689361427e+00, nobs = 1, Jo/n = 1.6019951689361427e+00, err = 3.3513128757476807e+00
@@ -92,4 +91,5 @@ CostJo   : Nonlinear Jo(Surface T,Q,Ps) = 6.5512520312447634e+02, nobs = 49, Jo/
 CostJo   : Nonlinear Jo(Surface U,V) = 0.0000000000000000e+00 --- No Observations
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7.0722418723909996e+03, nobs = 509, Jo/n = 1.3894384818056974e+01, err = 1.4113148604498487e+00
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--hydro) = 1.2964575536863590e+03, nobs = 356, Jo/n = 3.6417347013661772e+00, err = 2.6409534036738811e+00
+CostJb   : Nonlinear Jb = 4.3770369216741783e-06
 CostFunction: Nonlinear J = 1.1284528633559739e+04
