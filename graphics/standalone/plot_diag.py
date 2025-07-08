@@ -86,6 +86,8 @@ def readdata():
   radianceObsTypes = [
     'abi_g16',
     'ahi_himawari8',
+    'abi-clr_g16',
+    'ahi-clr_himawari8',
     'amsua_aqua',
     'amsua_metop-a',
     'amsua_metop-b',
@@ -450,6 +452,8 @@ def readdata():
       if isGNSSRO:
         db[omb] = (db[omb]/db[obs])*100.
         db[oma] = (db[oma]/db[obs])*100.
+        db[errstart] = (db[errstart]/db[obs])*100.
+        db[obserror] = (db[obserror]/db[obs])*100.
 
       # plot oma, omb from all vertical levels
       if makeDistributionPlots and plot_allinOneDistri:
@@ -737,13 +741,13 @@ def ploterrpro(xVals1, xLabel1,
   ax1.set_ylim([min(yVals), max(yVals)])
   ax1.set_ylabel(yLabel, fontsize=15)
   if 'Channel' in yLabel:
-      ax1.set_yticks(yVals)
-      ax1.set_yticklabels(yVals_in)
+    ax1.set_yticks(yVals)
+    ax1.set_yticklabels(yVals_in)
+  varUnits = '('+vu.varDictObs[varName][0]+')'
   if 'gnssro' in EXP_NAME:
-    varUnits = '(unitless)'
+    ax1.set_xlabel(varName+' '+metric+'(σ_o/y) '+varUnits, fontsize=15)
   else:
-    varUnits = '('+vu.varDictObs[varName][0]+')'
-  ax1.set_xlabel(varName+' '+metric+'(σ_o) '+varUnits, fontsize=15)
+    ax1.set_xlabel(varName+' '+metric+'(σ_o) '+varUnits, fontsize=15)
 
   ax2 = ax1.twinx()
   ax2.spines['right'].set_position(('axes', 1.0))
