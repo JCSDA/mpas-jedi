@@ -170,8 +170,8 @@ cost function:
           variables:
           - name: airTemperature
           - name: specificHumidity
-        - name: SfcPCorrected
-          da_psfc_scheme: UKMO   # or WRFDA
+        - name: SfcCorrected
+          correction scheme to use: UKMO   # or WRFDA
           variables:
           - name: stationPressure
       linear obs operator:

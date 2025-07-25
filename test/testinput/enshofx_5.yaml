@@ -123,7 +123,7 @@ observations:
       channels: 1-15
     obs bias: {}
   - obs space:
-      name: SfcPCorrected
+      name: SfcCorrected
       obsdatain:
         engine:
           type: H5File
@@ -134,8 +134,8 @@ observations:
           obsfile: Data/os/ensemble/mem005/obsout_enshofx_sfc.nc4
       simulated variables: [stationPressure]
     obs operator:
-      name: SfcPCorrected
-      da_psfc_scheme: UKMO   # or WRFDA
+      name: SfcCorrected
+      correction scheme to use: UKMO   # or WRFDA
     linear obs operator:
       name: Identity
       observation alias file: testinput/obsop_name_map.yaml

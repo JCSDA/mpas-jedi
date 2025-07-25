@@ -185,7 +185,7 @@ cost function:
       - filter: Background Check
         threshold: 3
     - obs space:
-        name: SfcPCorrected
+        name: SfcCorrected
         obsdatain:
           engine:
             type: H5File
@@ -197,8 +197,8 @@ cost function:
         simulated variables: [surface_pressure]
         obs perturbations seed: 1
       obs operator:
-        name: SfcPCorrected
-        da_psfc_scheme: UKMO   # or WRFDA
+        name: SfcCorrected
+        correction scheme to use: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
       obs error:

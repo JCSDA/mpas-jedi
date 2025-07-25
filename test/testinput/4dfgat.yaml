@@ -124,7 +124,7 @@ cost function:
         variable: refractivity
         errmodel: NCEP
     - obs space:
-        name: SfcPCorrected
+        name: SfcCorrected
         obsdatain:
           engine:
             type: H5File
@@ -135,8 +135,8 @@ cost function:
             obsfile: Data/os/obsout_4dfgat_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
-        name: SfcPCorrected
-        da_psfc_scheme: UKMO   # or WRFDA
+        name: SfcCorrected
+        correction scheme to use: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
         observation alias file: testinput/obsop_name_map.yaml

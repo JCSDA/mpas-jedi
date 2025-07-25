@@ -1,9 +1,9 @@
-CostJo   : Nonlinear Jo(Radiosonde) = 4.5590328402500347e+02, nobs = 554, Jo/n = 8.2293011556859830e-01, err = 1.8309762215536260e+00
-CostJo   : Nonlinear Jo(GnssroRefNCEP) = 6.5894412303544792e-01, nobs = 1, Jo/n = 6.5894412303544792e-01, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 3.2604592935942172e+01, nobs = 16, Jo/n = 2.0377870584963858e+00, err = 1.4053469322555196e+02
+CostJo   : Nonlinear Jo(Radiosonde) = 4.5583675415741897e+02, nobs = 554, Jo/n = 8.2281002555490790e-01, err = 1.8309762215536260e+00
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 6.5894412303538941e-01, nobs = 1, Jo/n = 6.5894412303538941e-01, err = 3.3513128757476807e+00
+CostJo   : Nonlinear Jo(SfcCorrected) = 3.2594944051684905e+01, nobs = 16, Jo/n = 2.0371840032303066e+00, err = 1.4053469322555196e+02
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
-CostFunction: Nonlinear J = 4.8916682108398106e+02
-DRPCGMinimizer: reduction in residual norm = 4.4843237061400282e-02
+CostFunction: Nonlinear J = 4.8909064233213928e+02
+DRPCGMinimizer: reduction in residual norm = 4.4843647879660803e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 30
@@ -37,12 +37,12 @@ Fld=27  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394
 Fld=28  Min=2.0000000000000000e-02, Max=1.0000000000000000e+00, RMS=8.9041635380025241e-01 : smois
 Fld=29  Min=2.1827041435332046e+02, Max=3.1510877777339482e+02, RMS=2.7526861618015903e+02 : tslb
 Fld=30  Min=-2.0498486374585451e-01, Max=2.6882317147162138e-01, RMS=3.0813132516069847e-02 : w
-CostJo   : Nonlinear Jo(Radiosonde) = 6.1443565753060602e+03, nobs = 1289, Jo/n = 4.7667622771963227e+00, err = 1.8801008775139638e+00
-CostJo   : Nonlinear Jo(GnssroRefNCEP) = 9.7087823564125392e-03, nobs = 1, Jo/n = 9.7087823564125392e-03, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 3.1244883308688138e+01, nobs = 16, Jo/n = 1.9528052067930086e+00, err = 1.4053469322555196e+02
-CostJb   : Nonlinear Jb = 2.1481294862914938e-05
-CostFunction: Nonlinear J = 6.1756111888783989e+03
-DRPCGMinimizer: reduction in residual norm = 4.6213897868580892e-02
+CostJo   : Nonlinear Jo(Radiosonde) = 6.1437176367490038e+03, nobs = 1289, Jo/n = 4.7662665917370086e+00, err = 1.8801008775139638e+00
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 9.6883550732865982e-03, nobs = 1, Jo/n = 9.6883550732865982e-03, err = 3.3513128757476807e+00
+CostJo   : Nonlinear Jo(SfcCorrected) = 3.1233729840959953e+01, nobs = 16, Jo/n = 1.9521081150599970e+00, err = 1.4053469322555196e+02
+CostJb   : Nonlinear Jb = 2.1481556353031746e-05
+CostFunction: Nonlinear J = 6.1749609293420162e+03
+DRPCGMinimizer: reduction in residual norm = 4.6213661909017677e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-14T21:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 30
@@ -76,8 +76,8 @@ Fld=27  Min=0.0000000000000000e+00, Max=6.4799321595370545e+00, RMS=1.3338709394
 Fld=28  Min=2.0000000000000000e-02, Max=1.0000000000000000e+00, RMS=8.9041635380025241e-01 : smois
 Fld=29  Min=2.1827041435332046e+02, Max=3.1510877777339482e+02, RMS=2.7526861618015903e+02 : tslb
 Fld=30  Min=-2.0498486374585451e-01, Max=2.6882317147162138e-01, RMS=3.0813132516069847e-02 : w
-CostJo   : Nonlinear Jo(Radiosonde) = 6.0311939876432143e+03, nobs = 1289, Jo/n = 4.6789712859916328e+00, err = 1.8801008775139638e+00
-CostJo   : Nonlinear Jo(GnssroRefNCEP) = 2.5059214554365803e-03, nobs = 1, Jo/n = 2.5059214554365803e-03, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 3.1248564097938299e+01, nobs = 16, Jo/n = 1.9530352561211437e+00, err = 1.4053469322555196e+02
-CostJb   : Nonlinear Jb = 2.1435915409035402e-05
-CostFunction: Nonlinear J = 6.0624450790985238e+03
+CostJo   : Nonlinear Jo(Radiosonde) = 6.0318777134620959e+03, nobs = 1289, Jo/n = 4.6795017171932471e+00, err = 1.8801008775139638e+00
+CostJo   : Nonlinear Jo(GnssroRefNCEP) = 2.4924795680327755e-03, nobs = 1, Jo/n = 2.4924795680327755e-03, err = 3.3513128757476807e+00
+CostJo   : Nonlinear Jo(SfcCorrected) = 3.1240639800136716e+01, nobs = 16, Jo/n = 1.9525399875085447e+00, err = 1.4053469322555196e+02
+CostJb   : Nonlinear Jb = 2.1436161719151474e-05
+CostFunction: Nonlinear J = 6.0631208671779623e+03

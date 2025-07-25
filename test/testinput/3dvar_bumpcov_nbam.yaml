@@ -144,7 +144,7 @@ cost function:
         threshold: 3
         apply at iterations: 0,1
     - obs space:
-        name: SfcPCorrected
+        name: SfcCorrected
         obsdatain:
           engine:
             type: H5File
@@ -155,8 +155,8 @@ cost function:
             obsfile: Data/os/obsout_3dvar_bumpcov_nbam_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
-        name: SfcPCorrected
-        da_psfc_scheme: UKMO   # or WRFDA
+        name: SfcCorrected
+        correction scheme to use: UKMO   # or WRFDA
       linear obs operator:
         name: Identity
         observation alias file: testinput/obsop_name_map.yaml

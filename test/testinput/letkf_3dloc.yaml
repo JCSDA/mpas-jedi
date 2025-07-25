@@ -148,7 +148,7 @@ observations:
       errmodel: NCEP
 
   - obs space:
-      name: SfcPCorrected
+      name: SfcCorrected
       distribution: *ObsSpaceDistribution
       obsdatain:
         engine:
@@ -161,8 +161,8 @@ observations:
       simulated variables: [stationPressure]
       obs perturbations seed: 1
     obs operator:
-      name: SfcPCorrected
-      da_psfc_scheme: UKMO   # or WRFDA
+      name: SfcCorrected
+      correction scheme to use: UKMO   # or WRFDA
     linear obs operator:
       name: Identity
       #observation alias file: testinput/obsop_name_map.yaml

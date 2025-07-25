@@ -303,7 +303,7 @@ observations:
 #          <<: *crtmobsopts
 #          Sensor_ID: atms_npp
   - obs space:
-      name: SfcPCorrected
+      name: SfcCorrected
       obsdatain:
         engine:
           type: H5File
@@ -314,8 +314,8 @@ observations:
           obsfile: Data/os/obsout_hofx3d_sfc.nc4
       simulated variables: [stationPressure]
     obs operator:
-      name: SfcPCorrected
-      da_psfc_scheme: UKMO   # or WRFDA
+      name: SfcCorrected
+      correction scheme to use: UKMO   # or WRFDA
 
   - obs space:
       name: Surface U,V
