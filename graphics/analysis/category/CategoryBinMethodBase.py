@@ -37,8 +37,8 @@ class CategoryBinMethodBase(AnalysisBase):
             # vu.modVarLat is redundant with vu.obsVarLat (both have varShort=="lat")
             #(vu.modVarLat, bu.latbandsMethod): {},
             (vu.noBinVar, bu.noBinMethod): {},
-            (vu.obsRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
-            (vu.modelRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
+            #(vu.obsRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
+            #(vu.modelRegionBinVar, bu.geoirlatlonboxMethod): {'binVarTier': 2},
             (vu.obsVarPrs, bu.PjetMethod): {'binVarTier': 3},
             (vu.obsVarAlt, bu.altjetMethod): {'binVarTier': 3},
             (vu.obsVarImpact, bu.altjetMethod): {'binVarTier': 3},

@@ -876,23 +876,23 @@ binVarConfigs = {
         'SE_ASIA': nullBinMethod,
         'S_ASIA': nullBinMethod,
         # TODO: this does not work for SEVIRI due to overlap with 0 deg longitude
-        bu.geoirlatlonboxMethod: {
-            'filters': [
-                {'where': bu.lessBound,
-                 'variable': vu.lonMeta,
-                 'bounds': geoirLonBands['starts']},
-                {'where': bu.greatBound,
-                 'variable': vu.lonMeta,
-                 'bounds': geoirLonBands['stops']},
-                {'where': bu.lessBound,
-                 'variable': vu.latMeta,
-                 'bounds': geoirLatBands['starts']},
-                {'where': bu.greatBound,
-                 'variable': vu.latMeta,
-                 'bounds': geoirLatBands['stops']},
-            ],
-            'values': geoirLonBands['values'],
-        },
+#        bu.geoirlatlonboxMethod: {
+#            'filters': [
+#                {'where': bu.lessBound,
+#                 'variable': vu.lonMeta,
+#                 'bounds': geoirLonBands['starts']},
+#               {'where': bu.greatBound,
+#                 'variable': vu.lonMeta,
+#                 'bounds': geoirLonBands['stops']},
+#                {'where': bu.lessBound,
+#                 'variable': vu.latMeta,
+#                 'bounds': geoirLatBands['starts']},
+#                {'where': bu.greatBound,
+#                 'variable': vu.latMeta,
+#                 'bounds': geoirLatBands['stops']},
+#            ],
+#            'values': geoirLonBands['values'],
+#        },
 #TODO: use shapefiles/polygons to describe geographic regions instead of lat/lon boxes, e.g.,
 #        'CONUS_POLYGON': {
 #            'filters': [
@@ -1000,7 +1000,7 @@ binVarConfigs = {
             'values': namedTropLatBands['values'],
         },
     },
-    vu.modelRegionBinVar: {
+#    vu.modelRegionBinVar: {
 #        'AFRICA': nullBinMethod,
 #        'ATLANTIC': nullBinMethod,
 #        'AUSTRALIA': nullBinMethod,
@@ -1028,25 +1028,26 @@ binVarConfigs = {
 #        'SAMERICA': nullBinMethod,
 #        'SE_ASIA': nullBinMethod,
 #        'S_ASIA': nullBinMethod,
-        bu.geoirlatlonboxMethod: {
-            'filters': [
-                {'where': bu.lessBound,
-                 'variable': vu.lonModel,
-                 'bounds': geoirLonBands['starts']},
-                {'where': bu.greatBound,
-                 'variable': vu.lonModel,
-                 'bounds': geoirLonBands['stops']},
-                {'where': bu.lessBound,
-                 'variable': vu.latModel,
-                 'bounds': geoirLatBands['starts']},
-                {'where': bu.greatBound,
-                 'variable': vu.latModel,
-                 'bounds': geoirLatBands['stops']},
-            ],
-            'exclude variables': vu.modDiagnosticVarNames,
-            'values': geoirLonBands['values'],
-        },
-    },
+
+#        bu.geoirlatlonboxMethod: {
+#            'filters': [
+#                {'where': bu.lessBound,
+#                 'variable': vu.lonModel,
+#                 'bounds': geoirLonBands['starts']},
+#                {'where': bu.greatBound,
+#                 'variable': vu.lonModel,
+#                 'bounds': geoirLonBands['stops']},
+#                {'where': bu.lessBound,
+#                 'variable': vu.latModel,
+#                 'bounds': geoirLatBands['starts']},
+#                {'where': bu.greatBound,
+#                 'variable': vu.latModel,
+#                 'bounds': geoirLatBands['stops']},
+#            ],
+#            'exclude variables': vu.modDiagnosticVarNames,
+#            'values': geoirLonBands['values'],
+#        },
+#    },
     vu.noBinVar: {
         bu.noBinMethod: {
             'filters': [
@@ -1066,28 +1067,28 @@ binVarConfigs = {
 #=============================
 
 # model level bins by geoir instrument
-for ii, instrument in enumerate(geoirLonBands['values']):
-  binVarConfigs[vu.modVarLev][instrument] = {
-      'filters': [
-          {'where': bu.notEqualBound,
-           'variable': vu.levModel,
-           'bounds': binAxes1D[vu.modVarLev].centrals(astype=int)},
-          {'where': bu.lessBound,
-           'variable': vu.lonModel,
-           'bounds': geoirLonBands['starts'][ii]},
-          {'where': bu.greatBound,
-           'variable': vu.lonModel,
-           'bounds': geoirLonBands['stops'][ii]},
-          {'where': bu.lessBound,
-           'variable': vu.latModel,
-           'bounds': geoirLatBands['starts'][ii]},
-          {'where': bu.greatBound,
-           'variable': vu.latModel,
-           'bounds': geoirLatBands['stops'][ii]},
-      ],
-      'include variables': vu.modVarNamesBase3d,
-      'values': binAxes1D[vu.modVarLev].values(),
-  }
+#for ii, instrument in enumerate(geoirLonBands['values']):
+#  binVarConfigs[vu.modVarLev][instrument] = {
+#      'filters': [
+#          {'where': bu.notEqualBound,
+#           'variable': vu.levModel,
+#           'bounds': binAxes1D[vu.modVarLev].centrals(astype=int)},
+#          {'where': bu.lessBound,
+#           'variable': vu.lonModel,
+#           'bounds': geoirLonBands['starts'][ii]},
+#          {'where': bu.greatBound,
+#           'variable': vu.lonModel,
+#           'bounds': geoirLonBands['stops'][ii]},
+#          {'where': bu.lessBound,
+#           'variable': vu.latModel,
+#           'bounds': geoirLatBands['starts'][ii]},
+#          {'where': bu.greatBound,
+#           'variable': vu.latModel,
+#           'bounds': geoirLatBands['stops'][ii]},
+#      ],
+#      'include variables': vu.modVarNamesBase3d,
+#      'values': binAxes1D[vu.modVarLev].values(),
+#  }
 
 # Add bu.identityBinMethod for identity ranged binning variables
 identityRangeBinVars = {

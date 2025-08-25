@@ -37,8 +37,8 @@ obsBinVars[vu.obsVarLat] += [bu.identityBinMethod]
 obsBinVars[vu.obsVarNormDep] += [bu.identityBinMethod]
 obsBinVars[vu.obsRegionBinVar] += ['CONUS']
 
-if specialAllSkyBins:
-  obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
+#if specialAllSkyBins:
+#  obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 
 ################################
@@ -262,7 +262,7 @@ modelBinVars[vu.modVarLat] += [bu.identityBinMethod]
 modelBinVars[vu.modVarLat] += [bu.troplatbandsMethod]
 modelBinVars[vu.modVarLev] += [bu.identityBinMethod]
 modelBinVars[vu.modVarDiagPrs] += [bu.identityBinMethod]
-modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
+#modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 # pseudo-2D diagnostic pressure bins with named latitude-band methods
 # priority 1 (used for FCScoreCard)
@@ -424,7 +424,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': abi_g16_binVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
@@ -434,7 +434,7 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
-        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         ### example for channel selection/ordering at plotting phase:
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
@@ -445,7 +445,8 @@ DiagSpaceConfig = {
         'anGrp': abiGrp,
         'binVarConfigs': abi_g16_binVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [8,9,10,11,13,14,15,16],
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'ahi-clr_himawari8': {
         'DiagSpaceGrp': radiance_s,
@@ -453,7 +454,8 @@ DiagSpaceConfig = {
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [8,9,10,11,13,14,15,16],
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
     'airs_aqua': {
         'DiagSpaceGrp': radiance_s,
@@ -468,8 +470,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [8, 9],
     },
     'amsua_metop-a': {
         'DiagSpaceGrp': radiance_s,
@@ -477,8 +479,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [5, 6, 9],
     },
     'amsua_metop-b': {
         'DiagSpaceGrp': radiance_s,
@@ -486,8 +488,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [8, 9],
     },
     'amsua_metop-c': {
         'DiagSpaceGrp': radiance_s,
@@ -495,7 +497,7 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
+        'channels': range(1,16),
         'analyzed channels': [5, 6, 7, 8, 9],
     },
     'amsua_n15': {
@@ -504,8 +506,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [5, 7, 8, 9],
     },
     'amsua_n18': {
         'DiagSpaceGrp': radiance_s,
@@ -513,7 +515,7 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
+        'channels': range(1,16),
         'analyzed channels': [5, 6, 7, 8, 9],
     },
     'amsua_n19': {
@@ -522,8 +524,8 @@ DiagSpaceConfig = {
         'anGrp': amsuaGrp,
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [5,6,7,8,9],
-        'analyzed channels': [5, 6, 7, 8, 9],
+        'channels': range(1,16),
+        'analyzed channels': [5, 6, 7, 9],
     },
     'amsua-cld_aqua': {
         'DiagSpaceGrp': radiance_s,
@@ -531,7 +533,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 2, 3, 4, 15],
     },
     'amsua-cld_metop-a': {
@@ -540,7 +542,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_metop-b': {
@@ -549,8 +551,8 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
-        'analyzed channels': [1, 3, 4, 15],
+        'channels': range(1,16),
+        'analyzed channels': [1, 3, 4],
     },
     'amsua-cld_metop-c': {
         'DiagSpaceGrp': radiance_s,
@@ -558,7 +560,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n15': {
@@ -567,7 +569,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n18': {
@@ -576,7 +578,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 3, 4, 15],
     },
     'amsua-cld_n19': {
@@ -585,7 +587,7 @@ DiagSpaceConfig = {
         'anGrp': amsuacldGrp,
         'binVarConfigs': polarcldBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
-        'channels': [1,2,3,4,15],
+        'channels': range(1,16),
         'analyzed channels': [1, 3, 4, 15],
     },
     'cris-fsr_npp': {
@@ -737,7 +739,7 @@ DiagSpaceConfig = {
         'binVarConfigs': polarBinVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(1,6),
-        'analyzed channels': [3, 4, 5],
+        'analyzed channels': [4, 5],
     },
     'atms_npp': {
         'DiagSpaceGrp': radiance_s,

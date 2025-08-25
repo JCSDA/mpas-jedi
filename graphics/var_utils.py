@@ -102,7 +102,7 @@ varDictObs = {
 #Note, bendingAngle: we plot RMSE of OMB/O and OMA/O; bending angle binVar == obsVarAlt:
 
 obsRegionBinVar = 'ObsRegion'
-varDictObs[obsRegionBinVar] = [miss_s, obsRegionBinVar]
+#varDictObs[obsRegionBinVar] = [miss_s, obsRegionBinVar]
 
 # IODA observation variable name substitutions
 vNameStr = 'varName'
@@ -332,7 +332,7 @@ noBinVar = 'all'
 varDictModel[noBinVar] = [miss_s, noBinVar]
 
 modelRegionBinVar = 'ModelRegion'
-varDictModel[modelRegionBinVar] = [miss_s, modelRegionBinVar]
+#varDictModel[modelRegionBinVar] = [miss_s, modelRegionBinVar]
 
 modVarNames2d = [
   'q2',
