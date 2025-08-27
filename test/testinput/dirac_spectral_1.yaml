@@ -43,19 +43,18 @@ background error:
         - eastward_wind
         - northward_wind
         - air_pressure_at_surface
-  saber outer blocks:
-  - saber block name: interpolation
-    inner geometry:
-      function space: StructuredColumns
-      grid:
-        name: F15
-      halo: 1
-      partitioner: ectrans
-    forward interpolator:
-      local interpolator type: oops unstructured grid interpolator
-    inverse interpolator:
-      local interpolator type: oops unstructured grid interpolator
-    active variables: *vars
+      - saber block name: interpolation
+        inner geometry:
+          function space: StructuredColumns
+          grid:
+            name: F15
+          halo: 1
+          partitioner: ectrans
+        forward interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        inverse interpolator:
+          local interpolator type: oops unstructured grid interpolator
+        active variables: *vars
   ensemble:
     members:
     - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
