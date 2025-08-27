@@ -31,6 +31,11 @@ setenv NUMEXPR_MAX_THREADS 1
 
 setenv pySourceDir PYSOURCE
 
+# Pass referenceType as environment variable
+setenv REFERENCE_TYPE REFTYPE
+
+echo "REFERENCE_TYPE is set to $REFERENCE_TYPE"
+
 set mainScript = '''+mainScript.__name__+'''
 ln -sf ${pySourceDir}/${mainScript}.py ./
 
@@ -175,6 +180,7 @@ def main():
             'JEDIAPP': args.jediAppName,
             'NOUTER': str(args.nOuterIter),
             'EXPARGS': expArgs,
+            'REFTYPE': args.referenceType if args.referenceType else 'GFS',  # default to 'GFS' if none provided
         }
         for line in jobbody:
             newline = line

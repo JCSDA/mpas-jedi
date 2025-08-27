@@ -50,7 +50,7 @@ Job-submission examples:
 
 + Spawn one job for the MPAS model DiagSpace
 
-    ./SpawnAnalyzeStats.py -d mpas
+    ./SpawnAnalyzeStats.py -d mpas # -R ERA5/EC/GFS
 
 + Spawn one job for each DiagSpace in the typical MPAS-Workflow variational application
 
@@ -491,8 +491,9 @@ diagnosticGroupings['dy'] = [vu.DiagnosticVars[dy] for dy in SpreadDiagnostics]
 diagnosticGroupings['CRy'] = ['CRyb', 'CRya']
 
 # model spread and consistency
+#REF_KEY = os.getenv("REFERENCE_TYPE", "GFS")  # "GFS" as a fallback default
 #diagnosticGroupings['sigmax'] = ['sigmaxb', 'sigmaxa', 'sigmainf']
-#diagnosticGroupings['dx'] = ['mmgfsan', 'sigmaxb']
+#diagnosticGroupings['dx'] = [f'mm{REF_KEY}an', 'sigmaxb']
 #diagnosticGroupings['CRx'] = ['CRxb', 'CRxa']
 #diagnosticGroupings['SRx'] = ['SRx-eda', 'SRx-rtpp']
 

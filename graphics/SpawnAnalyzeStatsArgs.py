@@ -50,6 +50,9 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
     parser.add_argument("-w", "--waitForSync", action="store_true",
       help="create a sync job which won't run until all graph jobs complete")
 
+    parser.add_argument('-R', '--referenceType', choices=['GFS', 'ERA5', 'EC'], default='GFS',
+    help='Reference data source (GFS, ERA5, or EC). Defaults to GFS.')
+
 processor = SpawnAnalyzeStatsArgs()
 
 processor.processArgs()

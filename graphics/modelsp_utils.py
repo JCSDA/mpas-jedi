@@ -10,6 +10,33 @@ import os
 import sys
 import var_utils as vu
 
+# Environment variable to choose reference data source
+REFERENCE_TYPE = os.getenv('REFERENCE_TYPE', 'GFS').upper()
+
+GFSANA_DIR  = os.getenv('GFSANA_DIR',  'Please link GFSANA_DIR')
+ERA5ANA_DIR = os.getenv('ERA5ANA_DIR', 'Please link ERA5ANA_DIR')
+ECANA_DIR   = os.getenv('ECANA_DIR',   'Please link ECANA_DIR')
+
+REFERENCE_CONFIG = {
+    'GFS': {'name': 'GFS', 'data_dir': GFSANA_DIR},
+    'ERA5': {'name': 'ERA5', 'data_dir': ERA5ANA_DIR},
+    'EC':   {'name': 'EC',   'data_dir': ECANA_DIR},
+}
+
+if REFERENCE_TYPE not in REFERENCE_CONFIG:
+    print(f"Warning: Unsupported REFERENCE_TYPE '{REFERENCE_TYPE}', defaulting to 'GFS'")
+    REFERENCE_TYPE = 'GFS'
+
+REF_DIAG_KEY = {
+  'GFS': 'gfs',
+  'ERA5': 'era5',
+  'EC':   'ec',
+}
+
+REF_KEY = REF_DIAG_KEY.get(REFERENCE_TYPE, 'ref')
+
+referenceDataDir = REFERENCE_CONFIG[REFERENCE_TYPE]['data_dir']
+
 ncWriteFormat = 'NETCDF3_64BIT_OFFSET'
 
 fcHours = os.getenv('fcHours', '0')
@@ -20,7 +47,6 @@ endDate  = os.getenv('end_init', '2018051400')
 diff2exp = os.getenv('diff2exp', 'False')
 expDirectory = os.getenv('TOP_DIR','/glade/scratch/$user/pandac/')
 
-GFSANA_DIR = os.getenv('GFSANA_DIR', 'Please link GFSANA_DIR')
 expLongNames = os.getenv('expLongNames', 'please set expLongNames')
 expNames = os.getenv('expNames','please set expNames')
 ncells = os.getenv('ncells', '40962')
@@ -32,7 +58,7 @@ exp2Name = os.getenv('exp2Name','name for current/target expt')
 #
 aggregatableFileStats = ['RMS','Mean'] #,'STD','MS', 'Min','Max']
 allFileStats = aggregatableFileStats
-expStats = 'expmgfs'
+expStats = f'expm{REF_KEY}'
 varNames2d = ['t2m','surface_pressure','q2','u10','v10']
 varNames3d = ['theta','temperature','rho',vu.modVarPrs,'uReconstructZonal','uReconstructMeridional','qv','w']
 varNames = varNames2d + varNames3d
@@ -162,24 +188,24 @@ expLongNames = expLongNames.split()
 expNames = expNames.split()
 nExp  = len(expNames)
 
-def getGridFile(date = initDate, gfsAnaDir = GFSANA_DIR, nCells = ncells):
-  date = initDate
-  print(date)
+def getGridFile(date=initDate, referenceDir=None, nCells=ncells):
+  if referenceDir is None:
+    referenceDir = referenceDataDir
   d = datetime.strptime(date,'%Y%m%d%H')
-  filedate= d.strftime('%Y-%m-%d_%H.%M.%S')
-
-  return gfsAnaDir+'/x1.'+str(nCells)+'.init.'+filedate+'.nc'
+  filedate = d.strftime('%Y-%m-%d_%H.%M.%S')
+  return os.path.join(referenceDir, f'x1.{str(nCells)}.init.{filedate}.nc')
 
 def readGrid(date=initDate, gridFile=None):
-  if gridFile is None: gridFile = getGridFile(date)
+  if gridFile is None:
+    gridFile = getGridFile(date)
   ncData = Dataset(gridFile, 'r')
-  grid = {}
-  grid['latitude'] = np.array( ncData.variables['latCell'][:] ) * 180.0 / np.pi
-  grid['longitude'] = np.array( ncData.variables['lonCell'][:] ) * 180.0 / np.pi
-  grid['area'] = np.array( ncData.variables['areaCell'][:] )
-  grid['R'] = ncData.__dict__['sphere_radius']
+  grid = {
+    'latitude': np.array(ncData.variables['latCell'][:]) * 180.0 / np.pi,
+    'longitude': np.array(ncData.variables['lonCell'][:]) * 180.0 / np.pi,
+    'area': np.array(ncData.variables['areaCell'][:]),
+    'R': ncData.__dict__['sphere_radius'],
+  }
   ncData.close()
-
   return grid
 
 def hasVar(varName, ncData):
@@ -202,7 +228,11 @@ def getPressure(ncData):
     pressure_base = np.array( ncData.variables['pressure_base'][0,:,:] )
     pressure = pressure_p + pressure_base
   else:
-    print("Error: 'pressure', 'pressure_p', or 'pressure_base' variables are missing from the NetCDF data.")
+    missing_vars = [v for v in ['pressure', 'pressure_p', 'pressure_base'] if v not in ncData.variables]
+    raise KeyError(
+        f"Critical variables missing from NetCDF data: {', '.join(missing_vars)}. "
+        "Cannot compute pressure without these."
+    )
   return pressure
 
 def getTemperature(ncData):
@@ -398,11 +428,10 @@ class fieldLogRatio():
 
     return np.asarray(d)
 
-
 diagnosticFunctions = {
-  'mmgfsan': fieldDiff(),
-  'rltv_mmgfsan': fieldRelativeDiff(),
-  'log_mogfsan': fieldLogRatio(),
+  f'mm{REF_KEY}an': fieldDiff(),
+  f'rltv_mm{REF_KEY}an': fieldRelativeDiff(),
+  f'log_mo{REF_KEY}an': fieldLogRatio(),
   'sigmaxb': fieldSpread('bg'),
   'sigmaxa': fieldSpread('an'),
   'sigmaxinf': fieldSpread('inf'),
@@ -410,26 +439,22 @@ diagnosticFunctions = {
 }
 
 variableSpecificDiagnosticConfigs = {
-  # default is 'mmgfsan' below
-  vu.modVarPrs: ['mmgfsan', 'log_mogfsan'],
-  'q2': ['mmgfsan', 'log_mogfsan'],
-  'qv': ['mmgfsan', 'log_mogfsan'],
-  'qv01to30': ['mmgfsan', 'log_mogfsan'],
-  'qv01to10': ['mmgfsan', 'log_mogfsan'],
-  'qv11to20': ['mmgfsan', 'log_mogfsan'],
-  'qv21to30': ['mmgfsan', 'log_mogfsan'],
-  'qv31to40': ['mmgfsan', 'log_mogfsan'],
-  'qv41to55': ['mmgfsan', 'log_mogfsan'],
+  vu.modVarPrs: [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'q2':         [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv':         [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv01to30':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv01to10':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv11to20':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv21to30':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv31to40':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
+  'qv41to55':   [f'mm{REF_KEY}an', f'log_mo{REF_KEY}an'],
 }
 
 def variableSpecificDiagnostics(varName: str, nEns: int):
-  diags = variableSpecificDiagnosticConfigs.get(varName, ['mmgfsan'])
+  defaultDiags = [f'mm{REF_KEY}an']
+  diags = variableSpecificDiagnosticConfigs.get(varName, defaultDiags)
   if nEns > 1:
-    diags.append('sigmaxb')
-    diags.append('sigmaxa')
-    diags.append('sigmaxinf')
-    #diags.append('sigmaxf')
-
+    diags += ['sigmaxb', 'sigmaxa', 'sigmaxinf']
   return diags
 
 aggregatedVariableConfig = {
@@ -479,6 +504,7 @@ def aggMinLevel(varName: str):
 def aggMaxLevel(varName: str, nLevels: int):
   return np.min([aggVariableConfig(varName).get('max level', nLevels), nLevels])
 
+# ------------------------------------------------------------
 def main():
   print ('This is not a runnable program.')
   os._exit(0)

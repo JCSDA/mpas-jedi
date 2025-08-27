@@ -13,6 +13,7 @@ from pathlib import Path
 import plot_utils as pu
 import os
 import var_utils as vu
+import modelsp_utils as mu
 
 import analysis.StatisticsDatabase as sdb
 
@@ -190,6 +191,9 @@ class AnalysisBase():
         self.myFigPath = self.WorkPath
         self.myFigPath.mkdir(parents=True, exist_ok=True)
 
+        # Initialize self.ref with the lowercase REF_KEY from modelsp_utils module
+        self.ref = mu.REF_KEY.lower()
+
     def oneHundredCenteredPercentDifference(self,
       experiment,
       reference,
@@ -348,7 +352,8 @@ class AnalysisBase():
         '''
         ommDiagnostics = ['omb', 'oma', 'omm', 'omf', 'omb_nobc', 'oma_nobc', 'omm_nobc',
                           'rltv_omb', 'rltv_oma', 'rltv_omm', 'rltv_omf']
-        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo', 'mmgfsan', 'rltv_mmgfsan', 'log_mogfsan']
+        mmoDiagnostics = ['bmo', 'amo', 'mmo', 'fmo', f'mm{self.ref}an', f'rltv_mm{self.ref}an', f'log_mo{self.ref}an']
+
         truncateDiagnostics = ommDiagnostics+mmoDiagnostics
         diagnosticGroup_ = diagnosticGroup
         #for diag in truncateDiagnostics:
@@ -442,10 +447,10 @@ class AnalysisBase():
             if 'OENI' in diagnosticGroup: centralValue = 0.
             if 'ACI' in diagnosticGroup: centralValue = 0.
 
-        if 'rltv_mmgfsan' in diagnosticGroup_ and statName in ['STD', 'RMS']: logScale = True
-        if 'log_mogfsan' in diagnosticGroup_ and statName in ['Mean']: centralValue = 0.
+        if f'rltv_mm{self.ref}an' in diagnosticGroup_ and statName in ['STD', 'RMS']: logScale = True
+        if f'log_mo{self.ref}an' in diagnosticGroup_ and statName in ['Mean']: centralValue = 0.
 
-        #if 'rltv_mmgfsan' in diagnosticGroup_: logScale = True
+        #if f'rltv_mm{self.ref}an' in diagnosticGroup_: logScale = True
 
         if isDifferencePlot:
           statDiagLabel = statDiagDiffLabel
@@ -459,7 +464,7 @@ class AnalysisBase():
         pubConventions = {
           'Mean': 'mean',
           'RMS': 'rms',
-          'rms(mmgfsan)': 'RMSE',
+          f'rms(mm{self.ref}an)': 'RMSE',
           'rms(omf)': 'RMSE',
           'rms(omm)': 'RMSE',
           'rms(dx)': 'rms',

@@ -30,10 +30,15 @@ class DiagnoseModelStatistics():
     self.logger = logging.getLogger(self.name)
     self.nprocs = min(mp.cpu_count(), self.args.nprocs)
 
+    if not hasattr(self.args, 'referenceState') or self.args.referenceState is None:
+        raise ValueError("referenceState argument must be set before running DiagnoseModelStatistics")
+
     # construct mean DB into 0th member slot
     date = str(self.args.date)
     initDate = datetime.strptime(date,'%Y%m%d%H')
     fileDate= initDate.strftime('%Y-%m-%d_%H.%M.%S')
+    if not os.path.exists(self.args.referenceState + '.' + fileDate + '.nc'):
+        raise FileNotFoundError(f"Reference state file does not exist: {self.args.referenceState}.{fileDate}.nc")
 
     self.files = {'state': {}, 'diagnostics':{}}
 

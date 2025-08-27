@@ -24,8 +24,8 @@ appName = jediAppName
 
 ## model-space diagnostics
 modelDiags = [
-  'mmgfsan',
-  #'rltv_mmgfsan', 'log_mogfsan',
+  f'mm{mu.REF_KEY}an',
+  #f'rltv_mm{mu.REF_KEY}an', f'log_mo{mu.REF_KEY}an',
   'sigmaxb',
   #'sigmaxa', 'sigmaxf', 'sigmaxinf',
   #'SRx-eda',
