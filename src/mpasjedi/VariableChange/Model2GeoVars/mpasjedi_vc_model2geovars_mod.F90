@@ -115,6 +115,9 @@ subroutine changevar(self, geom, xm, xg)
       [var_sfc_landtyp_usgs, var_sfc_landtyp_igbp, &
        var_sfc_vegtyp, var_sfc_soiltyp, &
        var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac]
+  character(len=MAXVARLEN), parameter :: &
+    ValidSfcFractionNames(4) = &
+      [var_sfc_wfrac, var_sfc_lfrac, var_sfc_ifrac, var_sfc_sfrac]
   type(oops_variables) :: RequestedCRTMSfcNames
   type(mpas_pool_type), pointer :: RequestedCRTMSfcFields => null()
   character(len=MAXVARLEN), parameter :: &
@@ -182,6 +185,17 @@ subroutine changevar(self, geom, xm, xg)
       end if
     end do
 
+    ! If any of ValidSfcFractionNames is requested, add all four fractions to the list.
+    ! This is necessary to use the "generic" obs filters and/or to calculate some VarBC predictors.
+    ! (TODO) If all four fractions are already included in RequestedCRTMSfcNames,
+    !        this part is not needed. However, the check is difficult to add at this point.
+    do iVar = 1, size(ValidSfcFractionNames)
+      geovar = ValidSfcFractionNames(iVar)
+      if ( RequestedCRTMSfcNames%has(geovar) ) then
+       call RequestedCRTMSfcNames%push_back( ValidSfcFractionNames )
+       exit
+      end if
+    end do
     call da_template_pool(geom, &
                           RequestedCRTMSfcFields, &
                           RequestedCRTMSfcNames%nvars(), &
