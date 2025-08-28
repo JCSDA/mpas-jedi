@@ -13,7 +13,6 @@
 
 #include "eckit/config/Configuration.h"
 
-#include "mpasjedi/Traits.h"
 #include "mpasjedi/VariableChange/Base/VariableChangeBase.h"
 #include "mpasjedi/VariableChange/Model2GeoVars/VarChaModel2GeoVars.interface.h"
 

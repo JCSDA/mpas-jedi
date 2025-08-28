@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "oops/interface/ModelBase.h"
 #include "oops/util/Duration.h"
 #include "oops/util/parameters/RequiredParameter.h"
 

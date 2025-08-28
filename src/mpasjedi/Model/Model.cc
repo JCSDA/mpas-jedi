@@ -16,10 +16,7 @@
 
 namespace mpas {
 // -----------------------------------------------------------------------------
-static oops::interface::ModelMaker<Traits, Model> makermodel_("MPAS");
-// -----------------------------------------------------------------------------
-Model::Model(const Geometry & resol,
-                     const eckit::Configuration & config)
+Model::Model(const Geometry & resol, const eckit::Configuration & config)
   : keyModel_(0), tstep_(0), geom_(resol), vars_(config, "model variables")
 {
   oops::Log::trace() << "Model::Model" << std::endl;

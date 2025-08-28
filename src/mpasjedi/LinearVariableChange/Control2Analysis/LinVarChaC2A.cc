@@ -17,7 +17,6 @@
 #include "mpasjedi/Increment/Increment.h"
 #include "mpasjedi/LinearVariableChange/Control2Analysis/LinVarChaC2A.h"
 #include "mpasjedi/State/State.h"
-#include "mpasjedi/Traits.h"
 
 namespace mpas {
 // -------------------------------------------------------------------------------------------------

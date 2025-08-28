@@ -14,11 +14,13 @@
 #include "mpasjedi/GeometryIterator/GeometryIterator.h"
 #include "mpasjedi/Increment/Increment.h"
 #include "mpasjedi/LinearVariableChange/LinearVariableChange.h"
+#include "mpasjedi/Model/Model.h"
 #include "mpasjedi/ModelBias/ModelBias.h"
 #include "mpasjedi/ModelBias/ModelBiasCovariance.h"
 #include "mpasjedi/ModelBias/ModelBiasIncrement.h"
 #include "mpasjedi/ModelData/ModelData.h"
 #include "mpasjedi/State/State.h"
+#include "mpasjedi/Tlm/Tlm.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
 
 namespace mpas {
@@ -33,6 +35,9 @@ struct Traits {
   typedef mpas::GeometryIterator     GeometryIterator;
   typedef mpas::Increment            Increment;
   typedef mpas::State                State;
+
+  typedef mpas::Model                Model;
+  typedef mpas::Tlm                  LinearModel;
 
   typedef mpas::ModelBias            ModelAuxControl;
   typedef mpas::ModelBiasIncrement   ModelAuxIncrement;

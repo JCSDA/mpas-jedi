@@ -5,7 +5,6 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
 
@@ -20,7 +19,6 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::instantiateModelFactory<mpas::Traits>();
   saber::instantiateCovarFactory<mpas::Traits>();
   saber::instantiateLocalizationFactory<mpas::Traits>();
   ufo::instantiateObsErrorFactory();

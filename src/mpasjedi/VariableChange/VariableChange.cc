@@ -16,7 +16,6 @@
 
 #include "mpasjedi/Geometry/Geometry.h"
 #include "mpasjedi/State/State.h"
-#include "mpasjedi/Traits.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
 
 namespace mpas {

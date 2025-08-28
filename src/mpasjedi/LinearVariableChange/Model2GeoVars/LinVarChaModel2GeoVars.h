@@ -13,7 +13,6 @@
 
 #include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
 #include "mpasjedi/LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.interface.h"
-#include "mpasjedi/Traits.h"
 
 // Forward declarations
 namespace eckit {

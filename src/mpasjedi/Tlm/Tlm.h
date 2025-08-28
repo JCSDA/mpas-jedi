@@ -12,19 +12,17 @@
 #include <string>
 #include <vector>
 
-#include "oops/interface/LinearModelBase.h"
-
 #include "mpasjedi/Fortran.h"
+#include "mpasjedi/Geometry/Geometry.h"
 #include "mpasjedi/Model/Model.h"
-#include "mpasjedi/Traits.h"
 
 // Forward declarations
 
 namespace mpas {
   class State;
   class Increment;
-  // class ModelBias;
-  // class ModelBiasIncrement;
+  class ModelBias;
+  class ModelBiasIncrement;
 
 // -----------------------------------------------------------------------------
 /// MPAS linear model definition.
@@ -32,31 +30,30 @@ namespace mpas {
  *  MPAS linear model definition and configuration parameters.
  */
 
-class Tlm: public oops::interface::LinearModelBase<Traits>,
-                private util::ObjectCounter<Tlm> {
+class Tlm: public util::Printable,
+           private util::ObjectCounter<Tlm> {
  public:
   static const std::string classname() {return "mpas::Tlm";}
+  static std::vector<std::string> names() {return {"MPASTLM"};}
 
   Tlm(const Geometry &, const eckit::Configuration &);
   ~Tlm();
 
 /// Model trajectory computation
-  void setTrajectory(const State &, State &, const ModelBias &)
-                    override;
+  void setTrajectory(const State &, State &, const ModelBias &);
 
 /// Run TLM and its adjoint
-  void initializeTL(Increment &) const override;
-  void stepTL(Increment &, const ModelBiasIncrement &) const override;
-  void finalizeTL(Increment &) const override;
+  void initializeTL(Increment &) const;
+  void stepTL(Increment &, const ModelBiasIncrement &) const;
+  void finalizeTL(Increment &) const;
 
-  void initializeAD(Increment &) const override;
-  void stepAD(Increment &, ModelBiasIncrement &) const override;
-  void finalizeAD(Increment &) const override;
+  void initializeAD(Increment &) const;
+  void stepAD(Increment &, ModelBiasIncrement &) const;
+  void finalizeAD(Increment &) const;
 
 /// Other utilities
-  const util::Duration & timeResolution() const override {return tstep_;}
-  const util::Duration & stepTrajectory() const override {return tstep_;}
-  const Geometry & resolution() const {return resol_;}
+  const util::Duration & timeResolution() const {return tstep_;}
+  const util::Duration & stepTrajectory() const {return tstep_;}
 
  private:
   void print(std::ostream &) const override;

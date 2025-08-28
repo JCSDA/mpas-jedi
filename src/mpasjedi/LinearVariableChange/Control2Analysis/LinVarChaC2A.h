@@ -18,7 +18,6 @@
 
 #include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
 #include "mpasjedi/LinearVariableChange/Control2Analysis/LinVarChaC2A.interface.h"
-#include "mpasjedi/Traits.h"
 
 // Forward declarations
 namespace eckit {

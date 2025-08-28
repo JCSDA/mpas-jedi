@@ -18,7 +18,6 @@
 #include "mpasjedi/LinearVariableChange/Base/LinearVariableChangeBase.h"
 #include "mpasjedi/LinearVariableChange/Model2GeoVars/LinVarChaModel2GeoVars.h"
 #include "mpasjedi/State/State.h"
-#include "mpasjedi/Traits.h"
 
 namespace mpas {
 // -------------------------------------------------------------------------------------------------

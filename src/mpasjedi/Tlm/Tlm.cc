@@ -18,10 +18,7 @@
 namespace mpas {
 
 // -----------------------------------------------------------------------------
-static oops::interface::LinearModelMaker<Traits, Tlm> makerMPASTLM_("MPASTLM");
-// -----------------------------------------------------------------------------
-Tlm::Tlm(const Geometry & resol,
-         const eckit::Configuration & config)
+Tlm::Tlm(const Geometry & resol, const eckit::Configuration & config)
   : keyConfig_(0), tstep_(), resol_(resol), traj_(),
     lrmodel_(resol_, config)
 {
@@ -40,8 +37,7 @@ Tlm::~Tlm() {
   oops::Log::trace() << "Tlm destructed" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void Tlm::setTrajectory(const State & xx, State & xlr,
-                            const ModelBias & bias) {
+void Tlm::setTrajectory(const State & xx, State & xlr, const ModelBias & bias) {
 // State xlr(resol_, xx);
   xlr.changeResolution(xx);
   int ftraj = lrmodel_.saveTrajectory(xlr, bias);
