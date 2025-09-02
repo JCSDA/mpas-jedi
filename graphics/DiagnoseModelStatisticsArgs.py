@@ -15,8 +15,8 @@ class DiagnoseObsStatisticsArgs(ProcessArgs):
                         type=str, nargs = '?',
                         help='Valid date (YYYYMMDDHH)')
 
-    parser.add_argument('-R', '--referenceType', choices=['GFS', 'ERA5', 'EC'], required=True,
-                        help='Reference data source (GFS, ERA5, or EC)')
+    parser.add_argument('-R', '--referenceType', choices=['GFS', 'ERA5', 'EC'], default='GFS',
+                        help='Reference data source (GFS, ERA5, or EC). Default is GFS.')
 
     parser.add_argument('-r', '--referenceState', required=True,
                         type = str,
