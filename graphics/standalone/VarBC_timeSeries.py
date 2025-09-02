@@ -94,8 +94,9 @@ def main(args_tuple):
                     data_cov = {pred: np.full(n_dates, np.nan) for pred in predlist}
 
                 for pred in predlist:
-                    # this is because we specify channels differently for ABI/AHI/MHS-ncdiag (a subset)
+                    # this is because we specify channels differently for ABI/AHI/amsua-cld/iasi/MHS-ncdiag (a subset)
                     if (prefix.startswith('abi') or prefix.startswith('ahi') or
+                        prefix.startswith('amsua-cld') or prefix.startswith('iasi') or
                         (prefix.startswith('mhs') and mhsType == 'ncdiag')):
                         data_coeff[pred][date_idx] = coeff[pred][0][ind]
                         data_cov[pred][date_idx] = math.sqrt(cov[pred][0][ind])
