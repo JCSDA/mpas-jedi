@@ -319,6 +319,8 @@ flip_vert_lev = c_flip_vert_lev
 
 call self%to_fieldset(geom, vars, afieldset, include_halo, flip_vert_lev)
 
+call afieldset%final()
+
 end subroutine mpas_increment_to_fieldset_c
 
 ! ------------------------------------------------------------------------------
@@ -348,6 +350,8 @@ include_halo = c_include_halo
 flip_vert_lev = c_flip_vert_lev
 
 call self%from_fieldset(geom, vars, afieldset, include_halo, flip_vert_lev)
+
+call afieldset%final()
 
 end subroutine mpas_increment_from_fieldset_c
 

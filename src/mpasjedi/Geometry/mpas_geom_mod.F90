@@ -473,6 +473,8 @@ subroutine geo_set_lonlat(self, afieldset, include_halo)
       real_ptr(2,:) = self%latCell(1:nx) * MPAS_JEDI_RAD2DEG_kr
       call afieldset%add(afield_incl_halo)
    endif
+   call afield%final()
+   call afield_incl_halo%final()
    
 end subroutine geo_set_lonlat
 
@@ -505,7 +507,6 @@ subroutine geo_fill_geometry_fields(self, afieldset)
    int_ptr(1,:)=0
    int_ptr(1,1:nx2) = 1
    call afieldset%add(afield)
-   call afield%final()
    
    ! Add area
    afield = self%afunctionspace%create_field &
@@ -513,8 +514,6 @@ subroutine geo_fill_geometry_fields(self, afieldset)
    call afield%data(real_ptr)
    real_ptr(1,1:nx) = real(self%areaCell(1:nx), kind_real)
    call afieldset%add(afield)
-   call afield%final()
-
    
    ! Add vertical unit
    afield = self%afunctionspace%create_field &

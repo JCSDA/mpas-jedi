@@ -247,6 +247,7 @@ integer function nearest_cell(target_lat, target_lon, start_cell, nCells, maxEdg
          end if
       end do
    end do
+   call ageometry%final()
 end function nearest_cell
 
 ! ------------------------------------------------------------------------------

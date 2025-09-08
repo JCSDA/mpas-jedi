@@ -94,6 +94,8 @@ afieldset = atlas_fieldset(c_afieldset)
 
 call geo_set_lonlat(self, afieldset, c_include_halo)
 
+call afieldset%final()
+
 end subroutine c_mpas_geo_set_lonlat
 
 ! --------------------------------------------------------------------------------------------------
@@ -130,6 +132,8 @@ call mpas_geom_registry%get(c_key_self, self)
 afieldset = atlas_fieldset(c_afieldset)
 
 call geo_fill_geometry_fields(self, afieldset)
+
+call afieldset%final()
 
 end subroutine c_mpas_geo_fill_geometry_fields
 
