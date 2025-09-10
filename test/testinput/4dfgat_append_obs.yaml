@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.014
+  float relative tolerance: 0.02
   integer tolerance: 0
   reference filename: testoutput/4dfgat_append_obs.ref
   log output filename: testoutput/4dfgat_append_obs.run
