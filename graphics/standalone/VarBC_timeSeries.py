@@ -8,6 +8,7 @@
 #################################################################################################################################
 
 import numpy as np
+import numpy.ma as ma
 import pandas as pd
 import time, os, argparse
 import h5py as h5
@@ -62,6 +63,7 @@ def main(args_tuple):
     nchans = sensorSat['channels']
     chans = sensorSat['analyzed channels']
     n_dates = len(date_list)
+    indInObsout = [sensorSat['channels'].index(i) for i in chans]
 
     for c in nchans:
         if c not in chans:
@@ -71,6 +73,7 @@ def main(args_tuple):
         ind = chans.index(c)
         ss = sensorSat['name']
         data_coeff, data_cov, predlist = {}, {}, None
+        betaPred, meanBetaPred, data_meanBetaPred, bias = {}, {}, {}, {}
 
         for date_idx, datestr in enumerate(date_list):
             datadir = main_path+exp+'/CyclingDA/'+datestr+'/dbOut/'
@@ -83,7 +86,9 @@ def main(args_tuple):
                 continue
 
             with h5.File(os.path.join(datadir, satbias_file), "r") as f_coeff, \
-                 h5.File(os.path.join(datadir, satbias_cov_file), "r") as f_cov:
+                 h5.File(os.path.join(datadir, satbias_cov_file), "r") as f_cov, \
+                 h5.File(os.path.join(datadir, obsout), "r") as f_obsout:
+
                 coeff = f_coeff['BiasCoefficients']
                 cov = f_cov['BiasCoefficientErrors']
                 nobs_ = f_cov['numberObservationsUsed']
@@ -92,6 +97,20 @@ def main(args_tuple):
                     predlist = [k for k in coeff.keys() if not removeEmiss or k != 'emissivityJacobian']
                     data_coeff = {pred: np.full(n_dates, np.nan) for pred in predlist}
                     data_cov = {pred: np.full(n_dates, np.nan) for pred in predlist}
+                    data_meanBetaPred = {pred: np.full(n_dates, np.nan) for pred in predlist}
+                    bias = {'obsbias': np.full(n_dates, 0.0)}
+
+                preds = { f'{g}Predictor': f_obsout[f'{g}Predictor/brightnessTemperature'][()]
+                          for g in predlist}
+
+                effective_qc_groups = [name for name in f_obsout.keys() if name.startswith('EffectiveQC')]
+                if effective_qc_groups:
+                    max_group = max(effective_qc_groups, key=lambda name: int(name.replace('EffectiveQC', '')))
+                    effective_qc = f_obsout[f'{max_group}/brightnessTemperature'][:,:]
+                masked_preds = {
+                    name: ma.masked_where(effective_qc != 0, data)
+                    for name, data in preds.items()
+                    }
 
                 for pred in predlist:
                     # this is because we specify channels differently for ABI/AHI/amsua-cld/iasi/MHS-ncdiag (a subset)
@@ -100,6 +119,7 @@ def main(args_tuple):
                         (prefix.startswith('mhs') and mhsType == 'ncdiag')):
                         data_coeff[pred][date_idx] = coeff[pred][0][ind]
                         data_cov[pred][date_idx] = math.sqrt(cov[pred][0][ind])
+                        betaPred[pred] = masked_preds[pred+'Predictor'][:,indInObsout[ind]] * coeff[pred][0][ind]
                         nobs = nobs_[0][ind]
                     else:
                         # here c-1 to extract the correct predictor value for the specific channel
@@ -107,10 +127,15 @@ def main(args_tuple):
                         data_coeff[pred][date_idx] = coeff[pred][0][c-1]
                         data_cov[pred][date_idx] = math.sqrt(cov[pred][0][c-1])
                         nobs = nobs_[0][c-1]
+                        betaPred[pred] = masked_preds[pred+'Predictor'][:,c-1] * coeff[pred][0][c-1]
 
+                    data_meanBetaPred[pred][date_idx] = betaPred[pred].mean(axis=0)
+                    bias['obsbias'][date_idx] = bias['obsbias'][date_idx] + data_meanBetaPred[pred][date_idx]
+                data_meanBetaPred.update(bias)
         if predlist and any(~np.isnan(data_coeff[pred]).all() for pred in predlist):
            plot(date_list, ss, data_coeff, expname, 'predcoeff', 'Bias coefficients @ch'+str(c), c, nobs)
            plot(date_list, ss, data_cov, expname, 'predcov', 'Bias coefficients errors @ch'+str(c), c, nobs)
+           plot(date_list, ss, data_meanBetaPred, expname, 'meanBetaPred', 'mean(beta*Predictor) @ch'+str(c), c, nobs)
 
     print(f'[DONE] {prefix} in {time.time() - h0:.2f} seconds')
 
