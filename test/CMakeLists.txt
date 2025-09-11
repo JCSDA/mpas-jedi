@@ -80,13 +80,14 @@ list( APPEND mpas_testinput
   testinput/3dvar_bumpcov_ropp.yaml
   testinput/3dvar_bumpcov_nbam.yaml
   testinput/3dvar_bumpcov_rttovcpp.yaml
+  testinput/3dfgat_cda.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
   testinput/4denvar_VarBC.yaml
   testinput/4denvar_VarBC_nonpar.yaml
   testinput/4dhybrid_bumpcov_bumploc.yaml
   testinput/4dfgat.yaml
-  testinput/4dfgat_append_obs.yaml
+  testinput/4dfgat_cda.yaml
   testinput/convertstate.yaml
   testinput/converttostructuredgrid_latlon.yaml
   testinput/dirac_bumpcov.yaml
@@ -158,12 +159,13 @@ list( APPEND mpas_testoutput
   testoutput/3dvar_bumpcov_ropp.ref
   testoutput/3dvar_bumpcov_nbam.ref
   testoutput/3dvar_bumpcov_rttovcpp.ref
+  testoutput/3dfgat_cda.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
   testoutput/4denvar_VarBC.ref
   testoutput/4dhybrid_bumpcov_bumploc.ref
   testoutput/4dfgat.ref
-  testoutput/4dfgat_append_obs.ref
+  testoutput/4dfgat_cda.ref
   testoutput/convertstate.ref
   testoutput/converttostructuredgrid_latlon.ref
   testoutput/dirac_bumpcov.ref
@@ -831,7 +833,7 @@ if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
         NAME dirac_spectral_1
         APPLICATION error_covariance_toolbox
         ${RECALIBRATE})
-    
+
     add_mpasjedi_application_test(
         NAME process_perts_spectral
         APPLICATION process_perts
@@ -877,6 +879,11 @@ if( ${rttov_FOUND} )
         DEPENDS parameters_bumpcov
         ${RECALIBRATE})
 endif( ${rttov_FOUND} )
+
+add_mpasjedi_application_test(
+    NAME 3dfgat_cda
+    APPLICATION variational
+    ${RECALIBRATE})
 
 #variational - 3denvar
 add_mpasjedi_application_test(
@@ -973,7 +980,7 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
-    NAME 4dfgat_append_obs
+    NAME 4dfgat_cda
     APPLICATION variational
     ${RECALIBRATE})
 
