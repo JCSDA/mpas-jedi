@@ -16,6 +16,7 @@ import netCDF4 as nc4
 import config as conf
 import var_utils as vu
 import JediDB
+import re
 
 '''
 Directory Structure for ctest:
@@ -65,6 +66,7 @@ def readdata():
   makeDistributionPlots = True
   plot_allinOneDistri = True   # plot profileObsTypes (includes all levels) and sfcObsTypes.
   plot_eachLevelDistri = False # plot every level separately for profileObsTypes.
+  plot_predictorDistri = False  # Default is False; should turn on it with makeDistributionPlots = True
 
   # NOUTER: number of outer iterations
   # can be set as env variable 'NOUTER'
@@ -255,12 +257,19 @@ def readdata():
     # assume hofx at first, then check for presence of 'ombgGroup'
     applicationType = hofxApp
     ncVarList = []
+    preds = {}
     for group in ncDB.groups:
+      match = re.search(r'Predictor$', group)
+      if match:
+         preds[group] = match
       if group == ApplicationObsGroups[variationalApp]['ombgGroup']:
         applicationType = variationalApp
       for var in ncDB.groups[group].variables:
         ncVarList+= [group+'/'+var]
 
+    predGroup = []
+    for group, match in preds.items():
+      predGroup+= {group}
     ncDB.close()
 
     obsGroup = ApplicationObsGroups[applicationType].get('obsGroup', None)
@@ -346,6 +355,14 @@ def readdata():
         hofx = hofxGroup+'/'+varName
         obsVars += [hofx]
 
+      # Add Predictor group:
+      pred = None
+      predVars = []
+      if predGroup is not None:
+        for group in predGroup:
+          pred =  group +'/'+varName
+          predVars.append(pred)
+          obsVars += [pred]
       # generate list of required variables to read
       readVars = coordVars + obsVars
 
@@ -664,6 +681,13 @@ def readdata():
                                         None, None, dotsize, color)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[ana][:,ich],
                                         obstype, shortname, units, expt_obs, 0, "ana",
+                                        None, None, dotsize, color)
+            if plot_predictorDistri:
+              print('plotting predictors distribution for : '+obstype+ 'ch'+str(channel))
+              for ipred, pred in enumerate(predVars):
+                basic_plot_functions.plotDistri(db[latitude], db[longitude], db[pred][:,ich],
+                                        obstype, predGroup[ipred], "ch"+str(channel),
+                                        expt_obs, 0, "ch"+str(channel),
                                         None, None, dotsize, color)
             dmin = -30
             dmax = 30
