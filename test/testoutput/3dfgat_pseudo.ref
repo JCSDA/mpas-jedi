@@ -1,6 +1,6 @@
 CostJo   : Nonlinear Jo(Radiosonde) = 9.2820660311155007e+02, nobs = 969, Jo/n = 9.5790155119871012e-01, err = 1.9854217306933506e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 4.6881628990735152e-01, nobs = 1, Jo/n = 4.6881628990735152e-01, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 2.4895078959695624e+01, nobs = 22, Jo/n = 1.1315944981679829e+00, err = 1.4365362381911442e+02
+CostJo   : Nonlinear Jo(SfcCorrected) = 2.4895078959695624e+01, nobs = 22, Jo/n = 1.1315944981679829e+00, err = 1.4365362381911442e+02
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 9.5357049836115300e+02
 DRPCGMinimizer: reduction in residual norm = 3.9468324920634942e-02
@@ -39,6 +39,6 @@ Fld=29  Min=2.1861984093432565e+02, Max=3.1450799148116488e+02, RMS=2.7519634154
 Fld=30  Min=-2.3892778044673058e-01, Max=5.2408286392792014e-01, RMS=2.9007552162012895e-02 : w
 CostJo   : Nonlinear Jo(Radiosonde) = 8.8996061776234887e+02, nobs = 968, Jo/n = 9.1938080347350093e-01, err = 1.9864469937247677e+00
 CostJo   : Nonlinear Jo(GnssroRefNCEP) = 2.4485611987517866e-01, nobs = 1, Jo/n = 2.4485611987517866e-01, err = 3.3513128757476807e+00
-CostJo   : Nonlinear Jo(SfcPCorrected) = 1.6944719888648475e+01, nobs = 8, Jo/n = 2.1180899860810594e+00, err = 1.4053469322555196e+02
+CostJo   : Nonlinear Jo(SfcCorrected) = 1.6944719888648475e+01, nobs = 8, Jo/n = 2.1180899860810594e+00, err = 1.4053469322555196e+02
 CostJb   : Nonlinear Jb = 2.2323683113495101e-05
 CostFunction: Nonlinear J = 9.0715021609455562e+02

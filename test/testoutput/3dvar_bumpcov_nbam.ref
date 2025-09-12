@@ -1,6 +1,6 @@
 CostJo   : Nonlinear Jo(Radiosonde) = 9.2820660311155007e+02, nobs = 969, Jo/n = 9.5790155119871012e-01, err = 1.9854217306933506e+00
 CostJo   : Nonlinear Jo(GnssroBndNBAM) = 2.5079978013238502e+02, nobs = 6, Jo/n = 4.1799963355397502e+01, err = 2.2318912705394964e-05
-CostJo   : Nonlinear Jo(SfcPCorrected) = 6.5512695591821694e+02, nobs = 49, Jo/n = 1.3369937875881979e+01, err = 1.4649649992336307e+02
+CostJo   : Nonlinear Jo(SfcCorrected) = 6.5512695591821694e+02, nobs = 49, Jo/n = 1.3369937875881979e+01, err = 1.4649649992336307e+02
 CostJo   : Nonlinear Jo(AMSUA-NOAA19--nohydro) = 7.0775267927969226e+03, nobs = 509, Jo/n = 1.3904767765809279e+01, err = 1.4113148604498487e+00
 Norm of input parameter StdDev: 1.1149982611482127e+01
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
