@@ -1018,11 +1018,13 @@ add_mpasjedi_application_test(
     APPLICATION enkf
     ${RECALIBRATE})
 
-# This test is failing with gcc 13.3 and intel compilers
-#add_mpasjedi_application_test(
-#    NAME lgetkf_height_vloc
-#    APPLICATION enkf
-#    ${RECALIBRATE})
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND
+        CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")
+add_mpasjedi_application_test(
+    NAME lgetkf_height_vloc
+    APPLICATION enkf
+    ${RECALIBRATE})
+endif()
 
 # subset of APPLICATION tests with comparison to reference output on multiple PE's
 #---------------------------------------------------------------------------------
