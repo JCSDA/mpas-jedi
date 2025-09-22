@@ -73,12 +73,22 @@ subroutine create(self, geom, bg, fg, conf)
         'air_pressure', &
         'air_pressure_at_surface' &
       ]
+  character(len=MAXVARLEN), allocatable :: trajHasNames(:)
 
-  call da_template_pool(geom, self%trajectory, size(trajFieldNames), trajFieldNames)
+  allocate(trajHasNames(0))
 
+  !Check if the given trajectory variable exists in the background variables
   do iVar = 1, size(trajFieldNames)
-    call bg%copy_to(trajFieldNames(iVar), self%trajectory)
+    if( bg%has(trajFieldNames(iVar)) ) trajHasNames = [trajHasNames, trajFieldNames(iVar)]
   end do
+
+  call da_template_pool(geom, self%trajectory, size(trajHasNames), trajHasNames)
+
+  do iVar = 1, size(trajHasNames)
+    call bg%copy_to(trajHasNames(iVar), self%trajectory)
+  end do
+
+  deallocate(trajHasNames)
 
 end subroutine create
 
