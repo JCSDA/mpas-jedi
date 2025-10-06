@@ -4,8 +4,18 @@ VarBCDict = {
         'channels': range(7,17),
         'analyzed channels': [8, 9, 10],
     },
+    'abi_g18': {
+        'name': 'abi_g18',
+        'channels': range(7,17),
+        'analyzed channels': [8, 9, 10],
+    },
     'ahi_himawari8': {
         'name': 'ahi_himawari8',
+        'channels': range(7,17),
+        'analyzed channels': [8, 9, 10],
+    },
+    'ahi_himawari9': {
+        'name': 'ahi_himawari9',
         'channels': range(7,17),
         'analyzed channels': [8, 9, 10],
     },
@@ -14,8 +24,18 @@ VarBCDict = {
         'channels': range(7,17),
         'analyzed channels': [8, 9, 10],
     },
+    'abi-clr_g18': {
+        'name': 'abi_g18',
+        'channels': range(7,17),
+        'analyzed channels': [8, 9, 10],
+    },
     'ahi-clr_himawari8': {
         'name': 'ahi_himawari8',
+        'channels': range(7,17),
+        'analyzed channels': [8, 9, 10],
+    },
+    'ahi-clr_himawari9': {
+        'name': 'ahi_himawari9',
         'channels': range(7,17),
         'analyzed channels': [8, 9, 10],
     },

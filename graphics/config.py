@@ -243,9 +243,13 @@ if specialAllSkyBins:
 # priority 1b
 abi_g16_binVars = deepcopy(geoirBinVars)
 abi_g16_binVars[pconf.LonLat2D] += [bu.abi_g16]
+abi_g18_binVars = deepcopy(geoirBinVars)
+abi_g18_binVars[pconf.LonLat2D] += [bu.abi_g18]
 
 ahi_himawari8_binVars = deepcopy(geoirBinVars)
 ahi_himawari8_binVars[pconf.LonLat2D] += [bu.ahi_himawari8]
+ahi_himawari9_binVars = deepcopy(geoirBinVars)
+ahi_himawari9_binVars[pconf.LonLat2D] += [bu.ahi_himawari9]
 
 #seviri_m08_binVars = deepcopy(radianceBinVars)
 #seviri_m08_binVars[pconf.LonLat2D] += [bu.seviri_m08]
@@ -453,6 +457,44 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': ahiGrp,
         'binVarConfigs': ahi_himawari8_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi_g18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g18_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'ahi_himawari9': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': ahiGrp,
+        'binVarConfigs': ahi_himawari9_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi-clr_g18': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g18_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'ahi-clr_himawari9': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': ahiGrp,
+        'binVarConfigs': ahi_himawari9_binVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],

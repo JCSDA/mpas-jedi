@@ -44,7 +44,9 @@ class BinValAxes2D(MultiDimBinMethodBase):
                 'subplotAspect': {
                     'default': 0.55,
                     'abi_g16': 0.9,
+                    'abi_g18': 0.9,
                     'ahi_himawari8': 0.9,
+                    'ahi_himawari9': 0.9,
                 },
                 'ybuffer': 0.45,
             },
