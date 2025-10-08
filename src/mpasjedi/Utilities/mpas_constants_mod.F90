@@ -62,6 +62,11 @@ real(kind=kind_real), parameter :: es_alpha    = 611.2_kind_real
 real(kind=kind_real), parameter :: es_beta     = 17.67_kind_real
 real(kind=kind_real), parameter :: es_gamma    = 243.5_kind_real
 
+! ------------------------------------------------------------------------------
+! reference mole_fraction_of_carbon_dioxide_in_air value
+real(kind=kind_real), parameter :: MPAS_JEDI_CO2  = 4.25e-4_kind_real  ! unit of [ mol / mol ]
+! ------------------------------------------------------------------------------
+
 contains
 
 ! ------------------------------------------------------------------------------

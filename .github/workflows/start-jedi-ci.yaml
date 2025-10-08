@@ -43,7 +43,7 @@ jobs:
           container_version: 'latest'
           target_project_name: mpas-jedi
           unittest_tag: mpasjedi
-          unittest_dependencies: crtm ioda mpas mpas-jedi-data oops ropp-ufo saber ufo ufo-data vader rttov
+          unittest_dependencies: crtm ioda ioda-data jedi-model-data mpas mpas-jedi-data oops ropp-ufo saber ufo ufo-data vader rttov
           test_script: run_tests.sh
           target_repo_dir: target_repository
           bundle_branch: develop

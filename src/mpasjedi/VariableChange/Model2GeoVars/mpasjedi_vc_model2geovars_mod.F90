@@ -347,7 +347,7 @@ subroutine changevar(self, geom, xm, xg)
 
         case ( var_co2 ) !-mole_fraction_of_carbon_dioxide_in_air :TODO: not directly available from MPAS
           !call xm%get('mole_fraction_of_carbon_dioxide_in_air', mdata)
-          gdata%r2%array(:,1:nCells) = MPAS_JEDI_ZERO_kr !mdata%r2%array(:,1:nCells)
+          gdata%r2%array(:,1:nCells) = MPAS_JEDI_CO2 !mdata%r2%array(:,1:nCells)
 
         case ( var_clw_wp ) !-mass_content_of_cloud_liquid_water_in_atmosphere_layer
           call q_fields_forward('cloud_liquid_water', mFields, gdata%r2, plevels, nCells, nVertLevels)
