@@ -4,7 +4,7 @@
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
 ################################################################################
-# MPAS 
+# MPAS
 ################################################################################
 
 cmake_minimum_required( VERSION 3.12 )
@@ -70,28 +70,31 @@ find_package( saber 1.10.0 REQUIRED )
 find_package( ioda 2.9.0 REQUIRED )
 find_package( ufo 1.10.0 REQUIRED )
 
-## Test data
-
-### The mpas-jedi_data package is problematic in bundles because it has some special CMake logic
-### at the root bundle location. So, we cannot find the mpas-jedi-data while in mpas-jedi!
-### Basically, with the current logic we hack mpas-jedi-data_FOUND to match ENABLE_MPAS_JEDI_DATA
-#find_package( mpas-jedi-data QUIET )
-if (ENABLE_MPAS_JEDI_DATA)
-  set (mpas-jedi-data_FOUND TRUE)
-else()
-  # Set values for downloading mpas-jedi test data from tarball
-  set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
-  set (mpas-jedi_data_tag "3.1.0.jcsda")
-  set (mpas-jedi_data_tarball_name "mpas-jedi_testinput_tier_1_${mpas-jedi_data_tag}.tar.gz")
-  set (mpas-jedi_data_tarball_hash "1c9999dc04609f0c129ed39bc644bddc")
-endif()
-
 ## Sources
 add_subdirectory( src )
-add_subdirectory( test )
 
 if( ENABLE_MPAS_DOC )
     add_subdirectory( docs )
+endif()
+
+## Tests
+if( BUILD_TESTING )
+  find_package( mpas-jedi-data QUIET )
+  if( NOT mpas-jedi-data_FOUND )
+    # Set values for downloading mpas-jedi test data from tarball
+    set (mpas-jedi_data_download_url "https://bin.ssec.wisc.edu/pub/s4/CRTM/file")
+    set (mpas-jedi_data_tag "3.1.0.jcsda")
+    set (mpas-jedi_data_tarball_name "mpas-jedi_testinput_tier_1_${mpas-jedi_data_tag}.tar.gz")
+    set (mpas-jedi_data_tarball_hash "1c9999dc04609f0c129ed39bc644bddc")
+  endif()
+
+  add_subdirectory( test )
+
+  ecbuild_add_test( TARGET ${PROJECT_NAME}_coding_norms
+                    TYPE SCRIPT
+                    COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
+                    ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR}/src
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 endif()
 
 ## Package Config
