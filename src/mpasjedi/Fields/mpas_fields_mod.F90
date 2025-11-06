@@ -1349,6 +1349,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             else
                call abor1_ftn('poolItr % dataType .NE. real OR integer, unexpected')
             endif
+            call meta%set('nearest 3d level', 'bottom')
 
             ! Set flag
             var_found = .true.

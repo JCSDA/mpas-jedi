@@ -57,8 +57,6 @@ background error:
         write local nicas: true
         write global nicas: true
         write nicas grids: true
-      model:
-        level for 2d variables: last
       sampling:
         computation grid size: 1024
         diagnostic grid size: 200

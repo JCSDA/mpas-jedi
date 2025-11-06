@@ -77,8 +77,6 @@ cost function:
           drivers:
             multivariate strategy: duplicated
             read local nicas: true
-          model:
-            level for 2d variables: last
     members:
     - states:
       - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
