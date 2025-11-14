@@ -297,7 +297,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                     else:
                         title = varLabel
                     title = expName+'\n'+title
-                    expFileName = re.sub('\.', '', re.sub('\s+', '-', expName))
+                    expFileName = re.sub(r'\.', '', re.sub(r'\s+', '-', expName))
 
                     bgstatDiagLabel = bgstatDiagLabel_abs
                     sciTicks = sciTicks_abs
@@ -617,7 +617,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
             if statName in twoDFittingStatistics:
 
                 for expName, e1 in fitEquationConfigs.items():
-                    expFileName = re.sub('\.', '', re.sub('\s+', '-', expName))
+                    expFileName = re.sub(r'\.', '', re.sub(r'\s+', '-', expName))
                     for degree, e2 in e1.items():
                         degStr = str(degree)
                         self.logger.info('\n '+expName+', degree: '+degStr)

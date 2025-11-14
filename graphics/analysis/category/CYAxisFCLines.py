@@ -122,7 +122,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
 
             # end varMap loop
 
-            expFileName = re.sub('\.', '', re.sub('\s+', '-', expName))
+            expFileName = re.sub(r'\.', '', re.sub(r'\s+', '-', expName))
             filename = ('%s%s_TSeries_%s_%s_%s_%s'%(
                        myLoc['binVar'], self.binMethodFile(myLoc['binMethod']), expFileName,
                        self.DiagSpaceName, fcDiagName, statName))

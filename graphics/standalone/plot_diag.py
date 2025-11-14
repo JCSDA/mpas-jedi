@@ -5,6 +5,7 @@ import numpy as np
 from copy import deepcopy
 import matplotlib
 matplotlib.use('AGG')
+from matplotlib import colormaps
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.axes as maxes
@@ -86,6 +87,13 @@ def readdata():
     'sfc',
   ]
   radianceObsTypes = [
+    'tms_s01',
+    'tms_s02',
+    'tms_s03',
+    'tms_s04',
+    'tms_s05',
+    'tms_s06',
+    'tms_s07',
     'abi_g16',
     'ahi_himawari8',
     'abi-clr_g16',
@@ -476,7 +484,7 @@ def readdata():
         db[var][~passan] = np.NaN
 
       if not np.isfinite(db[omb]).any():
-        print('all values are NaN of inf: ', varName, obstype)
+        print('all values are NaN or inf: ', varName, obstype)
         continue
 
       # diagnose relative omb/oma for GNSSRO, which varies
@@ -512,8 +520,12 @@ def readdata():
           nProfile_ana = len(np.unique(db[record][passan]))
 
         if obstype not in radianceObsTypes:
-          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_bak, "omb_allLevels")
-          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_ana, "oma_allLevels")
+          goodrange = np.nanpercentile(np.abs(np.concatenate((db[omb], db[oma])).ravel()), 98)
+          kwargs.update({"cmap": plt.colormaps["RdBu_r"]})
+          kwargs.update({"vmin": -goodrange})
+          kwargs.update({"vmax": goodrange})
+          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_bak, "omb_allLevels", **kwargs)
+          basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma], obstype, varName, vu.varDictObs[varName][0], expt_obs, nProfile_ana, "oma_allLevels", **kwargs)
 
       if binCoord is not None and binCoord in db:
         binVar = binningCoordinates[binCoord]['varName']
@@ -667,37 +679,37 @@ def readdata():
 
         # Horizontal distribution of radiance OBS, BCKG, ANA, OMB, OMA
         if makeDistributionPlots:
-          dotsize = 3.0
           for channel in plotChannels:
             ich = list(nchans).index(channel)
             shortname = varval[1] + str(channel)
 
-            color = "BT"
+            kwargs = dict(
+                vmin=173.15,  # -100C
+                vmax=303.15,  # 30C
+                marker='.',
+                edgecolors='none',
+                cmap=colormaps["nipy_spectral"],
+            )
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[obs][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "obs",
-                                        None, None, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "obs", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[bkg][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "bkg",
-                                        None, None, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "bkg", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[ana][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "ana",
-                                        None, None, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "ana", **kwargs)
             if plot_predictorDistri:
               print('plotting predictors distribution for : '+obstype+ 'ch'+str(channel))
               for ipred, pred in enumerate(predVars):
                 basic_plot_functions.plotDistri(db[latitude], db[longitude], db[pred][:,ich],
                                         obstype, predGroup[ipred], "ch"+str(channel),
-                                        expt_obs, 0, "ch"+str(channel),
-                                        None, None, dotsize, color)
-            dmin = -30
-            dmax = 30
-            color = "hsv"
+                                        expt_obs, 0, "ch"+str(channel), **kwargs)
+            goodrange = np.nanpercentile(np.abs(np.concatenate((db[omb][:,ich], db[oma][:,ich]))), 98)
+            kwargs.update({"cmap": plt.colormaps["RdBu_r"]})
+            kwargs.update({"vmin": -goodrange})
+            kwargs.update({"vmax": goodrange})
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[omb][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "omb",
-                                        dmin, dmax, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "omb", **kwargs)
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[oma][:,ich],
-                                        obstype, shortname, units, expt_obs, 0, "oma",
-                                        dmin, dmax, dotsize, color)
+                                        obstype, shortname, units, expt_obs, 0, "oma", **kwargs)
 
 def plotprofile(xVals1, xLabel1,
                 xVals2, xLabel2,

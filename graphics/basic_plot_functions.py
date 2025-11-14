@@ -86,9 +86,30 @@ distriZooms['ahi'] = {
     'maxLat': None,
 }
 
+
+def calculate_dot_size(npts):
+    """
+    Calculates an integer dot size (S_int) based on the number of points (npts).
+    """
+    nmin = 100
+    nmax = 1e5
+    smin = 1  # smallest marker area
+    smax = 16  # largest marker area
+    if npts <= nmin:
+        S_float = smax
+    elif npts >= nmax:
+        S_float = smin
+    else:
+        S_float = smax + (smin-smax)/np.log10(nmax/nmin) * np.log10(npts/nmin)
+
+    S_int = int(np.round(S_float))
+
+    return S_int
+
+
 def plotDistri(lats,lons,values,
                ObsType,VarName,var_unit,out_name,nstation,levbin,
-               dmin=None,dmax=None,dotsize=6,color="rainbow"):
+               **kwargs):
 #================================================================
 #INPUTS:
 # lats     - latitude
@@ -100,9 +121,7 @@ def plotDistri(lats,lons,values,
 # out_name - will be included in output file name. It can be experiment name.
 # nstation - station numbers for sondes.
 # levbin   - plot all levels together (levbin=all); or plot every level.
-# dmin, dmax  - min/max values of colorbars, optional
-# dotsize  - dot size, optional
-# color    - color scheme, optional
+# **kwargs: dict keyword arguments for ax.scatter
 #================================================================
 # For some plots that need to change longitude from [-180,180] to [0,360]
 #    tmp = np.logical_not(lons > 0)
@@ -138,18 +157,7 @@ def plotDistri(lats,lons,values,
     ax.set_global()
 
 #draw points onto map =========================================================
-    if color == "BT":
-        if ("abi" in ObsType or "ahi" in ObsType):
-            cm = btCMap
-            if dmin is None: dmin = 183
-            if dmax is None: dmax = 303
-        else:
-            cm = plt.cm.get_cmap("gist_ncar")
-            if dmin is None: dmin = 190
-            if dmax is None: dmax = 270
-    else:
-        cm = plt.cm.get_cmap(color)
-
+    cmap = kwargs.pop('cmap', plt.colormaps["rainbow"])
     finite = np.isfinite(values)
     if ((("abi" in ObsType or "ahi" in ObsType)
          and finite.sum() > 4e4)
@@ -173,13 +181,14 @@ def plotDistri(lats,lons,values,
 #                       latlon = True, tri = True)
 
         p = plt.tripcolor(lonsPlot[lonSort], latsPlot[lonSort], valuesPlot[lonSort],
-                       transform = ccrs.PlateCarree(),
-                       cmap = cm, vmin = dmin, vmax = dmax)
+                       transform = ccrs.PlateCarree(), cmap=cmap, **kwargs)
 
     else:
+        npts = finite.sum()
+        s=kwargs.pop('s', calculate_dot_size(finite.sum()))
+        print(f"{ObsType} {VarName} npts={npts} s={s}")
         p=ax.scatter(lons[finite], lats[finite], c=values[finite],
-                     transform = ccrs.PlateCarree(),
-                     cmap= cm, s = dotsize)
+                     transform = ccrs.PlateCarree(), s=s, cmap=cmap, **kwargs)
         ax.gridlines(draw_labels=True, xlocs=np.arange(-180,180,60),linestyle='--')
 
     ax.coastlines()
@@ -213,7 +222,9 @@ def plotDistri(lats,lons,values,
                 horizontalalignment='center',
                 fontsize=12, transform = ax.transAxes)
 
-    plt.savefig('distri_%s_%s_%s.png'%(VarName,out_name,levbin),dpi=200,bbox_inches='tight')
+    ofile = f'distri_{VarName}_{out_name}_{levbin}.png'
+    plt.savefig(ofile,dpi=200,bbox_inches='tight')
+    print(ofile)
     plt.close()
 
 
