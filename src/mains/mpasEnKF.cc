@@ -5,19 +5,20 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
-#include <oops/runs/LocalEnsembleDA.h>
-#include <oops/runs/Run.h>
+#include "oops/runs/LocalEnsembleDA.h"
+#include "oops/runs/Run.h"
 
-#include <ufo/instantiateObsErrorFactory.h>
-#include <ufo/instantiateObsFilterFactory.h>
-#include <ufo/instantiateObsLocFactory.h>
-#include <ufo/ObsTraits.h>
+#include "ufo/instantiateObsErrorFactory.h"
+#include "ufo/instantiateObsFilterFactory.h"
+#include "ufo/instantiateObsLocFactory.h"
+#include "ufo/ObsTraits.h"
 
+#include "mpasjedi/GeometryIterator/GeometryIterator.h"
 #include "mpasjedi/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsLocFactory<mpas::Traits>();
+  ufo::instantiateObsLocFactory<mpas::GeometryIterator>();
   ufo::instantiateObsErrorFactory();
   ufo::instantiateObsFilterFactory();
 

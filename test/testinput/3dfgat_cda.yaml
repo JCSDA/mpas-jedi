@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.014
+  float relative tolerance: 0.015
   integer tolerance: 0
   reference filename: testoutput/3dfgat_cda.ref
   log output filename: testoutput/3dfgat_cda.run

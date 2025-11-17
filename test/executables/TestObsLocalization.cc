@@ -6,6 +6,7 @@
  */
 
 #include "oops/runs/Run.h"
+#include "mpasjedi/GeometryIterator/GeometryIterator.h"
 #include "test/interface/ObsLocalization.h"
 #include "ufo/instantiateObsLocFactory.h"
 #include "ufo/ObsTraits.h"
@@ -14,7 +15,7 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsLocFactory<mpas::Traits>();
+  ufo::instantiateObsLocFactory<mpas::GeometryIterator>();
   test::ObsLocalization<mpas::Traits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }

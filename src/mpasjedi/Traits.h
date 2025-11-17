@@ -22,6 +22,7 @@
 #include "mpasjedi/State/State.h"
 #include "mpasjedi/Tlm/Tlm.h"
 #include "mpasjedi/VariableChange/VariableChange.h"
+#include "ufo/obslocalization/ObsLocalization.h"
 
 namespace mpas {
 
@@ -46,6 +47,8 @@ struct Traits {
   typedef mpas::LinearVariableChange LinearVariableChange;
   typedef mpas::VariableChange       VariableChange;
   typedef mpas::ModelData            ModelData;
+
+  typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
 };
 
 }  // namespace mpas
