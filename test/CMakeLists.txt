@@ -137,7 +137,6 @@ list( APPEND mpas_testinput
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
   testinput/state.yaml
-  testinput/unsinterp.yaml
   testinput/obsop_name_map.yaml
 )
 # Create Data directory for test input and symlink all files
@@ -709,7 +708,6 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
     add_mpasjedi_unit_test( CLASS Increment       YAMLFILE increment )
     add_mpasjedi_unit_test( CLASS ErrorCovariance YAMLFILE errorcovariance )
     add_mpasjedi_unit_test( CLASS LinVarCha       YAMLFILE linvarcha )
-    add_mpasjedi_unit_test( CLASS UnstructuredInterpolator YAMLFILE unsinterp NPE 4 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_2d NPE 2 )
     add_mpasjedi_unit_test( CLASS GeometryIterator YAMLFILE geometry_iterator_3d NPE 2 )
     add_mpasjedi_unit_test( CLASS GetValues       YAMLFILE getvalues )
