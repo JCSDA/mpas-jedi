@@ -37,6 +37,7 @@ CIErrParams['abi_g16'][ (14, 'Okamoto') ]   =  {'X': [1, 28.0], 'ERR': [2.44, 29
 CIErrParams['abi_g16'][ (15, 'Okamoto') ]   =  {'X': [1, 27.13], 'ERR': [2.39, 28.69]}
 CIErrParams['abi_g16'][ (16, 'Okamoto') ]   =  {'X': [1, 23.71], 'ERR': [2.18, 24.68]}
 CIErrParams['abi_g18'] = deepcopy(CIErrParams['abi_g16'])
+CIErrParams['abi_g19'] = deepcopy(CIErrParams['abi_g16'])
 #For UFO YAML config:
 #  x0: [1, 1, 1, 1, 1, 1, 1, 1, 1]
 #  x1: [29.37, 12.54, 15.15, 17.18, 25.68, 28.04, 28.0, 27.13, 23.71]
@@ -59,6 +60,7 @@ CIErrParams['abi_g16'][ (14, 'Okamoto') ]   =  {'X': [1, 26.97], 'ERR': [2.34, 2
 CIErrParams['abi_g16'][ (15, 'Okamoto') ]   =  {'X': [1, 25.5], 'ERR': [2.14, 24.59]}
 CIErrParams['abi_g16'][ (16, 'Okamoto') ]   =  {'X': [1, 22.41], 'ERR': [1.94, 20.95]}
 CIErrParams['abi_g18'] = deepcopy(CIErrParams['abi_g16'])
+CIErrParams['abi_g19'] = deepcopy(CIErrParams['abi_g16'])
 #For UFO YAML config(bench+IR):
 #  x0: [1, 1, 1, 1, 1, 11, 1, 1, 1, 1]
 #  x1: [35.91, 10.31, 12.33, 15.91, 30.81, 15.11, 28.76, 26.97, 25.5, 22.41]
@@ -114,6 +116,7 @@ CIErrParams['abi_g16'][(14, 'Okamoto')]   = {'X': [0.5, 27.32], 'ERR': [0.84, 31
 CIErrParams['abi_g16'][(15, 'Okamoto')]   = {'X': [0.5, 27.1], 'ERR': [0.75, 30.96]} #original x0 == 0
 CIErrParams['abi_g16'][(16, 'Okamoto')]   = {'X': [0.5, 23.11], 'ERR': [0.14, 25.79]} #original x0 == 0
 CIErrParams['abi_g18'] = deepcopy(CIErrParams['abi_g16'])
+CIErrParams['abi_g19'] = deepcopy(CIErrParams['abi_g16'])
 #For UFO YAML config(clrama):
 #  x0: [0.5, 0.5, 0.5, 0.5, 0.5, 3, 0.5, 0.5, 0.5, 0.5]
 #  x1: [20.08, 10.94, 13.29, 14.86, 26.21, 30.57, 27.91, 27.32, 27.1, 23.11]
@@ -149,6 +152,11 @@ ABEIParams = {
     (10): {'LambdaOverACI': 0.009*scaleInflation},
   },
   'abi_g18': {
+    (8): {'LambdaOverACI': 0.015*scaleInflation},
+    (9): {'LambdaOverACI': 0.012*scaleInflation},
+    (10): {'LambdaOverACI': 0.009*scaleInflation},
+  },
+  'abi_g19': {
     (8): {'LambdaOverACI': 0.015*scaleInflation},
     (9): {'LambdaOverACI': 0.012*scaleInflation},
     (10): {'LambdaOverACI': 0.009*scaleInflation},

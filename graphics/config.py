@@ -245,6 +245,8 @@ abi_g16_binVars = deepcopy(geoirBinVars)
 abi_g16_binVars[pconf.LonLat2D] += [bu.abi_g16]
 abi_g18_binVars = deepcopy(geoirBinVars)
 abi_g18_binVars[pconf.LonLat2D] += [bu.abi_g18]
+abi_g19_binVars = deepcopy(geoirBinVars)
+abi_g19_binVars[pconf.LonLat2D] += [bu.abi_g19]
 
 ahi_himawari8_binVars = deepcopy(geoirBinVars)
 ahi_himawari8_binVars[pconf.LonLat2D] += [bu.ahi_himawari8]
@@ -471,6 +473,16 @@ DiagSpaceConfig = {
         ### example for channel selection/ordering at plotting phase:
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
     },
+    'abi_g19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g19_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.cloudyRadDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        ### example for channel selection/ordering at plotting phase:
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
     'ahi_himawari9': {
         'DiagSpaceGrp': radiance_s,
         'process': True,
@@ -486,6 +498,15 @@ DiagSpaceConfig = {
         'process': True,
         'anGrp': abiGrp,
         'binVarConfigs': abi_g18_binVars,
+        'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+        'channels': range(7,17),
+        'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],
+    },
+    'abi-clr_g19': {
+        'DiagSpaceGrp': radiance_s,
+        'process': True,
+        'anGrp': abiGrp,
+        'binVarConfigs': abi_g19_binVars,
         'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
         'channels': range(7,17),
         'analyzed channels': [7, 8, 9, 10, 11, 13, 14, 15, 16],

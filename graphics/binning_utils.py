@@ -116,6 +116,10 @@ abi_g18 = 'abi_g18'
 geoirlatlonBoxParams['values'] += [abi_g18]
 geoirlatlonBoxParams['centerLon'] += [360. - 137.0]
 
+abi_g19 = 'abi_g19'
+geoirlatlonBoxParams['values'] += [abi_g19]
+geoirlatlonBoxParams['centerLon'] += [360. - 75.2]
+
 ahi_himawari9 = 'ahi_himawari9'
 geoirlatlonBoxParams['values'] += [ahi_himawari9]
 geoirlatlonBoxParams['centerLon'] += [140.7]
@@ -759,6 +763,7 @@ class CITotalSpread(TotalSpread):
     biasCorrectType['abi_g16'] = None
     biasCorrectType['ahi_himawari8'] = None
     biasCorrectType['abi_g18'] = None
+    biasCorrectType['abi_g19'] = None
     biasCorrectType['ahi_himawari9'] = None
 
     def __init__(self, CIName, CIClass, CIVariable=vu.obsVarCI, errortype='total'):

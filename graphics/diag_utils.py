@@ -1214,30 +1214,30 @@ availableDiagnostics = {
     'SCI-'+bu.OkamotoMethod: {
         'variable': bu.SCIOkamoto,
         'analyze': False,
-        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'ahi_himawari8', 'ahi_himawari9'],
+        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'abi_g19', 'ahi_himawari8', 'ahi_himawari9'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'ACI-'+bu.MZ19Method: {
         'variable': bu.ACIMZ19,
         'analyze': False,
-        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'ahi_himawari8', 'ahi_himawari9'],
+        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'abi_g19', 'ahi_himawari8', 'ahi_himawari9'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'MCI': {
         'variable': bu.MCI,
         'analyze': False,
-        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'ahi_himawari8', 'ahi_himawari9'],
+        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'abi_g19', 'ahi_himawari8', 'ahi_himawari9'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'CFy': {
         'variable': vu.cldfracMeta,
         'analyze': False,
-        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'ahi_himawari8', 'ahi_himawari9'],
+        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'abi_g19', 'ahi_himawari8', 'ahi_himawari9'],
         'selectedStatistics': ['Mean', 'STD'],
     },
     'ABEILambda': {
         'variable': bu.ABEILambda,
-        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'ahi_himawari8', 'ahi_himawari9'],
+        'onlyDiagSpaces': ['abi_g16', 'abi_g18', 'abi_g19', 'ahi_himawari8', 'ahi_himawari9'],
         'label': r'$\lambda_{ABEI}$',
     },
 # DerivedDiagnostics
