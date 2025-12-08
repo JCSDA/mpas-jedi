@@ -324,6 +324,7 @@ atmsGrp = 'atms'
 iasiGrp = 'iasi'
 crisGrp = 'cris'
 modelGrp = 'model'
+tmsGrp = 'tms'
 
 anGroupConfig = {
     convGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
@@ -335,6 +336,7 @@ anGroupConfig = {
     mhsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     mhscldGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     atmsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
+    tmsGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '00:50:00'},
     iasiGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
     crisGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:50:00'},
     modelGrp: {'npwork': 1, 'npread': 128, 'analyze walltime': '03:30:00'},
@@ -913,3 +915,19 @@ DiagSpaceConfig = {
     },
 }
 
+
+# Use common dictionary for Tomorrow.io satellites
+tms_common = {
+    'DiagSpaceGrp': radiance_s,
+    'process': True,
+    'anGrp': tmsGrp,
+    'binVarConfigs': polarBinVars,
+    'diagNames': pconf.absDiagnostics | pconf.absSigmaDiagnostics | pconf.nobcDiagnostics,
+    'channels': range(1, 13),
+    'analyzed channels': list(range(1, 13)),
+}
+
+# Use copy() so you can tweak params for one satellite without affecting all.
+# range may need to expand as more satellites come online.
+tms_configs = {f'tms_s{i:02d}': tms_common.copy() for i in range(1, 11)}
+DiagSpaceConfig.update(tms_configs)
