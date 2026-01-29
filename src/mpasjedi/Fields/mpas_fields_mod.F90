@@ -418,8 +418,8 @@ subroutine read_fields(self, f_conf, vdate)
    ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
    ! associated with this state.  Can be any string as long as it is included within the
    ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
-   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
-   ! unique properties, including the MPAS fields that are read/written.
+   ! are 'background', 'analysis', 'ensemble', 'control', 'dastate', 'da_state'. Each of those
+   ! streams has unique properties, including the MPAS fields that are read/written.
    streamID = 'background'
    if (f_conf%get("stream name", str)) then
      streamID = str
@@ -565,8 +565,8 @@ subroutine write_fields(self, f_conf, vdate)
    ! Name of the stream in streams.atmosphere or 'streams_file' associated with self%geom
    ! associated with this state.  Can be any string as long as it is included within the
    ! applicable streams.atmosphere file. Examples of stream names in the MPAS-JEDI distribution
-   ! are 'background', 'analysis', 'ensemble', 'control', 'da_state'. Each of those streams has
-   ! unique properties, including the MPAS fields that are read/written.
+   ! are 'background', 'analysis', 'ensemble', 'control', 'dastate', 'da_state'. Each of those
+   ! streams has unique properties, including the MPAS fields that are read/written.
    streamID = 'da_state'
    if (f_conf%get("stream name", str)) then
      streamID = str

@@ -397,6 +397,7 @@ list( APPEND mpas_test_config_base
   stream_list.atmosphere.analysis
   stream_list.atmosphere.ensemble
   stream_list.atmosphere.control
+  stream_list.atmosphere.dastate
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists
            ${CMAKE_CURRENT_BINARY_DIR}

@@ -29,5 +29,6 @@ model:
 output:
   frequency: PT1H
   filename: Data/states/mpas.forecast.$Y-$M-$D_$h.$m.$s.nc
+  stream name: dastate
 prints:
   frequency: PT30M
