@@ -51,7 +51,9 @@ class SpawnAnalyzeStatsArgs(ProcessArgs):
       help="create a sync job which won't run until all graph jobs complete")
 
     parser.add_argument('-R', '--referenceType', choices=['GFS', 'ERA5', 'EC'], default='GFS',
-    help='Reference data source (GFS, ERA5, or EC). Defaults to GFS.')
+      help='Reference data source (GFS, ERA5, or EC). Defaults to GFS.')
+    parser.add_argument('-M', '--emailAddresses', type = str,
+      help='comma separated list of email addrs to notify of large variances')
 
 processor = SpawnAnalyzeStatsArgs()
 

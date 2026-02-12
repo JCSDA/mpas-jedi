@@ -381,7 +381,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             sciTicks = False
                             logScale = False
 
-                            notused, dmin_relative, dmax_relative, centralValue, label = self.relativeErrorFunction(
+                            val_diffs, dmin_relative, dmax_relative, centralValue, label = self.relativeErrorFunction(
                               expAggPlaneVals,
                               cntrlAggPlaneVals,
                               dmin_relative,
@@ -392,6 +392,15 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             dmax = dmax_relative
 
                             bgstatDiagLabel = statName.replace('RMS','rms').replace('Mean','mean')+': '+label
+                            # check to see if relative differences exceed 3%
+                            if (statName == 'RMS'):
+                                max_all = np.nanmax(val_diffs)
+                                min_all = np.nanmin(val_diffs)
+                                if (abs(max_all) > 3 or abs(min_all) > 3):
+                                    self.logger.warning('Experiment '+expName+
+                                                        ' RMS variance for ' +varName+
+                                                        ' exceeds 3, max:'+str(max_all)+
+                                                        ' min:'+str(min_all))
 
                     cLabel = bgstatDiagLabel
 

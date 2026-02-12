@@ -76,6 +76,21 @@ while ($success != 0 && $try < 5)
   endif
 end
 
+# if an email address is provided, check for RMS variances
+set email_addresses = EMAIL_ADDR
+if ( "$email_addresses" == "none" ) then
+  echo "no email address, not checking RMS variances"
+else
+  echo "email addrs:$email_addresses"
+  echo NEW_EXP > an.warning
+  grep 'WARNING.*RMS .*variance.*exceeds' an.log >> an.warning
+  if ( $status == 0 ) then
+    echo "RMS variance exceeds limit"
+    cat an.warning
+    cat an.warning | mail -v -s "Weekly cylc variances" -S smtp=smtp://ndir.ucar.edu $email_addresses >& /dev/null
+  endif
+endif
+
 grep 'Finished main() successfully' an.log
 if ( $status != 0 ) then
   touch ./FAIL
@@ -143,11 +158,30 @@ def main():
       exps = args.experiments.split(',')
       if len(exps) > 1:analysisTypes.append('BinValAxisProfileDiffCI')
 
+    ## get the long name of the first experiment which isn't the control experiment
+    new_exp = ""
+    if args.experiments and args.controlExperiment:
+      for exp in exps:
+        labels = exp.split(':')
+        if (labels[0] != args.controlExperiment) :
+          new_exp = labels[1]
+          break
+
     ## check for command line option to create a sync job
     if args.waitForSync:
       sync = True
     else:
       sync = False
+
+    ## expand comma separated email addresses
+    email_addrs = '"none"'
+    if args.emailAddresses:
+      email_addrs = "( "
+      addrs = args.emailAddresses.split(',')
+      for addr in addrs:
+        email_addrs = email_addrs + addr + " "
+      email_addrs = email_addrs + ")"
+
 
     jobConf['env'] = jobenv
 
@@ -181,6 +215,8 @@ def main():
             'NOUTER': str(args.nOuterIter),
             'EXPARGS': expArgs,
             'REFTYPE': args.referenceType if args.referenceType else 'GFS',  # default to 'GFS' if none provided
+            'EMAIL_ADDR': email_addrs,
+            'NEW_EXP': new_exp,
         }
         for line in jobbody:
             newline = line
@@ -195,10 +231,10 @@ def main():
     if len(job_procs) > 0:
 
       # wait for all jobs to complete, order doesn't matter
-      for job_proc in job_procs:
-        if sync == True:
+      if sync == True:
+        for job_proc in job_procs:
           print("waiting for subprocess:", job_proc)
-        job_proc.wait()
+          job_proc.wait()
 
 if __name__ == '__main__': main()
 
