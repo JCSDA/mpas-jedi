@@ -1,0 +1,37 @@
+# Plot Extent [lon_min, lon_max, lat_min, lat_max]
+extent: [-180, 180, -85, 85]
+
+# Scatterplot dot size (s)
+s:
+  # by Observation Type
+  # See options in plot_diag.py under
+  #   profileObsTypes + radianceObsTypes + sfcObsTypes.
+  sondes: 35
+  aircraft: 16
+  satwind: 15
+  amsua_aqua: 18
+  amsua_cld_metop-a: 18
+  amsua_cld_metop-b: 18
+  amsua_cld_n15 : 18
+  amsua_cld_n18 : 18
+  amsua_cld_n19 : 18
+  amsua_metop-a: 15
+  amsua_metop-b: 15
+  amsua_n18: 15
+  amsua_n19: 15
+  atms_npp: 15
+  atms_n20: 15
+  mhs-cld_metop-a: 15
+  mhs-cld_metop-b: 15
+  mhs-cld_n15: 15
+  mhs-cld_n18: 15
+  mhs-cld_n19: 15
+
+# Value range (vmin/vmax)
+vlim:
+  # by varName
+  BT1: [140, 263]
+  BT2: [140, 260]
+  BT5: [210, 290]
+  BT6: [200, 290]
+  BT8: [180, 270]

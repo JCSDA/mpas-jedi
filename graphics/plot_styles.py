@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import itertools as itt
+import logging
+from typing import Any
 import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -268,3 +270,44 @@ plotSpecs = ['k-*', 'b-*', 'g-*', 'r-*', 'c-*', 'm-*',
              'k--+','b--+','g--+','r--+','c--+','m--+']
 plotMarkers = ['*','*','*','*','*','*',
                '+','+','+','+','+','+']
+
+
+def get_style_params(
+    config: dict[str, Any],
+    obstype: str,
+    varName: str,
+) -> dict[str, Any]:
+    """
+    Get plot extent from config dictionary.
+    Get scatterplot dotsize s, and vmin/vmax.
+    Returns particular values based on (obstype, varName).
+    """
+    params: dict[str, Any] = {}
+    # Plot Extent
+    if "extent" in config:
+        logging.debug(f"extent={config['extent']} from config file")
+        params["extent"] = config["extent"]
+        logging.debug(f"extent={params['extent']} from config file")
+
+    # Scatterplot Dot Size (s) based on obstype
+    logging.debug(config)
+    if "s" in config:
+        s_config = config["s"]
+        logging.debug(f"look for {obstype} in s_config {s_config}")
+
+        if obstype in s_config:
+            params["s"] = s_config[obstype]
+            logging.debug(f"{obstype} s={params['s']} from config file")
+    else:
+        logging.debug("s not in config")
+
+    # vmin/vmax based on varName
+    if "vlim" in config:
+        vlim_config = config["vlim"]
+
+        if varName in vlim_config:
+            vmin, vmax = vlim_config[varName]
+            params["vmin"] = vmin
+            params["vmax"] = vmax
+
+    return params

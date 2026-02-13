@@ -185,11 +185,23 @@ def plotDistri(lats,lons,values,
 
     else:
         npts = finite.sum()
-        s=kwargs.pop('s', calculate_dot_size(finite.sum()))
-        print(f"{ObsType} {VarName} npts={npts} s={s}")
-        p=ax.scatter(lons[finite], lats[finite], c=values[finite],
-                     transform = ccrs.PlateCarree(), s=s, cmap=cmap, **kwargs)
-        ax.gridlines(draw_labels=True, xlocs=np.arange(-180,180,60),linestyle='--')
+        s = kwargs.pop("s", calculate_dot_size(npts))
+        extent = kwargs.pop("extent", None)
+        print(
+            f"{ObsType} {VarName} npts={npts} s={s} extent={extent} {kwargs}"
+        )
+        p = ax.scatter(
+            lons[finite],
+            lats[finite],
+            c=values[finite],
+            transform=ccrs.PlateCarree(),
+            s=s,
+            cmap=cmap,
+            **kwargs,
+        )
+        if extent is not None:
+            ax.set_extent(extent, crs=ccrs.PlateCarree())
+        ax.gridlines(draw_labels=True, xlocs=np.arange(-180, 180, 60), linestyle="--")
 
     ax.coastlines()
 

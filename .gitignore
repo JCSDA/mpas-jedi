@@ -1,4 +1,6 @@
 # Ignore these files anywhere in the tree
+*.png
 *.pyc
+*.pyi
 *~
 tags

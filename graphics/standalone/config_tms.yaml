@@ -1,0 +1,24 @@
+# Plot Extent [lon_min, lon_max, lat_min, lat_max]
+extent: [-180, 180, -90, 85]
+
+# Scatterplot dot size (s)
+# Consider larger values if extent is small
+s:
+  # by Observation Type
+  # See options in plot_diag.py under
+  #   profileObsTypes + radianceObsTypes + sfcObsTypes.
+  tms_s02: 1
+  tms_s04: 1
+
+vlim:
+  # by varName
+  BT1: [133, 308]
+  BT2: [153, 303]
+  BT4: [193, 283]
+  BT5: [193, 273]
+  BT6: [183, 263]
+  BT7: [183, 273]
+  BT8: [183, 273]
+  BT10: [158, 303]
+  BT11: [158, 303]
+  BT12: [133, 308]
