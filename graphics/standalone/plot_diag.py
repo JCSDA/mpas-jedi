@@ -86,7 +86,7 @@ def readdata(args: argparse.Namespace) -> None:
   makeDistributionPlots = True
   plot_allinOneDistri = True   # plot profileObsTypes (includes all levels) and sfcObsTypes.
   plot_eachLevelDistri = False # plot every level separately for profileObsTypes.
-  plot_predictorDistri = False  # Default is False; should turn on it with makeDistributionPlots = True
+  plot_predictorDistri = args.predictors
 
   # NOUTER: number of outer iterations
   # can be set as env variable 'NOUTER'
@@ -711,11 +711,17 @@ def readdata(args: argparse.Namespace) -> None:
             basic_plot_functions.plotDistri(db[latitude], db[longitude], db[ana][:,ich],
                                         obstype, shortname, units, expt_obs, 0, "ana", **kwargs)
             if plot_predictorDistri:
-              print('plotting predictors distribution for : '+obstype+ 'ch'+str(channel))
-              for ipred, pred in enumerate(predVars):
-                basic_plot_functions.plotDistri(db[latitude], db[longitude], db[pred][:,ich],
-                                        obstype, predGroup[ipred], "ch"+str(channel),
-                                        expt_obs, 0, "ch"+str(channel), **kwargs)
+                print(f'plot {len(predVars)} predictors for {obstype} ch{channel}')
+                kwargs_copy = kwargs.copy()
+                # predictors don't have same range of values as obsType. Let matplotlib pick vmin, vmax.
+                del(kwargs_copy['vmin'])
+                del(kwargs_copy['vmax'])
+                for ipred, pred in enumerate(predVars):
+                    basic_plot_functions.plotDistri(
+                        db[latitude], db[longitude], db[pred][:,ich],
+                        obstype, predGroup[ipred], "ch"+str(channel),
+                        expt_obs, 0, "ch"+str(channel), **kwargs_copy
+                    )
             goodrange = np.nanpercentile(np.abs(np.concatenate((db[omb][:,ich], db[oma][:,ich]))), 98)
             kwargs.update({"cmap": plt.colormaps["RdBu_r"]})
             kwargs.update({"vmin": -goodrange})
@@ -1116,6 +1122,7 @@ def main():
         help="Path to optional YAML config file for plot styling",
     )
     parser.add_argument("--diagdir", help="Path to data", default="../..")
+    parser.add_argument("--predictors", action='store_true', help="plot predictors")
     args = parser.parse_args()
 
     readdata(args)
