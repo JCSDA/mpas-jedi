@@ -1,5 +1,6 @@
 import argparse
 import glob
+import logging
 import math
 import os
 import re
@@ -204,7 +205,7 @@ def readdata(args: argparse.Namespace) -> None:
   # collect all file names that fit file name format
   obsoutfiles = list(diagdir.glob(f'{diagprefix}*{diagsuffix}'))
   if not obsoutfiles:
-      print(f"No obsout files matching '{diagprefix}*{diagsuffix}'")
+      logging.warning(f"No obsout files matching '{diagprefix}*{diagsuffix}'")
 
   # Group files by experiment-obstype combination
   #  (e.g., 3dvar_aircraft), where each group
@@ -229,14 +230,14 @@ def readdata(args: argparse.Namespace) -> None:
   # Loop over experiment-obstype groups
   for expt_obs, files in exob_groups.items():
     if "_" not in expt_obs:
-      print(f"no obstype in {expt_obs}. skip.")
+      logging.warning(f"no obstype in {expt_obs}. skip.")
       continue
 
     # obstype is everything after first underscore
     obstype = expt_obs.split("_", 1)[1]
     # If obstype string is not found in one of the analyzedObsTypes...
     if not any(obstype in analyzedObsType for analyzedObsType in analyzedObsTypes):
-      print(f'{obstype} not in one of analyzedObsTypes. skip.')
+      logging.warning(f'{obstype} not in one of analyzedObsTypes. skip.')
       continue
 
     print(f"Processing experiment_obstype {expt_obs}")
@@ -391,7 +392,7 @@ def readdata(args: argparse.Namespace) -> None:
           var, grp = vu.splitObsVarGrp(varGrp)
 
           if grp not in ncDB.groups:
-              print(f'WARNING: group {grp} not in {file}')
+              logging.warning(f'group {grp} not in {file}')
               continue
 
           # recordNumber is not available in ctest data files
@@ -432,7 +433,7 @@ def readdata(args: argparse.Namespace) -> None:
               if station is not None and stationID == station: station = None
               pass
             else:
-              print('Incorrect unicode format for '+varGrp+' in '+file)
+              logging.error('Incorrect unicode format for '+varGrp+' in '+file)
               raise UnicodeDecodeError(p)
 
         ss = ee
@@ -492,7 +493,7 @@ def readdata(args: argparse.Namespace) -> None:
         db[var][~passan] = np.NaN
 
       if not np.isfinite(db[omb]).any():
-        print('all values are NaN or inf: ', varName, obstype)
+        logging.warning('all values are NaN or inf: ', varName, obstype)
         continue
 
       # diagnose relative omb/oma for GNSSRO, which varies
@@ -935,7 +936,7 @@ def scatter_verification(ifig, varName, varUnits, ivar, nvars,
       xlab = 'h(xb) - y'
       ylab = 'h(xa) - y'
     else:
-      print('WARNING: scatter_verification has no definitions for nfigtypes == ', nfigtypes)
+      logging.warning('scatter_verification has no definitions for nfigtypes == ', nfigtypes)
       continue
 
     # Uncomment these 2 lines to put x/y labels only on peripheral subplts
@@ -1007,18 +1008,18 @@ def scatter_one2ones(XVAL, YVALS, LEG, show_stats, XLAB, YLAB, VAR_NAME, UNITS, 
           ha='left', va='top', transform=ax.transAxes)
 
   if len(XVAL) == 0:
-    print('WARNING in scatter_one2ones: len(XVAL)==0; skipping this dataset')
+    logging.warning('in scatter_one2ones: len(XVAL)==0; skipping this dataset')
     return 1
   NVALS = np.asarray([])
   for i, YVAL in enumerate(YVALS):
     if len(XVAL) != len(YVAL):
-      print('ERROR: Incorrect usage of scatter_one2ones, YVALS must be list of arrays.')
+      logging.error('Incorrect usage of scatter_one2ones, YVALS must be list of arrays.')
       os._exit()
     not_nan = np.isfinite(XVAL) & np.isfinite(YVAL)
     NVALS = np.append(NVALS, np.sum(not_nan))
 
   if np.all(NVALS == 0):
-    print('WARNING in scatter_one2ones: all(XVAL/YVAL) are non-finite; skipping this dataset')
+    logging.warning('in scatter_one2ones: all(XVAL/YVAL) are non-finite; skipping this dataset')
     return 1
 
   colors = [
