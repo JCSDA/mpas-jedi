@@ -1393,7 +1393,7 @@ def plotTimeSeries(fig,
     if nLines <= maxLegendEntries:
         if legend_inside:
             #INSIDE AXES
-            nlcol = np.int(np.ceil(np.sqrt(nLines)))
+            nlcol = int(np.ceil(np.sqrt(nLines)))
             lh = ax.legend(loc='best',fontsize=legendLabelFontSize1,frameon=True,
                            framealpha=0.4,ncol=nlcol)
             lh.get_frame().set_linewidth(0.0)
