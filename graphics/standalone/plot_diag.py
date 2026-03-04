@@ -389,6 +389,11 @@ def readdata(args: argparse.Namespace) -> None:
         for varGrp in readVars:
           if varGrp is None: continue
           var, grp = vu.splitObsVarGrp(varGrp)
+
+          if grp not in ncDB.groups:
+              print(f'WARNING: group {grp} not in {file}')
+              continue
+
           # recordNumber is not available in ctest data files
           # In that case, assume record and station counts are identical
           if (varGrp == record and
