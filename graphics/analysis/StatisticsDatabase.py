@@ -26,7 +26,7 @@ class MultipleBinnedStatistics():
         for attribName in su.fileStatAttributes:
             self.values[attribName] = np.empty(nrows, np.chararray)
         for statName in su.allFileStats:
-            self.values[statName] = np.empty(nrows, np.float)
+            self.values[statName] = np.empty(nrows, float)
 
     @classmethod
     def read(cls, statsFile, expName, fcTDelta, cyDTime):
