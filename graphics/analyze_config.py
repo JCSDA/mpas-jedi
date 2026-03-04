@@ -96,6 +96,10 @@ def adjust_experiments(control, expArray, verifySpace, verifyType, firstCycle, l
   if verifyType:
     VerificationType = verifyType
     verificationChanged = True
+  if firstCycle and lastCycle and firstCycle > lastCycle:
+      raise ValueError(f"firstCycle ({firstCycle}) > lastCycle ({lastCycle})")
+  if firstCycle and lastCycle is None:
+      raise ValueError(f"if firstCycle is set, lastCycle must be set (-l option)")
   if firstCycle:
     dbConf['firstCycleDTime'] = firstCycle
   if lastCycle:
@@ -305,8 +309,7 @@ else:
 ## expDirectory is the top-level directory that contains data
 #  from all experiments.  The environment variable, EXP_DIR, can be used
 #  to specify its value externally if desired.
-user = os.environ['USER']
-dbConf['expDirectory'] = os.getenv('EXP_DIR','/glade/derecho/scratch/'+user+'/pandac')
+dbConf['expDirectory'] = os.getenv('EXP_DIR', os.path.join(os.getenv('SCRATCH'), 'pandac'))
 
 ## hasFCLenDir whether directory structure includes forecast length
 #  overridden to True within StatisticsDatabase.StatsDB when fcTDeltaLast > fcTDeltaFirst
