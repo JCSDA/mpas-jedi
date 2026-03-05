@@ -10,7 +10,6 @@ import diag_utils as du
 import logging
 import numpy as np
 from pathlib import Path
-import plot_utils as pu
 import os
 import var_utils as vu
 import modelsp_utils as mu
@@ -357,7 +356,7 @@ class AnalysisBase():
         truncateDiagnostics = ommDiagnostics+mmoDiagnostics
         diagnosticGroup_ = diagnosticGroup
         #for diag in truncateDiagnostics:
-        #    if pu.prepends(diag, diagnosticGroup_) or pu.postpends(diag, diagnosticGroup_):
+        #    if diagnosticGroup_.startswith(diag) or diagnosticGroup_.endswith(diag):
         #        diagnosticGroup_ = diag
 
         allDiagnosticNames_ = deepcopy(allDiagnosticNames)
@@ -395,10 +394,10 @@ class AnalysisBase():
         centralValue = None
 
         #for diag in truncateDiagnostics:
-        #    if pu.prepends(diag, cntrlDiagnosticName) or pu.postpends(diag, cntrlDiagnosticName):
+        #    if cntrlDiagnosticName.startswith(diag) or cntrlDiagnosticName.endswith(diag):
         #        cntrlDiagnosticName = diag
         #    for idiag, adiag in enumerate(allDiagnosticNames_):
-        #        if pu.prepends(diag, adiag) or pu.postpends(diag, adiag):
+        #        if adiag.startswith(diag) or adiag.endswith(diag):
         #            allDiagnosticNames_[idiag] = diag
 
         oneCenteredRatioDiagPrefixes = ['CRx', 'CRy', 'InnovationRatio', 'SRx', 'SRy', 'OENI']
@@ -406,7 +405,7 @@ class AnalysisBase():
         for diag in allDiagnosticNames_:
             oneCentered = False
             for diagPrefix in oneCenteredRatioDiagPrefixes:
-                oneCentered = oneCentered or pu.prepends(diagPrefix, diag)
+                oneCentered = oneCentered or diag.startswith(diagPrefix)
             allOneCenteredDiagnostics = allOneCenteredDiagnostics and oneCentered
         if allOneCenteredDiagnostics:
             centralValue = 1.
@@ -419,7 +418,7 @@ class AnalysisBase():
         # for diag in allDiagnosticNames_:
         #     logScaled = False
         #     for diagPrefix in logScaledDiagPrefixes:
-        #         logScaled = logScaled or pu.prepends(diagPrefix, diag)
+        #         logScaled = logScaled or diag.startswith(diagPrefix)
         #     allLogScaledDiagnostics = allLogScaledDiagnostics and logScaled
         # if allLogScaledDiagnostics:
         #     logScale = True and not isDifferencePlot
