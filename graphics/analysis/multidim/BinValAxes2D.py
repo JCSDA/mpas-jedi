@@ -167,14 +167,14 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
         # determine the coordinates of the structued X/Y grid points
         xUnique = np.array(pu.uniqueMembers(xCoords))
-        xVals = np.asarray(xUnique, dtype=np.float)
+        xVals = np.asarray(xUnique, dtype=float)
         xSort = np.argsort(xVals)
         xVals = xVals[xSort]
         nXVals = len(xVals)
         xValsStr = list(xUnique[xSort])
 
         yUnique = np.array(pu.uniqueMembers(yCoords))
-        yVals = np.asarray(yUnique, dtype=np.float)
+        yVals = np.asarray(yUnique, dtype=float)
         ySort = np.argsort(yVals)
         yVals = yVals[ySort]
         nYVals = len(yVals)
