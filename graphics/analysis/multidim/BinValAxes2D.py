@@ -368,11 +368,15 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                 t = float(ciVals[statName][trait])
                                 # automatically generate relative difference plots for positive-semi-definite statistics
                                 if useRelativeDifference:
-                                  # divide by cntrlLoc aggregated statName
-                                  t /= normalizingStat
-                                  if self.relativeErrorType == 'one hundred centered':
-                                    t += 1.0
-                                  t *= 100.0
+                                    if normalizingStat != 0 and np.isfinite(normalizingStat):
+                                        # divide by cntrlLoc aggregated statName
+                                        t /= normalizingStat
+                                        if self.relativeErrorType == 'one hundred centered':
+                                            t += 1.0
+                                        t *= 100.0
+                                    else:
+                                        t = np.NaN
+
                                 planeVals[trait][iy, ix] = t
 
                         # automatically generate relative difference plots for positive-semi-definite statistics
