@@ -238,22 +238,26 @@ class AnalysisBase():
         dmax = np.nanmax(d)
       return dmin, dmax
 
+
     def oneHundredCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
-      dmin, dmax = self.initLimits(dmin0, dmax0, d)
+        dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
-      # update dmax, conditional on dmin
-      dmax = np.nanmax([dmax, 100.0/(dmin/100.0)])
+        # Clamp dmin to its "Safety Envelope" (66.7% to 98.0%)
+        # This prevents division by zero and keeps the plot from being too squashed or too wide.
+        dmin = np.nanmax([dmin, 66.7])
+        dmin = np.nanmin([dmin, 98.0])
 
-      # set absolute min/max in case there are large outliers
-      #if np.isfinite(dmin):
-      dmin = np.nanmax([dmin, 66.7])
-      dmin = np.nanmin([dmin, 98.0])
+        # Clamp dmax to its "Safety Envelope" (102.0% to 150.0%)
+        dmax = np.nanmax([dmax, 102.0])
+        dmax = np.nanmin([dmax, 150.0])
 
-      #if np.isfinite(dmax):
-      dmax = np.nanmin([dmax, 150.0])
-      dmax = np.nanmax([dmax, 102.0])
+        # Symmetry Check
+        # Since dmin is at least 66.7, 100/(66.7/100) is ~150.
+        # This will never exceed our 150.0 ceiling.
+        dmax = np.nanmax([dmax, 100.0 / (dmin / 100.0)])
 
-      return dmin, dmax
+        return dmin, dmax
+
 
     def zeroCenteredPercentDifference(self,
       experiment,
@@ -291,23 +295,24 @@ class AnalysisBase():
       #return '100 x (EXP-'+self.cntrlExpName+') / \n'+self.cntrlExpName+''
       #return '100 x (EXP-CONTROL)/\nCONTROL'
 
+
     def zeroCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
-      dmin, dmax = self.initLimits(dmin0, dmax0, d)
+        dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
-      # update dmax, conditional on dmin
-      #dmax = np.nanmax([dmax, 100.0/((100.0+dmin)/100.0) - 100.0])
-      dmax = np.nanmax([dmax, 1.0/dmin])
+        # Ensures we always see at least -2.0 to +2.0
+        dmin = np.nanmin([dmin, -2.0])
+        dmax = np.nanmax([dmax, 2.0])
 
-      # set absolute min/max in case there are large outliers
-      #if np.isfinite(dmin):
-      dmin = np.nanmax([dmin, -33.3])
-      dmin = np.nanmin([dmin, -2.0])
+        # Prevents one bad observation from squishing the whole plot
+        dmin = np.nanmax([dmin, -33.3])
+        dmax = np.nanmin([dmax, 50.0])
 
-      #if np.isfinite(dmax):
-      dmax = np.nanmin([dmax, 50.0])
-      dmax = np.nanmax([dmax, 2.0])
+        # Symmetry (Optional/Legacy logic)
+        # With dmin clamped to -2.0, this maxes at 0.5.
+        # It won't override the 2.0 floor, but it's safe to keep.
+        dmax = np.nanmax([dmax, 1.0 / np.abs(dmin)])
 
-      return dmin, dmax
+        return dmin, dmax
 
 
     def binMethodFile(self, binMethod, before = True):
