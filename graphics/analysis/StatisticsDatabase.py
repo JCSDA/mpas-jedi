@@ -56,27 +56,24 @@ class MultipleBinnedStatistics():
         return new
 
     def insert(self, other, srow):
-        assert srow >= 0, ("Error: can only insert MultipleBinnedStatistics rows >= 0, not ", srow)
+        assert srow >= 0, f"Error: can only insert MultipleBinnedStatistics rows >= 0, not {srow}"
         erow = srow + other.nrows - 1
-        assert erow < self.nrows, ("Error: can only insert MultipleBinnedStatistics rows < ", self.nrows, ", not ", erow)
+        assert erow < self.nrows, f"Error: can only insert MultipleBinnedStatistics rows < {self.nrows}, not {erow}"
+
         for key, val in other.values.items():
-            if isinstance(val, Iterable):
-                assert key in self.values, key+" not in MultipleBinnedStatistics"
-                self.values[key][srow:erow+1] = val[:]
+            assert key in self.values, f"{key} not in MultipleBinnedStatistics"
+            self.values[key][srow:erow+1] = val
 
     def destroy(self):
         del self.values
 
 
-def dfIndexLevels(df, index):
-    mi = df.index.names
-    return pu.uniqueMembers(
-               df.index.get_level_values(
-                   mi.index(index) ).tolist() )
+def dfIndexLevels(df, index_name):
+    return df.index.get_level_values(index_name).unique().tolist()
 
 
 def dfVarVals(df, loc, var):
-    return pu.uniqueMembers(df.loc[loc, var].tolist())
+    return df.loc[loc, var].unique().tolist()
 
 
 class StatsDB:
@@ -487,42 +484,28 @@ class DFWrapper:
 
 
 def TDelta_dir(tdelta, fmt):
-    subs = {}
-    fmts = {}
-    i = '{:d}'
-    i02 = '{:02d}'
+    """Formats a timedelta into a directory string using a replacement map."""
+    # Pre-calculate all necessary values
+    total_seconds = int(tdelta.total_seconds())
+    h_rem, rem = divmod(tdelta.seconds, 3600)
+    m_rem, s_rem = divmod(rem, 60)
 
-    # "%D %HH:%MM:%SS"
-    subs["D"] = tdelta.days
-    fmts["D"] = i
+    # Define the mapping (Key: Formatted Value)
+    subs = {
+        "%D":   str(tdelta.days),
+        "%HH":  f"{h_rem:02d}",
+        "%MM":  f"{m_rem:02d}",
+        "%SS":  f"{s_rem:02d}",
+        "%h":   str(total_seconds // 3600),
+        "%MIN": str(total_seconds // 60),
+        "%SEC": f"{s_rem:02d}",
+        "%m":   str(total_seconds // 60),
+        "%s":   str(total_seconds)
+    }
 
-    subs["HH"], hrem = divmod(tdelta.seconds, 3600)
-    fmts["HH"] = i02
+    # Direct replacement loop
+    for key, val in subs.items():
+        if key in fmt:
+            fmt = fmt.replace(key, val)
 
-    subs["MM"], subs["SS"] = divmod(hrem, 60)
-    fmts["MM"] = i02
-    fmts["SS"] = i02
-
-    ts = int(tdelta.total_seconds())
-
-    # "%h"
-    subs["h"], hrem = divmod(ts, 3600)
-    fmts["h"] = i
-
-    # "%MIN:%SEC"
-    subs["MIN"], subs["SEC"] = divmod(ts, 60)
-    fmts["MIN"] = i
-    fmts["SEC"] = i02
-
-    subs["m"] = subs["MIN"]
-    fmts["m"] = fmts["MIN"]
-
-    # "%s"
-    subs["s"] = ts
-    fmts["s"] = i
-
-    out = fmt
-    for key in subs.keys():
-        out = out.replace("%"+key, fmts[key].format(subs[key]))
-
-    return out
+    return fmt
