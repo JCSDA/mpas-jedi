@@ -47,9 +47,7 @@ background error:
         # FunctionSpace-specific localization, not on model Geometry.
         localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
               # localization for low-waveband component of ensemble
               # (full inter-level and inter-variables localization)
               function:
@@ -57,6 +55,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars
@@ -107,9 +106,7 @@ background error:
         # FunctionSpace-specific localization, not on model Geometry.
         localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
             # Moderate horizontal localization
             # (although full inter-level and inter-variables localization)
               function:
@@ -117,6 +114,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars
@@ -155,9 +153,7 @@ background error:
         # FunctionSpace-specific localization, on model Geometry.
         localization:
             saber central block:
-              saber block name: ID
-            saber outer blocks:
-            - saber block name: spectral analytical filter
+              saber block name: spectral analytical filter
               # localization for high-waveband component of ensemble
               # (although full inter-level and inter-variables localization)
               function:
@@ -165,6 +161,7 @@ background error:
               normalize filter variance: true
               active variables:
               - spec_vars
+            saber outer blocks:
             - saber block name: spectral to gauss
               active variables:
               - spec_vars

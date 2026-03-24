@@ -21,9 +21,7 @@ background error:
   covariance type: ensemble
   localization:
       saber central block:
-        saber block name: ID
-      saber outer blocks:
-      - saber block name: spectral analytical filter
+        saber block name: spectral analytical filter
         function:
           horizontal daley length: 2000e3 # adjust this??
         normalize filter variance: true
@@ -33,6 +31,7 @@ background error:
         - air_upward_absolute_vorticity
         - air_horizontal_divergence
         - air_pressure_at_surface
+      saber outer blocks:
       - saber block name: spectral to gauss
         active variables:
         - air_temperature
