@@ -54,9 +54,9 @@ class CategoryBinMethodBase(AnalysisBase):
             nsubplots = nxplots * nyplots
         else:
             nsubplots = self.nVars
-            nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+            nxplots = int(np.ceil(np.sqrt(nsubplots)))
             while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-            nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+            nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
         return nxplots, nyplots, nsubplots
 

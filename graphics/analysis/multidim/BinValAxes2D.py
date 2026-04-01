@@ -167,14 +167,14 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
         # determine the coordinates of the structued X/Y grid points
         xUnique = np.array(pu.uniqueMembers(xCoords))
-        xVals = np.asarray(xUnique, dtype=np.float)
+        xVals = np.asarray(xUnique, dtype=float)
         xSort = np.argsort(xVals)
         xVals = xVals[xSort]
         nXVals = len(xVals)
         xValsStr = list(xUnique[xSort])
 
         yUnique = np.array(pu.uniqueMembers(yCoords))
-        yVals = np.asarray(yUnique, dtype=np.float)
+        yVals = np.asarray(yUnique, dtype=float)
         ySort = np.argsort(yVals)
         yVals = yVals[ySort]
         nYVals = len(yVals)
@@ -368,11 +368,15 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                 t = float(ciVals[statName][trait])
                                 # automatically generate relative difference plots for positive-semi-definite statistics
                                 if useRelativeDifference:
-                                  # divide by cntrlLoc aggregated statName
-                                  t /= normalizingStat
-                                  if self.relativeErrorType == 'one hundred centered':
-                                    t += 1.0
-                                  t *= 100.0
+                                    if normalizingStat != 0 and np.isfinite(normalizingStat):
+                                        # divide by cntrlLoc aggregated statName
+                                        t /= normalizingStat
+                                        if self.relativeErrorType == 'one hundred centered':
+                                            t += 1.0
+                                        t *= 100.0
+                                    else:
+                                        t = np.NaN
+
                                 planeVals[trait][iy, ix] = t
 
                         # automatically generate relative difference plots for positive-semi-definite statistics

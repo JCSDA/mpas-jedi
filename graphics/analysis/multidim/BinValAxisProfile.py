@@ -49,9 +49,9 @@ class BinValAxisProfile(MultiDimBinMethodBase):
             nsubplots = nxplots * nyplots
         else:
             nsubplots = np.nanmax([nVarsLoc, 1])
-            nxplots = np.nanmax([np.int(np.ceil(np.sqrt(nsubplots))), 1])
+            nxplots = np.nanmax([int(np.ceil(np.sqrt(nsubplots))), 1])
             while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-            nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+            nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
         ptLoc = {}
         axisLimitsLoc = {}
@@ -225,9 +225,9 @@ class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
             nsubplots = nxplots * nyplots
         else:
             nsubplots = np.nanmax([nVarsLoc, 1])
-            nxplots = np.nanmax([np.int(np.ceil(np.sqrt(nsubplots))), 1])
+            nxplots = np.nanmax([int(np.ceil(np.sqrt(nsubplots))), 1])
             while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-            nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+            nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
         # Only bootstrap over the union of cyDTimes available
         # from both experiments at each fcTDelta

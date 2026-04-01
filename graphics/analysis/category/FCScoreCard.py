@@ -356,9 +356,9 @@ class FCScoreCard(CategoryBinMethodBase):
             nsubplots = nxplots * nyplots
         else:
             nsubplots = nSubplotsPerExp
-            nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+            nxplots = int(np.ceil(np.sqrt(nsubplots)))
             while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-            nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+            nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
         xVals = self.fcTDeltas
 
