@@ -94,7 +94,8 @@ if( BUILD_TESTING )
                     TYPE SCRIPT
                     COMMAND ${CMAKE_BINARY_DIR}/bin/cpplint.py
                     ARGS --quiet --recursive ${CMAKE_CURRENT_SOURCE_DIR}/src
-                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+                    LABELS tier2 )
 endif()
 
 ## Package Config

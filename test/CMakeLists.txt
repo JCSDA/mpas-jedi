@@ -475,7 +475,7 @@ endif()
 #                   [ YAMLFILE <filename.yaml> ]
 #                   [ NAME <name> ]
 #                   [ NPE <number-of-processor-elements> ]
-#                   [ TESTTIER <tier-of-test> ])
+#                   [ LABELS <label-1> <label-2> ... ])
 #
 # Options
 # -------
@@ -492,28 +492,25 @@ endif()
 # NPE: optional
 #   Number of processor elements to use in this test
 #
-# TESTTIER: optional
-#   Testing tier for this test
+# LABELS: optional
+#   CMAKE labels for this test
 #
 ######################################################################
 function(add_mpasjedi_unit_test)
     set(options )
-    set(oneValueArgs CLASS YAMLFILE NAME NPE TESTTIER)
-    set(multiValueArgs )
+    set(oneValueArgs CLASS YAMLFILE NAME NPE )
+    set(multiValueArgs LABELS )
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
-    if( NOT DEFINED TEST_TESTTIER )
-        set( TEST_TESTTIER "1" )
-    endif()
-
-    # If the tier of the test is larger than the current
-    # MPASJEDI_TEST_TIER, we exit so it is not added.
-    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
-      return()
-    endif()
 
     if( NOT DEFINED TEST_NAME )
         set( TEST_NAME "${TEST_YAMLFILE}" )
+    endif()
+    if( DEFINED TEST_LABELS )
+        set(templist "")
+        foreach(label_NAME ${TEST_LABELS})
+            list(APPEND templist "${label_NAME}")
+        endforeach(label_NAME)
+        set(TEST_LABELS "${templist}")
     endif()
 
     set( MPI_SUFFIX "" )
@@ -533,12 +530,13 @@ function(add_mpasjedi_unit_test)
         set(_env ENVIRONMENT F_UFMTENDIAN=little\\$<SEMICOLON>big:101-200)
     endif()
 
-    ecbuild_add_test( TARGET  test_${TARGET_NAME}
+    ecbuild_add_test( TARGET  ${TARGET_NAME}
                       ${TEST_ENVIRONMENT}
                       SOURCES executables/Test${TEST_CLASS}.cc
                       ARGS    "testinput/${TEST_YAMLFILE}.yaml"
                       MPI     ${TEST_NPE}
-                      LIBS    ${PROJECT_NAME})
+                      LIBS    ${PROJECT_NAME}
+                      LABELS  ${TEST_LABELS} )
 endfunction()
 
 ####################################################################################
@@ -562,7 +560,7 @@ endfunction()
 #                              [ TOL <float> ]
 #                              [ DIF <int> ]
 #                              [ NPE <number-of-processor-elements> ]
-#                              [ TESTTIER <tier-of-test> ]
+#                              [ LABELS <label-1> <label-2> ... ]
 #                              [ DEPENDS <previous-test1> [<previous-test2> ...])
 #
 # Options
@@ -596,8 +594,8 @@ endfunction()
 #     e.g., number of parallel time windows in 4denvar
 #   Additionally will be used to generate the TARGET_NAME of this test.
 #
-# TESTTIER: optional
-#   Testing tier for this test
+# LABELS: optional
+#   CMAKE labels for this test
 #
 # DEPENDS: optional
 #   List of previous application test NAME's on which this test depends.
@@ -607,19 +605,9 @@ endfunction()
 ####################################################################################
 function(add_mpasjedi_application_test)
     set(options RECALIBRATE)
-    set(oneValueArgs NAME APPLICATION NPE N_PARALLEL_STATES TESTTIER)
-    set(multiValueArgs DEPENDS)
+    set(oneValueArgs NAME APPLICATION NPE N_PARALLEL_STATES )
+    set(multiValueArgs DEPENDS LABELS)
     cmake_parse_arguments(TEST "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
-    if( NOT DEFINED TEST_TESTTIER )
-        set( TEST_TESTTIER "1" )
-    endif()
-
-    # If the tier of the test is larger than the current
-    # MPASJEDI_TEST_TIER, we exit so it is not added.
-    if ( TEST_TESTTIER GREATER MPASJEDI_TEST_TIER)
-      return()
-    endif()
 
     if( NOT DEFINED TEST_NAME )
         set( TEST_NAME "${TEST_APPLICATION}" )
@@ -642,49 +630,51 @@ function(add_mpasjedi_application_test)
     endif()
 
     set(TARGET_NAME "${PROJECT_NAME}_${TEST_NAME}${MPI_SUFFIX}")
-    set(TARGET_PREFIX "test")
+    set(TARGET_PREFIX "")
     set(TEST_OUT_FILE "testoutput/${TEST_NAME}.run.ref")
     set(TEST_REFERENCE_FILE "testoutput/${TEST_NAME}.ref")
     if( TEST_RECALIBRATE )
-        set( TARGET_PREFIX "setup_ref" )
+        set( TARGET_PREFIX "setup_ref_" )
+    endif()
+    if( DEFINED TEST_LABELS )
+        set(templist "")
+        foreach(label_NAME ${TEST_LABELS})
+            list(APPEND templist "${label_NAME}")
+        endforeach(label_NAME)
+        set(TEST_LABELS "${templist}")
     endif()
     if( DEFINED TEST_DEPENDS )
         set(templist "")
-	foreach(previous_test_NAME ${TEST_DEPENDS})
-            list(APPEND templist "${TARGET_PREFIX}_${PROJECT_NAME}_${previous_test_NAME}${MPI_SUFFIX}")
-	endforeach(previous_test_NAME)
+        foreach(previous_test_NAME ${TEST_DEPENDS})
+            list(APPEND templist "${TARGET_PREFIX}${PROJECT_NAME}_${previous_test_NAME}${MPI_SUFFIX}")
+        endforeach(previous_test_NAME)
         set(TEST_DEPENDS "${templist}")
-        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
-			  ARGS    "testinput/${TEST_NAME}.yaml"
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+                          ARGS    "testinput/${TEST_NAME}.yaml"
                           MPI     ${TEST_NPE}
-                          TEST_DEPENDS "${TEST_DEPENDS}" )
+                          TEST_DEPENDS "${TEST_DEPENDS}"
+                          LABELS "${TEST_LABELS}" )
     else()
-        ecbuild_add_test( TARGET  ${TARGET_PREFIX}_${TARGET_NAME}
+        ecbuild_add_test( TARGET  ${TARGET_PREFIX}${TARGET_NAME}
                           ${TEST_ENVIRONMENT}
                           TYPE    EXE
-			  COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
-			  ARGS    "testinput/${TEST_NAME}.yaml"
-                          MPI     ${TEST_NPE} )
+                          COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}_${TEST_APPLICATION}.x
+                          ARGS    "testinput/${TEST_NAME}.yaml"
+                          MPI     ${TEST_NPE}
+                          LABELS "${TEST_LABELS}" )
     endif()
     if( TEST_RECALIBRATE )
         ecbuild_add_test( TARGET  extract_ref_${TARGET_NAME}
                           TYPE    SCRIPT
                           COMMAND cp
                           ARGS    ${TEST_OUT_FILE} ${TEST_REFERENCE_FILE}
-                          TEST_DEPENDS ${TARGET_PREFIX}_${TARGET_NAME} )
+                          TEST_DEPENDS ${TARGET_PREFIX}${TARGET_NAME}
+                          LABELS "${TEST_LABELS}" )
     endif()
 endfunction()
-
-# Default MPASJEDI_TEST_TIER
-set(MPASJEDI_TEST_TIER 1)
-
-# Override MPASJEDI_TEST_TIER using environment variable
-if(DEFINED ENV{MPASJEDI_TEST_TIER})
-    set(MPASJEDI_TEST_TIER "$ENV{MPASJEDI_TEST_TIER}")
-endif()
 
 ## whether to recalibrate reference files to current build
 set(RECALIBRATE_CTEST_REFS "OFF")
@@ -745,7 +735,8 @@ if( ${rttov_FOUND} )
     add_mpasjedi_application_test(
         NAME hofx3d_rttovcpp
         APPLICATION hofx3d
-        ${RECALIBRATE})
+        ${RECALIBRATE}
+        LABELS ci_flake_disable )
 endif( ${rttov_FOUND} )
 
 add_mpasjedi_application_test(
@@ -778,6 +769,7 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME parameters_bumpcov
     APPLICATION error_covariance_toolbox
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
@@ -794,6 +786,7 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     APPLICATION gen_ens_pert_B
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 #dirac
@@ -801,6 +794,7 @@ add_mpasjedi_application_test(
     NAME dirac_bumpcov
     APPLICATION error_covariance_toolbox
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
@@ -855,12 +849,14 @@ add_mpasjedi_application_test(
     NAME 3dvar_bumpcov
     APPLICATION variational
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
     NAME 3dvar_bumpcov_nbam
     APPLICATION variational
     DEPENDS parameters_bumpcov
+    LABELS tier2
     ${RECALIBRATE})
 
 if( ${ropp-ufo_FOUND} )
@@ -868,6 +864,7 @@ if( ${ropp-ufo_FOUND} )
         NAME 3dvar_bumpcov_ropp
         APPLICATION variational
         DEPENDS parameters_bumpcov
+        LABELS tier2
         ${RECALIBRATE})
 endif( ${ropp-ufo_FOUND} )
 
@@ -876,6 +873,7 @@ if( ${rttov_FOUND} )
         NAME 3dvar_bumpcov_rttovcpp
         APPLICATION variational
         DEPENDS parameters_bumpcov
+        LABELS tier2 ci_flake_disable
         ${RECALIBRATE})
 endif( ${rttov_FOUND} )
 
@@ -920,6 +918,7 @@ add_mpasjedi_application_test(
     NAME 3dhybrid_bumpcov_bumploc
     APPLICATION variational
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 #variational - 3dfgat
@@ -970,18 +969,21 @@ add_mpasjedi_application_test(
     NPE 3
     N_PARALLEL_STATES 3
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 #variational - 4dfgat
 add_mpasjedi_application_test(
     NAME 4dfgat
     APPLICATION variational
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 add_mpasjedi_application_test(
     NAME 4dfgat_cda
     APPLICATION variational
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 # eda
 add_mpasjedi_application_test(
@@ -990,12 +992,14 @@ add_mpasjedi_application_test(
     NPE 4
     N_PARALLEL_STATES 4
     DEPENDS parameters_bumpcov parameters_bumploc
+    LABELS tier2
     ${RECALIBRATE})
 
 # rtpp
 add_mpasjedi_application_test(
     APPLICATION rtpp
     DEPENDS eda_3dhybrid
+    LABELS tier2
     ${RECALIBRATE})
 
 # ens_mean_variance
@@ -1042,7 +1046,8 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
             add_mpasjedi_application_test(
                 APPLICATION error_covariance_toolbox
 		NAME parameters_bumpcov
-                NPE ${THIS_NPE})
+                NPE ${THIS_NPE}
+                LABELS tier2)
 
             add_mpasjedi_application_test(
                 APPLICATION error_covariance_toolbox
@@ -1058,7 +1063,8 @@ if( NOT ${RECALIBRATE_CTEST_REFS} STREQUAL "ON" )
                 APPLICATION variational
 		NAME 3dhybrid_bumpcov_bumploc
                 NPE ${THIS_NPE}
-                DEPENDS parameters_bumpcov parameters_bumploc)
+                DEPENDS parameters_bumpcov parameters_bumploc
+                LABELS tier2 )
         endif()
     endforeach(THIS_NPE)
 endif()
