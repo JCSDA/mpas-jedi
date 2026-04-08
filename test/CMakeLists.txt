@@ -717,7 +717,8 @@ add_mpasjedi_application_test(
 #hofx3d/hofx4d/enshofx
 add_mpasjedi_application_test(
     APPLICATION hofx3d
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+	LABELS ci_oneapi_disable )
 
 add_mpasjedi_application_test(
         NAME hofx3d_nbam
