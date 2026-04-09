@@ -1,54 +1,28 @@
-# (C) Copyright 2009-2016 ECMWF.
-# 
+# (C) Copyright 2026 UCAR
+#
 # This software is licensed under the terms of the Apache Licence Version 2.0
-# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0. 
-# In applying this licence, ECMWF does not waive the privileges and immunities 
-# granted to it by virtue of its status as an intergovernmental organisation nor
-# does it submit to any jurisdiction.
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
-if( NOT CMAKE_BUILD_TYPE MATCHES "Debug" )
-  add_definitions( -DNDEBUG )
-endif( )
-if( NOT MPAS_DOUBLE_PRECISION )
-  add_definitions( -DSINGLE_PRECISION )
+
+# Set compiler flags for basic build types,
+# for compilers where this is not provided by ecbuild.
+include(build_type_compiler_flags)
+
+# Set JEDI's common compiler flags
+include(jedi_common_compiler_flags)
+
+# Set MPAS-JEDI-specific compiler flags
+if(NOT MPAS_DOUBLE_PRECISION)
+  add_definitions(-DSINGLE_PRECISION)
 endif()
 
-#######################################################################################
-# Fortran
-#######################################################################################
-
-if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
-  include( compiler_flags_GNU_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
-  include( compiler_flags_Intel_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "XL" )
-  include( compiler_flags_XL_Fortran )
-elseif( CMAKE_Fortran_COMPILER_ID MATCHES "Cray" )
-  include( compiler_flags_Cray_Fortran )
-else()
-  message( STATUS "Fortran compiler with ID ${CMAKE_CXX_COMPILER_ID} will be used with CMake default options")
+if(CMAKE_CXX_COMPILER_ID STREQUAL Cray)
+  set(CMAKE_CXX_LINK_FLAGS        "-Wl,-Map,loadmap -Wl,-z,muldefs -Ktrap=fp $ENV{CRAYLIBS_X86_64}/btswap.o")
+  set(CMAKE_CXX_LINK_EXECUTABLE   "<CMAKE_CXX_COMPILER>  <FLAGS> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS>  -o <TARGET> <LINK_LIBRARIES> -Wl,-Bdynamic")
 endif()
-
-#######################################################################################
-# C
-#######################################################################################
-
-# todo
-
-#######################################################################################
-# C++
-#######################################################################################
-
-if( CMAKE_CXX_COMPILER_ID MATCHES "GNU" )
-  include( compiler_flags_GNU_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
-  include( compiler_flags_Intel_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "XL" )
-  include( compiler_flags_XL_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Cray" )
-  include( compiler_flags_Cray_CXX )
-elseif( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-  include( compiler_flags_Clang_CXX )
-else()
-  message( STATUS "C++ compiler with ID ${CMAKE_CXX_COMPILER_ID} will be used with CMake default options")
+if(CMAKE_Fortran_COMPILER_ID STREQUAL Cray)
+  set(CMAKE_Fortran_LINK_FLAGS    "-Wl,-Map,loadmap")
+endif()
+if(CMAKE_Fortran_COMPILER_ID STREQUAL GNU)
+  ecbuild_add_fortran_flags("-ffpe-trap=invalid,zero,overflow,underflow" BUILD DEBUG)
 endif()
