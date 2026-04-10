@@ -230,7 +230,7 @@ link_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_st
 
 # RTTOV coefficient files
 list( APPEND rttov_test_input
-  rttov7pred54L/rtcoef_noaa_19_amsua.dat
+  rttov13pred54L/rtcoef_noaa_19_amsua_o3.dat
 )
 
 # CRTM coefficient files
@@ -413,7 +413,7 @@ endif ( crtm_FOUND )
 
 # link rttov coefficient files
 if( ${rttov_FOUND} )
-  create_symlink_filename( ${rttov_SOURCE_DIR}/rtcoef_rttov12
+  create_symlink_filename( ${rttov_SOURCE_DIR}/rtcoef_rttov14
                            ${CMAKE_CURRENT_BINARY_DIR}/Data
                            ${rttov_test_input} )
 endif( ${rttov_FOUND} )
@@ -736,8 +736,7 @@ if( ${rttov_FOUND} )
     add_mpasjedi_application_test(
         NAME hofx3d_rttovcpp
         APPLICATION hofx3d
-        ${RECALIBRATE}
-        LABELS ci_flake_disable )
+        ${RECALIBRATE})
 endif( ${rttov_FOUND} )
 
 add_mpasjedi_application_test(
@@ -874,7 +873,7 @@ if( ${rttov_FOUND} )
         NAME 3dvar_bumpcov_rttovcpp
         APPLICATION variational
         DEPENDS parameters_bumpcov
-        LABELS tier2 ci_flake_disable
+        LABELS tier2
         ${RECALIBRATE})
 endif( ${rttov_FOUND} )
 

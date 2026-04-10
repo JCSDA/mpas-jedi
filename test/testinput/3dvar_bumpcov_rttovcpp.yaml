@@ -195,7 +195,7 @@ cost function:
       obs operator:
         name: RTTOVCPP
         CoefPath: Data/
-        SensorID: noaa_19_amsua
+        SensorID: noaa_19_amsua_o3
 output:
   filename: "Data/states/mpas.3dvar_bumpcov_rttovcpp.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis

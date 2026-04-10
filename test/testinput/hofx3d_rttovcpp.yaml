@@ -61,4 +61,4 @@ observations:
     obs operator: &rttovobsoper
       name: RTTOVCPP
       CoefPath: Data/
-      SensorID: noaa_19_amsua
+      SensorID: noaa_19_amsua_o3
