@@ -1,0 +1,105 @@
+# ==============================================================================
+# ACC CONFIGURATION
+# ==============================================================================
+
+# --- 1. RUN SETTINGS ---
+active_task:
+  year: "2018"             # Options: "2018", "2025"
+  eval_start: "2018-04-19" # "2018-04-28" | "2025-06-13" #Global start date for all experiments
+  eval_end:   "2018-05-14" # "2025-07-09"                #Global end date for all experiments
+  variables: ["height"]    # List of variables to process
+  levels: [500]            # Pressure levels in hPa
+  lead_times: [0, 24, 48, 72, 96, 120, 144, 168, 192, 216, 240]
+  num_workers: 36          # Parallel workers for Derecho/Casper
+  use_gfs_reference: true  # True: Use GFS Analysis | False: Use MPAS-JEDI Cycling DA
+
+# --- 2. PATHS ---
+paths:
+  static_file:    "/glade/campaign/mmm/parc/taosun/pandac/MPAS_GRAPH/x1.2621442.static.nc"
+  invariant_file: "/glade/derecho/scratch/liuz/pandac_common/Invariant/x1.2621442.invariant.nc"
+  clim_dir:       "/glade/derecho/scratch/ivette/ERA5_remappedACC_MPAS"
+
+# --- 3. VARIABLE MAPPING ---
+var_mapping:
+  temperature:
+    MPAS_prefix: 'temperature'
+    analysis_name: 'theta'
+    ERA5: 'T'
+  height:
+    MPAS_prefix: 'height'
+    analysis_name: 'height'
+    ERA5: 'Z'
+  uzonal:
+    MPAS_prefix: 'uzonal'
+    analysis_name: 'uReconstructZonal'
+    ERA5: 'U'
+  vmeridional:
+    MPAS_prefix: 'umeridional'
+    analysis_name: 'uReconstructMeridional'
+    ERA5: 'V'
+
+# --- 4. REGIONAL DOMAINS ---
+regions:
+  Globe:   { lat_min: -90, lat_max: 90,  lon_min: 0,   lon_max: 360 }
+  NH:      { lat_min: 20,  lat_max: 80,  lon_min: 0,   lon_max: 360 }
+  Tropics: { lat_min: -20, lat_max: 20,  lon_min: 0,   lon_max: 360 }
+  SH:      { lat_min: -80, lat_max: -20, lon_min: 0,   lon_max: 360 }
+  CONUS:   { lat_min: 25,  lat_max: 55,  lon_min: 235, lon_max: 285 }
+  NAM:     { lat_min: 15,  lat_max: 75,  lon_min: 200, lon_max: 305 }
+
+# --- 5. EXPERIMENTS ---
+experiments:
+  "2018":
+    output_dir: "/glade/derecho/scratch/ivette/ACC_Results_PR"
+    gfs_an_dir: "/glade/campaign/mmm/parc/taosun/pandac/15kmMeshGFS/MPAS_IC"
+    configs:
+      cold:
+        fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_coldstart_15km2018/ExtendedFC"
+        an_prefix: "x1.2621442.init"
+      e0-3d:
+        fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_0_3dhyb_csrama_csrmhs/ExtendedFC"
+        an_dir: "/glade/derecho/scratch/jban/pandac/jban_0_3dhyb_csrama_csrmhs/CyclingDA"
+        an_prefix: "an"
+      e3-3d:
+        fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_3_3dhyb_asrama_asrmhs_atms/ExtendedFC"
+        an_dir: "/glade/derecho/scratch/liuz/pandac/liuz_3_3dhyb_asrama_asrmhs_atms/CyclingDA"
+        an_prefix: "an"
+      e3-4d:
+        fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_3_4dhyb_asrama_asrmhs_atms/ExtendedFC"
+        an_dir: "/glade/derecho/scratch/liuz/pandac/liuz_3_4dhyb_asrama_asrmhs_atms/CyclingDA"
+        an_prefix: "an"
+      #e4-3d:
+      #  fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_4_3dhyb_asrama_asrmhs_atms_iasi/ExtendedFC"
+      #  an_dir: "/glade/derecho/scratch/liuz/pandac/liuz_4_3dhyb_asrama_asrmhs_atms_iasi/CyclingDA"
+      #  an_prefix: "an"
+      #e4-4d:
+      #  fc_dir: "/glade/derecho/scratch/liuz/pandac/liuz_4_4dhyb_asrama_asrmhs_atms_iasi/ExtendedFC"
+      #  an_dir: "/glade/derecho/scratch/liuz/pandac/liuz_4_4dhyb_asrama_asrmhs_atms_iasi/CyclingDA"
+      #  an_prefix: "an"
+
+  "2025":
+    output_dir: "/glade/derecho/scratch/ivette/ACC_Results_PR"
+    gfs_an_dir: "/glade/campaign/mmm/parc/zhuming/pandac/GFS15kmL55/mpas_init"
+    configs:
+      cold:
+        fc_dir: "/glade/derecho/scratch/mpasjedi/pandac/liuz_coldstart_15km2025/ExtendedFC"
+        an_prefix: "x1.2621442.init"
+      e3-3d:
+        fc_dir: "/glade/derecho/scratch/mpasjedi/pandac/liuz_3_3dhyb_asrama_asrmhs_atms2025/ExtendedFC"
+        an_dir: "/glade/derecho/scratch/mpasjedi/pandac/liuz_3_3dhyb_asrama_asrmhs_atms2025/CyclingDA"
+        an_prefix: "an"
+      e3-4d:
+        fc_dir: "/glade/derecho/scratch/mpasjedi/pandac/liuz_3_4dhyb_asrama_asrmhs_atms2025/ExtendedFC"
+        an_dir: "/glade/derecho/scratch/mpasjedi/pandac/liuz_3_4dhyb_asrama_asrmhs_atms2025/CyclingDA"
+        an_prefix: "an"
+
+# --- 6. PLOTTING SETTINGS ---
+plotting:
+  fig_size: [10, 6]
+  exp_styles:
+    cold:  { color: "#0000FF", ls: "-",  marker: "o" } # Blue
+    e0-3d: { color: "#000000", ls: "-",  marker: "s" } # Black
+    e3-3d: { color: "#ff7f0e", ls: "-",  marker: "^" } # Bright Orange
+    e3-4d: { color: "#2ca02c", ls: "-",  marker: "D" } # Forest Green
+    e4-3d: { color: "#d62728", ls: "-",  marker: "v" } # Crimson Red
+    e4-4d: { color: "#9467bd", ls: "-",  marker: "p" } # Royal Purple
