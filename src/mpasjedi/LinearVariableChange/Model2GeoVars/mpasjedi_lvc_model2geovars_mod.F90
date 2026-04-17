@@ -79,7 +79,9 @@ subroutine create(self, geom, bg, fg, conf)
 
   !Check if the given trajectory variable exists in the background variables
   do iVar = 1, size(trajFieldNames)
-    if( bg%has(trajFieldNames(iVar)) ) trajHasNames = [trajHasNames, trajFieldNames(iVar)]
+    if (bg%has(trajFieldNames(iVar))) then
+      trajHasNames = [ character(len=MAXVARLEN) :: trajHasNames, trajFieldNames(iVar) ]
+    endif
   end do
 
   call da_template_pool(geom, self%trajectory, size(trajHasNames), trajHasNames)
