@@ -931,3 +931,5 @@ tms_common = {
 # range may need to expand as more satellites come online.
 tms_configs = {f'tms_s{i:02d}': tms_common.copy() for i in range(1, 11)}
 DiagSpaceConfig.update(tms_configs)
+tms_clr_configs = {f'tms-clr_s{i:02d}': tms_common.copy() for i in range(1, 11)}
+DiagSpaceConfig.update(tms_clr_configs)
