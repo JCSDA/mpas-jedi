@@ -38,7 +38,7 @@ states to structured grid:
     - lai
     - smois
     - tslb
-    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: '2018-04-15T00:00:00Z'
   structured grid interpolation:
     grid type: latlon

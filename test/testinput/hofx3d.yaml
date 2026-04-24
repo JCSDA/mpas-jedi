@@ -40,7 +40,7 @@ state:
   - lai
   - smois
   - tslb
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 observations:
   observers:
@@ -196,7 +196,7 @@ observations:
       obs options:
         <<: *crtmobsopts
         Sensor_ID: airs_aqua
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: CRIS-NPP
       obsdatain:
@@ -214,7 +214,7 @@ observations:
       obs options:
         <<: *crtmobsopts
         Sensor_ID: cris-fsr_npp
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
   - obs space:
       name: IASI-METOPA
       obsdatain:
@@ -232,7 +232,7 @@ observations:
       obs options:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
-        IRVISlandCoeff: USGS
+        IRVISlandCoeff: IGBP
 #    get values:
 #      tropopause pressure method: wmo
     obs filters:

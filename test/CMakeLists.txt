@@ -69,7 +69,6 @@ endif()
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc.yaml
   testinput/3denvar_dual_resolution.yaml
-  testinput/3denvar_2stream_bumploc.yaml
   testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
@@ -147,7 +146,6 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 list( APPEND mpas_testoutput
   testoutput/3denvar_bumploc.ref
   testoutput/3denvar_dual_resolution.ref
-  testoutput/3denvar_2stream_bumploc.ref
   testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
@@ -248,6 +246,8 @@ list( APPEND crtm_test_input
   EmisCoeff/IR_Water/Little_Endian/Nalli.IRwater.EmisCoeff.bin
   EmisCoeff/IR_Land/SEcategory/Little_Endian/USGS.IRland.EmisCoeff.bin
   EmisCoeff/VIS_Land/SEcategory/Little_Endian/USGS.VISland.EmisCoeff.bin
+  EmisCoeff/IR_Land/SEcategory/Little_Endian/IGBP.IRland.EmisCoeff.bin
+  EmisCoeff/VIS_Land/SEcategory/Little_Endian/IGBP.VISland.EmisCoeff.bin
   SpcCoeff/Little_Endian/airs_aqua.SpcCoeff.bin
   TauCoeff/ODPS/Little_Endian/airs_aqua.TauCoeff.bin
   SpcCoeff/Little_Endian/amsua_n15.SpcCoeff.bin
@@ -317,8 +317,8 @@ endif()
 # link .nc files from mpas-jedi-data to build/mpas-jedi/test/Data
 #384km tests
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km)
-link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/init
-        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/init)
+link_dir(${mpas-jedi_data_testinput_tier_1_local}/384km/bg
+        ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km/bg)
 
 #480km
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km)
@@ -331,20 +331,6 @@ link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend1
          ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs/mpasobsappend1)
 link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend2
          ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/obs/mpasobsappend2)
-
-#480km_2stream
-# .nc files and config files are in the same directory
-# therefore .nc files are linked one by one
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream)
-list( APPEND mpas_test_480km_2stream_nc
-      mpasout.2018-04-15_00.00.00.nc
-      static.nc
-      x1.2562.grid.nc
-      x1.2562.init.2018-04-14_18.00.00.nc
-)
-link_files(${mpas-jedi_data_testinput_tier_1_local}/480km_2stream
-           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
-           ${mpas_test_480km_2stream_nc} )
 
 # link streams and namelists from mpas-jedi to build/mpas-jedi/test/Data
 #384km tests
@@ -379,15 +365,6 @@ endforeach()
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}
            ${mpas_test_partition_480km} )
-
-#480km_2stream tests
-list( APPEND mpas_test_480km_2stream
-      namelist.atmosphere_2018041500
-      streams.atmosphere
-    )
-link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km_2stream
-           ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km_2stream
-           ${mpas_test_480km_2stream} )
 
 # test config files
 list( APPEND mpas_test_config_base
@@ -891,12 +868,6 @@ add_mpasjedi_application_test(
 
 add_mpasjedi_application_test(
     NAME 3denvar_dual_resolution
-    APPLICATION variational
-    DEPENDS parameters_bumploc
-    ${RECALIBRATE})
-
-add_mpasjedi_application_test(
-    NAME 3denvar_2stream_bumploc
     APPLICATION variational
     DEPENDS parameters_bumploc
     ${RECALIBRATE})

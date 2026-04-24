@@ -24,8 +24,8 @@ cost function:
     begin: '2018-04-14T21:00:00Z'
     length: PT6H
   geometry:
-    nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
-    streams_file: "./Data/480km_2stream/streams.atmosphere"
+    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km/streams.atmosphere"
     deallocate non-da fields: true
   analysis variables: *incvars
   background:
@@ -60,7 +60,7 @@ cost function:
     - rain_water
     - snow_water
     - cldfrac
-    filename: "./Data/480km_2stream/mpasout.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:
     covariance model: ensemble
@@ -71,20 +71,20 @@ cost function:
         active variables: *incvars
         read:
           io:
-            files prefix: Data/bump/mpas_parametersbump_loc
+            files prefix: Data/bump/mpas_bumploc
           drivers:
             multivariate strategy: duplicated
             read local nicas: true
     members:
-    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
   observations:
     observers:
@@ -185,15 +185,15 @@ variational:
     algorithm: DRPCG
   iterations:
   - geometry:
-      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
   - geometry:
-      nml_file: "./Data/480km_2stream/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km_2stream/streams.atmosphere"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10

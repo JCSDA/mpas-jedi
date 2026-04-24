@@ -11,10 +11,10 @@ state test:
     - air_pressure_at_surface
     #- water_vapor_mixing_ratio_wrt_dry_air   # qv test. Read seems to work
     #- cloud_liquid_water                     # qc test. Read seems to work
-    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: &date '2018-04-15T00:00:00Z'
   date: *date
-  norm file: 19735.265702001503
+  norm file: 19733.181539730213
   state generate:
     analytic init:
       method: dcmip-test-4-0

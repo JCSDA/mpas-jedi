@@ -46,7 +46,7 @@ cost function:
     - smois
     - tslb
     - pressure_p
-    filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: &analysisdate '2018-04-15T00:00:00Z'
   background error:
     covariance model: SABER
@@ -54,7 +54,7 @@ cost function:
       saber block name: BUMP_NICAS
       read:
         io:
-          files prefix: Data/bump/mpas_parametersbump_cov
+          files prefix: Data/bump/mpas_bumpcov
         drivers:
           multivariate strategy: univariate
           read local nicas: true

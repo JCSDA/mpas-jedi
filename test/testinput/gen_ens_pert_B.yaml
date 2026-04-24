@@ -5,7 +5,7 @@ test:
   log output filename: testoutput/gen_ens_pert_B.run
   test output filename: testoutput/gen_ens_pert_B.run.ref
   
-forecast length: PT1H
+forecast length: PT1H30M
 
 include control: true
 
@@ -20,7 +20,7 @@ initial condition:
   - eastward_wind
   - northward_wind
   - air_pressure_at_surface
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
   
 members: 4
@@ -31,7 +31,7 @@ background error:
     saber block name: BUMP_NICAS
     read:
       io:
-        files prefix: Data/bump/mpas_parametersbump_cov
+        files prefix: Data/bump/mpas_bumpcov
       drivers:
         multivariate strategy: univariate
         read local nicas: true
@@ -55,7 +55,7 @@ background error:
         
 model:
   name: MPAS
-  tstep: PT30M
+  tstep: PT45M
   model variables:
   - water_vapor_mixing_ratio_wrt_moist_air
   - air_pressure_at_surface
@@ -66,7 +66,7 @@ model:
 output:
   type: ens
   first: PT0H
-  frequency: PT1H
+  frequency: PT1H30M
   filename: Data/enkf/model/EnsPertB.$Y-$M-$D_$h.$m.$s.nc.%member%
   member pattern: '%member%'
 

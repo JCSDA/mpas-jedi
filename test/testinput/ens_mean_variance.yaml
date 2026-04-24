@@ -39,7 +39,7 @@ ensemble:
   members from template:
     template:
       <<: *memberConfig
-      filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
+      filename: Data/480km/bg/ensemble/mem%iMember%/EnsForCov.2018-04-15_00.00.00.nc
     pattern: %iMember%
     start: 1
     zero padding: 2

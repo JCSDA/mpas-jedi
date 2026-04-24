@@ -8,17 +8,17 @@ initial condition:
   - eastward_wind
   - northward_wind
   - air_pressure_at_surface
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 model test:
-  forecast length: PT2H
+  forecast length: PT3H
   final norm: 19736.672672314493
   tolerance: 0.005
   test reforecast: false # TODO: fix model module and activate testreforecast
 ModelBias:
 model:
   name: MPAS
-  tstep: PT30M
+  tstep: PT45M
   model variables:
   - air_temperature
   - water_vapor_mixing_ratio_wrt_moist_air

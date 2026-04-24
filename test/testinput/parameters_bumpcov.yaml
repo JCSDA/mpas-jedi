@@ -8,6 +8,7 @@ geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
   deallocate non-da fields: true
+  bump vunit: "height" # modellevel, height
 background:
   state variables: &vars
   - air_temperature
@@ -15,29 +16,29 @@ background:
   - eastward_wind
   - northward_wind
   - air_pressure_at_surface
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: &date 2018-04-15T00:00:00Z
 background error:
   covariance model: SABER
   ensemble:
     members:
-    - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
       date: *date
       state variables: *vars
       stream name: ensemble
-    - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
       date: *date
       state variables: *vars
       stream name: ensemble
-    - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
       date: *date
       state variables: *vars
       stream name: ensemble
-    - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
       date: *date
       state variables: *vars
       stream name: ensemble
-    - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
       date: *date
       state variables: *vars
       stream name: ensemble
@@ -45,7 +46,7 @@ background error:
     saber block name: BUMP_NICAS
     calibration:
       io:
-        files prefix: Data/bump/mpas_parametersbump_cov
+        files prefix: Data/bump/mpas_bumpcov
       drivers:
         compute covariance: true
         compute correlation: true
@@ -57,14 +58,13 @@ background error:
         write global nicas: true
         write nicas grids: true
       sampling:
-        computation grid size: 512
-        diagnostic grid size: 150
+        computation grid size: 1024
+        diagnostic grid size: 200
         distance classes: 5
-        distance class width: 1000000
+        distance class width: 1500.0e3
         reduced levels: 1
         local diagnostic: true
-        averaging length-scale: 1000000
-        interpolation type: c0
+        averaging length-scale: 5000.0e3
       diagnostics:
         target ensemble size: 5
       variance:
@@ -77,22 +77,11 @@ background error:
           - eastward_wind
           - northward_wind
           - air_pressure_at_surface
-          value: 3000.0e3
+          value: 5000.0e3
       fit:
-        horizontal filtering length-scale: 3000000
+        horizontal filtering length-scale: 5000.0e3
       nicas:
         resolution: 4
-        min effective resolution: 2.5
-        filter max horizontal grid size: 15000 #default: 50000
-        filter min effective resolution: 2.5 #default: 2.0
-        interpolation type:
-        - groups:
-          - air_temperature
-          - water_vapor_mixing_ratio_wrt_moist_air
-          - eastward_wind
-          - northward_wind
-          - air_pressure_at_surface
-          type: c0
       grids:
       - model:
           variables:

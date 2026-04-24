@@ -59,9 +59,9 @@ geometry:
 background:
   members:
   - <<: *memberConfig
-    filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
   - <<: *memberConfig
-    filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+    filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
 analysis:
   members:
   - <<: *memberConfig

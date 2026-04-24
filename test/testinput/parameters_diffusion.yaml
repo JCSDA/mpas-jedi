@@ -10,7 +10,7 @@ background:
   - eastward_wind
   - northward_wind
   - air_pressure_at_surface
-  filename: ./Data/480km/bg/restart.2018-04-15_00.00.00.nc
+  filename: ./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc
   date: &date 2018-04-15T00:00:00Z
 background error:
   covariance model: SABER
@@ -34,7 +34,7 @@ background error:
       #    filepath: Data/diffusion/diffusion_hz_bumpcor_t
       - vertical:
           levels: 6
-          fixed value: 1.0
+          fixed value: 3.0
           as gaussian: true
         write:
           filepath: Data/diffusion/diffusion_vt

@@ -14,7 +14,7 @@ background:
   - eastward_wind
   - northward_wind
   - air_pressure_at_surface
-  filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: &date '2018-04-15T00:00:00Z'
 background error:
   covariance model: ensemble
@@ -25,24 +25,24 @@ background error:
       active variables: *vars
       read:
         io:
-          files prefix: Data/bump/mpas_parametersbump_loc
+          files prefix: Data/bump/mpas_bumploc
         drivers:
           multivariate strategy: duplicated
           read local nicas: true
   members:
-  - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+  - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
-  - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+  - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
-  - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+  - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
-  - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+  - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
-  - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+  - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
     date: *date
     state variables: *vars
 dirac:

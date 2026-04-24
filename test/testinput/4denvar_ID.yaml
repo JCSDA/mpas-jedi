@@ -56,13 +56,13 @@ cost function:
       - smois
       - tslb
       #- pressure_p #should we add this ?
-      filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
+      filename: "./Data/480km/bg/mpasout.2018-04-14_21.00.00.nc"
       date: *date1
     - state variables: *stvars
-      filename: "./Data/480km/bg/restart.2018-04-15_00.00.00.nc"
+      filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
       date: *date2
     - state variables: *stvars
-      filename: "./Data/480km/bg/restart.2018-04-15_03.00.00.nc"
+      filename: "./Data/480km/bg/mpasout.2018-04-15_03.00.00.nc"
       date: *date3
   background error:
     covariance model: ensemble
@@ -73,39 +73,39 @@ cost function:
         active variables: *incvars
     members:
     - states:
-      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-14_21.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-14_21.00.00.nc
         <<: *memberConfig1
-      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
         <<: *memberConfig2
-      - filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_03.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_03.00.00.nc
         <<: *memberConfig3
     - states:
-      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-14_21.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-14_21.00.00.nc
         <<: *memberConfig1
-      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_00.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
         <<: *memberConfig2
-      - filename: Data/480km/bg/ensemble/mem02/x1.2562.init.2018-04-15_03.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_03.00.00.nc
         <<: *memberConfig3
     - states:
-      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-14_21.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-14_21.00.00.nc
         <<: *memberConfig1
-      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_00.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
         <<: *memberConfig2
-      - filename: Data/480km/bg/ensemble/mem03/x1.2562.init.2018-04-15_03.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_03.00.00.nc
         <<: *memberConfig3
     - states:
-      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-14_21.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-14_21.00.00.nc
         <<: *memberConfig1
-      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_00.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
         <<: *memberConfig2
-      - filename: Data/480km/bg/ensemble/mem04/x1.2562.init.2018-04-15_03.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_03.00.00.nc
         <<: *memberConfig3
     - states:
-      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-14_21.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-14_21.00.00.nc
         <<: *memberConfig1
-      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_00.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
         <<: *memberConfig2
-      - filename: Data/480km/bg/ensemble/mem05/x1.2562.init.2018-04-15_03.00.00.nc
+      - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_03.00.00.nc
         <<: *memberConfig3
   observations:
     observers:

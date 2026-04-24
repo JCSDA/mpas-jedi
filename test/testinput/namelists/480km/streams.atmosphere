@@ -1,18 +1,23 @@
 <streams>
 <immutable_stream name="input"
                   type="input"
-                  filename_template="x1.2562.init.nc"
+                  filename_template="./Data/480km/bg/mpasout.$Y-$M-$D_$h.$m.$s.nc"
+                  input_interval="initial_only" />
+
+<immutable_stream name="invariant"
+                  type="input"
+                  filename_template="./Data/480km/bg/x1.2562.invariant.nc"
                   input_interval="initial_only" />
 
 <immutable_stream name="restart"
-                  type="input;output"
-                  filename_template="./Data/480km/bg/restart.$Y-$M-$D_$h.$m.$s.nc"
+                  type="none"
+                  filename_template="restart.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only"
                   clobber_mode="overwrite"
                   output_interval="0_01:00:00" />
 
 <immutable_stream name="da_state"
-                  type="input;output"
+                  type="output"
                   filename_template="mpasout_alt.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only"
                   clobber_mode="overwrite"

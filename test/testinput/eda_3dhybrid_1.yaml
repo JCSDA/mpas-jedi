@@ -50,7 +50,7 @@ cost function:
     - smois
     - tslb
     - pressure_p
-    filename: Data/480km/bg/ensemble/mem01/x1.2562.init.2018-04-15_00.00.00.nc
+    filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
     date: *analysisdate
   background error:
     covariance model: hybrid
@@ -61,7 +61,7 @@ cost function:
           saber block name: BUMP_NICAS
           read:
             io:
-              files prefix: Data/bump/mpas_parametersbump_cov
+              files prefix: Data/bump/mpas_bumpcov
             drivers:
               multivariate strategy: univariate
               read local nicas: true
@@ -93,14 +93,14 @@ cost function:
             active variables: *incvars
             read:
               io:
-                files prefix: Data/bump/mpas_parametersbump_loc
+                files prefix: Data/bump/mpas_bumploc
               drivers:
                 multivariate strategy: duplicated
                 read local nicas: true
         members from template:
           template:
             <<: *memberConfig
-            filename: Data/480km/bg/ensemble/mem%iMember%/x1.2562.init.2018-04-15_00.00.00.nc
+            filename: Data/480km/bg/ensemble/mem%iMember%/EnsForCov.2018-04-15_00.00.00.nc
           pattern: '%iMember%'
           start: 1
           zero padding: 2

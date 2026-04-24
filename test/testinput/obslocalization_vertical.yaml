@@ -25,9 +25,9 @@ observations:
     ioda vertical coordinate group: MetaData
     localization function: Box Car
     reference gridpoints:
-      lons: [-119.79888934141884, -119.79888934141884, -119.79888934141884]
-      lats: [61.44294696963654, 61.44294696963654, 61.44294696963654]
-      depths: [1098.55408, 3744.89676, 8793.91508]
+      lons: [-119.79889524938236, -119.79889524938236, -119.79889524938236]
+      lats: [61.44294743370900, 61.44294743370900, 61.44294743370900]
+      depths: [1099.48400, 3745.44842, 8793.90942]
     reference local nobs: [524, 571, 103]
     reference rms: [1.0, 1.0, 1.0]
     print iterator: false
@@ -49,9 +49,9 @@ observations:
     ioda vertical coordinate group: MetaData
     localization function: Gaspari Cohn
     reference gridpoints:
-      lons: [-119.79888934141884, -119.79888934141884, -119.79888934141884]
-      lats: [61.44294696963654, 61.44294696963654, 61.44294696963654]
-      depths: [1098.55408, 3744.89676, 8793.91508]
+      lons: [-119.79889524938236, -119.79889524938236, -119.79889524938236]
+      lats: [61.44294743370900, 61.44294743370900, 61.44294743370900]
+      depths: [1099.48400, 3745.44842, 8793.90942]
     reference local nobs: [514, 217, 80]
-    reference rms: [0.505112, 0.421054, 0.294308]
+    reference rms: [0.504864, 0.420828, 0.294307]
 

@@ -41,7 +41,8 @@
     config_block_decomp_file_prefix = 'x1.2562.graph.info.part.'
 /
 &restart
-    config_do_restart = true
+    config_do_restart = false
+    config_do_DAcycling = true
 /
 &printout
     config_print_global_minmax_vel = true
@@ -59,6 +60,7 @@
     config_radtsw_interval = '00:30:00'
     config_bucket_update = 'none'
     config_physics_suite = 'mesoscale_reference'
+    config_microp_re           = true
 /
 &soundings
     config_sounding_interval = 'none'

@@ -15,7 +15,7 @@ cost function:
     streams_file: "./Data/480km/streams.atmosphere"
   model:
     name: MPAS
-    tstep: PT30M
+    tstep: PT45M
     model variables: &modvars
     - air_temperature
     - water_vapor_mixing_ratio_wrt_moist_air
@@ -55,7 +55,7 @@ cost function:
   - air_pressure_at_surface
   background:
     state variables: *modvars
-    filename: "./Data/480km/bg/restart.2018-04-14_21.00.00.nc"
+    filename: "./Data/480km/bg/mpasout.2018-04-14_21.00.00.nc"
     date: '2018-04-14T21:00:00Z'
   background error:
     covariance model: MPASstatic
@@ -167,7 +167,7 @@ variational:
       # 4dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
       name: Identity
       increment variables: *incvars
-      tstep: PT30M
+      tstep: PT45M
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
@@ -178,7 +178,7 @@ variational:
       # 4dfgat utilizes the generic identity linear model, implemented in oops::IdentityLinearModel
       name: Identity
       increment variables: *incvars
-      tstep: PT30M
+      tstep: PT45M
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
