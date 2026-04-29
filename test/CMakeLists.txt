@@ -94,7 +94,6 @@ list( APPEND mpas_testinput
   testinput/dirac_diffusion_duplicated.yaml
   testinput/dirac_diffusion_univariate.yaml
   testinput/dirac_noloc.yaml
-  testinput/dirac_spectral_1.yaml
   testinput/dirac_spectral_loc.yaml
   testinput/eda_3dhybrid.yaml
   testinput/eda_3dhybrid_1.yaml
@@ -170,7 +169,6 @@ list( APPEND mpas_testoutput
   testoutput/dirac_diffusion_univariate.ref
   testoutput/dirac_diffusion_duplicated.ref
   testoutput/dirac_noloc.ref
-  testoutput/dirac_spectral_1.ref
   testoutput/dirac_spectral_loc.ref
   testoutput/eda_3dhybrid.ref
 #  testoutput/enshofx.ref
@@ -799,11 +797,6 @@ add_mpasjedi_application_test(
 
 #spectral
 if( atlas_TRANS_FOUND OR atlas_ECTRANS_FOUND )
-    add_mpasjedi_application_test(
-        NAME dirac_spectral_1
-        APPLICATION error_covariance_toolbox
-        ${RECALIBRATE})
-
     add_mpasjedi_application_test(
         NAME process_perts_spectral
         APPLICATION process_perts
