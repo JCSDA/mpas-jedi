@@ -95,6 +95,7 @@ observations:
     - filter: PreQC
       maxvalue: 3
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 3
 
   - obs space:
@@ -133,8 +134,10 @@ observations:
         minvalue: -200
         maxvalue: 200
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 3
     - filter: ROobserror
+      apply at iterations: 0,1
       variable: refractivity
       errmodel: NCEP
 
@@ -164,10 +167,12 @@ observations:
     - filter: PreQC
       maxvalue: 3
     - filter: Difference Check
+      apply at iterations: 0,1
       reference: MetaData/stationElevation
       value: GeoVaLs/height_above_mean_sea_level_at_surface
       threshold: 500
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 10
 
   - obs space:
@@ -180,7 +185,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_amsua_n19--nohydro.nc4
+          obsfile: Data/enkf/os/obsout_lgetkf_height_vloc_amsua_n19.nc4
       simulated variables: [brightnessTemperature]
       channels: 5-7,9
     obs error:
@@ -190,6 +195,7 @@ observations:
     - <<: *HorizObsLoc
     obs filters:
     - filter: Background Check
+      apply at iterations: 0,1
       threshold: 10
     obs operator:
       name: CRTM
@@ -218,11 +224,11 @@ local ensemble DA:
     lengthscale units: height
 
 output:
-  filename: Data/enkf/model/mem%{member}%/an.lgetkf.$Y-$M-$D_$h.$m.$s.nc
+  filename: Data/enkf/model/mem%{member}%/an.lgetkf_height_vloc.$Y-$M-$D_$h.$m.$s.nc
   stream name: analysis
 
 output variance posterior:
-  filename: Data/enkf/model/mem%{member}%/an.var.lgetkf.$Y-$M-$D_$h.$m.$s.nc
+  filename: Data/enkf/model/mem%{member}%/an.var.lgetkf_height_vloc.$Y-$M-$D_$h.$m.$s.nc
   stream name: analysis
 
 #output ensemble increments:
