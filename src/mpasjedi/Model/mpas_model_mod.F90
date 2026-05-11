@@ -20,7 +20,6 @@ use mpas_subdriver
 use atm_core
 use mpas_stream_manager
 use mpas4da_mod
-use mpas_constants, only : rgas, cp
 
 use kinds, only : kind_real
 

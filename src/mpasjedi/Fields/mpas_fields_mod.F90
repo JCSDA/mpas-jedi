@@ -25,7 +25,6 @@ use ufo_geovals_mod, only: ufo_geovals
 
 !MPAS-Model
 use atm_core, only: atm_simulation_clock_init, atm_compute_output_diagnostics
-use mpas_constants
 use mpas_derived_types
 use mpas_kind_types, only: StrKIND
 use mpas_pool_routines

@@ -22,7 +22,6 @@ use ufo_vars_mod, only: MAXVARLEN, ufo_vars_getindex
 !MPAS-Model
 use mpas_derived_types
 use mpas_kind_types
-use mpas_constants
 use mpas_dmpar, only: mpas_dmpar_sum_int, mpas_dmpar_sum_real
 use mpas_subdriver
 use atm_core

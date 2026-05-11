@@ -29,7 +29,6 @@ use ufo_vars_mod
 
 !MPAS-Model
 use mpas_abort, only: mpas_dmpar_global_abort
-use mpas_constants
 use mpas_derived_types
 use mpas_dmpar
 use mpas_field_routines

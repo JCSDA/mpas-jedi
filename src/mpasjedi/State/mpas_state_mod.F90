@@ -24,7 +24,6 @@ use ufo_geovals_mod
 use ufo_vars_mod
 
 !MPAS-Model
-use mpas_constants
 use mpas_derived_types
 use mpas_field_routines
 use mpas_kind_types, only: StrKIND
