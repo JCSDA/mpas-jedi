@@ -1,0 +1,213 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/3denvar_multi_resolution.ref
+  log output filename: testoutput/3denvar_multi_resolution.run
+  test output filename: testoutput/3denvar_multi_resolution.run.ref
+_member config: &memberConfig
+  date: &analysisdate '2018-04-15T00:00:00Z'
+  state variables: &incvars
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  stream name: ensemble
+cost function:
+  cost type: 3D-Var
+  time window:
+    begin: '2018-04-14T21:00:00Z'
+    length: PT6H
+  geometry:
+    nml_file: "./Data/384km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/384km/streams.atmosphere"
+    deallocate non-da fields: true
+  analysis variables: *incvars
+  background:
+    state variables:
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - eastward_wind
+    - northward_wind
+    - air_pressure_at_surface
+    - air_potential_temperature
+    - dry_air_density
+    - u
+    - water_vapor_mixing_ratio_wrt_dry_air
+    - air_pressure
+    - landmask
+    - seaice_fraction
+    - snowc
+    - skin_temperature_at_surface
+    - ivgtyp
+    - isltyp
+    - snowh
+    - vegetation_area_fraction
+    - eastward_wind_at_10m
+    - northward_wind_at_10m
+    - lai
+    - smois
+    - tslb
+    - pressure_p
+    filename: "./Data/384km/bg/mpasout.2018-04-15_00.00.00.nc"
+    date: *analysisdate
+  background error:
+    covariance model: ensemble
+    localization:
+      localization method: SABER
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *incvars
+        read:
+          io:
+            files prefix: Data/bump/mpas_bumploc
+          drivers:
+            multivariate strategy: duplicated
+            read local nicas: true
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+    - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
+      <<: *memberConfig
+  observations:
+    observers:
+    - obs space:
+        name: Radiosonde
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sondes_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_multi_sondes.nc4
+        simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
+      obs operator:
+        name: VertInterp
+        observation alias file: testinput/obsop_name_map.yaml
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Background Check
+        apply at iterations: 0,1
+        threshold: 3
+    - obs space:
+        name: Satwind
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_multi_satwind.nc4
+        simulated variables: [windEastward, windNorthward]
+      obs operator:
+        name: VertInterp
+        observation alias file: testinput/obsop_name_map.yaml
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Background Check
+        apply at iterations: 0,1
+        threshold: 3
+    - obs space:
+        name: GnssroRefNCEP
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_multi_gnssroref.nc4
+        simulated variables: [atmosphericRefractivity]
+      obs operator:
+        name: GnssroRefNCEP
+        obs options:
+          use_compress: 0
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: Domain Check
+        where:
+        - variable:
+            name: MetaData/height
+          minvalue: 0
+          maxvalue: 30000
+        - variable:
+            name: MetaData/earthRadiusCurvature
+          minvalue: 6250000
+          maxvalue: 6450000
+        - variable:
+            name: MetaData/geoidUndulation
+          minvalue: -200
+          maxvalue: 200
+      - filter: Background Check
+        apply at iterations: 0,1
+        threshold: 3
+      - filter: ROobserror
+        apply at iterations: 0,1
+        variable: refractivity
+        errmodel: NCEP
+    - obs space:
+        name: SfcCorrected
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3denvar_multi_sfc.nc4
+        simulated variables: [stationPressure]
+      obs operator:
+        name: SfcCorrected
+        correction scheme to use: UKMO   # or WRFDA
+      linear obs operator:
+        name: Identity
+        observation alias file: testinput/obsop_name_map.yaml
+      obs error:
+        covariance model: diagonal
+      obs filters:
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Difference Check
+        apply at iterations: 0,1
+        reference: MetaData/stationElevation
+        value: GeoVaLs/height_above_mean_sea_level_at_surface
+        threshold: 500
+      - filter: Background Check
+        apply at iterations: 0,1
+        threshold: 10
+output:
+  filename: "Data/states/mpas.3denvar_multires.$Y-$M-$D_$h.$m.$s.nc"
+  stream name: analysis
+variational:
+  minimizer:
+    algorithm: DRPCG
+  iterations:
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+      deallocate non-da fields: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+      deallocate non-da fields: true
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'

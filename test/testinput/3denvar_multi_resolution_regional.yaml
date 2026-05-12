@@ -1,9 +1,9 @@
 test:
   float relative tolerance: 0.00000001
   integer tolerance: 0
-  reference filename: testoutput/3denvar_dual_resolution.ref
-  log output filename: testoutput/3denvar_dual_resolution.run
-  test output filename: testoutput/3denvar_dual_resolution.run.ref
+  reference filename: testoutput/3denvar_multi_resolution_regional.ref
+  log output filename: testoutput/3denvar_multi_resolution_regional.run
+  test output filename: testoutput/3denvar_multi_resolution_regional.run.ref
 _member config: &memberConfig
   date: &analysisdate '2018-04-15T00:00:00Z'
   state variables: &incvars
@@ -19,8 +19,8 @@ cost function:
     begin: '2018-04-14T21:00:00Z'
     length: PT6H
   geometry:
-    nml_file: "./Data/384km/namelist.atmosphere_2018041500"
-    streams_file: "./Data/384km/streams.atmosphere"
+    nml_file: "./Data/384km/namelist.atmosphere_2018041500_regional"
+    streams_file: "./Data/384km/streams.atmosphere_regional"
     deallocate non-da fields: true
   analysis variables: *incvars
   background:
@@ -49,7 +49,7 @@ cost function:
     - smois
     - tslb
     - pressure_p
-    filename: "./Data/384km/bg/mpasout.2018-04-15_00.00.00.nc"
+    filename: "./Data/384km/bg/conus384km.mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:
     covariance model: ensemble
@@ -60,20 +60,20 @@ cost function:
         active variables: *incvars
         read:
           io:
-            files prefix: Data/bump/mpas_bumploc
+            files prefix: Data/bump/mpas_bumploc_regional
           drivers:
             multivariate strategy: duplicated
             read local nicas: true
     members:
-    - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem01/conus480km.EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem02/conus480km.EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem03/conus480km.EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem04/conus480km.EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
-    - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
+    - filename: Data/480km/bg/ensemble/mem05/conus480km.EnsForCov.2018-04-15_00.00.00.nc
       <<: *memberConfig
   observations:
     observers:
@@ -86,7 +86,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_dual_sondes.nc4
+            obsfile: Data/os/obsout_3denvar_multi_regional_sondes.nc4
         simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs operator:
         name: VertInterp
@@ -94,72 +94,22 @@ cost function:
       obs error:
         covariance model: diagonal
       obs filters:
+      - filter: Bounds Check
+        filter variables:
+        - name: airTemperature
+        - name: windEastward
+        - name: windNorthward
+        - name: specificHumidity
+        test variables:
+        - name:  GeoVaLs/observable_domain_mask
+          minvalue: 0.0
+          maxvalue: 1.0
+        apply at iterations: 0,1
       - filter: PreQC
         maxvalue: 3
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-    - obs space:
-        name: Satwind
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/satwind_obs_2018041500_m.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/obsout_3denvar_dual_satwind.nc4
-        simulated variables: [windEastward, windNorthward]
-      obs operator:
-        name: VertInterp
-        observation alias file: testinput/obsop_name_map.yaml
-      obs error:
-        covariance model: diagonal
-      obs filters:
-      - filter: PreQC
-        maxvalue: 3
-      - filter: Background Check
-        apply at iterations: 0,1
-        threshold: 3
-    - obs space:
-        name: GnssroRefNCEP
-        obsdatain:
-          engine:
-            type: H5File
-            obsfile: Data/ufo/testinput_tier_1/gnssro_obs_2018041500_s.nc4
-        obsdataout:
-          engine:
-            type: H5File
-            obsfile: Data/os/obsout_3denvar_dual_gnssroref.nc4
-        simulated variables: [atmosphericRefractivity]
-      obs operator:
-        name: GnssroRefNCEP
-        obs options:
-          use_compress: 0
-      obs error:
-        covariance model: diagonal
-      obs filters:
-      - filter: Domain Check
-        where:
-        - variable:
-            name: MetaData/height
-          minvalue: 0
-          maxvalue: 30000
-        - variable:
-            name: MetaData/earthRadiusCurvature
-          minvalue: 6250000
-          maxvalue: 6450000
-        - variable:
-            name: MetaData/geoidUndulation
-          minvalue: -200
-          maxvalue: 200
-      - filter: Background Check
-        apply at iterations: 0,1
-        threshold: 3
-      - filter: ROobserror
-        apply at iterations: 0,1
-        variable: refractivity
-        errmodel: NCEP
     - obs space:
         name: SfcCorrected
         obsdatain:
@@ -169,7 +119,7 @@ cost function:
         obsdataout:
           engine:
             type: H5File
-            obsfile: Data/os/obsout_3denvar_dual_sfc.nc4
+            obsfile: Data/os/obsout_3denvar_multi_regional_sfc.nc4
         simulated variables: [stationPressure]
       obs operator:
         name: SfcCorrected
@@ -180,6 +130,14 @@ cost function:
       obs error:
         covariance model: diagonal
       obs filters:
+      - filter: Bounds Check
+        filter variables:
+        - name: stationPressure
+        test variables:
+        - name:  GeoVaLs/observable_domain_mask
+          minvalue: 0.0
+          maxvalue: 1.0
+        apply at iterations: 0,1
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
@@ -191,22 +149,22 @@ cost function:
         apply at iterations: 0,1
         threshold: 10
 output:
-  filename: "Data/states/mpas.3denvar_dualres.$Y-$M-$D_$h.$m.$s.nc"
+  filename: "Data/states/mpas.3denvar_multires_regional.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
   iterations:
   - geometry:
-      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km/streams.atmosphere"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500_regional"
+      streams_file: "./Data/480km/streams.atmosphere_regional"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
   - geometry:
-      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
-      streams_file: "./Data/480km/streams.atmosphere"
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500_regional"
+      streams_file: "./Data/480km/streams.atmosphere_regional"
       deallocate non-da fields: true
     ninner: '10'
     gradient norm reduction: 1e-10

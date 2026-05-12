@@ -1,0 +1,60 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/parameters_bumploc_regional.ref
+  log output filename: testoutput/parameters_bumploc_regional.run
+  test output filename: testoutput/parameters_bumploc_regional.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500_regional"
+  streams_file: "./Data/480km/streams.atmosphere_regional"
+  deallocate non-da fields: true
+  bump vunit: "height" # modellevel, height
+background:
+  state variables: &vars
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  filename: ./Data/480km/bg/conus480km.mpasout.2018-04-15_00.00.00.nc
+  date: &date 2018-04-15T00:00:00Z
+background error:
+  covariance model: SABER
+  saber central block:
+    saber block name: BUMP_NICAS
+    calibration:
+      io:
+        files prefix: Data/bump/mpas_bumploc_regional
+      drivers:
+        multivariate strategy: duplicated
+        compute nicas: true
+        write global nicas: true
+        write local nicas: true
+      sampling:
+        computation grid size: 512
+      nicas:
+        resolution: 6
+        explicit length-scales: true
+        ## duplicated
+        horizontal length-scale:
+          - groups: [common]
+            value: 2500.0e3
+        vertical length-scale:
+          - groups: [common]
+            value: 0.0e3
+      output model files:
+      - parameter: loc_rh
+        file:
+          filename: Data/bump/mpas.loc_rh_regional.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: loc_rv
+        file:
+          filename: Data/bump/mpas.loc_rv_regional.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control
+      - parameter: nicas_norm
+        file:
+          filename: Data/bump/mpas.nicas_norm_regional.$Y-$M-$D_$h.$m.$s.nc
+          date: *date
+          stream name: control

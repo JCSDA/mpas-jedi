@@ -68,7 +68,8 @@ endif()
 ## test yamls
 list( APPEND mpas_testinput
   testinput/3denvar_bumploc.yaml
-  testinput/3denvar_dual_resolution.yaml
+  testinput/3denvar_multi_resolution.yaml
+  testinput/3denvar_multi_resolution_regional.yaml
   testinput/3denvar_amsua_allsky.yaml
   testinput/3denvar_amsua_bc.yaml
   testinput/3dfgat.yaml
@@ -130,6 +131,7 @@ list( APPEND mpas_testinput
   testinput/obslocalizations.yaml
   testinput/parameters_bumpcov.yaml
   testinput/parameters_bumploc.yaml
+  testinput/parameters_bumploc_regional.yaml
   testinput/parameters_diffusion.yaml
   testinput/process_perts_spectral.yaml
   testinput/rtpp.yaml
@@ -144,7 +146,8 @@ link_files(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_testin
 ## reference outputs
 list( APPEND mpas_testoutput
   testoutput/3denvar_bumploc.ref
-  testoutput/3denvar_dual_resolution.ref
+  testoutput/3denvar_multi_resolution.ref
+  testoutput/3denvar_multi_resolution_regional.ref
   testoutput/3denvar_amsua_allsky.ref
   testoutput/3denvar_amsua_bc.ref
   testoutput/3dfgat.ref
@@ -185,6 +188,7 @@ list( APPEND mpas_testoutput
   testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
+  testoutput/parameters_bumploc_regional.ref
   testoutput/process_perts_spectral.ref
   testoutput/rtpp.ref
   testoutput/ens_mean_variance.ref
@@ -335,6 +339,8 @@ link_dir(${mpas-jedi_data_testinput_tier_1_local}/obs/mpasobsappend2
 list( APPEND mpas_test_384km
       namelist.atmosphere_2018041500
       streams.atmosphere
+      namelist.atmosphere_2018041500_regional
+      streams.atmosphere_regional
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/384km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/384km
@@ -345,6 +351,8 @@ list( APPEND mpas_test_480km
       namelist.atmosphere_2018041421
       namelist.atmosphere_2018041500
       streams.atmosphere
+      namelist.atmosphere_2018041500_regional
+      streams.atmosphere_regional
 )
 link_files(${CMAKE_CURRENT_SOURCE_DIR}/testinput/namelists/480km
            ${CMAKE_CURRENT_BINARY_DIR}/${DATA_DIR_NAME}/480km
@@ -753,6 +761,11 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
+    NAME parameters_bumploc_regional
+    APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
     NAME parameters_diffusion
     APPLICATION error_covariance_toolbox
     ${RECALIBRATE})
@@ -860,9 +873,15 @@ add_mpasjedi_application_test(
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(
-    NAME 3denvar_dual_resolution
+    NAME 3denvar_multi_resolution
     APPLICATION variational
     DEPENDS parameters_bumploc
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3denvar_multi_resolution_regional
+    APPLICATION variational
+    DEPENDS parameters_bumploc_regional
     ${RECALIBRATE})
 
 add_mpasjedi_application_test(

@@ -1,20 +1,34 @@
 <streams>
-<immutable_stream name="invariant"
-                  type="input"
-                  filename_template="./Data/480km_2stream/static.nc"
-                  input_interval="initial_only" />
-
 <immutable_stream name="input"
                   type="input"
-                  filename_template="./Data/480km_2stream/mpasout.$Y-$M-$D_$h.$m.$s.nc"
+                  filename_template="./Data/480km/bg/conus480km.mpasout.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only" />
 
+<immutable_stream name="invariant"
+                  type="input"
+                  filename_template="./Data/480km/bg/conus480km.invariant.nc"
+                  input_interval="initial_only" />
+
+<immutable_stream name="restart"
+                  type="none"
+                  filename_template="restart.$Y-$M-$D_$h.$m.$s.nc"
+                  input_interval="initial_only"
+                  clobber_mode="overwrite"
+                  output_interval="0_01:00:00" />
+
 <immutable_stream name="da_state"
-                  type="input;output"
+                  type="output"
                   filename_template="mpasout_alt.$Y-$M-$D_$h.$m.$s.nc"
                   input_interval="initial_only"
                   clobber_mode="overwrite"
                   output_interval="0_01:00:00" />
+
+<immutable_stream name="lbc_in"
+                  type="input"
+                  filename_template="MESH.lbc.$Y-$M-$D_$h.$m.$s.nc"
+                  filename_interval="input_interval"
+                  packages="limited_area"
+                  input_interval="6:00:00" />
 
 <stream name="background"
         type="input;output"
