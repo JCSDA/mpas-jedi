@@ -137,11 +137,13 @@ cost function:
           channels: 1-15
         minvalue: 100.0
         maxvalue: 500.0
+        apply at iterations: 0,1,2
       - filter: Background Check
         filter variables:
         - name: brightnessTemperature
           channels: 1-15
         threshold: 10.0
+        apply at iterations: 0,1,2
 output:
   filename: "Data/states/mpas.3denvar_amsua_bc.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis

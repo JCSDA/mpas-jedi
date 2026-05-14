@@ -84,7 +84,7 @@ cost function:
         maxvalue: 3
       - filter: Background Check
         threshold: 3
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
 
     - obs space:
         name: Aircraft
@@ -107,7 +107,7 @@ cost function:
         maxvalue: 3
       - filter: Background Check
         threshold: 3
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
 
     - obs space:
         name: GnssroRefNCEP
@@ -142,10 +142,10 @@ cost function:
           minvalue: -200
           maxvalue: 200
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 3
       - filter: ROobserror
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         variable: refractivity
         errmodel: NCEP
 
@@ -190,12 +190,12 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         reference: MetaData/stationElevation
         value: GeoVaLs/height_above_mean_sea_level_at_surface
         threshold: 500
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
       - filter: Perform Action
         filter variables:
@@ -237,12 +237,12 @@ cost function:
       - filter: PreQC
         maxvalue: 3
       - filter: Difference Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         reference: MetaData/stationElevation
         value: GeoVaLs/height_above_mean_sea_level_at_surface
         threshold: 500
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
       - filter: Perform Action
         filter variables:
@@ -276,7 +276,7 @@ cost function:
         covariance model: diagonal
       obs filters:
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
       obs operator: &crtmobsoper
         name: CRTM
@@ -305,7 +305,7 @@ cost function:
         covariance model: diagonal
       obs filters:
       - filter: Background Check
-        apply at iterations: 0,1
+        apply at iterations: 0,1,2
         threshold: 10
       obs operator:
         <<: *crtmobsoper

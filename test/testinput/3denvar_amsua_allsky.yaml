@@ -150,11 +150,13 @@ cost function:
           channels: 1-4,15
         minvalue: 100.0
         maxvalue: 500.0
+        apply at iterations: 0,1,2
       - filter: Background Check
         filter variables:
         - name: brightnessTemperature
           channels: 1-4,15
         threshold: 10.0
+        apply at iterations: 0,1,2
       - filter: BlackList
         filter variables:
         - name: brightnessTemperature
@@ -177,6 +179,7 @@ cost function:
               x1:    [ 0.59,  0.60,  0.44,  0.51,  0.26 ]
               err0:  [ 3.47,  2.78,  2.08,  0.87,  4.90 ]
               err1:  [ 31.11, 42.10, 14.21,  3.21, 15.14]
+        apply at iterations: 0,1,2
 output:
   filename: "Data/states/mpas.3denvar_amsua_allsky.$Y-$M-$D_$h.$m.$s.nc"
   stream name: analysis
