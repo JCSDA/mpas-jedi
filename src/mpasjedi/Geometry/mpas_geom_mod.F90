@@ -73,6 +73,7 @@ type :: mpas_geom
    integer :: vertexDegree
    integer :: maxEdges
    logical :: deallocate_nonda_fields
+   logical :: update_2mTQ_between_outer_loops
    character(len=StrKIND) :: bump_vunit
    real(kind=RKIND), dimension(:),   allocatable :: latCell, lonCell
    real(kind=RKIND), dimension(:),   allocatable :: areaCell
@@ -206,6 +207,10 @@ subroutine geo_setup(self, f_conf, f_comm)
    call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
    self % deallocate_nonda_fields = deallocate_fields
    if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (f_conf, self % domain)
+
+   !whether to update 2mTQ with the lowest model level increments between outer loops, default to .false.
+   if (.not. f_conf%get("update 2mTQ between outer loops", self%update_2mTQ_between_outer_loops) ) &
+       self%update_2mTQ_between_outer_loops = .false.
 
    ! Set up the vertical coordinate for bump
    call f_conf%get_or_die("bump vunit",str)
@@ -738,6 +743,7 @@ subroutine geo_clone(self, other)
    self % bdyMaskCell       = other % bdyMaskCell
    self % bdyMaskEdge       = other % bdyMaskEdge
    self % bdyMaskVertex     = other % bdyMaskVertex
+   self % update_2mTQ_between_outer_loops = other % update_2mTQ_between_outer_loops
 
    self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
 

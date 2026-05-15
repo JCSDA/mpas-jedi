@@ -32,6 +32,10 @@ class GeometryParameters : public oops::Parameters {
   /// can not be true for forecast and hofx (4D) applications
   oops::Parameter<bool> deallocate_non_da_fields{ "deallocate non-da fields", false, this};
 
+  /// option to update 2mTQ between outer loops
+  oops::Parameter<bool> update_2mTQ_between_outer_loops{
+      "update 2mTQ between outer loops", false, this};
+
   /// yaml filename that contains the list of variables to be kept
   /// when "deallocate non-da fields" is true
   oops::Parameter<std::string> kept_fields_file{ "kept fields file", "keptvars.yaml", this};
