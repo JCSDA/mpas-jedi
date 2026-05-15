@@ -73,6 +73,7 @@ initial condition:
   - lai
   - smois
   - tslb
+  - cldfrac
   filename: "./Data/480km/bg/mpasout.2018-04-14_21.00.00.nc"
   date: '2018-04-14T21:00:00Z'
 observations:
@@ -155,7 +156,6 @@ observations:
     obs operator:
       <<: *crtmobsoper
       Clouds: [Water, Ice, Rain, Snow, Graupel]
-      Cloud_Fraction: 1.0
       obs options:
         <<: *crtmobsopts
   - obs space:
@@ -244,7 +244,6 @@ observations:
 #      obs operator:
 #        <<: *crtmobsoper
 #        Clouds: [Water, Ice, Rain, Snow, Graupel]
-#        Cloud_Fraction: 1.0
 #        obs options:
 #          <<: *crtmobsopts
 #          Sensor_ID: atms_npp

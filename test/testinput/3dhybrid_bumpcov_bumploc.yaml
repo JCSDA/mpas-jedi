@@ -47,7 +47,7 @@ cost function:
     - lai
     - smois
     - tslb
-    #- pressure_p  #Should we add this to be consistent with other tests? Just for diagnostics, no change in the result.
+    - pressure_p
     filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:

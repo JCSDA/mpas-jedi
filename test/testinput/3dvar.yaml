@@ -55,7 +55,8 @@ cost function:
     - lai
     - smois
     - tslb
-    #- pressure_p  #Should we add this to be consistent with other tests? Just for diagnostics, no change in the result.
+    - pressure_p
+    - cldfrac
     filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: &analysisdate '2018-04-15T00:00:00Z'
   background error:
@@ -310,7 +311,7 @@ cost function:
       obs operator:
         <<: *crtmobsoper
         Clouds: [Water, Ice, Rain, Snow, Graupel]
-        Cloud_Fraction: 1.0
+        Cloud_Seeding: true  # Set this as false for IR instruments.
         linear obs operator:
           Absorbers: [H2O]
           Clouds: [Water, Ice, Rain, Snow, Graupel]

@@ -55,7 +55,7 @@ cost function:
       - lai
       - smois
       - tslb
-      #- pressure_p #should we add this ?
+      - pressure_p
       filename: "./Data/480km/bg/mpasout.2018-04-14_21.00.00.nc"
       date: *date1
     - state variables: *stvars
