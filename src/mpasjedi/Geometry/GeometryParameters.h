@@ -43,6 +43,10 @@ class GeometryParameters : public oops::Parameters {
   /// yaml filename that contains configurations of templated field names
   oops::Parameter<std::string> template_fields_file{ "template fields file", "geovars.yaml", this};
 
+  /// distance for the nearest-neighbor filling in OOPS unstructured interpolator
+  oops::Parameter<double> regional_nn_fill_distance_in_km{
+      "regional nn fill distance in km", 500.0, this};
+
   /// vertical coordinate for BUMP to be used in the parameter estimate application
   /// not needed for hofx and variational applications
   /// available options are modellevel, height, avgheight, and scaleheight

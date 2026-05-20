@@ -264,4 +264,10 @@ int Geometry::getDim(const std::string & dim) const {
   return -1;
 }
 // -----------------------------------------------------------------------------
+double Geometry::getNNdistance() const {
+  double NNdistance;
+  mpas_geo_get_NN_distance_f90(keyGeom_, NNdistance);
+  return NNdistance;
+}
+// -----------------------------------------------------------------------------
 }  // namespace mpas

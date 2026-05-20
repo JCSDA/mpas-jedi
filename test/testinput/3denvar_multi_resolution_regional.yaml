@@ -22,6 +22,7 @@ cost function:
     nml_file: "./Data/384km/namelist.atmosphere_2018041500_regional"
     streams_file: "./Data/384km/streams.atmosphere_regional"
     deallocate non-da fields: true
+    regional nn fill distance in km: 500.0 #default
   analysis variables: *incvars
   background:
     state variables:

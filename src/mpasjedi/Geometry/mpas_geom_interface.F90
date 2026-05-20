@@ -304,3 +304,19 @@ implicit none
 end subroutine c_mpas_geo_get_coords_and_connectivities
 
 ! ------------------------------------------------------------------------------
+
+!> C++ interface to get NN distance
+subroutine mpas_geo_get_NN_distance(c_key_self, distance) bind(c, name='mpas_geo_get_NN_distance_f90')
+  use iso_c_binding
+  use mpas_geom_mod
+
+  integer(c_int), intent(in) :: c_key_self
+  real(c_double), intent(out) :: distance
+
+  type(mpas_geom), pointer :: self
+  call mpas_geom_registry%get(c_key_self, self)
+
+  distance = self%regional_nn_fill_distance_in_km
+end subroutine mpas_geo_get_NN_distance
+
+! --------------------------------------------------------------------------------------------------

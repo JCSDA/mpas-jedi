@@ -12,6 +12,7 @@ cost function:
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041500"
     streams_file: "./Data/480km/streams.atmosphere"
+    update 2mTQ between outer loops: false # default
   analysis variables: &incvars
   - air_temperature
   - water_vapor_mixing_ratio_wrt_moist_air

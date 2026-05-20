@@ -72,9 +72,9 @@ type :: mpas_geom
    integer :: nSoilLevels
    integer :: vertexDegree
    integer :: maxEdges
-   logical :: deallocate_nonda_fields
    logical :: update_2mTQ_between_outer_loops
    character(len=StrKIND) :: bump_vunit
+   real(kind=RKIND) :: regional_nn_fill_distance_in_km
    real(kind=RKIND), dimension(:),   allocatable :: latCell, lonCell
    real(kind=RKIND), dimension(:),   allocatable :: areaCell
    real(kind=RKIND), dimension(:),   allocatable :: latEdge, lonEdge
@@ -205,16 +205,17 @@ subroutine geo_setup(self, f_conf, f_comm)
 
    !Deallocate not-used fields for memory reduction
    call f_conf%get_or_die("deallocate non-da fields",deallocate_fields)
-   self % deallocate_nonda_fields = deallocate_fields
-   if (self % deallocate_nonda_fields) call geo_deallocate_nonda_fields (f_conf, self % domain)
+   if (deallocate_fields) call geo_deallocate_nonda_fields (f_conf, self % domain)
 
    !whether to update 2mTQ with the lowest model level increments between outer loops, default to .false.
-   if (.not. f_conf%get("update 2mTQ between outer loops", self%update_2mTQ_between_outer_loops) ) &
-       self%update_2mTQ_between_outer_loops = .false.
+   call f_conf%get_or_die("update 2mTQ between outer loops", self%update_2mTQ_between_outer_loops)
 
    ! Set up the vertical coordinate for bump
    call f_conf%get_or_die("bump vunit",str)
    self % bump_vunit = str
+
+   ! distance for the nearest-neighbor filling in OOPS unstructured interpolator
+   call f_conf%get_or_die("regional nn fill distance in km", self%regional_nn_fill_distance_in_km)
 
    if (allocated(geom_count)) then
       nprev = size(geom_count)
@@ -267,9 +268,8 @@ subroutine geo_setup(self, f_conf, f_comm)
    end do
    deallocate(fields_conf)
 
-  ! retrieve iterator dimension from config
-  if ( .not. f_conf%get("iterator dimension", self%iterator_dimension) ) &
-      self%iterator_dimension = 2
+   ! retrieve iterator dimension from config
+   call f_conf%get_or_die("iterator dimension", self%iterator_dimension)
 
    call f_conf%get_or_die('l_build_madwrf',self%saca_params%l_build_madwrf)
    call f_conf%get_or_die('l_build_gsdcloud',self%saca_params%l_build_gsdcloud)
@@ -744,6 +744,7 @@ subroutine geo_clone(self, other)
    self % bdyMaskEdge       = other % bdyMaskEdge
    self % bdyMaskVertex     = other % bdyMaskVertex
    self % update_2mTQ_between_outer_loops = other % update_2mTQ_between_outer_loops
+   self % regional_nn_fill_distance_in_km = other % regional_nn_fill_distance_in_km
 
    self%afunctionspace = atlas_functionspace(other%afunctionspace%c_ptr())
 

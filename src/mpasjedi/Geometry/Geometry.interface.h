@@ -54,6 +54,7 @@ extern "C" {
   void mpas_geo_get_coords_and_connectivities_f90(const F90geom &,
       const int &, double *, double *, int *, int *, int *, int *,
       const int &, int *);
+  void mpas_geo_get_NN_distance_f90(const F90geom &, double &);
 }
 // -----------------------------------------------------------------------------
 

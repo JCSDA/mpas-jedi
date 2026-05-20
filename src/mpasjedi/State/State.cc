@@ -153,7 +153,8 @@ void State::changeResolution(const State & other) {
   // many integer fields of mpas-jedi.
   conf.set("local interpolator type", "oops unstructured grid interpolator");
   conf.set("regional check enabled", "false");  // Unsafe mode (temporary)
-  conf.set("regional nn fill distance in km", "500.0");
+  double NNdistance = other.geom_.getNNdistance();
+  conf.set("regional nn fill distance in km", NNdistance);
   oops::GlobalInterpolator interp(conf, source_geom, target_fs, geom_.getComm());
 
   atlas::FieldSet source{};
