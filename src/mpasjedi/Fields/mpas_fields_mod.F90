@@ -1347,7 +1347,7 @@ subroutine to_fieldset(self, geom, vars, afieldset, include_halo, flip_vert_lev)
             if (poolItr % dataType == MPAS_POOL_REAL) then
                call meta%set('interp_type', 'default')
             elseif (poolItr % dataType == MPAS_POOL_INTEGER) then
-               call meta%set('interp_type', 'integer')
+               call meta%set('interp_type', 'nearest')
             else
                call abor1_ftn('poolItr % dataType .NE. real OR integer, unexpected')
             endif
