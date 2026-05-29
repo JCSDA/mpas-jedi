@@ -168,6 +168,8 @@ observations:
       channels: 24,26,135,137,332,342,1022,1058
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: cris-fsr_npp
@@ -186,6 +188,8 @@ observations:
       channels: 16,29,32,35,38,41,44
     obs operator:
       <<: *crtmobsoper
+      Absorbers: [H2O,O3,CO2]
+      CO2AbsorberMethod: MaunaLoa
       obs options:
         <<: *crtmobsopts
         Sensor_ID: iasi_metop-a
