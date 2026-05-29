@@ -863,6 +863,7 @@ endif( ${rttov_FOUND} )
 add_mpasjedi_application_test(
     NAME 3dfgat_cda
     APPLICATION variational
+    DEPENDS parameters_bumpcov
     ${RECALIBRATE})
 
 #variational - 3denvar
@@ -965,6 +966,7 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME 4dfgat_cda
     APPLICATION variational
+    DEPENDS parameters_bumpcov
     ${RECALIBRATE}
     LABELS tier2 )
 

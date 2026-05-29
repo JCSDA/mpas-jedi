@@ -1,4 +1,4 @@
-4dvar_cdatest:
+test:
   float relative tolerance: 0.02
   integer tolerance: 0
   reference filename: testoutput/4dfgat_cda.ref
@@ -186,4 +186,24 @@ variational:
       time window:
         begin: '2018-04-14T21:45:00Z'
         length: PT6H
+      background error:
+        covariance model: SABER
+        saber central block:
+          saber block name: BUMP_NICAS
+          read:
+            io:
+              files prefix: Data/bump/mpas_bumpcov
+            drivers:
+              multivariate strategy: univariate
+              read local nicas: true
+            grids:
+            - model:
+                variables:
+                - air_temperature
+                - water_vapor_mixing_ratio_wrt_moist_air
+                - eastward_wind
+                - northward_wind
+            - model:
+                variables:
+                - air_pressure_at_surface
 
