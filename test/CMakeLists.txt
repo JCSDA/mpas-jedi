@@ -864,7 +864,8 @@ add_mpasjedi_application_test(
     NAME 3dfgat_cda
     APPLICATION variational
     DEPENDS parameters_bumpcov
-    ${RECALIBRATE})
+    ${RECALIBRATE}
+    LABELS tier2 )
 
 #variational - 3denvar
 add_mpasjedi_application_test(
