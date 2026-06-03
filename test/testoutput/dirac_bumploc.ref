@@ -9,20 +9,20 @@ Fld=5  Min=0.0000000000000000e+00, Max=0.0000000000000000e+00, RMS=0.00000000000
 Covariance(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=-5.7877878451741201e-02, Max=1.1851829073916906e-01, RMS=1.2127008913140687e-03 : air_temperature
-Fld=2  Min=-6.1786926487833812e-06, Max=5.5420819267227204e-06, RMS=7.8753216195712461e-08 : water_vapor_mixing_ratio_wrt_moist_air
-Fld=3  Min=-2.1300928599513160e-06, Max=4.6587526544208219e-01, RMS=4.6535775040169149e-03 : eastward_wind
-Fld=4  Min=-9.1531881279771965e-02, Max=5.2720659487786159e-01, RMS=5.2292735395124898e-03 : northward_wind
+Fld=1  Min=-5.8528486257269294e-02, Max=1.1544150549149314e-01, RMS=1.1918022152099940e-03 : air_temperature
+Fld=2  Min=-6.2590812942591362e-06, Max=5.4100356070409320e-06, RMS=7.8774523230550357e-08 : water_vapor_mixing_ratio_wrt_moist_air
+Fld=3  Min=-4.5238318808757154e-06, Max=4.6891471302224097e-01, RMS=4.6361526554209286e-03 : eastward_wind
+Fld=4  Min=-8.9838229909693437e-02, Max=5.3048389300529397e-01, RMS=5.2153252252999565e-03 : northward_wind
 Fld=5  Min=0.0000000000000000e+00, Max=0.0000000000000000e+00, RMS=0.0000000000000000e+00 : air_pressure_at_surface
 Localization(ensemble_localization) diagnostics:
 - Localization at zero separation:
-  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (-102.95294, 26.56505, 4): 9.9999999999999989e-01
+  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (-102.95294, 26.56505, 4): 1.0000000000000002e+00
   + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (130.11183, 30.31012, 4): 1.0000000000000000e+00
 Localization(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=0.0000000000000000e+00, Max=1.0000000000000000e+00, RMS=1.5007179143792427e-02 : air_temperature
-Fld=2  Min=0.0000000000000000e+00, Max=1.0000000000000000e+00, RMS=1.5007179143792427e-02 : water_vapor_mixing_ratio_wrt_moist_air
-Fld=3  Min=0.0000000000000000e+00, Max=1.0000000000000000e+00, RMS=1.5007179143792427e-02 : eastward_wind
-Fld=4  Min=0.0000000000000000e+00, Max=1.0000000000000000e+00, RMS=1.5007179143792427e-02 : northward_wind
+Fld=1  Min=0.0000000000000000e+00, Max=1.0000000000000002e+00, RMS=1.4843073032469909e-02 : air_temperature
+Fld=2  Min=0.0000000000000000e+00, Max=1.0000000000000002e+00, RMS=1.4843073032469909e-02 : water_vapor_mixing_ratio_wrt_moist_air
+Fld=3  Min=0.0000000000000000e+00, Max=1.0000000000000002e+00, RMS=1.4843073032469909e-02 : eastward_wind
+Fld=4  Min=0.0000000000000000e+00, Max=1.0000000000000002e+00, RMS=1.4843073032469909e-02 : northward_wind
 Fld=5  Min=0.0000000000000000e+00, Max=0.0000000000000000e+00, RMS=0.0000000000000000e+00 : air_pressure_at_surface

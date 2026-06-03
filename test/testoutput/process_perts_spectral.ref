@@ -1,150 +1,150 @@
-Norm of perturbation: member 1: 2.9607117041952151e+03
-wb1_variance_1 ; name = eastward_wind ; bin index = 0 ; binned variance = 9.1495274644626690e-03
-wb1_variance_1 ; name = northward_wind ; bin index = 0 ; binned variance = 9.0676605714568367e-03
-wb1_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 1.5375653571348842e-03
-wb1_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.4152373323297766e-10
-wb1_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.1658927488712709e+02
+Norm of perturbation: member 1: 2.9709106315253002e+03
+wb1_variance_1 ; name = eastward_wind ; bin index = 0 ; binned variance = 9.1697009375910701e-03
+wb1_variance_1 ; name = northward_wind ; bin index = 0 ; binned variance = 9.1153846373760190e-03
+wb1_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 1.5344370125811590e-03
+wb1_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.4210581477352046e-10
+wb1_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.2082074870842587e+02
 Wrote file Data/spectral/wb1_variance_1.nc
 Wrote file Data/spectral/wb1_F15_inc_1.nc
 Fields:
-  eastward_wind: 9.3796154813750707e+00
-  northward_wind: 9.3756965687262124e+00
-  air_temperature: 3.9868564570155791e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 1.1539185971205677e-03
-  air_pressure_at_surface: 1.1626444929854126e+03
-Norm of band perturbation: member 1: band 1: 1.3534282935095846e+03
-wb2_variance_1 ; name = eastward_wind ; bin index = 0 ; binned variance = 4.2736511376671310e-02
-wb2_variance_1 ; name = northward_wind ; bin index = 0 ; binned variance = 3.0656492832904659e-02
-wb2_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 7.5312175287500704e-03
-wb2_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.1972664891612162e-10
-wb2_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.4101690076941475e+02
+  eastward_wind: 9.3959399120171661e+00
+  northward_wind: 9.4043608065081141e+00
+  air_temperature: 3.9857248145209132e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 1.1561386651109268e-03
+  air_pressure_at_surface: 1.1670568653008893e+03
+Norm of band perturbation: member 1: band 1: 1.3574239787350566e+03
+wb2_variance_1 ; name = eastward_wind ; bin index = 0 ; binned variance = 4.2804919859870012e-02
+wb2_variance_1 ; name = northward_wind ; bin index = 0 ; binned variance = 3.0714344835042054e-02
+wb2_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 7.5304668623145388e-03
+wb2_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.1789813903482311e-10
+wb2_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.4292878772945460e+02
 Wrote file Data/spectral/wb2_variance_1.nc
 Wrote file Data/spectral/wb2_F15_inc_1.nc
 Fields:
-  eastward_wind: 1.9734338784412621e+01
-  northward_wind: 1.7237940335098994e+01
-  air_temperature: 8.7456377321439831e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 2.7621190644397868e-03
-  air_pressure_at_surface: 1.3056489603819955e+03
-Norm of band perturbation: member 1: band 2: 1.3585489764522065e+03
-Norm of band perturbation: member 1: band 3: 2.2349949501137780e+03
-Norm of perturbation: member 2: 2.7203026212185737e+03
-wb1_variance_2 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.4607011312193262e-02
-wb1_variance_2 ; name = northward_wind ; bin index = 0 ; binned variance = 7.2072545859076763e-03
-wb1_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 2.4460671613191630e-03
-wb1_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.1635165742466638e-10
-wb1_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.2475060998148660e+02
+  eastward_wind: 1.9743969366245139e+01
+  northward_wind: 1.7261335151573196e+01
+  air_temperature: 8.7424352846474349e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 2.7585203876999858e-03
+  air_pressure_at_surface: 1.3072538501968120e+03
+Norm of band perturbation: member 1: band 2: 1.3602049935998143e+03
+Norm of band perturbation: member 1: band 3: 2.2450093095169209e+03
+Norm of perturbation: member 2: 2.7191727072781591e+03
+wb1_variance_2 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.4631525288331997e-02
+wb1_variance_2 ; name = northward_wind ; bin index = 0 ; binned variance = 7.2179672943107230e-03
+wb1_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 2.4431654838838177e-03
+wb1_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.1527530692549299e-10
+wb1_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.2729921415573131e+02
 Wrote file Data/spectral/wb1_variance_2.nc
 Wrote file Data/spectral/wb1_F15_inc_2.nc
 Fields:
-  eastward_wind: 1.1665427507374387e+01
-  northward_wind: 8.8075106022968264e+00
-  air_temperature: 5.4409809275250867e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 1.1111657855620812e-03
-  air_pressure_at_surface: 9.5229992228957440e+02
-Norm of band perturbation: member 2: band 1: 1.0429971006522367e+03
-wb2_variance_2 ; name = eastward_wind ; bin index = 0 ; binned variance = 4.5038559219994695e-02
-wb2_variance_2 ; name = northward_wind ; bin index = 0 ; binned variance = 3.4296157025426557e-02
-wb2_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 8.1767182260872439e-03
-wb2_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.0591363831325621e-10
-wb2_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.9209306518850036e+02
+  eastward_wind: 1.1673400267787899e+01
+  northward_wind: 8.8143659316499239e+00
+  air_temperature: 5.4320186642572228e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 1.1047587765097638e-03
+  air_pressure_at_surface: 9.5522586124662905e+02
+Norm of band perturbation: member 2: band 1: 1.0461275390785756e+03
+wb2_variance_2 ; name = eastward_wind ; bin index = 0 ; binned variance = 4.5124126000156695e-02
+wb2_variance_2 ; name = northward_wind ; bin index = 0 ; binned variance = 3.4241121713558510e-02
+wb2_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 8.1946635284677483e-03
+wb2_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.0745944614177353e-10
+wb2_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.8724778430151702e+02
 Wrote file Data/spectral/wb2_variance_2.nc
 Wrote file Data/spectral/wb2_F15_inc_2.nc
 Fields:
-  eastward_wind: 2.0348228249300575e+01
-  northward_wind: 1.8222087585908998e+01
-  air_temperature: 8.8897208252392961e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 2.6954410609979019e-03
-  air_pressure_at_surface: 1.1208678498129759e+03
-Norm of band perturbation: member 2: band 2: 1.1079082103297308e+03
-Norm of band perturbation: member 2: band 3: 2.2448851189018437e+03
-Norm of perturbation: member 3: 3.4796811531337430e+03
-wb1_variance_3 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.7148894628414447e-02
-wb1_variance_3 ; name = northward_wind ; bin index = 0 ; binned variance = 5.8961502952196909e-03
-wb1_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 3.2420439224144569e-03
-wb1_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.8227806708578454e-11
-wb1_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 1.8147496155628583e+03
+  eastward_wind: 2.0378830510759283e+01
+  northward_wind: 1.8215358319528384e+01
+  air_temperature: 8.9032878378228695e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 2.6956541775583287e-03
+  air_pressure_at_surface: 1.1163178190352276e+03
+Norm of band perturbation: member 2: band 2: 1.1024238978732567e+03
+Norm of band perturbation: member 2: band 3: 2.2454828869740118e+03
+Norm of perturbation: member 3: 3.4831482349109760e+03
+wb1_variance_3 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.7125992450763846e-02
+wb1_variance_3 ; name = northward_wind ; bin index = 0 ; binned variance = 5.9046035536179401e-03
+wb1_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 3.2198726059821021e-03
+wb1_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.8531623095944803e-11
+wb1_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 1.8167804199443058e+03
 Wrote file Data/spectral/wb1_variance_3.nc
 Wrote file Data/spectral/wb1_F15_inc_3.nc
 Fields:
-  eastward_wind: 1.2259320567168352e+01
-  northward_wind: 7.6623023026238357e+00
-  air_temperature: 5.6173981133589352e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 9.7157141564535728e-04
-  air_pressure_at_surface: 1.8462722447108572e+03
-Norm of band perturbation: member 3: band 1: 2.1560688426289839e+03
-wb2_variance_3 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.7119509472955801e-02
-wb2_variance_3 ; name = northward_wind ; bin index = 0 ; binned variance = 3.3236354966419475e-02
-wb2_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 9.6393033202447232e-03
-wb2_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.0147576062761454e-09
-wb2_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.3790971418778224e+02
+  eastward_wind: 1.2251334984943135e+01
+  northward_wind: 7.6650461126792697e+00
+  air_temperature: 5.6004971959598819e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 9.7334227801961339e-04
+  air_pressure_at_surface: 1.8491287880201025e+03
+Norm of band perturbation: member 3: band 1: 2.1572816863629496e+03
+wb2_variance_3 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.7137580267276919e-02
+wb2_variance_3 ; name = northward_wind ; bin index = 0 ; binned variance = 3.3260562739350442e-02
+wb2_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 9.6478618869838620e-03
+wb2_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.0194308277225088e-09
+wb2_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.3793060927918486e+02
 Wrote file Data/spectral/wb2_variance_3.nc
 Wrote file Data/spectral/wb2_F15_inc_3.nc
 Fields:
-  eastward_wind: 1.9054182574420278e+01
-  northward_wind: 1.7641072211242079e+01
-  air_temperature: 9.6887972845903860e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 2.8785532507954142e-03
-  air_pressure_at_surface: 1.1173618709892430e+03
-Norm of band perturbation: member 3: band 2: 1.3527527196144099e+03
-Norm of band perturbation: member 3: band 3: 2.3594359229307834e+03
-Norm of perturbation: member 4: 2.7990209079039282e+03
-wb1_variance_4 ; name = eastward_wind ; bin index = 0 ; binned variance = 8.7354727294962266e-03
-wb1_variance_4 ; name = northward_wind ; bin index = 0 ; binned variance = 6.1189883962784906e-03
-wb1_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 2.0278086887173734e-03
-wb1_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 3.0378981429770473e-10
-wb1_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.8763156098151455e+02
+  eastward_wind: 1.9055396178980356e+01
+  northward_wind: 1.7640788894033001e+01
+  air_temperature: 9.6850097691657204e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 2.8853841886097957e-03
+  air_pressure_at_surface: 1.1172823338454180e+03
+Norm of band perturbation: member 3: band 2: 1.3527842990208167e+03
+Norm of band perturbation: member 3: band 3: 2.3619080096748326e+03
+Norm of perturbation: member 4: 2.7987078523871878e+03
+wb1_variance_4 ; name = eastward_wind ; bin index = 0 ; binned variance = 8.7212912581375954e-03
+wb1_variance_4 ; name = northward_wind ; bin index = 0 ; binned variance = 6.0954672490079291e-03
+wb1_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 2.0225547647939974e-03
+wb1_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 3.0243286637511648e-10
+wb1_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.8486496419740729e+02
 Wrote file Data/spectral/wb1_variance_4.nc
 Wrote file Data/spectral/wb1_F15_inc_4.nc
 Fields:
-  eastward_wind: 8.9116285651063176e+00
-  northward_wind: 7.6801301168968132e+00
-  air_temperature: 4.3061225704149777e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 1.6334093401305209e-03
-  air_pressure_at_surface: 1.0419439468258354e+03
-Norm of band perturbation: member 4: band 1: 1.3257472480531731e+03
-wb2_variance_4 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.9787743400197841e-02
-wb2_variance_4 ; name = northward_wind ; bin index = 0 ; binned variance = 3.0235264987731880e-02
-wb2_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 7.0216588280836946e-03
-wb2_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.7480196327319425e-10
-wb2_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.4433915749094251e+02
+  eastward_wind: 8.9045968149176904e+00
+  northward_wind: 7.6668500798104944e+00
+  air_temperature: 4.3021411692267346e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 1.6304508924057247e-03
+  air_pressure_at_surface: 1.0394661130337897e+03
+Norm of band perturbation: member 4: band 1: 1.3230778528221067e+03
+wb2_variance_4 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.9798625332987204e-02
+wb2_variance_4 ; name = northward_wind ; bin index = 0 ; binned variance = 3.0090498673693639e-02
+wb2_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 7.0136023400518754e-03
+wb2_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.7605264148464168e-10
+wb2_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.4615497774568581e+02
 Wrote file Data/spectral/wb2_variance_4.nc
 Wrote file Data/spectral/wb2_F15_inc_4.nc
 Fields:
-  eastward_wind: 1.9464465146542839e+01
-  northward_wind: 1.7461401460476495e+01
-  air_temperature: 8.3429388321613338e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 2.8274564042895193e-03
-  air_pressure_at_surface: 8.8313767736154546e+02
-Norm of band perturbation: member 4: band 2: 1.0496219006132417e+03
-Norm of band perturbation: member 4: band 3: 2.2239533245790808e+03
-Norm of perturbation: member 5: 2.9257339511867981e+03
-wb1_variance_5 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.0586568461164668e-02
-wb1_variance_5 ; name = northward_wind ; bin index = 0 ; binned variance = 6.3024434429136992e-03
-wb1_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 2.1277119279866515e-03
-wb1_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 2.5858858730869422e-10
-wb1_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.2346816484600959e+02
+  eastward_wind: 1.9467633248681260e+01
+  northward_wind: 1.7421932003883491e+01
+  air_temperature: 8.3355716938208335e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 2.8281681792647730e-03
+  air_pressure_at_surface: 8.8532385179759217e+02
+Norm of band perturbation: member 4: band 2: 1.0516805532285800e+03
+Norm of band perturbation: member 4: band 3: 2.2233392279787586e+03
+Norm of perturbation: member 5: 2.9282355497388603e+03
+wb1_variance_5 ; name = eastward_wind ; bin index = 0 ; binned variance = 1.0583442911366328e-02
+wb1_variance_5 ; name = northward_wind ; bin index = 0 ; binned variance = 6.3528719245059982e-03
+wb1_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 2.1182290806141210e-03
+wb1_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 2.5597264083956927e-10
+wb1_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.2746865543746037e+02
 Wrote file Data/spectral/wb1_variance_5.nc
 Wrote file Data/spectral/wb1_F15_inc_5.nc
 Fields:
-  eastward_wind: 1.0020926716535863e+01
-  northward_wind: 7.9675634392282593e+00
-  air_temperature: 4.6390613980070485e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 1.5056710732911096e-03
-  air_pressure_at_surface: 9.9430553375871500e+02
-Norm of band perturbation: member 5: band 1: 1.2612783268252228e+03
-wb2_variance_5 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.6041777873446784e-02
-wb2_variance_5 ; name = northward_wind ; bin index = 0 ; binned variance = 3.4732184225659449e-02
-wb2_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 8.4583168487162054e-03
-wb2_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 7.7143133258694152e-10
-wb2_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.6137722670629717e+02
+  eastward_wind: 1.0026063244231315e+01
+  northward_wind: 7.9998944443351290e+00
+  air_temperature: 4.6300500498851855e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 1.4980048511111443e-03
+  air_pressure_at_surface: 9.9917528885091917e+02
+Norm of band perturbation: member 5: band 1: 1.2653281640746716e+03
+wb2_variance_5 ; name = eastward_wind ; bin index = 0 ; binned variance = 3.6086773617938599e-02
+wb2_variance_5 ; name = northward_wind ; bin index = 0 ; binned variance = 3.4730425484807363e-02
+wb2_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 8.4694455910528186e-03
+wb2_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 7.6607731823867973e-10
+wb2_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.5017954924231071e+02
 Wrote file Data/spectral/wb2_variance_5.nc
 Wrote file Data/spectral/wb2_F15_inc_5.nc
 Fields:
-  eastward_wind: 1.8768082944423082e+01
-  northward_wind: 1.8264893367697134e+01
-  air_temperature: 9.3081313151866585e+00
-  water_vapor_mixing_ratio_wrt_moist_air: 2.5259065623916901e-03
-  air_pressure_at_surface: 1.2475597972396447e+03
-Norm of band perturbation: member 5: band 2: 1.3732850466113030e+03
-Norm of band perturbation: member 5: band 3: 2.2444853129563630e+03
+  eastward_wind: 1.8781022626481313e+01
+  northward_wind: 1.8262142006569825e+01
+  air_temperature: 9.3228689964713656e+00
+  water_vapor_mixing_ratio_wrt_moist_air: 2.5168151910667977e-03
+  air_pressure_at_surface: 1.2396288533385512e+03
+Norm of band perturbation: member 5: band 2: 1.3632851407698199e+03
+Norm of band perturbation: member 5: band 3: 2.2526402937526723e+03

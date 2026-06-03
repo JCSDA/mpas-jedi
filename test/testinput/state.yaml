@@ -14,7 +14,7 @@ state test:
     filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: &date '2018-04-15T00:00:00Z'
   date: *date
-  norm file: 19733.181539730213
+  norm file: 19733.192402950168
   state generate:
     analytic init:
       method: dcmip-test-4-0
@@ -25,7 +25,7 @@ state test:
     - northward_wind
     - air_pressure_at_surface
     date: *date
-  norm generated state: 20000.378266179847
+  norm generated state: 20000.378272707854
   tolerance: 1.0e-08
   write then read test:
     state write:
