@@ -15,6 +15,7 @@ import os
 import pandas as pd
 
 from analysis.Analyses import Analyses
+from analysis.AnalysisBase import AnalysisBase
 import analysis.StatisticsDatabase as sdb
 
 _logger = logging.getLogger(__name__)
@@ -69,6 +70,9 @@ def main():
 
     firstCycle = pd.to_datetime(args.firstCycle)
     lastCycle = pd.to_datetime(args.lastCycle)
+
+    # Set figure output file type globally for all AnalysisBase-derived analyses.
+    AnalysisBase.figureFileType = args.figureFileType
 
     anconf.adjust_experiments(args.controlExperiment, exps, args.verifySpace, args.verifyType, firstCycle, lastCycle)
 

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
-import binning_utils as bu
-import predefined_configs as pconf
 from collections.abc import Iterable
 from copy import deepcopy
-import numpy as np
-import plot_utils as pu
-import analysis.StatisticsDatabase as sdb
-import var_utils as vu
 
+import numpy as np
+
+import analysis.StatisticsDatabase as sdb
+import binning_utils as bu
+import plot_utils as pu
+import predefined_configs as pconf
+import var_utils as vu
 from analysis.AnalysisBase import AnalysisBase
+from config import obsBinVars
+
 
 #=============
 # 1-D figures
@@ -44,6 +47,12 @@ class CategoryBinMethodBase(AnalysisBase):
             (vu.obsVarImpact, bu.altjetMethod): {'binVarTier': 3},
             (vu.obsVarLandFrac, bu.surfbandsMethod): {'binVarTier': 3},
         }
+
+        # Add regional bins from config
+        for method in obsBinVars[vu.obsRegionBinVar]:
+            self.binVarDict[(vu.obsRegionBinVar, method)] = {}
+
+        self.logger.debug(self.binVarDict)
         self.maxDiagnosticsPerAnalysis = 10 // self.nExp
 
     def subplotArrangement(self, binValsMap):
@@ -106,8 +115,10 @@ class CategoryBinMethodBase(AnalysisBase):
             for (fullBinVar, binMethod), options in self.binVarDict.items():
                 if options.get('binVarTier', 1) > self.maxBinVarTier: continue
                 binVar = vu.varDictAll.get(fullBinVar, [None, fullBinVar])[1]
-                if (binVar not in diagBinVars or
-                    (binMethod is not None and binMethod not in diagBinMethods)): continue
+                if binVar not in diagBinVars: continue
+                if binMethod is not None and binMethod not in diagBinMethods:
+                    self.logger.warning(diagnosticGroup+': binVar='+binVar+', binMethod='+str(binMethod)+' not in database; skipping')
+                    continue
 
                 self.logger.info(diagnosticGroup+', '+binVar+', '+str(binMethod))
 
@@ -215,5 +226,3 @@ def categoryBinValsAttributes(dfw, fullBinVar, binMethod, options):
     binValsMap = list(zip(select1DBinVals, binTitles))
 
     return binValsMap
-
-

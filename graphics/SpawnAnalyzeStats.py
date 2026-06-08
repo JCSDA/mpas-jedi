@@ -50,7 +50,7 @@ module purge
 #module load ncarcompilers/0.5.0
 #module load netcdf/4.8.1
 module load conda/latest
-conda activate npl-2023a
+conda activate npl
 setenv PYTHONDONTWRITEBYTECODE 1 # avoid __pycache__ creation
 module list
 
@@ -68,7 +68,7 @@ while ($success != 0 && $try < 5)
     module purge
     #module load python
     module load conda/latest
-    conda activate npl-2023a
+    conda activate npl
     module list
     #source /glade/u/apps/ch/opt/usr/bin/npl/ncar_pylib.csh default
   else

@@ -31,13 +31,19 @@ class analyzeStatsArgs(ProcessArgs):
     parser.add_argument("-e", "--experiments",
       help="Comma separated list of <short:long_name> experiments to graph")
     parser.add_argument("-p", "--verifySpace",
-      help="verificationSpace (model or obs)")
+      choices=['model', 'obs'],
+      help="verificationSpace")
     parser.add_argument("-t", "--verifyType",
-      help="verificationType (forecast or omb/oma)")
+      choices=['forecast', 'omb/oma'],
+      help="verificationType")
     parser.add_argument("-f", "--firstCycle",
       help="first Cycle date/time, e.g. 20180414T18")
     parser.add_argument("-l", "--lastCycle",
       help="last Cycle date/time, e.g. 20180415T06")
+    parser.add_argument("--figureFileType",
+      choices=['pdf', 'png'],
+      default='pdf',
+      help="Figure file type for analysis output (default: pdf)")
 
 processor = analyzeStatsArgs()
 

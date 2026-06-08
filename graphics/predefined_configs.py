@@ -501,6 +501,34 @@ AnyBadQC = {
 }
 
 
+def _obs_to_model_region_config(obs_region_config):
+  """Convert obs-space region bins to model-space region bins.
+
+  This keeps regional bounds defined in one place (obsRegionBinVar) and
+  remaps only the coordinate variables while dropping obs-only QC filters.
+  """
+  model_region_config = deepcopy(obs_region_config)
+  for _, method_config in model_region_config.items():
+    filters = method_config.get('filters', [])
+    model_filters = []
+    for filter_config in filters:
+      # Model-space diagnostics do not carry observation QC.
+      if filter_config.get('variable', None) == vu.selfQCValue:
+        continue
+
+      model_filter = deepcopy(filter_config)
+      if model_filter.get('variable', None) == vu.lonMeta:
+        model_filter['variable'] = vu.lonModel
+      elif model_filter.get('variable', None) == vu.latMeta:
+        model_filter['variable'] = vu.latModel
+
+      model_filters.append(model_filter)
+
+    method_config['filters'] = model_filters
+
+  return model_region_config
+
+
 # names for ClearCloudModeBins indicate the data that will be retained
 #  I.e., the filters that are present describe the data that will be
 #  removed, which is opposite the retained data
@@ -868,6 +896,42 @@ binVarConfigs = {
             ],
             'values': ['CONUS'],
         },
+        'MELISSA2025': {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.lonMeta,
+                 'bounds': 250.55254},
+                {'where': bu.greatBound,
+                 'variable': vu.lonMeta,
+                 'bounds': 320.46524},
+                {'where': bu.lessBound,
+                 'variable': vu.latMeta,
+                 'bounds': 1.1336054},
+                {'where': bu.greatBound,
+                 'variable': vu.latMeta,
+                 'bounds': 46.693916},
+                AnyBadQC,
+            ],
+            'values': ['MELISSA2025'],
+        },
+        'NEP': {
+            'filters': [
+                {'where': bu.lessBound,
+                 'variable': vu.lonMeta,
+                 'bounds': 180.0},
+                {'where': bu.greatBound,
+                 'variable': vu.lonMeta,
+                 'bounds': 250.0},
+                {'where': bu.lessBound,
+                 'variable': vu.latMeta,
+                 'bounds': 10.0},
+                {'where': bu.greatBound,
+                 'variable': vu.latMeta,
+                 'bounds': 60.0},
+                AnyBadQC,
+            ],
+            'values': ['NEP'],
+        },
         'EUROPE': nullBinMethod,
         'E_EUROPE': nullBinMethod,
         'NAMERICA': nullBinMethod,
@@ -1000,54 +1064,6 @@ binVarConfigs = {
             'values': namedTropLatBands['values'],
         },
     },
-#    vu.modelRegionBinVar: {
-#        'AFRICA': nullBinMethod,
-#        'ATLANTIC': nullBinMethod,
-#        'AUSTRALIA': nullBinMethod,
-#        'CONUS': {
-#            'filters': [
-#                {'where': bu.lessBound,
-#                 'variable': vu.lonModel,
-#                 'bounds': 234.0},
-#                {'where': bu.greatBound,
-#                 'variable': vu.lonModel,
-#                 'bounds': 294.0},
-#                {'where': bu.lessBound,
-#                 'variable': vu.latModel,
-#                 'bounds': 25.0},
-#                {'where': bu.greatBound,
-#                 'variable': vu.latModel,
-#                 'bounds': 50.0},
-#            ],
-#            'values': ['CONUS'],
-#        },
-#        'EUROPE': nullBinMethod,
-#        'E_EUROPE': nullBinMethod,
-#        'NAMERICA': nullBinMethod,
-#        'PACIFIC': nullBinMethod,
-#        'SAMERICA': nullBinMethod,
-#        'SE_ASIA': nullBinMethod,
-#        'S_ASIA': nullBinMethod,
-
-#        bu.geoirlatlonboxMethod: {
-#            'filters': [
-#                {'where': bu.lessBound,
-#                 'variable': vu.lonModel,
-#                 'bounds': geoirLonBands['starts']},
-#                {'where': bu.greatBound,
-#                 'variable': vu.lonModel,
-#                 'bounds': geoirLonBands['stops']},
-#                {'where': bu.lessBound,
-#                 'variable': vu.latModel,
-#                 'bounds': geoirLatBands['starts']},
-#                {'where': bu.greatBound,
-#                 'variable': vu.latModel,
-#                 'bounds': geoirLatBands['stops']},
-#            ],
-#            'exclude variables': vu.modDiagnosticVarNames,
-#            'values': geoirLonBands['values'],
-#        },
-#    },
     vu.noBinVar: {
         bu.noBinMethod: {
             'filters': [
@@ -1060,6 +1076,12 @@ binVarConfigs = {
         },
     },
 }
+
+# Derive model region bins from obs-region definitions to avoid duplicate
+# region maintenance. Add/edit regions in vu.obsRegionBinVar only.
+binVarConfigs[vu.modelRegionBinVar] = _obs_to_model_region_config(
+  binVarConfigs[vu.obsRegionBinVar]
+)
 
 
 #=============================

@@ -2,6 +2,7 @@
 
 import basic_plot_functions as bpf
 import binning_utils as bu
+import config as conf
 import predefined_configs as pconf
 from collections import OrderedDict
 from copy import deepcopy
@@ -125,6 +126,78 @@ class BinValAxes2D(MultiDimBinMethodBase):
             #},
         }
         self.maxDiagnosticsPerAnalysis = 1
+
+    def _region_extents_for_lonlat(self, lonlat_binvar):
+        if lonlat_binvar == pconf.LonLat2D:
+            region_var = vu.obsRegionBinVar
+            lon_var = vu.lonMeta
+            lat_var = vu.latMeta
+        elif lonlat_binvar == pconf.ModelLonLat2D:
+            region_var = vu.modelRegionBinVar
+            lon_var = vu.lonModel
+            lat_var = vu.latModel
+        else:
+            return []
+
+        ds_conf = conf.DiagSpaceConfig.get(self.DiagSpaceName, {})
+        ds_binvars = ds_conf.get('binVarConfigs', {})
+        region_methods = ds_binvars.get(region_var, [])
+
+        region_configs = pconf.binVarConfigs.get(region_var, {})
+        extents = []
+        for method_name in region_methods:
+            method_config = region_configs.get(method_name, pconf.nullBinMethod)
+            filters = method_config.get('filters', [])
+
+            lon_min = None
+            lon_max = None
+            lat_min = None
+            lat_max = None
+
+            for flt in filters:
+                if not isinstance(flt, dict):
+                    continue
+                where = flt.get('where', None)
+                variable = flt.get('variable', None)
+                bound = flt.get('bounds', None)
+                if not np.isscalar(bound) or isinstance(bound, str):
+                    continue
+
+                if variable == lon_var:
+                    if where in [bu.lessBound, bu.lessEqualBound]:
+                        lon_min = float(bound)
+                    elif where in [bu.greatBound, bu.greatEqualBound]:
+                        lon_max = float(bound)
+                elif variable == lat_var:
+                    if where in [bu.lessBound, bu.lessEqualBound]:
+                        lat_min = float(bound)
+                    elif where in [bu.greatBound, bu.greatEqualBound]:
+                        lat_max = float(bound)
+
+            if None in [lon_min, lon_max, lat_min, lat_max]:
+                continue
+
+            # Normalize longitudes to [-180, 180) for cartopy extents.
+            # This maps 180.0 -> -180.0 so dateline-touching regions are handled consistently.
+            lon_min = ((lon_min + 180.0) % 360.0) - 180.0
+            lon_max = ((lon_max + 180.0) % 360.0) - 180.0
+
+            # Skip regions that wrap the dateline; map2D extent in PlateCarree
+            # expects minLon <= maxLon.
+            if lon_min > lon_max:
+                continue
+
+            lon_pad = 2.0
+            lat_pad = 2.0
+            extent = [
+                max(-180.0, lon_min - lon_pad),
+                min(180.0, lon_max + lon_pad),
+                max(-90.0, lat_min - lat_pad),
+                min(90.0, lat_max + lat_pad),
+            ]
+            extents.append((method_name, extent))
+
+        return extents
 
     def innerloops(self,
         dfwDict, diagnosticGroup, myLoc, statName, nVarsLoc, varMapLoc, myBinConfigs, options):
@@ -252,6 +325,13 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
             # establish a new figure
             fig = pu.setup_fig(nxplots, nyplots, subplotWidth, subplotAspect, self.interiorLabels)
+            zoomed_figs = {}
+            if myLoc['binVar'] in [pconf.LonLat2D, pconf.ModelLonLat2D]:
+                for region_name, extent in self._region_extents_for_lonlat(myLoc['binVar']):
+                    zoomed_figs[region_name] = {
+                        'extent': extent,
+                        'fig': pu.setup_fig(nxplots, nyplots, subplotWidth, subplotAspect, self.interiorLabels),
+                    }
 
             iplot = 0
 
@@ -398,13 +478,14 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             bgstatDiagLabel = statName.replace('RMS','rms').replace('Mean','mean')+': '+label
                             # check to see if relative differences exceed 3%
                             if (statName == 'RMS'):
-                                max_all = np.nanmax(val_diffs)
-                                min_all = np.nanmin(val_diffs)
-                                if (abs(max_all) > 3 or abs(min_all) > 3):
-                                    self.logger.warning('Experiment '+expName+
-                                                        ' RMS variance for ' +varName+
-                                                        ' exceeds 3, max:'+str(max_all)+
-                                                        ' min:'+str(min_all))
+                                if not np.isnan(val_diffs).all():
+                                    max_all = np.nanmax(val_diffs)
+                                    min_all = np.nanmin(val_diffs)
+                                    if (abs(max_all) > 3 or abs(min_all) > 3):
+                                        self.logger.warning('Experiment '+expName+
+                                                            ' RMS variance for ' +varName+
+                                                            ' exceeds 3, max:'+str(max_all)+
+                                                            ' min:'+str(min_all))
 
                     cLabel = bgstatDiagLabel
 
@@ -604,6 +685,19 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             dmin = dmin, dmax = dmax,
                             interiorLabels = self.interiorLabels)
 
+                        for zoom in zoomed_figs.values():
+                            options['plotfunc'](
+                                zoom['fig'],
+                                xVals, yVals, planeVals[su.cimean],
+                                title, cLabel,
+                                sciTicks, logScale, centralValue,
+                                nyplots, nxplots, nsubplots, iplot,
+                                contourValsMinCI = planeVals[su.cimin],
+                                contourValsMaxCI = planeVals[su.cimax],
+                                dmin = dmin, dmax = dmax,
+                                extent = zoom['extent'],
+                                interiorLabels = self.interiorLabels)
+
                     else:
                         options['plotfunc'](
                             fig,
@@ -627,6 +721,21 @@ class BinValAxes2D(MultiDimBinMethodBase):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, xbuffer, ybuffer)
+
+            for region_name, zoom in zoomed_figs.items():
+                zoom_filename = ('%s%s_BinValAxes2D_%smin_%s_%s_%s'%(
+                               myLoc['binVar'],
+                               self.binMethodFile(region_name),
+                               fcTDelta_totmin, self.DiagSpaceName,
+                               diagnosticGroup, statName))
+                pu.finalize_fig(
+                    zoom['fig'],
+                    str(figPath/zoom_filename),
+                    self.figureFileType,
+                    self.interiorLabels,
+                    xbuffer,
+                    ybuffer,
+                )
 
             if statName in twoDFittingStatistics:
 

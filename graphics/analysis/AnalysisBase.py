@@ -234,8 +234,11 @@ class AnalysisBase():
       dmin = dmin0
       dmax = dmax0
       if d is not None and not (np.isfinite(dmin) or np.isfinite(dmax)):
-        dmin = np.nanmin(d)
-        dmax = np.nanmax(d)
+        if np.isnan(d).all():
+           dmin, dmax = np.NaN, np.NaN
+        else:
+          dmin = np.nanmin(d)
+          dmax = np.nanmax(d)
       return dmin, dmax
 
 

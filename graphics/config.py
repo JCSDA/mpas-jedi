@@ -35,7 +35,9 @@ obsBinVars[vu.obsVarLat] += [bu.identityBinMethod]
 #       IODA dateTime format
 #obsBinVars[vu.obsVarLT] += [bu.identityBinMethod]
 obsBinVars[vu.obsVarNormDep] += [bu.identityBinMethod]
-obsBinVars[vu.obsRegionBinVar] += ['CONUS']
+#obsBinVars[vu.obsRegionBinVar] += ['CONUS']
+#obsBinVars[vu.obsRegionBinVar] += ['MELISSA2025']
+#obsBinVars[vu.obsRegionBinVar] += ['NEP']
 
 #if specialAllSkyBins:
 #  obsBinVars[vu.obsRegionBinVar] += [bu.geoirlatlonboxMethod]
@@ -268,6 +270,9 @@ modelBinVars[vu.modVarLat] += [bu.identityBinMethod]
 modelBinVars[vu.modVarLat] += [bu.troplatbandsMethod]
 modelBinVars[vu.modVarLev] += [bu.identityBinMethod]
 modelBinVars[vu.modVarDiagPrs] += [bu.identityBinMethod]
+# Same regions as obs space. No need to comment if obs regions are commented.
+# If obs regions are commented, model regions default to an empty dictionary.
+modelBinVars[vu.modelRegionBinVar] = obsBinVars[vu.obsRegionBinVar].copy()
 #modelBinVars[vu.modelRegionBinVar] += [bu.geoirlatlonboxMethod]
 
 # pseudo-2D diagnostic pressure bins with named latitude-band methods
