@@ -68,9 +68,10 @@ Increment::Increment(const Geometry & resol,
   eckit::LocalConfiguration conf;
   // Use oops interpolator for consistency with State resolution change.
   conf.set("local interpolator type", "oops unstructured grid interpolator");
-  conf.set("regional check enabled", "false");  // Unsafe mode (temporary)
-  double NNdistance = other.geom_.getNNdistance();
-  conf.set("regional nn fill distance in km", NNdistance);
+  if (other.geom_.isRegional()) {
+    const double NNdistance = other.geom_.getNNdistance();
+    conf.set("regional nn fill distance in km", NNdistance);
+  }
   oops::GlobalInterpolator interp(conf, source_geom, target_fs, geom_.getComm());
 
   atlas::FieldSet source{};

@@ -320,3 +320,19 @@ subroutine mpas_geo_get_NN_distance(c_key_self, distance) bind(c, name='mpas_geo
 end subroutine mpas_geo_get_NN_distance
 
 ! --------------------------------------------------------------------------------------------------
+
+!> C++ interface to query regional-domain flag
+subroutine mpas_geo_is_regional(c_key_self, c_is_regional) bind(c, name='mpas_geo_is_regional_f90')
+  use iso_c_binding
+  use mpas_geom_mod
+
+  integer(c_int), intent(in) :: c_key_self
+  logical(c_bool), intent(out) :: c_is_regional
+
+  type(mpas_geom), pointer :: self
+  call mpas_geom_registry%get(c_key_self, self)
+
+  c_is_regional = self%is_regional
+end subroutine mpas_geo_is_regional
+
+! --------------------------------------------------------------------------------------------------

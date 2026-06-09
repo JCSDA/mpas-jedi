@@ -270,4 +270,10 @@ double Geometry::getNNdistance() const {
   return NNdistance;
 }
 // -----------------------------------------------------------------------------
+bool Geometry::isRegional() const {
+  bool isRegional;
+  mpas_geo_is_regional_f90(keyGeom_, isRegional);
+  return isRegional;
+}
+// -----------------------------------------------------------------------------
 }  // namespace mpas

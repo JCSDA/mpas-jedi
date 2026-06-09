@@ -55,6 +55,7 @@ extern "C" {
       const int &, double *, double *, int *, int *, int *, int *,
       const int &, int *);
   void mpas_geo_get_NN_distance_f90(const F90geom &, double &);
+  void mpas_geo_is_regional_f90(const F90geom &, bool &);
 }
 // -----------------------------------------------------------------------------
 
