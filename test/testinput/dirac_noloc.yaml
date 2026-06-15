@@ -48,8 +48,9 @@ dirac:
               29.01000159,  90.40857947,  31.24996822,  126.999731,
               88.32467566, 116.3882857,  106.8294376,  -118.1799805,
               -0.116721844, 51.42434403 ]
-  ildir: 3
-  dirvar: eastward_wind
+  dirLevs: [3, 3]
+  dirVars: [eastward_wind, eastward_wind]
 output dirac:
   filename: Data/states/mpas.Dirac_noloc_%id%.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control

@@ -29,8 +29,8 @@ class DiracParameters : public oops::Parameters {
   oops::RequiredParameter<int> ndir{"ndir", this};
   oops::RequiredParameter<std::vector<real_type>> dirLats{"dirLats", this};
   oops::RequiredParameter<std::vector<real_type>> dirLons{"dirLons", this};
-  oops::RequiredParameter<int> ildir{"ildir", this};
-  oops::RequiredParameter<std::string> dirvar{"dirvar", this};
+  oops::RequiredParameter<std::vector<int>> dirLevs{"dirLevs", this};
+  oops::RequiredParameter<std::vector<std::string>> dirVars{"dirVars", this};
 };
 
 // -------------------------------------------------------------------------------------------------

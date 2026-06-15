@@ -16,5 +16,5 @@ increment test:
     ndir: 1
     dirLats: [30.31011691]
     dirLons: [130.11182691]
-    ildir: 3
-    dirvar: eastward_wind
+    dirLevs: [3]
+    dirVars: [eastward_wind]

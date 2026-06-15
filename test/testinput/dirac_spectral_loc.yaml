@@ -184,9 +184,9 @@ dirac:
   ndir: 2
   dirLats: [  30.31011691,  26.56505123 ]
   dirLons: [ 130.11182691,-102.95294521 ]
-  ildir: 1
-  dirvar: air_temperature
+  dirLevs: [1, 1]
+  dirVars: [air_temperature, air_temperature]
 output dirac:
-  stream name: control
   filename: Data/spectral/mpas.spectral_loc_%id%.$Y-$M-$D_$h.$m.$s.nc
   date: *date
+  stream name: control

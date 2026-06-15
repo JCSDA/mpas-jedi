@@ -78,9 +78,8 @@ subroutine dirac(self, f_conf)
    implicit none
    class(mpas_fields),        intent(inout) :: self
    type(fckit_configuration), intent(in)    :: f_conf   !< Configuration
-   character(len=:), allocatable :: str
+
    integer                :: ndir, idir, ildir, ndirlocal
-   character(len=3)       :: idirchar
    character(len=StrKIND) :: dirvar
    type (mpas_pool_iterator_type) :: poolItr
    real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr_a
@@ -89,6 +88,8 @@ subroutine dirac(self, f_conf)
    integer, allocatable, dimension(:) :: dirOwned, dirOwnedGlobal
    real (kind=kind_real), allocatable, dimension(:) :: dirLats
    real (kind=kind_real), allocatable, dimension(:) :: dirLons
+   integer,               allocatable, dimension(:) :: dirLevs
+   character(len=:),      allocatable, dimension(:) :: dirVars
    integer, allocatable, dimension(:) :: dirCells
    real (kind=RKIND) :: x1, y1
 
@@ -100,10 +101,8 @@ subroutine dirac(self, f_conf)
 
    call f_conf%get_or_die("dirLats",dirLats)
    call f_conf%get_or_die("dirLons",dirLons)
-
-   call f_conf%get_or_die("ildir",ildir)
-   call f_conf%get_or_die("dirvar",str)
-   dirvar = str
+   call f_conf%get_or_die("dirLevs",dirLevs)
+   call f_conf%get_or_die("dirVars",dirVars)
 
    !Test if dir is owned and find the nearest local cell
    ! (repurposed from MPAS-Release/src/core_atmosphere/diagnostics/soundings.F)
@@ -146,8 +145,8 @@ subroutine dirac(self, f_conf)
    end if
    deallocate( dirOwnedGlobal )
 
-  if ((ildir < 1) .or. (ildir > self % geom % nVertLevels)) then
-      call abor1_ftn("mpas_increment:dirac invalid ildir")
+  if ((any(dirLevs < 1)) .or. (any(dirLevs > self % geom % nVertLevels))) then
+      call abor1_ftn("mpas_increment:dirac invalid dirLevs")
    endif
 
    ! Setup Diracs
@@ -166,9 +165,11 @@ subroutine dirac(self, f_conf)
          if (poolItr % dataType == MPAS_POOL_REAL) then
             ! Depending on the dimensionality of the field, we need to set pointers of
             ! the correct type
-            if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
+            do idir=1, ndir
                ndirlocal = 0
-               do idir=1, ndir
+               dirvar = dirVars(idir)
+               ildir = dirLevs(idir)
+               if( trim(dirvar) .eq. trim(poolItr % memberName) ) then
                   if ( dirOwned(idir).eq.1 ) then
                      if (poolItr % nDims == 1) then
                         call mpas_pool_get_array(self % subFields, trim(poolItr % memberName), r1d_ptr_a)
@@ -181,8 +182,8 @@ subroutine dirac(self, f_conf)
                      end if
                      ndirlocal = ndirlocal + 1
                   end if
-               end do
-            end if
+               end if
+            end do
          end if
       end if
    end do
@@ -190,6 +191,8 @@ subroutine dirac(self, f_conf)
    deallocate( dirOwned )
    deallocate( dirLats )
    deallocate( dirLons )
+   deallocate( dirLevs )
+   deallocate( dirVars )
    deallocate( dirCells )
 
 end subroutine dirac
