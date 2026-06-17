@@ -924,7 +924,7 @@ elemental subroutine pseudorh_to_spechum(pseudorh,spechum,saturation_spechum)
    real (kind=RKIND), intent(out) :: spechum
    real (kind=RKIND), intent(in)  :: saturation_spechum
 
-   spechum = pseudorh * saturation_spechum / MPAS_JEDI_HUNDRED_kr
+   spechum = pseudorh * saturation_spechum
 
 end subroutine pseudorh_to_spechum
 
@@ -935,7 +935,7 @@ elemental subroutine pseudorh_to_spechumAD(pseudorh,spechum,saturation_spechum)
    real (kind=RKIND), intent(inout) :: spechum
    real (kind=RKIND), intent(in)    :: saturation_spechum
 
-   pseudorh = pseudorh + spechum * saturation_spechum / MPAS_JEDI_HUNDRED_kr
+   pseudorh = pseudorh + spechum * saturation_spechum
    spechum = MPAS_JEDI_ZERO_kr
 
 end subroutine pseudorh_to_spechumAD
@@ -947,7 +947,7 @@ elemental subroutine pseudorh_to_spechum_inverse(pseudorh,spechum,saturation_spe
    real (kind=RKIND), intent(in)  :: spechum
    real (kind=RKIND), intent(in)  :: saturation_spechum
 
-   pseudorh = spechum / saturation_spechum * MPAS_JEDI_HUNDRED_kr
+   pseudorh = spechum / saturation_spechum
 
 end subroutine pseudorh_to_spechum_inverse
 
@@ -958,7 +958,7 @@ elemental subroutine pseudorh_to_spechum_inverseAD(pseudorh,spechum,saturation_s
    real (kind=RKIND), intent(inout) :: spechum
    real (kind=RKIND), intent(in)    :: saturation_spechum
 
-   spechum = spechum + pseudorh / saturation_spechum * MPAS_JEDI_HUNDRED_kr
+   spechum = spechum + pseudorh / saturation_spechum
    pseudorh = MPAS_JEDI_ZERO_kr
 
 end subroutine pseudorh_to_spechum_inverseAD

@@ -28,7 +28,6 @@ real(kind=kind_real), parameter :: MPAS_JEDI_HALF_kr     = 0.5_kind_real
 real(kind=kind_real), parameter :: MPAS_JEDI_ONE_kr      = 1.0_kind_real
 real(kind=kind_real), parameter :: MPAS_JEDI_TWO_kr      = 2.0_kind_real
 real(kind=kind_real), parameter :: MPAS_JEDI_THREE_kr    = 3.0_kind_real
-real(kind=kind_real), parameter :: MPAS_JEDI_HUNDRED_kr  = 100.0_kind_real
 real(kind=kind_real), parameter :: MPAS_JEDI_THOUSAND_kr = 1000.0_kind_real
 real(kind=kind_real), parameter :: MPAS_JEDI_MILLION_kr  = 1000000.0_kind_real
 

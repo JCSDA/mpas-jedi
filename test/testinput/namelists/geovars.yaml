@@ -413,3 +413,4 @@ fields:
     mpas template field: theta
     mpas identity field: relative_humidity
     mpas io name: relhum
+    mpas io scaling factor: 0.01 # from MPAS unit [percent] to generic unit [fraction] (or ratio)
