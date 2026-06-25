@@ -5,7 +5,6 @@ wb1_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 1.53
 wb1_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.4210581477352046e-10
 wb1_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.2082074870842587e+02
 Wrote file Data/spectral/wb1_variance_1.nc
-Wrote file Data/spectral/wb1_F15_inc_1.nc
 Fields:
   eastward_wind: 9.3959399120171661e+00
   northward_wind: 9.4043608065081141e+00
@@ -19,7 +18,6 @@ wb2_variance_1 ; name = air_temperature ; bin index = 0 ; binned variance = 7.53
 wb2_variance_1 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.1789813903482311e-10
 wb2_variance_1 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.4292878772945460e+02
 Wrote file Data/spectral/wb2_variance_1.nc
-Wrote file Data/spectral/wb2_F15_inc_1.nc
 Fields:
   eastward_wind: 1.9743969366245139e+01
   northward_wind: 1.7261335151573196e+01
@@ -35,7 +33,6 @@ wb1_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 2.44
 wb1_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.1527530692549299e-10
 wb1_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.2729921415573131e+02
 Wrote file Data/spectral/wb1_variance_2.nc
-Wrote file Data/spectral/wb1_F15_inc_2.nc
 Fields:
   eastward_wind: 1.1673400267787899e+01
   northward_wind: 8.8143659316499239e+00
@@ -49,7 +46,6 @@ wb2_variance_2 ; name = air_temperature ; bin index = 0 ; binned variance = 8.19
 wb2_variance_2 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.0745944614177353e-10
 wb2_variance_2 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.8724778430151702e+02
 Wrote file Data/spectral/wb2_variance_2.nc
-Wrote file Data/spectral/wb2_F15_inc_2.nc
 Fields:
   eastward_wind: 2.0378830510759283e+01
   northward_wind: 1.8215358319528384e+01
@@ -65,7 +61,6 @@ wb1_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 3.21
 wb1_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.8531623095944803e-11
 wb1_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 1.8167804199443058e+03
 Wrote file Data/spectral/wb1_variance_3.nc
-Wrote file Data/spectral/wb1_F15_inc_3.nc
 Fields:
   eastward_wind: 1.2251334984943135e+01
   northward_wind: 7.6650461126792697e+00
@@ -79,7 +74,6 @@ wb2_variance_3 ; name = air_temperature ; bin index = 0 ; binned variance = 9.64
 wb2_variance_3 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 1.0194308277225088e-09
 wb2_variance_3 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.3793060927918486e+02
 Wrote file Data/spectral/wb2_variance_3.nc
-Wrote file Data/spectral/wb2_F15_inc_3.nc
 Fields:
   eastward_wind: 1.9055396178980356e+01
   northward_wind: 1.7640788894033001e+01
@@ -95,7 +89,6 @@ wb1_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 2.02
 wb1_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 3.0243286637511648e-10
 wb1_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.8486496419740729e+02
 Wrote file Data/spectral/wb1_variance_4.nc
-Wrote file Data/spectral/wb1_F15_inc_4.nc
 Fields:
   eastward_wind: 8.9045968149176904e+00
   northward_wind: 7.6668500798104944e+00
@@ -109,7 +102,6 @@ wb2_variance_4 ; name = air_temperature ; bin index = 0 ; binned variance = 7.01
 wb2_variance_4 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 9.7605264148464168e-10
 wb2_variance_4 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 4.4615497774568581e+02
 Wrote file Data/spectral/wb2_variance_4.nc
-Wrote file Data/spectral/wb2_F15_inc_4.nc
 Fields:
   eastward_wind: 1.9467633248681260e+01
   northward_wind: 1.7421932003883491e+01
@@ -125,7 +117,6 @@ wb1_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 2.11
 wb1_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 2.5597264083956927e-10
 wb1_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 6.2746865543746037e+02
 Wrote file Data/spectral/wb1_variance_5.nc
-Wrote file Data/spectral/wb1_F15_inc_5.nc
 Fields:
   eastward_wind: 1.0026063244231315e+01
   northward_wind: 7.9998944443351290e+00
@@ -139,7 +130,6 @@ wb2_variance_5 ; name = air_temperature ; bin index = 0 ; binned variance = 8.46
 wb2_variance_5 ; name = water_vapor_mixing_ratio_wrt_moist_air ; bin index = 0 ; binned variance = 7.6607731823867973e-10
 wb2_variance_5 ; name = air_pressure_at_surface ; bin index = 0 ; binned variance = 7.5017954924231071e+02
 Wrote file Data/spectral/wb2_variance_5.nc
-Wrote file Data/spectral/wb2_F15_inc_5.nc
 Fields:
   eastward_wind: 1.8781022626481313e+01
   northward_wind: 1.8262142006569825e+01
