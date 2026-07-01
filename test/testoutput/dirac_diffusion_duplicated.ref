@@ -9,20 +9,20 @@ Fld=5  Min=0.0000000000000000e+00, Max=0.0000000000000000e+00, RMS=0.00000000000
 Covariance(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=-4.5967275271699548e-01, Max=4.0348681512775542e-01, RMS=1.0439610186014010e-02 : air_temperature
-Fld=2  Min=-1.8686514996564305e-04, Max=1.8406586607385865e-04, RMS=4.0216518690527572e-06 : water_vapor_mixing_ratio_wrt_moist_air
-Fld=3  Min=-6.3460811804426209e-01, Max=5.7256265621122338e-01, RMS=1.6045514466856974e-02 : eastward_wind
-Fld=4  Min=-4.9303982766410115e-01, Max=5.0438048854601802e-01, RMS=1.5540946439461262e-02 : northward_wind
-Fld=5  Min=-1.0741293557786811e+01, Max=2.7421036339925131e+01, RMS=9.6578444982954359e-01 : air_pressure_at_surface
+Fld=1  Min=-2.9933106012619465e-01, Max=2.8121969225474963e-01, RMS=6.3332425427186654e-03 : air_temperature
+Fld=2  Min=-1.5725657048265709e-04, Max=1.1986055405562693e-04, RMS=2.6136042623562212e-06 : water_vapor_mixing_ratio_wrt_moist_air
+Fld=3  Min=-4.4663075943113212e-01, Max=4.4068127484349551e-01, RMS=1.0063936833612721e-02 : eastward_wind
+Fld=4  Min=-3.2105913049406448e-01, Max=4.9854336356135043e-01, RMS=1.0800261817099487e-02 : northward_wind
+Fld=5  Min=-1.0246790341602900e+01, Max=1.7845654375179969e+01, RMS=5.9931027733766806e-01 : air_pressure_at_surface
 Localization(ensemble_localization) diagnostics:
 - Localization at zero separation:
-  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (-102.95294, 26.56505, 4): 9.5079321954264262e-01
-  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (130.11183, 30.31012, 4): 1.0072898827613956e+00
+  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (-102.95294, 26.56505, 4): 9.3978982233938491e-01
+  + Value for variable eastward_wind, subwindow 0, at (longitude, latitude, vertical index) point (130.11183, 30.31012, 4): 9.6685958431765906e-01
 Localization(ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
   Resolution: nCellsGlobal = 2562, nFields = 5
-Fld=1  Min=0.0000000000000000e+00, Max=1.0072898827613956e+00, RMS=6.8451547613589667e-02 : air_temperature
-Fld=2  Min=0.0000000000000000e+00, Max=1.0072898827613956e+00, RMS=6.8451547613589667e-02 : water_vapor_mixing_ratio_wrt_moist_air
-Fld=3  Min=0.0000000000000000e+00, Max=1.0072898827613956e+00, RMS=6.8451547613589667e-02 : eastward_wind
-Fld=4  Min=0.0000000000000000e+00, Max=1.0072898827613956e+00, RMS=6.8451547613589667e-02 : northward_wind
-Fld=5  Min=0.0000000000000000e+00, Max=6.7183192063663444e-01, RMS=5.2136464804179217e-02 : air_pressure_at_surface
+Fld=1  Min=0.0000000000000000e+00, Max=9.6685958431765906e-01, RMS=5.1249907876546111e-02 : air_temperature
+Fld=2  Min=0.0000000000000000e+00, Max=9.6685958431765906e-01, RMS=5.1249907876546111e-02 : water_vapor_mixing_ratio_wrt_moist_air
+Fld=3  Min=0.0000000000000000e+00, Max=9.6685958431765906e-01, RMS=5.1249907876546111e-02 : eastward_wind
+Fld=4  Min=0.0000000000000000e+00, Max=9.6685958431765906e-01, RMS=5.1249907876546111e-02 : northward_wind
+Fld=5  Min=0.0000000000000000e+00, Max=6.4486613301162155e-01, RMS=3.9034749561929628e-02 : air_pressure_at_surface
