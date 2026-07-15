@@ -168,7 +168,7 @@ class FileHandles():
       missing = np.full_like(valsOut, False, dtype=bool)
 
     if 'float' in dtype:
-      valsOut[missing] = np.NaN
+      valsOut[missing] = np.nan
 
     #TODO: missing value handling for integers, strings, and others?
 

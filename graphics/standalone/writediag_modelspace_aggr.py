@@ -35,7 +35,7 @@ def write_diag_stats():
                     tmp = mu.varDiff(varName,ncFile1,ncFile2)
 
                     tmpbin = deepcopy(tmp)
-                    tmpbin[np.logical_or(lats < mu.latBandsBounds [latBand+1], lats > mu.latBandsBounds [latBand])] = np.NaN
+                    tmpbin[np.logical_or(lats < mu.latBandsBounds [latBand+1], lats > mu.latBandsBounds [latBand])] = np.nan
 
                     if (fcdir == 0):
                         alltmp = np.append(alltmp, tmpbin)

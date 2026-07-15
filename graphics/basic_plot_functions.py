@@ -583,7 +583,7 @@ def plotSeries(fig,
                sciTicks=False, logScale= False, centralValue=None,
                ny=1, nx=1, nplots=1, iplot=0,
                linesValsMinCI=None, linesValsMaxCI=None,
-               dmin=np.NaN, dmax=np.NaN,
+               dmin=np.nan, dmax=np.nan,
                lineAttribOffset=0,
                legend_inside=True,
                interiorLabels=True):
@@ -676,7 +676,7 @@ def plotSeries(fig,
               # test statistical significance versus centralValue
               if centralValue is None:
                   isSignificant = np.empty(len(lineVals))
-                  isSignificant[:] = np.NaN
+                  isSignificant[:] = np.nan
                   centralValue_ = 0.0
               else:
                   isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
@@ -860,7 +860,7 @@ def plotProfile(fig,
                 sciTicks=False, logScale=False, centralValue=None,
                 ny=1, nx=1, nplots=1, iplot=0,
                 linesValsMinCI=None, linesValsMaxCI=None,
-                dmin=np.NaN, dmax=np.NaN,
+                dmin=np.nan, dmax=np.nan,
                 lineAttribOffset=0,
                 legend_inside=True,
                 interiorLabels=True,
@@ -955,7 +955,7 @@ def plotProfile(fig,
               # test statistical significance versus centralValue
               if centralValue is None:
                   isSignificant = np.empty(len(lineVals))
-                  isSignificant[:] = np.NaN
+                  isSignificant[:] = np.nan
                   centralValue_ = 0.0
               else:
                   isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
@@ -1141,7 +1141,7 @@ def plotTimeSeries(fig,
                    sciTicks=False, logScale = False, centralValue=None,
                    ny=1, nx=1, nplots=1, iplot=0,
                    linesValsMinCI=None, linesValsMaxCI=None,
-                   dmin=np.NaN, dmax=np.NaN,
+                   dmin=np.nan, dmax=np.nan,
                    lineAttribOffset=0,
                    legend_inside=True,
                    interiorLabels=True):
@@ -1248,7 +1248,7 @@ def plotTimeSeries(fig,
               # test statistical significance versus centralValue
               if centralValue is None:
                   isSignificant = np.empty(len(lineVals))
-                  isSignificant[:] = np.NaN
+                  isSignificant[:] = np.nan
                   centralValue_ = 0.0
               else:
                   isSignificant = np.multiply(np.subtract(linesValsMinCI[iline], centralValue),
@@ -1419,7 +1419,7 @@ def scoreCard(fig,
            sciTicks=False, logScale=False, centralValue=None,
            ny=1, nx=1, nplots=1, iplot=0,
            contourValsMinCI=None, contourValsMaxCI=None,
-           dmin=np.NaN, dmax=np.NaN,
+           dmin=np.nan, dmax=np.nan,
            interiorLabels=True):
 
 # ARGUMENTS
@@ -1695,7 +1695,7 @@ def plot2D(fig,
            sciTicks=False, logScale=False, centralValue=None,
            ny=1, nx=1, nplots=1, iplot=0,
            contourValsMinCI=None, contourValsMaxCI=None,
-           dmin=np.NaN, dmax=np.NaN,
+           dmin=np.nan, dmax=np.nan,
            interiorLabels=True):
 
 # ARGUMENTS
@@ -1963,7 +1963,7 @@ def map2D(fig,
           sciTicks=False, logScale=False, centralValue=None,
           ny=1, nx=1, nplots=1, iplot=0,
           contourValsMinCI=None, contourValsMaxCI=None,
-          dmin=np.NaN, dmax=np.NaN,
+          dmin=np.nan, dmax=np.nan,
           extent=None,
           interiorLabels=True):
 

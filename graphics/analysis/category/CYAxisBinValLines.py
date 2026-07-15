@@ -112,7 +112,7 @@ class CYAxisBinValLines(BinValLines):
                         lineLoc['binVal'] = binVal
                         lineCYDTimes = dfwDict['dfw'].levels('cyDTime', lineLoc)
 
-                        lineVals = np.full(self.nCY, np.NaN)
+                        lineVals = np.full(self.nCY, np.nan)
                         cyLoc = deepcopy(lineLoc)
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)

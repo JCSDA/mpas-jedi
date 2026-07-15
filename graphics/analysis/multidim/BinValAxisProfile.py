@@ -130,7 +130,7 @@ class BinValAxisProfile(MultiDimBinMethodBase):
                             #if len(pt) == 1:
                               #lineVals.append(pt[0])
                             #else:
-                              #lineVals.append(np.NaN)
+                              #lineVals.append(np.nan)
                         linesVals.append(lineVals)
                         key = str(diagnosticName)+' '+self.DiagSpaceName+str(myLoc['binMethod'])+'_'+str(varName)
                         linesData[str(expName)][key] = []

@@ -457,7 +457,7 @@ class FCScoreCard(CategoryBinMethodBase):
 
                     planeVals = {}
                     for trait in su.ciTraits:
-                        planeVals[trait] = np.full((nRow, nCol), np.NaN)
+                        planeVals[trait] = np.full((nRow, nCol), np.nan)
 
                     # row loop
                     for iy, row in enumerate(rowIndices):

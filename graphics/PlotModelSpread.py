@@ -168,7 +168,7 @@ class PlotModelSpread():
         if nDims==2:
           nn = dShape[1]
 
-        sigmax[ensembleState] = np.full(nn, np.NaN)
+        sigmax[ensembleState] = np.full(nn, np.nan)
 
         for lev in np.arange(0, mu.aggMaxLevel(varName, nn)):
           if nDims==2:
