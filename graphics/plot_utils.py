@@ -155,7 +155,7 @@ def format_x_for_dates(ax, x):
 
 
 ###############################################################################
-def get_clean_ax_limits(xmin_=np.NaN, xmax_=np.NaN, plotVals=[np.NaN],
+def get_clean_ax_limits(xmin_=np.nan, xmax_=np.nan, plotVals=[np.nan],
                         centralValue=None, buffr=0.2):
 
     x = np.empty(2)

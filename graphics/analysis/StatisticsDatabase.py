@@ -458,7 +458,7 @@ class DFWrapper:
         res = self.loc(locDict, var)
         # if result is empty or has multiple values, return NaN
         if len(res) != 1:
-            return np.NaN
+            return np.nan
         return res.item()
 
     def var(self, var):

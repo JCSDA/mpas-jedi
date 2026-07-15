@@ -196,13 +196,13 @@ class AnalysisBase():
     def oneHundredCenteredPercentDifference(self,
       experiment,
       reference,
-      dmin0 = np.NaN,
-      dmax0 = np.NaN,
+      dmin0 = np.nan,
+      dmax0 = np.nan,
     ):
       exp = experiment.astype(float)
       ref = reference.astype(float)
 
-      out = np.full_like(exp, np.NaN)
+      out = np.full_like(exp, np.nan)
 
       validDenom = bu.greatBound(np.abs(ref), 0., False)
 
@@ -230,19 +230,19 @@ class AnalysisBase():
       #return '100 x [1+\n(EXP-CONTROL)/\nCONTROL]'
 
     @staticmethod
-    def initLimits(dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def initLimits(dmin0=np.nan, dmax0=np.nan, d=None):
       dmin = dmin0
       dmax = dmax0
       if d is not None and not (np.isfinite(dmin) or np.isfinite(dmax)):
         if np.isnan(d).all():
-           dmin, dmax = np.NaN, np.NaN
+           dmin, dmax = np.nan, np.nan
         else:
           dmin = np.nanmin(d)
           dmax = np.nanmax(d)
       return dmin, dmax
 
 
-    def oneHundredCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def oneHundredCenteredLimiter(self, dmin0=np.nan, dmax0=np.nan, d=None):
         dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
         # Clamp dmin to its "Safety Envelope" (66.7% to 98.0%)
@@ -265,13 +265,13 @@ class AnalysisBase():
     def zeroCenteredPercentDifference(self,
       experiment,
       reference,
-      dmin0 = np.NaN,
-      dmax0 = np.NaN,
+      dmin0 = np.nan,
+      dmax0 = np.nan,
     ):
       exp = experiment.astype(float)
       ref = reference.astype(float)
 
-      out = np.full_like(exp, np.NaN)
+      out = np.full_like(exp, np.nan)
 
       validDenom = bu.greatBound(np.abs(ref), 0., False)
 
@@ -299,7 +299,7 @@ class AnalysisBase():
       #return '100 x (EXP-CONTROL)/\nCONTROL'
 
 
-    def zeroCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def zeroCenteredLimiter(self, dmin0=np.nan, dmax0=np.nan, d=None):
         dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
         # Ensures we always see at least -2.0 to +2.0

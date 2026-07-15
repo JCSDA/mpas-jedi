@@ -201,9 +201,9 @@ class BinValAxisStatsComposite(AnalysisBase):
 
                                 #collect aggregated statNames, varying across fcTDelta
                                 countsVals = np.full(nBins, 0)
-                                meansVals  = np.full(nBins, np.NaN)
-                                rmssVals   = np.full(nBins, np.NaN)
-                                stdsVals   = np.full(nBins, np.NaN)
+                                meansVals  = np.full(nBins, np.nan)
+                                rmssVals   = np.full(nBins, np.nan)
+                                stdsVals   = np.full(nBins, np.nan)
 
                                 for ibin, binVal in enumerate(binStrVals):
                                     ptLoc['binVal'] = binVal

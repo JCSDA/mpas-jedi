@@ -83,7 +83,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
 
                         lineFCTDeltas = dfwDict['agg'].levels('fcTDelta', lineLoc)
 
-                        lineVals = np.full(self.nFC, np.NaN)
+                        lineVals = np.full(self.nFC, np.nan)
                         fcLoc = deepcopy(lineLoc)
                         for fcTDelta in lineFCTDeltas:
                             ifc = self.fcTDeltas.index(fcTDelta)

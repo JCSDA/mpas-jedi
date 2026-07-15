@@ -91,7 +91,7 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                 cntrlLoc = deepcopy(planeLoc)
                 cntrlLoc['expName'] = self.cntrlExpName
                 cntrlPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', cntrlLoc)
-                cntrlPlaneVals = np.full((nBinVals, self.nCY), np.NaN)
+                cntrlPlaneVals = np.full((nBinVals, self.nCY), np.nan)
 
                 for ibin, binVal in enumerate(binStrVals):
                     cntrlLoc['binVal'] = binVal
@@ -102,8 +102,8 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                         cntrlPlaneVals[ibin, icy] = tmp[jcy]
 
                 #subplot loop 2
-                dmin_relative = np.NaN
-                dmax_relative = np.NaN
+                dmin_relative = np.nan
+                dmax_relative = np.nan
                 for expName in self.expNames:
                     expLoc = deepcopy(planeLoc)
                     expLoc['expName'] = expName
@@ -127,7 +127,7 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                         # letting cyDTime and binVal vary
                         # extract this experiment
                         expPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', expLoc)
-                        expPlaneVals = np.full_like(cntrlPlaneVals, np.NaN)
+                        expPlaneVals = np.full_like(cntrlPlaneVals, np.nan)
 
                         for ibin, binVal in enumerate(binStrVals):
                             expLoc['binVal'] = binVal
