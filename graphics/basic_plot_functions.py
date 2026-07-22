@@ -44,12 +44,12 @@ _logger = logging.getLogger(__name__)
 ## color maps
 
 # IR brightness temperature color map
-cmGray     = plt.cm.get_cmap("gist_gray")
-cmRainbow  = plt.cm.get_cmap("gist_rainbow")
-cmSpectral = plt.cm.get_cmap("nipy_spectral")
-cmHeat     = plt.cm.get_cmap("gist_heat")
-cmOcean    = plt.cm.get_cmap("ocean")
-cmNCAR     = plt.cm.get_cmap("gist_ncar")
+cmGray     = plt.colormaps["gist_gray"]
+cmRainbow  = plt.colormaps["gist_rainbow"]
+cmSpectral = plt.colormaps["nipy_spectral"]
+cmHeat     = plt.colormaps["gist_heat"]
+cmOcean    = plt.colormaps["ocean"]
+cmNCAR     = plt.colormaps["gist_ncar"]
 
 WhiteBlack1 = cmGray(np.linspace(1.0,0.0,17)) # white to black (-90 to -74 C)
 BlackRed    = cmHeat(np.linspace(0.0,0.5,10)) #black to red (-74 to -65 C)
@@ -244,6 +244,20 @@ def plotDistri(lats,lons,values,
     ofile = f'distri_{VarName}_{out_name}_{levbin}.png'
     plt.savefig(ofile,dpi=200,bbox_inches='tight')
     print(ofile)
+
+    # save figure data as yaml
+    figureData = {
+        'ObsType': str(ObsType),
+        'VarName': str(VarName),
+        'varUnit': str(var_unit),
+        'lats': pu.dataYAMLFmtArray(lats[finite]),
+        'lons': pu.dataYAMLFmtArray(lons[finite]),
+        'values': pu.dataYAMLFmtArray(values[finite]),
+    }
+    figureYAML = pu.yaml_dump_figure_data(figureData)
+    with open(ofile.replace('.png', '.yaml'), 'w') as file:
+        file.write(figureYAML)
+
     plt.close()
 
 

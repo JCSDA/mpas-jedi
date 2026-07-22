@@ -192,6 +192,12 @@ class BinValAxisStatsComposite(AnalysisBase):
                             fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
                             iplot = 0
 
+                            figureData = {}
+                            figureData['binNumVals'] = [float(f) for f in binNumVals]
+                            figureData['binLabel'] = binLabel
+                            figureData['dataLabel'] = 'STATS('+fcDiagName+')'
+                            figureData['subplots'] = []
+
                             ERRParams = {}
                             ERRParams[self.DiagSpaceName] = {}
 
@@ -236,6 +242,20 @@ class BinValAxisStatsComposite(AnalysisBase):
                                 if FitParams is not None:
                                     ERRParams[self.DiagSpaceName][(paramKey, binMethod)] = FitParams
 
+                                subplotData = {}
+                                subplotData['varName'] = str(varName)
+                                subplotData['title'] = title
+                                subplotData['countsVals'] = self.dataYAMLFmtArray(countsVals)
+                                subplotData['meansVals'] = self.dataYAMLFmtArray(meansVals)
+                                subplotData['rmssVals'] = self.dataYAMLFmtArray(rmssVals)
+                                subplotData['stdsVals'] = self.dataYAMLFmtArray(stdsVals)
+                                if FitParams is not None:
+                                    subplotData['fitParams'] = {
+                                        'X': self.dataYAMLFmtArray(FitParams['bin_utils']['X']),
+                                        'ERR': self.dataYAMLFmtArray(FitParams['bin_utils']['ERR']),
+                                    }
+                                figureData['subplots'].append(subplotData)
+
                                 iplot = iplot + 1
 
                             YAMLParams = {}
@@ -256,6 +276,9 @@ class BinValAxisStatsComposite(AnalysisBase):
                                        self.DiagSpaceName, fcDiagName, expName))
 
                             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.6)
+
+                            # save figure data as yaml
+                            self.write_figure_yaml(figureData, dataPath, filename)
 
                     # end expName loop
 

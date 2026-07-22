@@ -74,6 +74,12 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
 
             iplot = 0
 
+            figureData = {}
+            figureData['xVals'] = [t.isoformat() for t in xVals]
+            figureData['binNumVals'] = [float(f) for f in binNumVals]
+            figureData['binLabel'] = binLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             for (varName, varLabel) in varMapLoc:
                 planeLoc['varName'] = varName
@@ -156,6 +162,16 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
 
                     cLabel = bgstatDiagLabel
 
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dataLabel'] = cLabel
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['contourVals'] = self.dataYAMLFmtArray(planeVals)
+                    figureData['subplots'].append(subplotData)
+
                     # perform subplot agnostic plotting (all expNames)
                     bpf.plot2D(
                         fig,
@@ -176,5 +192,8 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+            # save figure data as yaml
+            self.write_figure_yaml(figureData, dataPath, filename)
 
         # end fcTDelta loop

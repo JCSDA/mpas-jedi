@@ -249,9 +249,9 @@ class BinValAxisPDF(AnalysisBase):
               nsubplots = nxplots * nyplots
             else:
               nsubplots = self.nVars
-              nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+              nxplots = int(np.ceil(np.sqrt(nsubplots)))
               while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-              nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+              nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
             subplotLoc = deepcopy(caseLoc)
 
@@ -264,6 +264,18 @@ class BinValAxisPDF(AnalysisBase):
               fig_normalized = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
 
               iplot = 0
+
+              figureData = {}
+              figureData['binNumVals'] = [float(f) for f in binNumVals]
+              figureData['binLabel'] = binLabel
+              figureData['normalized'] = False
+              figureData['subplots'] = []
+
+              figureDataNormalized = {}
+              figureDataNormalized['binNumVals'] = [float(f) for f in binNumVals]
+              figureDataNormalized['binLabel'] = binLabel
+              figureDataNormalized['normalized'] = True
+              figureDataNormalized['subplots'] = []
 
               #subplot loop 1
               for (varName, varLabel) in self.varMap:
@@ -353,6 +365,18 @@ class BinValAxisPDF(AnalysisBase):
                   if len(self.fcTDeltas) > 1:
                     title += ' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+' days'
 
+                  subplotData = {}
+                  subplotData['varName'] = str(varName)
+                  subplotData['tDeltaDays'] = float(fcTDelta.total_seconds()) / 3600.0 / 24.0
+                  subplotData['title'] = title
+                  subplotData['linesLabel'] = list(binMethodLabelsValues)
+                  subplotData['linesVals'] = [self.dataYAMLFmtArray(v) for v in countsVals]
+                  figureData['subplots'].append(subplotData)
+
+                  subplotDataNormalized = deepcopy(subplotData)
+                  subplotDataNormalized['linesLabel'] = list(binMethodLabelsWithMetrics)
+                  figureDataNormalized['subplots'].append(subplotDataNormalized)
+
                   # perform subplot agnostic plotting (all expNames)
                   # raw counts
                   pdffunc(
@@ -395,11 +419,17 @@ class BinValAxisPDF(AnalysisBase):
 
               pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.6)
 
+              # save figure data as yaml
+              self.write_figure_yaml(figureData, dataPath, filename)
+
               filename = ('%s_%s-normalized_BinValAxis_%s-%smin_%s_%s_%s'%(
                          binVar, binMethodCase, self.fcTDeltas_totmin[0], self.fcTDeltas_totmin[-1],
                          self.DiagSpaceName, fcDiagName, expName))
 
               pu.finalize_fig(fig_normalized, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.6)
+
+              # save figure data as yaml
+              self.write_figure_yaml(figureDataNormalized, dataPath, filename)
 
             # end expName loop
 
@@ -586,9 +616,9 @@ class BinValAxisPDFMultiExp(AnalysisBase):
               nsubplots = nxplots * nyplots
             else:
               nsubplots = self.nVars
-              nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
+              nxplots = int(np.ceil(np.sqrt(nsubplots)))
               while nsubplots%nxplots > 0 and nsubplots%nxplots / nxplots <= 0.5: nxplots += 1
-              nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+              nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
 
             subplotLoc = deepcopy(caseLoc)
 
@@ -597,6 +627,18 @@ class BinValAxisPDFMultiExp(AnalysisBase):
             fig_normalized = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
 
             iplot = 0
+
+            figureData = {}
+            figureData['binNumVals'] = [float(f) for f in binNumVals]
+            figureData['binLabel'] = binLabel
+            figureData['normalized'] = False
+            figureData['subplots'] = []
+
+            figureDataNormalized = {}
+            figureDataNormalized['binNumVals'] = [float(f) for f in binNumVals]
+            figureDataNormalized['binLabel'] = binLabel
+            figureDataNormalized['normalized'] = True
+            figureDataNormalized['subplots'] = []
 
             #subplot loop 1
             for (varName, varLabel) in self.varMap:
@@ -709,6 +751,18 @@ class BinValAxisPDFMultiExp(AnalysisBase):
 
                 # end expName loop
 
+                subplotData = {}
+                subplotData['varName'] = str(varName)
+                subplotData['tDeltaDays'] = float(fcTDelta.total_seconds()) / 3600.0 / 24.0
+                subplotData['title'] = title
+                subplotData['linesLabel'] = list(expBinMethodLabelsValues)
+                subplotData['linesVals'] = [self.dataYAMLFmtArray(v) for v in expCounts]
+                figureData['subplots'].append(subplotData)
+
+                subplotDataNormalized = deepcopy(subplotData)
+                subplotDataNormalized['linesLabel'] = list(expBinMethodLabelsWithMetrics)
+                figureDataNormalized['subplots'].append(subplotDataNormalized)
+
                 # perform subplot agnostic plotting (all expNames)
                 # raw counts
                 pdffunc(
@@ -751,8 +805,14 @@ class BinValAxisPDFMultiExp(AnalysisBase):
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.6)
 
+            # save figure data as yaml
+            self.write_figure_yaml(figureData, dataPath, filename)
+
             filename = ('%s_%s-normalized_BinValAxis_%s-%smin_%s_%s_allExp'%(
                        binVar, binMethodCase, self.fcTDeltas_totmin[0], self.fcTDeltas_totmin[-1],
                        self.DiagSpaceName, fcDiagName))
 
             pu.finalize_fig(fig_normalized, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.6)
+
+            # save figure data as yaml
+            self.write_figure_yaml(figureDataNormalized, dataPath, filename)
