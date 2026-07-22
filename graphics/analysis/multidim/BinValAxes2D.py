@@ -335,6 +335,13 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
             iplot = 0
 
+            figureData = {}
+            figureData['xVals'] = [float(f) for f in xVals]
+            figureData['yVals'] = [float(f) for f in yVals]
+            figureData['xLabel'] = xLabel
+            figureData['yLabel'] = yLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             polynomialDegrees = np.asarray([4, 6, 8, 10, 12, 14, 16])
 
@@ -672,6 +679,19 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
                         pu.finalize_fig(LFig, str(figPath/filename), self.figureFileType, True, 0.6)
 
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dataLabel'] = cLabel
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['contourVals'] = {
+                        trait: self.dataYAMLFmtArray(planeVals[trait])
+                        for trait in su.ciTraits
+                    }
+                    figureData['subplots'].append(subplotData)
+
                     # perform subplot agnostic plotting (all expNames)
                     if options['plotfunc'] is bpf.map2D:
                         options['plotfunc'](
@@ -721,6 +741,11 @@ class BinValAxes2D(MultiDimBinMethodBase):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, xbuffer, ybuffer)
+
+            # save figure data as yaml (zoomed_figs below replot the same
+            # planeVals with a different map extent, so no separate sidecar
+            # is written for them)
+            self.write_figure_yaml(figureData, dataPath, filename)
 
             for region_name, zoom in zoomed_figs.items():
                 zoom_filename = ('%s%s_BinValAxes2D_%smin_%s_%s_%s'%(

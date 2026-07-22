@@ -13,6 +13,7 @@ from pathlib import Path
 import os
 import var_utils as vu
 import modelsp_utils as mu
+import plot_utils as pu
 
 import analysis.StatisticsDatabase as sdb
 
@@ -26,10 +27,6 @@ class AnalysisBase():
     ## plot settings
     figureFileType = 'pdf' #['pdf','png']
     interiorLabels = True
-
-    ## yaml writing options
-    __dataYAMLMissingFloat = 999. # fill value when ~np.isfinite
-    __dataYAMLPrecision = 4 # number of significant digits
 
     ## Establish default configuration
     blocking = False
@@ -515,10 +512,20 @@ class AnalysisBase():
         return expsCYDTimes
 
     def dataYAMLFmtFloat(self, f):
-      if np.isfinite(f):
-        return float(('{:.'+str(self.__dataYAMLPrecision-1)+'e}').format(f))
-      else:
-        return self.__dataYAMLMissingFloat
+      return pu.dataYAMLFmtFloat(f)
+
+    def dataYAMLFmtArray(self, arr):
+      return pu.dataYAMLFmtArray(arr)
+
+    def write_figure_yaml(self, figureData, dataPath, filename):
+      '''
+      Write figureData (raw data/metadata needed to reproduce a figure in a
+      third-party plotting package) as a YAML sidecar next to the figure
+      file of the same basename.
+      '''
+      figureYAML = pu.yaml_dump_figure_data(figureData)
+      with open(str(dataPath/filename)+'.yaml', 'w') as file:
+        file.write(figureYAML)
 
     def analyze(self, workers = None):
         self.logger.info('analyze()')

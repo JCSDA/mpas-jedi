@@ -6,7 +6,6 @@ import diag_utils as du
 import numpy as np
 import plot_utils as pu
 import stat_utils as su
-import yaml
 
 from analysis.multidim.MultiDimBinMethodBase import MultiDimBinMethodBase
 import analysis.StatisticsDatabase as sdb
@@ -163,15 +162,7 @@ class BinValAxisProfile(MultiDimBinMethodBase):
         pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.50, 0.55)
 
         # save figure data as yaml
-        figureYAML = yaml.safe_dump(
-          figureData,
-          indent=2,
-          width=2147483647,
-          allow_unicode=False,
-          default_flow_style=None,
-        )
-        with open(str(dataPath/filename)+'.yaml', 'w') as file:
-           file.write(figureYAML)
+        self.write_figure_yaml(figureData, dataPath, filename)
 
 
 class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
@@ -240,6 +231,11 @@ class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
         binNumVals = myBinConfigs['num']
         binStrVals = myBinConfigs['str']
         binLabel = myBinConfigs['binLabel']
+
+        figureData = {}
+        figureData['binNumVals'] = [float(f) for f in binNumVals]
+        figureData['binLabel'] = binLabel
+        figureData['subplots'] = []
 
         useRelativeDifference = (
           statName in su.posSemiDefiniteStats and
@@ -349,6 +345,19 @@ class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
                 if len(self.fcTDeltas) > 1:
                   title += ' @ '+str(float(fcTDelta.total_seconds()) / 3600.0 / 24.0)+' days'
 
+                subplotData = {}
+                subplotData['varName'] = str(varName)
+                subplotData['tDeltaDays'] = float(fcTDelta.total_seconds()) / 3600.0 / 24.0
+                subplotData['title'] = title
+                subplotData['dataLabel'] = fcstatDiagLabel
+                subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                subplotData['linesLabel'] = linesLabel
+                subplotData['linesVals'] = {
+                    trait: [self.dataYAMLFmtArray(v) for v in linesVals[trait]]
+                    for trait in su.ciTraits
+                }
+                figureData['subplots'].append(subplotData)
 
                 # perform subplot agnostic plotting (all expNames)
                 options['profilefunc'](
@@ -374,3 +383,6 @@ class BinValAxisProfileDiffCI(MultiDimBinMethodBase):
                    self.DiagSpaceName, fcDiagName, statName))
 
         pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.50, 0.55)
+
+        # save figure data as yaml
+        self.write_figure_yaml(figureData, dataPath, filename)

@@ -129,8 +129,8 @@ class PlotModelSpread():
     ######################################
 
     nsubplots = len(modelVars)
-    nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
-    nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+    nxplots = int(np.ceil(np.sqrt(nsubplots)))
+    nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
     subplotWidth = 1.9
     subplotAspect = 0.75
 
