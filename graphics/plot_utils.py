@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import ConciseDateFormatter, DateFormatter, AutoDateLocator
 import numpy as np
 import pandas as pd
+import yaml
 
 #===============
 # plot utilities
@@ -56,6 +57,68 @@ def finalize_fig(fig, filename='temporary_figure', filetype='png',
         fig.savefig(filename+'.'+filetype,bbox_inches='tight')
 
     plt.close(fig)
+
+
+###############################################################################
+# yaml sidecar formatting utilities
+###############################################################################
+
+# fill value when ~np.isfinite
+dataYAMLMissingFloat = 999.
+# number of significant digits
+dataYAMLPrecision = 4
+
+def dataYAMLFmtFloat(f):
+    if np.isfinite(f):
+        return float(('{:.'+str(dataYAMLPrecision-1)+'e}').format(f))
+    else:
+        return dataYAMLMissingFloat
+
+def dataYAMLFmtArray(arr):
+    '''
+    Recursively apply dataYAMLFmtFloat across a (possibly nested) list or
+    numpy array, returning plain (YAML-safe) nested lists of floats.
+    '''
+    if isinstance(arr, np.ndarray):
+        arr = arr.tolist()
+    if isinstance(arr, (list, tuple)):
+        return [dataYAMLFmtArray(v) for v in arr]
+    return dataYAMLFmtFloat(arr)
+
+
+class _NumpySafeYAMLDumper(yaml.SafeDumper):
+    '''
+    yaml.SafeDumper that also knows how to represent any numpy scalar
+    (np.str_, np.bool_, np.integer, np.floating, etc.) or numpy array,
+    converting each to its native Python equivalent via .item()/.tolist().
+    Guards against stray numpy types (e.g. a raw ndarray or a scalar
+    pulled from a pandas/numpy source) reaching yaml.dump unconverted,
+    regardless of which field in figureData they end up in.
+    '''
+
+def _represent_numpy_generic(dumper, data):
+    return dumper.represent_data(data.item())
+
+def _represent_numpy_ndarray(dumper, data):
+    return dumper.represent_data(data.tolist())
+
+_NumpySafeYAMLDumper.add_multi_representer(np.generic, _represent_numpy_generic)
+_NumpySafeYAMLDumper.add_multi_representer(np.ndarray, _represent_numpy_ndarray)
+
+def yaml_dump_figure_data(figureData):
+    '''
+    Dump figureData (raw data/metadata needed to reproduce a figure in a
+    third-party plotting package) to a YAML string, safe against stray
+    numpy scalar types anywhere in the structure.
+    '''
+    return yaml.dump(
+        figureData,
+        Dumper=_NumpySafeYAMLDumper,
+        indent=2,
+        width=2147483647,
+        allow_unicode=False,
+        default_flow_style=None,
+    )
 
 
 ###############################################################################
@@ -155,7 +218,7 @@ def format_x_for_dates(ax, x):
 
 
 ###############################################################################
-def get_clean_ax_limits(xmin_=np.NaN, xmax_=np.NaN, plotVals=[np.NaN],
+def get_clean_ax_limits(xmin_=np.nan, xmax_=np.nan, plotVals=[np.nan],
                         centralValue=None, buffr=0.2):
 
     x = np.empty(2)

@@ -256,7 +256,7 @@ def varRead(varName, ncData, nprocs=1):
   if varName in vu.modDiagnosticVarNames:
     nLocs = getTemperature(ncData['state']).shape[0]
     nLevs = len(diagnosticPressures)
-    varVals = np.full((nLocs, nLevs), np.NaN)
+    varVals = np.full((nLocs, nLevs), np.nan)
 
     # allow for missing values for ensembles (None)
     if ncData['diagnostics'] is not None:
@@ -371,7 +371,7 @@ class fieldSpread():
 
     nEns = len(ensemble)
     if nEns > 1:
-      exps = np.full((nEns, nLocs), np.NaN)
+      exps = np.full((nEns, nLocs), np.nan)
       for ii, member in enumerate(ensemble):
         exps[ii,:] = varRead(varName, member, nprocs).flatten()
 
@@ -380,7 +380,7 @@ class fieldSpread():
       del exps
 
     else:
-      std = np.full(exp.shape, np.NaN)
+      std = np.full(exp.shape, np.nan)
 
     return np.asarray(std)
 

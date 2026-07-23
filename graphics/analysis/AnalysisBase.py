@@ -13,6 +13,7 @@ from pathlib import Path
 import os
 import var_utils as vu
 import modelsp_utils as mu
+import plot_utils as pu
 
 import analysis.StatisticsDatabase as sdb
 
@@ -26,10 +27,6 @@ class AnalysisBase():
     ## plot settings
     figureFileType = 'pdf' #['pdf','png']
     interiorLabels = True
-
-    ## yaml writing options
-    __dataYAMLMissingFloat = 999. # fill value when ~np.isfinite
-    __dataYAMLPrecision = 4 # number of significant digits
 
     ## Establish default configuration
     blocking = False
@@ -196,13 +193,13 @@ class AnalysisBase():
     def oneHundredCenteredPercentDifference(self,
       experiment,
       reference,
-      dmin0 = np.NaN,
-      dmax0 = np.NaN,
+      dmin0 = np.nan,
+      dmax0 = np.nan,
     ):
       exp = experiment.astype(float)
       ref = reference.astype(float)
 
-      out = np.full_like(exp, np.NaN)
+      out = np.full_like(exp, np.nan)
 
       validDenom = bu.greatBound(np.abs(ref), 0., False)
 
@@ -230,19 +227,19 @@ class AnalysisBase():
       #return '100 x [1+\n(EXP-CONTROL)/\nCONTROL]'
 
     @staticmethod
-    def initLimits(dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def initLimits(dmin0=np.nan, dmax0=np.nan, d=None):
       dmin = dmin0
       dmax = dmax0
       if d is not None and not (np.isfinite(dmin) or np.isfinite(dmax)):
         if np.isnan(d).all():
-           dmin, dmax = np.NaN, np.NaN
+           dmin, dmax = np.nan, np.nan
         else:
           dmin = np.nanmin(d)
           dmax = np.nanmax(d)
       return dmin, dmax
 
 
-    def oneHundredCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def oneHundredCenteredLimiter(self, dmin0=np.nan, dmax0=np.nan, d=None):
         dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
         # Clamp dmin to its "Safety Envelope" (66.7% to 98.0%)
@@ -265,13 +262,13 @@ class AnalysisBase():
     def zeroCenteredPercentDifference(self,
       experiment,
       reference,
-      dmin0 = np.NaN,
-      dmax0 = np.NaN,
+      dmin0 = np.nan,
+      dmax0 = np.nan,
     ):
       exp = experiment.astype(float)
       ref = reference.astype(float)
 
-      out = np.full_like(exp, np.NaN)
+      out = np.full_like(exp, np.nan)
 
       validDenom = bu.greatBound(np.abs(ref), 0., False)
 
@@ -299,7 +296,7 @@ class AnalysisBase():
       #return '100 x (EXP-CONTROL)/\nCONTROL'
 
 
-    def zeroCenteredLimiter(self, dmin0=np.NaN, dmax0=np.NaN, d=None):
+    def zeroCenteredLimiter(self, dmin0=np.nan, dmax0=np.nan, d=None):
         dmin, dmax = self.initLimits(dmin0, dmax0, d)
 
         # Ensures we always see at least -2.0 to +2.0
@@ -515,10 +512,20 @@ class AnalysisBase():
         return expsCYDTimes
 
     def dataYAMLFmtFloat(self, f):
-      if np.isfinite(f):
-        return float(('{:.'+str(self.__dataYAMLPrecision-1)+'e}').format(f))
-      else:
-        return self.__dataYAMLMissingFloat
+      return pu.dataYAMLFmtFloat(f)
+
+    def dataYAMLFmtArray(self, arr):
+      return pu.dataYAMLFmtArray(arr)
+
+    def write_figure_yaml(self, figureData, dataPath, filename):
+      '''
+      Write figureData (raw data/metadata needed to reproduce a figure in a
+      third-party plotting package) as a YAML sidecar next to the figure
+      file of the same basename.
+      '''
+      figureYAML = pu.yaml_dump_figure_data(figureData)
+      with open(str(dataPath/filename)+'.yaml', 'w') as file:
+        file.write(figureYAML)
 
     def analyze(self, workers = None):
         self.logger.info('analyze()')

@@ -150,18 +150,18 @@ def readdata():
                 stationidnc_array = []
                 recordnc_array = []
                 if (obstype == 'gnssro' or obstype == 'gnssroref' or obstype == 'gnssrobndropp1d'):
-                    obsnc[np.less(obsnc, -999)] = np.NaN
+                    obsnc[np.less(obsnc, -999)] = np.nan
                     stationidnc_array=np.asarray(stationidnc).astype(str)
                     if (test == 'cycling'):
                         recordnc_array=np.asarray(recordNum).astype(str)
-                        recordnc_array[np.isnan(obsnc)]= np.NaN
+                        recordnc_array[np.isnan(obsnc)]= np.nan
                         nrecord = len(set(recordnc_array)) -1
                 else:
                     PreQCnc = nc[PreQC]
-                    obsnc[np.greater(PreQCnc, PreQCMaxvalueConv)] = np.NaN
-                    obsnc[np.less(PreQCnc,PreQCMinvalueConv)] = np.NaN
+                    obsnc[np.greater(PreQCnc, PreQCMaxvalueConv)] = np.nan
+                    obsnc[np.less(PreQCnc,PreQCMinvalueConv)] = np.nan
                     stationidnc_array=np.asarray(stationidnc)
-                stationidnc_array[np.isnan(obsnc)]= np.NaN
+                stationidnc_array[np.isnan(obsnc)]= np.nan
                 nstation = len(set(stationidnc_array)) -1 # -1: 'nan' is also included, so remove it
                 if (obstype == 'satwind' or obstype == 'satwnd'):
                     nstation = 0
@@ -185,7 +185,7 @@ def readdata():
                     #obsnc = nc[var][:,channel-1]
                     #PreQCnc = nc[PreQC][:,channel-1]
                     obsnc = np.asarray(obsnc)
-                    obsnc[np.greater(PreQCnc, PreQCMaxvalueAmsua)] = np.NaN
+                    obsnc[np.greater(PreQCnc, PreQCMaxvalueAmsua)] = np.nan
                     var_name = var_name +'_ch'+ str(channel)
                     nstation = 0
                     kwargs = dict(

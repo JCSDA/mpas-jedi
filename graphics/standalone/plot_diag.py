@@ -456,14 +456,14 @@ def readdata(args: argparse.Namespace) -> None:
       # background qc checks
       for var in [obs, ombg, hofx, obserror, errstart]:
         if var is None: continue
-        db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.NaN
-        db[var][failbg] = np.NaN
+        db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.nan
+        db[var][failbg] = np.nan
 
       # analysis QC checks
       for var in [oman]:
         if var is None: continue
-        db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.NaN
-        db[var][failan] = np.NaN
+        db[var][np.greater(np.abs(db[var]), 1.0e+15)] = np.nan
+        db[var][failan] = np.nan
 
       # create equivalent bg/an departures for hofx application
       if hofx is not None:
@@ -482,7 +482,7 @@ def readdata(args: argparse.Namespace) -> None:
       db[bkg] = db[obs] - db[omb]
       passbg = np.logical_and(~failbg, np.isfinite(db[omb]))
       for var in [obs, ombg, obserror, errstart, omb, bkg]:
-        db[var][~passbg] = np.NaN
+        db[var][~passbg] = np.nan
 
       oma = 'oma/'+varName
       db[oma] = db[oman]
@@ -490,7 +490,7 @@ def readdata(args: argparse.Namespace) -> None:
       db[ana] = db[obs] - db[oma]
       passan = np.logical_and(~failan, np.isfinite(db[oma]))
       for var in [oman, oma, ana]:
-        db[var][~passan] = np.NaN
+        db[var][~passan] = np.nan
 
       if not np.isfinite(db[omb]).any():
         logging.warning('all values are NaN or inf: ', varName, obstype)
@@ -565,13 +565,13 @@ def readdata(args: argparse.Namespace) -> None:
 
           for var in binnedVars:
             dbBinned[var] = deepcopy(db[var])
-            dbBinned[var][outsideLevel] = np.NaN
+            dbBinned[var][outsideLevel] = np.nan
 
             Count[var][iBin] = np.isfinite(dbBinned[var]).sum()
             if Count[var][iBin] > 0:
               RMS[var][iBin] = np.sqrt(np.nanmean(np.square(dbBinned[var])))
             else:
-              RMS[var][iBin] = np.NaN
+              RMS[var][iBin] = np.nan
 
           # plot oma, omb from every bin range
           if makeDistributionPlots and plot_eachLevelDistri:
@@ -648,7 +648,7 @@ def readdata(args: argparse.Namespace) -> None:
             if Count[var][i] > 0:
               RMS[var][i] = np.sqrt(np.nanmean(np.square(db[var][:,Ch_id])))
             else:
-              RMS[var][i] = np.NaN
+              RMS[var][i] = np.nan
 
         plotprofile(RMS[omb], 'OMB',
                     RMS[oma], 'OMA',

@@ -110,7 +110,7 @@ def calcStats(x_):
   y['Count']  = np.isfinite(x_).sum()
 
   for statName in nonCountFileStats:
-    y[statName] = statDtypes[statName](np.NaN)
+    y[statName] = statDtypes[statName](np.nan)
 
   if y['Count'] > 0:
     x = np.asarray(x_).flatten()
@@ -151,7 +151,7 @@ def calcStats(x_):
 
 #  else:
 #    for stat in nonCountFileStats:
-#      y[stat] = np.NaN
+#      y[stat] = np.nan
 
   return y
 
@@ -289,7 +289,7 @@ def aggStatsDict(x_): #, stats = aggregatableFileStats):
 
   y = {}
   for stat in nonCountAggregatableFileStats:
-    y[stat] = np.NaN
+    y[stat] = np.nan
 
   ## Count
   Count = np.int64(np.nansum(x['Count']))
@@ -636,12 +636,13 @@ def bootStrapClusterFunc(X, Y, alpha=0.05,
   for stat in statNames:
     statCIVals[stat] = {}
     for trait in ciTraits:
-      statCIVals[stat][trait] = np.NaN
+      statCIVals[stat][trait] = np.nan
 
   ## number of "data points" must by > 0
   #  could be aggregated over a time series, space, or any other binning characteristic
+  # X and Y must also be the same length, otherwise they cannot be paired cluster-wise
   nClust = len(X)
-  if nClust > 0:
+  if nClust > 0 and len(Y) == nClust:
 
     if type(n_samples) is list:
       nsSamples = n_samples

@@ -119,14 +119,14 @@ for testVariable in testVariables:
                    projection = 'moll',
   )
 
-  minAbsNormError[testVariable] = np.NaN
-  maxAbsNormError[testVariable] = np.NaN
+  minAbsNormError[testVariable] = np.nan
+  maxAbsNormError[testVariable] = np.nan
 
-  minAbsError[testVariable] = np.NaN
-  maxAbsError[testVariable] = np.NaN
+  minAbsError[testVariable] = np.nan
+  maxAbsError[testVariable] = np.nan
 
-  minBias[testVariable] = np.NaN
-  maxBias[testVariable] = np.NaN
+  minBias[testVariable] = np.nan
+  maxBias[testVariable] = np.nan
 
 ## generate the double-interpolated field and calculate errors
 absNormErrorFields = {}

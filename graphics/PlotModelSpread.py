@@ -129,8 +129,8 @@ class PlotModelSpread():
     ######################################
 
     nsubplots = len(modelVars)
-    nxplots = np.int(np.ceil(np.sqrt(nsubplots)))
-    nyplots = np.int(np.ceil(np.true_divide(nsubplots, nxplots)))
+    nxplots = int(np.ceil(np.sqrt(nsubplots)))
+    nyplots = int(np.ceil(np.true_divide(nsubplots, nxplots)))
     subplotWidth = 1.9
     subplotAspect = 0.75
 
@@ -168,7 +168,7 @@ class PlotModelSpread():
         if nDims==2:
           nn = dShape[1]
 
-        sigmax[ensembleState] = np.full(nn, np.NaN)
+        sigmax[ensembleState] = np.full(nn, np.nan)
 
         for lev in np.arange(0, mu.aggMaxLevel(varName, nn)):
           if nDims==2:

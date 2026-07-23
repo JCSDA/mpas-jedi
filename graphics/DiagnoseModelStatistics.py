@@ -266,11 +266,11 @@ class DiagnoseModelStatistics():
 
           # mask levels < minLevel
           mask = bu.lessBound(dbValsNN[vu.modVarLev], minLevel)
-          diagnostic[:,mask] = np.NaN
+          diagnostic[:,mask] = np.nan
 
           # mask levels > maxLevel
           mask = bu.greatBound(dbValsNN[vu.modVarLev], maxLevel)
-          diagnostic[:,mask] = np.NaN
+          diagnostic[:,mask] = np.nan
 
         if np.isfinite(diagnostic).sum() == 0:
           self.logger.warning('All missing values for (varName, diagnostic): '+varName+', '+diagName)

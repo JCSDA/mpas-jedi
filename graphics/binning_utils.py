@@ -386,8 +386,8 @@ class GlintAngle(UniformLocFunction):
                     np.multiply(np.sin(solzen),
                         np.multiply(np.sin(senzen), np.cos(relazi))))
 
-        glint[greatBound(glint, 1.0)] = np.NaN
-        glint[lessBound(glint, -1.0)] = np.NaN
+        glint[greatBound(glint, 1.0)] = np.nan
+        glint[lessBound(glint, -1.0)] = np.nan
 
         glint = np.multiply(np.arccos(glint), vu.rad2deg)
         glint[greatBound(glint, maxGlint, False)] = maxGlint
@@ -577,7 +577,7 @@ class ACIQuadrature(InsituLocFunction):
         d = OCI - MCI
 
         # subtract OCI and MCI in quadrature, keeping sign outside sqrt
-        ACI = np.full_like(d, np.NaN)
+        ACI = np.full_like(d, np.nan)
         p = np.isfinite(d)
         ACI[p] = np.multiply(np.sqrt(np.abs(d[p])), np.sign(d[p]))
 
@@ -684,13 +684,13 @@ class STDofHofX:
         nMembers = len(memberKeys)
         if nMembers > 0:
             nLocs = len(dbVals[memberKeys[0]])
-            mods = np.full((nMembers, nLocs), np.NaN)
+            mods = np.full((nMembers, nLocs), np.nan)
             for member, key in enumerate(memberKeys):
                 mods[member,:] = dbVals[key]
             std = np.nanstd(mods, axis=0, ddof=1)
         else:
             nLocs = len(dbVals[meanVarName])
-            std = np.full(nLocs, np.NaN)
+            std = np.full(nLocs, np.nan)
         return std
 
 
@@ -724,7 +724,7 @@ class TotalSpread:
 
     def getObsError(self, dbVals, insituParameters):
         err = dbVals[insituParameters[vu.selfErrorValue]]
-        err[lessEqualBound(err, 0.0)] = np.NaN
+        err[lessEqualBound(err, 0.0)] = np.nan
         return err
 
     def getEnsSpread(self, dbVals, insituParameters):
@@ -739,7 +739,7 @@ class TotalSpread:
         bothValid = np.logical_and(validO, validH)
         onlyO = np.logical_and(validO, np.logical_not(validH))
         onlyH = np.logical_and(validH, np.logical_not(validO))
-        validvalues = np.full_like(sigmao, np.NaN)
+        validvalues = np.full_like(sigmao, np.nan)
         validvalues[onlyO] = sigmao[onlyO]
         validvalues[onlyH] = sigmah[onlyH]
 
@@ -809,7 +809,7 @@ class CITotalSpread(TotalSpread):
         aboveramp = greatEqualBound(CI, CI1, False)
         onramp    = insideBounds(CI, [CI0, CI1], False)
 
-        err = np.full_like(CI, np.NaN)
+        err = np.full_like(CI, np.nan)
         err[belowramp] = STD0
         err[onramp]    = STD0 + slope * (CI[onramp] - CI0)
         err[aboveramp] = STD1
@@ -1356,7 +1356,7 @@ class BinFilter:
         self.except_diags = config.get('except_diags', [])
         self.include_diags = config.get('include_diags', [])
 
-        self.mask_value = config.get('mask_value', np.NaN)
+        self.mask_value = config.get('mask_value', np.nan)
         #TODO: add other actions besides mask_value/exclude
 
 #    def baseVars(self):
@@ -1513,7 +1513,7 @@ class BinMethod:
             mask = Filter.updateMask(
                 mask, diagName, ibin, maskValue=True)
         masked_array = np.asarray(deepcopy(array))
-        masked_array[mask] = np.NaN
+        masked_array[mask] = np.nan
 
 #        masked_array = np.asarray(deepcopy(array))
 #        for Filter in self.filters:

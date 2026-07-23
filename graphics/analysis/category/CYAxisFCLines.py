@@ -56,6 +56,10 @@ class CYAxisFCLines(CategoryBinMethodBase):
             fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
             iplot = 0
 
+            figureData = {}
+            figureData['dataLabel'] = bgstatDiagLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             for (varName, varLabel) in self.varMap:
                 lineLoc['varName'] = varName
@@ -94,7 +98,7 @@ class CYAxisFCLines(CategoryBinMethodBase):
 
                         lineCYDTimes = dfwDict['dfw'].levels('cyDTime', lineLoc)
 
-                        lineVals = np.full(self.nCY, np.NaN)
+                        lineVals = np.full(self.nCY, np.nan)
                         cyLoc = deepcopy(lineLoc)
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)
@@ -105,6 +109,23 @@ class CYAxisFCLines(CategoryBinMethodBase):
 
                     # define subplot title
                     title = varLabel+binTitle
+
+                    # xsVals has one x-array per fcTDelta (unbounded), but linesVals/
+                    # fcTDeltas_labels are capped at MAX_FC_LINES; xsVals[:len(linesVals)]
+                    # are the ones actually paired with a line by plotTimeSeries below
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['binVal'] = str(binVal)
+                    subplotData['title'] = title
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['linesLabel'] = [self.dataYAMLFmtFloat(l[0]) for l in self.fcTDeltas_labels]
+                    subplotData['xsVals'] = [
+                        [t.isoformat() for t in xVals]
+                        for xVals in xsVals[:len(linesVals)]
+                    ]
+                    subplotData['linesVals'] = [self.dataYAMLFmtArray(v) for v in linesVals]
+                    figureData['subplots'].append(deepcopy(subplotData))
 
                     # perform subplot agnostic plotting (all expNames)
                     bpf.plotTimeSeries(
@@ -128,5 +149,8 @@ class CYAxisFCLines(CategoryBinMethodBase):
                        self.DiagSpaceName, fcDiagName, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+            # save figure data as yaml
+            self.write_figure_yaml(figureData, dataPath, filename)
 
         # end expName loop

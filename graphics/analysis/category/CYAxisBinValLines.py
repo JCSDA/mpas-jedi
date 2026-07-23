@@ -90,6 +90,11 @@ class CYAxisBinValLines(BinValLines):
 
             iplot = 0
 
+            figureData = {}
+            figureData['xVals'] = [t.isoformat() for t in xVals]
+            figureData['dataLabel'] = bgstatDiagLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             for (varName, varLabel) in self.varMap:
                 lineLoc['varName'] = varName
@@ -112,7 +117,7 @@ class CYAxisBinValLines(BinValLines):
                         lineLoc['binVal'] = binVal
                         lineCYDTimes = dfwDict['dfw'].levels('cyDTime', lineLoc)
 
-                        lineVals = np.full(self.nCY, np.NaN)
+                        lineVals = np.full(self.nCY, np.nan)
                         cyLoc = deepcopy(lineLoc)
                         for cyDTime in lineCYDTimes:
                             icy = self.cyDTimes.index(cyDTime)
@@ -125,6 +130,16 @@ class CYAxisBinValLines(BinValLines):
 
                     # define subplot title
                     title = expName+'\n'+varLabel
+
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['linesLabel'] = list(binStrVals)
+                    subplotData['linesVals'] = [self.dataYAMLFmtArray(v) for v in linesVals]
+                    figureData['subplots'].append(deepcopy(subplotData))
 
                     # perform subplot agnostic plotting (all expNames)
                     bpf.plotTimeSeries(
@@ -148,5 +163,8 @@ class CYAxisBinValLines(BinValLines):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+            # save figure data as yaml
+            self.write_figure_yaml(figureData, dataPath, filename)
 
         # end fcMap loop

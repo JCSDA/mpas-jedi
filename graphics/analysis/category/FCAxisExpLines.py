@@ -52,6 +52,12 @@ class FCAxisExpLines(CategoryBinMethodBase):
         fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
         iplot = 0
 
+        figureData = {}
+        figureData['xVals'] = list(self.fcTDeltas_totmin)
+        figureData['xLabel'] = 'Lead Time'
+        figureData['dataLabel'] = fcstatDiagLabel
+        figureData['subplots'] = []
+
         #subplot loop 1
         for (varName, varLabel) in self.varMap:
             lineLoc['varName'] = varName
@@ -83,7 +89,7 @@ class FCAxisExpLines(CategoryBinMethodBase):
 
                         lineFCTDeltas = dfwDict['agg'].levels('fcTDelta', lineLoc)
 
-                        lineVals = np.full(self.nFC, np.NaN)
+                        lineVals = np.full(self.nFC, np.nan)
                         fcLoc = deepcopy(lineLoc)
                         for fcTDelta in lineFCTDeltas:
                             ifc = self.fcTDeltas.index(fcTDelta)
@@ -93,6 +99,16 @@ class FCAxisExpLines(CategoryBinMethodBase):
 
                 # define subplot title
                 title = varLabel+binTitle
+
+                subplotData = {}
+                subplotData['varName'] = str(varName)
+                subplotData['binVal'] = str(binVal)
+                subplotData['title'] = title
+                subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                subplotData['linesLabel'] = linesLabel
+                subplotData['linesVals'] = [self.dataYAMLFmtArray(v) for v in linesVals]
+                figureData['subplots'].append(deepcopy(subplotData))
 
                 # perform subplot agnostic plotting (all expNames)
                 bpf.plotTimeSeries(
@@ -117,6 +133,9 @@ class FCAxisExpLines(CategoryBinMethodBase):
                    self.DiagSpaceName, fcDiagName, statName))
 
         pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+        # save figure data as yaml
+        self.write_figure_yaml(figureData, dataPath, filename)
 
 
 class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
@@ -172,6 +191,11 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
         # establish a new figure
         fig = pu.setup_fig(nxplots, nyplots, self.subplotWidth, self.subplotAspect, self.interiorLabels)
         iplot = 0
+
+        figureData = {}
+        figureData['xVals'] = list(self.fcTDeltas_totmin)
+        figureData['xLabel'] = 'Lead Time'
+        figureData['subplots'] = []
 
         useRelativeDifference = (
           statName in su.posSemiDefiniteStats and
@@ -276,6 +300,20 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                   sciTicks = False
                   logScale = False
 
+                subplotData = {}
+                subplotData['varName'] = str(varName)
+                subplotData['binVal'] = str(binVal)
+                subplotData['title'] = title
+                subplotData['dataLabel'] = fcstatDiagLabel
+                subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                subplotData['linesLabel'] = linesLabel
+                subplotData['linesVals'] = {
+                    trait: [self.dataYAMLFmtArray(v) for v in linesVals[trait]]
+                    for trait in su.ciTraits
+                }
+                figureData['subplots'].append(deepcopy(subplotData))
+
                 # perform subplot agnostic plotting (all expNames)
                 bpf.plotTimeSeries(
                     fig,
@@ -303,3 +341,6 @@ class FCAxisExpLinesDiffCI(CategoryBinMethodBase):
                    self.DiagSpaceName, fcDiagName, statName))
 
         pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+        # save figure data as yaml
+        self.write_figure_yaml(figureData, dataPath, filename)

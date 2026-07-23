@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 #====================================
 def negativeSafeSqrt(q):
     q_ = deepcopy(q)
-    q_[bu.lessBound(q, 0.0)] = np.NaN
+    q_[bu.lessBound(q, 0.0)] = np.nan
     q_ = np.sqrt(q_)
 
     return q_
@@ -149,7 +149,7 @@ class RelativeBiasCorrectedObsMinusModel:
 
         valid = bu.greatBound(np.abs(obs), 0.0, False)
         omm_bc[valid] = np.divide(omm_bc[valid], obs[valid])
-        omm_bc[~valid] = np.NaN
+        omm_bc[~valid] = np.nan
 
         return np.multiply(omm_bc, 100.0)
 
@@ -179,7 +179,7 @@ class RelativeObsMinusModel:
         OMM = np.subtract(obs, mod)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
         OMM[valid] = np.divide(OMM[valid],obs[valid])
-        OMM[~valid] = np.NaN
+        OMM[~valid] = np.nan
 
         return np.multiply(OMM, 100.0)
 
@@ -211,7 +211,7 @@ class RelativeAnalysisMinusBackground:
         AMB = np.subtract(ana, bak)
         valid = bu.greatBound(np.abs(obs), 0.0, False)
         AMB[valid] = np.divide(AMB[valid], obs[valid])
-        AMB[~valid] = np.NaN
+        AMB[~valid] = np.nan
 
         return np.multiply(AMB, 100.0)
 
@@ -233,7 +233,7 @@ class AnalysisMinusBackgroundOverObsMinusBackground:
         valid = bu.greatBound(np.abs(OMB), 0.0, False)
 
         AMBoOMB[valid] = np.divide(AMBoOMB[valid], OMB[valid])
-        AMBoOMB[~valid] = np.NaN
+        AMBoOMB[~valid] = np.nan
 
         return AMBoOMB
 
@@ -250,7 +250,7 @@ class RelativeError:
 
         valid = bu.greatBound(np.abs(obs), 0.0, False)
         err[valid] = np.divide(err[valid], obs[valid])
-        err[~valid] = np.NaN
+        err[~valid] = np.nan
 
         return np.multiply(err, 100.0)
 
@@ -357,7 +357,7 @@ class idealSigmao(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(omm, np.NaN)
+            Stats[statName] = np.full_like(omm, np.nan)
 
         p = np.logical_and(np.isfinite(omm), np.isfinite(sigmam))
         if p.sum() > 0:
@@ -402,7 +402,7 @@ class idealRelativeSigmao(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(omm, np.NaN)
+            Stats[statName] = np.full_like(omm, np.nan)
 
         p = np.logical_and(np.isfinite(omm), np.isfinite(sigmam))
         if p.sum() > 0:
@@ -457,7 +457,7 @@ class ObsSpaceConsistencyRatio(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(omm, np.NaN)
+            Stats[statName] = np.full_like(omm, np.nan)
 
         p = np.logical_and(np.isfinite(omm),
               np.logical_and(np.isfinite(sigmam), np.isfinite(sigmao)))
@@ -537,7 +537,7 @@ class ModelSpaceConsistencyRatio(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(mmref, np.NaN)
+            Stats[statName] = np.full_like(mmref, np.nan)
 
         p = np.logical_and(np.isfinite(mmref), np.isfinite(sigmam))
         if p.sum() > 0:
@@ -595,7 +595,7 @@ class SumDiagnosticsStatisticsPairs(DerivedDiagnostic):
 
         # re-store them in a dictionary with the new statName
         Stats = {}
-        Stats[self.statName] = np.full_like(diagStats[0], np.NaN)
+        Stats[self.statName] = np.full_like(diagStats[0], np.nan)
 
         p = np.full_like(diagStats[0], True, bool)
         for ds in diagStats:
@@ -711,7 +711,7 @@ class ObsErrorNormalizedInnovation(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(ommMean, np.NaN)
+            Stats[statName] = np.full_like(ommMean, np.nan)
 
         p = np.logical_and(np.isfinite(ommMean),
               np.logical_and(np.isfinite(ommMS), np.isfinite(sigmao)))
@@ -760,7 +760,7 @@ class InnovationRatio(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(ombMean, np.NaN)
+            Stats[statName] = np.full_like(ombMean, np.nan)
 
         p = np.logical_and(np.isfinite(omaMean),
               np.logical_and(np.isfinite(omaMS), np.isfinite(omaRMS)))
@@ -809,7 +809,7 @@ class SpreadRatio(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(sigmabMS, np.NaN)
+            Stats[statName] = np.full_like(sigmabMS, np.nan)
 
         p = np.logical_and(np.isfinite(sigmaaMS), np.isfinite(sigmabMS))
         if p.sum() > 0:
@@ -847,7 +847,7 @@ class ApproxDoaDob(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(ombRMS, np.NaN)
+            Stats[statName] = np.full_like(ombRMS, np.nan)
 
         p = np.logical_and(np.isfinite(ombRMS), np.isfinite(omaRMS))
 
@@ -883,7 +883,7 @@ class ApproxRelativeDoaDob(DerivedDiagnostic):
 
         Stats = {}
         for statName in self.availableStatistics:
-            Stats[statName] = np.full_like(ombRMS, np.NaN)
+            Stats[statName] = np.full_like(ombRMS, np.nan)
 
         p = np.logical_and(np.isfinite(ombRMS), np.isfinite(omaRMS))
 

@@ -37,7 +37,7 @@ def write_diag_stats():
                 #bin for regions
                 tmpbin = []
                 tmpbin = deepcopy(tmp)
-                tmpbin[np.logical_or(lats < mu.latBandsBounds [latBand+1], lats > mu.latBandsBounds [latBand])] = np.NaN
+                tmpbin[np.logical_or(lats < mu.latBandsBounds [latBand+1], lats > mu.latBandsBounds [latBand])] = np.nan
                 #save every level stat
                 newfile = write_stats(tmpbin,varName,mu.latBands[latBand],str(fcTDelta))
 

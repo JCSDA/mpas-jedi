@@ -74,6 +74,12 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
 
             iplot = 0
 
+            figureData = {}
+            figureData['xVals'] = [t.isoformat() for t in xVals]
+            figureData['binNumVals'] = [float(f) for f in binNumVals]
+            figureData['binLabel'] = binLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             for (varName, varLabel) in varMapLoc:
                 planeLoc['varName'] = varName
@@ -91,7 +97,7 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                 cntrlLoc = deepcopy(planeLoc)
                 cntrlLoc['expName'] = self.cntrlExpName
                 cntrlPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', cntrlLoc)
-                cntrlPlaneVals = np.full((nBinVals, self.nCY), np.NaN)
+                cntrlPlaneVals = np.full((nBinVals, self.nCY), np.nan)
 
                 for ibin, binVal in enumerate(binStrVals):
                     cntrlLoc['binVal'] = binVal
@@ -102,8 +108,8 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                         cntrlPlaneVals[ibin, icy] = tmp[jcy]
 
                 #subplot loop 2
-                dmin_relative = np.NaN
-                dmax_relative = np.NaN
+                dmin_relative = np.nan
+                dmax_relative = np.nan
                 for expName in self.expNames:
                     expLoc = deepcopy(planeLoc)
                     expLoc['expName'] = expName
@@ -127,7 +133,7 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                         # letting cyDTime and binVal vary
                         # extract this experiment
                         expPlaneCYDTimes = dfwDict['dfw'].levels('cyDTime', expLoc)
-                        expPlaneVals = np.full_like(cntrlPlaneVals, np.NaN)
+                        expPlaneVals = np.full_like(cntrlPlaneVals, np.nan)
 
                         for ibin, binVal in enumerate(binStrVals):
                             expLoc['binVal'] = binVal
@@ -156,6 +162,16 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
 
                     cLabel = bgstatDiagLabel
 
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dataLabel'] = cLabel
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['contourVals'] = self.dataYAMLFmtArray(planeVals)
+                    figureData['subplots'].append(subplotData)
+
                     # perform subplot agnostic plotting (all expNames)
                     bpf.plot2D(
                         fig,
@@ -176,5 +192,8 @@ class CYandBinValAxes2D(MultiDimBinMethodBase):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, 0.35, 0.55)
+
+            # save figure data as yaml
+            self.write_figure_yaml(figureData, dataPath, filename)
 
         # end fcTDelta loop

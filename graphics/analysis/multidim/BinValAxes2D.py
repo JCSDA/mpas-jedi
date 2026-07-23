@@ -335,6 +335,13 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
             iplot = 0
 
+            figureData = {}
+            figureData['xVals'] = [float(f) for f in xVals]
+            figureData['yVals'] = [float(f) for f in yVals]
+            figureData['xLabel'] = xLabel
+            figureData['yLabel'] = yLabel
+            figureData['subplots'] = []
+
             #subplot loop 1
             polynomialDegrees = np.asarray([4, 6, 8, 10, 12, 14, 16])
 
@@ -360,7 +367,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                 # extract control experiment
                 cntrlAggLoc = deepcopy(planeLoc)
                 cntrlAggLoc['expName'] = self.cntrlExpName
-                cntrlAggPlaneVals = np.full((nYVals, nXVals), np.NaN)
+                cntrlAggPlaneVals = np.full((nYVals, nXVals), np.nan)
                 for ibin, binVal in enumerate(binCoordsLevels):
                     cntrlAggLoc['binVal'] = binVal
                     cntrlAggPlaneVals[yIndex[ibin], xIndex[ibin]] = \
@@ -370,8 +377,8 @@ class BinValAxes2D(MultiDimBinMethodBase):
                 tempdfw = sdb.DFWrapper.fromLoc(dfwDict['dfw'], planeLoc)
 
                 #subplot loop 2
-                dmin_relative = np.NaN
-                dmax_relative = np.NaN
+                dmin_relative = np.nan
+                dmax_relative = np.nan
                 for expName in self.expNames:
                     if useRelativeDifference:
                         title = varName
@@ -389,7 +396,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
                     planeVals = {}
                     for trait in su.ciTraits:
-                        planeVals[trait] = np.full_like(cntrlAggPlaneVals, np.NaN)
+                        planeVals[trait] = np.full_like(cntrlAggPlaneVals, np.nan)
 
                     expAggLoc = deepcopy(cntrlAggLoc)
                     expAggPlaneVals = deepcopy(cntrlAggPlaneVals)
@@ -405,7 +412,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
 
                         # letting binVal vary
                         # extract this experiment
-                        expAggPlaneVals.fill(np.NaN)
+                        expAggPlaneVals.fill(np.nan)
                         for ibin, binVal in enumerate(binCoordsLevels):
                             iy = yIndex[ibin]
                             ix = xIndex[ibin]
@@ -434,14 +441,14 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                 else:
                                     ciVals = {statName: {
                                         su.cimean: expAggPlaneVals[iy, ix] - normalizingStat,
-                                        su.cimin: np.NaN,
-                                        su.cimax: np.NaN,
+                                        su.cimin: np.nan,
+                                        su.cimax: np.nan,
                                     }}
                             else:
                                 ciVals = {statName: {
                                     su.cimean: expAggPlaneVals[iy, ix],
-                                    su.cimin: np.NaN,
-                                    su.cimax: np.NaN,
+                                    su.cimin: np.nan,
+                                    su.cimax: np.nan,
                                 }}
 
                             for trait in su.ciTraits:
@@ -455,7 +462,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                             t += 1.0
                                         t *= 100.0
                                     else:
-                                        t = np.NaN
+                                        t = np.nan
 
                                 planeVals[trait][iy, ix] = t
 
@@ -553,7 +560,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                             xConfig, yConfig,
                             True, True, None,
                             nyFit, nxFit, nyFit*nxFit, fplot+nxFit,
-                            dmin = np.NaN, dmax = np.NaN,
+                            dmin = np.nan, dmax = np.nan,
                             interiorLabels = self.interiorLabels)
 
                         delta = np.abs(np.nanmax([(dmax - dmin) / 5., dmin, dmax]))
@@ -627,7 +634,7 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                 xConfig, yConfig,
                                 False, True, None,
                                 nyFit, nxFit, nyFit*nxFit, fplot+2*nxFit,
-                                dmin = np.NaN, dmax = delta/5.,
+                                dmin = np.nan, dmax = delta/5.,
                                 interiorLabels = self.interiorLabels)
 
                         self.logger.info('\nfit2D L2 norms: '+str(L2Norms))
@@ -671,6 +678,19 @@ class BinValAxes2D(MultiDimBinMethodBase):
                                    fcTDelta_totmin))
 
                         pu.finalize_fig(LFig, str(figPath/filename), self.figureFileType, True, 0.6)
+
+                    subplotData = {}
+                    subplotData['varName'] = str(varName)
+                    subplotData['expName'] = str(expName)
+                    subplotData['title'] = title
+                    subplotData['dataLabel'] = cLabel
+                    subplotData['dmin'] = self.dataYAMLFmtFloat(dmin)
+                    subplotData['dmax'] = self.dataYAMLFmtFloat(dmax)
+                    subplotData['contourVals'] = {
+                        trait: self.dataYAMLFmtArray(planeVals[trait])
+                        for trait in su.ciTraits
+                    }
+                    figureData['subplots'].append(subplotData)
 
                     # perform subplot agnostic plotting (all expNames)
                     if options['plotfunc'] is bpf.map2D:
@@ -721,6 +741,11 @@ class BinValAxes2D(MultiDimBinMethodBase):
                        diagnosticGroup, statName))
 
             pu.finalize_fig(fig, str(figPath/filename), self.figureFileType, self.interiorLabels, xbuffer, ybuffer)
+
+            # save figure data as yaml (zoomed_figs below replot the same
+            # planeVals with a different map extent, so no separate sidecar
+            # is written for them)
+            self.write_figure_yaml(figureData, dataPath, filename)
 
             for region_name, zoom in zoomed_figs.items():
                 zoom_filename = ('%s%s_BinValAxes2D_%smin_%s_%s_%s'%(
