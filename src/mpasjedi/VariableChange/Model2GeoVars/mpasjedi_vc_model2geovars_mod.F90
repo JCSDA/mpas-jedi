@@ -534,7 +534,7 @@ subroutine changevar(self, geom, xm, xg)
 ! pass only the domain interior points.
           gdata%r1%array(1:nCells)= real(domainMask(1:nCells))
 
-        case ( var_sfc_fact10 ) !-wind_reduction_factor_at_10m
+        case ( var_sfc_fact10 ) !-ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
           call xm%get('eastward_wind_at_10m', ptrr1_a)
           call xm%get('northward_wind_at_10m', ptrr1_b)
 

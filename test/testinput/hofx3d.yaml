@@ -337,7 +337,7 @@ observations:
       observation vertical coordinate: height
       interpolation method: linear
 
-      hofx scaling field: wind_reduction_factor_at_10m
+      hofx scaling field: ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
       hofx scaling field group: GeoVaLs
       variables:
       - name: windEastward
