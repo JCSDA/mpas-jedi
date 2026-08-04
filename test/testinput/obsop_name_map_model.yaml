@@ -1,0 +1,4 @@
+variable maps:
+- name: airTemperatureAt2M
+  alias: air_temperature
+

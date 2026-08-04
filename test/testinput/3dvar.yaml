@@ -160,16 +160,19 @@ cost function:
           engine:
             type: H5File
             obsfile: Data/os/obsout_3dvar_sfc.nc4
-        simulated variables: [stationPressure, airTemperature, specificHumidity]
+        simulated variables: [stationPressure, airTemperatureAt2M, specificHumidity]
       obs operator:
         name: Composite
         components:
+        - name: Identity
+          observation alias file: testinput/obsop_name_map.yaml
+          variables:
+          - name: airTemperatureAt2M
         - name: VertInterp
           vertical coordinate: height_above_mean_sea_level
           observation vertical coordinate: height
           interpolation method: linear
           variables:
-          - name: airTemperature
           - name: specificHumidity
         - name: SfcCorrected
           correction scheme to use: UKMO   # or WRFDA
@@ -179,8 +182,11 @@ cost function:
         name: Composite
         components:
         - name: Identity
+          observation alias file: testinput/obsop_name_map_model.yaml
           variables:
-          - name: airTemperature
+          - name: airTemperatureAt2M
+        - name: Identity
+          variables:
           - name: specificHumidity
         - name: Identity
           variables:
@@ -200,7 +206,7 @@ cost function:
         threshold: 10
       - filter: Perform Action
         filter variables:
-        - name: airTemperature
+        - name: airTemperatureAt2M
         - name: specificHumidity
         action:
           name: passivate

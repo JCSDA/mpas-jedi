@@ -1,6 +1,8 @@
 variable maps:
   - name: airTemperature
     alias: air_temperature
+  - name: airTemperatureAt2M
+    alias: air_temperature_at_2m
   - name: windEastward
     alias: eastward_wind
   - name: windNorthward
