@@ -12,7 +12,7 @@
 #  files: A list of file names to link relative to this source dir
 macro(link_files src_dir dest_dir)
     foreach(_f IN ITEMS ${ARGN})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+        file(CREATE_LINK ${src_dir}/${_f} ${dest_dir}/${_f} SYMBOLIC)
     endforeach()
 endmacro()
 
@@ -22,8 +22,9 @@ endmacro()
 #  dest_dir: Full path to target directory
 macro(copy_all_files src_dir dest_dir)
     file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
+    file(MAKE_DIRECTORY ${dest_dir})
     foreach(_f IN LISTS _all)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${src_dir}/${_f} ${dest_dir}/)
+        file(COPY_FILE ${src_dir}/${_f} ${dest_dir}/${_f} ONLY_IF_DIFFERENT)
     endforeach()
 endmacro()
 
@@ -34,7 +35,7 @@ endmacro()
 macro(link_all_files src_dir dest_dir)
     file(GLOB _all RELATIVE ${src_dir} ${src_dir}/*)
     foreach(_f IN LISTS _all)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir}/${_f} ${dest_dir}/${_f})
+        file(CREATE_LINK ${src_dir}/${_f} ${dest_dir}/${_f} SYMBOLIC)
     endforeach()
 endmacro()
 
@@ -43,16 +44,16 @@ endmacro()
 #  src_dir: Full path to source directory
 #  dest_dir: Full path to target directory link name
 macro(link_dir src_dir dest_dir)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${src_dir} ${dest_dir})
+    file(CREATE_LINK ${src_dir} ${dest_dir} SYMBOLIC)
 endmacro()
 
 # macro to create a symlink from src to dst with just filename
 function(CREATE_SYMLINK_FILENAME src dst)
     foreach (FILENAME ${ARGN})
         get_filename_component(filename ${FILENAME} NAME )
-        execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+        file( CREATE_LINK
             ${src}/${FILENAME}
-            ${dst}/${filename} )
+            ${dst}/${filename} SYMBOLIC )
         endforeach(FILENAME)
 endfunction(CREATE_SYMLINK_FILENAME)
 

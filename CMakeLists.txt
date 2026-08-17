@@ -7,7 +7,7 @@
 # MPAS
 ################################################################################
 
-cmake_minimum_required( VERSION 3.12 )
+cmake_minimum_required( VERSION 3.23 )
 project( mpasjedi VERSION 3.1.0 LANGUAGES C CXX Fortran )
 
 ## Ecbuild integration
