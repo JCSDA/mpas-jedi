@@ -515,13 +515,26 @@ function(add_mpasjedi_unit_test)
         set(_env ENVIRONMENT F_UFMTENDIAN=little\\$<SEMICOLON>big:101-200)
     endif()
 
-    ecbuild_add_test( TARGET  ${TARGET_NAME}
-                      ${TEST_ENVIRONMENT}
-                      SOURCES executables/Test${TEST_CLASS}.cc
-                      ARGS    "testinput/${TEST_YAMLFILE}.yaml"
-                      MPI     ${TEST_NPE}
-                      LIBS    ${PROJECT_NAME}
-                      LABELS  ${TEST_LABELS} )
+    # Reuse one executable per test CLASS: the first test of a class builds it,
+    # subsequent tests run the same binary with their own yaml.
+    get_property( _class_exe GLOBAL PROPERTY MPASJEDI_UNIT_TEST_EXE_${TEST_CLASS} )
+    if( _class_exe )
+        ecbuild_add_test( TARGET  ${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
+                          COMMAND ${_class_exe}
+                          ARGS    "testinput/${TEST_YAMLFILE}.yaml"
+                          MPI     ${TEST_NPE}
+                          LABELS  ${TEST_LABELS} )
+    else()
+        ecbuild_add_test( TARGET  ${TARGET_NAME}
+                          ${TEST_ENVIRONMENT}
+                          SOURCES executables/Test${TEST_CLASS}.cc
+                          ARGS    "testinput/${TEST_YAMLFILE}.yaml"
+                          MPI     ${TEST_NPE}
+                          LIBS    ${PROJECT_NAME}
+                          LABELS  ${TEST_LABELS} )
+        set_property( GLOBAL PROPERTY MPASJEDI_UNIT_TEST_EXE_${TEST_CLASS} ${TARGET_NAME} )
+    endif()
 endfunction()
 
 ####################################################################################
