@@ -123,6 +123,7 @@ list( APPEND mpas_testinput
   testinput/hofx4d_pseudo.yaml
   testinput/increment.yaml
   testinput/letkf_3dloc.yaml
+  testinput/letkf_3dloc_onestep_redist.yaml
   testinput/lgetkf.yaml
   testinput/lgetkf_height_vloc.yaml
   testinput/linvarcha.yaml
@@ -186,6 +187,7 @@ list( APPEND mpas_testoutput
   testoutput/hofx4d.ref
   testoutput/hofx4d_pseudo.ref
   testoutput/letkf_3dloc.ref
+  testoutput/letkf_3dloc_onestep_redist.ref
   testoutput/lgetkf.ref
   testoutput/lgetkf_height_vloc.ref
   testoutput/parameters_bumpcov.ref
@@ -1012,6 +1014,12 @@ add_mpasjedi_application_test(
 # enkf (4 and 8 pe)
 add_mpasjedi_application_test(
     NAME letkf_3dloc
+    NPE 4
+    APPLICATION enkf
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME letkf_3dloc_onestep_redist
     NPE 4
     APPLICATION enkf
     ${RECALIBRATE})

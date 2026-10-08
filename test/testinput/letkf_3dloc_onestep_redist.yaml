@@ -1,10 +1,10 @@
 test:
-  float relative tolerance: 6.e-6
+  float relative tolerance: 1.e-2 # lenient to allow different core counts
   float absolute tolerance: 1.e-40
   integer tolerance: 0
-  reference filename: testoutput/lgetkf.ref
-  log output filename: testoutput/lgetkf.run
-  test output filename: testoutput/lgetkf.run.ref
+  reference filename: testoutput/letkf_3dloc_onestep_redist.ref
+  log output filename: testoutput/letkf_3dloc_onestep_redist.run
+  test output filename: testoutput/letkf_3dloc_onestep_redist.run.ref
 
 _obs error diagonal: &ObsErrorDiagonal
   covariance model: diagonal
@@ -12,6 +12,13 @@ _obs error diagonal: &ObsErrorDiagonal
 _hor obs localization: &HorizObsLoc
   localization method: Horizontal Gaspari-Cohn
   lengthscale: 5.0e6
+
+_conventional vertical localization: &HeightVertObsLoc
+  localization method: Vertical localization
+  vertical lengthscale: 6000
+  ioda vertical coordinate: height
+  ioda vertical coordinate group: MetaData
+  localization function: Gaspari Cohn
 
 _obs distribution: &ObsSpaceDistribution
   name: Halo
@@ -21,7 +28,7 @@ geometry:
   nml_file: "./Data/480km/namelist.atmosphere_2018041500"
   streams_file: "./Data/480km/streams.atmosphere"
   deallocate non-da fields: true
-  iterator dimension: 2
+  iterator dimension: 3
 
 time window:
   begin: 2018-04-14T21:00:00Z
@@ -74,7 +81,8 @@ observations:
   observers:
   - obs space:
       name: Radiosonde
-      distribution: *ObsSpaceDistribution
+      use data frame container: true
+      redistribution: *ObsSpaceDistribution
       obsdatain:
         engine:
           type: H5File
@@ -82,7 +90,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_sondes.nc4
+          obsfile: Data/enkf/os/obsout_letkf_3dloc_onestep_redist_sondes.nc4
       simulated variables: [airTemperature, windEastward, windNorthward, specificHumidity]
       obs perturbations seed: 1
     obs operator:
@@ -91,6 +99,7 @@ observations:
     obs error: *ObsErrorDiagonal
     obs localizations:
     - <<: *HorizObsLoc
+    - <<: *HeightVertObsLoc
     obs filters:
     - filter: PreQC
       maxvalue: 3
@@ -100,7 +109,8 @@ observations:
 
   - obs space:
       name: GnssroRefNCEP
-      distribution: *ObsSpaceDistribution
+      use data frame container: true
+      redistribution: *ObsSpaceDistribution
       obsdatain:
         engine:
           type: H5File
@@ -108,7 +118,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_gnssroref.nc4
+          obsfile: Data/enkf/os/obsout_letkf_3dloc_onestep_redist_gnssroref.nc4
       simulated variables: [atmosphericRefractivity]
       obs perturbations seed: 1
     obs operator:
@@ -118,6 +128,7 @@ observations:
     obs error: *ObsErrorDiagonal
     obs localizations:
     - <<: *HorizObsLoc
+    - <<: *HeightVertObsLoc
     obs filters:
     - filter: Domain Check
       where:
@@ -143,7 +154,8 @@ observations:
 
   - obs space:
       name: SfcCorrected
-      distribution: *ObsSpaceDistribution
+      use data frame container: true
+      redistribution: *ObsSpaceDistribution
       obsdatain:
         engine:
           type: H5File
@@ -151,7 +163,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_sfc.nc4
+          obsfile: Data/enkf/os/obsout_letkf_3dloc_onestep_redist_sfc.nc4
       simulated variables: [stationPressure]
       obs perturbations seed: 1
     obs operator:
@@ -177,7 +189,8 @@ observations:
 
   - obs space:
       name: AMSUA-NOAA19
-      distribution: *ObsSpaceDistribution
+      use data frame container: true
+      redistribution: *ObsSpaceDistribution
       obsdatain:
         engine:
           type: H5File
@@ -185,7 +198,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: Data/enkf/os/obsout_lgetkf_amsua_n19.nc4
+          obsfile: Data/enkf/os/obsout_letkf_3dloc_onestep_redist_amsua_n19.nc4
       simulated variables: [brightnessTemperature]
       channels: 5-7,9
     obs error:
@@ -217,21 +230,23 @@ driver:
   save posterior variance: true
 
 local ensemble DA:
-  solver: Deterministic GETKF
-  vertical localization:
-    fraction of retained variance: 0.5
-    lengthscale: 2.0
-    lengthscale units: modellevel
+  solver: Deterministic LETKF
+# TODO: how do inflation settings impact result?
+#  inflation:
+#    rtps: 0.5
+#    rtpp: 0.6
+#    mult: 1.1
 
 output:
-  filename: Data/enkf/model/mem%{member}%/an.lgetkf.$Y-$M-$D_$h.$m.$s.nc
+  # does not correctly update u (edge-winds)
+  filename: Data/enkf/model/mem%{member}%/an.letkf_3dloc_onestep_redist.$Y-$M-$D_$h.$m.$s.nc
   stream name: analysis
 
 output variance posterior:
-  filename: Data/enkf/model/mem%{member}%/an.var.lgetkf.$Y-$M-$D_$h.$m.$s.nc
+  filename: Data/enkf/model/mem%{member}%/an.var.letkf_3dloc_onestep_redist.$Y-$M-$D_$h.$m.$s.nc
   stream name: analysis
 
 #output ensemble increments:
 #  # requires external AddIncrement step with mem%{member}%/bg.$Y-$M-$D_$h.$m.$s.nc as background
-#  filename: Data/enkf/model/mem%{member}%/increment.lgetkf.$Y-$M-$D_$h.$m.$s.nc
+#  filename: Data/enkf/model/mem%{member}%/increment.3dloc.$Y-$M-$D_$h.$m.$s.nc
 #  stream name: control
