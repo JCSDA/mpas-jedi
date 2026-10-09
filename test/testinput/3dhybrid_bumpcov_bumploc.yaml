@@ -51,10 +51,10 @@ cost function:
     filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
     date: *analysisdate
   background error:
-    covariance model: hybrid
+    covariance model: SABER
+    covariance type: hybrid
     components:
     - covariance:
-        covariance model: SABER
         saber central block:
           saber block name: BUMP_NICAS
           read:
@@ -83,9 +83,8 @@ cost function:
       weight:
         value: 0.5
     - covariance:
-        covariance model: ensemble
+        covariance type: ensemble
         localization:
-          localization method: SABER
           saber central block:
             saber block name: BUMP_NICAS
             active variables: *incvars
@@ -95,17 +94,18 @@ cost function:
               drivers:
                 multivariate strategy: duplicated
                 read local nicas: true
-        members:
-        - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
-          <<: *memberConfig
-        - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
-          <<: *memberConfig
+        ensemble:
+          members:
+          - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
+            <<: *memberConfig
+          - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
+            <<: *memberConfig
+          - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
+            <<: *memberConfig
+          - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
+            <<: *memberConfig
+          - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
+            <<: *memberConfig
       weight:
         value: 0.5
   observations:
