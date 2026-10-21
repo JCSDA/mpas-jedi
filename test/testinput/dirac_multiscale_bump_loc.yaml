@@ -1,0 +1,186 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/dirac_multiscale_bump_loc.ref
+  log output filename: testoutput/dirac_multiscale_bump_loc.run
+  test output filename: testoutput/dirac_multiscale_bump_loc.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+background:
+  state variables: &vars
+  - air_temperature
+  - eastward_wind
+  - northward_wind
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - air_pressure_at_surface
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
+  date: &date "2018-04-15T00:00:00Z"
+background error:
+  covariance model: SABER
+  covariance type: ensemble
+  recursive perturbations processing: true
+  multiscale strategy: separated
+  ensemble:
+    members:
+    - filename: Data/480km/bg/ensemble/mem01/EnsForCov.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem02/EnsForCov.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem03/EnsForCov.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem04/EnsForCov.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+    - filename: Data/480km/bg/ensemble/mem05/EnsForCov.2018-04-15_00.00.00.nc
+      date: *date
+      state variables: *vars
+  scales:
+  #############################
+  # Waveband 1 - longest scales
+  #############################
+  - filter:
+    - saber block name: BUMP_NICASFilter
+      read:
+        general:
+          universe length-scale: 6000.0e3
+        drivers:
+          multivariate strategy: univariate  # each variable is filtered independently
+          compute nicas: true
+        grids:
+        - model:
+            variables:
+            - air_temperature
+            - water_vapor_mixing_ratio_wrt_moist_air
+            - eastward_wind
+            - northward_wind
+        - model:
+            variables:
+            - air_pressure_at_surface
+        nicas:
+          filter mode: true
+          filter resolution: 6
+          explicit length-scales: true
+          horizontal length-scale:
+          - groups:
+            - eastward_wind
+            - northward_wind
+            - air_temperature
+            - water_vapor_mixing_ratio_wrt_moist_air
+            value: 6000.0e3
+          - groups:
+            - air_pressure_at_surface
+            value: 6000.0e3
+          same horizontal convolution: true
+    localization:
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *vars
+        read:
+          general:
+            universe length-scale: 6000.0e3
+          drivers:
+            multivariate strategy: duplicated
+            compute nicas: true
+          nicas:
+            resolution: 4
+            explicit length-scales: true
+            horizontal length-scale:
+            - groups:
+              - common
+              value: 6000.0e3
+            vertical length-scale:
+            - groups:
+              - common
+              value: 2.0
+    ############################
+    # Waveband 2 - middle scales
+    ############################
+  - filter:
+    - saber block name: BUMP_NICASFilter
+      read:
+        general:
+          universe length-scale: 3000.0e3
+        drivers:
+          multivariate strategy: univariate  # each variable is filtered independently
+          compute nicas: true
+        grids:
+        - model:
+            variables:
+            - air_temperature
+            - water_vapor_mixing_ratio_wrt_moist_air
+            - eastward_wind
+            - northward_wind
+        - model:
+            variables:
+            - air_pressure_at_surface
+        nicas:
+          filter mode: true
+          filter resolution: 6
+          explicit length-scales: true
+          horizontal length-scale:
+          - groups:
+            - eastward_wind
+            - northward_wind
+            - air_temperature
+            - water_vapor_mixing_ratio_wrt_moist_air
+            value: 3000.0e3
+          - groups:
+            - air_pressure_at_surface
+            value: 3000.0e3
+          same horizontal convolution: true
+    localization:
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *vars
+        read:
+          general:
+            universe length-scale: 3000e3
+          drivers:
+            multivariate strategy: duplicated
+            compute nicas: true
+          nicas:
+            resolution: 4
+            explicit length-scales: true
+            horizontal length-scale:
+            - groups:
+              - common
+              value: 2500.0e3
+            vertical length-scale:
+            - groups:
+              - common
+              value: 2.0
+  - localization:
+      saber central block:
+        saber block name: BUMP_NICAS
+        active variables: *vars
+        read:
+          general:
+            universe length-scale: 2000.0e3
+          drivers:
+            multivariate strategy: duplicated
+            compute nicas: true
+          nicas:
+            resolution: 4
+            explicit length-scales: true
+            horizontal length-scale:
+            - groups:
+              - common
+              value: 1500.0e3
+            vertical length-scale:
+            - groups:
+              - common
+              value: 2.0
+dirac:
+  ndir: 1
+  dirLats: [  30.31011691,  26.56505123 ]
+  dirLons: [ 130.11182691,-102.95294521 ]
+  dirLevs: [2] #  level 1 is the surface
+  dirVars: [air_pressure_at_surface]
+output dirac:
+  stream name: control
+  filename: Data/bump/mpas.bump_multiscale_loc_%id%.$Y-$M-$D_$h.$m.$s.nc
+  date: *date

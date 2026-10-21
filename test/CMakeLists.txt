@@ -95,6 +95,8 @@ list( APPEND mpas_testinput
   testinput/dirac_bumploc.yaml
   testinput/dirac_diffusion_duplicated.yaml
   testinput/dirac_diffusion_univariate.yaml
+  testinput/dirac_multiscale_bump_loc.yaml
+  testinput/dirac_multiscale_diffusion_loc.yaml
   testinput/dirac_noloc.yaml
   testinput/dirac_spectral_loc.yaml
   testinput/eda_3dhybrid.yaml
@@ -135,6 +137,7 @@ list( APPEND mpas_testinput
   testinput/parameters_bumploc.yaml
   testinput/parameters_bumploc_regional.yaml
   testinput/parameters_diffusion.yaml
+  testinput/process_perts_diffusion.yaml
   testinput/process_perts_spectral.yaml
   testinput/rtpp.yaml
   testinput/ens_mean_variance.yaml
@@ -174,6 +177,8 @@ list( APPEND mpas_testoutput
   testoutput/dirac_bumploc.ref
   testoutput/dirac_diffusion_univariate.ref
   testoutput/dirac_diffusion_duplicated.ref
+  testoutput/dirac_multiscale_diffusion_loc.ref
+  testoutput/dirac_multiscale_bump_loc.ref
   testoutput/dirac_noloc.ref
   testoutput/dirac_spectral_loc.ref
   testoutput/eda_3dhybrid.ref
@@ -193,6 +198,7 @@ list( APPEND mpas_testoutput
   testoutput/parameters_bumpcov.ref
   testoutput/parameters_bumploc.ref
   testoutput/parameters_bumploc_regional.ref
+  testoutput/process_perts_diffusion.ref
   testoutput/process_perts_spectral.ref
   testoutput/rtpp.ref
   testoutput/ens_mean_variance.ref
@@ -823,6 +829,31 @@ add_mpasjedi_application_test(
 add_mpasjedi_application_test(
     NAME dirac_noloc
     APPLICATION error_covariance_toolbox
+    ${RECALIBRATE})
+
+## process perts and dirac
+#  =======================
+
+#bump
+add_mpasjedi_application_test(
+    NAME dirac_multiscale_bump_loc
+    APPLICATION error_covariance_toolbox
+    LABELS multiscale
+    ${RECALIBRATE})
+
+#diffusion
+add_mpasjedi_application_test(
+    NAME process_perts_diffusion
+    APPLICATION process_perts
+	DEPENDS parameters_diffusion
+    LABELS multiscale
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME dirac_multiscale_diffusion_loc
+    APPLICATION error_covariance_toolbox
+    DEPENDS process_perts_diffusion
+    LABELS multiscale
     ${RECALIBRATE})
 
 #spectral

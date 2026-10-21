@@ -24,17 +24,18 @@ background error:
           fixed value: 2500e3
           #as gaussian: true   #default as Gaspari-Cohn
         write:
-          filepath: Data/diffusion/diffusion_hz
-      #- horizontal:
-      #    model file:   # can read the lengths from the file.
-      #      date: *date
-      #      filename: ./Data/bump/mpas.cor_rh.2018-04-15_00.00.00.nc
-      #    model variable: air_temperature
-      #  write:
-      #    filepath: Data/diffusion/diffusion_hz_bumpcor_t
+          filepath: Data/diffusion/diffusion_hz_2500km
       - vertical:
           levels: 6
           fixed value: 3.0
           as gaussian: true
         write:
           filepath: Data/diffusion/diffusion_vt
+      - horizontal:
+          fixed value: 6500e3
+        write:
+          filepath: Data/diffusion/diffusion_hz_6500km
+      - horizontal:
+          fixed value: 5000e3
+        write:
+          filepath: Data/diffusion/diffusion_hz_5000km

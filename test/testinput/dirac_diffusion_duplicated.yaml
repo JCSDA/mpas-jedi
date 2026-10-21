@@ -28,7 +28,7 @@ background error:
         - variables: *vars
           multivariate strategy: duplicated
           horizontal:
-            filepath: Data/diffusion/diffusion_hz
+            filepath: Data/diffusion/diffusion_hz_2500km
           vertical:
             levels: 6
             filepath: Data/diffusion/diffusion_vt

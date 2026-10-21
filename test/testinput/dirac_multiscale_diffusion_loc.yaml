@@ -1,0 +1,117 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/dirac_multiscale_diffusion_loc.ref
+  log output filename: testoutput/dirac_multiscale_diffusion_loc.run
+  test output filename: testoutput/dirac_multiscale_diffusion_loc.run.ref
+geometry:
+  nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+  streams_file: "./Data/480km/streams.atmosphere"
+background:
+  state variables: &vars
+  - air_temperature
+  - eastward_wind
+  - northward_wind
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - air_pressure_at_surface
+  filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
+  date: &date "2018-04-15T00:00:00Z"
+background error:
+  covariance model: SABER
+  covariance type: hybrid
+  run components recursively: true
+  components:
+  #############################
+  # Waveband 1 - longest scales
+  #############################
+  - weight:
+        value: 1.0
+    covariance:
+        covariance type: ensemble
+        ensemble pert:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filename: Data/diffusion/wb1_pert_mb%MEM%
+              variables: *vars
+        localization:
+          saber central block:
+            saber block name: diffusion
+            read:
+              groups:
+              - variables: *vars
+                multivariate strategy: duplicated
+                horizontal:
+                  filepath: Data/diffusion/diffusion_hz_6500km
+                vertical:
+                  levels: 6
+                  filepath: Data/diffusion/diffusion_vt
+    ############################
+    # Waveband 2 - middle scales
+    ############################
+  - weight:
+        value: 1.0
+    covariance:
+        covariance type: ensemble
+        ensemble pert:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filename: Data/diffusion/wb2_pert_mb%MEM%
+              variables: *vars
+        localization:
+          saber central block:
+            saber block name: diffusion
+            read:
+              groups:
+              - variables: *vars
+                multivariate strategy: duplicated
+                horizontal:
+                  filepath: Data/diffusion/diffusion_hz_5000km
+                vertical:
+                  levels: 6
+                  filepath: Data/diffusion/diffusion_vt
+    ##############################################
+    # Waveband 3 - from residual (shortest scales)
+    ##############################################
+  - weight:
+        value: 1.0
+    covariance:
+        covariance type: ensemble
+        ensemble pert:
+          date: *date
+          members from template:
+            pattern: '%MEM%'
+            nmembers: 5
+            template:
+              date: *date
+              filename: Data/diffusion/wb3_residual_pert_mb%MEM%
+              variables: *vars
+        localization:
+          saber central block:
+            saber block name: diffusion
+            read:
+              groups:
+              - variables: *vars
+                multivariate strategy: duplicated
+                horizontal:
+                  filepath: Data/diffusion/diffusion_hz_2500km
+                vertical:
+                  levels: 6
+                  filepath: Data/diffusion/diffusion_vt
+dirac:
+  ndir: 1
+  dirLats: [  30.31011691,  26.56505123 ]
+  dirLons: [ 130.11182691,-102.95294521 ]
+  dirLevs: [1] #  level 1 is surface, but this is not used for surface fields
+  dirVars: [air_pressure_at_surface]
+output dirac:
+  stream name: control
+  filename: Data/diffusion/mpas.diffusion_multiscale_loc_%id%.$Y-$M-$D_$h.$m.$s.nc
+  date: *date
