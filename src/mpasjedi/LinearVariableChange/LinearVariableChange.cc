@@ -66,29 +66,6 @@ void LinearVariableChange::changeVarTL(Increment & dx, const oops::Variables & v
 
 // -------------------------------------------------------------------------------------------------
 
-void LinearVariableChange::changeVarInverseTL(Increment & dx, const oops::Variables & vars) const {
-  oops::Log::trace() << "LinearVariableChange::changeVarInverseTL starting" << std::endl;
-
-  // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars == dx.variables()) {
-    oops::Log::trace() << "LinearVariableChange::changeVarInverseTL done (identity)" << std::endl;
-    return;
-  }
-
-  // Create output increment
-  Increment dxout(dx.geometry(), vars, dx.time());
-
-  // Call variable change
-  linearVariableChange_->changeVarInverseTL(dx, dxout);
-
-  // Copy data from temporary increment
-  dx = dxout;
-
-  oops::Log::trace() << "LinearVariableChange::changeVarInverseTL done" << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
 void LinearVariableChange::changeVarAD(Increment & dx, const oops::Variables & vars) const {
   oops::Log::trace() << "LinearVariableChange::changeVarAD starting" << std::endl;
 
@@ -108,30 +85,6 @@ void LinearVariableChange::changeVarAD(Increment & dx, const oops::Variables & v
   dx = dxout;
 
   oops::Log::trace() << "LinearVariableChange::changeVarAD done" << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-void LinearVariableChange::changeVarInverseAD(Increment & dx,
-                                             const oops::Variables & vars) const {
-  oops::Log::trace() << "LinearVariableChange::changeVarInverseAD starting" << std::endl;
-
-  // If all variables already in incoming increment just remove the no longer needed fields
-  if (vars == dx.variables()) {
-    oops::Log::trace() << "LinearVariableChange::changeVarInverseAD done (identity)" << std::endl;
-    return;
-  }
-
-  // Create output increment
-  Increment dxout(dx.geometry(), vars, dx.time());
-
-  // Call variable change
-  linearVariableChange_->changeVarInverseAD(dx, dxout);
-
-  // Copy data from temporary increment
-  dx = dxout;
-
-  oops::Log::trace() << "LinearVariableChange::changeVarInverseAD done" << std::endl;
 }
 
 // -------------------------------------------------------------------------------------------------

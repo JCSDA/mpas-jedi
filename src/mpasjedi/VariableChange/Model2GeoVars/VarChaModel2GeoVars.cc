@@ -48,14 +48,6 @@ void VarChaModel2GeoVars::changeVar(const State & xin, State & xout) const {
   oops::Log::trace() << classname() << " changeVar done" << std::endl;
 }
 // -------------------------------------------------------------------------------------------------
-void VarChaModel2GeoVars::changeVarInverse(const State & xin, State & xout) const {
-  util::Timer timer(classname(), "changeVarInverse");
-  oops::Log::trace() << classname() << " changeVarInverse starting" << std::endl;
-  xout = xin;
-  xout.validTime() = xin.validTime();
-  oops::Log::trace() << classname() << " changeVarInverse done" << std::endl;
-}
-// -------------------------------------------------------------------------------------------------
 void VarChaModel2GeoVars::print(std::ostream & os) const {
   os << classname() << " variable change";
 }

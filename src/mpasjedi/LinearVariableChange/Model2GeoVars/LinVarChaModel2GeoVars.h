@@ -36,9 +36,7 @@ class LinVarChaModel2GeoVars : public LinearVariableChangeBase,
   ~LinVarChaModel2GeoVars();
 
   void changeVarTL(const Increment &, Increment &) const override;
-  void changeVarInverseTL(const Increment &, Increment &) const override;
   void changeVarAD(const Increment &, Increment &) const override;
-  void changeVarInverseAD(const Increment &, Increment &) const override;
 
  private:
   const Geometry & geom_;

@@ -63,31 +63,6 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 // -------------------------------------------------------------------------------------------------
 
-void VariableChange::changeVarInverse(State & x, const oops::Variables & vars) const {
-  // Trace
-  oops::Log::trace() << "VariableChange::changeVarInverse starting" << std::endl;
-
-  // If all variables already in incoming state just remove the no longer needed fields
-  if (vars == x.variables()) {
-    oops::Log::info() << "VariableChange::changeVarInverse done (identity)" << std::endl;
-    return;
-  }
-
-  // Create output state
-  State xout(x.geometry(), vars, x.time());
-
-  // Call variable change
-  variableChange_->changeVarInverse(x, xout);
-
-  // Copy data from temporary state
-  x = xout;
-
-  // Trace
-  oops::Log::trace() << "VariableChange::changeVarInverse done" << std::endl;
-}
-
-// -------------------------------------------------------------------------------------------------
-
 void VariableChange::print(std::ostream & os) const {
   os << *variableChange_;
 }

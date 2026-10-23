@@ -56,9 +56,7 @@ class LinearVariableChangeBase : public util::Printable, private boost::noncopya
   LinearVariableChangeBase() {}
   virtual ~LinearVariableChangeBase() {}
   virtual void changeVarTL(const Increment &, Increment &) const = 0;
-  virtual void changeVarInverseTL(const Increment &, Increment &) const = 0;
   virtual void changeVarAD(const Increment &, Increment &) const = 0;
-  virtual void changeVarInverseAD(const Increment &, Increment &) const = 0;
 
  private:
   virtual void print(std::ostream &) const = 0;

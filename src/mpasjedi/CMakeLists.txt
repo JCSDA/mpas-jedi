@@ -28,6 +28,9 @@ list( APPEND mpasjedi_src_files
     Increment/mpas_increment_mod.F90
     LinearVariableChange/LinearVariableChange.cc
     LinearVariableChange/LinearVariableChange.h
+    LinearVariableChange/Analysis2Control/LinVarChaA2C.cc
+    LinearVariableChange/Analysis2Control/LinVarChaA2C.h
+    LinearVariableChange/Control2Analysis/LinVarChaC2A.h
     LinearVariableChange/Base/LinearVariableChangeBase.cc
     LinearVariableChange/Base/LinearVariableChangeBase.h
     LinearVariableChange/Control2Analysis/mpasjedi_linvarcha_c2a_interface.F90

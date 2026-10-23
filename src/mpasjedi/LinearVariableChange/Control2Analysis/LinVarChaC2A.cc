@@ -52,15 +52,6 @@ void LinVarChaC2A::changeVarTL(const Increment & dxc, Increment & dxa)
   oops::Log::trace() << classname() << " changeVarTL done" << std::endl;
 }
 // -----------------------------------------------------------------------------
-void LinVarChaC2A::changeVarInverseTL(const Increment & dxa, Increment & dxc)
-  const {
-  util::Timer timer(classname(), "changeVarInverseTL");
-  oops::Log::trace() << classname() << " changeVarInverseTL starting" << std::endl;
-  mpasjedi_linvarcha_c2a_multiplyinverse_f90(keyFtnConfig_, geom_.toFortran(),
-                                            dxa.toFortran(), dxc.toFortran());
-  oops::Log::trace() << classname() << " changeVarInverseTL done" << std::endl;
-}
-// -----------------------------------------------------------------------------
 void LinVarChaC2A::changeVarAD(const Increment & dxa, Increment & dxc)
   const {
   util::Timer timer(classname(), "changeVarAD");
@@ -68,15 +59,6 @@ void LinVarChaC2A::changeVarAD(const Increment & dxa, Increment & dxc)
   mpasjedi_linvarcha_c2a_multiplyadjoint_f90(keyFtnConfig_, geom_.toFortran(),
                                             dxa.toFortran(), dxc.toFortran());
   oops::Log::trace() << classname() << " changeVarAD done" << std::endl;
-}
-// -----------------------------------------------------------------------------
-void LinVarChaC2A::changeVarInverseAD(const Increment & dxc, Increment & dxa)
-  const {
-  util::Timer timer(classname(), "changeVarInverseAD");
-  oops::Log::trace() << classname() << " changeVarInverseAD starting" << std::endl;
-  mpasjedi_linvarcha_c2a_multiplyinverseadjoint_f90(keyFtnConfig_, geom_.toFortran(),
-                                                   dxc.toFortran(), dxa.toFortran());
-  oops::Log::trace() << classname() << " changeVarInverseAD done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 void LinVarChaC2A::print(std::ostream & os)
