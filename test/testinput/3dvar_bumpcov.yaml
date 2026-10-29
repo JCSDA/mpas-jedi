@@ -199,9 +199,6 @@ cost function:
           Sensor_ID: amsua_n19
           EndianType: little_endian
           CoefficientPath: Data/UFOCoeff/
-output:
-  filename: "Data/states/mpas.3dvar_bumpcov.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -218,3 +215,4 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output: {}

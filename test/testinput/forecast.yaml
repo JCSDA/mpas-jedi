@@ -1,5 +1,6 @@
 test:
   float relative tolerance: 0.005
+  float absolute tolerance: 1.0e-12
   integer tolerance: 0
   reference filename: testoutput/forecast.ref
   log output filename: testoutput/forecast.run

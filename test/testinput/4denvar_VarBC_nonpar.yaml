@@ -170,9 +170,6 @@ cost function:
               ratio: 1.1
               ratio for small dataset: 2.0
           output file: Data/os/satbias_cov_amsua_n19_nonpar_out.nc4
-output:
-  filename: "Data/states/mpas.4denvar_bc_nonpar_bump.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -189,3 +186,4 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output: {}

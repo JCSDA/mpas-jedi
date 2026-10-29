@@ -152,9 +152,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1,2
         threshold: 3
-output:
-  filename: "Data/states/mpas.4dfgat_cda.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -206,4 +203,4 @@ variational:
             - model:
                 variables:
                 - air_pressure_at_surface
-
+output: {}

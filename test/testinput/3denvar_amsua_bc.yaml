@@ -144,9 +144,6 @@ cost function:
           channels: 1-15
         threshold: 10.0
         apply at iterations: 0,1,2
-output:
-  filename: "Data/states/mpas.3denvar_amsua_bc.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -165,3 +162,4 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output: {}

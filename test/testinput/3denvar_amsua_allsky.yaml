@@ -181,9 +181,6 @@ cost function:
               err0:  [ 3.47,  2.78,  2.08,  0.87,  4.90 ]
               err1:  [ 31.11, 42.10, 14.21,  3.21, 15.14]
         apply at iterations: 0,1,2
-output:
-  filename: "Data/states/mpas.3denvar_amsua_allsky.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -202,3 +199,4 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output: {}

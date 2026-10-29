@@ -190,9 +190,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1,2
         threshold: 10
-output:
-  filename: "Data/states/mpas.3denvar_bumploc.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -223,13 +220,14 @@ variational:
         state component:
           filename: "./Data/states/mpas.3denvar_bumploc.inc-iter2.$Y-$M-$D_$h.$m.$s.nc"
           stream name: control
-final:
+output:
+  analysis:
+    filename: "Data/states/mpas.3denvar_bumploc.$Y-$M-$D_$h.$m.$s.nc"
+    stream name: analysis
   increment: # total increment
     geometry:
       nml_file: "./Data/480km/namelist.atmosphere_2018041500"
       streams_file: "./Data/480km/streams.atmosphere"
       deallocate non-da fields: true
-    output:
-      state component:
-        filename: "./Data/states/mpas.3denvar_bumploc.inc.$Y-$M-$D_$h.$m.$s.nc"
-        stream name: control
+    filename: "./Data/states/mpas.3denvar_bumploc.inc.$Y-$M-$D_$h.$m.$s.nc"
+    stream name: control

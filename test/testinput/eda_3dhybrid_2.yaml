@@ -202,9 +202,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1,2
         threshold: 10
-output:
-  filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
-  stream name: background #required for use by rtpp test
 variational:
   minimizer:
     algorithm: DRPCG
@@ -223,3 +220,7 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output:
+  analysis:
+    filename: Data/states/ensemble/mem002/mpas.eda_3dhybrid.$Y-$M-$D_$h.$m.$s.nc
+    stream name: background #required for use by rtpp test

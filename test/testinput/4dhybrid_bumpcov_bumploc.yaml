@@ -239,9 +239,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1,2
         threshold: 10
-output:
-  filename: "Data/states/mpas.4dhybrid_bump.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -258,3 +255,4 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output: {}

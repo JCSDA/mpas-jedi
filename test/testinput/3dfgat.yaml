@@ -152,9 +152,6 @@ cost function:
       - filter: Background Check
         apply at iterations: 0,1
         threshold: 3
-output:
-  filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
-  stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
@@ -165,6 +162,10 @@ variational:
     ninner: '10'
     gradient norm reduction: 1e-10
     test: 'on'
+output:
+  analysis:
+    filename: "Data/states/mpas.3dfgat.$Y-$M-$D_$h.$m.$s.nc"
+    stream name: analysis
 # 3D-FGAT can not run multiple outer loops. If activated, 3D-Var will be applied for the 2nd OL.
 #  - geometry:
 #      nml_file: "./Data/480km/namelist.atmosphere_2018041421"
