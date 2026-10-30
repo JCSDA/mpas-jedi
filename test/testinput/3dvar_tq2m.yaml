@@ -1,0 +1,155 @@
+test:
+  float relative tolerance: 0.00000001
+  integer tolerance: 0
+  reference filename: testoutput/3dvar_tq2m.ref
+  log output filename: testoutput/3dvar_tq2m.run
+  test output filename: testoutput/3dvar_tq2m.run.ref
+cost function:
+  cost type: 3D-Var
+  time window:
+    begin: '2018-04-14T21:00:00Z'
+    length: PT6H
+  geometry:
+    nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+    streams_file: "./Data/480km/streams.atmosphere"
+  analysis variables: &incvars
+  - air_temperature
+  - water_vapor_mixing_ratio_wrt_moist_air
+  - eastward_wind
+  - northward_wind
+  - air_pressure_at_surface
+  - cloud_liquid_water
+  - cloud_liquid_ice
+  - rain_water
+  - snow_water
+  - graupel
+  background:
+    state variables:
+    - air_temperature
+    - water_vapor_mixing_ratio_wrt_moist_air
+    - eastward_wind
+    - northward_wind
+    - air_pressure_at_surface
+    - cloud_liquid_water
+    - cloud_liquid_ice
+    - rain_water
+    - snow_water
+    - graupel
+    - air_potential_temperature
+    - dry_air_density
+    - u
+    - water_vapor_mixing_ratio_wrt_dry_air
+    - air_pressure
+    - landmask
+    - seaice_fraction
+    - snowc
+    - skin_temperature_at_surface
+    - ivgtyp
+    - isltyp
+    - snowh
+    - znt
+    - air_temperature_at_2m
+    - water_vapor_mixing_ratio_wrt_moist_air_at_2m
+    - vegetation_area_fraction
+    - eastward_wind_at_10m
+    - northward_wind_at_10m
+    - lai
+    - smois
+    - tslb
+    - pressure_p
+    - cldfrac
+    filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
+    date: &analysisdate '2018-04-15T00:00:00Z'
+  background error:
+    covariance model: MPASstatic
+    date: *analysisdate
+  observations:
+    observers:
+    - obs space:
+        name: Surface_TQ_HeightAdjusted
+        obsdatain:
+          engine:
+            type: H5File
+            obsfile: Data/ufo/testinput_tier_1/sfc_obs_2018041500_m.nc4
+        obsdataout:
+          engine:
+            type: H5File
+            obsfile: Data/os/obsout_3dvar_tq2m.nc4
+        simulated variables: [airTemperatureAt2M, specificHumidityAt2M]
+        derived variables: [airTemperatureAt2M, specificHumidityAt2M]
+      obs operator:
+        name: Identity
+      linear obs operator:
+        name: Identity
+        variable maps:
+        - name: airTemperatureAt2M
+          alias: air_temperature
+        - name: specificHumidityAt2M
+          alias: water_vapor_mixing_ratio_wrt_moist_air
+      obs error:
+        covariance model: diagonal
+      obs filters:
+
+      - filter: Variable Assignment
+        assignments:
+        - name: PreQC/specificHumidityAt2M
+          type: int
+          function:
+            name: ObsFunction/Arithmetic
+            options:
+              variables:
+              - name: PreQC/specificHumidity
+
+      # ============================================================
+      # Step 1: Height-adjust temperature using local lapse rate
+      # ============================================================
+      - filter: Variable Assignment
+        assignments:
+        - name: DerivedObsValue/airTemperatureAt2M
+          type: float
+          function:
+            name: ObsFunction/ModelHeightAdjustedAirTemperature
+            options:
+              elevation:
+                name: MetaData/stationElevation
+              temperature lapse rate in K/km:
+                scheme: constant
+                value: 6.5
+
+      # ============================================================
+      # Step 2: Height-adjust specific humidity (RH-preserving)
+      # ============================================================
+      - filter: Variable Assignment
+        assignments:
+        - name: DerivedObsValue/specificHumidityAt2M
+          type: float
+          function:
+            name: ObsFunction/ModelHeightAdjustedSpecificHumidity
+            options:
+              observed specific humidity variable: ObsValue/specificHumidity
+
+      # ============================================================
+      # Standard QC filters
+      # ============================================================
+      - filter: PreQC
+        maxvalue: 3
+      - filter: Background Check
+        apply at iterations: 0,1,2
+        threshold: 10
+variational:
+  minimizer:
+    algorithm: DRPCG
+  iterations:
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+  - geometry:
+      nml_file: "./Data/480km/namelist.atmosphere_2018041500"
+      streams_file: "./Data/480km/streams.atmosphere"
+    ninner: '10'
+    gradient norm reduction: 1e-10
+    test: 'on'
+output: {}

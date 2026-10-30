@@ -81,6 +81,7 @@ list( APPEND mpas_testinput
   testinput/3dvar_bumpcov_ropp.yaml
   testinput/3dvar_bumpcov_nbam.yaml
   testinput/3dvar_bumpcov_rttovcpp.yaml
+  testinput/3dvar_tq2m.yaml
   testinput/3dfgat_cda.yaml
   testinput/4denvar_bumploc.yaml
   testinput/4denvar_ID.yaml
@@ -164,6 +165,7 @@ list( APPEND mpas_testoutput
   testoutput/3dvar_bumpcov_ropp.ref
   testoutput/3dvar_bumpcov_nbam.ref
   testoutput/3dvar_bumpcov_rttovcpp.ref
+  testoutput/3dvar_tq2m.ref
   testoutput/3dfgat_cda.ref
   testoutput/4denvar_bumploc.ref
   testoutput/4denvar_ID.ref
@@ -873,6 +875,11 @@ endif()
 #variational - 3dvar
 add_mpasjedi_application_test(
     NAME 3dvar
+    APPLICATION variational
+    ${RECALIBRATE})
+
+add_mpasjedi_application_test(
+    NAME 3dvar_tq2m
     APPLICATION variational
     ${RECALIBRATE})
 
