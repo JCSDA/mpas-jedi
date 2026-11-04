@@ -94,11 +94,8 @@ cost function:
         assignments:
         - name: PreQC/specificHumidityAt2M
           type: int
-          function:
-            name: ObsFunction/Arithmetic
-            options:
-              variables:
-              - name: PreQC/specificHumidity
+          source variable:
+            name: PreQC/specificHumidity
 
       # ============================================================
       # Step 1: Height-adjust temperature using local lapse rate
