@@ -473,11 +473,12 @@ subroutine changevar(self, geom, xm, xg)
         case ( var_tropprs ) !-tropopause pressure
           call xm%get('air_pressure',    ptrr2_a)
           call xm%get('air_temperature', ptrr2_b)
+          ! The tropopause routines take heights at the same mid-layer points as pressure, temperature
           if (trim(self%tropprs_method) == "thompson") then
-            call tropopause_pressure_th(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr2_b(:,1:nCells), &
+            call tropopause_pressure_th(ptrr2_a(:,1:nCells), geom%height(:,1:nCells), ptrr2_b(:,1:nCells), &
                                         nCells, nVertLevels, gdata%r1%array(1:nCells))
           elseif (trim(self%tropprs_method) == "wmo") then
-            call tropopause_pressure_wmo(ptrr2_a(:,1:nCells), geom%zgrid(:,1:nCells), ptrr2_b(:,1:nCells), &
+            call tropopause_pressure_wmo(ptrr2_a(:,1:nCells), geom%height(:,1:nCells), ptrr2_b(:,1:nCells), &
                                          nCells, nVertLevels, gdata%r1%array(1:nCells))
           else
             call abor1_ftn('mpasjedi_vc_model2geovars::changevar: invalid tropopause pressure determination method, &
