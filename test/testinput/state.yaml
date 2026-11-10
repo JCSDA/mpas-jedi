@@ -40,9 +40,4 @@ state test:
       filename: *filename
       date: *date
       transform model to analysis: false # Prevents variable change logic in read routine
-  construct to variables:
-  - air_temperature
-  - water_vapor_mixing_ratio_wrt_moist_air
-  - eastward_wind
-  - northward_wind
 
