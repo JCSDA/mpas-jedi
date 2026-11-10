@@ -5,7 +5,7 @@ test:
   log output filename: testoutput/gen_ens_pert_B.run
   test output filename: testoutput/gen_ens_pert_B.run.ref
   
-forecast length: PT1H30M
+forecast length: PT1H
 
 include control: true
 
@@ -55,7 +55,7 @@ background error:
         
 model:
   name: MPAS
-  tstep: PT45M
+  tstep: PT1H
   model variables:
   - water_vapor_mixing_ratio_wrt_moist_air
   - air_pressure_at_surface
@@ -66,7 +66,7 @@ model:
 output:
   type: ens
   first: PT0H
-  frequency: PT1H30M
+  frequency: PT1H
   filename: Data/enkf/model/EnsPertB.$Y-$M-$D_$h.$m.$s.nc.%member%
   member pattern: '%member%'
 

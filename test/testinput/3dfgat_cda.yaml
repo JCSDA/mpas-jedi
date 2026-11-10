@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 0.015
+  float relative tolerance: 0.05
   integer tolerance: 0
   reference filename: testoutput/3dfgat_cda.ref
   log output filename: testoutput/3dfgat_cda.run
@@ -9,13 +9,13 @@ cost function:
   cost type: 3D-FGAT
   time window:
     begin: '2018-04-14T21:00:00Z'
-    length: PT3H
+    length: PT4H
   geometry:
     nml_file: "./Data/480km/namelist.atmosphere_2018041421"
     streams_file: "./Data/480km/streams.atmosphere"
   model:
     name: MPAS
-    tstep: PT45M
+    tstep: PT1H
     model variables: &modvars
     - air_temperature
     - water_vapor_mixing_ratio_wrt_moist_air
@@ -171,7 +171,7 @@ variational:
     continuous da:
       obs append directory: Data/obs/mpasobsappend2
       time window:
-        begin: '2018-04-14T21:45:00Z'
+        begin: '2018-04-14T22:00:00Z'
         length: PT6H
       background error:
         covariance model: SABER

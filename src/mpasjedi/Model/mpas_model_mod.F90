@@ -42,6 +42,7 @@ type :: mpas_model
    type (domain_type), pointer :: domain 
    type (core_type), pointer :: corelist
    real (kind=RKIND) :: dt
+   integer :: nsubsteps   ! MPAS steps of dt per JEDI tstep
 end type mpas_model
 
 integer, parameter    :: max_string=8000
@@ -77,6 +78,7 @@ subroutine model_setup(self, geom, f_conf)
    character(len=:), allocatable :: str
    character(len=20) :: ststep
    type(duration) :: dtstep
+   integer(kind=c_int64_t) :: tstep_ms, dt_ms
 
    real (kind=RKIND), pointer :: config_dt
    character (len=StrKIND), pointer :: config_start_time
@@ -130,7 +132,23 @@ subroutine model_setup(self, geom, f_conf)
    dtstep = trim(ststep)
    write(message,*) 'ststep: ', ststep
    call fckit_log%debug(message)
-   self % dt = config_dt !real(duration_seconds(dtstep),kind_real)
+
+   ! tstep is the interval at which the model hands a state back to JEDI. MPAS
+   ! integrates it in steps of config_dt, so tstep must be a whole multiple of it.
+   ! Compare in whole milliseconds, so the test is exact integer arithmetic
+   ! (config_dt need not be whole seconds, e.g. 22.5 s).
+   self % dt = config_dt
+   tstep_ms = duration_seconds(dtstep) * 1000_c_int64_t
+   dt_ms = nint(config_dt * 1000.0_RKIND, kind=c_int64_t)
+   if (dt_ms <= 0 .or. tstep_ms <= 0 .or. mod(tstep_ms, max(dt_ms, 1_c_int64_t)) /= 0) then
+      write(message,*) '--> model_setup: tstep ', trim(ststep), &
+                       ' must be a positive multiple of config_dt = ', config_dt, ' s'
+      call abor1_ftn(message)
+   end if
+   self % nsubsteps = int(tstep_ms / dt_ms)
+   write(message,*) 'model_setup: ', self % nsubsteps, ' MPAS step(s) of ', config_dt, &
+                    ' s per tstep ', trim(ststep)
+   call fckit_log%info(message)
    ! call f_conf%get_or_die("dstep",str)
    ! dstep = str
    ! set clock here MPAS_STARTING, MPAS_NOW, MPAS_STOP_TIME
@@ -340,7 +358,7 @@ subroutine model_propagate(self, jedi_state)
 
    type (mpas_pool_type), pointer :: state, diag, mesh
    real (kind=kind_real) :: dt
-   integer :: itimestep
+   integer :: itimestep, isub
 
    call fckit_log%info ('===> model_propagate')
 
@@ -349,13 +367,16 @@ subroutine model_propagate(self, jedi_state)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'diag', diag)
    call mpas_pool_get_subpool(self % domain % blocklist % structs, 'mesh', mesh)
 
-   itimestep = 1
-   ! Perform single time step, including
-   !  update of mpas wind from the edges to center
-   call atm_do_timestep(self % domain, self % dt, itimestep)
-   call mpas_pool_shift_time_levels(state)
-   call mpas_advance_clock(self % domain % clock)
-   call mpas_advance_clock(jedi_state % clock) !Advance jedi_state % clock, Too
+   ! One JEDI tstep: nsubsteps MPAS time steps, each including the update of mpas
+   ! wind from the edges to center. Both clocks tick by config_dt, so both advance
+   ! every step.
+   do isub = 1, self % nsubsteps
+      itimestep = 1
+      call atm_do_timestep(self % domain, self % dt, itimestep)
+      call mpas_pool_shift_time_levels(state)
+      call mpas_advance_clock(self % domain % clock)
+      call mpas_advance_clock(jedi_state % clock)
+   end do
 
    ! TODO: GD: can be here or needs to go probably somewhere else as a postprocessing of a forecast
    ! update theta et rho: postprocess is implemented at the C++ level now and needs to be

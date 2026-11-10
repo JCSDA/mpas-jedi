@@ -13,7 +13,7 @@ geometry:
   streams_file: "./Data/480km/streams.atmosphere"
 model:
   name: MPAS
-  tstep: PT45M
+  tstep: PT1H
   model variables:
   - air_temperature
   - water_vapor_mixing_ratio_wrt_moist_air
