@@ -152,7 +152,7 @@ cost function:
         threshold: 500
       - filter: Background Check
         apply at iterations: 0,1,2
-        threshold: 3
+        threshold: 3.04
 variational:
   minimizer:
     algorithm: DRPCG
