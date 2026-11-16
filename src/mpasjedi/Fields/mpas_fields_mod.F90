@@ -515,8 +515,8 @@ subroutine update_diagnostic_fields(geom, subFields, ngrid)
    call theta_to_temp(theta % array(:,1:ngrid), pressure % array(:,1:ngrid), temperature % array(:,1:ngrid))
    call w_to_q( scalars % array(index_qv,:,1:ngrid) , specific_humidity % array(:,1:ngrid) )
 
-   ! Only accept background refl10cm no lower than 0 dBZ
-   call da_posdef( subFields, ['equivalent_reflectivity_factor'])
+   ! Impose positive-definite limits on fields with "positive definite: true" in geovars.yaml
+   call da_posdef( subFields, geom%posdef_fields())
 
 end subroutine update_diagnostic_fields
 

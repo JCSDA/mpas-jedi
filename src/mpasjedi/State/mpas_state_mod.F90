@@ -163,13 +163,9 @@ subroutine add_incr(self, increment)
          ptrr1_2msh(1:ngrid) = ptrr1_2msh(1:ngrid) + ptrr2_dsh(1,1:ngrid)
       endif
 
-      ! Impose positive-definite limits on hydrometeors and moistureFields
+      ! Impose positive-definite limits on fields with "positive definite: true" in geovars.yaml
       ! note: nonlinear change of variable
-      call da_posdef( self%subFields, mpas_hydrometeor_fields)
-      call da_posdef( self%subFields, moistureFields)
-
-      ! Force the analyzed refl10cm to be no lower than 0 dBZ
-      call da_posdef( self%subFields, ['equivalent_reflectivity_factor'])
+      call da_posdef( self%subFields, self%geom%posdef_fields())
 
       ! Update qv (water vapor mixing ratio) from spechum (specific humidity) [ w = q / (1 - q) ]
       ! note: nonlinear change of variable

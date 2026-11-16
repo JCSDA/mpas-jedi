@@ -54,6 +54,7 @@ type :: templated_field
    character(len=MAXVARLEN) :: identity
    character(len=MAXVARLEN) :: io_name
    real(kind=kind_real)     :: io_scaling_factor
+   logical                  :: positive_definite
 end type templated_field
 
 !> Fortran derived type to hold geometry definition
@@ -117,6 +118,7 @@ type :: mpas_geom
    procedure, public :: io_name => io_name_fieldname
    procedure, public :: has_io_scaling_factor => field_has_io_scaling_factor
    procedure, public :: io_scaling_factor => io_scaling_factor_value
+   procedure, public :: posdef_fields => positive_definite_fieldnames
    procedure, public :: full_to_half => full_to_half_levels
    procedure, public :: get_num_nodes_and_elements
    procedure, public :: get_coords_and_connectivities
@@ -265,8 +267,24 @@ subroutine geo_setup(self, f_conf, f_comm)
       else
         self%templated_fields(ii)%io_scaling_factor = -1.0_kind_real
       end if
+      if (.not. fields_conf(ii)%get('positive definite', self%templated_fields(ii)%positive_definite)) then
+        self%templated_fields(ii)%positive_definite = .false.
+      end if
    end do
    deallocate(fields_conf)
+
+   ! report positive-definite fields; warn if none, to flag a possibly mis-specified template fields file
+   if (.not. any(self%templated_fields(:)%positive_definite)) then
+      call fckit_log%warning('--> geo_setup: WARNING: no field has "positive definite: true" in '// &
+         trim(fields_file)//'. No field will be kept non-negative. If this is not intended, mark'// &
+         ' the fields to be kept non-negative (e.g., moisture and hydrometeors);'// &
+         ' see test/testinput/namelists/geovars.yaml in mpas-jedi')
+   end if
+   call fckit_log%info('--> geo_setup: positive-definite fields in '//trim(fields_file)//':')
+   do ii = 1, size(self%templated_fields)
+      if (self%templated_fields(ii)%positive_definite) &
+         call fckit_log%info('      '//trim(self%templated_fields(ii)%name))
+   end do
 
    ! retrieve iterator dimension from config
    call f_conf%get_or_die("iterator dimension", self%iterator_dimension)
@@ -1072,6 +1090,19 @@ function io_scaling_factor_value(self, fieldname) result(io_scaling_factor)
    write(message,*) '--> mpas_geom % io_scaling_factor_value: fieldname does not have io_scaling_factor, ',fieldname
    call abor1_ftn(message)
 end function io_scaling_factor_value
+
+! ------------------------------------------------------------------------------
+
+function positive_definite_fieldnames(self) result(names)
+   implicit none
+   class(mpas_geom), intent(in) :: self
+   character(len=MAXVARLEN), allocatable :: names(:)
+   if (allocated(self%templated_fields)) then
+      names = pack(self%templated_fields(:)%name, self%templated_fields(:)%positive_definite)
+   else
+      allocate(names(0))
+   end if
+end function positive_definite_fieldnames
 
 ! ------------------------------------------------------------------------------
 

@@ -336,9 +336,8 @@ subroutine update_cloud_fields ( state, obs )
    call mpas_deallocate_field( fld2d_qv_bg )
    call mpas_deallocate_field( fld1d_dps   )
 
-   ! Impose positive-definite limits on hydrometeors and moistureFields
-   call da_posdef( state%subFields, mpas_hydrometeor_fields)
-   call da_posdef( state%subFields, moistureFields)
+   ! Impose positive-definite limits on fields with "positive definite: true" in geovars.yaml
+   call da_posdef( state%subFields, state%geom%posdef_fields())
 
    !update pressure_p
    call mpas_pool_get_field(state%geom%domain%blocklist%allFields, 'pressure_base', fld2d_pb)
