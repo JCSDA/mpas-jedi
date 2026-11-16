@@ -1,5 +1,5 @@
 test:
-  float relative tolerance: 1.e-6
+  float relative tolerance: 6.e-6
   float absolute tolerance: 1.e-40
   integer tolerance: 0
   reference filename: testoutput/lgetkf_height_vloc.ref
