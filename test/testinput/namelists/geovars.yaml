@@ -137,37 +137,43 @@ fields:
   - field name: mole_fraction_of_carbon_dioxide_in_air
     mpas template field: theta
 
-#--- ???
+#--- RTTOV-related cloud variables. (TODO) Distinction from another set of cloud variables?
   - field name: mixing_ratio_of_cloud_liquid_water
     mpas template field: theta
     mpas identity field: mixing_ratio_of_cloud_liquid_water
     mpas io name: qc
+    positive definite: true
 
   - field name: mixing_ratio_of_cloud_ice
     mpas template field: theta
     mpas identity field: mixing_ratio_of_cloud_ice
     mpas io name: qi
+    positive definite: true
 
   - field name: mixing_ratio_of_rain
     mpas template field: theta
     mpas identity field: mixing_ratio_of_rain
     mpas io name: qr
+    positive definite: true
 
   - field name: mixing_ratio_of_snow
     mpas template field: theta
     mpas identity field: mixing_ratio_of_snow
     mpas io name: qs
+    positive definite: true
 
   - field name: mixing_ratio_of_graupel
     mpas template field: theta
     mpas identity field: mixing_ratio_of_graupel
     mpas io name: qg
+    positive definite: true
 
   - field name: mixing_ratio_of_hail
     mpas template field: theta
     mpas identity field: mixing_ratio_of_hail
     mpas io name: qh
-#--- ???
+    positive definite: true
+#---
 
   - field name: cloud_liquid_water
     mpas template field: theta

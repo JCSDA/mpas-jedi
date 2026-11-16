@@ -42,6 +42,12 @@ state:
   - lai
   - smois
   - tslb
+  - mixing_ratio_of_cloud_liquid_water
+  - mixing_ratio_of_cloud_ice
+  - mixing_ratio_of_rain
+  - mixing_ratio_of_snow
+  - mixing_ratio_of_graupel
+  - cldfrac
   filename: "./Data/480km/bg/mpasout.2018-04-15_00.00.00.nc"
   date: '2018-04-15T00:00:00Z'
 observations:
@@ -62,3 +68,29 @@ observations:
       name: RTTOVCPP
       CoefPath: Data/
       SensorID: noaa_19_amsua_o3
+      use hydrometeors: false
+  - obs space:
+      name: AMSUA-NOAA19-allsky
+      obsdatain:
+        engine:
+          type: H5File
+          obsfile: Data/ufo/testinput_tier_1/amsua_n19_obs_2018041500_m.nc4
+      obsdataout:
+        engine:
+          type: H5File
+          obsfile: Data/os/obsout_hofx3d_rttovcpp_amsua_n19-allsky.nc4
+      simulated variables: [brightnessTemperature]
+      channels: 1-15
+    obs operator:
+      name: RTTOVCPP
+      CoefPath: Data/
+      SensorID: noaa_19_amsua_o3
+      use hydrometeors: true
+      hydrometeor variables: [
+        mixing_ratio_of_cloud_liquid_water,
+        mixing_ratio_of_cloud_ice,
+        mixing_ratio_of_rain,
+        mixing_ratio_of_snow,
+        mixing_ratio_of_graupel,
+        cloud_area_fraction_in_atmosphere_layer
+      ]

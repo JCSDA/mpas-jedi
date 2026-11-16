@@ -243,6 +243,7 @@ link_files(${MPAS_CORE_ATMOSPHERE_DATADIR} ${CMAKE_CURRENT_BINARY_DIR} ${mpas_st
 # RTTOV coefficient files
 list( APPEND rttov_test_input
   rttov13pred54L/rtcoef_noaa_19_amsua_o3.dat
+  hydrotable/rttov_hydrotable_noaa_19_amsua_o3.dat
 )
 
 # CRTM coefficient files
