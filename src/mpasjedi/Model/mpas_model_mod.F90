@@ -232,8 +232,15 @@ subroutine model_prepare_integration(self, jedi_state)
    !-------------------------------------------------------------------
    ! update domain % clock using mpas_fields clock and config files
    !-------------------------------------------------------------------
-   startTime = mpas_get_clock_time(jedi_state % clock, MPAS_START_TIME, ierr)
+   ! A model run starts at the valid time of the state it is given. Only MPAS_NOW of
+   ! jedi_state % clock tracks that (read, copy and propagate set it); its
+   ! MPAS_START_TIME stays at config_start_time, which is stale once the state has
+   ! been advanced, e.g. at the start of a continuous-DA window.
+   startTime = mpas_get_clock_time(jedi_state % clock, MPAS_NOW, ierr)
    call mpas_set_clock_time(self % domain % clock, startTime, MPAS_START_TIME)
+   ! NOW must be reset too: the domain clock is shared between model runs, and the
+   ! physics take the hour from START_TIME and the elapsed time from NOW - START_TIME
+   call mpas_set_clock_time(self % domain % clock, startTime, MPAS_NOW)
    call mpas_get_time(startTime, dateTimeString=startTimeStamp) ! needed by xtime later
    call mpas_pool_get_config(self % domain % blocklist % configs,'config_run_duration',config_run_duration)
    call mpas_set_timeInterval(runDuration, timeString=config_run_duration,ierr=ierr)
