@@ -9,6 +9,7 @@ module mpas_state_interface_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
+use fckit_mpi_module, only: fckit_mpi_comm
 use atlas_module, only: atlas_fieldset
 
 !oops
@@ -99,6 +100,42 @@ end subroutine mpas_state_create_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_state_remove_fields_c(c_key_self, c_vars) &
+      bind(c,name='mpas_state_remove_fields_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_vars !< Variables to remove
+
+type(mpas_fields), pointer :: self
+type(oops_variables) :: vars
+
+call mpas_fields_registry%get(c_key_self, self)
+vars = oops_variables(c_vars)
+
+call self%remove(vars)
+
+end subroutine mpas_state_remove_fields_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_state_add_fields_c(c_key_self, c_vars) &
+      bind(c,name='mpas_state_add_fields_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_vars !< Variables to add
+
+type(mpas_fields), pointer :: self
+type(oops_variables) :: vars
+
+call mpas_fields_registry%get(c_key_self, self)
+vars = oops_variables(c_vars)
+
+call self%add(vars)
+
+end subroutine mpas_state_add_fields_c
+
+! ------------------------------------------------------------------------------
+
 subroutine mpas_state_delete_c(c_key_self) &
       bind(c,name='mpas_state_delete_f90')
 implicit none
@@ -163,6 +200,21 @@ zz = real(c_zz, kind=RKIND)
 call self%axpy(zz,rhs)
 
 end subroutine mpas_state_axpy_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_state_allreduce_c(c_key_self,c_comm) &
+      bind(c,name='mpas_state_allreduce_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_comm
+
+type(mpas_fields), pointer :: self
+
+call mpas_fields_registry%get(c_key_self,self)
+call self%allreduce(fckit_mpi_comm(c_comm))
+
+end subroutine mpas_state_allreduce_c
 
 ! ------------------------------------------------------------------------------
 

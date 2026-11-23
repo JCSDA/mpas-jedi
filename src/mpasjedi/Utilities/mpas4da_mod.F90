@@ -19,6 +19,7 @@ module mpas4da_mod
 
 !fckit
 use fckit_log_module, only: fckit_log
+use fckit_mpi_module, only: fckit_mpi_comm, fckit_mpi_sum
 
 !oops
 use kinds, only: kind_real
@@ -46,14 +47,16 @@ public :: &
    da_copy_all2sub_fields, &
    da_copy_sub2all_fields, &
    da_template_pool, &
-   !mpas_pool_template_field, &
+   mpas_pool_template_field, &
    da_random, &
    da_operator, &
+   da_divide, &
    da_self_mult, &
    da_constant, &
    da_posdef, &
    da_setval, &
    da_axpy, &
+   da_allreduce, &
    da_gpnorm, &
    da_fldrms, &
    da_dot_product, &
@@ -1342,6 +1345,61 @@ contains
 
    !***********************************************************************
    !
+   !  subroutine da_allreduce
+   !
+   !> \brief   Sums the real-valued fields of a pool in place across f_comm
+   !> \details
+   !>  Every task in f_comm must hold an identically shaped pool (e.g. one
+   !>  ensemble member each on the same geometry decomposition). Only
+   !>  real-valued fields are summed, optionally restricted to fld_select;
+   !>  integer and logical fields are left as they are.
+   !
+   !-----------------------------------------------------------------------
+   subroutine da_allreduce(pool, f_comm, fld_select)
+
+      implicit none
+      type (mpas_pool_type), pointer, intent(inout) :: pool
+      type (fckit_mpi_comm), intent(in) :: f_comm
+      character (len=*), optional, intent(in) :: fld_select(:)
+
+      type (mpas_pool_iterator_type) :: poolItr
+      real (kind=RKIND), pointer :: r0d_ptr
+      real (kind=RKIND), dimension(:), pointer :: r1d_ptr
+      real (kind=RKIND), dimension(:,:), pointer :: r2d_ptr
+      real (kind=RKIND), dimension(:,:,:), pointer :: r3d_ptr
+
+      call mpas_pool_begin_iteration(pool)
+
+      do while ( mpas_pool_get_next_member(pool, poolItr) )
+
+         if (present(fld_select)) then
+            if (ufo_vars_getindex(fld_select,trim(poolItr % memberName)) < 0) cycle
+         end if
+
+         if (poolItr % memberType == MPAS_POOL_FIELD) then
+            if (poolItr % dataType == MPAS_POOL_REAL) then
+               if (poolItr % nDims == 0) then
+                  call mpas_pool_get_array(pool, trim(poolItr % memberName), r0d_ptr)
+                  call f_comm%allreduce(r0d_ptr, fckit_mpi_sum())
+               else if (poolItr % nDims == 1) then
+                  call mpas_pool_get_array(pool, trim(poolItr % memberName), r1d_ptr)
+                  call f_comm%allreduce(r1d_ptr, fckit_mpi_sum())
+               else if (poolItr % nDims == 2) then
+                  call mpas_pool_get_array(pool, trim(poolItr % memberName), r2d_ptr)
+                  call f_comm%allreduce(r2d_ptr, fckit_mpi_sum())
+               else if (poolItr % nDims == 3) then
+                  call mpas_pool_get_array(pool, trim(poolItr % memberName), r3d_ptr)
+                  call f_comm%allreduce(r3d_ptr, fckit_mpi_sum())
+               end if
+            end if
+         end if
+      end do
+
+   end subroutine da_allreduce
+
+
+   !***********************************************************************
+   !
    !  subroutine da_gpnorm
    !
    !> \brief   Performs basic statistics min/max/norm given a pool
@@ -1616,6 +1674,87 @@ contains
    end subroutine da_dot_product
 
 
+   !-----------------------------------------------------------------------
+   !  subroutine da_divide
+   !
+   !> \brief   Elementwise division of the fields of pool_a by those of pool_b
+   !> \details
+   !>  Elementwise division; for finite/0 this is an error, for 0/0 returns 0.
+   !-----------------------------------------------------------------------
+
+   subroutine da_divide(pool_a, pool_b, fld_select)
+
+   implicit none
+   type (mpas_pool_type), pointer, intent(in) :: pool_a, pool_b
+   character (len=*), optional, intent(in) :: fld_select(:)
+
+   type (mpas_pool_iterator_type) :: poolItr
+   type (field1DReal), pointer :: field1d_a, field1d_b
+   type (field2DReal), pointer :: field2d_a, field2d_b
+   type (field3DReal), pointer :: field3d_a, field3d_b
+   integer :: ndims, dim1, dim2, dim3
+   integer, allocatable :: dimSizes(:)
+
+   call mpas_pool_begin_iteration(pool_a)
+
+   do while ( mpas_pool_get_next_member(pool_a, poolItr) )
+      if (poolItr % dataType /= MPAS_POOL_REAL) cycle
+      if (poolItr % memberType /= MPAS_POOL_FIELD) cycle
+      if (present(fld_select)) then
+         if (ufo_vars_getindex(fld_select, trim(poolItr % memberName)) < 0) cycle
+      end if
+
+      ndims = poolItr % nDims
+      dimSizes = getSolveDimSizes(pool_a, poolItr%memberName)
+      if (ndims == 1) then
+         dim1 = dimSizes(1)
+         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field1d_a)
+         call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field1d_b)
+         call da_divide_check(field1d_a % array(1:dim1), field1d_b % array(1:dim1), &
+                              trim(poolItr % memberName))
+         where (abs(field1d_b % array(1:dim1)) > MPAS_JEDI_ZERO_kr) &
+            field1d_a % array(1:dim1) = field1d_a % array(1:dim1) / field1d_b % array(1:dim1)
+      else if (ndims == 2) then
+         dim1 = dimSizes(1)
+         dim2 = dimSizes(2)
+         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field2d_a)
+         call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field2d_b)
+         call da_divide_check(reshape(field2d_a % array(1:dim1,1:dim2), [dim1*dim2]), &
+                              reshape(field2d_b % array(1:dim1,1:dim2), [dim1*dim2]), &
+                              trim(poolItr % memberName))
+         where (abs(field2d_b % array(1:dim1,1:dim2)) > MPAS_JEDI_ZERO_kr) &
+            field2d_a % array(1:dim1,1:dim2) = field2d_a % array(1:dim1,1:dim2) &
+                                             / field2d_b % array(1:dim1,1:dim2)
+      else if (ndims == 3) then
+         dim1 = dimSizes(1)
+         dim2 = dimSizes(2)
+         dim3 = dimSizes(3)
+         call mpas_pool_get_field(pool_a, trim(poolItr % memberName), field3d_a)
+         call mpas_pool_get_field(pool_b, trim(poolItr % memberName), field3d_b)
+         call da_divide_check(reshape(field3d_a % array(1:dim1,1:dim2,1:dim3), [dim1*dim2*dim3]), &
+                              reshape(field3d_b % array(1:dim1,1:dim2,1:dim3), [dim1*dim2*dim3]), &
+                              trim(poolItr % memberName))
+         where (abs(field3d_b % array(1:dim1,1:dim2,1:dim3)) > MPAS_JEDI_ZERO_kr) &
+            field3d_a % array(1:dim1,1:dim2,1:dim3) = field3d_a % array(1:dim1,1:dim2,1:dim3) &
+                                                    / field3d_b % array(1:dim1,1:dim2,1:dim3)
+      end if
+      deallocate(dimSizes)
+   end do
+
+   end subroutine da_divide
+
+   ! Abort if any zero denominator sits under a non-zero numerator.
+   subroutine da_divide_check(num, den, fldname)
+
+   implicit none
+   real(kind=RKIND), intent(in) :: num(:), den(:)
+   character (len=*), intent(in) :: fldname
+
+   if (any(abs(den) <= MPAS_JEDI_ZERO_kr .and. abs(num) > MPAS_JEDI_ZERO_kr)) then
+      call abor1_ftn('da_divide: divide by zero for field '//fldname)
+   end if
+
+   end subroutine da_divide_check
   subroutine cvt_oopsmpas_date(inString2,outString2,iconv)
 
      implicit none

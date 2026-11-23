@@ -18,6 +18,7 @@
 #include "atlas/functionspace.h"
 
 #include "eckit/config/Configuration.h"
+#include "eckit/mpi/Comm.h"
 
 #include "oops/base/GeometryData.h"
 #include "oops/generic/GlobalInterpolator.h"
@@ -198,6 +199,10 @@ void Increment::schur_product_with(const Increment & dx) {
   mpas_increment_self_schur_f90(keyInc_, dx.keyInc_);
 }
 // -----------------------------------------------------------------------------
+void Increment::schur_quotient_with(const Increment & dx) {
+  mpas_increment_self_div_f90(keyInc_, dx.keyInc_);
+}
+// -----------------------------------------------------------------------------
 real_type Increment::dot_product_with(const Increment & other) const {
   real_type zz;
   mpas_increment_dot_prod_f90(keyInc_, other.keyInc_, zz);
@@ -258,6 +263,13 @@ void Increment::write(const eckit::Configuration & config) const {
   WriteParameters_ params;
   params.deserialize(config);
   mpas_increment_write_file_f90(keyInc_, params.toConfiguration(), time_);
+}
+// -----------------------------------------------------------------------------
+void Increment::allReduceInPlace(const eckit::mpi::Comm & commEns) {
+  if (commEns.size() <= 1) {
+    return;
+  }
+  mpas_increment_allreduce_f90(keyInc_, &commEns);
 }
 // -----------------------------------------------------------------------------
 /// Serialization

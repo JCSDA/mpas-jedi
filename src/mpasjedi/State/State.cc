@@ -13,6 +13,8 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 
+#include "eckit/mpi/Comm.h"
+
 #include "oops/base/GeometryData.h"
 #include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/Logger.h"
@@ -171,6 +173,13 @@ State & State::operator+=(const Increment & dx) {
   return *this;
 }
 // -----------------------------------------------------------------------------
+void State::allReduceInPlace(const eckit::mpi::Comm & commEns) {
+  if (commEns.size() <= 1) {
+    return;
+  }
+  mpas_state_allreduce_f90(keyState_, &commEns);
+}
+// -----------------------------------------------------------------------------
 /// Serialization
 // -----------------------------------------------------------------------------
 size_t State::serialSize() const {
@@ -267,6 +276,20 @@ real_type State::norm() const {
   real_type zz = 0.0;
   mpas_state_rms_f90(keyState_, zz);
   return zz;
+}
+// -----------------------------------------------------------------------------
+void State::removeFields(const oops::Variables & vars) {
+  oops::Log::trace() << "State::removeFields starting" << std::endl;
+  vars_ -= vars;
+  mpas_state_remove_fields_f90(keyState_, vars);
+  oops::Log::trace() << "State::removeFields done" << std::endl;
+}
+// -----------------------------------------------------------------------------
+void State::addFields(const oops::Variables & vars) {
+  oops::Log::trace() << "State::addFields starting" << std::endl;
+  vars_ += vars;
+  mpas_state_add_fields_f90(keyState_, vars);
+  oops::Log::trace() << "State::addFields done" << std::endl;
 }
 // -----------------------------------------------------------------------------
 oops::Variables State::stateVars()

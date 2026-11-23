@@ -11,6 +11,7 @@ use atlas_module, only: atlas_field, atlas_fieldset, atlas_real, atlas_metadata
 ! fckit
 use fckit_configuration_module, only: fckit_configuration
 use fckit_log_module, only: fckit_log
+use fckit_mpi_module, only: fckit_mpi_comm
 use iso_c_binding
 
 !oops
@@ -73,6 +74,7 @@ public :: mpas_fields, mpas_fields_registry, &
 
      contains
 
+     procedure :: allreduce    => allreduce_
      procedure :: axpy         => axpy_
      procedure :: dot_prod     => dot_prod_
      procedure :: gpnorm       => gpnorm_
@@ -80,6 +82,7 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: rms          => rms_
      procedure :: self_add     => self_add_
      procedure :: self_schur   => self_schur_
+     procedure :: self_div     => self_div_
      procedure :: self_mult    => self_mult_
      procedure :: self_sub     => self_sub_
      procedure :: zeros        => zeros_
@@ -89,6 +92,8 @@ public :: mpas_fields, mpas_fields_registry, &
      procedure :: create       => create_fields
      procedure :: populate     => populate_subfields
      procedure :: delete       => delete_fields
+     procedure :: remove       => remove_fields
+     procedure :: add          => add_fields
      procedure :: read_file    => read_fields
      procedure :: write_file   => write_fields
      procedure :: serial_size  => serial_size
@@ -319,6 +324,91 @@ subroutine delete_fields(self)
    return
 
 end subroutine delete_fields
+
+! ------------------------------------------------------------------------------
+
+subroutine remove_fields(self, vars)
+
+    implicit none
+
+    class(mpas_fields),   intent(inout) :: self
+    type(oops_variables), intent(in)    :: vars
+
+    type(mpas_pool_type), pointer :: newPool
+    character(len=MAXVARLEN), allocatable :: keepnames(:)
+    integer :: ivar, nkeep
+
+    allocate(keepnames(self % nf))
+    nkeep = 0
+    do ivar = 1, self % nf
+       if (.not. vars % has(self % fldnames(ivar))) then
+          nkeep = nkeep + 1
+          keepnames(nkeep) = self % fldnames(ivar)
+       end if
+    end do
+
+    ! copy the kept fields into a new pool (removing a pool member does not free its data)
+    call da_template_pool(self % geom, newPool, 0, keepnames(1:0))
+    do ivar = 1, nkeep
+       call mpas_pool_template_field(trim(keepnames(ivar)), self % subFields, &
+                                     trim(keepnames(ivar)), newPool)
+    end do
+
+    ! replace the pool, deallocating the removed fields
+    call delete_pool(self % subFields)
+    self % subFields => newPool
+
+    self % nf = nkeep
+    deallocate(self % fldnames)
+    allocate(self % fldnames(self % nf))
+    self % fldnames(:) = keepnames(1:nkeep)
+
+    deallocate(self % nvert)
+    allocate(self % nvert(self % nf))
+    do ivar = 1, self % nf
+       self % nvert(ivar) = getVertLevels(self % subFields, self % fldnames(ivar))
+    end do
+
+end subroutine remove_fields
+
+! ------------------------------------------------------------------------------
+
+subroutine add_fields(self, vars)
+
+    implicit none
+
+    class(mpas_fields),   intent(inout) :: self
+    type(oops_variables), intent(in)    :: vars
+
+    type(mpas_pool_type), pointer :: addPool
+    character(len=MAXVARLEN), allocatable :: fldnames(:)
+    integer :: ivar, nadd
+
+    nadd = vars % nvars()
+    allocate(fldnames(self % nf + nadd))
+    fldnames(1:self % nf) = self % fldnames(:)
+    do ivar = 1, nadd
+       fldnames(self % nf + ivar) = trim(vars % variable(ivar))
+    end do
+
+    ! create the new fields (zero) from the geometry templates and copy them into the pool
+    call da_template_pool(self % geom, addPool, nadd, fldnames(self % nf + 1:))
+    do ivar = 1, nadd
+       call mpas_pool_template_field(trim(vars % variable(ivar)), addPool, &
+                                     trim(vars % variable(ivar)), self % subFields)
+    end do
+    call delete_pool(addPool)
+
+    self % nf = self % nf + nadd
+    call move_alloc(fldnames, self % fldnames)
+
+    deallocate(self % nvert)
+    allocate(self % nvert(self % nf))
+    do ivar = 1, self % nf
+       self % nvert(ivar) = getVertLevels(self % subFields, self % fldnames(ivar))
+    end do
+
+end subroutine add_fields
 
 ! ------------------------------------------------------------------------------
 
@@ -672,6 +762,18 @@ end subroutine self_schur_
 
 ! ------------------------------------------------------------------------------
 
+subroutine self_div_(self,rhs)
+
+   implicit none
+   class(mpas_fields), intent(inout) :: self
+   class(mpas_fields), intent(in)    :: rhs
+
+   call da_divide(self % subFields, rhs % subFields, fld_select = self % fldnames_ci)
+
+end subroutine self_div_
+
+! ------------------------------------------------------------------------------
+
 subroutine self_sub_(self,rhs)
 
    implicit none
@@ -708,6 +810,18 @@ subroutine axpy_(self,zz,rhs)
    call da_axpy(self % subFields, rhs % subFields, zz, fld_select = self % fldnames_ci)
 
 end subroutine axpy_
+
+! ------------------------------------------------------------------------------
+
+subroutine allreduce_(self,f_comm)
+
+   implicit none
+   class(mpas_fields),   intent(inout) :: self
+   type(fckit_mpi_comm), intent(in)    :: f_comm
+
+   call da_allreduce(self % subFields, f_comm, fld_select = self % fldnames_ci)
+
+end subroutine allreduce_
 
 ! ------------------------------------------------------------------------------
 

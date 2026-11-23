@@ -18,6 +18,9 @@ namespace atlas {
 
 namespace eckit {
   class Configuration;
+  namespace mpi {
+    class Comm;
+  }
 }
 
 namespace oops {
@@ -39,9 +42,12 @@ extern "C" {
                              const oops::Variables &,
                              const oops::Variables &);
   void mpas_state_delete_f90(F90state &);
+  void mpas_state_remove_fields_f90(const F90state &, const oops::Variables &);
+  void mpas_state_add_fields_f90(const F90state &, const oops::Variables &);
   void mpas_state_copy_f90(const F90state &, const F90state &);
   void mpas_state_zero_f90(const F90state &);
   void mpas_state_axpy_f90(const F90state &, const real_type &, const F90state &);
+  void mpas_state_allreduce_f90(const F90state &, const eckit::mpi::Comm *);
   void mpas_state_add_incr_f90(const F90state &, const F90inc &);
   void mpas_state_serial_size_f90(const F90state &, std::size_t &);
   void mpas_state_serialize_f90(const F90state &, const std::size_t &,

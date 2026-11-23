@@ -18,6 +18,9 @@ namespace atlas {
 
 namespace eckit {
   class Configuration;
+  namespace mpi {
+    class Comm;
+  }
 }
 
 namespace oops {
@@ -45,6 +48,7 @@ extern "C" {
                                    const F90inc &);
   void mpas_increment_axpy_state_f90(const F90inc &, const real_type &,
                                      const F90state &);
+  void mpas_increment_allreduce_f90(const F90inc &, const eckit::mpi::Comm *);
   void mpas_increment_read_file_f90(const F90inc &,
                                 const eckit::Configuration &,
                                 util::DateTime &);
@@ -60,6 +64,7 @@ extern "C" {
   void mpas_increment_self_mul_f90(const F90inc &, const real_type &);
   void mpas_increment_dot_prod_f90(const F90inc &, const F90inc &, real_type &);
   void mpas_increment_self_schur_f90(const F90inc &, const F90inc &);
+  void mpas_increment_self_div_f90(const F90inc &, const F90inc &);
   void mpas_increment_random_f90(const F90inc &);
   void mpas_increment_to_fieldset_f90(const F90inc &,
                                    const F90geom &,

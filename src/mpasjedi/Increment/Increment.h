@@ -28,6 +28,12 @@
 #include "mpasjedi/Increment/Increment.interface.h"
 #include "mpasjedi/Increment/IncrementParameters.h"
 
+namespace eckit {
+  namespace mpi {
+    class Comm;
+  }
+}
+
 namespace ufo {
   class GeoVaLs;
 }
@@ -78,6 +84,7 @@ class Increment : public util::Printable,
   void axpy(const real_type &, const State &, const bool check = true);
   real_type dot_product_with(const Increment &) const;
   void schur_product_with(const Increment &);
+  void schur_quotient_with(const Increment &);
   void random();
   void dirac(const eckit::Configuration &);
   std::vector<double> rmsByLevel(const std::string &) const;
@@ -99,6 +106,9 @@ class Increment : public util::Printable,
 
   /// Other
   void accumul(const real_type &, const State &);
+
+  /// Sums the real-valued pool fields across comm
+  void allReduceInPlace(const eckit::mpi::Comm &);
 
   /// Serialize and deserialize
   size_t serialSize() const override;

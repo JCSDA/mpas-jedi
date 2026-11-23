@@ -8,6 +8,7 @@
 module mpas_increment_interface_mod
 
 use iso_c_binding
+use fckit_mpi_module, only: fckit_mpi_comm
 use fckit_configuration_module, only: fckit_configuration
 use atlas_module, only: atlas_fieldset
 
@@ -179,6 +180,23 @@ end subroutine mpas_increment_self_schur_c
 
 ! ------------------------------------------------------------------------------
 
+subroutine mpas_increment_self_div_c(c_key_self,c_key_rhs) &
+      bind(c,name='mpas_increment_self_div_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+integer(c_int), intent(in) :: c_key_rhs
+
+type(mpas_fields), pointer :: self
+type(mpas_fields), pointer :: rhs
+call mpas_fields_registry%get(c_key_self,self)
+call mpas_fields_registry%get(c_key_rhs,rhs)
+
+call self%self_div(rhs)
+
+end subroutine mpas_increment_self_div_c
+
+! ------------------------------------------------------------------------------
+
 subroutine mpas_increment_self_sub_c(c_key_self,c_key_rhs) &
       bind(c,name='mpas_increment_self_sub_f90')
 implicit none
@@ -251,6 +269,21 @@ zz = real(c_zz, kind=RKIND)
 call self%axpy(zz,rhs)
 
 end subroutine mpas_increment_axpy_state_c
+
+! ------------------------------------------------------------------------------
+
+subroutine mpas_increment_allreduce_c(c_key_self,c_comm) &
+      bind(c,name='mpas_increment_allreduce_f90')
+implicit none
+integer(c_int), intent(in) :: c_key_self
+type(c_ptr), value, intent(in) :: c_comm
+
+type(mpas_fields), pointer :: self
+
+call mpas_fields_registry%get(c_key_self,self)
+call self%allreduce(fckit_mpi_comm(c_comm))
+
+end subroutine mpas_increment_allreduce_c
 
 ! ------------------------------------------------------------------------------
 

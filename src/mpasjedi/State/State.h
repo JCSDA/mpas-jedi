@@ -23,6 +23,12 @@
 #include "mpasjedi/State/State.interface.h"
 #include "mpasjedi/State/StateParameters.h"
 
+namespace eckit {
+  namespace mpi {
+    class Comm;
+  }
+}
+
 namespace ufo {
   class GeoVaLs;
 }
@@ -67,6 +73,9 @@ class State : public util::Printable,
 /// Interactions with Increment
   State & operator+=(const Increment &);
 
+/// Sums the real-valued pool fields across comm
+  void allReduceInPlace(const eckit::mpi::Comm &);
+
 /// Serialization
   size_t serialSize() const override;
   void serialize(std::vector<real_type> &) const override;
@@ -89,6 +98,9 @@ class State : public util::Printable,
   util::DateTime & validTime() {return time_;}
   const oops::Variables & variables() const {return vars_;}
   void updateTime(const util::Duration & dt) {time_ += dt;}
+
+  void removeFields(const oops::Variables &);
+  void addFields(const oops::Variables &);
 
   // Accessors to the ATLAS fieldset
   void toFieldSet(atlas::FieldSet &) const;
