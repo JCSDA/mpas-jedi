@@ -524,7 +524,7 @@ subroutine changevar(self, geom, xm, xg)
           !-water_area_fraction, land_area_fraction, ice_area_fraction, surface_snow_area_fraction
           call xg%copy_from(geovar, RequestedCRTMSfcFields)
 
-        case ( var_sfc_wspeed ) !-wind_speed_at_surface
+        case ( var_sfc_wspeed ) !-wind_speed_at_10m
           call xm%get('eastward_wind_at_10m', ptrr1_a)
           call xm%get('northward_wind_at_10m', ptrr1_b)
           gdata%r1%array(1:nCells)=sqrt( ptrr1_a(1:nCells)**2 + ptrr1_b(1:nCells)**2 )
@@ -534,7 +534,7 @@ subroutine changevar(self, geom, xm, xg)
 ! pass only the domain interior points.
           gdata%r1%array(1:nCells)= real(domainMask(1:nCells))
 
-        case ( var_sfc_fact10 ) !-ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
+        case ( var_sfc_fact10 ) !-ratio_of_wind_at_10m_to_wind_at_surface_adjacent_layer
           call xm%get('eastward_wind_at_10m', ptrr1_a)
           call xm%get('northward_wind_at_10m', ptrr1_b)
 

@@ -357,23 +357,13 @@ fields:
   - field name: surface_snow_area_fraction
     mpas template field: u10
 
-  - field name: eastward_wind_at_surface
-    mpas template field: u10
-    mpas identity field: eastward_wind_at_10m #we are doing this... for CRTM #eastward_wind_at_surface
-    mpas io name: u10
-
-  - field name: northward_wind_at_surface
-    mpas template field: u10
-    mpas identity field: northward_wind_at_10m #we are doing this... for CRTM #northward_wind_at_surface
-    mpas io name: v10
-
-  - field name: wind_speed_at_surface
+  - field name: wind_speed_at_10m
     mpas template field: u10
 
   - field name: observable_domain_mask
     mpas template field: u10
 
-  - field name: ratio_of_wind_at_surface_adjacent_layer_to_wind_at_10m
+  - field name: ratio_of_wind_at_10m_to_wind_at_surface_adjacent_layer
     mpas template field: u10
     
   - field name: land_type_index_USGS
